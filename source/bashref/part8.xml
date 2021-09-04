@@ -1,0 +1,2119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ********************************************************************
+     $Id: part8.xml,v 1.12 2002/12/20 23:23:58 nilgun Exp $
+     ********************************************************************-->
+<part id="bashref_command.line.editing">
+  <title>Komut Satırının Düzenlenmesi</title>
+  <titleabbrev>Komut satırı düzenlemesi ile ilgili özellikler.</titleabbrev>
+  <partintro>
+    <para>
+Bu oylumda GNU komut satırı düzenleme arayüzünün temel özelliklerinden
+söz edilecektir. Komut satırı düzenlemesi, Bash'in de aralarında olduğu
+pek çok uygulamanın kullandığı, Readline kütüphanesi tarafından sağlanır.
+    </para>
+  </partintro>
+
+    <chapter id="bashref_command.line.editing-intro" label="1">
+      <title>Satır Düzenlemeye Giriş</title>
+      <titleabbrev>Bu oylumda kullanılan nitelemeler.</titleabbrev>
+      <para>
+Tuşlarla ilgili olarak kullanılan nitelemeler aşağıda açıklanmıştır.
+      </para><para>
+<literal>C-k</literal> gördüğünüz yerde bu dizgeyi `Kontrol-K' olarak
+okuyacaksınız ve <literal>Ctrl</literal> tuşu basılıyken <literal>k</literal>
+tuşuna da basmanız gerektiğini anlayacaksınız.
+      </para><para>
+<literal>M-k</literal> gördüğünüz yerde ise bu dizgeyi `Meta-K' olarak
+okuyacaksınız ve boşluk tuşunun solunda bulunan <literal>Alt</literal>
+tuşu basılı iken <literal>k</literal> tuşuna da basmanız gerektiğini
+anlayacaksınız.
+      </para><para>
+Boşluk tuşunun solundaki <literal>Alt</literal> tuşu `Meta' tuşu olarak
+da bilinir. Boşluk tuşunun sağındaki <literal>AltGr</literal> tuşu ise
+bazı klavyelerde Meta tuşu olabildiği gibi Türk klavyelerinde olduğu
+gibi tuşlara atanan ek karakterler için de kullanılır. Bu bakımdan
+Meta tuşu denilince soldaki <literal>Alt</literal> tuşundan
+bahsedildiğini anlayacağız.
+      </para><para>
+Bazı klavyelerde bu iki tuş bulunmayabilir ya da onlara farklı görevler
+atanmış olabilir. Bu gibi durumlar için başvulurulabilecek bir tuş
+daha vardır: <literal>Esc</literal> tuşu. Yalnız <literal>Esc</literal>
+tuşu <literal>Alt</literal> tuşu gibi kullanılmaz. <literal>M-k</literal>
+için <literal>Esc</literal> tuşuna bir kere basıp bıraktıktan sonra
+<literal>k</literal> tuşuna basmalısınız. Her iki işleme
+<literal>k</literal> tuşunun ötelenmesi de denir (metafying).
+      </para><para>
+<literal>M-C-k</literal> gördüğünüz yerde bu dizgeyi `Meta-Kontrol-k'
+olarak okuyacaksınız ve <literal>Alt</literal> ile <literal>Ctrl</literal>
+tuşlarına basılı iken <literal>k</literal> tuşuna da basmanız gerektiğini
+anlayacaksınız. Bu işleme <literal>C-k</literal> ötelemesi de denir.
+      </para><para>
+Bunlara ek olarak bazı tuşların kendi isimleri kullanılmıştır.
+Özellikle <literal>DEL</literal> (silme tuşu), <literal>ESC</literal>
+(öteleme tuşu), <literal>LFD</literal>, <literal>SPC</literal> (boşluk
+tuşu), <literal>RET</literal> (return veya enter tuşu) ve
+<literal>TAB</literal> (sekme tuşu) tuşları ilerleyen bölümlerde ve
+<filename>init</filename> dosyasında  (<xref
+linkend="bashref_rl.initfiles"/> bölümüne bakınız) bu isimlerle geçer.
+Klavyenizde <literal>LFD</literal> tuşu yoksa <literal>C-j</literal>
+tuşlayarak bu tuşun işlevselliğine erişebilirsiniz.
+      </para>
+    </chapter>
+
+    <chapter id="bashref_rl.interaction" label="2">
+      <title>Readline Etkileşimi</title>
+      <titleabbrev>Bir satırı düzenlemek için en düşük gereksinimler.</titleabbrev>
+<indexterm scope="bashref_concept.index">
+<primary>etkileşim</primary><secondary>readline</secondary></indexterm>
+      <para>
+Bir etkileşimli oturumda satıra uzunca bir metin girdiğinizde çoğunlukla
+sadece ilk sözcüğü yanlış yazdığınızda uyarılırsınız. Readline
+kütüphanesi bu gibi durumlarda hatalı yazdığınız metni yeniden yazmadan
+kolayca değiştirebilmenizi sağlayan bazı komutlara sahiptir. Bu
+düzenleme komutlarını kullanrak imleci düzeltme yapılacak yere
+götürebilir, hatalı kısmı silebilir ve silinen yere doğrusunu
+yazabilirsiniz. Düzeltmeyi bitirdiğinizde metnin neresinde olursanız olun
+basitçe <literal>RET</literal> tuşuna bastığınızda satırın tümü kabul
+edilir.
+      </para>
+      <sect1 id="bashref_rl.interaction-ess">
+        <title>Readline'ın Yalın Özü</title>
+        <titleabbrev>Readline hakkında en azından bilmek zorunda olduklarınız.</titleabbrev>
+<indexterm scope="bashref_concept.index">
+<primary>komut</primary><secondary>düzenleme</secondary></indexterm>
+<indexterm scope="bashref_concept.index">
+<primary>niteleme</primary><secondary>readline</secondary></indexterm>
+<indexterm scope="bashref_concept.index">
+<primary>komut satırı düzenlemesi</primary></indexterm>
+        <para>
+Satıra karakterleri girmek isterseniz basitçe onları yazarsınız.
+Yazılan karakterler imlecin olduğu yerde görünür ve siz yazdıkça
+imleç hep sağdaki boşluğa kayar. Bir karakteri yanlış yazarsanız,
+silme tuşlarını kullanarak onu yerinde ya da geriye doğru silebilirsiniz.
+        </para><para>
+Bazan yanlış yazılmış bir karakteri geç farkedersiniz ya da başka
+karakterleri yazdıktan sonra bir hata uyarısı alırsınız. Bu durumda
+<literal>C-b</literal> tuşlayarak satır üzerinde sola ilerleyip
+hatalı yeri düzelttikten sonra <literal>C-f</literal> tuşlayarak
+kaldığınız yere geri dönebilirsiniz.
+        </para><para>
+Bir satırın ortasına bir kaç sözcük eklemek isterseniz, imleç sağa
+ilerledikçe imlecin sağındaki karakterlerde sağa doğru ötelenerek
+gireceğiniz metin için yer açılır. Tersine olarak, arada kalan bir
+metni sildiğinizde, açılan boşluk sağdaki karakterlerin sola
+ötelenmesiyle doldurulur.
+        </para><para>
+Girdi satırındaki metni düzenlemek için kullanılan temel tuşlar:
+</para><glosslist><glossentry>
+<glossterm><literal>C-b</literal></glossterm>
+<glossdef><para>İmleç bir karakter sola gider.</para></glossdef>
+</glossentry><glossentry>
+<glossterm><literal>C-f</literal></glossterm>
+<glossdef><para>İmleç bir karakter sağa gider.</para></glossdef>
+</glossentry><glossentry>
+<glossterm><literal>DEL</literal> veya <literal>Gerisilme</literal></glossterm>
+<glossdef><para>
+İmlecin solundaki karakteri siler.
+</para></glossdef>
+</glossentry><glossentry>
+<glossterm><literal>C-d</literal></glossterm>
+<glossdef><para>
+İmlecin altındaki karakteri siler.
+</para></glossdef>
+</glossentry><glossentry>
+<glossterm>basılan karakterler</glossterm>
+<glossdef><para>
+İmlecin olduğu yerde satıra eklenir.
+</para></glossdef>
+</glossentry><glossentry>
+<glossterm><literal>C-_</literal> veya <literal>C-x C-u</literal></glossterm>
+<glossdef><para>
+Son yapılan düzeltmeleri geri alır. Geri ala ala boş satıra
+kadar gidilebilir.
+</para></glossdef>
+</glossentry>
+</glosslist><para>
+Klavye yapılandırmanıza bağlı olarak, imlecin altındaki karakteri
+silen <literal>C-d</literal> yerine <literal>DEL</literal> tuşu
+kullanılabilir (Türk klavye yapılandırması böyledir).
+        </para>
+      </sect1>
+      <sect1 id="bashref_rl.interaction-movement">
+        <title>Readline Hareket Tuşları</title>
+        <titleabbrev>Girdi satırı üzerinde yapılabilen hareketler.</titleabbrev>
+        <para>
+Bir önceki bölümde bahsedilen tuşlar, girdi satırı üzerinde yapacağınız
+düzenlemelerde kullanabileceğiniz en temel tuşlardı. Rahatınız için
+<literal>C-b</literal>, <literal>C-f</literal>, <literal>C-d</literal> ve
+<literal>DEL</literal> tuşlarına ek olarak başka komutlar da bulunur.
+        </para><glosslist><glossentry>
+  <glossterm><literal>C-a</literal></glossterm>
+  <glossdef><para>İmleç satırın başına gider.</para></glossdef>
+</glossentry><glossentry>
+  <glossterm><literal>C-e</literal></glossterm>
+  <glossdef><para>İmleç satırın sonuna gider.</para></glossdef>
+</glossentry><glossentry>
+  <glossterm><literal>M-f</literal></glossterm>
+  <glossdef><para>
+İmleç bir sözcük ileri gider. Harf ya da rakam olmayan
+karakterler sözcükten sayılmaz, onlara boşluk gibi davranılır.
+  </para></glossdef>
+</glossentry><glossentry>
+  <glossterm><literal>M-b</literal></glossterm>
+  <glossdef><para>
+İmleç bir sözcük ileri gider. Harf ya da rakam olmayan
+karakterler sözcükten sayılmaz, onlara boşluk gibi davranılır.
+  </para></glossdef>
+</glossentry><glossentry>
+  <glossterm><literal>C-l</literal></glossterm>
+  <glossdef><para>
+Son satır tepede kalacak şekilde ekran yukarı kaydırılır
+(ekran temizlenir).
+  </para></glossdef>
+</glossentry>
+</glosslist><para>
+Dikkat ettiyseniz <literal>C-f</literal> imleci bir karakter sağa
+kaydırırken, <literal>M-f</literal> imleci bir sözcük sağa kaydırmaktadır.
+Bir teamül olarak <literal>Ctrl</literal> ile basılan tuşlar
+karakterlerle <literal>Alt</literal> ile basılan tuşlar sözcüklerle
+ilgilidir.
+        </para>
+      </sect1>
+      <sect1 id="bashref_rl.interaction-killing">
+        <title>Readline Kes ve Yapıştır Komutları</title>
+        <titleabbrev>Metinler nasıl silinir ve geri alınır!</titleabbrev>
+<indexterm scope="bashref_concept.index"><primary>kes ve yapıştır</primary></indexterm>
+        <para>
+<emphasis>Kesmek</emphasis> satırdaki metni silmek ama silerken daha
+sonra kullanmak üzere saklamaktır. <emphasis>Yapıştırmak</emphasis> ise
+kesilen metni satıra yerleştirmektir.
+        </para><para>
+Bir komut açıklamasında 'kesmek'ten bahsediliyorsa, bu metnin
+satırda aynı yerde ya da farklı bir yerde tekrar kulanabileceğiniz
+anlamına gelir.
+        </para><para id="bashref-kill-ring">
+<indexterm scope="bashref_concept.index"><primary>pano</primary></indexterm>
+Bir metni kestiğinizde metin <emphasis>pano</emphasis>'ya kopyalanır.
+Metin içinde ardışık yapılan kesmeler, satır üzerinde kesildiği sırada
+birlikte tutulur. Örneğin "aaa bbb ccc ddd" satırında sırayla "aaa",
+"bbb", "ddd" kesilmişse metni panodan istediğinizde "aaa bbb" ile
+"ddd" şeklinde iki kesme (üç değil) bulunduğunu görürüz. Ancak pano
+satıra özel değildir. Bir satırdan kesilen bir metin başka bir satıra
+yapıştırılabilir.
+        </para><para id="bashref-killing.text">
+<indexterm scope="bashref_concept.index"><primary>metnin kesilmesi</primary></indexterm>
+Metinleri kesmek için kullanılan komutlar:
+        </para><glosslist><glossentry>
+    <glossterm><literal>C-k</literal></glossterm>
+    <glossdef><para>
+Metni imleç konumundan satırın sonuna kadar keser.
+    </para></glossdef>
+  </glossentry><glossentry>
+    <glossterm><literal>M-d</literal></glossterm>
+    <glossdef><para>
+Metni imleç konumundan sözcüğün sonuna kadar keser.
+İmleç iki sözcüğün arasındaysa, metin sonraki sözcüğün sonuna
+kadar kesilir. Sözcük sınırları <literal>M-f</literal>
+ile aynıdır.
+    </para></glossdef>
+  </glossentry><glossentry>
+    <glossterm><literal>M-DEL</literal></glossterm>
+    <glossdef><para>
+Metni sözcük başlangıcından imlece kadar keser.
+İmleç iki sözcüğün arasındaysa, metin önceki sözcüğün başına kadar
+kesilir. Sözcük sınırları <literal>M-f</literal> ile aynıdır.
+    </para></glossdef>
+  </glossentry><glossentry>
+    <glossterm><literal>C-w</literal></glossterm>
+    <glossdef><para>
+Metni imleç konumundan önceki boşluğa kadar keser. Buradaki
+sözcük sınırları <literal>M-DEL</literal>'deki sınırlardan
+farklıdır.
+    </para></glossdef>
+  </glossentry>
+</glosslist><para id="bashref-yanking.text">
+<indexterm scope="bashref_concept.index"><primary>metnin yapıştırılması</primary></indexterm>
+Burada metnin satıra nasıl yapıştırılacağından bahsedilecektir.
+Yapıştırmak, panodaki son metni satıra kopyalamaktır.
+        </para><glosslist><glossentry>
+    <glossterm><literal>C-y</literal></glossterm>
+    <glossdef><para>
+Son kesilen metni imleç konumunda satıra yerleştirir.
+    </para></glossdef>
+  </glossentry><glossentry>
+    <glossterm><literal>M-y</literal></glossterm>
+    <glossdef><para>
+Her <literal>M-y</literal> pano içeriğindeki kesmelerden
+bir öncekinin seçilmesini sağlar. Pano içeriği <literal>M-y</literal>
+ile sürekli döndürülür. Bu işlem sadece önceki komut
+<literal>C-y</literal> ya da  <literal>M-y</literal> ise uygulanır.
+    </para></glossdef>
+  </glossentry></glosslist>
+      </sect1>
+      <sect1 id="bashref_rl.interaction-args">
+        <title>Readline Argümanları</title>
+        <titleabbrev>Komutlara verilen sayısal argümanlar.</titleabbrev>
+        <para>
+Readline komutlarına sayısal argümanlar aktarılabilir. Bu argümanlar
+bazan bir yineleme, bazan bir argümanın önem derecesini gösteren
+bir <emphasis>işaret</emphasis> olarak ele alınır. Negatif bir
+argüman, normalde ileri yönde bir eylem oluşturan bir komutta
+ters yönde bir eyleme sebep olacaktır. Örneğin bir metni imleç
+konumundan satırın başına kadar kesmek isterseniz
+<literal>M-- C-k</literal> komutunu verebilirsiniz.
+        </para><para>
+Bir komuta sayısal argümanları aktarmanın genel yolu komuttan önce
+rakam ötelemesi yapmaktır. Bir sayıdan önce bir eksi işareti
+(<literal>-</literal>) koyarsanız, argümanın işareti negatif
+olur. Bir rakam ötelemesinden sonra sayıyı tamamlamak için kalan
+rakamlar tek başına tuşlanır ve ardından komut tuşlanır. Örneğin
+<literal>C-d</literal> komutuna 10 argümanını vermek için
+<literal>M-1 0 C-d</literal> tuşlanır ve girdi satırında imleç
+konumundan itibaren 10 karakter silinir.
+        </para>
+      </sect1>
+      <sect1 id="bashref_rl.interaction-history">
+        <title>Geçmiş içinde Komutların Aranması</title>
+        <titleabbrev>Önceki satırların aranması.</titleabbrev>
+        <para>
+Readline komut geçmişinde belirtilen bir dizgeyi aramak için komutlara
+sahiptir (<xref linkend="bashref_bash.history.facilities"/> bölümüne
+bakınız). İki arama kipi vardır: <emphasis>arttırımlı</emphasis> ve
+<emphasis>arttırımsız</emphasis>.
+        </para><para>
+Arttırımlı arama, kullanıcı aranacak dizgeyi yazmaya başladığı anda
+başlar. Karakterler yazıldıkça, Readline yazılan dizge ile eşleşen
+bir sonraki geçmiş girdisini gösterir. Bir arttırımlı arama, istenen
+geçmiş girdisini bulmayı sağlayacak kadar karakterin yazılmasını
+gerektirir. Bir dizgeyi geçmişte geriye doğru aramayı başlatmak için
+<literal>C-r</literal> tuşlayın. <literal>C-s</literal> aramayı ileri
+yönde başlatır. Arttırımlı aramayı sonlandıracak karakterler
+<literal>isearch-terminators</literal> değişkeninde tutulur. Değişkene
+bir değer atanmamışsa, <literal>ESC</literal> ve <literal>C-J</literal>
+bir arttrımlı aramayı sonlandıracaktır. <literal>C-g</literal> aramayı
+iptal ederek özgün satıra dönülmesini sağlar. Arama sonlandırıldığında
+aramanın sonucu olan girdi komut satırı haline gelir.
+        </para><para>
+Geçmiş listesinde diğer eşleşmeleri bulmak için aramayı hangisiyle
+başlattığınıza bağlı olarak <literal>C-r</literal> ya da
+<literal>C-s</literal> tuşlayabilirsiniz. Bu, yazdığınız arama dizgesine
+bağlı olarak ileri veya geri yönde eşleşen diğer geçmiş girdilerini
+taramanızı sağlar. Readline komutu olan herhangi bir tuşlama aramayı
+sonlandırır ve komutu çalıştırır. Örneğin, <literal>RET</literal> tuşu
+aramayı sonlandırıp satırın kabul edilmesini ve geçmiş listesindeki
+komutun çalıştırılmasını sağlar. Bir hareket komutu aramayı sonlandıracak,
+bulunan son satırı komut satırı yapacak ve satır düzenlemesini
+başlatacaktır.
+        </para><para>
+Readline son arttırımlı arama dizgesini hatırlar. Peşpeşe iki
+<literal>C-r</literal> girerseniz, hatırdaki arama dizgelerinden
+biri kullanılır.
+        </para><para>
+Arttırımsız arama, eşleşen geçmiş satırını aramaya başlamadan önce
+arama dizgesinin tamamını okur. Arama dizgesi kullanıcı tarafından
+yazılmış ya da o anki satırın içindeki bir parça olabilir.
+        </para>
+      </sect1>
+    </chapter>
+
+<chapter id="bashref_rl.initfiles" label="3">
+  <title>Readline İlklendirme Dosyası</title>
+  <titleabbrev>Readline'ın kişiselleştirilmesi.</titleabbrev>
+<indexterm scope="bashref_concept.index">
+<primary>ilklendirme dosyası</primary><secondary>readline</secondary></indexterm>
+<indexterm scope="bashref_concept.index">
+<primary>değişken</primary><secondary>readline</secondary></indexterm>
+  <para>
+Readline kütüphanesi kurulumda öntanımlı olarak Emacs benzeri tuş
+kısayolları ile gelmekle birlikte, farklı tuş kısayolları ile de
+kullanmak mümkündür. Bir kullanıcı, teamül olarak ev dizininde bulunan
+bir <filename>inputrc</filename> dosyasına yerleştirdiği komutlarla
+Readline'ın kullanıldığı uygulamaları kişiselleştirebilir. Bu dosyanın
+ismi bir kabuk değişkeni olan <literal>INPUTRC</literal> değişkeninden
+alınır. Bu değişken atanmamışsa dosyanın öntanımlı ismi
+<filename>~/.inputrc</filename>'dir. Bu dosya mevcut değilse vela okunamıyorsa, eninde sonunda bakılacak dosya <filename>/etc/inputrc</filename> dosyasıdır.
+  </para><para>
+Readline kütüphanesini kullanan bir uygulama başlatıldığında ilklendirme
+dosyası okunur ve tuş kısayolları atanır.
+  </para><para>
+Ek olarak, <literal>C-x C-r</literal> komutu bu ilklendirme dosyasının tekrar
+okunmasını sağlar, böylece dosyanın okunmasından sonra dosyada değişiklik
+yapıldığında bu değişikliklerin etkinleştirilmesi sağlanmıştır.
+  </para>
+  <sect1 id="bashref_rl.initfiles-syntax">
+    <title>Readline İlklendirme Dosyasının Sözdizimi</title>
+    <titleabbrev>inputrc dosyasındaki komutların sözdizimi.</titleabbrev>
+    <para>
+Readline ilklendirme dosyasında izin verilen bir kaç temel yapı vardır.
+Boş satırlar yoksayılır. <literal>#</literal> ile başlayan satırlarda
+açıklamalar verilebilir. <literal>$</literal> ile başlayan satırlar
+koşullu yapılardır (<xref linkend="bashref_rl.initfiles-conditionals"/>
+bölümüne bakınız). Diğer satırlar değişken atamaları ve tuş kısayolları
+olarak ele alınır.
+    </para>
+    <sect2><title>Değişken Atamaları</title>
+      <para>
+Readline'ın çalışma anı davranışlarını, Readline değişkenlerine
+ilklendirme dosyasında <command>set</command> komutuyla
+değer atayarak değiştirebilirsiniz. Sözdizimi basittir:
+      </para><para>
+<literallayout indent="0">
+    <command>set</command> <emphasis>değişken değer</emphasis>
+</literallayout>
+      </para><para>
+Burada, örneğin öntanımlı Emacs benzeri tuş kısayollarını
+<command>vi</command> satır düzenleme komutları ile değiştirmek
+için komutu şöyle yazabilirsiniz:
+      </para><para>
+<literallayout indent="0">
+    <command>set</command> editing-mode vi
+</literallayout>
+      </para><para>
+Değişken isimleri ve değerleri uygun kullanıldığında harf büyüklüklerine
+bakılmaksızın tanınır. Bilinmeyen değişken isimleri yoksayılır.
+      </para><para>
+Mantıksal değişkenlerden (açık veya kapalı olabilenler) değerleri boş, null, <literal>on</literal> (harf büyüklüğü önemsiz) veya 1 olanlar açık (<literal>on</literal>) kabul edilir; bunların dışındaki herhangi bir değere sahip olanlar kapalı (<literal>off</literal>) kabul edilir.
+      </para><para>
+<link linkend="bashref_bash.builtins-bind"><command>bind</command><option> -V</option></link> komutu o anki Readline değişken isimlerini ve değerlerini listeler.
+      </para><para>
+Çalışma anı davranışlarının büyük kısmı aşağıdaki değişkenlerle
+değiştirilebilir:
+      </para><glosslist>
+<indexterm scope="bashref_param-var.index">
+<primary><literal>bell-style</literal></primary></indexterm>
+<glossentry><glossterm id="bashref-bell-style"><literal>bell-style</literal></glossterm>
+<glossdef><para>
+Readline uçbirim çanını çaldırmak istediğinde neler olacağını
+kontrol eder. Değer olarak <literal>none</literal> atanırsa,
+çan hiç çalmaz. <literal>visible</literal> atanırsa ve
+bir görünür çan kullanılabilir durumdaysa Readline kullanır.
+<literal>audible</literal> atanırsa (öntanımlıdır), Readline
+uçbirim çanını çalmaya çalışır.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_param-var.index">
+<primary><literal>bind-tty-special-chars</literal></primary></indexterm>
+<glossentry><glossterm id="bashref-bind-tty-special-chars"> <literal>bind-tty-special-chars</literal></glossterm><glossdef><para>
+Değeri <command>on</command> ise Readline, çekirdeğin uçbirim sürücüsü tarafından özel olarak ele alınan kontrol karakterlerini Readline eşdeğerlerine bağlamaya çalışır.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_param-var.index">
+<primary><literal>comment-begin</literal></primary></indexterm>
+<glossentry><glossterm id="bashref-comment-begin"> <literal>comment-begin</literal></glossterm><glossdef><para>
+<command>insert-comment</command> komutu çalıştırıldığında
+satırın başına yerleştirilecek dizge. Öntanımlı değeri: "<literal>#</literal>".
+</para></glossdef></glossentry>
+<indexterm scope="bashref_param-var.index">
+<primary><literal>completion-ignore-case</literal></primary></indexterm>
+<glossentry><glossterm id="bashref-completion-ignore-case"> <literal>completion-ignore-case</literal></glossterm>
+     <glossdef><para>
+<literal>on</literal> değeri atanırsa, Readline harf büyüklüğüne
+duyarlı dosyaismi eşleştirmesi ve tamamlaması uygular.
+Öntanımlı değeri: <literal>off</literal>.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_param-var.index">
+<primary><literal>completion-query-items</literal></primary></indexterm>
+<glossentry><glossterm id="bashref-completion-query-items"> <literal>completion-query-items</literal></glossterm>
+     <glossdef><para>
+Kullanıcıya olasılıkların listesini görmek isteyip istemediği
+sorulurken saptanan olası tamamlamaların sayısı. Olası
+tamamlamaların sayısı bu değerden yüksekse Readline kullanıcıya
+onları görmek isteyip istemediğini soracaktır; aksi takdirde,
+basitçe listelenecektir. Bu değişkene sıfırdan büyük ya da eşit bir
+tamsayı atanabilir. Negatif bir değer asla sorulmayacak anlamına gelir.
+Öntanımlı değeri: 100.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_param-var.index">
+<primary><literal>convert-meta</literal></primary></indexterm>
+<glossentry><glossterm id="bashref-convert-meta"><literal>convert-meta</literal></glossterm>
+     <glossdef><para>
+<literal>on</literal> değeri atanırsa, Readline karakterlerin
+sekizinci bitini ayırıp sekizinci bite bir ASCII tuş dizisi
+atayarak ve onları meta önekli tuş dizisine çeviren
+<literal>ESC</literal> karakteri ile önceleyerek karakterleri
+dönüştürecektir. Öntanımlı değeri: <literal>on</literal>.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_param-var.index">
+<primary><literal>disable-completion</literal></primary></indexterm>
+<glossentry><glossterm id="bashref-disable-completion"><literal>disable-completion</literal></glossterm>
+            <glossdef><para>
+<literal>On</literal> değeri atandığında, Readline sözcük
+tamamlamasını iptal eder. Tamamlama karakterleri nasıl girildiyse
+o şekilde satıra yerleştirilir. Öntanımlı değeri: <literal>off</literal>.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_param-var.index">
+<primary><literal>editing-mode</literal></primary></indexterm>
+<glossentry><glossterm id="bashref-editing-mode"><literal>editing-mode</literal></glossterm>
+     <glossdef><para>
+<literal>editing-mode</literal> değişkeni kullanılan öntanımlı tuş
+kısayollarının kipini kontrol eder. Öntanımlı olarak Readline
+tuş kısayolları Emacs'ınkine çok benzeyen Emacs düzenleme kipinde
+başlar. Bu değişkene ya <literal>emacs</literal> ya da
+<literal>vi</literal> atanabilir.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_param-var.index">
+<primary><literal>enable-keypad</literal></primary></indexterm>
+<glossentry><glossterm id="bashref-enable-keypad"><literal>enable-keypad</literal></glossterm>
+     <glossdef><para>
+<literal>on</literal> değeri atandığında, Readline uygulama
+çağrıldığında sayısal tuş takımını etkinleştirmeye çalışacaktır.
+Bazı sistemler ok tuşlarının kullanılabilmesi için sayısal tuş
+takımının etkinleştirilmesine ihtiyaç duyar. Öntanımlı değeri:
+<literal>off</literal>.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_param-var.index">
+<primary><literal>expand-tilde</literal></primary></indexterm>
+<glossentry><glossterm id="bashref-expand-tilde"><literal>expand-tilde</literal></glossterm>
+     <glossdef><para>
+<literal>on</literal> değeri atanırsa, Readline sözcük tamamlaması
+yapmaya çalışırken yaklaşık yorumlaması uygular. Öntanımlı değeri:
+<literal>off</literal>.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_param-var.index">
+<primary><literal>history-preserve-point</literal></primary></indexterm>
+<glossentry><glossterm id="bashref-history-preserve-point"> <literal>history-preserve-point</literal></glossterm>
+     <glossdef><para>
+<literal>on</literal> değeri atanırsa, komut geçmişi kodu imleci
+<literal>previous-history</literal> veya <literal>next-history</literal>
+ile alınan her geçmiş satırında aynı konuma yerleştirmeye
+çalışır. Öntanımlı değeri: <literal>off</literal>.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_param-var.index">
+<primary><literal>horizontal-scroll-mode</literal></primary></indexterm>
+<glossentry><glossterm id="bashref-horizontal-scroll-mode"> <literal>horizontal-scroll-mode</literal></glossterm>
+     <glossdef><para>
+<literal>on</literal> değeri atanırsa, düzenlenen metnin
+satırlarının uzunluğu ekran genişliğinden fazlaysa imleci
+bir alt satıra indirmek yerine, satır kaydırılır. Öntanımlı
+değeri: <literal>off</literal>.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_param-var.index">
+<primary><literal>input-meta</literal></primary></indexterm>
+<glossentry><glossterm id="bashref-input-meta"><literal>input-meta</literal></glossterm>
+     <glossdef><para>
+<literal>on</literal> değeri atanırsa, uçbirimin destek için
+ne gerektirdiğine bakılmaksızın, Readline sekiz bitlik
+girdileri etkinleştirir (okunurken sekizinci bit temizlenmeyecektir).
+<literal>meta-flag</literal> bu değişkenle eşanlamlıdır.
+Öntanımlı değeri: <literal>off</literal>.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_param-var.index">
+<primary><literal>isearch-terminators</literal></primary></indexterm>
+<glossentry><glossterm id="bashref-isearch-terminators"><literal>isearch-terminators</literal></glossterm>
+    <glossdef><para>
+Bir arttırımlı aramayı sonlandıracak karakter dizisi
+(<xref linkend="bashref_rl.interaction-history"/> bölümüne bakınız).
+Bu değiken bir değerle atanmamışsa bir arttırımlı arama
+<literal>ESC</literal> ve <literal>C-J</literal> ile
+sonlandırılır.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_param-var.index">
+<primary><literal>keymap</literal></primary></indexterm>
+<glossentry><glossterm id="bashref-keymap"><literal>keymap</literal></glossterm>
+    <glossdef><para>
+Tuş kısayolları için kullanılacak tuşeşlemi atanır. Kabul edilen
+tuşeşlemi isimleri
+<literal>emacs</literal>, <literal>emacs-standard</literal>,
+<literal>emacs-meta</literal>, <literal>emacs-ctlx</literal>,
+<literal>vi</literal>, <literal>vi-move</literal>,
+<literal>vi-command</literal> ve <literal>vi-insert</literal>.
+<literal>vi</literal> ile <literal>vi-command</literal> ve
+<literal>emacs</literal> ile <literal>emacs-standard</literal>
+eşdeğerdir. Öntanımlı değeri <literal>emacs</literal>'dır.
+Ayrıca <literal>editing-mode</literal> değişkeni de öntanımlı
+tuşeşlemini etkiler.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_param-var.index"> <primary><literal>mark-directories</literal></primary></indexterm>
+<glossentry><glossterm id="bashref-mark-directories"><literal>mark-directories</literal></glossterm>
+    <glossdef><para>
+<literal>on</literal> değeri atanırsa,, tamamlanmış dizin
+isimlerine bir <literal>/ </literal> eklenir. Öntanımlı değeri:
+<literal>on</literal>.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_param-var.index"> <primary><literal>mark-modified-lines</literal></primary></indexterm>
+<glossentry><glossterm id="bashref-mark-modified-lines"> <literal>mark-modified-lines</literal></glossterm>
+    <glossdef><para>
+<literal>on</literal> değeri atanırsa, değiştirilmiş geçmiş
+satırlarını Readline başına bir <literal>*</literal> ekleyerek
+gösterir. Öntanımlı değeri: <literal>off</literal>.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_param-var.index"> <primary><literal>mark-symlinked-directories</literal></primary></indexterm>
+<glossentry><glossterm id="bashref-mark-symlinked-directories"> <literal>mark-symlinked-directories</literal></glossterm>
+    <glossdef><para>
+<command>on</command> yapılırsa, dizinlere sembolik bağ olan tamamlanmış isimlere bir / eklenmiş olur (<literal>mark-directories</literal> değerine konu). Öntanımlı değeri: <literal>off</literal>.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_param-var.index"> <primary><literal>match-hidden-files</literal></primary></indexterm>
+<glossentry><glossterm id="bashref-match-hidden-files"><literal>match-hidden-files</literal></glossterm>
+    <glossdef><para>
+<literal>on</literal> değeri atanırsa, dosyaismi
+tamamlaması uygularken, dosyaisminin tamamlanmasında baştaki
+<literal>.</literal> kullanıcı tarafından verilmedikçe,
+Readline'ın <literal>.</literal> ile başlayan dosya isimlerini
+eşleştirmesini sağlar. Öntanımlı değeri: <literal>on</literal>.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_param-var.index"> <primary><literal>output-meta</literal></primary></indexterm>
+<glossentry><glossterm id="bashref-output-meta"><literal>output-meta</literal></glossterm>
+    <glossdef><para>
+<literal>on</literal> değeri atanırsa Readline, karakterleri
+bir meta önekli öteleme dizileri olarak değil sekizinci
+biti etkin olarak gösterecektir. Öntanımlı değeri: <literal>off</literal>.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_param-var.index"> <primary><literal>page-completions</literal></primary></indexterm>
+<glossentry><glossterm id="bashref-page-completions"> <literal>page-completions</literal></glossterm>
+    <glossdef><para>
+<command>on</command> yapılırsa, Readline olası tamamlamaları bir defada bir tam ekran göstermek için <command>more</command> benzeri bir dahili sayfalayıcı kullanır. Öntanımlı değeri: <literal>on</literal>.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_param-var.index"> <primary><literal>print-completions-horizontally</literal></primary></indexterm>
+<glossentry><glossterm id="bashref-print-completions-horizontally"> <literal>print-completions-horizontally</literal></glossterm>
+    <glossdef><para>
+<literal>on</literal> değeri atanırsa, Readline tamamlamalarla
+eşleşmeleri ekranda yukardan aşağı dizmek yerine alfabetik sırada
+yanyana gösterecektir. Öntanımlı değeri:
+<literal>off</literal>.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_param-var.index"> <primary><literal>show-all-if-ambiguous</literal></primary></indexterm>
+<glossentry><glossterm id="bashref-show-all-if-ambiguous"> <literal>show-all-if-ambiguous</literal></glossterm>
+    <glossdef><para>
+Tamamlama işlevlerinin öntanımlı davranışını değiştirir.
+<literal>on</literal> değeri atanırsa, birden fazla olası
+tamamlaması olan sözcüklerin eşleşmelerinin çanı çaldırmak yerine
+listelenmesini sağlar. Öntanımlı değeri:
+<literal>off</literal>.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_param-var.index"> <primary><literal>show-all-if-unmodified</literal></primary></indexterm>
+<glossentry><glossterm id="bashref-show-all-if-unmodified"> <literal>show-all-if-unmodified</literal></glossterm>
+    <glossdef><para>
+Tamamlama işlevlerinin öntanımlı davranışlarını <varname>show-all-if-ambiguous</varname>'a benzer bir şekilde değiştirir. Değeri <command>on</command> yapılırsa herhangi bir kısmi tamamlama olmaksızın (olası tamamlamalar ortak bir önek paylaşmazlar)  tek olası tamamlamadan fazlasına sahip sözcükler çanı çaldırmak yerine eşleşenlerin hemen listelenmesine sebep olur.
+Öntanımlı değeri: <literal>off</literal>.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_param-var.index"> <primary><literal>visible-stats</literal></primary></indexterm>
+<glossentry><glossterm id="bashref-visible-stats"><literal>visible-stats</literal></glossterm>
+    <glossdef><para>
+<literal>on</literal> değeri atanırsa, dosya türünü gösteren
+bir karakter, olası tamamlamalar listelenirken dosya ismine eklenir.
+Öntanımlı değeri: <literal>off</literal>.
+</para></glossdef></glossentry></glosslist>
+    </sect2>
+    <sect2><title>Tuş Kısayolları</title>
+      <para>
+İlklendirme dosyasında tuş kısayollarının kontrol edilmesi için
+kullanılan sözdizimi basittir. Önce değiştirmek istediğiniz komutun
+ismini bulmanız gerekir. Aşağıda komut isimlerini, öntanımlı tuş
+kısayollarını ve varsa komutun ne yaptığını anlatan bir kısa açıklamanın
+da bulunduğu bir liste bulacaksınız.
+      </para><para>
+Komutun ismini öğrendikten sonra, ilklendirme dosyasında bir satıra,
+önce komuta kısayol olarak atayacağınız tuşun ismini yazın, bir
+<literal>:</literal> işareti koyun ve komutun ismini yazın. Tuşun ismi ile ikinokta imi arasında boşluk olmayabilir, bu durumda ikinokta imi tuş isminin bir parçası olarak yorumlanır. Tuşun ismini kolayınıza gelen farklı yollarla ifade edebilirsiniz.
+      </para><para>
+Komut isimlerine ek olarak, Readline tuşlara basıldığında bir dizge
+basmalarını sağlamak üzere bir dizge atanmasına da izin verir (bir
+<emphasis>makro</emphasis>).
+      </para><para>
+<link linkend="bashref_bash.builtins"><command>bind</command><option> -p</option> komutu</link> Readline işlev isimleri ve
+kısayollarını bir ilklendirme dosyasına doğrudan konulabilecek
+biçemde gösterir.
+      </para><glosslist><glossentry>
+      <glossterm><varname>tuşismi: işlev-ismi veya makro</varname></glossterm>
+      <glossdef><para>
+<varname>tuşismi</varname>, bir tuşun İngilizce ismidir. Örnek:
+      </para><para>
+<literallayout indent="0">
+    Control-u: universal-argument
+    Meta-Rubout: backward-kill-word
+    Control-o: "> çıktı"
+</literallayout>
+      </para><para>
+Bu örnekte, <literal>C-u</literal> tuşlarına
+<literal>universal-argument</literal> işlevi,
+<literal>M-DEL</literal> tuşlarına
+<literal>backward-kill-word</literal> işlevi ve
+<literal>C-o</literal> tuşlarına çalıştırılacak bir makro
+(satıra <literal>> çıktı</literal> dizgesini girer)
+atanmıştır.
+      </para><para>
+Tuş kısayollarını tanımlarken kullanılabilecek sembolik karakter
+isimlerinin sözdizimleri: <emphasis>DEL</emphasis>,
+<emphasis>ESC</emphasis>, <emphasis>ESCAPE</emphasis>,
+<emphasis>LFD</emphasis>, <emphasis>NEWLINE</emphasis>,
+<emphasis>RET</emphasis>, <emphasis>RETURN</emphasis>,
+<emphasis>RUBOUT</emphasis>, <emphasis>SPACE</emphasis>,
+<emphasis>SPC</emphasis> ve <emphasis>TAB</emphasis>.
+      </para></glossdef></glossentry><glossentry>
+      <glossterm>"<varname>tuşdizisi</varname>": <varname>işlev-ismi veya makro</varname></glossterm>
+      <glossdef><para>
+<varname>tuşdizisi  tuşismi</varname>'nden
+dizgenin çift tırnak içine alınmış olması ile farklıdır.
+Bazı GNU Emacs tarzı tuş ötelemeleri aşağıdaki örnekteki
+gibi kullanılabilmesine karşın özel karakter isimleri kullanılamaz.
+      </para><para>
+<literallayout indent="0">  "\C-u": universal-argument
+  "\C-x\C-r": re-read-init-file
+  "\e[11~": "İşlev tuşu 1"
+</literallayout>
+      </para><para>
+Bu örnekte, <literal>C-u</literal> tuşlarına
+<literal>universal-argument</literal> işlevini (ilk örnekteki gibi),
+<literal>C-x C-r</literal> tuşlarına
+<literal>re-read-init-file</literal> işlevini ve
+<literal>ESC [ 1 1 ~</literal> ise
+<literal>İşlev tuşu 1</literal> metnini girmek üzere atanmıştır.
+      </para></glossdef></glossentry></glosslist><para>
+Aşağıdaki GNU Emacs tarzı tuş ötelemeleri, tuş dizilerini belirtirken
+kullanılabilir:
+     </para><glosslist><glossentry>
+       <glossterm><literal>\C-</literal></glossterm>
+       <glossdef><para>Kontrol öneki</para></glossdef>
+     </glossentry><glossentry>
+       <glossterm><literal>\M-</literal></glossterm>
+       <glossdef><para>Meta öneki</para></glossdef>
+     </glossentry><glossentry>
+       <glossterm><literal>\e</literal></glossterm>
+       <glossdef><para>öteleme karakteri</para></glossdef>
+     </glossentry><glossentry>
+       <glossterm><literal>\\</literal></glossterm>
+       <glossdef><para>tersbölü</para></glossdef>
+     </glossentry><glossentry>
+       <glossterm><literal>\"</literal></glossterm>
+       <glossdef><para>", bir çift tırnak işareti</para>
+     </glossdef><glossentry>
+       <glossterm><literal>\'</literal></glossterm>
+       <glossdef><para>, bir tek tırnak işareti</para></glossdef>
+     </glossentry></glossentry></glosslist><para>
+GNU Emacs tarzı tuş ötelemelerine ek olarak, tersbölü öncelemeli
+karakterler de mevcuttur:
+   </para><glosslist><glossentry>
+     <glossterm><literal>\a</literal></glossterm>
+     <glossdef><para>sesli uyarı (bell)</para></glossdef>
+   </glossentry><glossentry>
+     <glossterm><literal>\b</literal></glossterm>
+     <glossdef><para>gerisilme</para></glossdef>
+   </glossentry><glossentry>
+     <glossterm><literal>\d</literal></glossterm>
+     <glossdef><para>silme</para></glossdef>
+   </glossentry><glossentry>
+     <glossterm><literal>\f</literal></glossterm>
+     <glossdef><para>sayfa ilerletme</para></glossdef>
+   </glossentry><glossentry>
+     <glossterm><literal>\n</literal></glossterm>
+     <glossdef><para>satırsonu</para></glossdef>
+   </glossentry><glossentry>
+     <glossterm><literal>\r</literal></glossterm>
+     <glossdef><para>satırbaşı</para></glossdef>
+   </glossentry><glossentry>
+     <glossterm><literal>\t</literal></glossterm>
+     <glossdef><para>yatay sekme</para></glossdef>
+   </glossentry><glossentry>
+     <glossterm><literal>\v</literal></glossterm>
+     <glossdef><para>düşey sekme</para></glossdef>
+   </glossentry><glossentry>
+     <glossterm><literal>\nnn</literal></glossterm>
+     <glossdef><para>
+sekizlik değeri <literal>nnn</literal> olan sekiz bitlik karakter
+(1, 2 ya da 3 haneli olabilir).
+     </para></glossdef>
+   </glossentry><glossentry>
+     <glossterm><literal>\xHH</literal></glossterm>
+     <glossdef><para>
+       onaltılık değeri <literal>HH</literal> olan sekiz bitlik
+       karakter (1 ya da 2 haneli olabilir).
+     </para></glossdef>
+   </glossentry></glosslist><para>
+Bir makro metnini girerken, bir makro tanımını belirtmek için
+çift ya da tek tırnaklar arasına alınmalıdır. Tırnaksız metinler
+bir işlev ismi olarak kabul edilir. Makro gövdesinde tersbölü
+öncelemeli karakterler yukarıda açıklandığı gibi yorumlanır.
+Makro metni içindeki tırnak içine alınmış yerlerde tırnak işaretleri
+<literal>"</literal> ve <literal>'</literal> tersbölü ile
+öncelenmelidir. Örneğin aşağıdaki atama <literal>C-x \</literal>
+tuşlarıyla bir tek <literal>\</literal> basar:
+      </para><para>
+<literallayout indent="0">    "\C-x\\": "\\"</literallayout>
+      </para>
+    </sect2>
+  </sect1>
+  <sect1 id="bashref_rl.initfiles-conditionals">
+    <title>Koşullu İlklendirme Yapıları</title>
+    <titleabbrev>inputrc dosyasındaki koşullu tuş kısayolları.</titleabbrev>
+    <para>
+Readline, C önişlemcisinin koşullu derleme özelliklerine benzer testlerin
+sonucu olarak uygulanacak tuş kısayolları ve değişken atamalarına izin
+veren bir araç sağlar. Kullanılan dört çözümleyici yönerge vardır.
+    </para><variablelist><varlistentry>
+     <term><literal>$if</literal></term>
+     <listitem><para>
+<command>$if</command> yapısı, Readline kullanan uygulamalar,
+kullanılan uçbirim ve düzenleme kipi üzerine tabanlanmış kısayollar
+yapılmasına izin verir. Test metni satır sonuna kadar uzar; onu
+izole etmek için bir karaker gerekmez.
+     </para><glosslist><glossentry>
+       <glossterm><literal>mode</literal></glossterm>
+       <glossdef><para>
+<command>$if</command> yönergesinin <literal>mode=</literal>
+sınaması Readline'ın <literal>emacs</literal> kipinde mi yoksa
+<literal>vi</literal> kipinde mi olduğunu test etmekte kullanılır.
+Bu, <command>set</command> <option>tuşeşlemi</option>
+komutu ile birlikte kullanılabilir, örneğin, Readline sadece
+<literal>emacs</literal> kipinde başlatıldığında kısayolların
+<literal>emacs-standard</literal> ve <literal>emacs-ctlx</literal>
+tuşeşlemlerine ayarlanması gibi.
+       </para></glossdef>
+     </glossentry><glossentry>
+       <glossterm><literal>term</literal></glossterm>
+       <glossdef><para>
+<literal>term=</literal> sınaması uçbirime özel tuş
+kısayollarını içermekte, belki de tuş dizilerinin çıktısını
+uçbirimin işlev tuşlarına göre bağlamakta kullanılabilir.
+<literal>=</literal> işaretinin sağındaki sözcük hem
+uçbirimin tam adı hem de ilk <literal>-</literal>' den
+önceki parçasında test edilir. Bu, örneğin <literal>sun</literal>
+sözcüğünün hem <literal>sun</literal> hem de
+<literal>sun-cmd</literal> ile eşleşmesine izin verir.
+       </para></glossdef>
+     </glossentry><glossentry>
+       <glossterm><literal>uygulama</literal></glossterm>
+       <glossdef><para>
+<literal>uygulama</literal> sınaması uygulamaya özel ayarların
+içerilmesinde kullanılır. Readline kütüphanesini kullanan
+her program <emphasis>uygulama ismi</emphasis>'ni belirler ve
+bir kısmi değer için test yapabilirsiniz. Bu, tuş dizilerini
+belli bir program için kullanışlı olan işlevlere bağlamakta
+kullanılmalıdır. Örneğin, aşağıdaki komut Bash'da o anki ya da
+önceki sözcüğü tırnak içine alan bir tuş dizisi ekler:
+       </para><para>
+<screen>
+<command>$if Bash</command>
+# Şimdiki ya da önceki sözcüğü tırnak içine al
+<command>"\C-xq": "\eb\"\ef\""
+$endif</command>
+</screen>
+                </para></glossdef>
+              </glossentry>
+            </glosslist>
+          </listitem>
+        </varlistentry><varlistentry>
+          <term><literal>$endif</literal></term>
+          <listitem><para>
+Bu yönerge yukardaki örnekte de görüldüğü gibi bir
+<command>$if</command> yönergesini sonlandırmak için kullanılır.
+          </para></listitem>
+        </varlistentry><varlistentry>
+          <term><literal>$else</literal></term>
+          <listitem><para>
+<command>$if</command> yönergesi başarısız olduğunda
+bu yönerge altındaki komutlar çalıştırılır.
+          </para></listitem>
+        </varlistentry><varlistentry>
+          <term><literal>$include</literal></term>
+          <listitem><para>
+Bu yönerge argüman olarak tek bir dosyaismi alır ve komutları ve
+tuş kısayollarını dosyadan okur. Örneğin aşağıdaki yönerge
+<filename>/etc/inputrc</filename> dosyasını okur:
+          </para><para>
+<screen>$include /etc/inputrc</screen>
+          </para></listitem>
+        </varlistentry>
+      </variablelist>
+  </sect1>
+  <sect1 id="bashref_rl.initfiles-sample">
+    <title>Örnek İlklendirme Dosyası</title>
+    <titleabbrev>Bir inputrc dosyası örneği.</titleabbrev>
+    <para>
+Buradaki <filename>inputrc</filename> dosyası örneği
+tuş kısayolları, değişken atamaları ve koşullu sözdizimlerini
+örneklerle açıklamaktadır.
+    </para><para>
+<screen>
+# Bu dosya Gnu Readline Kütüphanesini kullanan uygulamalar için
+# satır girdi düzenlemesi davranışlarını kontrol eder.
+# Bu uygulamalar FTP, Bash ve Gdb'dir.
+#
+# inputrc dosyasını C-x C-r ile yeniden okutabilirsiniz.
+# '#' ile başlayan satırlar açıklamadır.
+#
+# Önce, sistem genelinde etkin olacak kısayollar ve değişken atamaları
+# /etc/inputrc dosyası ile dosya içeriğine dahil edilir.
+<command>$include /etc/inputrc</command>
+
+#
+# Çeşitli kısayollar emacs kipinde atanır
+<command>set editing-mode emacs</command>
+
+<command>$if mode=emacs</command>
+
+<command>Meta-Control-h: backward-kill-word</command>    İşlev isminden sonraki metin yoksayılır
+
+#
+# Sayısal tuştakımı kipinde ok tuşları
+#
+#"\M-OD":        backward-char
+#"\M-OC":        forward-char
+#"\M-OA":        previous-history
+#"\M-OB":        next-history
+#
+# ANSI kipinde ok tuşları
+#
+<command>"\M-[D":        backward-char</command>
+<command>"\M-[C":        forward-char</command>
+<command>"\M-[A":        previous-history</command>
+<command>"\M-[B":        next-history</command>
+#
+# 8 bit sayısal tuştakımı kipinde ok tuşları
+#
+#"\M-\C-OD":       backward-char
+#"\M-\C-OC":       forward-char
+#"\M-\C-OA":       previous-history
+#"\M-\C-OB":       next-history
+#
+# 8 bit ANSI kipinde ok tuşları
+#
+#"\M-\C-[D":       backward-char
+#"\M-\C-[C":       forward-char
+#"\M-\C-[A":       previous-history
+#"\M-\C-[B":       next-history
+<command>C-q: quoted-insert</command>
+
+<command>$endif</command>
+# Eski tarz bir kısayol.  Bunun öntanımlı olması umulur.
+<command>TAB: complete</command>
+
+# Kabuk etkileşimini kolaylaştıran makrolar
+<command>$if Bash</command>
+# yolu düzenle
+<command>"\C-xp": "PATH=${PATH}\e\C-e\C-a\ef\C-f"</command>
+# tırnak içine almak için hazırla --
+# ardarda iki çift tırnak yazar
+# ve bir karakter geri gider
+<command>"\C-x\"": "\"\"\C-b"</command>
+# bir tersbölü girer
+# (tuş dizilerindeki tersbölü öncelemelerini ve makroları test etmek için)
+<command>"\C-x\\": "\\"</command>
+# Şimdiki ya da önceki sözcüğü tırnak içine alır
+<command>"\C-xq": "\eb\"\ef\""</command>
+# Satırı tazeler
+<command>"\C-xr": redraw-current-line</command>
+# Satırdaki değişkeni düzenler
+<command>"\M-\C-v": "\C-a\C-k$\C-y\M-\C-e\C-a\C-y="</command>
+<command>$endif</command>
+
+# varsa bir görünür çan kullanılır
+<command>set bell-style visible</command>
+
+# okurken karakterlerden 8. biti ayırmaz
+<command>set input-meta on</command>
+
+# iso-* karakterlerin girilmesine izin verir
+<command>set convert-meta off</command>
+
+# karakterleri meta önekli karakterler olarak değil
+# sekizinci bitleri doğrudan 1 yapılmış olarak gösterir
+<command>set output-meta on</command>
+
+# bir sözcüğün tamamlanabilmesi için 150 den fazla olasılık varsa
+# kullanıcıya onları görmek isteyip istemediğini sor
+<command>set completion-query-items 150</command>
+
+# FTP için
+<command>$if Ftp</command>
+<command>"\C-xg": "get \M-?"</command>
+<command>"\C-xt": "put \M-?"</command>
+<command>"\M-.": yank-last-arg</command>
+<command>$endif</command>
+</screen>
+    </para>
+  </sect1>
+</chapter>
+
+<chapter id="bashref_rl.commands" label="4">
+  <title>Kısayollar için Readline Komutları</title>
+  <titleabbrev>
+Kısayol atanabilecek çok kullanılan Readline komutlarının açıklamaları.
+  </titleabbrev>
+  <para/><para>
+Bu kısımda, tuş dizilerine bağlanabilecek Readline komutları anlatılmıştır.
+Tuş kısayollarını <link linkend="bashref_bash.builtins-bind"><command>bind</command></link><option> -P</option>
+komutunu çalıştırarak ya da bir <filename>inputrc</filename>
+dosyasında kullanılabilir biçemde
+<command>bind</command><option> -p</option> komutu ile
+listeleyebilirsiniz. Bir tuş dizisinin eşlik etmediği komut isimleri
+öntanımlı olarak bağlantısızdır.
+  </para><para>
+Aşağıdaki açıklamalarda <literal>nokta</literal> o anki imleç konumunu,
+<literal>mark</literal> ise <command>set-mark</command> komutu
+ile kaydedilmiş imleç konumunu ifade eder. <literal>nokta</literal> ile
+<literal>mark</literal> arasındaki dizge ise <literal>bölge</literal>
+ile ifade edilmiştir.
+  </para>
+  <sect1 id="bashref_rl.commands-moving">
+    <title>Hareket Komutları</title>
+    <titleabbrev>Satır üzerindeki hareketler.</titleabbrev>
+<glosslist>
+<indexterm scope="bashref_function.index">
+<primary><literal>beginning-of-line </literal> (<literal>C-a</literal>)</primary></indexterm>
+<glossentry><glossterm id="bashref-beginning-of-line"><command>beginning-of-line</command> (<literal>C-a</literal>)</glossterm>
+<glossdef><para>
+İmleç satırın başına gider.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>end-of-line </literal> (<literal>C-e</literal>)</primary></indexterm>
+<glossentry><glossterm id="bashref-end-of-line"><command>end-of-line</command> (<literal>C-e</literal>)</glossterm>
+<glossdef><para>İmleç satırın sonuna gider.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>forward-char </literal> (<literal>C-f</literal>)</primary></indexterm>
+<glossentry><glossterm id="bashref-forward-char"><command>forward-char</command> (<literal>C-f</literal>)</glossterm>
+<glossdef><para>İmleç bir karakter ileri gider.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>backward-char </literal> (<literal>C-b</literal>)</primary></indexterm>
+<glossentry><glossterm id="bashref-backward-char"><command>backward-char</command> (<literal>C-b</literal>)</glossterm>
+<glossdef><para>İmleç bir karakter geri gider.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>forward-word </literal> (<literal>M-f</literal>)</primary></indexterm>
+<glossentry><glossterm id="bashref-forward-word"><command>forward-word</command> (<literal>M-f</literal>)</glossterm>
+<glossdef><para>
+İmleç bir sözcük ileri gider. Harf ya da rakam olmayan karakterler sözcükten sayılmaz, onlara boşluk gibi davranılır.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>backward-word </literal> (<literal>M-b</literal>)</primary></indexterm>
+<glossentry><glossterm id="bashref-backward-word"><command>backward-word</command> (<literal>M-b</literal>)</glossterm>
+<glossdef><para>
+İmleç bir sözcük geri gider. Harf ya da rakam olmayan karakterler sözcükten sayılmaz, onlara boşluk gibi davranılır.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>clear-screen </literal> (<literal>C-l</literal>)</primary></indexterm>
+<glossentry><glossterm id="bashref-clear-screen"><command>clear-screen</command> (<literal>C-l</literal>)</glossterm>
+<glossdef><para>
+Son satır tepede kalacak şekilde ekran yukarı kaydırılır
+(ekran temizlenir).
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>redraw-current-line </literal> ()</primary></indexterm>
+<glossentry><glossterm id="bashref-redraw-current-line"><command>redraw-current-line</command> ()</glossterm>
+<glossdef><para>
+Satırı tazeler. Öntanımlı olarak kısayol atanmamıştır.
+</para></glossdef></glossentry></glosslist>
+  </sect1>
+  <sect1 id="bashref_rl.commands-history">
+    <title>Geçmişi Yöneten Komutlar</title>
+    <titleabbrev>Önceki satırların kullanılması.</titleabbrev>
+<glosslist>
+<indexterm scope="bashref_function.index">
+<primary><literal>accept-line </literal> (<literal>Newline veya Return</literal>)</primary>
+</indexterm>
+<glossentry><glossterm id="bashref-accept-line"><command>accept-line</command> (<literal>Newline veya Return</literal>)</glossterm>
+<glossdef><para>
+İmlecin yerine bakmaksızın satırı kabul eder. Bu bir boş satır değilse,
+<literal>HISTCONTROL</literal> ve <literal>HISTIGNORE</literal>
+değişkenlerinin değerlerine bağlı olarak geçmiş listesine eklenir.
+Satır değiştirilmiş bir geçmiş satırı ise, geçmiş satırı orjinal
+durumuna getirilir.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>previous-history </literal> (<literal>C-p</literal>)</primary></indexterm>
+<glossentry><glossterm id="bashref-previous-history"><command>previous-history</command> (<literal>C-p</literal>)</glossterm>
+<glossdef><para>
+Önceki komut alınarak, geçmiş listesinde `geri' gidilir.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>next-history </literal> (<literal>C-n</literal>)</primary></indexterm>
+<glossentry><glossterm id="bashref-next-history"><command>next-history</command> (<literal>C-n</literal>)</glossterm>
+<glossdef><para>
+Sonraki komut alınarak, geçmiş listesinde `ileri' gidilir.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>beginning-of-history </literal> (<literal>M-&lt;</literal>)</primary>
+</indexterm>
+<glossentry><glossterm id="bashref-beginning-of-history"><command>beginning-of-history</command> (<literal>M-&lt;</literal>)</glossterm>
+<glossdef><para>
+Geçmişteki ilk satıra gidilir.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>end-of-history </literal> (<literal>M-></literal>)</primary></indexterm>
+<glossentry><glossterm id="bashref-end-of-history"><command>end-of-history</command> (<literal>M-></literal>)</glossterm>
+<glossdef><para>
+Geçmişin son satırına gidilir, örneğin, o an girilen satır.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>reverse-search-history </literal> (<literal>C-r</literal>)</primary></indexterm>
+<glossentry><glossterm id="bashref-reverse-search-history"> <command>reverse-search-history</command> (<literal>C-r</literal>)</glossterm>
+<glossdef><para>
+O anki satırdan geriye doğru ve gerekliyse geçmişte `yukarı'
+hareketle arama yapılır. Bu bir arttırımlı aramadır.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>forward-search-history </literal> (<literal>C-s</literal>)</primary></indexterm>
+<glossentry><glossterm id="bashref-forward-search-history"> <command>forward-search-history</command> (<literal>C-s</literal>)</glossterm>
+<glossdef><para>
+O anki satırdan ileriye doğru ve gerekliyse geçmişte `aşağı'
+hareketle arama yapılır. Bu bir arttırımlı aramadır.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>non-incremental-reverse-search-history </literal> (<literal>M-p</literal>)</primary></indexterm>
+<glossentry><glossterm id="bashref-non-incremental-reverse-search-history"> <command>non-incremental-reverse-search-history</command> (<literal>M-p</literal>)</glossterm>
+<glossdef><para>
+O anki satırdan geriye doğru ve gerekliyse kullanıcı tarafından
+verilen bir dizge için bir arttırımsız arama kullanılarak
+geçmişte `yukarı' hareketle arama yapılır.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>non-incremental-forward-search-history </literal> (<literal>M-n</literal>)</primary></indexterm>
+<glossentry><glossterm id="bashref-non-incremental-forward-search-history"> <command>non-incremental-forward-search-history</command> (<literal>M-n</literal>)</glossterm>
+<glossdef><para>
+O anki satırdan ileriye doğru ve gerekliyse kullanıcı tarafından
+verilen bir dizge için bir arttırımsız arama kullanılarak
+geçmişte `aşağı' hareketle arama yapılır.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>history-search-forward </literal> ()</primary></indexterm>
+<glossentry><glossterm id="bashref-history-search-forward"><command>history-search-forward</command> ()</glossterm>
+<glossdef><para>
+O anki satırın başından imleç konumuna kadar olan metin için
+geçmişte ileri doğru arama yapılır. Bu bir arttırımsız
+aramadır. Öntanımlı olarak kısayol atanmamıştır.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>history-search-backward </literal> ()</primary></indexterm>
+<glossentry><glossterm id="bashref-history-search-backward"><command>history-search-backward</command> ()</glossterm>
+<glossdef><para>
+O anki satırın başından imleç konumuna kadar olan metin için
+geçmişte geriye doğru arama yapılır. Bu bir arttırımsız
+aramadır. Öntanımlı olarak kısayol atanmamıştır.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>yank-nth-arg </literal> (<literal>M-C-y</literal>)</primary></indexterm>
+<glossentry><glossterm id="bashref-yank-nth-arg"><command>yank-nth-arg</command> (<literal>M-C-y</literal>)</glossterm>
+<glossdef><para>
+İlk argümanı önceki komuta imleç konumunda yerleştirir (genellikle
+önceki satırın ikinci sözcüğü). Bir <varname>n</varname> argümanı
+ile, önceki komutun <varname>n.</varname> sözcüğü olarak yerleştirilir
+(önceki satırdaki sözcükler ilk sözcük 0 kabul edilerek sayılır).
+Bir negatif argüman ile, önceki komutun sonundan <varname>n.</varname>
+sözcük olarak yerleştirilir. <varname>n.</varname> argüman bir kere hesaplandı mı <literal>!</literal><varname>n</varname> geçmiş yorumlaması belirtilmiş gibi argüman elde edilir,
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>yank-last-arg </literal> (<literal>M-. veya M-_</literal>)</primary></indexterm>
+<glossentry><glossterm id="bashref-yank-last-arg"><command>yank-last-arg</command> (<literal>M-. veya M-_</literal>)</glossterm>
+<glossdef><para>
+Son argümanı önceki komuta yerleştirir (önceki geçmiş girdisindeki
+son sözcük). Bir argüman ile <command>yank-nth-arg</command>
+açıklamasındaki gibi davranır. Peşpeşe yapılan çağrılarla geçmiş
+listesinde geriye doğru gidilirken her satıra son argüman
+yerleştirilir. Geçmiş yorumlama oluşumları son argümanı elde etmek için <literal>!$</literal> geçmiş yorumlaması belirtilmiş gibi kullanılır.
+</para></glossdef></glossentry>
+</glosslist>
+  </sect1>
+  <sect1 id="bashref_rl.commands-texts">
+    <title>Metni Değiştirmek için Komutlar</title>
+    <titleabbrev>Metni değiştirmekte kullanılan komutlar.</titleabbrev>
+<glosslist>
+<indexterm scope="bashref_function.index">
+<primary><literal>delete-char </literal> (<literal>C-d</literal>)</primary></indexterm>
+<glossentry><glossterm id="bashref-delete-char"><command>delete-char</command> (<literal>C-d</literal>)</glossterm>
+<glossdef><para>
+İmleç konumunda karakteri siler. İmleç satırın başlangıcında ise,
+satırda hiç karakter yoksa ve son karakter <command>delete-char</command>'a
+bağlı değilse EOF döner.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>backward-delete-char </literal> (<literal>Rubout</literal>)</primary></indexterm>
+<glossentry><glossterm id="bashref-backward-delete-char"><command>backward-delete-char</command> (<literal>Rubout</literal>)</glossterm>
+<glossdef><para>
+İmlecin arkasındaki karakteri siler. Bir sayısal argüman karakterlerin
+silinmesini değil kesilmesini sağlar.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>forward-backward-delete-char </literal> ()</primary></indexterm>
+<glossentry><glossterm id="bashref-forward-backward-delete-char"><command>forward-backward-delete-char</command> ()</glossterm>
+<glossdef><para>
+İmleç satırın sonunda olmadıkça, imlecin altındaki karakteri siler.
+İmleç satırın sonundaysa imlecin arkasındaki karakter silinir.
+Öntanımlı olarak bir tuşa atanmamıştır.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>quoted-insert </literal> (<literal>C-q veya C-v</literal>)</primary></indexterm>
+<glossentry><glossterm id="bashref-quoted-insert"><command>quoted-insert</command> (<literal>C-q veya C-v</literal>)</glossterm>
+<glossdef><para>
+Sonraki karakteri yazılan satıra aynen ekler. Bu <literal>C-q</literal>
+gibi bir tuş dizilerinin girilmesi gibidir.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>self-insert </literal> (<literal>a, b, A, 1, !, ...</literal>)</primary></indexterm>
+<glossentry><glossterm id="bashref-self-insert"><command>self-insert</command> (<literal>a, b, A, 1, !, ...</literal>)</glossterm>
+<glossdef><para>Kendini yerleştirir.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>transpose-chars </literal> (<literal>C-t</literal>)</primary></indexterm>
+<glossentry><glossterm id="bashref-transpose-chars"><command>transpose-chars</command> (<literal>C-t</literal>)</glossterm>
+<glossdef><para>
+İmleç arkasındaki karakteri peşinden ileri doğru bir karakter sürükler.
+İmleç satırın sonundaysa, son iki karakter yer değiştirir.
+Negatif argümanlar etkisizdir.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>transpose-words </literal> (<literal>M-t</literal>)</primary></indexterm>
+<glossentry><glossterm id="bashref-transpose-words"><command>transpose-words</command> (<literal>M-t</literal>)</glossterm>
+<glossdef><para>
+İmleç öncesindeki sözcüğü peşinden bir sözcük ileri sürükler.
+İmleç satırın sonundaysa son iki sözcük yer değiştirir.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>upcase-word </literal> (<literal>M-u</literal>)</primary></indexterm>
+<glossentry><glossterm id="bashref-upcase-word"><command>upcase-word</command> (<literal>M-u</literal>)</glossterm>
+<glossdef><para>
+İmlecin üzerindeki (ya da sonrasındaki) sözcüğün harfleri
+büyük harfe çevrilir. Bir negatif argüman ile, önceki sözcük
+büyük harfli yapılır ama imleç hareket etmez.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>downcase-word </literal> (<literal>M-l</literal>)</primary></indexterm>
+<glossentry><glossterm id="bashref-downcase-word"><command>downcase-word</command> (<literal>M-l</literal>)</glossterm>
+<glossdef><para>
+İmlecin üzerindeki (ya da sonrasındaki) sözcüğün harfleri
+küçük harfe çevrilir. Bir negatif argüman ile, önceki sözcük
+küçük harfli yapılır ama imleç hareket etmez.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>capitalize-word </literal> (<literal>M-c</literal>)</primary></indexterm>
+<glossentry><glossterm id="bashref-capitalize-word"><command>capitalize-word</command> (<literal>M-c</literal>)</glossterm>
+<glossdef><para>
+İmlecin üzerindeki (ya da sonrasındaki) sözcüğün başharfini
+büyük harfe çevrilir. Bir negatif argüman ile, önceki sözcüğün başharfi
+büyük harfe çevrilir ama imleç hareket etmez.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>overwrite-mode </literal> ()</primary></indexterm>
+<glossentry><glossterm id="bashref-overwrite-mode"><command>overwrite-mode</command> ()</glossterm>
+<glossdef><para>
+Üsteyazma kipini açar kapar. Doğrudan bir pozitif sayısal argüman ile üsteyazma kipine geçer. Doğrudan bir pozitif olmayan sayısal argümanla ekleme kipine geçer. Bu komut sadece <literal>emacs</literal> kipini etkiler; <literal>vi</literal> kipinde bu işlem farklı yapılır. Her <command>readline()</command> çağrısı ekleme kipini başlatır.
+       </para><para>
+Üsteyazma kipinde, <command>self-insert</command>'e bağlı karakterler metni sağa itmek yerine aynı noktadaki metinle değiştirilir. <command>backward-delete-char</command>'a bağlı karakterler imlecin öncesindeki karakteri boşlukla değiştirir.
+       </para><para>
+Öntanımlı olarak bu komut bir tuşa bağlanmamıştır.
+          </para></glossdef>
+        </glossentry>
+      </glosslist>
+  </sect1>
+  <sect1 id="bashref_rl.commands-killing">
+    <title>Kesme ve Yapıştırma Komutları</title>
+    <titleabbrev>Kesme ve yapıştırma komutları.</titleabbrev>
+<glosslist>
+<indexterm scope="bashref_function.index">
+<primary><literal>kill-line </literal> (<literal>C-k</literal>)</primary></indexterm>
+<glossentry><glossterm id="bashref-kill-line"><command>kill-line</command> (<literal>C-k</literal>)</glossterm>
+<glossdef><para>
+İmleç konumundan satırın sonuna kadar keser.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>backward-kill-line </literal> (<literal>C-x Rubout</literal>)</primary></indexterm>
+<glossentry><glossterm id="bashref-backward-kill-line"><command>backward-kill-line</command> (<literal>C-x Rubout</literal>)</glossterm>
+<glossdef><para>
+İmleç konumundan satırın başına kadar keser.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>unix-line-discard </literal> (<literal>C-u</literal>)</primary></indexterm>
+<glossentry><glossterm id="bashref-unix-line-discard"><command>unix-line-discard</command> (<literal>C-u</literal>)</glossterm>
+<glossdef><para>
+İmleç konumundan satırın başına kadar keser.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>kill-whole-line </literal> ()</primary></indexterm>
+<glossentry><glossterm><command>kill-whole-line</command> ()</glossterm>
+<glossdef id="bashref-kill-whole-line"><para>
+Satırın tamamını keser, imleç konumundan bağımsızdır.
+Öntanımlı olarak kısayol atanmamıştır.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>kill-word </literal> (<literal>M-d</literal>)</primary></indexterm>
+<glossentry><glossterm><command>kill-word</command> (<literal>M-d</literal>)</glossterm>
+<glossdef id="bashref-kill-word"><para>
+İmleç konumundan sözcüğün sonuna kadar keser, imleç iki sözcüğün
+arasındaysa sonraki sözcüğün sonuna kadar keser. Sözcük sınırları
+<command>forward-word</command> ile aynıdır.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>backward-kill-word </literal> (<literal>M-DEL</literal>)</primary></indexterm>
+<glossentry><glossterm id="bashref-backward-kill-word"><command>backward-kill-word</command> (<literal>M-DEL</literal>)</glossterm>
+<glossdef><para>
+Metni sözcük başlangıcından imlece kadar keser. İmleç iki sözcüğün
+arasındaysa, metin önceki sözcüğün başına kadar kesilir.
+Sözcük sınırları <command>backward-word</command> ile aynıdır.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>unix-word-rubout </literal> (<literal>C-w</literal>)</primary></indexterm>
+<glossentry><glossterm id="bashref-unix-word-rubout"><command>unix-word-rubout</command> (<literal>C-w</literal>)</glossterm>
+<glossdef><para>
+Metni imleç konumundan önceki boşluğa kadar keser. Buradaki sözcük
+sınırları <command>backward-kill-word</command>'deki sınırlardan
+farklıdır.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>unix-filename-rubout </literal> ()</primary></indexterm>
+<glossentry><glossterm id="bashref-unix-filename-rubout"><command>unix-filename-rubout</command> ()</glossterm>
+<glossdef><para>
+Sözcük sınırları olarak boşluk ve / karakterini kullanarak imlecin arkasındaki sözcüğü keser. Kesilen metin kesme zincirine kaydedilir.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>delete-horizontal-space </literal> ()</primary></indexterm>
+<glossentry><glossterm id="bashref-delete-horizontal-space"> <command>delete-horizontal-space</command> ()</glossterm>
+<glossdef><para>
+İmlecin çevresindeki tüm boşlukları ve sekmeleri siler.
+Öntanımlı olarak kısayol atanmamıştır.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>kill-region </literal> ()</primary></indexterm>
+<glossentry><glossterm id="bashref-kill-region"><command>kill-region</command> ()</glossterm>
+<glossdef><para>
+`Bölge'deki metni keser. Öntanımlı olarak kısayol atanmamıştır.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>copy-region-as-kill </literal> ()</primary></indexterm>
+<glossentry><glossterm id="bashref-copy-region-as-kill"><command>copy-region-as-kill</command> ()</glossterm>
+<glossdef><para>
+`Bölge'deki metni keser. Öntanımlı olarak kısayol atanmamıştır.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>copy-backward-word </literal> ()</primary></indexterm>
+<glossentry><glossterm id="bashref-copy-backward-word"><command>copy-backward-word</command> ()</glossterm>
+<glossdef><para>
+İmleçten önceki sözcüğü keser.
+Sözcük sınırları <command>backward-word</command> ile aynıdır.
+Öntanımlı olarak kısayol atanmamıştır.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>copy-forward-word </literal> ()</primary></indexterm>
+<glossentry><glossterm id="bashref-copy-forward-word"><command>copy-forward-word</command> ()</glossterm>
+<glossdef><para>
+İmleçten sonraki sözcüğü keser. Sözcük sınırları <command>forward-word</command> ile aynıdır. Öntanımlı olarak kısayol atanmamıştır.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>yank </literal> (<literal>C-y</literal>)</primary></indexterm>
+<glossentry><glossterm id="bashref-yank"><command>yank</command> (<literal>C-y</literal>)</glossterm>
+<glossdef><para>
+Son kesilen metni imleç konumunda satıra yerleştirir.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>yank-pop </literal> (<literal>M-y</literal>)</primary></indexterm>
+<glossentry><glossterm id="bashref-yank-pop"><command>yank-pop</command> (<literal>M-y</literal>)</glossterm>
+<glossdef><para>
+Her <command>yank-pop</command> pano içeriğindeki kesmelerden bir öncekinin seçilmesini sağlar. Pano içeriği <command>yank-pop</command> ile sürekli döndürülür. Bu işlem sadece önceki komut <command>yank</command> ya da <command>yank-pop</command> ise uygulanır.
+</para></glossdef></glossentry>
+</glosslist>
+  </sect1>
+  <sect1 id="bashref_rl.commands-args">
+    <title>Sayısal Argümanların Belirtilmesi</title>
+    <titleabbrev>Sayısal argümanların, yinelemelerin belirtilmesi</titleabbrev>
+<glosslist>
+<indexterm scope="bashref_function.index">
+<primary><literal>digit-argument </literal> (<literal>M-0, M-1, ... M--</literal>)</primary></indexterm>
+<glossentry><glossterm id="bashref-digit-argument"><command>digit-argument</command> (<literal>M-0, M-1, ... M--</literal>)</glossterm>
+<glossdef><para>
+Rakamı evvelce başlatılmış argümana ekler ya da bir yeni argüman
+başlatır. <literal>M--</literal> bir negatif argüman başlatır.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>universal-argument </literal> ()</primary></indexterm>
+<glossentry><glossterm id="bashref-universal-argument"><command>universal-argument</command> ()</glossterm>
+<glossdef><para>
+Bu bir argüman belirtmenin diğer yoludur. Bu komuttan sonra bir
+veya daha fazla rakam verilirse, istemlik bir eksi işaretiyle,
+bu rakamlar argümanı tanımlar. Komuttan sonra rakamlar verilmişse
+<command>universal-argument</command>'ın tekrar çalıştırılması
+sayısal argümanla biter, ama başka türlü yoksayılır. Özel bir durum
+olarak bu komuttan sonra bir rakam ya da eksi işareti olarak bir
+karakter verilirse sonraki komut için argüman sayısı dört ile çarpılır.
+Argüman sayısı dahili olarak birdir, yani bu işlevin ilk defa
+çalıştırılması argüman sayısını dört yapar, bir ikincisi argüman
+sayısını 16 yapar ve böyle gider. Öntanımlı olarak kısayol atanmamıştır.
+</para></glossdef></glossentry>
+</glosslist>
+  </sect1>
+  <sect1 id="bashref_rl.commands-rltype">
+    <title>Readline Sizin Yerinize Yazsın</title>
+    <titleabbrev>Readline sizin yerinize satırı yazabilir.</titleabbrev>
+<glosslist>
+<indexterm scope="bashref_function.index">
+<primary><literal>complete </literal> (<literal>TAB</literal>)</primary></indexterm>
+<glossentry><glossterm id="bashref-complete"><command>complete</command> (<literal>TAB</literal>)</glossterm>
+<glossdef><para>
+İmlecin arkasındaki metne tamamlama uygulamaya çalışır. Uygulanan
+asıl tamamlama uygulamaya özeldir. Bash, metni döndürülen bir değişken
+(metin <literal>$</literal> ile başlıyorsa), kullanıcı ismi
+(metin <literal>~</literal> ile başlıyorsa), konak ismi
+(metin <literal>@</literal> ile başlıyorsa) ya da komut (takma adlar
+ve işlevler) olarak ele alıp tamamlamaya çalışır. Eğer bunlardan hiçbiri
+bir eşleşme sağlamazsa, dosyaismi tamamlaması yapılmaya çalışılır.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>possible-completions </literal> (<literal>M-?</literal>)</primary></indexterm>
+<glossentry><glossterm id="bashref-possible-completions"><command>possible-completions</command> (<literal>M-?</literal>)</glossterm>
+<glossdef><para>
+İmlecin arkasındaki metnin olası tamamlamalarını listeler.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>insert-completions </literal> (<literal>M-*</literal>)</primary></indexterm>
+<glossentry><glossterm id="bashref-insert-completions"><command>insert-completions</command> (<literal>M-*</literal>)</glossterm>
+<glossdef><para>
+İmlecin arkasındaki metnin <command>possible-completions</command>
+tarafından üretilmiş olan tüm tamamlamalarını yerleştirir.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>menu-complete </literal> ()</primary></indexterm>
+<glossentry><glossterm id="bashref-menu-complete"><command>menu-complete</command> ()</glossterm>
+<glossdef><para>
+<command>complete</command>'e benzer ancak, tamamlanacak
+sözcük ile olası tamamlamalar listesindeki tek bir eşleşme
+yer değiştirilir. <command>menu-complete</command> peşpeşe
+çalıştırılırsa olası tamamlamalar listesi üzerinde adım adım
+dolaşılarak her eşleşme tek tek satıra yerleştirilir. Tamamlamalar
+listesinin sonuna gelindiğinde çan çalar (<literal>bell-style</literal>
+atamasına bağlı olarak) ve orjinal metne dönülür. Bir
+<literal>n</literal> argümanı eşleşenler listesinde <literal>n</literal>
+adım ileri gidilmesini sağlar; argüman negatifse listede
+<literal>n</literal> adım geri gidilir. Bu komut <literal>TAB</literal>
+için düşünülmüştür ancak öntanımlı olarak atanmamıştır.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>delete-char-or-list </literal> ()</primary></indexterm>
+<glossentry><glossterm id="bashref-delete-char-or-list"><command>delete-char-or-list</command> ()</glossterm>
+<glossdef><para>
+İmleç satırın başında ya da sonunda değilse imlecin altındaki
+karakteri siler (<command>delete-char</command> gibi).
+Satırın sonunda <command>possible-completions</command>'a
+özgü davranır. Bu komuta öntanımlı olarak bir kısayol atanmamıştır.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>complete-filename </literal> (<literal>M-/</literal>)</primary></indexterm>
+<glossentry><glossterm id="bashref-complete-filename"><command>complete-filename</command> (<literal>M-/</literal>)</glossterm>
+<glossdef><para>
+İmlecin arkasındaki metne dosyaismi tamamlaması yapmaya çalışır.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>possible-filename-completions </literal> (<literal>C-x /</literal>)</primary></indexterm>
+<glossentry><glossterm id="bashref-possible-filename-completions"><command>possible-filename-completions</command> (<literal>C-x /</literal>)</glossterm>
+<glossdef><para>
+İmlecin arkasındaki metni bir dosyaismi olarak ele alıp,
+olası tamamlamalarını listeler.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>complete-username </literal> (<literal>M-~</literal>)</primary></indexterm>
+<glossentry><glossterm id="bashref-complete-username"><command>complete-username</command> (<literal>M-~</literal>)</glossterm>
+<glossdef><para>
+İmlecin arkasındaki metni bir kullanıcı ismi olarak ele alıp,
+tamamlamaya çalışır.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>possible-username-completions </literal> (<literal>C-x ~</literal>)</primary></indexterm>
+<glossentry><glossterm id="bashref-possible-username-completions"> <command>possible-username-completions</command> (<literal>C-x ~</literal>)</glossterm>
+<glossdef><para>
+İmlecin arkasındaki metni bir kullanıcı ismi olarak ele alıp,
+olası tamamlamalarını listeler.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>complete-variable </literal> (<literal>M-$</literal>)</primary></indexterm>
+<glossentry><glossterm id="bashref-complete-variable"><command>complete-variable</command> (<literal>M-$</literal>)</glossterm>
+<glossdef><para>
+İmlecin arkasındaki metni bir kabuk değişkeni olarak ele alıp,
+tamamlamaya çalışır.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>possible-variable-completions </literal> (<literal>C-x $</literal>)</primary></indexterm>
+<glossentry><glossterm id="bashref-possible-variable-completions"> <command>possible-variable-completions</command> (<literal>C-x $</literal>)</glossterm>
+<glossdef><para>
+İmlecin arkasındaki metni bir kabuk değişkeni olarak ele alıp,
+olası tamamlamalarını listeler.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>complete-hostname </literal> (<literal>M-@</literal>)</primary></indexterm>
+<glossentry><glossterm id="bashref-complete-hostname"><command>complete-hostname</command> (<literal>M-@</literal>)</glossterm>
+<glossdef><para>
+İmlecin arkasındaki metni bir konak ismi olarak ele alıp,
+tamamlamaya çalışır.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>possible-hostname-completions </literal> (<literal>C-x @</literal>)</primary></indexterm>
+<glossentry><glossterm id="bashref-possible-hostname-completions"> <command>possible-hostname-completions</command> (<literal>C-x @</literal>)</glossterm>
+<glossdef><para>
+İmlecin arkasındaki metni bir konak ismi olarak ele alıp,
+olası tamamlamalarını listeler.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>complete-command </literal> (<literal>M-!</literal>)</primary></indexterm>
+<glossentry><glossterm id="bashref-complete-command"><command>complete-command</command> (<literal>M-!</literal>)</glossterm>
+<glossdef><para>
+İmlecin arkasındaki metni bir komut ismi olarak ele alıp,
+tamamlamaya çalışır. Komut tamamlaması metni sırasıyla takma adlar,
+anahtar sözcükler, kabuk işlevleri, kabuk yerleşikleri ve son olarak
+çalıştırılabilir dosya isimleri ile tamalamaya çalışır.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>possible-command-completions </literal> (<literal>C-x !</literal>)</primary></indexterm>
+<glossentry><glossterm id="bashref-possible-command-completions"> <command>possible-command-completions</command> (<literal>C-x !</literal>)</glossterm>
+<glossdef><para>
+İmlecin arkasındaki metni bir komut ismi olarak ele alıp,
+olası tamamlamalarını listeler.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>dynamic-complete-history </literal> (<literal>M-TAB</literal>)</primary></indexterm>
+<glossentry><glossterm id="bashref-dynamic-complete-history"> <command>dynamic-complete-history</command> (<literal>M-TAB</literal>)</glossterm>
+<glossdef><para>
+İmlecin arkasındaki metni geçmiş listesinin satırları olan
+olası tamamlamalarla tamamlamaya çalışır.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>complete-into-braces </literal> (<literal>M-{</literal>)</primary></indexterm>
+<glossentry><glossterm id="bashref-complete-into-braces"> <command>complete-into-braces</command> (<literal>M-{</literal>)</glossterm>
+<glossdef><para>
+Dosyaismi tamamlaması uygular ve olası tamamlamaların listesini
+kaşlı ayraçlar arasına yerleştirir, böylece liste kabuk tarafından
+kullanılabilir hale gelir (<xref linkend="bashref_shell.expansions-brace"/>
+bölümüne bakınız).
+</para></glossdef></glossentry>
+</glosslist>
+  </sect1>
+  <sect1 id="bashref_rl.commands-kb">
+    <title>Klavye Makroları</title>
+    <titleabbrev>Yazılan karakterlerin yeniden çalıştırılması ve kaydedilmesi.</titleabbrev>
+<glosslist>
+<indexterm scope="bashref_function.index">
+<primary><literal>start-kbd-macro </literal> (<literal>C-x (</literal>)</primary></indexterm>
+<glossentry><glossterm id="bashref-start-kbd-macro"> <command>start-kbd-macro</command> (<literal>C-x (</literal>)</glossterm>
+<glossdef><para>
+Yazılan karakterlerin o anki klavye makrosuna kaydını başlatır.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>end-kbd-macro </literal> (<literal>C-x )</literal>)</primary></indexterm>
+<glossentry><glossterm id="bashref-end-kbd-macro"><command>end-kbd-macro</command> (<literal>C-x )</literal>)</glossterm>
+<glossdef><para>
+Yazılan karakterlerin o anki klavye makrosuna kaydını durdurur ve
+tanımı kaydeder.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>call-last-kbd-macro </literal> (<literal>C-x e</literal>)</primary></indexterm>
+<glossentry><glossterm id="bashref-call-last-kbd-macro"><command>call-last-kbd-macro</command> (<literal>C-x e</literal>)</glossterm>
+<glossdef><para>
+Atanan klavye makrosunu, makrodaki karakterler klavyeden
+yazılmışçasına basarak yeniden çalıştırır.
+</para></glossdef></glossentry>
+</glosslist>
+  </sect1>
+  <sect1 id="bashref_rl.commands-misc">
+    <title>Çeşitli Komutlar</title>
+    <titleabbrev>Diğer konuların kapsamına girmeyen komutlar.</titleabbrev>
+<glosslist>
+<indexterm scope="bashref_function.index">
+<primary><literal>re-read-init-file </literal> (<literal>C-x C-r</literal>)</primary></indexterm>
+<glossentry><glossterm id="bashref-re-read-init-file"><command>re-read-init-file</command> (<literal>C-x C-r</literal>)</glossterm>
+<glossdef><para>
+<filename>inputrc</filename> dosyasının içeriğini okur ve
+burada bulunan değişken atamaları ve tuş kısayolları ile
+Readline'ı yeniden ilklendirir.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>abort </literal> (<literal>C-g</literal>)</primary></indexterm>
+<glossentry><glossterm id="bashref-abort"><command>abort</command> (<literal>C-g</literal>)</glossterm>
+<glossdef><para>
+o anki düznleme komutundan çıkar ve uçbirim çanını çalar
+(<literal>bell-style</literal> atamasına bağlı olarak).
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>do-uppercase-version </literal> (<literal>M-a, M-b, M-x, ...</literal>)</primary></indexterm>
+<glossentry><glossterm id="bashref-do-uppercase-version"><command>do-uppercase-version</command> (<literal>M-a, M-b, M-x, ...</literal>)</glossterm>
+<glossdef><para>
+Ötelenmiş karakter x küçük harf ise, bu karakterin büyük harfli
+karşılığını içeren komutu çalıştırır.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>prefix-meta </literal> (<literal>ESC</literal>)</primary></indexterm>
+<glossentry><glossterm id="bashref-prefix-meta"><command>prefix-meta</command> (<literal>ESC</literal>)</glossterm>
+<glossdef><para>
+Ardından yazılan karakteri öteler. Bu, bir meta tuşu olmayan
+klavyeler içindir. <literal>ESC f</literal> ile <literal>M-f</literal>
+eşdeğerdir.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>undo </literal> (<literal>C-_ or C-x C-u</literal>)</primary></indexterm>
+<glossentry><glossterm id="bashref-undo"><command>undo</command> (<literal>C-_ or C-x C-u</literal>)</glossterm>
+<glossdef><para>
+Arttırımlı geri alma, her satır için ayrı ayrı hatırlanır.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>revert-line </literal> (<literal>M-r</literal>)</primary></indexterm>
+<glossentry><glossterm id="bashref-revert-line"><command>revert-line</command> (<literal>M-r</literal>)</glossterm>
+<glossdef><para>
+Bu satırda yapılan tüm değişiklikleri geri alır. Bu,
+satır üstünde peşpeşe <command>undo</command> komutu
+girilip tüm değişikliklerin geri alındığı duruma bir kerede
+erişmeyi sağlar.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>tilde-expand </literal> (<literal>M-&amp;</literal>)</primary></indexterm>
+<glossentry><glossterm id="bashref-tilde-expand"><command>tilde-expand</command> (<literal>M-&amp;</literal>)</glossterm>
+<glossdef><para>
+ O anki sözcük üstünde yaklaşık yorumlaması uygular.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>set-mark </literal> (<literal>C-@</literal>)</primary></indexterm>
+<glossentry><glossterm id="bashref-set-mark"><command>set-mark</command> (<literal>C-@</literal>)</glossterm>
+<glossdef><para>
+Noktayı mark yapar. (İmleç konumunu kaydeder). Bir sayısal argüman
+verilirse, belirttiği konum mark yapılır.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>exchange-point-and-mark </literal> (<literal>C-x C-x</literal>)</primary></indexterm>
+<glossentry><glossterm id="bashref-exchange-point-and-mark"> <command>exchange-point-and-mark</command> (<literal>C-x C-x</literal>)</glossterm>
+<glossdef><para>
+Nokta ile markı yer değiştirir. O anki imleç kaydedilmiş
+konuma kaydırılır ve eski imleç konumu mark olarak kaydedilir.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>character-search </literal> (<literal>C-]</literal>)</primary></indexterm>
+<glossentry><glossterm id="bashref-character-search"><command>character-search</command> (<literal>C-]</literal>)</glossterm>
+<glossdef><para>
+Bir karakter okunur ve imleç bu karakterin bulunduğu sonraki konuma
+gider. Bir negatif argüman karakteri satırın başına doğru arar.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>character-search-backward </literal> (<literal>M-C-]</literal>)</primary></indexterm>
+<glossentry><glossterm id="bashref-character-search-backward"> <command>character-search-backward</command> (<literal>M-C-]</literal>)</glossterm>
+<glossdef><para>
+Bir karakter okunur ve imleç bu karakterin bulunduğu önceki konuma
+gider. Bir negatif argüman karakteri satırın sonuna doğru arar.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>insert-comment </literal> (<literal>M-#</literal>)</primary></indexterm>
+<glossentry><glossterm id="bashref-insert-comment"><command>insert-comment</command> (<literal>M-#</literal>)</glossterm>
+<glossdef><para>
+Bir sayısal argüman olmaksızın <literal>comment-begin</literal> değişkeninin değeri o anki satırın başına yerleştirilir. Bir sayısal argüman sağlanmışsa bu komutun değiştirilmesine sebep olur: eğer satırın başındaki karakter <literal>comment-begin</literal> değeri ile eşleşmiyorsa değer yerleştirilir, aksi takdirde <literal>comment-begin</literal>'deki karakter satırın başından silinir. Her durumda, satır bir satırsonu tuşlanmış gibi kabul edilir. <literal>comment-begin</literal> değişkeninin öntanımlı değeri bu komutun o anki satırı bir kabuk açıklaması yapmasına sebep olur. Eğer bir sayısal argüman açıklama karakterinin silinmesine sebep olursa satır kabuk tarafından çalıştırılacaktır.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>dump-functions </literal> ()</primary></indexterm>
+<glossentry><glossterm id="bashref-dump-functions"><command>dump-functions</command> ()</glossterm>
+<glossdef><para>
+Tüm işlevleri ve bunlarla ilişkili tuş kısayollarını Readline
+çıktı hattına basar. Bir sayısal argüman verilirse, çıktı
+<filename>inputrc</filename> dosyasında girdi olarak kullanılabilecek
+biçemde basılır. Bu komuta öntanımlı olarak bir kısayol atanmamıştır.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>dump-variables </literal> ()</primary></indexterm>
+<glossentry><glossterm id="bashref-dump-variables"><command>dump-variables</command> ()</glossterm>
+<glossdef><para>
+Tüm atanabilir değişkenleri ve değerlerini Readline çıktı
+hattına basar. Bir sayısal argüman verilirse, çıktı
+<filename>inputrc</filename> dosyasında girdi olarak kullanılabilecek
+biçemde basılır. Bu komuta öntanımlı olarak bir kısayol atanmamıştır.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>dump-macros </literal> ()</primary></indexterm>
+<glossentry><glossterm id="bashref-dump-macros"><command>dump-macros</command> ()</glossterm>
+<glossdef><para>
+Readline tuş dizilerini ve bunların bağlandığı makrolarla dizgeleri
+Readline çıktı hattına basar. Bir sayısal argüman verilirse, çıktı
+<filename>inputrc</filename> dosyasında girdi olarak kullanılabilecek
+biçemde basılır. Bu komuta öntanımlı olarak bir kısayol atanmamıştır.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>glob-complete-word </literal> (<literal>M-g</literal>)</primary></indexterm>
+<glossentry><glossterm id="bashref-glob-complete-word"><command>glob-complete-word</command> (<literal>M-g</literal>)</glossterm>
+<glossdef><para>
+İmlecin öncesindeki sözcük bir * örtük olarak eklenerek dosyayolu yorumlaması için bir kalıp olarak ele alınır. Bu kalıp olası tamamlamalar için eşleşen dosya isimlerinin bir listesini üretmek için kullanılır.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>glob-expand-word </literal> (<literal>C-x *</literal>)</primary></indexterm>
+<glossentry><glossterm id="bashref-glob-expand-word"><command>glob-expand-word</command> (<literal>C-x *</literal>)</glossterm>
+<glossdef><para>
+İmlecin öncesindeki sözcük dosyayolu yorumlaması için bir kalıp
+olarak ele alınarak eşleşen dosya isimlerinin listesi sözcükle
+değiştirilir. Bir sayısal argüman sağlanmışsa dosya yorumlamasının öncesine bir * eklenir.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>glob-list-expansions </literal> (<literal>C-x g</literal>)</primary></indexterm>
+<glossentry><glossterm id="bashref-glob-list-expansions"><command>glob-list-expansions</command> (<literal>C-x g</literal>)</glossterm>
+<glossdef><para>
+<literal>glob-expand-word</literal> tarafından üretilen
+yorumlama listesi gösterilir ve satır yeniden oluşturulur.
+Bir sayısal argüman sağlanmışsa dosya yorumlamasının öncesine bir * eklenir.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>display-shell-version </literal> (<literal>C-x C-v</literal>)</primary></indexterm>
+<glossentry><glossterm id="bashref-display-shell-version"><command>display-shell-version</command> (<literal>C-x C-v</literal>)</glossterm>
+<glossdef><para>
+Bash'in çalışan kopyası hakkında sürüm bilgisi gösterir.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>shell-expand-line </literal> (<literal>M-C-e</literal>)</primary></indexterm>
+<glossentry><glossterm id="bashref-shell-expand-line"><command>shell-expand-line</command> (<literal>M-C-e</literal>)</glossterm>
+<glossdef><para>
+Satırı kabuğun yaptığı gibi yorumlar. Bu takma ad ve geçmiş yorumlaması
+ile kabuk sözcük yorumlamalarının hemen tamamını uygular
+(<xref linkend="bashref_shell.expansions"/> bölümüne bakınız).
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>history-expand-line </literal> (<literal>M-^</literal>)</primary></indexterm>
+<glossentry><glossterm id="bashref-history-expand-line"><command>history-expand-line</command> (<literal>M-^</literal>)</glossterm>
+<glossdef><para>
+O anki satıra geçmiş yorumlaması uygular.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>magic-space </literal> ()</primary></indexterm>
+<glossentry><glossterm id="bashref-magic-space"><command>magic-space</command> ()</glossterm>
+<glossdef><para>
+O anki satıra geçmiş yorumlaması uygular ve bir boşluk girer
+(<xref linkend="bashref_bash.hist.exp"/> bölümüne bakınız).
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>alias-expand-line </literal> ()</primary></indexterm>
+<glossentry><glossterm id="bashref-alias-expand-line"><command>alias-expand-line</command> ()</glossterm>
+<glossdef><para>
+O anki satıra takma ad yorumlaması uygular
+(<xref linkend="bashref_aliases"/> bölümüne bakınız).
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>history-and-alias-expand-line </literal> ()</primary></indexterm>
+<glossentry><glossterm id="bashref-history-and-alias-expand-line"> <command>history-and-alias-expand-line</command> ()</glossterm>
+<glossdef><para>
+O anki satıra geçmiş ve takma ad yorumlaması uygular.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>insert-last-argument </literal> (<literal>M-. or M-_</literal>)</primary></indexterm>
+<glossentry><glossterm id="bashref-insert-last-argument"><command>insert-last-argument</command> (<literal>M-. or M-_</literal>)</glossterm>
+<glossdef><para>
+<command>yank-last-arg</command> ile eşanlamlıdır.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index">
+<primary><literal>operate-and-get-next </literal> (<literal>C-o</literal>)</primary></indexterm>
+<glossentry><glossterm id="bashref-operate-and-get-next"><command>operate-and-get-next</command> (<literal>C-o</literal>)</glossterm>
+<glossdef><para>
+O anki satırı çalıştırmak için kabul eder ve o anki satıra göreli
+sonraki satırı düzenlemek için geçmişten alır. Her argüman
+yoksayılır.
+</para></glossdef></glossentry>
+<indexterm scope="bashref_function.index"><primary><literal>edit-and-execute-command </literal> (<literal>C-xC-e</literal>)</primary></indexterm>
+<glossentry><glossterm id="bashref-edit-and-execute-command"> <command>edit-and-execute-command</command> (<literal>C-xC-e</literal>)</glossterm>
+<glossdef><para>
+O anki komut satırı üstünde bir metin düzenleyici çağırır ve sonucu bir kabuk komutu olarak çalıştırır. Bash metin düzenleyici olarak sırasıyla <literal>$VISUAL</literal>, <literal>$EDITOR</literal> ve <command>emacs</command> çağırmaya çalışır.
+</para></glossdef></glossentry>
+</glosslist>
+</sect1>
+</chapter>
+
+  <chapter id="bashref_rl.vi" label="5">
+    <title>Readline <literal>vi</literal> Kipi</title>
+    <titleabbrev>Readline'ın vi metin düzenleyicisi gibi davranması.</titleabbrev>
+    <para>
+Readline kütüphanesi <literal>vi</literal>'nin düzenleme işlevlerinin tamamına sahip olmasa da bir satırın düzenlenmesinin basitliği nedeniyle yeterlidir. Readline <literal>vi</literal> kipinde POSIX standardında belirtildiği gibi davranır.
+    </para><para>
+<literal>emacs</literal> ve <literal>vi</literal> düzenleme kipleri
+arasında etkileşimli olarak geçiş yapmak için
+<link linkend="bashref_set.builtin"><command>set</command></link><option> -o emacs</option> ve
+<command>set</command><option> -o vi</option> komutları kullanılır.
+Readline öntanımlı olarak <literal>emacs</literal> kipindedir.
+    </para><para>
+<literal>vi</literal> kipindeyken bir satır girerseniz, kendinizi
+<literal>i</literal> tuşuna basıldığında girilen `üzerine yazma' kipinde
+bulursunuz. <literal>ESC</literal> tuşuna basarak `komut' kipine geçersiniz.
+Böylece standart <literal>vi</literal> hareket tuşları ile satırı
+düzenleyebilirsiniz. Örneğin <literal>k</literal> ile geçmiş listesindeki
+önceki satırlara, <literal>j</literal> ile müteakip satırlara hareket
+edebilirsiniz.
+    </para>
+  </chapter>
+
+  <chapter id="bashref_programmable" label="6">
+    <title>Programlanabilir Tamamlama</title>
+    <titleabbrev>Belli bir komut için olası tamamlamalar basıl belirtilir.</titleabbrev>
+<indexterm scope="bashref_concept.index"><primary>programlanabilir tamamlama</primary></indexterm>
+    <para>
+<link linkend="bashref_programmable.builtins"><command>complete</command></link> yerleşiği kullanılarak etkinleştirilen
+bir tamamlama belirtiminin (compspec) bir komutun bir argümanı için
+sözcük tamamlamasında kullanılmaya çalışılması halinde, programlanabilir
+tamamlama araçları çağrılmış olur.
+    </para><para>
+Önce komut ismi saptanır. Bu komut için bir tamamlama belirtimi
+tanımlanmışsa, bu, sözcüğün olası tamamlamalarını üretir.
+Komut tam dosyayolu belirtilerek verilmişse ilk olarak bu dosyayoluna
+göre bir tamamlama belirtimi aranır. Tam dosyayolu için bir tamamlama
+belirtimi bulunmuyorsa, son / işaretinden sonraki kısım için bir
+tamamlama belirtimi bulunmaya çalışılır.
+    </para><para>
+Bir tamamlama belirtimi bir kere bulunduktan sonra, onunla, uygun
+sözcüklerin bir listesi üretilir. Bir tamamlama belirtimi yoksa,
+<xref linkend="bashref_rl.commands-rltype"/> bölümünde bahsedilen
+öntanımlı Bash tamamlaması uygulanır.
+    </para><para>
+İlk olarak, tamamlama belirtimi tarafından belirtilen eylemler kullanılır
+ve sadece sözcük ile başlayan tamamlamalar döndürülür. Dosyaismi veya
+dizin ismi tamamlaması için <literal>-f</literal> ya da <literal>-d</literal>
+seçeneği kullanıldığında, <link linkend="bashref-FIGNORE"><literal>FIGNORE</literal> kabuk değişkeni</link> uyuşanları süzmek için kullanılır.
+    </para><para>
+Sonra, <literal>-G</literal> seçeneği ile bir dosyaismi yorumlama kalıbı
+verilerek tamamlamalar üretilir. Sözcüklerin üretildiği kalıbın tamamlanması
+istenen sözcükle eşleşmemesi gerekir. Eşleşenleri süzmekte <link
+linkend="bashref-GLOBIGNORE"><literal>GLOBIGNORE</literal> kabuk
+değişkeni</link> değil, <literal>FIGNORE</literal> kabuk değişkeni kullanılır.
+    </para><para>
+Sonra da <literal>-W</literal> seçeneğine argüman olarak dizgenin
+belirtildiği varsayılır. <literal>IFS</literal> özel değişkenindeki
+karakterler ayraç olarak kullanılarak dizge önce ayrıştırılır. Kabuk
+tarafından tırnaklama uygulanır. Her sözcüğe <link
+linkend="bashref_shell.expansions-brace">kaşlı ayraç yorumlaması</link>,
+<link linkend="bashref_shell.expansions-tilde">yaklaşık yorumlaması</link>,
+<link linkend="bashref_shell.expansions-param">parametre yorumlaması</link>,
+<link linkend="bashref_shell.expansions-cmd.subs">komut ikamesi</link> ve
+<link linkend="bashref_shell.expansions-arith">aritmetik yorumlama</link>
+uygulanır. Sonuçlara
+<link linkend="bashref_shell.expansions-splitting">sözcüklere ayırma</link>
+uygulanır. Yorumlama sonuçları tamamlanması istenen sözcüğün önek olduğu
+sözcüklerdir ve eşleşen sözcükler olası tamamlamalardır.
+    </para><para>
+Bu eşleşmeler üretildikten sonra, <literal>-F</literal> ve
+<literal>-C</literal> seçenekleri ile bir kabuk işlevi ya da bir komut
+çağrılır ve <link linkend="bashref-COMP_LINE"><literal>COMP_LINE</literal>
+ile <literal>COMP_POINT</literal></link> değişkenlerine değerleri atanır.
+Bir kabuk işlevi çağrılmışsa ayrıca <link linkend="bashref-COMP_CWORD"><literal>COMP_CWORD</literal></link> ve <link linkend="bashref-COMP_WORDS"><literal>COMP_WORDS</literal></link> değişkenleri de atanır.
+İşlev veya komut çağrıldığında, ilk argüman argümanları tamamlanacak
+olan komutun ismidir, ikinci argüman tamamlanan sözcüktür ve üçüncü
+argüman komut satırındaki tamamlanması istenen sözcüğü önceleyen sözcüktür.
+Tamamlanması istenen sözcüğe karşılık üretilen tamamlamalara süzme
+uygulanmaz; işlev ya da komut üretilen eşleşmelerle serbestçe tamamlanır.
+    </para><para>
+Bir işlev ilk olarak` <literal>-F</literal> seçeneğine belirtilerek çağrılır.
+İşlev, eşleşmeleri üretmek için <link linkend="bashref_programmable.builtins-compgen"><command>compgen</command> yerleşiği</link> dahil, her kabuk aracını
+kullanabilir. Olası tamamlamaları <link linkend="bashref-COMPREPLY"><literal>COMPREPLY</literal></link> dizi değişkenine yerleştirmelidir.
+    </para><para>
+Sonra, komut ikamesine eşdeğer bir ortam içinde bir komut <literal>-C</literal>
+seçeneğine belirtilerek çağrılır. Bu, komut tamamlamalarının listesini
+her biri bir satırda standart çıktıya basmalıdır. Gerekliyse, tersbölü
+bir satırsonunu öncelemekte kullanılabilir.
+    </para><para>
+Tüm olası tamamlamalar üretildikten sonra <literal>-X</literal>
+seçeneğine belirtilen bir süzgeç listeye uygulanır. Süzgeç dosyayolu
+yorumlaması için kullanılan bir kalıptır; kalıptaki bir
+<literal>&amp;</literal> karakteri tamamlanması istenen sözcük metni ile
+değiştirilir. Kalıba uyan tamamlamalar listeden kaldırılacaktır.
+<literal>!</literal> ile başlayan bir kalıp zıt eşleme yapar;
+bu durumda, kalıba uymayan tamamlamalar listeden kaldırılacaktır.
+    </para><para>
+Son olarak, <literal>-P</literal> ve <literal>-S</literal> seçenekleri
+ile belirtilen bir önek ve bir sonek tamamlama listesinin her üyesine
+eklenir ve sonuç Readline tamamlama koduna olası tamamlamaların listesi
+olarak döndürülür.
+    </para><para>
+Eğer öncelikle uygulanan eylemler bir eşleşme üretmezse ve
+tamamlama belirtimi tanımlanırken <link
+linkend="bashref_programmable.builtins-complete"><command>complete</command></link> ile
+<option>-o dirnames</option>  seçeneği verilmişse, dizin ismi
+tamamlanmaya çalışılır.
+    </para><para>
+Eğer tamamlama belirtimi tanımlandığında <option>-o plusdirs</option> seçeneği <command>complete</command> komutuna sağlanmışsa  dizin ismi tamamlanmaya çalışılır ve eşleşenler diğer eylemlerin sonuçlarına eklenir.
+   </para><para>
+Öntanımlı olarak, bir tamamlama belirtimi varsa, onun ürettiği her ne
+varsa olası tamamlamaların bir tam kümesi olarak tamamlama koduna döner.
+Öntanımlı Bash tamamlamaları uygulanmaz ve Readline'ın öntanımlısı olan
+dosyaismi tamamlaması kapatılır.
+Eğer tamamlama belirtimi tanımlıyken <command>complete</command> yerleşiği <option>-o bashdefault</option> seçeneği ile çalıştırılmışsa ve tamamlama balirtimi bir eşleşme üretmiyosa öntanımlı Bash tamamlamaları uygulanmaya çalışılır.
+Tamamlama belirtimi tanımlıyken <option>-o default</option> seçeneği ile çalıştırılmışsa ve tamamlama belirtimi (ve eğer uygulanmışsa öntanımlı Bash tamamlamaları) hiç eşleşme üretememişse, Readline'ın öntanımlı tamamlaması uygulanacaktır.
+   </para><para>
+Bir tamamlama belirtimi dizin ismi tamamlaması istendiğini belirtiyorsa programlanabilir tamamlama işlevleri Readline'ı dizinlere sembolik bağ olan ve <literal>mark-symlinked-directories</literal> Readline değişkeninin değerine bakmaksızın <literal>mark-directories</literal> Readline değişkeninin değerine konu olan isimleri tamamlamak için / eklemeye zorlar.
+    </para>
+  </chapter>
+
+  <chapter id="bashref_programmable.builtins" label="7">
+    <title>Programlanabilir Tamamlama Yerleşikleri</title>
+    <titleabbrev>
+Bir komutun argümanlarının nasıl tamamlanacağının belirtildiği yerleşik komutlar.
+    </titleabbrev>
+<indexterm scope="bashref_concept.index"><primary>tamamlama yerleşikleri</primary></indexterm>
+<indexterm scope="bashref_concept.index"><primary>yerleşik komutlar</primary><secondary>tamamlama</secondary></indexterm>
+<indexterm scope="bashref_concept.index"><primary>geçmiş</primary><secondary>nasıl kullanılır</secondary></indexterm>
+    <para>
+Programlanabilir tamamlama araçlarını yönetmek için iki yerleşik komut vardır.
+    </para>
+    <sect1 id="bashref_programmable.builtins-compgen">
+      <title>Compgen Yerleşiği</title>
+<indexterm scope="bashref_commands.index"><primary>compgen</primary></indexterm>
+      <para>
+<synopsis><command>compgen</command> [<emphasis>seçenek</emphasis>] [<emphasis>sözcük</emphasis>]
+</synopsis>
+      </para><para>
+<replaceable>sözcük</replaceable> ile eşleşen olası tamamlamaları,
+<option>-p</option> ve <option>-r</option> seçenekleri dışında
+<command>complete</command> yerleşiği tarafından kabul edilen
+herhangi bir seçenek olabilen <replaceable>seçenek</replaceable>lere
+göre üretir ve eşleşenleri standart çıktıya yazar. <option>-F</option>
+veya <option>-C</option> seçenekleri kullanıldığında, çeşitli kabuk
+değişkenleri programlanabilir tamamlama araçları tarafından kullanılana
+kadar yararlı olmayacak değerlerle atanır.
+      </para><para>
+Programlanabilir tamamlama kodunun, bir tamamlama belirtiminden aynı
+seçeneklerle doğrudan ürettiği gibi eşleşmeler üretilmiş olacaktır.
+<replaceable>sözcük</replaceable> belirtilmişse bu eşleşmelerin
+sadece, <replaceable>sözcük</replaceable> ile eşleşenleri gösterilmiş
+olacaktır.
+      </para><para>
+Geçersiz bir seçenek verilmedikçe ya da  hiç eşleşme üretilmemesi
+dışında dönüş durumu sıfırdır.
+      </para>
+    </sect1>
+    <sect1 id="bashref_programmable.builtins-complete">
+      <title>Complete Yerleşiği</title>
+<indexterm scope="bashref_commands.index"><primary>complete</primary></indexterm>
+      <para>
+<synopsis><command>complete</command> [<command>-abcdefgjksuv</command>] [<command>-o</command> <emphasis>tamamlama-seçeneği</emphasis>] [<command>-A</command> <emphasis>eylem</emphasis>] [<command>-G</command> <emphasis>genel-kalıp</emphasis>]
+         [<command>-W</command> <emphasis>sözcük-listesi</emphasis>] [<command>-P</command> <emphasis>önek</emphasis>] [<command>-S</command> <emphasis>sonek</emphasis>] [<command>-X</command> <emphasis>süzgeç-kalıbı</emphasis>]
+         [<command>-F</command> <emphasis>işlev</emphasis>] [<command>-C</command> <emphasis>komut</emphasis>] <emphasis>isim</emphasis> [<emphasis>isim</emphasis> &hellip;]
+
+<command>complete -pr</command> [<emphasis>isim</emphasis> &hellip;]
+</synopsis>
+      </para><para>
+Argümanların her <replaceable>isim</replaceable>e nasıl tamamlanması
+gerektiği belirtilir. <option>-p</option> seçeneği verilirse veya
+hiç seçenek verilmezse, mevcut tamamlama belirtimleri girdi olarak
+yeniden kullanılabilir şekilde basılır. <option>-r</option> seçeneği
+her <replaceable>isim</replaceable> için tamamlama belirtimini kaldırır,
+hiç <replaceable>isim</replaceable> belirtilmezse tümü kaldırılır.
+      </para><para>
+Sözcük tamamlaması yapılmaya çalışıldığında, bu tamamlama belirtimlerinin
+uygulanma süreci <xref linkend="bashref_programmable"/> bölümünde
+açıklanmıştır.
+      </para><para>
+Diğer seçenekler belirtildiklerinde aşağıdaki anlamlara gelirler.
+<option>-G</option>, <option>-W</option> ve <option>-X</option>
+(ve lazımsa <option>-P</option> ve <option>-S</option>)
+seçeneklerinin argümanları, <command>complete</command> yerleşiği
+çağrılmadan önce yorumlanmaması için tırnak içine alınmış olmalıdır.
+      </para><glosslist>
+          <glossentry>
+            <glossterm>
+<command>-o </command><varname>tamamlama-seçeneği</varname></glossterm>
+            <glossdef><para>
+<replaceable>tamamlama-seçeneği</replaceable> tamamlamaların
+basit üretimi dışında tamamlama belirtiminin çeşitli davranış
+biçimlerini kontrol eder. <replaceable>tamamlama-seçeneği</replaceable>
+aşağıdakilerden biri olabilir:
+            </para><glosslist>
+                <glossentry>
+                  <glossterm><literal>bashdefault</literal></glossterm>
+                  <glossdef><para>
+Tamamlama belirtimi hiç eşleşme üretemezse öntanımlı Bash tamamlamalarının kalanı uygulanır.
+                  </para></glossdef>
+                </glossentry><glossentry>
+                  <glossterm><literal>default</literal></glossterm>
+                  <glossdef><para>
+Tamamlama belirtimi hiç eşleşme üretemezse Readline'ın
+öntanımlı dosyaismitamamlaması kullanılır.
+                  </para></glossdef>
+                </glossentry><glossentry>
+                  <glossterm><literal>dirnames</literal></glossterm>
+                  <glossdef><para>
+Tamamlama belirtimi hiç eşleşme üretemezse, dizin ismi
+tamamlaması uygulanır.
+                  </para></glossdef>
+                </glossentry><glossentry>
+                  <glossterm><literal>filenames</literal></glossterm>
+                  <glossdef><para>
+Readline'a tamamlama belirtiminin dosyaisimlerini
+üretmesini söyler, böylece dosyaismine özel işlemleri
+uygulayabilir (dizin isimlerine / eklemek veya
+sondaki boşlukların kaldırılması gibi işlemler).
+Bu seçenek, <option>-F</option> seçeneği ile
+belirtilen kabuk işlevleriyle kullanmak için düşünülmüştür.
+                  </para></glossdef>
+                </glossentry><glossentry>
+                  <glossterm><literal>nospace</literal></glossterm>
+                  <glossdef><para>
+Readline'a bir sözcüğü tamamlamak için satır sonundayken bir boşluk eklememesini söyler.
+                  </para></glossdef>
+                </glossentry><glossentry>
+                  <glossterm><literal>plusdirs</literal></glossterm>
+                  <glossdef><para>
+Tamamlama belirtimi tarafından tanımlanmış eşleşmeler üretildikten sonra dizin ismi tamamlanmaya çalışılır ve eşleşenler diğer eylemlerin sonuçlarına eklenir.
+                  </para></glossdef>
+                </glossentry>
+              </glosslist></glossdef>
+          </glossentry><glossentry>
+            <glossterm><command>-A </command><varname>eylem</varname></glossterm>
+            <glossdef><para>
+<replaceable>eylem</replaceable>, olası tamamlamaların bir listesinin
+üretilmesi için kullanılan aşağıdaki seçeneklerden biridir:
+            </para><glosslist>
+                <glossentry>
+                  <glossterm><literal>alias</literal></glossterm>
+                  <glossdef><para>
+Takma adlar. <option>-a</option> seçeneği ile aynıdır.
+                  </para></glossdef>
+                </glossentry><glossentry>
+                  <glossterm><literal>arrayvar</literal></glossterm>
+                  <glossdef><para>Dizi değişkeni isimleri.</para></glossdef>
+                </glossentry><glossentry>
+                  <glossterm><literal>binding</literal></glossterm>
+                  <glossdef><para>
+Readline tuş kısayollarının isimleri (<xref linkend="bashref_rl.commands"/> bölümüne bakınız).
+                  </para></glossdef>
+                </glossentry><glossentry>
+                  <glossterm><literal>builtin</literal></glossterm>
+                  <glossdef><para>
+Kabuk yerleşik komutlarının isimleri. <option>-b</option> seçeneği ile aynıdır.
+                  </para></glossdef>
+                </glossentry><glossentry>
+                  <glossterm><literal>command</literal></glossterm>
+                  <glossdef><para>
+Komut isimleri. <option>-c</option> seçeneği ile aynıdır.
+                  </para></glossdef>
+                </glossentry><glossentry>
+                  <glossterm><literal>directory</literal></glossterm>
+                  <glossdef><para>
+Dizin isimleri. <option>-d</option> seçeneği ile aynıdır.
+                  </para></glossdef>
+                </glossentry><glossentry>
+                  <glossterm><literal>disabled</literal></glossterm>
+                  <glossdef><para>
+İptal edilmiş kabuk yerleşikleri.
+                  </para></glossdef>
+                </glossentry><glossentry>
+                  <glossterm><literal>enabled</literal></glossterm>
+                  <glossdef><para>
+Etkin kabuk yerleşiklerinin isimleri.
+                  </para></glossdef>
+                </glossentry><glossentry>
+                  <glossterm><literal>export</literal></glossterm>
+                  <glossdef><para>
+Ortama aktarılmış kabuk değişkenlerinin isimleri.
+<option>-e</option> seçeneği ile aynıdır.
+                  </para></glossdef>
+                </glossentry><glossentry>
+                  <glossterm><literal>file</literal></glossterm>
+                  <glossdef><para>
+Dosya ismi. <option>-f</option> seçeneği ile aynıdır.
+                  </para></glossdef>
+                </glossentry><glossentry>
+                  <glossterm><literal>function</literal></glossterm>
+                  <glossdef><para>Kabuk işlevlerinin isimleri.</para></glossdef>
+                </glossentry><glossentry>
+                  <glossterm><literal>group</literal></glossterm>
+                  <glossdef><para>
+Grup isimleri. <option>-g</option> seçeneği ile aynıdır.
+                  </para></glossdef>
+                </glossentry><glossentry>
+                  <glossterm><literal>helptopic</literal></glossterm>
+                  <glossdef><para>
+<link linkend="bashref_bash.builtins-help"><userinput>help</userinput> yerleşik komutu</link> tarafından  kabul edilen yardım konuları.
+                  </para></glossdef>
+                </glossentry><glossentry>
+                  <glossterm><literal>hostname</literal></glossterm>
+                  <glossdef><para>
+<link linkend="bashref-HOSTFILE"><literal>HOSTFILE</literal>
+kabuk değişkeni</link> tarafından belirtilen dosyadan alınan konak isimleri.
+                  </para></glossdef>
+                </glossentry><glossentry>
+                  <glossterm><literal>job</literal></glossterm>
+                  <glossdef><para>
+İş denetimi etkinse, iş isimleri. <option>-j</option> seçeneği ile aynıdır.
+                  </para></glossdef>
+                </glossentry><glossentry>
+                  <glossterm><literal>keyword</literal></glossterm>
+                  <glossdef><para>
+Kabuk anahtar sözcükleri. <option>-k</option> seçeneği ile aynıdır.
+                  </para></glossdef>
+                </glossentry><glossentry>
+                  <glossterm><literal>running</literal></glossterm>
+                  <glossdef><para>
+İş denetimi etkinse, çalışan işlerin isimleri.
+                  </para></glossdef>
+                </glossentry><glossentry>
+                  <glossterm><literal>service</literal></glossterm>
+                  <glossdef><para>
+Servis isimleri. Ayrıca <command>-s</command> olarak da belirtilebilir.
+                  </para></glossdef>
+                </glossentry><glossentry>
+                  <glossterm><literal>setopt</literal></glossterm>
+                  <glossdef><para>
+<link linkend="bashref_set.builtin"><command>set</command>
+yerleşik komutunun</link> <option>-o</option> seçeneğinin geçerli argümanları.
+                  </para></glossdef>
+                </glossentry><glossentry>
+                  <glossterm><literal>shopt</literal></glossterm>
+                  <glossdef><para>
+<link linkend="bashref_bash.builtins-shopt"><userinput>shopt</userinput> yerleşik komutunun</link> kabul ettiği kabuk seçeneklerinin isimleri.
+                  </para></glossdef>
+                </glossentry><glossentry>
+                  <glossterm><literal>signal</literal></glossterm>
+                  <glossdef><para>Sinyal isimleri</para></glossdef>
+                </glossentry><glossentry>
+                  <glossterm><literal>stopped</literal></glossterm>
+                  <glossdef><para>
+İş denetimi etkinse, durmuş işlerin isimleri.
+                  </para></glossdef>
+                </glossentry><glossentry>
+                  <glossterm><literal>user</literal></glossterm>
+                  <glossdef><para>
+Kullanıcı isimleri. <option>-u</option> seçeneği ile aynıdır.
+                  </para></glossdef>
+                </glossentry><glossentry>
+                  <glossterm><literal>variable</literal></glossterm>
+                  <glossdef><para>
+Tüm kabuk değişkenlerinin isimleri. <option>-v</option> seçeneği ile aynıdır.
+                  </para></glossdef>
+                </glossentry>
+              </glosslist></glossdef>
+          </glossentry><glossentry>
+            <glossterm><command>-G </command><varname>genel-kalıp</varname></glossterm>
+            <glossdef><para>
+Dosyaismi yorumlama kalıbı <replaceable>genel-kalıp</replaceable>,
+olası tamamlamaları üretmek için yorumlanır.
+            </para></glossdef>
+          </glossentry><glossentry>
+            <glossterm><command>-W </command><varname>sözcük-listesi</varname></glossterm>
+            <glossdef><para>
+<replaceable>sözcük-listesi</replaceable> <literal>IFS</literal>
+özel değişkenindeki karakterler ayraç olarak kullanılarak
+ayrıştırılır ve elde edilen sözcük yorumlanır. Olası tamamlamalar,
+tamamlanması istenen sözcükle eşleşen sonuç listesinin üyeleridir.
+            </para></glossdef>
+          </glossentry><glossentry>
+            <glossterm><command>-C </command><varname>komut</varname></glossterm>
+            <glossdef><para>
+<replaceable>komut</replaceable> bir altkabuk ortamında
+çalıştırılır ve  çıktısı olası tamamlamalar olarak kullanılır.
+            </para></glossdef>
+          </glossentry><glossentry>
+            <glossterm><command>-F </command><varname>işlev</varname></glossterm>
+            <glossdef><para>
+Kabuk işlevi <replaceable>işlev</replaceable> bulunulan kabuk
+ortamında çalıştırılır. Bittiğinde olası tamamlamalar
+<link linkend="bashref-COMPREPLY"><literal>COMPREPLY</literal></link>
+dizi değişkeninden alınır.
+            </para></glossdef>
+          </glossentry><glossentry>
+            <glossterm><command>-X </command><varname>süzgeç-kalıbı</varname></glossterm>
+            <glossdef><para>
+<replaceable>süzgeç-kalıbı</replaceable> dosyaismi yorumlaması
+için kullanılan bir kalıptır. Önceki seçenek ve argümanlar
+tarafından üretilen olası tamamlamaların listesine uygulanır ve
+<emphasis>süzgeç-kalıbı</emphasis> ile eşleşen her tamamlama
+listeden kaldırılır. Bir <literal>!</literal> ile öncelenirse
+kalıp zıt işlem yapar yani, eşleşmeyenler listeden kaldırılır.
+            </para></glossdef>
+          </glossentry><glossentry>
+            <glossterm><command>-P </command><varname>önek</varname></glossterm>
+            <glossdef><para>
+Tüm seçenekler uygulandıktan sonra her olası tamamlamanın
+başlangıcına <replaceable>önek</replaceable> eklenir.
+            </para></glossdef>
+          </glossentry><glossentry>
+            <glossterm><command>-S </command><varname>sonek</varname></glossterm>
+            <glossdef><para>
+Tüm seçenekler uygulandıktan sonra her olası tamamlamanın
+sonuna <replaceable>sonek</replaceable> eklenir.
+            </para></glossdef>
+          </glossentry>
+        </glosslist><para>
+Bir geçersiz seçenek verilmedikçe, <option>-p</option> veya
+<option>-r</option> seçenekleri dışında bir seçenek bir isim argümanı
+ile verilmedikçe, hiç belirtimi olmayan bir isim için bir tamamlama
+belirtimi kaldırılmaya çalışılmadıkça veya bir tamamlama belirtimine
+eklemenin bir hata oluşturması dışında dönüş durumu sıfırdır.
+      </para>
+    </sect1>
+  </chapter>
+</part>

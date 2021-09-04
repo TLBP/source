@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--DOCTYPE article SYSTEM "../docbook/dtd/docbookx.dtd"-->
+<!-- ********************************************************************
+     $Id: linux-winnt-nasil.xml,v 1.2 2002/09/18 20:11:34 nilgun Exp $
+     ******************************************************************** -->
+
+<article id="archive-linux-winnt-nasil">
+  <articleinfo>
+    <title>Linux+WindowsNT NASIL</title>
+    <author>
+      <firstname>H. İlker Temir</firstname>
+      <affiliation>
+          <address><email>itemir@cisco.com</email></address>
+      </affiliation>
+    </author>
+    <pubdate>v1.0, 4 Aralık 1996</pubdate>
+  </articleinfo>
+<div>
+
+<pre>
+
+"You hear maniacal laughter..."
+
+HP Vectra bilgisayarımda NT ve Linux'u sorunsuz çalıştırmak için karşı
+karşıya kaldığım yazılım ve donanım problemleri beni dehşete düşürüyordu.
+
+Hiç bir şart altında bölümleri formatlamak için NT 3.51 altındaki Disk
+Yöneticisi'ni (Disk Administrator) kullanmayın. Size "hiç bir zarar
+vermeyeceğini söylediği" bir imza yazıp yazamayacağını soracaktır. Bana
+bunu yaptığında bölüm tablomu, onu ileride anlatacağım 3. ve 7.
+basamakları uygulayıncaya kadar askıya almıştı. Bu sorunlar yüzünden, bir
+FAT NT bölümü ile sınırlı kalmıştım. Disk Yöneticisi'ni (Disk
+Administrator) doğru bir şekilde çalıştırabilseniz dahi Linux NTFS
+dosyasistemine sahip oluncaya kadar Linux ve NT arasında dosya transferi
+yapabilmek için küçük de olsa bir FAT bölümüne ihtiyacınız olacaktır.
+
+Ben önce Linux'u sonra da NT'yi kurdum, ancak edindiğim tecrübelere göre
+şu anda önce NT'yi ardından da Linux'u kurabileceğimi düşünüyorum.
+
+NOT : Altıncı madde yalnızca Debian Linux 1.1, Linux 2.0.0, HP Vectra XU
+6/150, Adaptec AIC 7880 Ultra (BIOS1.2S-HP), Quantum Fireball 1080S,
+Phoenix uyumlu BIOS GG.06.02. NT 3.51 ile alakalıdır. Bu örnekler bir SCSI
+disk (/dev/sda) için yazılmıştır;  IDE sürücüler için /dev/hda
+kullanabilirsiniz.
+
+1. Linux'u kurun. NT bölümleri de (NT bölümünü FAT olarak yapın) dahil
+olmak üzere tüm disk bölümlemesini Linux altında yapın. Birden fazla NT
+bölümü açma denemelerimin hiç birinde başarılı olamadım, ayrıca NT'yi ilk
+bölüm olarak tanımladım, ancak bunun gerekli olup olmadığını bilmiyorum.
+
+2. /etc/lilo.conf dosyasını düzenleyin ve boot=/dev/sda (Linux
+Yükleyicisini (LILO) Linux bölümüne kurmakta başarılı olamadım - benim
+için /dev/sda idi) ve Linux Yükleyicisini çalıştırın ("lilo"). "ae"
+editörünü kullanmak zorunda kalacaksınız. Merak etmeyin ölmezsiniz.
+
+3. MBR'yi dd if=/dev/sda of=/dev/fd0 bs=512 count=1 şeklinde kayıt edin.
+Bu iş için disket kullanın, bana güvenin ayrıca bunu disk bölümleme
+tablosunu (partition table) her değiştirdiğinizde tekrarlayın.
+
+4. NT, bölüm 1'i kurun. İşlemin ortasında makineyi açıp kapattığında
+bilgisayarınız Linux açacaktır.
+
+5. /etc/lilo/conf dosyasına aşağıdaki gibi bir NT satırı ekleyin :
+
+        other=/dev/sda1
+        label=NT
+        table=/dev/sda
+
+ve yine Linux Yükleyecisini çalıştırın (lilo). Eğer linux yükleyecisini
+buna itiraz ederse (Mesajı tam olarak hatırlayamıyorum) "linear"
+seçeneğini /etc/lilo.conf dosyasında "compact" anahtarının yanına
+yerleştirin. Hatta eğer bölümleme tablonuz NT tarafından işe yaramaz hale
+getirildi ise ya "ignore-table" kullanın ya da 7. maddede söylenenleri
+uygulayın. Ayrıca "fix-table"a bir göz atın. LILO HOWTO size yardımcı
+olabilir.
+
+6. Makinanızı kapatıp açın, Linux Yükleyicisinden NT'yi seçin ve NT'nin
+kurulumunu tamamlayın. Ağ sürücülerini yüklemek için "Boot Disk XU, HP
+Vectra AIC 7880 Driver A.01.02" disketine ve Matrox MGA Millennium ekran
+sürücülerini yüklemek için "XU/VT Drivers and Documentation" CD'sine
+(Yanlış hatırlamıyorsam video/disk4 dizini) ihtiyacınız olacaktır.
+
+7. Linux'a döndüğünüzde, "fdisk"'i çalıştırın ve Linux bölümleri üzerinde
+"partition doesn't end on cylinder boundary" (Bölüm silindir sınırlarında
+bitmiyor) mesajları almadığınızdan emin olun. Bu mesaj NT bölümleri
+üzerinde görülebilir, bu normal bir durumdur.
+
+/dev/sda1 1 1 322 329301 6 DOS 16-bit >=32M
+Partition 1 does not end on cylinder boundary:
+(Bölüm silindir sınırlarında bitmiyor)
+phys=(321, 39, 9) should be (321, 63, 32)
+
+Cfdisk sistemde "ilginçlik" olduğunu söyleyebilir, bunu dikkate almayın.
+
+                                     Unusable                      0.04*
+/dev/sda1             Primary        DOS 16-bit >=32Mb           321.59*
+                                     Unusable                      0.39*
+
+Eğer Linux bölümleri üzerinde benzer hata mesajları alıyorsanız, cfdisk'i
+kullanarak "boot sector" gibi birkaç yerde değişiklik yapmanız
+gerekebilir.
+
+Ancak, eğer NT bilgisayarınızı cfdisk'i bile (/dev/sda'yı göremediğini
+iddia ederek) çalıştıramayacak bir hale getirdiyse daha önce kayıt etmiş
+olduğunuz bölümleme tablosuna (MBR) ihtiyacınız olacaktır. Bunu aşağıdaki
+şekilde yapabilirsiniz :
+
+          dd if=/dev/zero of=/dev/sda bs=512 count=1
+          dd if=/dev/fd0 of=/dev/sda bs=510 count=1
+
+8. Linux'un kalan kurulumunu tamamlayın, ne kadar kolay değil mi ?
+
+Eğer NT'yi tercih ediyorsanız, linux yükleyicisi yerine bölümleme
+tablosunu (MBR) yazabilirsiniz. Bölümleme tablosunu temizlemek için
+aşağıdaki işlemleri uygulayabilirsiniz.
+
+a) dd if=/dev/zero of=/dev/sda bs=446 count=1 (Linux'da) yazın veya SCSI
+yardımcı programlarını kullanarak sabit diskinizi düşük düzeyli (low-level
+format)formatlayın. IDE bir diski bu şekilde formatlamanın zararlı
+olduğunu duydum bu yüzden IDE disk kullanıyorsanız bunu yapmayın.
+
+b) fdisk /mbr (tabii ki herşeyden önce içerisinde fdisk bulunan bir DOS
+disketi hazırlamıştınız) yazın.
+
+c) NT bölümünü silin ve NT kurulum programı ile yeniden oluşturun.
+
+d) NT kurulumuna devam edin.
+
+Not : Bu mesajı postaladıktan sonra, birkaç kişiden NT'nin disk
+yöneticisini (Disk Administrator) kullandıklarını ve NT'yi ve Linux'u ilk
+olarak sorunsuz bir şekilde kurduklarını duydum. Umarım siz de bu gruptan
+olurunuz ancak, belki bu yazı bu şanslı gru bun içinde olmayanlara
+yardımcı olabilir.
+
+Buraya kadar yazdıklarim Linux paketinde yeralan Linux-NT Nasıl'dan
+(HOW-TO) çevirdiklerimdi, şimdi de NT ile Linux'u beraber kurmak için
+-kendi yaptıklarımdan yola çıkarak- yapmanız gerekenleri maddeler halinde
+açıklayayım. Yalnız bu yaptıklarımda OS/2'n in sistem disketini kullandım,
+böyle bir alternatifi olmayanlara ancak fikir vermek açısından faydalı
+olabilir.
+
+1. Diskim için OS/2 Warp 3.0'ın fdisk programını kullandım, bence ilk iş
+olarak (elinizde yoksa, bir arkadaşınızdan ödünç alabilirsiniz ;-)) bir
+OS/2 sistem disketi bulun.
+
+2. Bilgisayarı açıp fdisk'i çalıştırın, OS/2'nin Açılış Düzenleyicisini
+(Boot Manager) kurun, Açılış Düzenleyici 2MB'lik bir yer kaplayacaktır.
+Daha sonra, iki adet birincil (primary) bölüm oluşturun. Bunlardan biri NT
+için diğeri de Linux için olacağında n büyüklüklerini istediğiniz gibi
+ayarlayabilirsiniz. Burada her iki bölümü de "Add to Boot Manager Menu"
+ile - birer isim vererek, Linux, WinNT gibi - Açılış düzenleyicisinin
+menüsüne ekleyin. Ve yaptıklarınızı kayıt edip çıkın. OS/2'nin fdisk'i ile
+işin iz bitti.
+
+3. Bilgisayarınızı açtığınızda karşınıza açılış düzenleyicisi çıkacaktır.
+Burada hiçbir bölüm formatlı olmadığı için, herhangi biri ile açılış yapma
+şansınız olmayacaktır.
+
+4. Bu yüzden NT'yi kurmadan, önce açılış düzenleyicisinden NT bölümünü
+seçerek Linux bölümünü "hidden" yapın.
+
+5. Daha sonra bir sistem disketi ile açarak NT'nizi kurun. Göreceksiniz ki
+sorun çıkmayacaktır (En azından bende çıkmadı).
+
+6. Linux'u kurmak için Linux bölümünü aktif hale getirmenize gerek yok,
+ancak linux'u kurmadan fdisk ile "linux native" yapacağınız bölümü NT'nin
+bölümü ile karıştırmamaya özen gösterin ;-)
+
+7. Linux yükleyicinsinin (lilo) ayarlarını yaparken de -mesajı tam
+hatırlamıyorum ancak- kendini MBR yerine kendi kullandığı bölümün başına
+(boot sector) kurmasını sağlayın. Bu sayede linux'un OS/2'nin açılış
+yükleyicisini etkisiz hale getirmesini engelle miş olursunuz, ayrıca
+açılıştaki bekleme süresini kaldırmak da (0 yapmak) iyi bir fikir
+olabilir, çünkü tüm işlemler OS/2 açılış düzenleyicisi tarafından
+yapılacaktır.
+
+8. Linux'un kurulumunu da tamamladığınızda, eksik kalan hiç birşey
+olmayacak, açılıştaki açılış düzenleyicisi ile istediğiniz bölümü açmanız
+mümkün.
+
+Ben bu sistemi -gerek var mı bilmiyorum ama !- RHINO9 ana kartlı bir
+pentium-100'de 1 GB'lik Seagate disk üzerinde kurdum ve diski üç (Linux,
+Windows NT Server 4.0, DOS+OS/2) olmak üzere) bölüme ayırdım ve halen de
+sorunsuz olarak kullanıyorum. Ayrıca NT 'yi FAT üzerine kurdum, NT dosya
+sistemini (NTFS) kullanmadım ancak bu durumda da sorun çıkacağını
+sanmıyorum.
+
+NOT : Sanırım, tüm bunlar OS/2 açılış düzenleyicisi kullanılmadan linux
+yükleyicisi (lilo) ile de yapılabilir, ancak denemediğim için şu aşamada
+birşey söylemem güç.
+
+</pre></div></article>

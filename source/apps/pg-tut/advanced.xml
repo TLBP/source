@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ********************************************************************
+     $Id: advanced.xml,v 1.8 2002/12/20 22:46:09 nilgun Exp $
+     ******************************************************************** -->
+
+ <chapter id="pgsql-tutorial-advanced">
+  <title>Gelişmiş Özellikler</title>
+  <para>
+Bundan önceki bölümlerde bir <productname>PostgreSQL</productname> veritabanına nasıl veri girilip, onlara nasıl erişileceğini işledik. Bu bölümde ise PostgreSQL'in daha gelişmiş özellikleri olan verileri nasıl daha kolay idare edilebileceği ve veri kaybına ya da bozulma riskine karşı alınacak önlemlerden bahsedeceğiz. En sonunda, PostgreSQL'in bir kaç ek özelliğine göz atma şansımız olacak.
+   </para><para>
+Bu kısımda <xref linkend="pgsql-tutorial-sql"/> kısmında gördüğünüz örnekleri çoğaltma ve geliştirme şansınız olacak, ki bu yüzden bu kısmın da dikkatle okunması sizin lehinize olur. Bu bölümden sonraki alıştırmaları ise <filename>tutorial/advanced.sql</filename> dosyasında bulabilirsiniz. Bu dosya ek olarak burada tekrar belirtmeyeceğimiz ama yüklenmesi gereken örnek veriler içermektedir. (<xref linkend="pgsql-tutorial-sql"/> sayfasında dosya kullanımı açıklanmıştır.)
+  </para>
+  <sect1 id="pgsql-tutorial-views">
+   <title>Sanal Tablolar</title>
+   <para>
+Bu bölümü okumadan önce <xref linkend="pgsql-tutorial-join"/> bölümünü okumanızı öneririz. Diyelim ki, uygulamanızda hava durumu kayıtları ile şehirlerin yerlerinin birarada listelenmesi ile çok ilgileniyorsunuz. Bunun için bir sorgu oluşturup bu sorguya isim verebilir ve bu sorguya herhangi bir tabloya erişir gibi erişebilirsiniz.
+   </para><para>
+<programlisting>
+CREATE VIEW myview AS
+    SELECT city, tmp_lo, tmp_hi, prcp, date, location
+        FROM weather, cities
+        WHERE city = name;
+
+SELECT * FROM myview;
+</programlisting>
+   </para><para>
+Sanal tablo kullanımı iyi SQL veritabanı tasarımında önemli bir rol oynar. Sanal tablolar, tablolarınızdaki yapının ayrıntılarını toparlamanızı mümkün kılarak, arkasında kararlı bir arayüz olarak uygulamanızın gelişimini değiştirebilir.
+   </para><para>
+Sanal tablolar, gerçek bir tablonun kullanılabildiği hemen her yerde kullanılabilir. Fakat, sanal tabloları başka sanal tabloları oluşturmak için kullanmak pek iyi bir yöntem değildir.
+   </para>
+  </sect1><sect1 id="pgsql-tutorial-fk">
+   <title>Anahtarlar</title>
+   <para>
+<xref linkend="pgsql-tutorial-sql"/> kısmındaki <literal>weather</literal> ve <literal>cities</literal> tablolarını tekrar ele alalım ve <literal>weather</literal> tablosuna girilecek kayıtlardan <literal>cities</literal> tablosundaki kayıtlarla eşleşmeyecek olanlarının tabloya girilmeyeceğinden emin olmak istediğinizi varsayalım. Buna <wordasword>verilerin göreli bütünlüğünün sağlanaması</wordasword> diyoruz. Basitleştirmeli veritabanı sistemlerinde bu şöyle gerçeklenir: Önce <literal>cities</literal> tablosunda eşleşen bir kaydın olup olmadığına bakılır ve yeni <literal>weather</literal> kaydının tabloya girilip girilmeyeceğine karar verilir. Bu yaklaşım çok sakıncalı sorunlar içerir, ancak <productname>PostgreSQL</productname> bunu sizin için yapabilir.
+   </para><para>
+Tabloların yeni bildirimleri şöyle olurdu:
+   </para><para>
+<programlisting>
+CREATE TABLE cities (
+        city     varchar(80) primary key,
+        location point
+);
+
+CREATE TABLE weather (
+        city     varchar(80) references cities(city),
+        tmp_lo   int,
+        tmp_hi   int,
+        prcp     real,
+        date     date
+);
+</programlisting>
+   </para><para>
+Şimdi geçersiz bir kaydı girmeye çalışalım:
+   </para><para>
+<programlisting>
+INSERT INTO weather VALUES ('Berkeley', 45, 53, 0.0, '1994-11-28');
+</programlisting>
+   </para><para>
+<screen>
+ERROR:  insert or update on table "weather" violates foreign key constraint
+"weather_city_fkey"
+DETAIL:  Key (city)=(Berkeley) is not present in table "cities".
+</screen>
+   </para><para>
+Anahtarların davranışları uygulamanıza en iyi şekilde uyarlanabilir. Bu eğitmende bu basit örnekten daha ileri gitmeyeceğiz, fakat daha fazla bilgi edinmek isterseniz, <productname>PostgreSQL</productname> 8.0 belgelerindeki <ulink url="http://&pgsql-web;/docs/8.0/static/ddl.html">Veri Tanımlama</ulink> kısmına bakabilirsiniz. Anahtarları doğru şekilde kullanarak veritabanı uygulamalarınızın kalitesini oldukça arttırabilirsiniz, dolayısıyla anahtar kullanımını iyi öğrenmenizi öneririz.
+   </para>
+  </sect1><sect1 id="pgsql-tutorial-transactions">
+   <title>Hareketler</title>
+   <para>
+<wordasword>Hareketler</wordasword> tüm veritabanı sistemlerinin en temel konularından biridir. Bir hareketin başlıca özelliği ya hep ya hiç şeklinde uygulanmak üzere çok sayıda adımın tek bir adım haline getirilmesidir. Hareketi oluşturan adımlar arasındaki işlemler onunla işbirliği yapan diğer hareketlere görünür değildir ve hareketin tamamlanmasını engelleyen bazı olumsuzluklar olduğunda hareketi oluşturan adımların hiçbiri veritabanını etkilemez.
+   </para><para>
+Örneğin, bir bankanın şube hesapları (branches) olsun ve bu hesaplarda çeşitli müşteri hesapları (accounts) ve bu hesaplarda da bir miktar nakit (balance) bulunsun. Alice'in hesabından 100.00 doları Bob'ın hesabına geçirmek istediğimizi kabul edelim. Son derece basitleştirerek, SQL komutları şöyle olurdu:
+   </para><para>
+<programlisting>
+UPDATE accounts SET balance = balance - 100.00
+    WHERE name = 'Alice';
+UPDATE branches SET balance = balance - 100.00
+    WHERE name = (SELECT branch_name FROM accounts WHERE name = 'Alice');
+UPDATE accounts SET balance = balance + 100.00
+    WHERE name = 'Bob';
+UPDATE branches SET balance = balance + 100.00
+    WHERE name = (SELECT branch_name FROM accounts WHERE name = 'Bob');
+</programlisting>
+   </para><para>
+Bu komutların ayrıntılarının burada bir önemi yoktur; önemli olan bunun basit işlemler olarak değil, ayrı ayrı güncellemelerin hepsinin birden yapılmasıdır. Bankamızın memurları bu işlemlerin ya hepsinin yapılmasını ya da hiçbirinin yapılmamasını ister. Eğer Bob, Alice'in hesabından yeterli miktarı alamazsa ya da Alice'in hesabından gerekli miktar alındığı halde Bob'un hesabına geçmezse sistemin hata vermesinden başka her iki müşteri de memnun olmayacaktır. Yani, eğer işlemlerden biri gerçekleşmezse bu adımların hiçbirinin veritabanını etkilemeyeceğini garantilemeliyiz. Yapılacak işlemlerin bir <wordasword>hareket</wordasword> içinde gruplanması bize bu garantiyi sağlar.  Bir hareket <wordasword>atomik</wordasword> olmalıdır, denir: diğer hareketler açısından ya tüm adımların hepsi gerçekleşmeli ya da hiçbiri gerçekleşmemelidir.
+   </para><para>
+Kesinlikle emin olmamız gereken bir nokta ise bir hareket başarı ile işlemi yürütmüş olsa bile, bilginin tamam olarak veritabanına geçip geçmediğidir, son anda bir sistem kaynaklı hata olsa bile. Örneğin, Bob'un hesabından para çekmeye çalıştığımızda, o daha bankanın kapısında çıkmadan, paranın bir hata sonucu onun hesabında çekilmiş olarak gözükmemesi gibi bir şansı göze alamayız. Tam bu noktada bir veritabanı, bir hareketle ilgili tüm işlemler yapılıp kayıtlar sabit disk gibi bir saklama alanına aktarılmadan 'tamam' sonucunu göndermez.
+   </para><para>
+Bir diğer önemli nokta ise çok sayıda hareket aynı anda çalışırken birbirlerinin tamamlanmamış sonuçlarını görmemesi gerektiğidir. Örneğin bir hareket tüm şubelerdeki (branches) hesap miktarlarını toplarken başka bir hareket Alice ya da Bob'un hesabı üzerinde işlem yapamayacaktır. Kısaca bir hareket tamam benim işim bitti demeden, diğer bir hareket bir işlem başlatamayacaktır.
+   </para><para>
+PostgreSQL'de bir hareket, <userinput>BEGIN</userinput> ve <userinput>COMMIT</userinput> SQL komutları ile sarmalanmış adımlardan oluşur. Bu durumda, banka işlemlerimiz aslında şöyle görünecektir:
+   </para><para>
+<programlisting>BEGIN;
+UPDATE accounts SET balance = balance - 100.00
+    WHERE name = 'Alice';
+-- vesaire vesaire
+COMMIT;
+</programlisting>
+   </para><para>
+Hareketin de belli bir noktasında işlemin iptal edilmesi gerekebilir (Mesela Alice'in hesabı aktarılacak miktar için yetmeyip negatife düşerse), bunun için <userinput>COMMIT</userinput> yerine <userinput>ROLLBACK</userinput> kullanabiliriz ve böyle bir durumda tüm güncellemeler iptal edilir.
+   </para><para>
+<productname>PostgreSQL</productname> aslında her SQL cümlesini sanki bir hareket gerçekleştiriyormuş gibi ele alır. Bir <userinput>BEGIN</userinput> komutu kullanmazsanız, her cümlenin başına örtük bir <userinput>BEGIN</userinput> ve cümle başarılı ise sonuna da örtük bir <userinput>COMMIT</userinput> getirilir. Bu nedenle, <userinput>BEGIN</userinput> ve <userinput>COMMIT</userinput> komutları ile sarmalanmış cümlelere bazan <wordasword>hareket kümesi</wordasword> de dendiği olur.
+   </para><note><para>
+Bazı istemci kütüphaneleri <userinput>BEGIN</userinput> ve <userinput>COMMIT</userinput> komutlarını kendiliğinden koyar, böylece istemeden hareket kümelerinin etkileriyle karşılaşırsınız. Bu bakımdan kullandığınız arayüzün belgelerine bakmayı unutmayın.
+    </para></note><para>
+Bir hareketi içinde kayıt noktaları belirterek cümle cümle  denetlemek de mümkündür. Kayıt noktaları bir hareketin belli parçalarını seçerek iptal etmeyi mümkün kılar. Bir kayıt noktasını <userinput>SAVEPOINT</userinput> ile tanımladıktan sonra ihtiyaç duyarsanız, <userinput>ROLLBACK TO</userinput> ile bu kayıt noktasına kadar olan kısmı geri sarabilirsiniz. Bir hareketin bu iki komut arasında kalan veritabanı değişiklikleri iptal edilir, fakat, bu bölümden önce yapılanlar veritabanında kalır.
+   </para><para>
+Bir kayıt noktasına kadar geri sarıldıktan sonra, işlem bu noktadan devam eder, öyle ki, bu defalarca yapılabilir. Tersine, belli bir kayıt noktasına geri sarmaya artık ihtiyaç duymayacağınızdan emin olduğunuzda, onu serbest bırakabilirsiniz, böylece sistem bazı özkaynakları serbest bırakabilir. Serbest bırakmanın da, bir kayıt noktasına geridönmenin de tanımlanmasının ardından tüm kayıt noktalarının özdevimli olarak serbest bırakılacağını unutmayın.
+   </para><para>
+Bunların hepsi hareket kümesinin içinde gerçekleşir, dolayısıyla, bu işlemlerin hiçbiri diğer veritabanı oturumlarına görünür değildir. Bir hareket kümesini işleme sokulduğunda, geriye sarma işlemleri diğer oturumlara asla görünür olmazken, işleme sokulan diğer eylemler bir birim olarak diğer oturumlara görünür hale gelir.
+   </para><para>
+Bankanın veritabanını hatırlarsanız, Alice'in hesabından Bob'un hesabına 100 dolar aktarmıştık ama daha sonra baktığımızda, paranın Wally'nin hesabına geçmesi gerektiğini keşfetmiş olalım. Bunun  için kayıt noktalarını şöyle kullanabiliriz:
+   </para><para>
+<programlisting>
+BEGIN;
+UPDATE accounts SET balance = balance - 100.00
+    WHERE name = 'Alice';
+SAVEPOINT my_savepoint;
+UPDATE accounts SET balance = balance + 100.00
+    WHERE name = 'Bob';
+-- dur bakalım ... Wally'nin hesabını kullanacağız
+ROLLBACK TO my_savepoint;
+UPDATE accounts SET balance = balance + 100.00
+    WHERE name = 'Wally';
+COMMIT;
+</programlisting>
+   </para><para>
+Bu örnek, şüphesiz fazla basit, fakat bir hareket bloğu üzerinde kayıt noktalarınını kullanımı ile ilgili yeterince denetim var. Dahası, sistem tarafından bir hatadan dolayı çıkış istendiğinde, <userinput>ROLLBACK TO</userinput> bir hareket kümesinin denetimini yeniden kazanmanın tek yoludur, tamamen gerisarma yapılıp tekrar başlanabilir.
+   </para>
+  </sect1><sect1 id="pgsql-tutorial-inheritance">
+   <title>Kalıtım</title>
+   <para>
+Kalıtım (miras alma), nesne yönelimli veritabanlarından kaynaklanan bir kavramdır. Bu sayede veritabanı tasarımında ilginç ve yeni olasılıkların yolu açılmıştır.
+   </para><para>
+İki tablo oluşturalım: Bir <literal>cities</literal> tablosu ile bir <literal>capitals</literal> tablosu. Doğal olarak, başkentler aynı zamanda şehirdirler, dolayısıyla şehirleri listelerken dolaylı olarak başkentleri de bir şekilde göstermek isteriz. Biraz akıllıca hareket ederek, şöyle bir şema kullanabilirsiniz:
+   </para><para>
+<programlisting>
+CREATE TABLE capitals (
+  name       text,
+  population real,
+  altitude   int,    -- (feet cinsinden)
+  state      char(2)
+);
+
+CREATE TABLE non_capitals (
+  name       text,
+  population real,
+  altitude   int     -- (feet cinsinden)
+);
+
+CREATE VIEW cities AS
+  SELECT name, population, altitude FROM capitals
+    UNION
+  SELECT name, population, altitude FROM non_capitals;
+</programlisting>
+   </para><para>
+Çok fazla sorgulamadan bu doğru çalışır, fakat, bazı satırları güncellemek istediğinizde tuhaf şeyler olur.
+   </para><para>
+Bu daha iyi bir çözümdür:
+   </para><para>
+<programlisting>
+CREATE TABLE cities (
+  name       text,
+  population real,
+  altitude   int     -- (feet cinsinden)
+);
+
+CREATE TABLE capitals (
+  state      char(2)
+) INHERITS (cities);
+</programlisting>
+   </para><para>
+Bu durumda <literal>capitals</literal> tablosu, <literal>cities</literal> tablosundaki bütün sütunları (<literal>name</literal>, <literal>population</literal> ve <literal>altitude</literal>) miras alacaktır. <literal>name</literal> sütununun türü <literal>text</literal> olup, değişken uzunlukta dizge kabul eden bir PostgreSQL türüdür. Eyalet başkentleri ek bir sütuna, eyalet sütununa sahiptir ve hangi eyaletin başkenti olduğu bu sütunda belirtilir. PostgreSQL'de bir tablo, sıfır ya da daha fazla tablo miras alabilir.
+   </para><para>
+Örneğin, ağağıdaki sorgu, tüm şehirlerin isimleri arasından başkentler de dahil 500 feet'ten daha yüksekteki şehirleri bulmaktadır:
+   </para><para>
+<programlisting>
+SELECT name, altitude
+  FROM cities
+  WHERE altitude &gt; 500;
+</programlisting>
+   </para><para>
+Sorgu şöyle dönecektir:
+   </para><para>
+<screen>
+   name    | altitude
+-----------+----------
+ Las Vegas |     2174
+ Mariposa  |     1953
+ Madison   |      845
+(3 rows)
+</screen>
+   </para><para>
+Aşağıdaki sorgu ise, eyalet başkenti olmayan şehirlerden 500 feet ve daha yüksekte olan şehirleri bulmaktadır:
+   </para><para>
+<programlisting>
+SELECT name, altitude
+    FROM ONLY cities
+    WHERE altitude &gt; 500;
+</programlisting>
+   </para><para>
+<screen>
+   name    | altitude
+-----------+----------
+ Las Vegas |     2174
+ Mariposa  |     1953
+(2 rows)
+</screen>
+   </para><para>
+Buradaki <literal>ONLY</literal> deyimi sorgunun sadece <literal>cities</literal> tablosunda yapılacağını <literal>cities</literal> tablosunu miras alan tablolarda yapılmayacağını belirtir. Daha önce bahsettiğimiz <userinput>SELECT</userinput>, <userinput>UPDATE</userinput> ve <userinput>DELETE</userinput> cümleleri de dahil olmak üzere pek çok SQL cümlesi <literal>ONLY</literal> deyimini destekler.
+   </para><note><para>
+Kalıtım yeterince kullanışlı olduğundan, kullanışlılığını sınırlayan tekil kısıtlar ve anahtarlar ile bütünleştirilmemiştir. Daha fazla bilgi için <productname>PostgreSQL</productname> 8.0 belgelerindeki <ulink url="http://&pgsql-web;/docs/8.0/static/ddl-inherit.html">Kalıtım</ulink> bölümüne bakınız.
+    </para></note>
+  </sect1><sect1 id="pgsql-tutorial-conclusion">
+   <title>Sonuç</title>
+   <para>
+PostgreSQL'in bu eğitmende yeni SQL kullanıcılarına yönelik olanlar dışında, bahsedilmeyen daha bir çok özelliği mevcuttur. Bu özellikler hakkında daha ayrıntılı bilgiyi bu eğitmeni de içeren <ulink url="http://&pgsql-web;/docs/8.0/static/index.html"><productname>PostgreSQL</productname> 8.0 belgelerinde</ulink> bulabilirsiniz.
+   </para><para>
+Daha fazla bilgiye ihtiyaç duyarsanız, <ulink url="http://www.postgresql.org">PostgreSQL web site</ulink>sinde yeterince kaynak bulabilirsiniz.
+   </para>
+  </sect1>
+ </chapter>
+
+
+

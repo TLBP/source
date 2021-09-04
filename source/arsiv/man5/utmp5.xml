@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ********************************************************************
+     $Id: utmp5.xml,v 1.1 2002/09/30 18:07:50 nilgun Exp $
+     ******************************************************************** -->
+
+<sect1 id="archive-man-5-utmp">
+  <sect1info>
+    <title>utmp(5)</title>
+  </sect1info>
+<div>
+<h2>İSİM</h2>
+<p/>
+utmp, wtmp - giris kayitlari
+
+<h2>KULLANIM</h2>
+<p/>
+#include &lt;utmp.h&gt;
+
+<h2>TANIM</h2>
+<p/>
+<b>utmp</b>
+
+dosyasi, o an icin sistemi kimlerin kullandigini ogrenmek isteyenlere bu
+olanagi sunar. Butun programlar utmp gunlugunu kullanmadiklarindan, sistemde
+daha fazla kullanici olabilir.
+<p/>
+
+<b>Uyari:</b> Bir cok sistem programi <b>utmp</b>'nin dogruluguna bagli
+oldugundan, bu dosya yazilabilir olmamalidir. Herhangi bir kullaniciya
+<b>utmp</b>'ye yazma hakki verdiginizde sistem dosyalarinin dogrulugunu
+tehlikeye atarsiniz.
+<p/>
+
+Bu dosya, icerik (#include) dosyasinda tanimlanmis olan asagidaki yapidaki
+satirlardan olusmustur:
+<dl><dd>
+<pre>
+
+#define UT_UNKNOWN            0
+#define RUN_LVL               1
+#define BOOT_TIME             2
+#define NEW_TIME              3
+#define OLD_TIME              4
+#define INIT_PROCESS          5
+#define LOGIN_PROCESS         6
+#define USER_PROCESS          7
+#define DEAD_PROCESS          8
+
+#define UT_LINESIZE           12
+#define UT_NAMESIZE           8
+#define UT_HOSTSIZE           16
+
+struct utmp {
+  short ut_type;              /* giris tipi */
+  pid_t ut_pid;               /* surecin numarasi (PID) */
+  char ut_line[UT_LINESIZE];  /* tty adi - &quot;/dev/&quot; */
+  char ut_id[2];              /* init id yada kisa tty-adi */
+  time_t ut_time;             /* giris zamani */
+  char ut_user[UT_NAMESIZE];  /* kullanici ismi */
+  char ut_host[UT_HOSTSIZE];  /* uzaktan giris icin makina adi */
+  long ut_addr;               /* uzaktaki makinanin IP adresi */
+};
+</pre>
+</dd>
+</dl>
+<p/>
+Bu yapi, kullanicinin ucbirimi, kullanicinin giris ismi ve
+<em>time</em>(2)
+
+tipindeki giris zamani ile ilgili olan bir ozel dosyanin ismini vermektedir.
+Eger dizge alanlari ilgili alanin uzunlugundan daha kisa ise, <b>'\0'</b>
+ile bitirilir.
+<p/>
+
+Dosyanin ilk satirlari <em>init</em>(8) programinin
+<em>inittab</em>(5) dosyasini
+islemesinin sonucunda yaratilmistir. Herhangi bir satir islenmeden once;
+<em>init</em>(8) programi, <b>ut_type</b>
+icerigi <b>DEAD_PROCESS</b> ya da
+<b>RUN_LVL</b> olmayan ve <b>ut_pid</b> icerigindeki surec tanimlayici
+numarasina (PID) sahip bir surec bulunmayan butun kayitlarin <b>ut_user</b>,
+<b>ut_host</b> ve <b>ut_time</b> bilgilerini bos baytlarla doldurarak ve
+<b>ut_type</b> icerigini <b>DEAD_PROCESS</b> olarak degistirerek, utmp
+dosyasini temizler. Eger istenilen <b>ut_id</b> iceriginde bos kayit
+bulunamazsa, init yeni bir kayit yaratir. <b>ut_id</b> bilgisini inittab
+dosyasindan alir, <b>ut_pid</b> ve <b>ut_time</b> bilgilerini o andaki
+degerlerle doldurur ve <b>ut_type</b> icerigini de <b>INIT_PROCESS</b> yapar.
+<p/>
+
+<em>getty</em>(8) pid bilgisi ile satiri bulur, <b>ut_type</b> icerigini
+<b>LOGIN_PROCESS</b> olarak degistirir, <b>ut_time</b> ve <b>ut_line</b>
+iceriklerini de uygun olarak saptar ve baglanti kurulmasini bekler.
+Herhangi bir kullanici tanimlandiktan sonra,
+<em>login</em>(8) programi,
+<b>ut_type</b> icerigini <b>USER_PROCESS</b> olarak degistirir ve
+<b>ut_time</b>, <b>ut_host</b> ve <b>ut_addr</b> iceriklerini saptar.
+<em>getty</em>(8) ve <em>login</em>(8) programlarina bagli olarak, aranan
+kayitlar genelde tercih edilen <b>ut_pid</b> yerine <b>ut_line</b> bilgisi
+ile de bulunabilir.
+<p/>
+
+<em>init</em>(8) bir surecin bittigini anladiginda, <b>ut_pid</b> bilgisi ile
+gerekli utmp satirini bulur, <b>ut_type</b> icerigini <b>DEAD_PROCESS</b>
+olarak degistirir ve <b>ut_user</b>, <b>ut_host</b> ve <b>ut_time</b>
+iceriklerini bos baytlarla doldurarak temizler.
+<p/>
+
+<em>xterm</em>(1) ve diger ucbirim oykunculeri (emulator) dogrudan bir
+<b>USER_PROCESS</b> kaydi yaratirlar ve <b>/dev/ttyp</b><em>%c</em> 'nin son
+iki harfini ya da <b>/dev/pts/</b><em>%d</em> icin <b>p</b><em>%d</em>
+bilgisini kullanarak <b>ut_id</b> bilgisini olustururlar. Eger bu tanimlayici
+numara icin <b>DEAD_PROCESS</b> bilgisi bulurlarsa, bu satiri yeniden
+kullanirlar; eger bulmazlarsa yeni bir satir yaratirlar. Eger yapabilirlerse,
+cikacaklari zaman, kullandiklari satiri <b>DEAD_PROCESS</b> olarak
+isaretlerler ve bununla birlikte <b>ut_line</b>, <b>ut_time</b>, <b>ut_user</b>
+ve <b>ut_host</b> iceriklerini de temizlemeye calisirlar.
+<p/>
+
+<em>xdm</em>(8) programi, kendisine atanmis bir ucbirim olmadigindan, utmp
+kayitlari yaratmaz. Bir satir yaratmasini saglamak: &quot;finger: can not stat
+/dev/machine.dom&quot; gibi bir soruna yol acacaktir. Bununla birlikte,
+<em>ftpd</em>(8) programinin yaptigi gibi, wtmp satirlari yaratmalidir.
+<p/>
+
+Normal olarak, <em>telnetd</em>(8) programi bir <b>LOGIN_PROCESS</b> satiri
+olusturur ve gerisini <em>login</em>(8) programina birakir. Oturum sona erdikten
+sonra, <em>telnetd</em>(8) programi tanimlandigi gibi utmp satirini siler.
+<p/>
+
+<b>wtmp</b> dosyasi butun giris cikis bilgilerini kaydeder. Bu dosyanin
+duzeni - bos bir kullanici isminin, atanmis ucbirimden cikis islemini
+belirtmesinin disinda - <b>utmp</b> ile aynidir. Ayrica, <b>&quot;shutdown&quot;</b>
+veya <b>&quot;reboot&quot;</b> kullanici ismiyle birlikte <b>&quot;~&quot;</b> seklindeki
+ucbirim adi, bir sistem kapanisini veya yeniden baslatimini belirtir
+ve son olarak da, <b>&quot;|&quot;</b>/<b>&quot;}&quot;</b> seklindeki ucbirim isim ciftleri -
+<em>date</em>(1) programi sistemin saatini degistirdiginde - eski/yeni sistem
+saatini gunluk dosyasina yazar. <b>wtmp</b> dosyasi,
+<em>login</em>(1),
+<em>init</em>(1) ve bir cok <em>getty</em>(1) programindan bazilari tarafindan
+kullanilir. Bu programlarin hicbiri bu dosyayi yaratmadigindan, dosyanin
+silinmesi, kayit tutma isleminin kapatilmasina yarar.
+
+<h2>DOSYALAR</h2>
+<p/>
+/var/run/utmp
+<br/>
+
+/var/log/wtmp
+
+<h2>BENZERLIK</h2>
+<p/>
+Linux utmp satirlari ne v7/BSD, ne de SYSV ile benzesmektedir. Tam olarak
+bu ikisinin karisimidir. v7/BSD'de daha az bilgi alani vardir; bu
+eksikliklerin en onemlisi <b>ut_type</b> bilgisinin olmamasi ve bunun,
+dogal v7/BSD-benzer programlarin olu yada giris satirlarini gostermesidir.
+Ayrica Linux'ta, oturumlara zaman araliklari atayan bir yapilandirma dosyasi
+yoktur. BSD'de ise <b>ut_id</b> bilgisi olmadigindan bu yapilandirma dosyasini
+kullanir. Linux'ta (SYSV'de oldugu gibi), bir defa yazildiktan sonra, bir
+kayitin <b>ut_id</b> bilgisi - o zaman araligini bir yapilandirma dosyasina
+gerek duymadan elde ettigi icin - hic bir zaman degistirilmez. <b>ut_id</b>
+bilgisinin temizlenmesi, bozulmus utmp satirlarina ve boylece guvenlik
+bosluklarina yol acabilecek &quot;race condition&quot;larla sonuclanir. Bu anlatilan
+bilgileri bos baytlarla doldurarak temizlemek SYSV anlambiliminde
+gerekmemektedir; ancak bu islemi yapmak BSD anlambiliminde calistigini
+varsayan ve utmp dosyasini degistirmeyen bir cok programin calismasina
+olanak saglayacaktir. Yukarida yazildigi gibi, satir icerikleri icin Linux
+BSD kurallarini kullanir. SYSV ise sadece isaretlemek icin &quot;type&quot; alanini
+kullanir ve  <b>&quot;new time&quot;</b> gibi bilgi iletilerini ilgili satira yazar.
+Olmus islevlerin cikis durumunu yazmak icin, SYSV'nin bir alani daha vardir.
+<b>UT_UNKNOWN</b> bir Linux bulusu gibi gozukmektedir. Linux'ta <b>ACCOUNTING</b>
+gibi bir tip yoktur. SYSV'de <b>ut_host</b> veya <b>ut_addr</b> alanlari yoktur.
+Cesitli benzer diger sistemlerin bir ozelligi olan, utmp gunlugu tutulmasinin
+dosyayi silerek kaldirilmasi islevi, Linux'ta yoktur ve bu nedenle utmp
+dosyasi mutlaka bulunmalidir. Eger
+<em>who</em>(1) programinin calistirilmasini
+engellemek isterseniz, utmp dosyasinda olan herkese okuma hakkini
+kapatmamalisiniz.
+
+<h2>KISITLAMALAR</h2>
+<p/>
+Dosyanin duzeni makinaya baglidir, bu nedenle sadece yaratildigi makina
+mimarisinde kullanilmasi onerilir.
+
+<h2>ILGILI KOMUTLAR</h2>
+<p/>
+<b>ac</b>(1), <b>date</b>(1),
+<b>last</b>(1), <b>login</b>(1),
+<b>who</b>(1),
+<b>getutent</b>(3),
+<b>init</b>(8)
+
+<p/>
+
+</div></sect1>

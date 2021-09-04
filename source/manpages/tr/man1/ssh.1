@@ -1,0 +1,517 @@
+.\" http://belgeler.org \N'45' 2006\N'45'11\N'45'26T10:18:30+02:00 
+.\" \N'45'*\N'45' nroff \N'45'*\N'45' 
+.\" 
+.\" Author: Tatu Ylonen <ylo@cs.hut.fi> 
+.\" Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland 
+.\" All rights reserved 
+.\" 
+.\" As far as I am concerned, the code I have written for this software 
+.\" can be used freely for any purpose. Any derived versions of this 
+.\" software must be clearly marked as such, and if the derived work is 
+.\" incompatible with the protocol description in the RFC file, it must be 
+.\" called by a name other than "ssh" or "Secure Shell". 
+.\" 
+.\" Copyright (c) 1999,2000 Markus Friedl. All rights reserved. 
+.\" Copyright (c) 1999 Aaron Campbell. All rights reserved. 
+.\" Copyright (c) 1999 Theo de Raadt. All rights reserved. 
+.\" 
+.\" Redistribution and use in source and binary forms, with or without 
+.\" modification, are permitted provided that the following conditions 
+.\" are met: 
+.\" 1. Redistributions of source code must retain the above copyright 
+.\" notice, this list of conditions and the following disclaimer. 
+.\" 2. Redistributions in binary form must reproduce the above copyright 
+.\" notice, this list of conditions and the following disclaimer in the 
+.\" documentation and/or other materials provided with the distribution. 
+.\" 
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR \N'96'\N'96'AS IS\N'39'\N'39' AND ANY EXPRESS OR 
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES 
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, 
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT 
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY 
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT 
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF 
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+.\"   
+.TH "ssh" 1 "25 Eylül 1999" "BSD" "BSD Genel Komutları Kılavuzu"
+.nh   
+.SH İSİM
+ssh \N'45' OpenSSH SSH istemcisi (uzaktan oturum açma aracı)   
+.SH KULLANIM 
+.nf
+\fBssh\fR [ \fB\N'45'l \fR\fIkullanıcı\fR ] \fIkonakismi\fR | \fIkullanıcı@konakismi\fR [ \fIkomut\fR ]
+
+\fBssh\fR [ \fB\N'45'afgknqstvxACNTX1246\fR ] [ \fB\N'45'b \fR\fIbağlantı_adresi\fR ]
+\    [ \fB\N'45'c \fR\fIşifre_belirtimi\fR ] [ \fB\N'45'e \fR\fIönceleme_krk\fR ] [ \fB\N'45'i \fR\fIkimlik_dosyası\fR ]
+\    [ \fB\N'45'l \fR\fIkullanıcı\fR ] [ \fB\N'45'm \fR\fImac_belirtimi\fR ] [ \fB\N'45'o \fR\fIseçenek\fR ] [ \fB\N'45'p \fR\fIport\fR ]
+\    [ \fB\N'45'F \fR\fIyapılandırma_dosyası\fR ] [ \fB\N'45'L \fR\fIyerelport:uzakkonak:uzakkonakportu\fR ]
+\    [ \fB\N'45'R \fR\fIuzakport:yerelkonak:yerelkonakportu\fR ] [ \fB\N'45'D \fR\fIport\fR ]
+\    \fIkonakismi\fR | \fIkullanıcı@konakismi\fR [ \fIkomut\fR ]
+.fi
+   
+.SH AÇIKLAMA
+\fBssh\fR  (SSH istemci) uzaktaki bir makinada komut çalıştırmak için uzaktaki makinada bir kullanıcı oturumu açmayı sağlayan bir uygulamadır. \fBrlogin\fR ve \fBrsh\fR\N'39'ın yerini alması amaçlanmıştır. \fBssh\fR güvenli olmayan bir ağ üzerindeki  güvenilir olmayan iki sistemin şifreli dolayısı ile güvenli iletişim kurmalarını sağlar.  X11 bağlantıları ve çeşitli TCP/IP bağlantı portları da güvenli kanal üzerinden iletilebilirler.     
+
+\fBssh\fR, \fIkonakismi\fR ile belirtilen makinaya bağlanır ve oturum açar. Şayet kullanıcı bir \fIkomut\fR belirtmiş ise, kullanıcıya oturum kabuğu yerine komutun çalıştırıldıktan sonraki çıktısı döndürülür.     
+
+Kullanıcı, uzaktaki sisteme kimliğini kanıtlamak zorundadır ve bunu kullanılan protokole bağlı olarak farklı yöntemlerle yapabilir:     
+
+.SS SSH protokolünün 1. sürümü
+İlk olarak eğer kullanıcının oturum açtığı sistemin ismi uzaktaki sistemin /etc/hosts.equiv veya /etc/ssh/shosts.equiv dosyalarında bulunuyorsa ve her iki taraftaki kullanıcı isimleri aynı ise, kullanıcın uzak sisteme erişmesine hemen izin verilir. İkinci olarak, eğer .rhosts veya .shosts dosyaları kullanıcının uzaktaki ev dizininde mevcut ise ve istemci makinanın adı ile bu makinadaki kullanıcı adı bu dosyalardan birinde var ise, yine kullanıcın erişmesine izin verilir. Güvenli olmamaması nedeni ile bu çeşit kimlik denetiminin kullanmasına normalde sunucu tarafından izin verilmez.     
+
+İkinci kimlik denetim yöntemi ise rhosts veya hosts.equiv yöntemlerinin RSA tabanlı konak kimlik denetimi ile birlikte kullanılmasıdır. Bu şu anlama gelir:  eğer erişime $HOME/.rhosts, $HOME/.shosts, /etc/hosts.equiv veya /etc/ssh/shosts.equiv tarafından izin verilmiş ve buna ek olarak sunucu da istemci anahtarını doğrulayabiliyorsa (DOSYALAR bölümündeki /etc/ssh/ssh_known_hosts ve $HOME/.ssh/known_hosts dosyalarının açıklamalarına bakınız), ancak o zaman oturum açılmasına izin verilir.  Bu kimlik denetimi yöntemi sayesinde IP kandırmaca, DNS kandırmaca ve yönlendirme kandırmacanın sebep olduğu güvenlik açıkları engellenmiş olur.     
+
+
+.br
+.ns
+.TP 
+\fBSistem yöneticilerine bilgi:\fR
+/etc/hosts.equiv, $HOME/.rhosts ve \fBrlogin\fR/\fBrsh\fR protokolleri genel olarak güvenli değillerdir ve güvenliğin gerektiği durumlarda kullanılmamaları gerekir.
+
+.PP     
+
+Üçüncü kimlik kanıtlama yöntemi olarak, \fBssh\fR RSA tabanlı kimlik denetimini destekler. Bu senaryo açık anahtarlı kriptografiye dayanır: Şifrelemenin ve şifre çözmenin farklı anahtarlarla yapıldığı ve şifre çözme anahtarını şifreleme anahtarından türetmeniz mümkün olmadığı kripto sistemleri vardır.  RSA böyle bir sistemdir. Burada amaç her kullanıcının kimlik denetimi için bir çift genel ve özel anahtar oluşturmasıdır.  Sunucu genel anahtara sahip iken, özel anahtar sadece kullanıcının kendisinde bulunur.   $HOME/.ssh/authorized_keys dosyası erişim hakkı olan genel anahtarları listeler. Kullanıcı oturum açmak istediği zaman, \fBssh\fR kimlik denetimi için hangi anahtar çiftini kullanmak istediğini sunucuya bildirir. Sunucu bu anahtarın geçerli olup olmadığına bakar, şayet geçerli ise kullanıcıya (aslında kullanıcı adına çalışan \fBssh\fR\N'39'a) kullanıcının genel anahtarı ile şifrelenmiş bir kimlik sorgusu, rasgele bir sayı gönderir.  Şifreli kimlik sorgusu sadece uygun özel anahtar ile çözülebilir. Kullanıcının istemcisi bu kimlik sorgusunu kullanıcının özel anahtarı ile çözer, böylece uygun özel anahtarın varlığını ispatlar (özel anahtarı sunucuya göstermeden).     
+
+\fBssh\fR RSA kimlik denetim protokolünü özdevinimli olarak gerçekleştirir.  Kullanıcı kendi RSA anahtar çiftini \fBssh\N'45'keygen(1)\fR komutunu çalıştırarak oluşturur. Bu işlem sayesinde özel anahtar $HOME/.ssh/identity dosyasında ve genel anahtar da $HOME/.ssh/identity.pub doyasında saklanır. Daha sonra kullanıcı identity.pub dosyasını uzak makinenin kullanıcının ev dizinideki $HOME/.ssh/authorized_keys  dosyasına kopyalamalıdır. authorized_keys dosyası geleneksel $HOME/.rhosts dosyasına karşılık gelir ve her satırı bir anahtar içerir (satırlar çok uzun olabilmektedir). Sonuçta kullanıcı parola girmeden oturum açmaya hak kazanmaktadır.  RSA kimlik denetimi \fBrhosts\fR kimlik denetimine göre daha güvenlidir.     
+
+RSA kimlik denetiminin en uygun kullanımı bir kimlik denetimi ajanı ile sağlanabilir.  Daha fazla bilgi için \fBssh\N'45'agent(1)\fR\N'39'a bakınız.     
+
+Şayet bahsedilen kimlik denetimi yöntemleri hata verirler ise, bu sefer \fBssh\fR kullanıcıya parola sorar.  Parola ana makineye denetim için gönderilir. Fakat bütün iletişim şifrelendiği için parola ağı dinlemekte olan biri tarafından görülemez.     
+
+.SS SSH protokolünün 2. sürümü
+Kullanıcı protokolün 2. sürümünü kullanarak bağlantı kurduğunda benzer kimlik denetimi yöntemleri kullanılır.  \fBPreferredAuthentications\fR (tercih edilen kimlik kanıtlamaları) için öntanımlı değerler kullanılarak, istemci öncelikle konak tabanlı kimlik denetimi ile uzaktaki makineye erişmeye çalışır; bu yöntemin başarısız olması durumunda, genel anahtarlı kimlik denetimi yöntemi denenir, bu yöntemin de başarısız olması durumunda son olarak klavye etkileşimli ve parolalı kimlik denetimi yöntemine başvurulur.     
+
+Genel anahtar yöntemi, bir önceki bölümde anlatılan RSA kimlik denetimi ile benzerdir ve RSA veya DSA algoritmalarının kullanılmasına izin verir: İstemci oturum tanıtıcısını özel anahtarı ($HOME/.ssh/id_dsa veya $HOME/.ssh/id_rsa) ile imzalar ve sonucu sunucuya gönderir. Sunucu, bu imza ile eşleşen genel anahtarın $HOME/.ssh/authorized_keys dosyasında olup olmadığına bakar. Hem anahtarın listede bulunması hem de imzanın doğru olması durumunda istemciye erişim izni verilir. Oturum tanıtıcı sadece sunucu ve istemci tarafından bilinen ortak Diffie\N'45'Hellman değerinden türetilir.     
+
+Şayet genel anahtarlı kimlik denetimi başarısız olursa ya da desteklenmiyorsa, kullanıcının kimliğini ispatlamak için kullanıcının parolası şifrelenerek sunucuya gönderilebilir.     
+
+\fBssh\fR bunlara ek olarak konak tabanlı ve kimlik sorma/yanıt verme kimlik denetimi yöntemlerini de destekler.     
+
+Protokol 2 gizlilik ve bütünlük ilkeleri için ek mekanizmalar sağlar. Gizlilik için veri trafiği 3DES, Blowfish, CAST128 veya Arcfour algoritmaları ile şifrelenir ve bütünlük  ilkesi için ise hmac\N'45'md5 ya da hmac\N'45'sha1 algoritmaları kullanılır. Protokol 1\N'39'in bağlantının bütünlüğünü kesinlikle garanti eden bir mekanizmaya gereksinimi olduğu unutulmamalıdır.     
+
+.SS Oturum ve Uzaktan Yürütme
+Sunucu, kullanıcının kimliğini onayladığı takdirde ya kullanıcının belirttiği komutu yürütür ya da sistemde oturum açar ve uzak sistemde kullanıcının normal bir kabuğa erişmesini sağlar. Uzakta çalıştırılacak komut ya da kabukla gerçekleştirilen bütün iletişim şifrelenir.     
+
+Kullanıcı, sözde uçbirim (normal oturum) sağlanması durumunda aşağıdaki önceleme karakterlerini kullanabilir.     
+
+Şayet bir uçbirim sağlanmazsa, oturum saydam olur ve ikili veri güvenilir şekilde aktarılabilir. Birçok sistemde önceleme karakterini \N'96'\N'96'none\N'39'\N'39' şeklinde ayarlamak tty kullanılsa bile oturumu saydam kılar.     
+
+Uzak sistemdeki komut ya da kabuk sonlandığında oturum sonlanır ve bütünl X11 ve TCP/IP bağlantıları kapatılır.  Erişilen makinada çalıştırılan uygulamanın çıkış durumu \fBssh\fR\N'39'ın çıkış durumu olarak döndürülür.     
+
+.SS Önceleme Karakterleri
+Sözde uçbirim istenmesi durumunda \fBssh\fR birçok işlevi bir önceleme karakteri aracılığı ile  desteker.     
+
+Tek bir yaklaşık işareti (tilde) \fB~~\fR şeklinde ya da yaklaşık işaretini aşağıda belirtilen karakterlerin haricindeki bir karakterin takip etmesi şeklinde gönderilebilir.  Önceleme karakterinin önceleme karakteri olarak yorumlanabilmesi karakterden hemen sonra bir satırsonu karakteri gelmelidir. Önceleme karakteri yapılandırma dosyasındaki  \fBEscapeChar\fR yapılandırma seçeneği ile ya da komut satırında \fB\N'45'e\fR seçeneği ile değiştirilebilir.     
+
+Desteklenen öncelemler (öntanımlının \N'39'\fB~\fR\N'39' olduğu kabulüyle) şunlardır:     
+
+
+.br
+.ns
+.TP 
+\fB~.\fR
+Bağlantıyı kes
+
+.TP 
+\fB~^Z\fR
+\fBssh\fR\N'39'ı artalanda çalıştır
+
+.TP 
+\fB~#\fR
+İletilen bağlantıları listele
+
+.TP 
+\fB~&\fR
+İletilen bağlantının ya da X11 oturumlarının sonlandırılmasını beklerken \fBssh\fR\N'39'ı artalanda çalıştır
+
+.TP 
+\fB~?\fR
+Önceleme karakterlerinin listesini göster
+
+.TP 
+\fB~B\fR
+Uzak sisteme sonlandırma iletisi gönder  (sadece uzak sistemin de desteklemesi durumunda SSH protokolünün 2. sürümü için geçerlidir)
+
+.TP 
+\fB~C\fR
+Komut satırı aç (sadece \fB\N'45'L\fR ve \fB\N'45'R\fR seçeneklerini kullanarak port iletimi eklemek için yararlıdır)
+
+.TP 
+\fB~R\fR
+Bağlantının anahtarlarının yenilenmesini iste (sadece uzak sistemin de desteklemesi durumunda SSH protokolünün 2. sürümü için geçerlidir)
+
+.PP     
+
+.SS X11 ve TCP İletimi
+Şayet \fBForwardX11\fR değişkeni  \N'96'\N'96'yes\N'39'\N'39' şeklinde ayarlı ise (ya da aşağıdaki  \fB\N'45'X\fR ve \fB\N'45'x\fR seçeneklerinin tanımlarına bakınız) ve kullanıcı X11 (DISPLAY çevre değişkeni atanmış ise) kullanıyorsa, X11 görüntüye olan bağlantı özdevinimli biçimde uzaktaki sisteme iletilir. Bu sayede kabuktan (ya da komut ile) çalıştırılan herhangi bir X11 programı şifreli kanal boyunca iletilir ve yerel sistemin gerçek X sunucusu ile bağlantısı gerçekleştirilmiş olur.  Kullanıcı DISPLAY değişkenini el ile ayarlamamalıdır.   X11 bağlantılarının iletilmesi komut satırında ya da yapılandırma dosyaları aracalığı ile ayarlanabilir.     
+
+\fBssh\fR tarafından ayarlanan DISPLAY değeri (sıfırdan büyük bir sayı) sunucu sistemi işaret eder. Bu normaldir ve sebebi de \fBssh\fR\N'39'nın bağlantıları şifreli kanal üzerinden iletmek için sunucu sistemde \N'39'vekil\N'39' X sunucusu oluşturmasıdır.     
+
+\fBssh\fR yine sunucu makinede özdevinimli biçimde Xauthority verisini ayarlar.  Bu amaçla rasgele yetkilendime çerezi üretilip sunucuda \N'39'Xauthority\N'39' dosyasında saklanır ve iletilen bağlantıların bu çerezi taşıyıp taşımadıkları kontrol edilir ve bağlantı açıldığında bu çerez gerçek çerez ile değiştirilir. Gerçek kimlik denetimi çerezi sunucu sisteme hiçbir zaman gönderilmez (ve hiçbir çerez düz metin olarak gönderilmez).     
+
+Şayet \fBForwardAgent\fR değişkeni \N'96'\N'96'yes\N'39'\N'39' şeklinde ayarlandı ise (aşağıda açıklanan \fB\N'45'A\fR ve \fB\N'45'a\fR seçeneklerine bakınız) ve kullanıcı kimlik denetimi ajanı kullanılıyorsa, ajana olan bağlantı özdevinimli biçimde uzak tarafa iletilir.     
+
+Keyfi TCP/IP bağlantılarının güvenli kanal üzerinden iletimi ya komut satırında ya da yapılandırma dosyasında belirtilebilir.  TCP/IP iletimi uygulamalarına örnek olarak elektronik para çantasına güvenli bağlantı ya da güvenlik duvarı üzerinden iletişim verilebilir.     
+
+.SS Sunucu kimlik denetimi
+\fBssh\fR kullanılmış olan bütün ana sistemleri içeren bir veritabanını özdevinimli olarak oluşturur ve denetler.  Ana sistem anahtarları kullanıcının ev dizinindeki  $HOME/.ssh/known_hosts dosyasında tutulur. Buna ek olarak  /etc/ssh/ssh_known_hosts dosyasına da bilinen sistemleri kontrol için özdevinimli olarak başvurulur.     
+
+Yeni sistemler özdevinimli olarak kullacının dosyasına eklenir.  Şayet bir sistemin kimliği değişirse, \fBssh\fR bu konuda uyarır ve truva atlarının kullanıcın parolasını çalmasını engellemek için parola kimlik denetimini edilgenleştirir. Bu mekanizmanın diğer bir amacı şifrelemeyi es geçebilen araya girme saldırılarına engel olmaktır.  \fBStrictHostKeyChecking\fR seçeneği anahtarı bilinmeyen ya da değişmiş olan sistemlerde oturum açmayı engellemek için kullanılabilir.     
+
+Seçenekler şunlardır:
+
+
+.br
+.ns
+.TP 
+\fB\N'45'1\fR
+\fBssh\fR\N'39'yı sadece protokolün 1. sürümünü kullanmaya zorlar.         
+
+.TP 
+\fB\N'45'2\fR
+\fBssh\fR\N'39'yı sadece protokolün 2. sürümünü kullanmaya zorlar.         
+
+.TP 
+\fB\N'45'4\fR
+\fBssh\fR\N'39'yı sadece IPv4 adreslerini kullanmaya zorlar.         
+
+.TP 
+\fB\N'45'6\fR
+\fBssh\fR\N'39'yı sadece IPv6 adreslerini kullanmaya zorlar.         
+
+.TP 
+\fB\N'45'a\fR
+Kimlik denetimi ajanı bağlantı iletimini iptal eder.         
+
+.TP 
+\fB\N'45'A\fR
+Kimlik denetimi ajanı bağlantı iletimini etkinleştirir.  Bu ayrıca yapılandırma dosyasında da her bir konak için ayrı ayrı belirtilebilir.         
+
+Bu seçenek etkinleştirilirken dikkat edilmelidir.  Uzak konaktaki (ajanın Unix\N'45'alan soketi için) dosya izinlerini atlayabilen kullanıcılar iletilen bağlantılar sayesinde yerel ajana erişebilirler.  Saldırgan, ajandan anahtarları alamaz ancak  ajanda yüklü olan kimlikleri kullanarak kimlik denetimini geçmeyi başarabilir.         
+
+.TP 
+\fB\N'45'b \fR\fIbağlantı_adresi\fR
+Çoklu arayüzü olan ya da takma isimli adresler kullanan sistemlerde iletişimin yapılacağı arayüzü belirler.         
+
+.TP 
+\fB\N'45'c \fRblowfish | 3des | des
+Oturumu şifrelemekte kullanılacak şifreyi seçer. Öntanımlı değer  \fB3des\fR\N'39'dir.  Güvenli olduğuna inanılır.  \fB3des\fR (üçlü\N'45'des) şifreleme\N'45'şifre çözme\N'45'şifreleme üçlüsünü 3 farklı anahtarla gerçekleştirir. \fBblowfish\fR hızlı bir blok şifresidir; çok güvenilirdir ve \fB3des\fR\N'39'ten çok daha hızlıdır.  \fBdes\fR ise \fB3des\fR şifrelemeyi desteklemeyen eski protokol 1 gerçeklemeleri ile işbirliktelik adına desteklenir. Şifreleme ile ilgili zayıflıklarından dolayı \fBdes\fR\N'39'in kullanılmaması önemle tavsiye edilir.         
+
+.TP 
+\fB\N'45'c \fR\fIşifre_belirtimi\fR
+Ek olarak, protokol 2\N'39'de tercih sırasını belirtmek için virgülle ayrılmış şifreleme listesi verilebilir. Daha fazla bilgi için yapılandıma dosyaındaki \fBCiphers\fR (Şifreler) satırına bakınız.         
+
+.TP 
+\fB\N'45'C\fR
+Bütün verilerin (stdin, stdout, stderr, X11 verileri ve TCP/IP bağlantı verileri) sıkıştırılmasını sağlar.  Sıkıştırma algoritması \fBgzip(1)\fR\N'39'in kullandığı ile aynıdır. \fBCompressionLevel\fR(Sıkıştırma Seviyesi) seçeneği protokolün 1. sürümü için \N'96'\N'96'seviye\N'39'\N'39' yi belirler.  Modem hatları ve diğer yavaş bağlantılar için sıkıştırma kullanılmalıdır, ancak hızlı ağlar için bu sadece yavaşlamaya neden olacaktır. Öntanımlı değer  yapılandırma dosyalarında her konak için ayrı ayrı belirtilebilir. (\fBCompression\fR [Sıkıştırma] seçeneğine bakınız).         
+
+.TP 
+\fB\N'45'D \fR\fIport\fR
+Yerel "özdevimli" uygulama seviyesinde port iletimini belirtir.  Yerel tarafta portu dinlemek üzere bir soket ayrılır. Bu port ile ne zaman bir bağlantı kurulsa, bağlantı güvenli kanal üzerinden iletilir ve uzak sistemde nereye bağlanılacağı uygulama protokolü kullanılarak belirlenir. Şu anda SOCKS4 ve SOCKS5 protokolleri desteklenmektedir. \fBssh\fR bir SOCKS sunucusu olarak davranır. Sadece yetkili kullanıcı (root) ayrıcalıklı portları iletebilir.  Özdevimli port iletimleri yapılandırma dosyasında da belirtilebilir.         
+
+.TP 
+\fB\N'45'e \fR\fIkrk\fR | ^\fIkrk\fR | none
+pty\N'39'li bir oturum için önceleme karakterini ayarlar (öntanımlı: \N'39'\fB~\fR\N'39').  Önceleme karakteri sadece bir satırının başında ise tanınabilir.  Önceleme karakterini nokta (\N'39'\fB.\fR\N'39') takip ederse bağlantı sonlandırılır; control\N'45'Z takip ederse bağlantı askıya alınır; \N'39'\fB~\fR\N'39' takip ederse önceleme karakteri bir kez gönderilir. Karakteri  \N'96'\N'96'none\N'39'\N'39' şeklinde ayarlamak öncelemleri iptal eder ve oturumu tamamen saydam yapar.         
+
+.TP 
+\fB\N'45'f\fR
+Komut yürütülmeden hemen önce \fBssh\fR\N'39'nın arkaplanda çalışmasını sağlar.  Bu \fBssh\fR\N'39'nın kullanıcı ya da anahtar parolası sorması gerektiği ancak kullanıcının bu  işlemin arkaplanda yapılmasını istediği durumlarda yararlıdır. Bu seçenek \fB\N'45'n\fR seçeneğinin de uygulanmasını sağlar. X11 programları uzak konakta çalıştırırken komutun şöyle çağrılması tavsiye edilir: \fBssh \N'45'f konakismi xterm\fR.         
+
+.TP 
+\fB\N'45'F \fR\fIyapılandırma_dosyası\fR
+Kullanıcının kendine özgü yapılandırma dosyasını belirtmek içindir.  Şayet komut satırında bir \fIyapılandırma_dosyası\fR verilirse, sistemin yapılandırma dosyası (/etc/ssh/ssh_config) görmezden gelinir. $HOME/.ssh/config dosyası kullanıcının öntanımlı yapılandırma dosyasıdır.         
+
+.TP 
+\fB\N'45'g\fR
+Uzak konakların iletilen yerel portlara bağlanmasına izin verir.         
+
+.TP 
+\fB\N'45'i \fR\fIkimlik_dosyası\fR
+RSA ya da DSA kimlik doğrulamaları için kullanılacak olan kimlik dosyasını (dolayısıyla gizli anahtarı) belirtir.  Protokolün 1. sürümü için varsayılan dosya $HOME/.ssh/identity dosyasıdır. $HOME/.ssh/id_rsa ve $HOME/.ssh/id_dsa ise protokolün 2. sürümü için öntanımlı dosyalardır.  Kimlik dosyaları her bir konak için ayrı ayrı yapılandırma dosyasında da belirtilebilir. \fB\N'45'i\fR seçeneğinin birden fazla kullanılması mümkündür (ve yapılandırma dosyalarında birden fazla kimlik tanımlamak da).         
+
+.TP 
+\fB\N'45'I \fR\fIakıllıkart_aygıtı\fR
+Kullanılacak olan akıllıkart aygıtını belirtir. Belirtilen aygıt kullanıcının RSA gizli anahtarının bulunduğu akıllıkart ile iletişim için kullanılan aygıt olmalıdır.         
+
+.TP 
+\fB\N'45'k\fR
+Kerberos biletlerinin ve AFS dizgeciklerinin iletimini iptal eder. Bu ayrıca yapılandırma dosyasında her konak için ayrı ayrı belirtilebilir.         
+
+.TP 
+\fB\N'45'l \fR\fIkullanıcı_ismi\fR
+Uzak sistemde oturum açmak için kullanılacak kullanıcı adını belirtir.  Bu yine yapılandırma dosyasında her bir konak için ayrı ayrı belirtilebilir.         
+
+.TP 
+\fB\N'45'L \fR\fIyerelport:uzakkonak:uzakkonakportu\fR
+Belirtilen yerel portun uzak konaktaki porta iletilmesi için kullanılır. Bunu sağlamak için yerel sistemde bir soket \fIyerelport\fR portunu dinlemeye başlar ve bu porta bağlantı isteği geldiğinde, bağlantı güvenli kanaldan iletilerek  \fIuzakkonak\fR üzerindeki \fIuzakkonakportu\fRna bir bağlantı gerçekleştirilir. Port iletimi, yapılandırma dosyasında da belirtilebilir.  Sadece yetkili kullanıcı (root) ayrıcaklı portları iletebilir.  IPv6 adresler için farklı bir sözdizimi kullanılır: \fIyerelport/uzakkonak/uzakkonakportu\fR.         
+
+.TP 
+\fB\N'45'm \fR\fImac_belirtimi\fR
+Protokolün 2. sürümünde ayrıca tercih sırasına göre virgüllerle ayrılmış MAC (message authentication code \N'45' ileti kimlik denetimi kodu) algoritmaları belirtilebilir. Daha fazla bilgi için \fBMACs\fR anahtar sözcüğüne bakınız.         
+
+.TP 
+\fB\N'45'n\fR
+/dev/null\N'39'u standart girdiye yöneltir (yani standart girdiden okuma yapılması engellenir). \fBssh\fR artalanda çalışıyorsa bu seçenek kullanılmak zorundadır. Uzak sistemde X11 programları çalıştırılırken bu seçenek çok kullanılır. Örneğin, \fBssh \N'45'n shadows.cs.hut.fi emacs &\fR komutu shadows.cs.hut.fi konağında \fBemacs\fR uygulamasını başlatacaktır ve X11 bağlantısı özdevinimli olarak şifreli kanal üzerinden iletilecektir.  \fBssh\fR artalana yerleştirilecektir.       (Ancak \fBssh\fR\N'39'nın kullanıcı ya da anahtar parolası gerektirmesi durumunda bu çalışmayacaktır; ayrıca \fB\N'45'f\fR seçeneğine de bakınız.)         
+
+.TP 
+\fB\N'45'N\fR
+Bir uzak komut çalıştırmaz.  Bu sadece port iletimi için yararlıdır (sadece protokolün 2. sürümünde).         
+
+.TP 
+\fB\N'45'o \fR\fIseçenek\fR
+Yapılandırma dosyasındaki biçime uygun seçenekler belirtmek için kullanılabilir. Kendisine özel komut satırı seçeneği olmayan yapılandırma seçeneklerini belirtmek için kullanılabilir. Aşağıda sıralanan seçeneklere ait tüm ayrıntılar ve alabilecekleri olası değerler için \fBssh_config(5)\fR\N'39'e başvurunuz.         
+
+.IP
+.RS
+.nf
+AddressFamily (Adres Ailesi)
+BatchMode (Toplu İş Kipi)
+BindAddress (Bağlantı Adresi)
+ChallengeResponseAuthentication (Kimlik Sorma/Yanıtlama Yöntemi)
+CheckHostIP (Konak IP Denetimi)
+Cipher (Şifre)
+Ciphers (Şifreler)
+ClearAllForwardings (Bütün İletimleri Temizle)
+Compression (Sıkıştırma)
+CompressionLevel (Sıkıştırma Seviyesi)
+ConnectionAttempts (Bağlantı Denemeleri)
+ConnectionTimeout (Bağlantı Zaman Aşımı)
+DynamicForward (Özdevimli İletim)
+EscapeChar (Önceleme Karakteri)
+ForwardAgent (İletim Ajanı)
+ForwardX11 (X11 İletimi)
+ForwardX11Trusted (Güvenilir X11 İletimi)
+GatewayPorts (Ağ Geçidi Portları)
+GlobalKnownHostsFile (Genel Bilinen Konaklar Dosyası)
+GSSAPIAuthentication (GSSAPI Kimlik Denetimi)
+GSSAPIDelegateCredentials (GSSAPI Yetkilendirme Tanıtımları)
+Host (Konak)
+HostbasedAuthentication (Konak Tabanlı Kimlik Denetimi)
+HostKeyAlgorithms (Konak Anahtarı Algoritmaları)
+HostKeyAlias (Konak Anahtarı Takma Adları)
+HostName (Konak Adı)
+IdentityFile (Kimlik Dosyası)
+LocalForward (Yerel İletim)
+LogLevel (Günlükleme Düzeyi)
+MACs (İleti Kimlik Denetimi Kodları)
+NoHostAuthenticationForLocalhost (Yerel Konak İçin Kimlik Denetimi Yapma)
+NumberOfPasswordPrompts (Parola İsteme Adedi)
+PasswordAuthentication (Parolalı Kimlik Denetimi)
+Port
+PreferredAuthentications (Tercih Edilen Kimlik Denetimi Yöntemleri)
+Protocol (Protokol)
+ProxyCommand (Vekil Komutu)
+PubkeyAuthentication (Genel Anahtarlı Kimlik Denetimi)
+RemoteForward (Uzak İletim)
+RhostsRSAAuthentication (RSA tabanlı Rhosts Kimlik Denetimi)
+RSAAuthentication (RSA Kimlik Denetimi)
+ServerAliveInterval (Sunucu Canlılık Aralığı)
+ServerAliveCountMax (Canlı Sunucu En Çok Mesaj Sayısı)
+SmartcardDevice (Akıllı Kart Aygıtı)
+StrictHostKeyChecking (Mutlak Konak Anahtarı Denetimi)
+TCPKeepAlive (TCP Canlı Tutma)
+UsePrivilegedPort (Ayrıcalıklı Port Kullan)
+User (Kullanıcı)
+UserKnownHostsFile (Kullanıcının Bilinen Konakları Dosyası)
+VerifyHostKeyDNS (Uzak Konak Anahtarının Doğruluğunun DNS ile Sağlanması)
+XAuthLocation (XAuth\N'39'un Tam Yolu)
+.fi
+.RE
+.IP
+
+
+.TP 
+\fB\N'45'p \fR\fIport\fR
+Uzak konaktaki bağlantı portu. Yapılandırma dosyasında her bir konak için ayrı ayrı belirtilebilir.         
+
+.TP 
+\fB\N'45'q\fR
+Sessizlik kipi.  Bütün uyarı ve tanı iletilerinin gizlenmesini sağlar.  Sadece onarılamaz hatalar gösterilir.  Şayet ikinci bir \fB\N'45'q\fR verilirse onarılamaz hatalar da gösterilmez.         
+
+.TP 
+\fB\N'45'R \fR\fIuzakport:yerelkonak:yerelkonakportu\fR
+Belirtilen uzak portun yerel konaktaki porta iletilmesi için kullanılır. Bunu sağlamak için uzak sistemde bir soket \fIuzakport\fR portunu dinlemeye başlar ve bu porta bağlantı isteği geldiğinde, bağlantı güvenli kanaldan iletilerek  \fIyerelkonak\fR üzerindeki \fIyerelkonakportu\fRna bir bağlantı gerçekleştirilir. Port iletimi, yapılandırma dosyasında da belirtilebilir.  Sadece yetkili kullanıcı (root) ayrıcaklı portları iletebilir.  IPv6 adresler için farklı bir sözdizimi kullanılır: \fIuzakport/yerelkonak/yerelkonakportu\fR.         
+
+.TP 
+\fB\N'45's\fR
+Uzak konakta bir altsistemi çağırmak amacıyla kullanılabilir.  Altsistemler, diğer uygulamaların (örn. sftp) güvenli taşınmasını sağlayan SSH2 protokolünün bir özelliğidir. Altsistem uzak komut olarak belirtilir.         
+
+.TP 
+\fB\N'45't\fR
+Sözde\N'45'tty ayırmayı zorlar. Bu uzak sistemde ekran tabanlı herhangi bir uygulamaların çalıştırılmasında kullanılabilir. Örnek olarak menü hizmetlerinin gerçekleştirilmesinde bu çok yararlı olabilir.  Çok sayıda \fB\N'45't\fR seçeneği \fBssh\fR\N'39'nın yerel tty\N'39'si olmasa bile bir tty ayrılmasını sağlar.         
+
+.TP 
+\fB\N'45'T\fR
+Sözde\N'45'tty ayırmayı iptal eder.         
+
+.TP 
+\fB\N'45'v\fR
+Ayrıntı kipi. \fBssh\fR\N'39'nın çalışması esnasındaki hata ayıklama iletilerinin gösterilmesini sağlar. Bağlantı, kimlik denetimi ve yapılandırma sorunlarındaki hataları ayıklamada bu seçenek çok faydalıdır. Çok sayıda \fB\N'45'v\fR seçeneği ayrıntı seviyesini artırır. En fazla üç tane olabilir.         
+
+.TP 
+\fB\N'45'V\fR
+Sürüm numarasını gösterir ve çıkar.         
+
+.TP 
+\fB\N'45'x\fR
+X11 iletimini iptal eder.         
+
+.TP 
+\fB\N'45'X\fR
+X11 iletimini etkinleştirir.  Bu her bir konak için ayrı ayrı yapılandırma dosyasında belirtilebilir.         
+
+Bu seçenek etkinleştirilirken dikkat edilmelidir.  Uzak sistemdeki dosya izinlerini atlayabilen kullanıcılar (kullanıcının X yetkilendirme veritabanı için) iletilen bağlantılar sayesinde yerel X11 görüntüye erişebilirler.  Saldırgan, tuş vuruşlarını izlenmek gibi etkinliklerde bulunabilir.         
+
+.TP 
+\fB\N'45'Y\fR
+Güvenilir X11 iletimini etkinleştirir.         
+
+.PP     
+     
+.SH YAPILANDIRMA DOSYALARI
+\fBssh\fR yapılandırma verilerini her kullanıcıya özel ayrı birer yapılandırma dosyasından ve de sistemin yapılandırma dosyasından alabilir.  Dosya biçimi ve yapılandırma seçenekleri \fBssh_config(5)\fR\N'39'de açıklanmaktadır.     
+
+.SH ORTAM DEĞİŞKENLERİ
+\fBssh\fR normalde aşağıdaki çevre değişkenlerini ayarlar:     
+
+.br
+.ns
+.TP 
+DISPLAY
+DISPLAY değişkeni X11 sunucusunun konumunu gösterir. \fBssh\fR bu değişkene özdevinimli biçimde  \N'96'\N'96'konak_adı:n\N'39'\N'39' biçiminde değer atar. Burada konak_adı kabuğun çalıştığı sistemi işaret ederken n de n >= 1 şartını sağlayan bir tamsayıya karşılık gelir.  \fBssh\fR bu özel değeri X11 bağlantılarını güvenli kanal üzerinden iletmede kullanır.  Kullanıcı DISPLAY değişkenini doğrudan kendisi ayarlamamalıdır,  çünkü bu X11 bağlantılarını güvensiz hale getirir (ve ayrıca kullanıcının gerekli olan yetkilendirme çerezlerini el ile kopyalamasını gerektirir).         
+
+.TP 
+HOME
+Kullanıcının ev dizininin yolu bu değişkene atanır.         
+
+.TP 
+LOGNAME
+USER değişkeni ile aynıdır; bu değişkeni kullanan sistemlerle uyumluluk için tanımlanır.         
+
+.TP 
+MAIL
+Kullanıcının posta kutusunun yolu bu değişkene atanır.         
+
+.TP 
+PATH
+\fBssh\fR derlenirken belirtilen gibi  öntanımlı PATH\N'39'a ayarlanır.         
+
+.TP 
+SSH_ASKPASS
+Şayet \fBssh\fR bir anahtar parolası gerektiriyorsa, bunu mevcut uçbirimden okur (eğer uçbirimden çalıştırılıyorsa).  Diğer taraftan \fBssh\fR bir uçbirimden çalıştırılmıyor fakat DISPLAY ve SSH_ASKPASS değişkenleri ayarlanmış iseler, \fBssh\fR, SSH_ASKPASS tarafından belirtilen uygulamayı çalıştırır ve anahtar parolayı okumak için bir X11 penceresi açar.  Bu özellikle \fBssh\fR bir .Xsession ya da ilgili betik tarafından çağırılıyorsa yararlıdır.  (Burada dikkat edilmesi gereken bu yöntemin çalışması için bazı sistemlerde girdilerin /dev/null\N'39'dan yönlendirilmesi gerektiğidir.)         
+
+.TP 
+SSH_AUTH_SOCK
+Ajanla iletişimde kullanılacak Unix\N'45'alan soketinin yolunu belirtir.         
+
+.TP 
+SSH_CONNECTION
+Bağlantının kurulduğu istemci ve sunucuyu belirtir.  Değişken boşluk ile birbirinden ayrılmış 4 değerden oluşur: istemci ip\N'45'adresi, istemci portu, sunucu ip\N'45'adresi ve sunucu portu.         
+
+.TP 
+SSH_ORIGINAL_COMMAND
+Zorunlu bir komutun çalıştırılması durumunda özgün komut satırını içerir. Bu özgün argümanların özütlenmesinde kullanılabilir.         
+
+.TP 
+SSH_TTY
+Yürürlükteki kabuk ya da komutla ilişkili olan tty\N'39'nin adı (aygıt yolu) bu değişkene atanır. Yürürlükteki oturum tty\N'39'ye sahip değilse, bu değişkene bir atama yapılmaz.         
+
+.TP 
+TZ
+Zaman Dilimi değişkeni; o anki zaman dilimini işaret etmesi için ayarlanır (şayet artalan süreci başlatıldığında ayarlandı ise). Yani, artalan süreci yeni bağlantılara bu değeri aktarır.         
+
+.TP 
+USER
+Oturum açan kullanıcı adı olarak ayarlanır.         
+
+.PP
+
+Ayrıca \fBssh\fR, $HOME/.ssh/environment dosyasını okur ve eğer bu dosya mevcut ise ve de kullanıcılar değişkenlerini değiştirme hakkına sahip iseler \N'96'\N'96'DEĞİŞKEN=değer\N'39'\N'39' biçimindeki satırları ortama ekler. Daha fazla bilgi için, \fBsshd_config(5)\fR\N'39'deki \fBPermitUserEnvironment\fR (Kullanıcı Ortamına İzin Ver) seçeneğine bakınız.     
+
+.SH İLGİLİ DOSYALAR
+
+.br
+.ns
+.TP 
+$HOME/.ssh/known_hosts
+Kullanıcının oturum açtığı /etc/ssh/ssh_known_hosts dosyasında kayıtlı olmayan bütün konakların  anahtarlarını kaydeder. Bakınız, \fBsshd(8)\fR.         
+
+.TP 
+$HOME/.ssh/identity, $HOME/.ssh/id_dsa, $HOME/.ssh/id_rsa
+Kullanıcının kimlik denetim kimliğini içerirler.  Sırasıyla protokol 1 RSA, protokol 2 DSA ve protokol 2 RSA\N'39'ye karşılık gelirler.  Bu dosyalar duyarlı veri içerirler ve bu sebeple kimlik sahibi haricindekilerin erişim hakkı olmamalıdır.  Şayet özel anahtar dosyası diğer kullanıcıların erişimine açıksa, \fBssh\fR\N'39'nın bu dosyayı kullanmayı reddedeceğini unutmayın. Gizli anahtarı oluştururken bir anahtar parolası belirtilebilir ve anahtar parolası bu dosyanın duyarlı kısmını 3DES algoritması ile şifrelemede kullanılır.         
+
+.TP 
+$HOME/.ssh/identity.pub, $HOME/.ssh/id_dsa.pub, $HOME/.ssh/id_rsa.pub
+Kimlik denetiminde kullanılacak genel anahtarı içerirler (kimlik dosyasının okunabilir biçimdeki genele açık olan kısmı). $HOME/.ssh/identity.pub\N'39'un içeriği kullanıcının protokol sürüm 1 RSA kimlik denetimini kullanmak istediği bütün sistemlerdeki $HOME/.ssh/authorized_keys dosyasına eklenmelidir.  $HOME/.ssh/id_dsa.pub ve $HOME/.ssh/id_rsa.pub dosyalarının içerikleri kullanıcının protokol sürüm 2 DSA/RSA kimlik denetimini kullanmak istediği bütün sistemlerdeki $HOME/.ssh/authorized_keys dosyasına eklenmelidir. Bu dosyalar duyarlı değillerdir ve herkes tarafından okunabilirler (fakat gerekmemektedir).  Bu dosyalar hiçbir zaman özdevinimli biçimde kullanılmamalıdır ve kullanılmaları da gerekmez. Bu dosyalar sadece kullanıcının rahatlığı için oluşturulur.         
+
+.TP 
+$HOME/.ssh/config
+Kullanıcıya özel yapılandırma dosyası.  Dosyanın biçimi ve yapılandırma seçenekleri \fBssh_config(5)\fR\N'39'de açıklanmaktadır.         
+
+.TP 
+$HOME/.ssh/authorized_keys
+Ev dizini sahibinin oturum açması için kullanılan açık anahtarları (RSA/DSA) listeler. Dosya biçimi \fBsshd(8)\fR kılavuz sayfasında açıklanmaktadır. En basit biçimiyle dosya .pub kimlik dosyaları ile aynı biçimdedir.  Bu dosya çok duyarlı değildir, ancak tavsiye edilen izinler kullanıcı için okuma/yazma hakları ve diğer kullanıcılar için ise erişim hakkının olmamasıdır.         
+
+.TP 
+/etc/ssh/ssh_known_hosts
+Bilinen konakların anahtarlarını listeleyen sistem dosyası. Bu dosya sistem yöneticisi tarafından hazırlanmalıdır ve örgütleşimdeki bütün konakların genel anahtarları dosyaya eklenmelidir.  Dosya izinleri herkes tarafından okunabilecek şekilde ayarlanmalıdır. Dosya her satırda belirtilecek şekilde genel anahtarları şu biçimde içerir (alanlar birbirinden boşluk ile ayrılırlar): sistem adı, açık anahtar ve yorum alanı (zorunlu değil).  Şayet aynı makina için farklı isimler kullanılırsa, bütün bu isimler virgülle ayrılacak şekilde listelenmelidir. Biçim hakkında detaylı bilgiyi \fBsshd(8)\fR kılavuz sayfasında bulabilirsiniz.         
+
+Kurallı sistem adı (isim sunucularından dönene ad) istemci için oturum açılırken denetimde \fBsshd\fR(8) tarafından kullanılır; diğer isimlere de gerek vardır çünkü \fBssh\fR, anahtarı denetlemeden önce kullanıcının belirttiği ismi kurallı isme çevirmez. Bunun nedeni isim sunucularına erişebilen birinin sistem kimlik denetimini yanıltma olasılığıdır.         
+
+.TP 
+/etc/ssh/ssh_config
+Sistem yapılandırma dosyası. Dosyanın biçimi ve yapılandırma seçenekleri \fBssh_config(5)\fR\N'39'de açıklanmaktadır.         
+
+.TP 
+/etc/ssh/ssh_host_key, /etc/ssh/ssh_host_dsa_key, /etc/ssh/ssh_host_rsa_key
+Bu üç dosya sistem anahtarlarının özel kısmını içerirler ve \fBRhostsRSAAuthentication\fR ve \fBHostbasedAuthentication\fR için kullanılırlar. Şayet \fBRhostsRSAAuthentication\fR yöntemi protokolün 1. sürümü için kullanılıyor ise, \fBssh\fR root yetkileriyle (setuid root)  çalışmalıdır, zira sistem anahtarı sadece root tarafından okunabilir.  Protokolün 2. sürümü için ise, \fBssh\fR,  \fBHostbasedAuthentication\fR  için sistem anahtarlarına erişimde \fBssh\N'45'keysign(8)\fR\N'39'ı kullanır.  Bu sayede bu kimlik denetimi yöntemi kullanıldığında ssh\N'39'nın root yetkileriyle çalışması zorunluluğu ortadan kalkar.  Öntanımlı olarak, \fBssh\fR root yetkileriyle çalışmaz.         
+
+.TP 
+$HOME/.rhosts
+Bu dosya .rhosts kimlik denetiminde erişim izni olan konak/kullanıcı çiftlerini listeler.  (Dikkat: Bu dosya ayrıca \fBrlogin\fR ve \fBrsh\fR tarafından da kullanıldığından kullanımı güvenli değildir.)  Dosyanın her satırında birbirinden boşluk ile ayrılmış bir konak adı (isim sunucuları tarafından sağlanan kurallı ad biçiminde) ve bu konakta geçerli kullanıcı adı bulunur. Bazı makinalarda bu dosyanın erişim haklarının herkes tarafından okunacak şekilde düzenlenmiş olması gerekmektedir (şayet kullanıcının ana dizini NFS bölümünde ise; çünkü \fBsshd(8)\fR bu dosyayı root olarak okur). Ayrıca bu dosyanın sahibi kullanıcı olmalı ve hiçbir kimsenin bu dosyaya yazma hakkı bulunmamalıdır.  Birçok makina için tavsiye edilen erişim yetkileri, kullanıcı için okuma/yazma hakkı ve diğerleri için ise erişimin olmamasıdır.         
+
+\fBsshd\fR(8) öntanımlı olarak .rhosts kimlik kanıtlama yönteminden önce RSA konak kimlik denetimini gerektirecek şekilde kurulur. Şayet sunucu makinanın /etc/ssh/ssh_known_hosts dosyasında istemcinin konak anahtarı bulunmuyorsa, bu anahtar $HOME/.ssh/known_hosts dosyasında bulunabilir. Bunu yapmanın en basit yolu sunucu konağa \fBssh\fR ile oturum açtıktan sonra istemciye \fBssh\fR kullanarak bağlanmaktır. Böylece konak anahtarı kendiliğinden $HOME/.ssh/known_hosts dosyasına eklenir.         
+
+.TP 
+$HOME/.shosts
+Aynı .rhosts\N'39'un kullanıldığı şekilde kullanılır.  Bu dosyanın bulunmasının amacı .rhosts kimlik denetiminin sadece \fBssh\fR ile  kullanılmasını, \fBrlogin\fR ya da \fBrsh(1)\fR ile kullanılmamasını sağlamaktır.         
+
+.TP 
+/etc/hosts.equiv
+Bu dosya .rhosts kimlik denetiminde kullanılır. Her satırda kurallı sistem adlarını içerecek şekilde düzenlenir (Biçim hakkında ayrıntılı bilgi \fBsshd(8)\fR kılavuz sayfasında bulunabilir). Şayet istemci konak bu dosyada bulunuyorsa, istemci ve sunucu kullanıcı adları aynı olması şartı ile erişime izin verilir.  Ayrıca RSA sistem kimlik denetimi normalde gereklidir.  Bu dosyaya sadece root yazabilmelidir.         
+
+.TP 
+/etc/ssh/shosts.equiv
+Aynı /etc/hosts.equiv gibi işlem görür.  \fBssh\fR kullanarak erişimin sağlandığı ancak \fBrsh\fR/\fBrlogin\fR\N'39'in kullanılmaması gerektiği durumlarda faydalıdır.         
+
+.TP 
+/etc/ssh/sshrc
+Bu dosyadaki komutlar kullanıcı oturum açtığında kullanıcının kabuğu (ya da komut) çalıştırılmadan hemen önce \fBssh\fR tarafından çalıştırılır.  Daha arıntılı bilgi için \fBsshd(8)\fR kılavuz sayfasına bakınız.         
+
+.TP 
+$HOME/.ssh/rc
+Bu dosyadaki komutlar kullanıcı oturum açtığında kullanıcının kabuğu (ya da komut) çalıştırılmadan hemen önce \fBssh\fR tarafından çalıştırılır.  Daha arıntılı bilgi için \fBsshd(8)\fR kılavuz sayfasına bakınız.         
+
+.TP 
+$HOME/.ssh/environment
+Ortam değişkenlerinin ek tanımlarını içerir. Yukarıdaki \fBORTAM DEĞİŞKENLERİ\fR bölümüne bakınız.         
+
+.PP     
+
+.SH ÇIKIŞ DURUMU
+\fBssh\fR uzak komutun çıkış durumu ile ya da hata olmuş ise 255 ile sonlanır.     
+
+.SH İLGİLİ BELGELER
+\fBgzip(1)\fR, \fBrsh(1)\fR, \fBscp(1)\fR, \fBsftp(1)\fR, \fBssh\N'45'add(1)\fR, \fBssh\N'45'agent(1)\fR, \fBssh\N'45'keygen(1)\fR, \fBtelnet(1)\fR, \fBhosts.equiv(5)\fR, \fBssh_config(5)\fR, \fBsshd_config(5)\fR, \fBssh\N'45'keysign(8)\fR, \fBsshd(8)\fR.     
+
+T. Ylonen, T. Kivinen, M. Saarinen, T. Rinne, ve S. Lehtinen, SSH Protocol Architecture (SSH Protokol Mimarisi), draft\N'45'ietf\N'45'secsh\N'45'architecture\N'45'12.txt, Ocak 2002 (halen geliştiriliyor).     
+
+.SH YAZARLAR
+OpenSSH, Tatu Ylonen\N'39'in özgün ve özgür ssh 1.2.12 sürümünün bir türevidir.  Aaron Campbell, Bob Beck, Markus Friedl, Niels Provos, Theo de Raadt ve Dug Song birçok yazılım hatasını ortadan kaldırmışlar, yeni özellikler eklemişler ve OpenSSH\N'39'ı oluşturmuşlardır.  Markus Friedl SSH protokolünün 1.5 ve 2.0 sürümü desteği için katkıda bulunmuştur.     
+
+.SH ÇEVİREN     
+Emin İslam Tatlı <eminislam (at) web.de>, Ağustos 2004
+    
+  

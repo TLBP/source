@@ -1,0 +1,1105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--DOCTYPE article SYSTEM "../../docbook/dtd/docbookx.dtd"-->
+<!-- ********************************************************************
+     $Id: IPCHAINS-NASIL.xml,v 1.4 2002/09/30 18:21:14 nilgun Exp $
+     ******************************************************************** -->
+
+<article id="ipchains-nasil" lang="tr">
+  <articleinfo>
+    <title>Linux IPCHAINS NASIL</title>
+    <author>
+      <firstname>Halis Osman</firstname>
+      <surname>Erkan</surname>
+      <affiliation>
+        <address>
+          <email>hoerkan@bornova.ege.edu.tr</email>
+        </address>
+      </affiliation>
+    </author>
+    <revhistory>
+      <revision>
+         <revnumber>0.3</revnumber>
+         <date>26 Eylül 1999</date>
+         <authorinitials>Halis Osman ERKAN <email>hoerkan@bornova.ege.edu.tr</email></authorinitials>
+      </revision>
+    </revhistory>
+
+    <abstract>
+      <para>
+        Linux'un geliştirilmiş güvenlik duvarı yazılımı Ipchains'in NASIL
+        sağlanacağı, kurulacağı ve yapılandırılacağı anlatılıyor, ayrıca
+        kullanımı hakkında biraz fikir verilmeye çalışılıyor.
+      </para><para>
+<command>ipchains</command>, 2.6.x çekirdekler tarafından desteklenmemektedir. Onun yerine <command>iptables</command> kullanılmaktadır. 2.4.x çekirdeklerde ise ikisinden birini kullanmak mümkündür. -- Ocak 2007, belgeler.org
+      </para>
+    </abstract>
+  </articleinfo>
+<para role='only.html'>Ek - <ulink url="fdl.html">GNU Free Documentation License</ulink></para>
+  <sect1 id="ipchains-nasil_intro">
+    <title>Giriş</title>
+  <!-- Legal Sections -->
+    <sect2 id="ipchains-nasil_copyright">
+      <title>Telif Hakkı ve Lisans</title>
+
+      <!-- The LDP recommends, but doesn't require, the GFDL -->
+      <para>
+      Bu belgenin, <emphasis>IPCHAINS NASIL</emphasis>,
+      telif hakkı (c) 1999 <emphasis>Halis Osman ERKAN</emphasis>'a
+      aittir. Bu belgeyi, Free Software Foundation tarafından yayınlanmış
+      bulunan GNU Özgür Belgeleme Lisansının 1.1 ya da daha sonraki sürümünün
+      koşullarına bağlı kalarak kopyalayabilir, dağıtabilir ve/veya
+      değiştirebilirsiniz. Bu Lisansın bir kopyasını <ulink url="fdl.html">GNU Free Documentation License</ulink> başlıklı bölümde bulabilirsiniz.
+      </para>
+
+      <para>
+      Linux, Linus Torvalds adına kayıtlı bir ticarî isimdir.
+      </para>
+    </sect2>
+
+    <sect2 id="ipchains-nasil_disclaimer">
+      <title>Feragatname</title>
+
+      <para>
+        Bu belgedeki bilgilerin kullanımından doğacak sorumluluklar,
+        ve olası zararlardan belge yazarı sorumlu tutulamaz.
+        Bu belgedeki bilgileri uygulama sorumluluğu uygulayan aittir.
+      </para>
+
+      <para>
+        Tüm telif hakları aksi özellikle belirtilmediği sürece sahibine
+        aittir. Belge içinde geçen herhangi bir terim bir ticarî isim
+        ya da kuruma itibar kazandırma olarak algılanmamalıdır. Bir ürün
+        ya da markanın kullanılmış olması ona onay verildiği anlamında
+        görülmemelidir.
+      </para>
+    </sect2>
+  </sect1>
+
+  <sect1 id="ipchains-nasil_what">
+    <title>Nedir?</title>
+    <sect2>
+      <title>Ipchains Nedir?</title>
+      <para>
+        Ipchains Linux çekirdeğinin 2.1.102 ve yukarı sürümlerinde desteği
+        bulunan, çekirdek üzerinde bir güvenlik duvarı yönetim programıdır.
+        Daha eski çekirdeklerde bulunan <literal>ipfwadm</literal>'nin yerini
+        almasına karşın kullanımı ve özellikleri <literal>ipfwadm</literal>'den
+        çok farklıdır. <literal>ipfwadm</literal>'nin yapamadığı defragment
+        özelliği ve !(NOT-tersi) işlemimi gibi gelişmiş özellikleri bulunmaktadır.
+      </para>
+    </sect2>
+    <sect2>
+      <title>Hangi Sürüm?</title>
+      <para>
+        Ipchains'in 1.3.8 sürümü mevcuttur (şu gün için) ama 1.3.4 sürümünün
+        daha güvenilir ve kalıcı olduğunu belirtmekte yarar görüyorum.
+        Kullandığınız ipchains sürümünü öğrenmek için
+</para><para>
+<screen>
+# ipchains --version
+</screen>
+      </para>
+      <para>
+        komutunu kullanabilirsiniz.
+      </para>
+    </sect2>
+    <sect2>
+      <title>Neler Lazım?</title>
+      <para>
+        Çekirdek 2.1.102 üzeri veya 2.0.x + yama gereklidir.Bu belgede 2.0.x
+        türü çekirdekler için ayarlamalardan bahsedilmeyecektir. Bununla beraber
+        çalıştıracağınız makina bir sunucu olacaksa son çıkan kararlı çekirdeği
+        indirip kurmanız mantıklıdır. Bu belgede anlatılacak örnekler de 2.2.10
+        (şu anda bulunan son kararlı çekirdek) çekirdeği üzerinde örneklenecektir.
+      </para>
+      <para>
+        Çekirdeğiniz şu destekler sağlanmış olarak derlenmiş olmalıdır. Çekirdek
+        derlenmesi icin Çekirdek-NASIL belgesine başvurabilirsiniz.
+      </para>
+      <para>
+        Cekirdek 2.1.x  |  2.2.x icin
+</para><para>
+<screen>
+  CONFIG_FIREWALL = y
+  CONFIG_IP_FIREWALL = y
+</screen>
+      </para>
+    </sect2>
+    <sect2>
+      <title>Hedef?</title>
+      <para>
+        Güvenlik duvarı mantığında hedeflenen makinanızın veri iletişiminde
+        kullandığı portların ve bu portlar üzerinden yapılan veri alışverişinin
+        kontrolüdür. Bu kontrolü sağlamak için bazı portların kapatılması; bazı
+        portların sadece bir tür veri alışverişine izin vermesi; sadece
+        yönlendirme  yapması gibi metodlar gereklidir.
+      </para>
+      <para>
+        Portları dinleyip gelen paketleri sorgulamak ve istenilen türdeki veri
+        paketlerini <literal>yakalayıp</literal> bu paketler için tanımlayacağınız
+        <literal>yaptırım</literal>ları uygulamak da  Ipchains yardımıyla
+        mümkündür. Bu iş için daha önceden <literal>ipfwadm</literal>
+        kullanılıyordu.
+      </para>
+    </sect2>
+  </sect1>
+  <sect1 id="ipchains-nasil_general">
+    <title>Genel</title>
+    <sect2>
+      <title>Genel Olarak Ipchains</title>
+      <para>
+        Ipchains'de öntanımlı gelen veya kullanıcının tanımlayabileceği kural
+        kümeleri (<literal>chain</literal> - burada küme diye bahsedilecek)
+        sorgulamaları yürütür. Bu kümeler gelen paketleri sorgular ve tanımlara
+        uyan paketleri yakalarlar. Öntanımlı olarak gelen 3 adet küme vardır:
+        </para><variablelist>
+          <varlistentry>
+            <term>input</term>
+            <listitem>
+              <para>
+                Makinanıza gelen paketler için geçerlidir. Bunun içine makinanın
+                kendi haberleşmesi de dahildir.
+              </para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>output</term>
+            <listitem>
+              <para>
+                Makinanızdan çıkan paketler için.
+              </para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>forward</term>
+            <listitem>
+              <para>
+                Makinanız maskeleme yapıyorsa.
+              </para>
+            </listitem>
+          </varlistentry>
+        </variablelist>
+      <para>
+        Bunlar haricinde kullanıcılar kendi kümelerini tanımlayabilirler veya
+        öntanımlı kümeleri kullanabilirler. Bu komut <literal>eth0-in</literal>
+        adlı bir küme oluşturur:
+</para><para>
+<screen>
+# ipchains -N eth0-in
+</screen>
+      </para>
+      <para>
+        <literal>ipchains</literal> komutuyla kullanılabilecek parametreleri
+        3 kısma ayırabiliriz:
+        </para><itemizedlist>
+          <listitem>
+            <para>
+              <literal>[-p|-s|-d ...]</literal> gibi sorguları düzenleyen
+              parametreler.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              <literal>[-N|-D|-X ...]</literal> gibi kümeler zerinde işlem
+              yapan parametreler.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              <literal>[--version] [-help] ...</literal> genel işlemler
+              yapan parametreler.
+            </para>
+          </listitem>
+        </itemizedlist>
+    </sect2>
+    <sect2>
+      <title>Kural Koşul Tanımlamaları</title>
+      <para>
+        Gelen / gönderilen / yönlendirilen her paket için kümeler ve kümeler
+        altında gruplanmış kurallar olduğunu belirtmiştik. Her paket durumuna
+        göre bu kurallarla karşılaştrılıyor ve yakalanırsa (kurallara uyarsa)
+        belirtilen yaptırımlar paket üzerinde uygulanıyordu. Yani ben istersem
+        <literal>155.223.3.202</literal> adresinin 21. portundan benim Linux
+        makinemdeki 1025. geçici (ephemeral karşılığı olarak) porta gelen ftp
+        isteğini reddedebilirim / kabul edebilirim / yerel herhangi başka bir
+        porta yönlendirebilirim.
+      </para>
+      <para>
+        Şimdi paketi kabul etmeyen bir ipchains satırını inceleyelim:
+</para><para>
+<screen>
+# <command>ipchains -A input -p tcp -s 155.223.3.202/32 -d 155.223.64.10/32 -j REJECT</command>
+            |        |      |               |   |              |   | |
+            +---+    +--+   +-----------+   |   +----------+   |   | +-----+
+            |   |    |  |   |           |   |   |          |   |   | |     |
+              1        2          3         4          5       6   7    8
+</screen>
+      </para>
+        <orderedlist>
+          <listitem>
+            <para>
+              Burada <literal>input</literal> kümesi içinde (bu küme öntanımlı
+              bir kümedir kullanıcının herhangi bir küme tanımı yapmasına gerek
+              yoktur) kuralın nereye yerleştirileceği belirtilir.
+            </para>
+            <para>
+              <literal>-A</literal>, kural kümenin sonuna eklenecek demektir.
+              Çoğu durumda kuralların diziliş sırası önemlidir.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Hangi protokol için bu testin yapılacağı belirlenir. Burada
+              protokol <literal>tcp</literal> seçilmiştir.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Kaynak makinanın adresidir. Bu adres bir ip olacağı gibi
+              bir alan adı da olabilir.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Adresin ağ maskesidir. Buradaki sayı <literal>255.255.255.255</literal>
+              olan maskeyi ifade eder. <literal>255.255.255.255</literal> için soldan
+              itibaren aralıksız bit sayısı = 32.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Paket için hedef makina tanımı; 3'deki gibidir.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Hedef makinanın ağ maskesi.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Şu ana kadar olan kısımlar paketin test edileceği şartlardı.
+              Eğer paket bu koşullara uyan paketse yani aranılan paketse bu
+              pakete ne gibi bir yaptırım (policy) uygulanacağı burada
+              belirtilir.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Yakalanan paket kabul edilmeyecektir (ayrıntılı açıklama <xref
+              linkend="ipchains-nasil_policies"/> bölümünde bulunabilir).
+            </para>
+          </listitem>
+        </orderedlist>
+    </sect2>
+    <sect2 id="ipchains-nasil_policies">
+      <title>Yaptırımlar</title>
+      <para>
+        Yukarıdaki örnekte yakalanan paket reddedildi. Yani paketi gönderen
+        makinaya (155.223.3.202) gelen <literal>tcp</literal> paketinin
+        reddedildiğini belirten bir <literal>ICMP</literal> paketi geri
+        gönderildi; başka neler yapılabilirdi?
+        </para><variablelist>
+          <varlistentry>
+            <term>DENY</term>
+            <listitem>
+              <para>
+                Paket öldürülebilir. Yani paketin çıktığı makinaya hiçbir geri
+                bildirim yapılmaz. Bu biraz kabaca görünse de portlarınızı
+                tarayan bir <emphasis>portscan</emphasis> esnasında bu işlemi
+                karşıdaki için daha uzun bir hale getirir. Portlarınizı tarayan
+                bu <emphasis>meraklı</emphasis> her seferinde
+                <literal>timeout</literal> beklemek zorunda kalır.
+              </para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>REJECT</term>
+            <listitem>
+              <para>
+                Paket reddedilir ve geriye bilgisi döner.
+              </para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>ACCEPT</term>
+            <listitem>
+              <para>
+                Paket bir işleme tabi tutulmadan yoluna devam eder. Kabul edilir.
+              </para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>MASQ</term>
+            <listitem>
+              <para>
+                Eğer makinanız arkada bir kaç sisteme maskeleme hizmeti veriyorsa
+                (masquerade-howto incelenebilir) makinanız ve dolayısıyla
+                ethernet kartlarınız üzerinden o sistemlere ait paketler
+                taşınmalıdır. Bu yaptırım kullanıcı tanımlı kümelerde veya
+                öntanımlı <literal>forward</literal> kümesinde kullanılabilir.
+                Çekirdekte ise <literal>CONFIG_IP_MASQUERADE</literal>
+                tanımlanmalıdır.
+              </para>
+              <para>
+                <literal>155.223.3.0/255.255.255.0</literal> ağını elimizdeki
+                bir makina ile maskelediğimizi farzedersek maskeleme ayarları
+                şu şekilde yapılabilirdi:
+</para><para>
+<screen>
+# ipchains -A forward -p all -s 155.223.3.0/24 -d 0/0 -j MASQ
+                         |                               |
+                     tcp/udp/icmp                     yaptırım
+</screen>
+              </para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>REDIRECT</term>
+            <listitem>
+              <para>
+                Eğer çekirdeğe <literal>CONFIG_IP_TRANSPARENT_PROXY</literal>
+                desteği verilmiş ise yakalanan paket bir başka YEREL porta
+                yönlendirilebir. Proxy kullanmak için web isteklerini proxy'ye
+                yöneltmek gerekir. Bu durumda yapılmasi gereken ise 80. port
+                isteklerini 8080 porta ve/veya 8081'i 8080'e yönlendirmektir.
+</para><para>
+<screen>
+# ipchains -A input -p tcp -s 0/0 -d 155.223.3.202 80 -j REDIRECT 8080
+</screen>
+              </para>
+            </listitem>
+          </varlistentry>
+        </variablelist>
+      <sect3>
+        <title>Port Numaraları</title>
+        <para>
+          Bu arada port numaralarına da değinmek gerek; port numarası için
+          iki tam sayı ayrılmıştır  <literal>port_a:port_b</literal> biçeminde.
+          Alabileceği değerler -doğal olarak- 0 ile 65536 arasındadır.
+          Belirtilmeyen port max veya min değer alır. Yani:
+</para><para>
+<literallayout indent="0">
+    1023:         -->   1023 - 65535
+    :1023         -->   0    - 1023   portları belirtir.
+</literallayout>
+        </para>
+        <para>
+          <literal>!</literal> parametresi de geçerlidir:
+</para><para>
+<literallayout indent="0">
+    ! 6000:6010   -->   1..5999 ve 6011..65536 portlar,
+    ! 22          -->   22. port hariç tümü manasına gelir.
+</literallayout>
+</para><para>
+          değer girilmezse tüm portlar ele alınır.
+        </para>
+      </sect3>
+    </sect2>
+    <sect2>
+      <title>Firewall Kurarken</title>
+      <sect3>
+        <title>Daha Neler Yapılabilir?</title>
+        <para>
+          Güvenlik duvarı kurarken genel olarak izlenen yol belirli bir sınırın
+          altındaki portların tamamını kapatmak ve makinada verilecek servisler
+          gözönüne alınarak sadece gerekli portları açmaktır. Bu şekilde bir
+          ölçüde korunma sağlanır.
+        </para>
+        <para>
+         Örnek:
+</para><para>
+<screen>
+# ipchains -F input
+# ipchains -F forward
+# ipchains -F output
+</screen>
+</para><para>veya</para><para>
+<screen>
+# ipchains -F
+</screen>
+</para><para>ve</para><para>
+<screen>
+# ipchains -P input ACCEPT
+# ipchains -P forward ACCEPT
+# ipchains -P output ACCEPT
+</screen>
+        </para>
+        <para>
+          Bu şekilde daha önceden tanımlı olması muhtemel ipchains tanımlarını
+          silmiş olduk. Mutlaka güvenlik duvarı betiğinizin başında bulunması
+          gereklidir. Daha önceden kazara eklenen bir komut veya deneme amaçlı
+          açılan bir port güvenlik duvarı üzerinde önemli delik oluşturabilir.
+          Veya o an sizin dışarıyla olan bağlantınız kesebilir.
+          (<literal>output DENY</literal> gibi)
+        </para>
+        <para>
+          Böyle bir yapıyı oluştururken temel olarak tamamen birbirinin tümleyeni
+          olan iki yöntemden biri kullanılabilir:
+</para><para>
+<screen>
+# ipchains -P input DENY
+# ipchains -P forward DENY
+# ipchains -P output ACCEPT
+</screen>
+        </para>
+        <para>
+          Bütün öntanımlı kümeler için ana yaptırımları tanımladık. Burası paket
+          kurallardan geçip yakalanmadığında uygulanır. Yani şu anda elimizdeki
+          giriş portları kapalı durumda.Kullanacağımız her portu açmamız gerekli.
+        </para>
+        <para>
+        VEYA
+</para><para>
+<screen>
+# ipchains -P input ACCEPT
+# ipchains -P forward ACCEPT
+# ipchains -P output ACCEPT
+</screen>
+        </para>
+        <para>
+          Şeklinde tanımlar yapıp belli portları kapatmak ve istemediğimiz
+          bağlantıları yakalamak gereklidir. Kolayca anlaşılacağı gibi
+          ikinci yol yakalanmayan paketleri kabul eder yani gözümüzden
+          kaçan bir durum olduğunda port açık kalır. Özellikle
+          <literal>ipfwadm</literal>'den kalma bir alışkanlıkla tanımlayacağınız
+          tablolar bu şekilde olabilir. AMA birinci yöntem her durumda ikinciden
+          daha emindir.
+        </para>
+        <para>
+          Eğer gözümüzden kaçan bir durum varsa; hiç önemli değil; kabul
+          edilmeyecektir. Tabii ki bu bahisler çıkış kümesi olan output
+          için geçerli değildir.Yapının bu şekilde kurulması daha zor görünse
+          de güvenlik duvarı bir defa ayağa kalktıktan sonra da bir zorluk
+          çıkmaz.
+        </para>
+        <para>
+          Şu durumda bütün öntanımlı yaptırımları DENY kabul ediyoruz.
+          Daha önce bahsettiğimiz üzere REJECT kullanmadık. Elimizde dışarıdan
+          hiçbir bağlantı kabul etmeyen ve hiçbir bağlantı yönlendirmeyen
+          (<literal>forward</literal>) bir güvenlik duvarı var.
+          <literal>Output</literal> için de özel ve çok geçerli bir sebep
+          olmadıkça <literal>ACCEPT</literal> kullanmak mantıklı olacaktır.
+          Aksi takdirde çoğu durumda kendimizi hapsetmiş oluruz.
+        </para>
+      </sect3>
+      <sect3>
+        <title>Hangi Portlar?</title>
+        <para>
+         Makinanın (sunucu) ne tür hizmetler vereceğini saptamamız ve bu
+         hizmetler için hangi portlara ihtiyaç duyacağımızı belirlememiz
+         gerekir. Bunun için elimizde hazır olan kaynakları kullanabiliriz.
+         <literal>/etc/services</literal> dosyası bize yeterli bilgiyi
+         verecektir. Örnek olarak <literal>ftp</literal> hizmeti verebilmek
+         için hangi portlara ihtiyacımız olduğunu saptayalım:
+</para><para>
+<screen>
+# cat /etc/services | grep ftp
+
+  ftp-data    20 tcp
+  ftp         21 tcp
+</screen>
+        </para>
+        <para>
+          Anlaşıldığı üzere <literal>ftp</literal> için 20. port ve 21.
+          portların açılması gerekli. Bu portları sadece <literal>tcp</literal>
+          protokolü için açmamız yeterli olacaktır.
+        </para>
+        <para>
+          Böylece kullanılmayan <literal>udp</literal> protokolü için bir boş
+          port bırakmamış oluruz.
+</para><para>
+<screen>
+# ipchains -A input -p tcp -s 0/0 -d 155.223.3.202/32  20 -j ACCEPT
+# ipchains -A input -p tcp -s 0/0 -d 155.223.3.202/32  21 -j ACCEPT
+</screen>
+</para><para>ya da</para><para>
+<screen>
+# ipchains -A input -p tcp -s 0/0 -d 155.223.3.202/32  20:21 -j ACCEPT
+</screen>
+</para><para>
+          komutları <literal>input</literal> kümemize <emphasis>herhangi bir
+          yerden <literal>tcp</literal> ile (doğal olarak) 20 ve 21. portlara
+          istek gelirse bu isteği yakala ve kabul et</emphasis> manasına gelen
+          satırı ekler .(-A = küme sonuna ekle; append; bkz. <xref
+          linkend="ipchains-nasil_chains"/>)
+        </para>
+        <para>
+          Eğer e-posta alışverişini sağlamak istersek:
+</para><para>
+<screen>
+# ipchains -A input -p tcp -s 0/0 -d 155.223.3.202/32 25 -j ACCEPT
+</screen>
+</para><para><literal>ssh</literal> için:</para><para>
+<screen>
+# ipchains -A input -p tcp -s 0/0 -d 155.223.3.202/32 22 -j ACCEPT
+# ipchains -A input -p udp -s 0/0 -d 155.223.3.202/32 22 -j ACCEPT
+</screen>
+        </para>
+        <para>
+          Dikkat edilirse <literal>ssh</literal> icin 22. port hem
+          <literal>tcp</literal> hem de <literal>udp</literal> olarak açıldı.
+        </para>
+        <para>
+          Özel olarak bildiğimiz bir makinadan telnet kabul edelim:
+</para><para>
+<screen>
+# ipchains -A input -p udp -s 10.1.10.3/32 23 -d 155.223.3.202/32 23 -j ACCEPT
+</screen>
+        </para>
+        <para>
+          Bizim de aynı şekilde çıkmamız gerekirse (şu durumda gerekmiyor çünkü
+          <literal>output</literal> yaptırımı <literal>accept</literal>) şu
+          satırı da eklememiz gerekir.
+</para><para>
+<screen>
+# ipchains -A input -p udp -d 155.223.3.202/32 23 -d 10.1.10.3/32 23 -j ACCEPT
+</screen>
+        </para>
+        <para>
+          Bunun kısa yolu ise yukarıdaki komutlardan birini -b parametresiyle
+          kullanmaktır. (-b: [b]idirectional - iki yönlü kip).
+        </para>
+        <para>
+          Benzer şekilde <literal>web</literal>, <literal>domain</literal>, vb.
+          portlar da ihtiyaca göre açıldıktan sonra rahatlayabiliriz. Tabii ki
+          bu onlarca komutu her sistem açılışında da yazmak işkence olur kaldı ki
+          çoğu zaman acil olarak güvenlik duvarının devreden çıkması gerekebilir.
+          Bir -F komutu sonrası kuralların tamamı (genel yaptırımlar hariç)
+          iptal edilir. Bu sebeple yaptığımız bu ayarları yani oluşturduğumuz
+          kural kümelerini saklamalıyız. Bunu bir betik yardımıyla da yapabiliriz.
+          Ama ipchains komutunun bu işi görebilecek işlevleri olduğunu bilmek de
+          yararlı olur.
+        </para>
+      </sect3>
+      <sect3>
+        <title>Betik Üzerinden Çalıştırma</title>
+        <para>
+          Burada vereceğim basit bir betik size bu konuda yardımcı olabilir. Bu
+          betik <literal>/etc/firewall.conf/</literal> adlı tanım dosyanızdaki
+          komutları işletir.
+        </para>
+        <para>
+          Gerekirse de -F (<literal>flush</literal>) ile iptal eder istenirse
+          yeniden çalıştırır:
+</para><para>
+<screen>
+#!/bin/bash
+#ipchains yükleme betiğidir
+#/etc/firewall.conf dosyasını okur
+
+set -e
+
+case "$1" in
+
+        start)
+        echo "Güvenlik Duvarı çalıştırılıyor..."
+        /etc/firewall.conf
+        echo "TAMAM"
+        ;;
+        stop)
+        echo "Güvenlik Duvarı durduruluyor..."
+        /sbin/ipchains -F
+        /sbin/ipchains -P input ACCEPT
+        /sbin/ipchains -P forward ACCEPT
+        /sbin/ipchains -P output ACCEPT
+        echo "TAMAM"
+        ;;
+        restart)
+        echo "Güvenlik Duvarı yeniden çalıştırılıyor..."
+        /sbin/ipchains -F
+        /sbin/ipchains -P input ACCEPT
+        /sbin/ipchains -P forward ACCEPT
+        /sbin/ipchains -P output ACCEPT
+        /bin/sleep 1
+        /etc/firewall.conf
+        echo "TAMAM"
+        ;;
+        * )
+        echo "Kullanımı : $N {start|stop|restart}" >&amp;2
+        exit 1
+        ;;
+esac
+
+exit 0
+</screen>
+        </para>
+      </sect3>
+      <sect3>
+        <title>Güvenlik Duvarı Çatısını Kurmak</title>
+        <para>
+          <literal>firewall.conf</literal> dosyasını oluşturmak içinse 2
+          yolunuz var:
+          </para><orderedlist>
+            <listitem>
+              <para>
+                Yazdığınız komutları bir metin düzenleyici (pico, emacs) ile
+                <literal>/etc/firewall.conf</literal> dosyasına ekleyebilirsiniz.
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+                Tüm komutlar bellekteyken
+</para><para>
+<screen>
+# ipchains-save > firewall.conf
+</screen>
+</para><para>
+                komutu ile dosyaya eklenir. Parametresiz girilen komut bütün
+                kümeleri ekler; istenirse
+</para><para>
+<screen>
+# ipchains [<emphasis>küme ismi</emphasis>] > firewall.conf
+</screen>
+</para><para>ile istenilen küme yazılabilir.
+</para><para>Sonra</para><para>
+<screen>
+# ipchains-restore &lt; firewall.conf
+</screen>
+</para><para>
+                ile yeniden yüklenebilir. Burada bellekte halihazırda kullanımda
+                olan <literal>ipchains</literal> kümeleri varsa bunları silmek
+                için sizden onay bekler. Eğer <literal>-f</literal> parametresini
+                de eklerseniz bu uyarıyı almazsınız.
+              </para>
+            </listitem>
+          </orderedlist>
+      </sect3>
+    </sect2>
+  </sect1>
+  <sect1 id="ipchains-nasil_expert">
+    <title>Uzman</title>
+    <para>
+      Buraya kadar <literal>ipchains</literal> ile basitce bir güvenlik duvarı
+      nasıl kurulur anlatıldı. Bu aşamadan sonra ise duyarlı ve daha güvenilir
+      güvenlik duvarı kurulumu ve <literal>ipchains</literal> komutunun daha
+      ayrıntılı kullanımı anlatılacaktır.
+    </para>
+    <sect2>
+      <title>Taklit Etme (spoofing)</title>
+      <para>
+        <literal>ipchains  -i [<emphasis>arabirim</emphasis>]</literal>
+        Bu parametre ile paketin makinaya hangi arabirim aracılığıyla geldiğini
+        kontrol edebiliriz. <literal>lo</literal> ,<literal>eth*</literal>,
+        <literal>ppp*</literal> bu arabirimlerden biri olabilir. Bu şekilde
+        beklemediğimiz yerden gelen paketleri de kontrol edebiliriz. İki
+        ethernet kartı aracılığıyla arkada bir ağı maskeleme ile internete
+        çıkarıyor olabiliriz. Ve sadece arkadaki ağ üzerinden gelen paketleri
+        maskelemek için sadece IP kontrolu yetmeyebilir. Arabirim kontrolü
+        ile ip-taklidini önüne bir ölçüde geçilebilir. Örneklersek:
+      </para>
+      <para>
+        <literal>10.1.10.x</literal> ağına <literal>eth1</literal> aracılığıyla
+        maskeleme yaptığımızı düşünürsek maskeleme tanımında arabirim belirtmek;
+        kendini bu adrestenmiş gibi gösteren birinin; bu ağa tanıdığımız
+        haklardan yararlanmasını engelleyecektir.
+</para><para>
+<screen>
+# ipchains -A forward -s 10.1.10.0/24 -d 0/0 -i eth1 -j MA
+                                             ^^^^^^^
+# ipchains -A forward -s 10.1.10.0/24 -d 0/0 -i eth+ -j MASQ
+                                                 ^
+</screen>
+      </para>
+      <para>
+<literallayout indent="0">
+    eth+ = eth1 eth2 .....
+    ppp+ = ppp1 ppp2 .....
+</literallayout>
+</para><para>
+        şeklinde de olabilir.
+      </para>
+      <para>
+        IP taklidinin engellenmesi için daha başka yollar da vardır. Güvenlik
+        duvarı genelde bu işi tam karşılamaz. Mesela çekirdek 2.1 den sonrası
+        ip'si <literal>127.x.x.x</literal> gibi davranan paketleri kabul etmez.
+        Benzer şekilde çekirdekten kaynak adres kontrolü (Source Adres
+        Verification) özelliği kullanılabilir.
+      </para>
+      <para>
+        <literal>/proc/sys/net/ipv4/conf/all/rp-filter</literal>'a değer
+        yüklenebilir.
+</para><para>
+<screen>
+# echo "1" > /proc/sys/net/ipv4/conf/all/rp-filter
+</screen>
+      </para>
+      <para>
+        Daha geniş bilgi için <link linkend="kernel-nasil">Çekirdek-NASIL</link>
+        incelenebilir.
+      </para>
+    </sect2>
+    <sect2>
+      <title>Paketlerin Bölünmesi</title>
+      <para>
+        Paketler, kullanılan araçların bir defada açabileceği boyutlarda
+        taşınırlar. <literal>MTU</literal> ile belirtilen
+        (<emphasis role="bold">M</emphasis>aximum
+        <emphasis role="bold">T</emphasis>ransmission
+        <emphasis role="bold">U</emphasis>nit) belli boyutlara uyulmak
+        zorunludur. Mesala <literal>FDDI</literal> bir ağ 4000 baytlık
+        paketler gönderebilirken buraya bağlı olan bir ethernet ağ ise
+        ancak 1518 bayt olarak bu paketleri alabilir. Bu durumda büyük
+        gelen paket bölünür (<emphasis>fragmentation</emphasis>). Bölünen
+        paketler <literal>Fragment Header</literal> denilen bir başlık ile
+        tanınırlar. Böyle bir paketin sadece ilk parçası <literal>ipchains</literal>
+        tarafından kontrole tabi tutulabilir. Diğer paketler kontrole tabi
+        tutulamazlar. Pek önemli görülmese de bu durumun da gözönünde tutulması
+        kimseye bir şey kaybettirmez.
+      </para>
+      <para>
+        <literal>ipchains</literal> içinde bu durumu engellemek için
+        <literal>-f</literal> parametresi kullanılabilir. Yalnız bu durumda
+        bölünmüş olan paketin iki ve daha sonraki alt paketleri anlaşılabilir.
+        Port adresi ise okunamaz. Bu sebeple de bu parametre ile port numarası
+        kullanılmaz.
+      </para>
+      <para>
+        Özellikle <literal>ICMP</literal> paketleri kullanan exploitler için
+        iyi bir savunma mekanizması oluşturulabilir. <literal>ICMP</literal>
+        paketleri bölünmeyecek kadar küçük paketlerdir. (ayrıca bölünmeyi
+        üzerlerindeki <literal>don't fragment</literal> biti de engeller).
+        Yani bölünmüş bu tür paketleri reddetmek yararınızadır.
+</para><para>
+<screen>
+# ipchains -A -t icmp input -s x.x.x.x/x -d y.y.y.y/y -f -j DENY
+                 ^^^^                                 ^^^
+</screen>
+      </para>
+    </sect2>
+    <sect2>
+      <title>Paket Sayımı</title>
+      <para>
+        Her bir paket yakalandığında; paketle alakalı çekirdek tarafından
+        kontrol edilen iki sayaca işlenir. Birinci sayaç her yakalanan pakette
+        1 diğeri ise paket boyutu kadar artar. Paketin sayaçlarının artışı için
+        ille de pakete bir yaptırım uygulanmış olması gerekmez. Yakalanması
+        yeter şarttır.
+</para><para>
+<screen>
+# ipchains -A output -p tcp -s 155.223.3.202/32 6667 -d 0/0
+</screen>
+</para><para>
+        komutu ile makinanızdan genelde <literal>irc</literal> için kullanılan
+        <literal>6667</literal>. port üzerinden kaç defa paket yollanmış ve
+        toplam ne kadar veri akmış öğrenebilirsiniz.
+      </para>
+      <para>
+        Sayım sonuçlarını <literal>-L [<emphasis>küme</emphasis>] -v</literal>
+        ile görebilirsiniz.
+</para><para>
+<screen>
+# ipchains -L output -v
+</screen>
+      </para>
+      <para>
+        Eğer istenirse yakalanan paketlerin bir disk sahasına depolanması da
+        mümkündür. <literal>-o [<emphasis>max boyut</emphasis>]</literal>
+        parametresi ile kullanılır.
+      </para>
+    </sect2>
+    <sect2>
+      <title>Gelen Paketlerin Yapısına Müdahale</title>
+      <para>
+        Ipchains yakalanan paketlerin üzerinde belirli işlemler yapabilmenizi
+        sağlar. Paketi işaretleyebilir; TOS (<emphasis>types of service</emphasis>)
+        bilgisini değiştirebilir; hangi tür paketin ne kadar yakalandığıni ve ne
+        kadarlık bilgi aktığını anlayabilirsiniz.
+      </para>
+      <para>
+        Eğer isterseniz de gelen paketleri işaretleyebilirsiniz. Gelen paketler
+        32bit işaretsiz bir sayı ile işaretlenebilir. Hatta birden çok defa
+        işaretlenebilir. Hiç işaretlenmemiş bir paketin işaret değeri 0 dır.
+        Paket her işaretlendiğinde tanımlanan 32 bit sayı kadar artırılır ve
+        azaltılır.
+      </para>
+      <para>
+        Eğer <emphasis>kernel hacking</emphasis> konusunda meraklı iseniz başka
+        NASILlar öneririm.
+      </para>
+      <para>
+        <literal>-m +-[<emphasis>32 bit sayı</emphasis>]</literal> biçemindedir.
+      </para>
+    </sect2>
+    <sect2>
+      <title>Paketin TOS (<emphasis>Types Of Services</emphasis>) Kısmının Kontrolü</title>
+      <para>
+        Gelen paket içinde bulunan TOS istenirse iki onaltılık 8 bit sayı ile
+        AND'lenip sonuç ikinci değer ile XOR'lanır.
+      </para>
+      <para>
+        Örnek olarak <literal>ftp</literal>'de <emphasis>minimum delay</emphasis>
+        ve <emphasis>maximum throughput</emphasis> sağlanmalıdır.
+      </para>
+      <para>
+        Çünkü karşıdaki kullanıcı komutları girecek (<emphasis>minimum delay</emphasis>
+        burada) ve dosya aktarımı yapacaktır (dosya aktarımı için ise
+        <emphasis>maximum throughput</emphasis>).
+      </para>
+      <para>
+        Bunları sağlamak için de <literal>TCP</literal> paketlerinin başında
+        bulunan 4 bit ile oynanabilir. Ve bir defada sadece biri 1 konumuna
+        getirilebilir.
+      </para>
+      <para>
+        Bazı servisler için tavsiye edilen TOS değerleri:
+</para><para>
+<literallayout indent="0">
+|---------------------------------------------------------------------------|
+|Servis            Minimize    Maximize    Maximize    Minimize   Hex Value |
+|                    delay    throughput  reliability    cost               |
+|---------------------------------------------------------------------------|
+|Telnet/Rlogin        1     |      0     |     0      |    0     |   0x10   |
+|FTP                        |            |            |          |          |
+|  control            1     |      0     |     0      |    0     |   0x10   |
+|  data               0     |      1     |     0      |    0     |   0x08   |
+|any bulk data        0     |      1     |     0      |    0     |   0x08   |
+|TFTP                 1     |      0     |     0      |    0     |   0x10   |
+|SMTP                       |            |            |          |          |
+|  command phrase     1     |      0     |     0      |    0     |   0x10   |
+|  data phrase        0     |      1     |     0      |    0     |   0x18   |
+|DNS                        |            |            |          |          |
+|  UDP Query          1     |      0     |     0      |    0     |   0x10   |
+|  TCP Query          0     |      0     |     0      |    0     |   0x00   |
+|  zone transfer      0     |      1     |     0      |    0     |   0x08   |
+|ICMP                       |            |            |          |          |
+|  error              0     |      0     |     0      |    0     |   0x00   |
+|  query              0     |      0     |     0      |    0     |   0x00   |
+|  any IGP            0     |      0     |     1      |    0     |   0x04   |
+|SNMP                 0     |      0     |     1      |    0     |   0x04   |
+|BOOTP                0     |      0     |     0      |    0     |   0x00   |
+|NNTP                 0     |      0     |     0      |    1     |   0x02   |
+|---------------------------------------------------------------------------|
+
+Bu değerler tavsiye edilen değerlerdir. (R.Stevens,TCP/IP,1998)
+</literallayout>
+      </para>
+    </sect2>
+    <sect2>
+      <title>TCP Bağlantı İsteklerinin Engellenmesi</title>
+      <para>
+        Bilindiği üzere <literal>TCP</literal> protokol olarak çok
+        kullanılmaktadır. <literal>ftp</literal>, <literal>telnet</literal> vs.
+        <literal>TCP</literal> paketleri ile yapılacak olan veri aktarımlarında
+        ise <literal>TCP</literal>'nin üç-koşullu-onaylama (<emphasis>three way
+        hanshaking</emphasis>) olarak adlandırılan yöntemi kullanılır.
+      </para>
+      <para>
+        Yöntem bir bağlantı isteği (<emphasis>active open</emphasis> olarak geçer) ile
+        işlemeye başlar.
+      </para>
+      <para>
+        İstemci makina sunucuya <literal>SYN</literal> (<emphasis>syncronise</emphasis>)
+        sayısı içeren bir paket gönderdiğinde sunucu buna <literal>SYN</literal>
+        ve <literal>ACK</literal> (<emphasis>acknowledgement</emphasis>) ile cevap
+        verir.
+      </para>
+      <para>
+        Üçüncü adım olarak da istemciden sadece bir <literal>ACK</literal> geri
+        döner (<emphasis>passive open</emphasis>).
+      </para>
+      <para>
+        Daha fazla ayrıntısına girmeyeceğim bu iletişim bir <literal>TCP</literal>
+        bağlantısı başlatır. Biz eğer makinamıza giren <literal>TCP</literal>
+        isteklerini kontrol etmek istersek (bu sekilde <literal>TCP</literal>
+        kullanan tüm servisler kontrol edilir; <literal>ftp</literal>,
+        <literal>telnet</literal>, <literal>ssh</literal>, <literal>finger</literal>
+        <literal>www</literal> vs.) <literal>ipchains</literal>'in
+        <literal>-y</literal> parametresi yardımımıza koşar.
+      </para>
+      <para>
+        Bu parametre ile içinde <literal>SYN</literal> biti 1 olan ve aynı
+        zamanda <literal>ACK</literal> ve <literal>FIN</literal> bitleri 1'e
+        eşit olan (<literal>SYN=1 &amp;&amp; ACK=0 &amp;&amp; FIN=0</literal> durumu) paketler
+        yakalanabilir.
+      </para>
+      <para>
+        Parametrenin ! (tersi) seçeneği de vardır. (bit durumlarının tersi değil
+        koşul sağlanmasının tersi). Ve de doğal olarak sadece <literal>TCP</literal>
+        protokolü için kullanılır.
+      </para>
+      <para>
+<screen>
+# ipchains -A input -p tcp -s 0/0 -d 155.223.3.202/32 -y -j DENY
+</screen>
+</para><para>
+        Komutu ile makinaya gelen tüm <literal>SYN_REQ</literal>'ler kabul
+        edilmemiş olur. Böylece dışardan hiçbir şekilde makinaya
+        <literal>TCP</literal> bağlantısı yapılamaz.
+      </para>
+      <para>
+        Ve de bizim dışarıya <literal>TCP</literal> bağlantısı isteklerimiz de
+        bundan etkilenmez. (çünkü bizim başlattığımız <literal>TCP</literal>'lerde
+        de bu bitler kullanılır ne kadar sadece output kümesini ilgilendiriyor
+        görünse de <literal>TCP</literal>'nin çift taraflı özelliğinden ötürü
+        <literal>input</literal> kümesi de olaya girer. Ama belirttiğimiz gibi
+        <literal>-y</literal> parametresi bizim başlattığımız
+        <literal>TCP</literal> bağlantılarını görmez).
+      </para>
+    </sect2>
+  </sect1>
+  <sect1 id="ipchains-nasil_chains">
+    <title>Kümeler</title>
+    <para>
+<literallayout indent="0">
+|======================================================================|
+|                               IPCHAINS                               |
+|======================================================================|
+|     |                                                                |
+|     +---------------+--------------+-----------------+               |
+|     |               |              |                 |               |
+|  =============   =============  ============  =====================  |
+|  |   input   |   |   output  |  |  forward |  | kullanıcı tanımlı |  |
+|  =============   =============  ============  =====================  |
+|  | sorgu 1   |   |  sorgu 1  |  | sorgu 1  |  |                   |  |
+|  | sorgu 2   |   |  sorgu 2  |  | sorgu 2  |  |  sorgulamalar     |  |
+|  | sorgu 3   |   |  sorgu 3  |  | sorgu 3  |  |                   |  |
+|  |  ...      |   |   ...     |  |  ...     |  |                   |  |
+|  =============   =============  ============  =====================  |
+|======================================================================|
+</literallayout>
+</para><para>
+      Ipchains ile sorgulanacak kurallar birbirinden farklı 4 tip küme içinde
+      bulunabilirler. Kullanıcı tanımlı bir küme olması zorunlu değildir ama
+      kullanıldığında hiyerarşik bir yapı oluşturulup daha sonraki incelemelerde
+      kolaylık sağlanabilir.
+    </para>
+    <sect2>
+      <title>Küme işlemleri</title>
+      <para>
+        Şimdi ağ üzerinden ethernet kartı ile gelen bir paket için olası bir
+        senaryo düzenleyelim:
+      </para>
+      <para>
+        Ulaşan paket önce <literal>input</literal> kümesi tarafından
+        sorgulanacaktır. Sorgulamalar içinde kullanıcı tanımlı bir kümeye
+        bağ varsa; bağ üzerinden kullanıcı tanımlı küme de işlenir, bu küme
+        sonlandığında (<literal>RETURN</literal> veya kural sonu) kümeyi
+        çağıran sorguya geri dönüp bir sonraki <literal>input</literal> kümesi
+        sorgusuyla devam edecektir (bir program kodunda alt yordam çağrılması
+        gibi). Eğer paket hiçbir sorguyla uyuşmadı ise o zaman <literal>input</literal>
+        kümesinin genel yaptırımıyla işlenecektir (<emphasis>input chain
+        policy</emphasis>). Paket ise iki türlü yakalanabilir:
+        </para><orderedlist>
+          <listitem>
+            <para>
+              Küme sorgusu ile
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Kullanıcı tanımlı bir küme sorgusuna bağ ile
+            </para>
+          </listitem>
+        </orderedlist>
+      <para>
+        1. durumda koşulun içeriğinde belirtilen, paketin yakalanması sonucu
+        uygulanacak yaptırım işlenir. (paketi kabulet, redddet, yönlendir gibi).
+        2. durumda ise koşulun bulunduğu kümeyi çağıran 1. türde bir yakalama
+        söz konusu olur ve çağıran koşulun yaptırımı uygulanır.
+      </para>
+    </sect2>
+    <sect2>
+      <title>Kümeler üzerinde işlem yapan komutlar</title>
+      <para>
+        Görüldüğü gibi kullanıcı kendisi bir kural kümesi tanımlayabilir. Bu
+        tanımlarda ise şu komutlar geçerlidir:
+        </para><variablelist>
+          <varlistentry>
+            <term>-N [<emphasis>küme ismi</emphasis>]</term>
+            <listitem>
+              <para>
+                Yeni bir küme tanımlamak için kullanılır.Yalnız küme
+                isminin 8 karakteri geçmemesi gerekir. Örneğin:
+</para><para>
+<screen>
+# ipchains -N input_eth0
+# ipchains -N input_eth1
+</screen>
+</para><para>
+                komutları <literal>input_et</literal> adlı <emphasis role="bold"
+                >bir</emphasis> tane küme açarlar.
+              </para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>-L [<emphasis>küme ismi</emphasis>]</term>
+            <listitem>
+              <para>
+                Verilen kümenin içerdiği koşulları listeler. Eğer parametresiz
+                kullanılırsa tüm tanımlı kümeleri gösterir.
+</para><para>
+<screen>
+# ipchains -L input
+# ipchains -L eth0-in
+</screen>
+              </para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>-F [<emphasis>küme ismi</emphasis>]</term>
+            <listitem>
+              <para>
+                Verilen kümenin kurallarını iptal eder. Tüm kümenin kurallarını
+                tek tek silmek gibidir. Parametresiz kullanılırsa öntanımlı
+                ve kullanıcı tanımlı tüm kümeleri / kuralları iptal eder. Eğer
+                bir betik yazılacaksa en başta kuralları sıfırlamak için
+                bulunması çok mantıklı olacaktır.
+              </para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>-Z [<emphasis>küme ismi</emphasis>]</term>
+            <listitem>
+              <para>
+                Her koşulun çekirdekte tutulan iki adet sayacı vardır. Birisi
+                koşulu tutan yani yakalanan paket sayısını, diğeri ise bu şekilde
+                geçen bayt sayısını tutar. -Z (= zero) parametresi ise tutulan
+                sayaçları sıfırlamaya yarar.
+              </para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>-X [<emphasis>küme ismi</emphasis>]</term>
+            <listitem>
+              <para>
+                Bir kümenin tamamını silmeye yarar. Parametre girilmezse
+                kullanıcı tanımlı bütün kümeleri siler. Yalnız bir kümenin
+                silinebilmesi için içinin boş olması yani kural içermemesi
+                gerekir (<emphasis>rm komutuyla dizin silmek gibi</emphasis>).
+              </para>
+            </listitem>
+          </varlistentry>
+        </variablelist>
+    </sect2>
+  </sect1>
+  <sect1 id="ipchains-nasil_biblio">
+    <title>Kaynakça</title>
+      <orderedlist>
+        <listitem>
+          <para>man ipchains</para>
+        </listitem>
+        <listitem>
+          <para>man ipfw_adm</para>
+        </listitem>
+        <listitem>
+          <para>man ipfw_chains</para>
+        </listitem>
+        <listitem>
+          <para>ipchains-nasil (P. Russel)</para>
+        </listitem>
+        <listitem>
+          <para>firewall-howto</para>
+        </listitem>
+        <listitem>
+          <para>ip_masq howto</para>
+        </listitem>
+        <listitem>
+          <para>Stevens W . R , 1998, TCP/IP Vol 1 The Protocols</para>
+        </listitem>
+        <listitem>
+          <para>Arnett M. F. , 1995 Inside TCP/IP</para>
+        </listitem>
+      </orderedlist>
+  </sect1>
+</article>

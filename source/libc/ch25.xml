@@ -1,0 +1,2108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ********************************************************************
+     $Id: ch25.xml,v 1.2 2002/12/20 22:29:48 nilgun Exp $
+******************************************************************** -->
+<part id="glibc-Program-Basics">
+  <title>Temel Yazılım ve Sistem Arayüzü</title>
+  <titleabbrev>Yazılımların başlangıcının sonunun yazılması.</titleabbrev>
+  <partintro><para>
+<indexterm scope="glibc-cp"><primary>süreç</primary></indexterm>
+<indexterm scope="glibc-cp"><primary>yazılım</primary></indexterm>
+<indexterm scope="glibc-cp"><primary>adres alanı</primary></indexterm>
+<indexterm scope="glibc-cp"><primary>denetim evresi</primary></indexterm>
+<firstterm>Süreçler</firstterm> sistem kaynaklarının ayrılması için kullanılan ilkel birimlerdir. Her sürecin kendi adres uzayı ve (dolayısıyla) bir denetim evresi vardır. Bir süreç bir yazılımı çalıştırır; aynı yazılımı çalıştıran çok sayıda süreç oluşturabilirsiniz fakat her sürecin kendi adres uzayında kendi yazılım kopyası bulunur ve onu diğer kopyalardan bağımsız olarak çalıştırır. Bir süreç aynı yazılım içinde çok sayıda denetim evresine sahip olabildiği ve bir yazılım çok sayıda mantıksal olarak ayrı modüllerin birleşimi olabildiği halde bir süreç daima sadece bir yazılımı çalıştırır.
+  </para><para>
+Biz bu kılavuzun amaçlarına uygun olarak ve Unix sistemi bağlamında bir ortak tanımın karşılığı olan &quot;program&quot; için "yazılım" karşılığını kullanıyoruz. Popüler kullanımda, &quot;program&quot; daha geniş bir tanıma sahiptir; örneğin, bir sistemin çekirdeği, bir metin düzenleyici makrosu, karmaşık bir yazılım paketi veya bir süreç içinde çalıştırılan ayrı bir kod parçası olabilir.
+  </para><para>
+Yazılımın geliştirilmesi bu kılavuzun tamamında anlatıldığı gibi yapılır. Bu oylumda yazılımınız ile onun çalıştığı sistem arasındaki çok temel arayüz açıklanacaktır. Bu, sistem için parametrelerin (argümanlar ve ortam) aktarılması, sistemden temel hizmetlerin istenmesi ve sisteme yazılımın ne yaptığının söylenmesini içerir.
+  </para><para>
+Bir yazılım başka bir yazılımı <command>exec</command> ailesinden bir sistem çağrısı ile başlatır. Bu oylumda olaya yazılımı çalıştıran açısından değil çalışan yazılım açısından bakacağız. Olaya bir yazılımı çalıştıranın açısından bakmak için <xref linkend="glibc-Executing-a-File"/> bölümüne bakınız. (Ç.N.: Aslında bu oylumda olaya yazılımın içinden bakacağız. Olaya yazılımın dışından yani bir dış uygulama açısından bakmak için <xref linkend="glibc-Executing-a-File"/> bölümüne bakın demek daha doğru olacak.)
+  </para></partintro>
+  <chapter id="glibc-Program-Arguments">
+    <title>Yazılım Argümanları</title>
+    <titleabbrev>Yazılımın komut satırı argümanlarının çözümlenmesi.</titleabbrev>
+    <para>
+<indexterm scope="glibc-cp"><primary>yazılım</primary><secondary>argümanları</secondary></indexterm>
+<indexterm scope="glibc-cp"><primary>komut satırı argümanları</primary></indexterm>
+<indexterm scope="glibc-cp"><primary>yazılım</primary><secondary>başlatılması</secondary></indexterm>
+<indexterm scope="glibc-cp"><primary>yazılım</primary><secondary>çalıştırma</secondary></indexterm>
+<indexterm scope="glibc-cp"><primary><literal>main</literal> işlevi</primary></indexterm>
+<indexterm scope="glibc-fn"><primary>yazılım</primary><secondary>main işlevi</secondary></indexterm>
+Sistem bir C yazılımını <command>main</command> işlevini çağırarak başlatır. Bu aslında sizin yazdığınız, ismi <command>main</command> olan bir işlevdir; bu işlevi yazmamışsanız, yazılımınızı hatasız derlemeniz mümkün olamaz.
+   </para><para>
+ISO C'ye göre <command>main</command> işlevini ya argümansız ya da yazılımın komut satırı argümanlarını ifade eden iki argümanla bu örnekteki gibi tanımlayabilirsiniz:
+   </para><para>
+<screen>int main (int <varname>argc</varname>, char *<varname>argv</varname>[])
+</screen>
+   </para><para>
+<indexterm scope="glibc-cp"><primary><varname>argc</varname> (yazılım argümanlarının sayısı)</primary></indexterm>
+<indexterm scope="glibc-cp"><primary><varname>argv</varname> (yazılım argümanları vektörü)</primary></indexterm>
+Komut satırı argümanları kabukta yazılımı çağırırken kullanılan boşluklarla ayrılmış bir takım sözcüklerdir; örneğin, <command>cat foo bar</command> gibi bir komut satırında  <command>foo</command> ve <command>bar</command> argümanlardır. Bir yazılımın komut satırı argümanlarına bakabileceğiniz tek yer <command>main</command> işlevidir ve bunu işlevin argümanları sağlar. Eğer <command>main</command> işlevini argümansız olarak tanımlamışsanız, komut satırı argümanlarını elde edemezsiniz.
+   </para><para>
+<varname>argc</varname> argümanının değeri komut satırı argümanlarının sayısıdır. <varname>argv</varname> argümanı ise bir C dizgeleri vektörüdür; yani elemanları komut satırı argüman dizgeleri olan bir dizidir. Yazılımın dosya ismi de bu vektör içinde vektörün ilk elemanı olarak yer alır; <varname>argc</varname> ise bu dizideki elemanların sayısıdır. Son eleman daima bir boş göstericidir: <command><varname>argv</varname>[<varname>argc</varname>]</command> bir boş göstericidir.
+   </para><para>
+<command>cat foo bar</command> komutu için, <varname>argc</varname> argümanının değeri 3'tür ve <varname>argv</varname>, elemanları <command>&quot;cat&quot;</command>, <command>&quot;foo&quot;</command> ve <command>&quot;bar&quot;</command> olan bir dizidir.
+   </para><para>
+Unix sistemlerinde <command>main</command> işlevini üç argüman kullanılan üçüncü bir yöntemle tanımlayabilirsiniz:
+   </para><para>
+<screen>int main (int <varname>argc</varname>, char *<varname>argv</varname>[], char *<varname>envp</varname>[])
+</screen></para><para>
+İlk iki argüman aynıdır. Üçüncü argüman olan <varname>envp</varname> yazılımın ortamını verir; <command>environ</command> değeri ile aynıdır. Bkz. <xref linkend="glibc-Environment-Variables"/>.  POSIX.1 bu üçüncü argümana izin vermez, dolayısıyla taşınabilirlik açısından en iyisi <command>main</command> işlevini iki argümanlı olarak yazmak ve <command>environ</command> değerini kullanmaktır.
+   </para>
+    <sect1 id="glibc-Argument-Syntax">
+      <title>Yazılım Argümanları için Sözdizimi Uzlaşımları</title>
+      <titleabbrev>Teamülen, seçenekler bir tire işareti ile başlar.</titleabbrev>
+      <para>
+<indexterm scope="glibc-cp"><primary>sözdizimi</primary><secondary>yazılım argümanları için</secondary></indexterm>
+<indexterm scope="glibc-cp"><primary>yazılım</primary><secondary>argümanları</secondary><tertiary>sözdizimi</tertiary></indexterm>
+<indexterm scope="glibc-cp"><primary>komut satırı argümanları</primary><secondary>sözdizimi</secondary></indexterm>
+POSIX komut satırı argümanları için şu uzlaşımları tavsiye eder. <command>getopt</command> (<xref linkend="glibc-Getopt"/>) ve <command>argp_parse</command> (<xref linkend="glibc-Argp"/>) işlevleri ile bunların gerçeklenmesi kolaylaştırılmıştır.
+    </para><para><itemizedlist><listitem>
+Tire (<command>-</command>) ile başlayan argümanlar seçeneklerdir.
+      </listitem><listitem>
+Argüman almayan seçenekler, tek bir tire işaretinden sonra aralarında boşluk bırakmaksızın tek bir sözcük olarak belirtilebilir. Yani, <command>-abc</command> ile <command>-a -b -c</command> eşdeğerdir.
+      </listitem><listitem>
+Seçenek isimleri tek bir alfanümerik karakterden (<command>isalnum</command> kapsamındaki karakterler) oluşur; bkz. <xref linkend="glibc-Classification-of-Characters"/>.
+      </listitem><listitem>
+Bazı seçenekler bir argüman gerektirebilir. Örneğin, <command>ld</command> komutunun <command>-o</command> seçeneği bir argüman gerektirir: bir çıktı dosyası ismi.
+      </listitem><listitem>
+Bir seçenek ile argümanı arasında bir ayraç olabilir de olmayabilir de. (Başka bir deyişle aralarında bir boşluk bırakılması isteğe bağlıdır.) Yani <command>-o foo</command> ile <command>-ofoo</command> eşdeğerdir.
+      </listitem><listitem><para>
+Seçenekler genellikle seçenek olmayan argümanlardan önce gelir.
+      </para><para>
+GNU C kütüphanesindeki <command>getopt</command> ve <command>argp_parse</command> gerçeklemeleri, kullanıcı seçeneklerle seçenek olmayan argümanları karışık olarak vermiş olsa bile, çözümlemenin doğası gereği onları seçenekler önce görünecek duruma getirir. Bu davranış standartdışıdır; bunu istemiyorsanız <command>_POSIX_OPTION_ORDER</command> ortam değişkenini tanımlayın. Bkz. <xref linkend="glibc-Standard-Environment"/>.
+      </para></listitem><listitem>
+<command>--</command> argümanı tüm seçeneklerin sonunu belirtir; bu argümandan sonra gelen argümanlar tire işareti ile başlasalar bile seçenek olarak ele alınmazlar.
+      </listitem><listitem>
+Tek başına bir tire işareti sıradan bir seçenek-olmayan-argüman olarak değerlendirilir. Teamülen (uzlaşımsal olarak), standart girdi ve standart çıktı için girdi ve çıktı belirtmekte kullanılır.
+      </listitem><listitem>
+Seçenekler herhangi bir sırada verilebilir ya da defalarca belirtilebilir. Yorumlanması yazılımın yeteneğine bırakılır.
+      </listitem></itemizedlist></para><para>
+<indexterm scope="glibc-cp"><primary>yazılım</primary><secondary>argümanları</secondary><tertiary>uzun seçenekler</tertiary></indexterm>
+GNU bu uzlaşımlara <wordasword>uzun seçenekler</wordasword>i ekler. Uzun seçenekler iki tire işareti ile başlayan ve çok sayıda alfanümerik karakter ve tire işaretinden oluşabilen bir dizgedir. Uzun seçeneklerin isimleri genellikle en çok üç sözcük uzunlukta olurlar ve bu sözcükler arasında bir tire işareti bulunur. Kullanıcılar seçenek isimlerini eşsizliğini koruyarak kısaltılmış olarak kullanabilirler.
+    </para><para>
+Bir uzun seçenek için bir argüman belirtmek gerekirse, <command>--<varname>isim</varname>=<varname>değer</varname></command> yazılır. Bu sözdizimi bir uzun seçeneğin isteğe bağlı bir argüman kabul etmesini sağlar.
+    </para><para>
+Neticede, GNU sistemi kabukta uzun seçeneklerin tamamlanmasını sağlayacaktır.
+    </para></sect1>
+    <sect1 id="glibc-Parsing-Program-Arguments">
+      <title>Yazılım Argümanlarının Çözümlenmesi</title>
+      <titleabbrev>Yazılımın seçenek ve argümanlarını çözümleme yolları.</titleabbrev>
+      <para>
+<indexterm scope="glibc-cp"><primary>yazılım</primary><secondary>argümanları</secondary><tertiary>çözümleme</tertiary></indexterm>
+<indexterm scope="glibc-cp"><primary>komut satırı argümanları</primary><secondary>çözümleme</secondary></indexterm>
+Yazılımınızın komut satırı argümanlarının sözdizimi yeterince basitse, <varname>argv</varname>'den argümanları kendiniz ayıklayabilirsiniz. Yazılımınız sabit sayıda argüman almıyorsa ve tüm argümanlar aynı yöntemle (örneğin dosya isimleri) elde edilemiyorsa, argümanları çözümlemek için genellikle  <command>getopt</command> (<xref linkend="glibc-Getopt"/>) veya <command>argp_parse</command> (<xref linkend="glibc-Argp"/>) işlevlerini kullanmak daha iyidir.
+    </para><para>
+<command>getopt</command> işlevi daha standarttır (sadece kısa seçenek kabul eden sürümü POSIX standardının bir parçasıdır), ama <command>argp_parse</command> işlevinin kullanımı hem çok basit hem de çok karmaşık seçenek yapıları için daha kolaydır.
+    </para>
+  </sect1>
+  <sect1 id="glibc-Getopt">
+    <title><literal>getopt</literal></title>
+    <titleabbrev>Yazılım seçeneklerinin <command>getopt</command> ile çözümlenmesi</titleabbrev>
+    <para>
+<command>getopt</command> ve <command>getopt_long</command> işlevleri tipik unix komut satırı argümanları çözümlemesinin biraz zevksiz olan yanını sizin için hallederler.
+   </para>
+    <sect2 id="glibc-Using-Getopt" chunkthis="1">
+      <title><literal>getopt</literal> Kullanımı</title>
+      <titleabbrev><command>getopt</command> işlevinin kullanımı</titleabbrev>
+      <para>
+Bu bölümde <command>getopt</command> işlev çağrısının ayrıntıları üzerinde durulacaktır. Bu oluşumları kullanacaksanız, yazılımınıza <filename>unistd.h</filename> başlık dosyasını dahil etmelisiniz.
+<indexterm scope="glibc-pg"><primary>unistd.h</primary></indexterm>
+    </para><para>
+<indexterm scope="glibc-vr"><primary>opterr</primary></indexterm>
+<funcsynopsis><funcprototype role="değişken" id="glibc-opterr">
+<funcdef>int <command>opterr</command></funcdef>
+<paramdef></paramdef>
+</funcprototype><funcdescr><para>
+Bu değişkenin değeri sıfırdan farklıysa, <command>getopt</command> işlevi bilinmeyen bir seçenek karakteri veya argüman gerektiren bir seçenek için argüman belirtilmediğini saptarsa standart hataya bir hata iletisi basar. Bu değişkene sıfır değerini atarsanız, <command>getopt</command> işlevi standart hataya birşey basmaz ama bir hatayı belirtmek üzere <command>?</command> karakteri ile döner.
+</para></funcdescr></funcsynopsis></para><para>
+<indexterm scope="glibc-vr"><primary>optopt</primary></indexterm>
+<funcsynopsis><funcprototype role="değişken" id="glibc-optopt">
+<funcdef>int <command>optopt</command></funcdef>
+<paramdef></paramdef>
+</funcprototype><funcdescr><para>
+<command>getopt</command> işlevi bilinmeyen bir seçenek karakteri veya argüman gerektiren bir seçenek için argüman belirtilmediğini saptadığında seçenek karakterini bu değişkende saklar. Bunu kendi tanı iletileriniz için kullanabilirsiniz.
+</para></funcdescr></funcsynopsis></para><para>
+<indexterm scope="glibc-vr"><primary>optind</primary></indexterm>
+<funcsynopsis><funcprototype role="değişken" id="glibc-optind">
+<funcdef>int <command>optind</command></funcdef>
+<paramdef></paramdef>
+</funcprototype><funcdescr><para>
+Bu değişkene <command>getopt</command> tarafından <varname>argv</varname> dizisinin işlenen elemanından sonraki elemanın indisini koyar. <command>getopt</command> tüm seçenekleri bulduktan sonra, bu değişkeni seçenek olmayan ilk argümanın indisini saptamakta kullanabilirsiniz. Bu değişkenin başlangıç değeri <command>1</command>'dir.
+</para></funcdescr></funcsynopsis></para><para>
+<indexterm scope="glibc-vr"><primary>optarg</primary></indexterm>
+<funcsynopsis><funcprototype role="değişken" id="glibc-optarg">
+<funcdef>char *<command>optarg</command></funcdef>
+<paramdef></paramdef>
+</funcprototype><funcdescr><para>
+Bu değişkene <command>getopt</command> tarafından argüman kabul eden seçeneklerin argümanına gösterici yerleştirilir.
+</para></funcdescr></funcsynopsis></para><para>
+<indexterm scope="glibc-fn"><primary>getopt</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev" id="glibc-getopt">
+<funcdef>int <command>getopt</command></funcdef>
+<paramdef>(int         <varname>argc</varname>,
+ char      **<varname>argv</varname>,
+ const char *<varname>seçenekler</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+<varname>argv</varname> and <varname>argc</varname> argümanları ile belirtilen argüman listesindeki sonraki seçenek argümanı ile döner. Normalde bu değerler <command>main</command> işlevinden alınan argümanlardan gelir.
+    </para><para>
+<varname>seçenekler</varname> argümanı yazılım için geçerli seçenek karakterlerinin belirtildiği bir dizgedir. Bu dizgedeki bir seçenek karakterinden sonra bir iki nokta üstüste (<command>:</command>) varsa bu, o seçeneğin bir argüman gerektirdiğini belirtir. Seçenek karakterinden sonra iki tane iki nokta üstüste (<command>::</command>) varsa bu, o seçeneğin argümanının isteğe bağlı olduğunu belirtir; bu bir GNU oluşumudur.
+    </para><para>
+<command>getopt</command> işlevi seçenek olmayan <varname>argv</varname> elemanlarından sonraki seçenekler için üç yöntem kullanır. Özel <command>--</command> argümanı her durumda seçeneklerin sonunu belirtir.
+    </para><para><itemizedlist><listitem><para>
+Neticede tüm seçenek olmayan argümanların sonda olacağından hareketle, taranan <varname>argv</varname> içeriğinin kendi aralarında yer değiştirilmesi öntanımlıdır. Bu, seçeneklerin herhangi bir sırada verilebilmesini, bu durumun olabileceği varsayılmamış yazılımlarda bile sağlar.
+      </para></listitem><listitem><para>
+Eğer <varname>seçenekler</varname> dizgesi bir tire işareti (<command>-</command>) ile başlıyorsa, bu özel olarak ele alınır. Bu durumda, <command>\1</command> seçenek karakteri ile ilişkiliymiş gibi döndürülecek seçenek olmayan argümanlara izin verilir.
+      </para></listitem><listitem><para>
+POSIX şu davranışı talep eder: İlk seçenek olmayan argüman işlemi durdurur. Bu kip, <command>POSIXLY_CORRECT</command> ortam değişkeni atanarak ya da <varname>seçenekler</varname> dizgesini artı (<command>+</command>) işareti ile başlatarak seçilebilir.
+      </para></listitem></itemizedlist></para><para>
+<command>getopt</command> işlevi sonraki komut satırı seçeneği olan seçenek karakteri ile döner. Artık seçenek argümanı kalmadığında <command>-1</command> döndürür. Hala seçenek olmayan argümanlar olabilir; bunu sınamak için <command>optind</command> harici değişkenini <varname>argc</varname> parametresi ile karşılaştırabilirsiniz.
+    </para><para>
+Seçenek bir argümana sahipse, <command>getopt</command> argümanı <varname>optarg</varname> değişkenine saklayıp döner. <varname>optarg</varname> değişkeninin değerini sırası geldikçe kopyalamanız gerekmez, çünkü değişkenin değeri üzerine yazılabilen durağan alana gösterici değil, özgün <varname>argv</varname> dizisine bir göstericidir.
+    </para><para>
+<command>getopt</command> işlevi <varname>argv</varname> içinde <varname>seçenekler</varname> ile belirtilmemiş bir seçenek karakteri bulursa ya da bir seçenek argümanı eksikse <command>?</command> ile döner ve <command>optopt</command> harici değişkenine seçenek karakterini atar. <varname>seçenekler</varname> dizisinin ilk argümanı bir ikinokta üstüste (<command>:</command>) ise, <command>getopt</command> <command>:</command> yerine eksik seçenek argümanını belirten <command>?</command> ile döner. Ek olarak, <command>opterr</command> harici değişkeni sıfırdan farklıysa (öntanımlı olarak sıfırdan farklıdır), <command>getopt</command> bir hata iletisi basar.
+    </para></funcdescr></funcsynopsis></para></sect2>
+    <sect2 id="glibc-Example-of-Getopt" chunkthis="1">
+      <title><literal>getopt</literal> Örneği</title>
+      <titleabbrev><command>getopt</command> ile argümanların çözümlenmesi örneği</titleabbrev>
+      <para>
+Bu bölümde <command>getopt</command> işlevinin tipik kullanımını gösteren bir örneğe yer verilmiştir. Önemli noktalar şunlardır:
+    </para><para><itemizedlist><listitem>
+Normalde, <command>getopt</command> bir döngü içinde çağrılır. <command>getopt</command> işlevi  <command>-1</command> ile dönerse, artık seçenek kalmamış demektir, dolayısıyla döngüden çıkılır.
+      </listitem><listitem>
+<command>getopt</command> işlevinden dönen değeri ayıklamak için bir <command>switch</command> deyimi kullanılmıştır. Tipik kullanımda, her <command>case</command> deyiminde daha sonra yazılımda kullanılmak üzere bir değişkene değer atanır.
+      </listitem><listitem>
+İkinci bir döngü kalan seçenek olmayan argümanlar içindir.
+      </listitem></itemizedlist></para><para>
+<screen>#include &lt;ctype.h&gt;
+#include &lt;stdio.h>
+#include &lt;stdlib.h&gt;
+#include &lt;unistd.h&gt;
+
+int
+main (int argc, char **argv)
+{
+  int aflag = 0;
+  int bflag = 0;
+  char *cvalue = NULL;
+  int index;
+  int c;
+
+  opterr = 0;
+
+  while ((c = getopt (argc, argv, "abc:")) != -1)
+    switch (c)
+      {
+      case 'a':
+        aflag = 1;
+        break;
+      case 'b':
+        bflag = 1;
+        break;
+      case 'c':
+        cvalue = optarg;
+        break;
+      case '?':
+        if (optopt == 'c')
+          fprintf (stderr, "-%c seçeneği bir argüman gerektirir.\n", optopt);
+        else if (isprint (optopt))
+          fprintf (stderr, "`-%c' seçeneği bilinmiyor.\n", optopt);
+        else
+          fprintf (stderr,
+                    "Seçenek karakteri `\\x%x' bilinmiyor.\n",
+                    optopt);
+        return 1;
+      default:
+        abort ();
+      }
+
+  printf ("aflag = %d, bflag = %d, cvalue = %s\n",
+          aflag, bflag, cvalue);
+
+  for (index = optind; index &lt; argc; index++)
+    printf ("Seçenek olmayan argüman: %s\n", argv[index]);
+  return 0;
+}
+</screen></para><para>
+Yazılımın değişik komut satırı seçenekleriyle çalıştırılmasıyla alınan bazı sonuçlar:
+    </para><para>
+<screen>
+$ <command>testopt</command>
+aflag = 0, bflag = 0, cvalue = (null)
+
+$ <command>testopt -a -b</command>
+aflag = 1, bflag = 1, cvalue = (null)
+
+$ <command>testopt -ab</command>
+aflag = 1, bflag = 1, cvalue = (null)
+
+$ <command>testopt -c foo</command>
+aflag = 0, bflag = 0, cvalue = foo
+
+$ <command>testopt -cfoo</command>
+aflag = 0, bflag = 0, cvalue = foo
+
+$ <command>testopt arg1</command>
+aflag = 0, bflag = 0, cvalue = (null)
+Seçenek olmayan argüman: arg1
+
+$ <command>testopt -a arg1</command>
+aflag = 1, bflag = 0, cvalue = (null)
+Seçenek olmayan argüman: arg1
+
+$ <command>testopt -c foo arg1</command>
+aflag = 0, bflag = 0, cvalue = foo
+Seçenek olmayan argüman: arg1
+
+$ <command>testopt -a -- -b</command>
+aflag = 1, bflag = 0, cvalue = (null)
+Seçenek olmayan argüman: -b
+
+$ <command>testopt -a -</command>
+aflag = 1, bflag = 0, cvalue = (null)
+Seçenek olmayan argüman: -
+</screen></para></sect2>
+    <sect2 id="glibc-Getopt-Long-Options" chunkthis="1">
+      <title><literal>getopt_long</literal> ile Uzun Seçeneklerin Çözümlenmesi</title>
+      <titleabbrev>GNU uygulamaların uzun isimli seçenekler kabul etmesini önerir; nasıl yapılacağı da burada.</titleabbrev>
+      <para>
+Tek karakterlik seçeneklerin yanında GNU tarzı uzun seçeneklerinde kabul edilmesi için <command>getopt</command> yerine <command>getopt_long</command> işlevini kullanabilirsiniz. Bu işlev <filename>unistd.h</filename> değil, <filename>getopt.h</filename> başlık dosyasında bildirilmiştir. Her ne kadar ek bir çalışma gerektirse de yazılımı kullanan acemilerin yazılım kullanımını hatırlamalarına yardımcı olacağından<footnote><para>Ç.N.:İngilizce düşünen acemiler için evet de, anadili ingilizce olmayanlar için uzun seçeneklerin de diğer iletiler gibi yerel dile çevrilmesi sağlansa iyi olacak.</para></footnote> yazılımınız her tek karakterlik seçenek için bir uzun seçenek kabul etmelidir.
+    </para><para>
+<indexterm scope="glibc-tp"><primary sortas="option">struct option</primary></indexterm>
+<funcsynopsis><funcprototype role="veri türü" id="glibc-struct-option">
+<funcdef>struct <command>option</command></funcdef>
+<paramdef></paramdef>
+</funcprototype><funcdescr><para>
+Bu yapı <command>getopt_long</command> işlevinin hatırı için tek bir uzun seçenek ismini açıklar. İşlevin <varname>uzun-seçenekler</varname> argümanı her elemanı bir uzun seçenek içeren bu yapıların bir dizisi olmalıdır. Dizi tamamı sıfır içeren bir elemanla sonlandırılır.
+    </para><para>
+<literal>struct </literal><command>option</command> yapısı şu alanlara sahiptir:
+    </para><para><glosslist><glossentry><glossterm>
+    <literal>const char *<command>name</command></literal>
+    </glossterm><glossdef><para>
+Seçeneğin isimini içerir. Bir dizgedir.
+    </para></glossdef></glossentry><glossentry><glossterm>
+    <literal>int <command>has_arg</command></literal>
+    </glossterm><glossdef><para>
+Seçeneğin bir argüman alıp almadığı belirtilir. Bir tamsayıdır ve üç meşru değerden birini içerir: <command>no_argument</command> (argümansız), <command>required_argument</command> (argüman gerekli) ve <command>optional_argument</command> (argüman isteğe bağlı).
+    </para></glossdef></glossentry><glossentry><glossterm>
+    <literal>int *<command>flag</command></literal>
+    </glossterm><glossterm>
+    <literal>int <command>val</command></literal>
+    </glossterm><glossdef><para>
+Bu alanlar bu seçeneğe rastlandığında nasıl raporlanacağı ve rölünü denetler.
+       </para><para>
+<command>flag</command> bir boş gösterici ise, <command>val</command> bu seçeneği kimliklendiren bir değerdir. Bu değerler çoğunlukla, belli bir uzun seçeneği eşsiz olarak kimliklendirecek şekilde seçilirler.
+       </para><para>
+<command>flag</command> bir boş gösterici değilse, bu seçenek için bir bayrak olan <command>int</command> türünde bir değişkenin adresi olmalıdır. <command>val</command> içindeki değer de, seçeneğe rastlandığını belirten bayrakta saklanacak değerdir.
+    </para></glossdef></glossentry></glosslist>
+</para></funcdescr></funcsynopsis></para><para>
+<indexterm scope="glibc-fn"><primary>getopt_long</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev" id="glibc-getopt_long">
+<funcdef>int <command>getopt_long</command></funcdef>
+<paramdef>(int                  <varname>argc</varname>,
+ char *const         *<varname>argv</varname>,
+ const char          *<varname>kısa-seçenekler</varname>,
+ const struct option *<varname>uzun-seçenekler</varname>,
+ int                 *<varname>indis-göstr</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+<varname>argv</varname> vektöründen seçenekleri ayıklar. <varname>kısa-seçenekler</varname> argümanı <command>getopt</command> işlevindeki gibi kabul edilecek kısa seçenekleri açıklar. <varname>uzun-seçenekler</varname> argümanı ise yukarıda bahsedildiği gibi kabul edilen uzun seçenekleri açıklar.
+    </para><para>
+<command>getopt_long</command> bir kısa seçeneğe rastlarsa <command>getopt</command> işlevinin yaptığını yapar: seçeneğin karakter kodu ile döner ve seçenek argümanını (eğer varsa) <command>optarg</command> içinde saklar.
+    </para><para>
+<command>getopt_long</command> bir uzun seçeneğe rastlarsa, bu seçeneği tanımlayan <command>flag</command> ve <command>val</command> üzerine tabanlanmış eylemleri ele alır.
+    </para><para>
+Eğer <command>flag</command> bir boş gösterici ise,  <command>getopt_long</command> işlevi hangi seçeneğin bulunduğunu belirtmek için <command>val</command> içeriği ile döner. <command>val</command> alanındaki değerleri, farklı anlamlara gelen seçenekleri ayıklamak üzere düzenlemelisiniz, böylece işlev döndükten sonra bu değerleri çözümleyebilirsiniz. Uzun seçenek bir kısa seçeneğin eşdeğeri ise, <command>val</command> içinde kısa seçeneğin karakter kodunu kullanabilirsiniz.
+    </para><para>
+Eğer <command>flag</command> bir boş gösterici değilse, bu, seçeneğin yazılımda bir bayrağı etkinleştirdiği anlamına gelir. Bayrak sizin tanımlayacağınız <command>int</command> türünde bir değişkendir. Bayrağın adresini <command>flag</command> alanına ve saklamasını istediğiniz değeri <command>val</command> alanına koyun. Bu durumda, <command>getopt_long</command> işlevi <command>0</command> ile döner.
+    </para><para>
+Herhangi bir uzun seçenek için, <command>getopt_long</command> işlevi seçenek tanımlarını içeren <varname>uzun-seçenekler</varname> dizisinin seçeneği içeren elemanının indisini <varname>*indis-göstr</varname> içinde saklayarak döndürür. Seçeneğin ismini <varname>uzun-seçenekler</varname><literal>[*<emphasis>indis-göstr</emphasis>].name</literal> ile alabilirsiniz. Uzun seçenekleri, <command>val</command> alanlarındaki değerlerine göre ya da indislerine göre ayrımsayabilirsiniz. Ayrıca bir bayrak tanımlayan uzun seçenekleri bu yolla da ayrımsayabilirsiniz.
+    </para><para>
+Bir uzun seçenek bir argümana sahipse, <command>getopt_long</command> işlevi dönmeden önce argüman değerini <command>optarg</command> değişkenine atar. Seçenek argümana sahip değilse, <command>optarg</command> değişkenindeki değer bir boş gösterici olacaktır. Bu durum bir isteğe bağlı argüman olup olmadığını size söyleyebilir.
+    </para><para>
+<command>getopt_long</command> artık seçenek bulamazsa, <command>-1</command> değeri ile döner ve <varname>argv</varname> dizisindeki sonraki argümanın indisini <command>optind</command> değişkenine atar.
+</para></funcdescr></funcsynopsis></para><para>
+<command>getopt_long</command> işlevinin devreye girmesinden önce <command>--option value</command> gibi seçenekler yerine <command>-option value</command> gibi uzun seçenekleri tanıyan yazılım arayüzleri sayesinde uzun seçenek isimleri daha önce de kullanılmaktaydı. Bu yazılımların GNU'nun getopt işlevselliğini kullanabilmelerini sağlamak için bir işlev daha vardır.
+    </para><para>
+<indexterm scope="glibc-fn"><primary>getopt_long_only</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev" id="glibc-getopt_long_only">
+<funcdef>int <command>getopt_long_only</command></funcdef>
+<paramdef>(int                  <varname>argc</varname>,
+ char *const         *<varname>argv</varname>,
+ const char          *<varname>kısa-seçenekler</varname>,
+ const struct option *<varname>uzun-seçenekler</varname>,
+ int                 *<varname>indis-göstr</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+<command>getopt_long_only</command> işlevi uygulamanın kullanıcısına <command>--</command> yerine <command>-</command> ile başlayan uzun seçenekler belirtme imkanı vermesi dışında <command>getopt_long</command> işlevine eşdeğerdir. <command>--</command> ile başlayan seçenekler yine tanınırken <command>-</command> ile başlayan seçenekler için işlev önce dizgeye karşılık bir uzun seçenek ismi var mı diye bakar, yoksa dizgenin karakterlerini kısa seçeneklerle eşlemeye çalışır.
+    </para><para>
+<command>getopt_long_only</command> işlevinin şu komut satırıyla çalıştırılan bir yazılımın seçeneklerini çözümlemek için kullanıldığını varsayalım:
+    </para><para>
+<screen>  app -foo</screen>
+    </para><para>
+<command>getopt_long_only</command> işlevi önce <command>foo</command> isimli bir uzun seçeneğin varlığına bakacaktır. Eğer bulamazsa, <command>f</command>, <command>o</command> ve <command>o</command> kısa seçenklerinin varlığına bakacaktır.
+    </para></funcdescr></funcsynopsis></para></sect2>
+    <sect2 id="glibc-Getopt-Long-Option-Example" chunkthis="1">
+      <title><literal>getopt_long</literal> Kullanım Örneği.</title>
+      <titleabbrev><command>getopt_long</command> ile uzun seçenekleri çözümlemek için örnek yazılım.</titleabbrev>
+      <para>
+<screen>
+#include &lt;stdio.h>
+#include &lt;stdlib.h>
+#include &lt;getopt.h>
+
+/* --verbose için tanımlanan bayrak. */
+static int verbose_flag;
+
+int
+main (argc, argv)
+      int argc;
+      char **argv;
+{
+  int c;
+
+  while (1)
+    {
+      static struct option long_options[] =
+        {
+        /* Bu seçenekler bir bayrak tanımlar. */
+          {"verbose", no_argument,       &amp;verbose_flag, 1},
+          {"brief",   no_argument,       &amp;verbose_flag, 0},
+        /* Bu seçenekler bayraksız. Onları indislerine bakıp bulacağız. */
+          {"add",     no_argument,       0, 'a'},
+          {"append",  no_argument,       0, 'b'},
+          {"delete",  required_argument, 0, 'd'},
+          {"create",  required_argument, 0, 'c'},
+          {"file",    required_argument, 0, 'f'},
+          {0, 0, 0, 0}
+        };
+      /* getopt_long seçenek indisini burada saklar. */
+      int option_index = 0;
+
+      c = getopt_long (argc, argv, "abc:d:f:",
+                        long_options, &amp;option_index);
+
+      /* Seçeneklerin sonu mu, bakalım. */
+      if (c == -1)
+        break;
+
+      switch (c)
+        {
+        case 0:
+          /* Bu seçenek bir bayrak tanımlamamışsa,
+             şimdilik birşey yapmayacağız. */
+          if (long_options[option_index].flag != 0)
+            break;
+          if (optarg)
+            printf ("%s argümanı ile ", optarg);
+          printf ("%s seçeneği", long_options[option_index].name);
+
+          printf ("\n");
+          break;
+
+        case 'a':
+          puts ("-a seçeneği\n");
+          break;
+
+        case 'b':
+          puts ("-b seçeneği\n");
+          break;
+
+        case 'c':
+          printf ("`%s' değeri ile -c seçeneği\n", optarg);
+          break;
+
+        case 'd':
+          printf ("`%s' değeri ile -d seçeneği\n", optarg);
+          break;
+
+        case 'f':
+          printf ("`%s' değeri ile -f seçeneği\n", optarg);
+          break;
+
+        case '?':
+          /* getopt_long bir hata iletisi basmış oldu. */
+          break;
+
+        default:
+          abort ();
+        }
+    }
+
+  /* --verbose ve --brief seçeneklerine rastlandığında onları
+     raporlamak yerine onların sonucu olan son durumu raporlayalım. */
+  if (verbose_flag)
+    puts ("ayrıntı bayrağı etkinleştirildi");
+
+  /* Kalan komut satırı argümanlarını (seçenek olmayan) basalım. */
+  if (optind &lt; argc)
+    {
+      printf ("seçenek olmayan ARGV elemanları: ");
+      while (optind &lt; argc)
+        printf ("%s ", argv[optind++]);
+      putchar ('\n');
+    }
+
+  exit (0);
+}
+</screen></para></sect2>
+  </sect1><sect1 id="glibc-Argp">
+  <title>Argp</title>
+  <titleabbrev><command>argp_parse</command> ile yazılım seçeneklerinin çözümlenmesi</titleabbrev>
+  <para>
+<indexterm scope="glibc-cp"><primary>argp (yazılım argümanları çözümleyici)</primary></indexterm>
+<indexterm scope="glibc-cp"><primary>argp ile argüman çözümleme</primary></indexterm>
+<indexterm scope="glibc-cp"><primary>argp ile seçenek çözümleme</primary></indexterm>
+<firstterm>Argp</firstterm> unix tarzı argüman vektörlerini çözümlemek için bir arayüzdür. Bkz. <xref linkend="glibc-Program-Arguments"/>.
+   </para><para>
+Argp arayüzü, <command>getopt</command> arayüzü ile kullanılamayan özellikler içerir. Bu özellikler GNU kodlama standartlarında belirtildiği gibi <command>--help</command> and <command>--version</command> seçenekleri için özdevimli bir çıktı üretilmesini içerir. Argp kullanımı, yazılımcının bu ek seçeneklerin gerçeklenmesini ya da güncel tutulmasını boşvermesi olasılığını azaltır.
+   </para><para>
+Argp ayrıca, birbirinden bağımsız tanımlanmış seçenek çözümleyicileri arasındaki çelişkilere bir orta yol bularak ve sonuçları tek bir çözümleyiciden geliyormuşçasına biraraya getirerek, birarada kullanma yeteneğine de sahiptir. Bir kütüphane, kullanıcı yazılımlarının kendi seçenek çözümleyicileri ile birlikte çalışarak ve kullanıcı yazılımları için daha az iş üreterek, bir argp çözümleyici içerebilir. Bazı yazılımlar sadece kütüphanelerin içerdiği çözümleyicileri kullanır, böylece ayrıntıya girmeden tutarlı ve verimli seçenek çözümlemesi kütüphaneler tarafından gerçekleştirilir.
+   </para><para>
+<indexterm scope="glibc-pg"><primary>argp.h</primary></indexterm>
+Argp oluşumlarını kullanacaksanız yazılımınıza <filename>argp.h</filename> başlık dosyasını dahil etmelisiniz.
+   </para>
+    <sect2 id="glibc-argp_parse" chunkthis="1">
+      <title><literal>argp_parse</literal> İşlevi</title>
+      <titleabbrev>Argp arayüzünün ana işlevi <command>argp_parse</command> işlevidir.</titleabbrev>
+      <para>
+Argp arayüzünün ana işlevi <command>argp_parse</command> işlevidir. Bir çok durumda, <command>argp_parse</command> çağrısı sadece <command>main</command> işlevinde argüman çözümlemesi gerekliyse yapılır.
+Bkz. <xref linkend="glibc-Program-Arguments"/>.
+    </para><para>
+<indexterm scope="glibc-fn"><primary>argp_parse</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev" id="glibc-func-argp_parse">
+<funcdef>error_t <command>argp_parse</command></funcdef>
+<paramdef>(const struct argp *<varname>argp</varname>,
+ int                <varname>argc</varname>,
+ char             **<varname>argv</varname>,
+ unsigned           <varname>bayraklar</varname>,
+ int               *<varname>arg_indisi</varname>,
+ void              *<varname>girdi</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+<command>argp_parse</command> işlevi <varname>argp</varname> çözümleyicisini kullanarak <varname>argc</varname> uzunluğundaki <varname>argv</varname> içindeki argümanları çözümler.
+    </para><para>
+Sıfır değeri <command>struct argp</command> yapısının üyelerinin hepsinin sıfır olduğu bir duruma denktir. <varname>bayraklar</varname> çözümlemenin gidişatını etkileyen <link linkend="glibc-Argp-Flags">bayrak bitlerinden</link> oluşur. <varname>girdi</varname> ile argp çözümleyiciye parametreleri belirtmek için kullanılan bir yapının göstericisi aktarılır, çözümleyici sonuçları bu yapıyla döndürür.
+    </para><para>
+<varname>bayraklar</varname> içinde <command>ARGP_NO_EXIT</command> veya <command>ARGP_NO_HELP</command> bitleri yoksa <command>argp_parse</command> çağrısı sonuçlarını yazılım çıkarken verebilir. Bu davranış bir hata saptandığında ya da bilinmeyen bir seçeneğe rastlandığında gerçekleşir. Bkz. <xref linkend="glibc-Program-Termination"/>.
+    </para><para>
+<varname>arg_indisi</varname> bir boş gösterici değilse, burada <varname>argv</varname> içindeki çözümlenmemiş ilk seçeneğin indisi değer olarak döner.
+    </para><para>
+Çözümleme başarılı olursa işlev sıfırla döner, bir hata oluşmuşsa o <link linkend="glibc-Error-Codes">hatanın kodu</link> ile döner. Farklı argp çözümleyicileri aynı hata için farklı hata kodları döndürebilirse de, standart hata kodları şunlardır: bir bellek ayırma hatası oluşmuşsa <command>ENOMEM</command>, bilinmeyen bir seçenek ya da seçenek argümanına rastlanmışsa <command>EINVAL</command>.
+  </para></funcdescr></funcsynopsis></para></sect2>
+  <sect2 id="glibc-Argp-Global-Variables" chunkthis="1">
+    <title>Argp Genel Değişkenleri</title>
+    <para>
+Bu değişkenler, <command>--help</command> çıktısında bir hata raporlama adresi sağlanması ve <command>--version</command> seçeneğinin gerçeklenmesini kullanıcı yazılımları açısından kolaylaştırır. Bunlar argp içinde öntanımlı olarak gerçeklenmiştir.
+    </para><para>
+<indexterm scope="glibc-vr"><primary>argp_program_version</primary></indexterm>
+<funcsynopsis><funcprototype role="değişken" id="glibc-argp_program_version">
+<funcdef>const char *<command>argp_program_version</command></funcdef>
+<paramdef></paramdef>
+</funcprototype><funcdescr><para>
+Tanımlanmışsa ve değeri sıfırdan farklıysa, <command>argp_parse</command>  çözümlemesine, satırsonu karakteri ile biten bir sürüm bilgisi basıp yazılımın çıkmasını sağlayan bir <command>--version</command> seçeneği eklenir. Sürüm bilgisinin basılıp yazılımın çıkması istenmiyorsa, <command>ARGP_NO_EXIT</command> biti ile bu sağlanabilir.
+</para></funcdescr></funcsynopsis></para><para>
+<indexterm scope="glibc-vr"><primary>argp_program_bug_address</primary></indexterm>
+<funcsynopsis><funcprototype role="değişken" id="glibc-argp_program_bug_address">
+<funcdef>const char *<command>argp_program_bug_address</command></funcdef>
+<paramdef></paramdef>
+</funcprototype><funcdescr><para>
+Tanımlanmışsa ve değeri bir boş gösterici değilse, <command>--help</command> seçeneği için standart çıktının sonuna basılacak <literal>Report bugs to <varname>address</varname>.</literal> cümlesinin <varname>address</varname> dizgesine bir göstericidir.
+</para></funcdescr></funcsynopsis></para><para>
+<indexterm scope="glibc-vr"><primary>argp_program_version_hook</primary></indexterm>
+<funcsynopsis><funcprototype role="değişken" id="glibc-argp_program_version_hook">
+<funcdef><command>argp_program_version_hook</command></funcdef>
+<paramdef></paramdef>
+</funcprototype><funcdescr><para>
+Tanımlanmışsa ve değeri sıfırdan farklıysa, <command>argp_parse</command>  çözümlemesine, satırsonu karakteri ile biten bir sürüm bilgisi basıp yazılımın sıfır durumu ile çıkmasını sağlayan bir <command>--version</command> seçeneği eklenir. <command>ARGP_NO_HELP</command> biti etkinse bu yapılmaz. <command>ARGP_NO_EXIT</command> biti etkinse, argp başka yazılımlarca kullanılıyormuşçasına, yazılımın çıkış davranışı ya engellenir ya da değiştirilir.
+    </para><para>
+Değişken, şöyle bir işlevi göstermelidir:
+    </para><para>
+<literallayout indent="0">
+    void <varname>print-version</varname> (FILE *<varname>akım</varname>, struct argp_state *<varname>durum</varname>)
+</literallayout></para><para>
+<varname>durum</varname> için <xref linkend="glibc-Argp-Parsing-State"/> bölümüne bakınız.
+    </para><para>
+<command>argp_program_version</command> değişkeni de atanmışsa, bu değişken önceliklidir ve yazılımın sürüm bilgisi basit bir dizge ile karşılanamıyorsa bu değişkeni kullanmak daha yararlıdır.
+</para></funcdescr></funcsynopsis></para><para>
+<indexterm scope="glibc-vr"><primary>argp_err_exit_status</primary></indexterm>
+<funcsynopsis><funcprototype role="değişken" id="glibc-argp_err_exit_status">
+<funcdef>error_t <command>argp_err_exit_status</command></funcdef>
+<paramdef></paramdef>
+</funcprototype><funcdescr><para>
+Argp bir çözümleme hatası dolayısıyla çıkarken kullanılan çıkış durumudur. Yazılımda tanımlanmamışsa ya da bir değer atanmamışsa öntanımlı değeri, <filename>sysexits.h</filename> dosyasındaki <command>EX_USAGE</command>'dir.
+  </para></funcdescr></funcsynopsis></para></sect2>
+  <sect2 id="glibc-Argp-Parsers" chunkthis="1">
+    <title>Argp Çözümleyicisinin Belirtilmesi</title>
+    <titleabbrev><command>argp_parse</command> ile kullanmak için çözümleyicinin tanımlanması.</titleabbrev>
+    <para>
+<command>argp_parse</command> işlevinin ilk argümanı <firstterm>argp çözümleyici</firstterm> olarak bilinen bir <command>struct argp</command> yapısına bir göstericidir:
+    </para><para>
+<indexterm scope="glibc-tp"><primary sortas="argp">struct argp</primary></indexterm>
+<funcsynopsis><funcprototype role="veri türü" id="glibc-struct-argp">
+<funcdef>struct <command>argp</command></funcdef>
+<paramdef></paramdef>
+</funcprototype><funcdescr><para>
+Bu yapı, belirtilen seçenek ve argümanların nasıl çözümleneceğini belirtir. Şüphesiz bu işlem diğer argp çözümleyiciler ile birlikte yapılır. Yapı şu üyelere sahiptir:
+    </para><para><glosslist><glossentry><glossterm>
+    <literal>const struct argp_option *<command>options</command></literal>
+    </glossterm><glossdef><para>
+Argp çözümleyiciye seçenekleri belirtmek için kullanılan <command>argp_option</command> yapılarının bir vektörüne göstericidir; çözümlenecek bir seçenek yoksa sıfır olabilir. Bkz. <xref linkend="glibc-Argp-Option-Vectors"/>.
+    </para></glossdef></glossentry><glossentry><glossterm>
+    <literal>argp_parser_t <command>parser</command></literal>
+    </glossterm><glossdef><para>
+Bu çözümleyici için eylemleri tanımlayan bir işleve göstericidir; her seçeneğin çözümlenmesinde ve çözümleme sürecindeki diğer iyi tanımlanmış noktalarda bu işlev çağrılır. Değer olarak sıfır belirtilmişse bu, daima <command>ARGP_ERR_UNKNOWN</command> döndüren bir işleve göstericiymiş gibi ele alınır. Bkz. <xref linkend="glibc-Argp-Parser-Functions"/>.
+    </para></glossdef></glossentry><glossentry><glossterm>
+    <literal>const char *<command>args_doc</command></literal>
+    </glossterm><glossdef><para>
+Sıfırdan farklıysa, bu çözümleyici tarafından çağrılan seçenek olmayan argümanları açıklayan bir dizgedir. Bu sadece <command>Usage:</command> (Kullanımı:) iletilerini basmak için kullanılır. İçinde satırsonu karakterleri varsa, onların diğer kullanım iletileri oldukları varsayılarak ayrı satırlara basılır. İlk satırdan sonraki satırların başına <command>Usage:</command> yerine <command> or: </command> ( veya: ) getirilir.
+    </para></glossdef></glossentry><glossentry><glossterm>
+    <literal>const char *<command>doc</command></literal>
+    </glossterm><glossdef><para>
+Sıfırdan farklıysa bir uzun yardım iletisinden önce ve sonra basılacak ek metinleri içeren bir dizgedir. Dizge içinde bu metinler bir düşey sekme (<command>'\v'</command>, <command>'\013'</command>) karakteri ile ayrılır. Uzlaşımsal olarak, seçeneklerden önceki bilgiler yazılımın ne yaptığını açıklayan bir dizgedir. Seçeneklerden sonra da yazılımın davranışını daha ayrıntılı açıklayan bilgiler basılır.
+    </para></glossdef></glossentry><glossentry><glossterm>
+    <literal>const struct argp_child *<command>children</command></literal>
+    </glossterm><glossdef><para>
+<command>argp_children</command> yapılarının vektörüne göstericidir. Gösterici hangi ek argp çözümleyecilerin birlikte kullanılacağını belirtir. Bkz. <xref linkend="glibc-Argp-Children"/>.
+    </para></glossdef></glossentry><glossentry><glossterm>
+    <literal>char *(*help_filter)(int <varname>anahtar</varname>, const char *<varname>metin</varname>, void *<varname>girdi</varname>)</literal>
+    </glossterm><glossdef><para>
+Sıfırdan farklıysa, yardım iletilerinin çıktısını süzen bir işleve göstericidir. Bkz. <xref linkend="glibc-Argp-Help-Filtering"/>.
+    </para></glossdef></glossentry><glossentry><glossterm>
+    <literal>const char *<command>argp_domain</command></literal>
+    </glossterm><glossdef><para>
+Sıfırdan farklıysa, bir dizgeye göstericidir. Argp kütüphanesi bu dizgeyi etki alanını değiştirmekte kullanır. Sıfırsa, öntanımlı etki alanı kullanılır.
+    </para></glossdef></glossentry></glosslist></para><para>
+Yukarıdaki grubun, <command>options</command>, <command>parser</command>, <command>args_doc</command> ve <command>doc</command> alanlarının hepsi gereklidir. Bir argp çözümleyici bir C değişkeni olarak tanımlanmışsa, değişken ilklendirilirken sadece bu alanların belirtilmesi yeterlidir. C yapılarının ilklendirilmeleri gereği olarak kalan üyelerin değerleri öntanımlı olarak sıfır olacaktır. Çoğu argp yapısında bu tasarım kullanılır; sık kullanılan alanlar bir arada gruplanır, kullanılmayanlar belirtilmeden bırakılır.
+  </para></funcdescr></funcsynopsis></para></sect2>
+  <sect2 id="glibc-Argp-Option-Vectors" chunkthis="1">
+    <title>Seçenekler</title>
+    <titleabbrev>Argp çözümleyiciye seçeneklerin belirtilmesi.</titleabbrev>
+    <para/><para>
+<command>struct argp</command> yapısının <command>options</command> alanı, her birinde argp çözümleyicinin desteklemesi için bir seçenek belitilen <command>struct argp_option</command> yapılarının vektörünü gösterir. Farklı isimlere sahip tek bir seçenek için çok sayıda girdi kullanılabilir. Böyle bir girdi grubu tüm alanları sıfır olan bir girdi ile sonlandırılır. Böyle bir C dizisini ilklendirirken bu işlemi yapmak için <command>{ 0 }</command> yazmanın yeterli olacağını hatırlatalım.
+    </para><para>
+<indexterm scope="glibc-tp"><primary sortas="argp_option">struct argp_option</primary></indexterm>
+<funcsynopsis><funcprototype role="veri türü" id="glibc-struct-argp_option">
+<funcdef>struct <command>argp_option</command></funcdef>
+<paramdef></paramdef>
+</funcprototype><funcdescr><para>
+Bu yapı, argp çözümleyicinin arayacağı tek bir seçeneği belirtmek için kullanılmasının yanında, bu seçeneğin nasıl çözümleneceği ve yardım iletisinde bu seçenek için nasıl bir açıklama verileceğini belirtmek için de kullanılır. Şu alanlara sahiptir:
+    </para><para><glosslist><glossentry><glossterm>
+    <literal>const char *<command>name</command></literal>
+    </glossterm><glossdef><para>
+Bu seçeneğin <command>--<varname>isim</varname></command> biçimindeki uzun ismi; seçenek sadece kısa isme sahipse bu üye sıfır olarak bırakılabilir. Bir seçeneğin çok sayıda isimle kullanılabilmesi durumunda, bu girdiyi ek girdilerin izlemesini istiyorsanız <command>OPTION_ALIAS</command> bitini etkinleştirmelisiniz. Bkz. <xref linkend="glibc-Argp-Option-Flags"/>.
+    </para></glossdef></glossentry><glossentry><glossterm>
+    <literal>int <command>key</command></literal>
+    </glossterm><glossdef><para>
+Seçenek çözümleyiciye bu seçeneği tanımlayan tamsayı anahtar. Eğer <varname>anahtar</varname> basılabilir bir ascii karakterin (yani, <command>isascii (<varname>anahtar</varname>)</command>) değeri ise, <command>-<varname>karakter</varname></command> biçimindeki bir kısa seçeneğin ismi olan karakteri de ifade eder.
+    </para></glossdef></glossentry><glossentry><glossterm>
+    <literal>const char *<command>arg</command></literal>
+    </glossterm><glossdef><para>
+Sıfırdan farklı ise, <command>--<varname>isim</varname>=<varname>değer</varname></command> veya <command>-<varname>karakter </varname><varname>değer</varname></command> sözdizimlerindeki gibi bu seçenekle kullanılan argümanın ismidir. Bu argüman ismi <command>OPTION_ARG_OPTIONAL</command> biti etkin değilse anlamlıdır. Bkz. <xref linkend="glibc-Argp-Option-Flags"/>.
+    </para></glossdef></glossentry><glossentry><glossterm>
+    <literal>int <command>flags</command></literal>
+    </glossterm><glossdef><para>
+Bu seçenekle ilgili bayraklar (bir kısmından yukarıda bahsedilmişti). Bkz. <xref linkend="glibc-Argp-Option-Flags"/>.
+    </para></glossdef></glossentry><glossentry><glossterm>
+    <literal>const char *<command>doc</command></literal>
+    </glossterm><glossdef><para>
+Bu seçenek için bilgilendirme iletisi; yardım iletilerinde seçeneğin açıklaması olarak basılır.
+       </para><para>
+<command>name</command> ve <command>key</command> alanlarının ikisi de sıfırsa, bu dizge grup başlığı yapılmak üzere normalde seçeneklerin bulunduğu sütununa basılır. Bu dizge kendi grubunun ilki olmalıdır. Kullanımda, bu dizge teamülen <command>:</command> ile biter.
+    </para></glossdef></glossentry><glossentry><glossterm>
+    <literal>int <command>group</command></literal>
+    </glossterm><glossdef><para>
+Bu seçenek için grup kimliği.
+       </para><para>
+Uzun bir yardım iletisinde, her gruptaki seçenekler alfabetik olarak sıralanırlar ve gruplar da 0, 1, 2, …, <varname>n</varname>, -<varname>m</varname>, …, -2, -1 sırasıyla basılırlar.
+       </para><para>
+Bir seçenekler dizisinin bu alanı 0 olan her girdisi grup numarasını, kendinden bir önceki girdiden miras alacaktır, doğal olarak ilki sıfırsa sıfır olacaktır. Grubunu başında  <command>name</command> ve <command>key</command> alanlarının ikisi de sıfırsa, "önceki girdi + 1" öntanımlıdır. Argp arayüzü tarafından üretilen <command>--help</command> gibi seçeneklerin grubu -1'dir.
+       </para><para>
+C yapılarının ilklendirme kurallarından dolayı, bu alan çoğunlukla belirtilmez, çünkü 0 geçerli bir değerdir.
+       </para></glossdef></glossentry></glosslist>
+      </para></funcdescr></funcsynopsis></para>
+      <sect3 id="glibc-Argp-Option-Flags" chunkthis="1">
+        <title>Bayraklar</title>
+        <titleabbrev>Argp seçeneklerinin yorumlanmasında kullanılan seçenekler</titleabbrev>
+        <para>
+Aşağıdaki bayraklar VEYA'lanarak bir <command>struct argp_option</command> yapısının <command>flags</command> alanında kullanılır. Bu bayraklar, seçeneklerin nasıl çözümleneceğini veya yardım iletilerinde nasıl gösterileceğini belirlerler:
+     </para><para><variablelist><varlistentry>
+     <term><literal>OPTION_ARG_OPTIONAL</literal></term><listitem><para>
+Bu seçenekle ilgili argümanın belirtilmesi isteğe bağlıdır.
+        </para></listitem></varlistentry><varlistentry>
+        <term><literal>OPTION_HIDDEN</literal></term><listitem><para>
+Bu seçenek hiçbir yardım iletisinde gösterilmez.
+        </para></listitem></varlistentry><varlistentry>
+        <term><literal>OPTION_ALIAS</literal></term><listitem><para>
+Bu seçenek en yakın takma ad olmayan seçeneğin takma adıdır. Yani takma adı olduğu yardım girdisi ile aynı girdide gösterilir. Takma adı olduğu seçeneğin <command>name</command> ve <command>key</command> dışındaki üyelerinin değerlerini miras alacaktır.
+        </para></listitem></varlistentry><varlistentry>
+        <term><literal>OPTION_DOC</literal></term><listitem><para>
+Bu seçenek aslında bir seçenek değildir ve seçenek çözümleyicide yoksayılır. Seçeneklerle aynı manada gösterilecek keyfi bir belgeleme bölümüdür. <firstterm>Belgeleme seçeneği</firstterm> olarak da bilinir.
+        </para><para>
+Bu bit etkinse, seçeneğin <command>name</command> alanı değiştirilmeksizin gösterilir (yani önüne hiç <command>-</command> eklenmez). Dizge kısa seçeneklerin olduğu yerde gösterilir. Sıralama amacına uygun olarak dizgenin başında <command>-</command> olmadıkça başlangıçtaki boşluklar ve noktalama işaretleri yoksayılır. Bu girdi tüm seçeneklerden sonra, <command>-</command> ile başlayan <command>OPTION_DOC</command> girdilerinden sonra aynı grupta gösterilir.
+        </para></listitem></varlistentry><varlistentry>
+        <term><literal>OPTION_NO_USAGE</literal></term><listitem><para>
+Bu seçenek "uzun" kullanım iletisine konmaz, diğer yardım iletilerine konur. Bu bit, argp arayüzünün <command>args_doc</command> alanında tamamen belgelenmiş seçenekler için tasarlanmıştır. Bkz.  <xref linkend="glibc-Argp-Parsers"/>.  Bu bitin soysal kullanım listesinde bulunması gereksiz olurdu, bundan kaçınmak gerekir.
+        </para><para>
+Örneğin, <command>args_doc</command> alanında <literal>&quot;FOO BAR\n-x BLAH&quot;</literal> varsa ve <command>-x</command> seçeneğinin amacı bu iki durumu ayırmaksa,  <command>-x</command> şüphesiz <command>OPTION_NO_USAGE</command> olarak imlenecekti.
+        </para></listitem></varlistentry></variablelist>
+    </para></sect3></sect2>
+  <sect2 id="glibc-Argp-Parser-Functions" chunkthis="1">
+    <title>Argp Çözümleyici İşlevleri</title>
+    <titleabbrev>Argp çözümleyici için tanımlanan eylemler.</titleabbrev>
+    <para/><para>
+Bir <command>struct argp</command> (<xref linkend="glibc-Argp-Parsers"/>) yapısının <command>parser</command> alanı ile gösterilen işlev, çözümlenen her seçenek ve argümana verilen yanıt içinde yer alan eylemi tanımlar. Ayrıca, çözümleme sırasında belirli başka noktalarda uygulanacak işlemleri mümkün kılan bir kanca işlev olarak da kullanılır.
+    </para><para>
+Argp çözümleyici işlevleri şöyle bir şeydir:
+    </para><para>
+<indexterm scope="glibc-cp"><primary>argp parser functions</primary></indexterm>
+<literallayout indent="0">
+    error_t <varname>çözümleyici</varname> (int <varname>anahtar</varname>, char *<varname>argüman</varname>, struct argp_state *<varname>durum</varname>)
+</literallayout></para><para>
+Buradaki argümanlar:
+    </para><para><variablelist><varlistentry>
+    <term><varname>anahtar</varname></term><listitem><para>
+Çözümlenen her seçenek için, <varname>çözümleyici</varname> işlevi <link linkend="glibc-Argp-Option-Vectors">seçenek vektöründeki</link> seçeneğin <command>key</command> alanındaki <varname>anahtar</varname> değeri ile çağrılır. <varname>çözümleyici</varname> işlevi ayrıca, seçenek olmayan argümanlar için <command>ARGP_KEY_ARG</command> gibi <link linkend="glibc-Argp-Special-Keys">özel anahtarlarla</link> da çağrılır.
+       </para></listitem></varlistentry><varlistentry>
+       <term><varname>argüman</varname></term><listitem><para>
+Eğer <varname>anahtar</varname> bir seçenek belirtiyorsa, <varname>argüman</varname> onun için belirtilmiş değerdir. Hiçbir değer belirtilmemişse öntanımlı değeri sıfırdır. Sadece <varname>argüman</varname> alanı sıfırdan farklı olan seçenekler bir değer alabilir. <command>OPTION_ARG_OPTIONAL</command> bayrağı belirtilmedikçe bunlar <emphasis>daima</emphasis> bir değer alırlar. Eğer bir değere izin vermeyen bir seçenek için bir değer belirtilmiş bir girdi çözümleniyorsa, <varname>çözümleyici</varname> çağrısından önce bir hata oluşur.
+       </para><para>
+Eğer <varname>anahtar</varname> değeri <command>ARGP_KEY_ARG</command> ise, <varname>argüman</varname> bir seçeneği olmayan argümandır. Diğer özel anahtarlar daima sıfır <varname>argüman</varname> değerine sahiptir.
+       </para></listitem></varlistentry><varlistentry>
+       <term><varname>durum</varname></term><listitem><para>
+<varname>durum</varname> argümanı, <varname>çözümleyici</varname> tarafından kullanılmak için o anki çözümleme durumu hakkında bilgi içeren <command>struct argp_state</command> için bir gösterici içerir. Bkz. <xref linkend="glibc-Argp-Parsing-State"/>.
+       </para></listitem></varlistentry></variablelist></para><para>
+<varname>çözümleyici</varname> çağrıldığında, <varname>anahtar</varname> için uygun eylemi uygular ve başarılı olursa <command>0</command> ile döner. <varname>anahtar</varname> değeri işlev tarafından elde edilemezse, işlev <command>ARGP_ERR_UNKNOWN</command> ile, gerçekten bir hata oluşmuşsa bir unix hata kodu ile döner. Bkz. <xref linkend="glibc-Error-Codes"/>.
+    </para><para>
+<indexterm scope="glibc-vr"><primary>ARGP_ERR_UNKNOWN</primary></indexterm>
+<funcsynopsis><funcprototype role="makro" id="glibc-ARGP_ERR_UNKNOWN">
+<funcdef>int <command>ARGP_ERR_UNKNOWN</command></funcdef>
+<paramdef></paramdef>
+</funcprototype><funcdescr><para>
+Argp çözümleyici işlevi <varname>anahtar</varname> değeri olarak belirtilen değeri tanımıyorsa ya da seçeneği olmayan argümanları (<varname>anahtar</varname><literal> == ARGP_KEY_ARG</literal>) elde etmek için çağrılmamışsa bu argümanlar için <command>ARGP_ERR_UNKNOWN</command> ile döner.
+       </para><para>
+Tipik bir çözümleyici işlev <varname>anahtar</varname> üzerinde bir switch deyimi kullanır:
+    </para><para>
+<screen>
+error_t
+parse_opt (int anahtar, char *arg, struct argp_state *durum)
+{
+  switch (anahtar)
+    {
+    case <varname>seçenek-anahtarı</varname>:
+      <varname>eylem</varname>
+      break;
+    …
+    default:
+      return ARGP_ERR_UNKNOWN;
+    }
+  return 0;
+}
+</screen></para></funcdescr></funcsynopsis></para>
+      <sect3 id="glibc-Argp-Special-Keys" chunkthis="1">
+        <title>Argp Çözümleyici İşlevleri için Özel Anahtarlar</title>
+        <titleabbrev><varname>anahtar</varname> argümanında kullanılabilecek özel anahtarlar.</titleabbrev>
+        <para>
+Kullanıcı seçeneklerine karşılık olan anahtar değerlerine ek olarak argp çözümleyici işlevlerinin <varname>anahtar</varname> argümanında bazı özel değerler de kullanılabilir. Aşağıdaki örnekte <varname>argüman</varname> ve <varname>durum</varname>, çözümleyici işlevin argümanlarını ifade eder. Bkz. <xref linkend="glibc-Argp-Parser-Functions"/>.
+     </para><para><variablelist><varlistentry>
+     <term><literal>ARGP_KEY_ARG</literal></term><listitem><para>
+Seçeneği olmayan bir komut satırı argümanını belirtmek için <varname>argüman</varname> bu değere bir gösterici olur.
+        </para><para>
+Çok sayıda argp çözümleyicinin bulunmasından dolayı çok sayıda çözümleyici işlev varsa, belli bir argümanın hangisi tarafından çözümleneceğini bilmek mümkün olmaz. Bu durumda sıfır ya da <command>ARGP_ERR_UNKNOWN</command> dışında bir hata döndürünceye kadar herbiri çağrılır; yine de bir argüman elde edilememişse, <command>argp_parse</command> işlevi başka bir argüman çözümlemesi yapmaksızın başarılı olarak döner.
+        </para><para>
+Bu anahtar için bir çözümleyici işlev başarılı olmuşsa, bu kaydedilir ve <command>ARGP_KEY_NO_ARGS</command> durumu kullanılmaz. Ancak, bir çözümleyici işlev bir argümanı işlerken, <varname>durum</varname> argümanının <command>next</command> alanını azaltıyorsa, seçenek işlenmemiş varsayılacaktır; bu durumda hala bir seçenek içinde argümanı değiştirme ve onu tekrar işleme sokma imkanı olacaktır.
+        </para></listitem></varlistentry><varlistentry>
+        <term><literal>ARGP_KEY_ARGS</literal></term><listitem><para>
+Bir çözümleyici işlev, <command>ARGP_KEY_ARG</command> için <command>ARGP_ERR_UNKNOWN</command> hatası ile dönerse, bu anahtarla benzer anlama sahip ama kalan tüm argümanlar üzerinde etkili olan  <command>ARGP_KEY_ARGS</command> anahtarı ile çağrı hemen yinelenir. <varname>argüman</varname> 0'dır ve argüman vektörünün ucu <literal><emphasis>durum</emphasis>->argv + <emphasis>durum</emphasis>->next</literal> ile bulunur. Bu anahtar için işlev başarılı ise ve <varname>durum</varname><literal>->next</literal> değişmemişse, kalan tüm argümanlar tüketilmiş varsayılır. Aksi takdirde, <varname>durum</varname><literal>->next</literal> ile belirtilen miktar kullanılmış olanların sayısına ayarlanır. Örnekte farklı argümannlar için her iki durum da kullanılmıştır:
+        </para><para>
+<screen>…
+  case ARGP_KEY_ARG:
+    if (<varname>durum</varname>->arg_num == 0)
+      /* İlk argüman */
+      ilk_arg = <varname>arguman</varname>;
+    else
+      /* Sonra çözümlenecek.  */
+      return ARGP_KEY_UNKNOWN;
+    break;
+  case ARGP_KEY_ARGS:
+    kalan_argumanlar = <varname>durum</varname>->argv + <varname>durum</varname>->next;
+    kalan_arg_sayisi = <varname>durum</varname>->argc - <varname>durum</varname>->next;
+    break;
+</screen>
+      </para></listitem></varlistentry><varlistentry>
+      <term><literal>ARGP_KEY_END</literal></term><listitem><para>
+Bu anahtar başka komut satırı kalmadığını belirtir. Çözümleyici işlevler farklı bir sırada (önce <command>children</command>) çağrılır. Bu, her çözümleyici işlevin çağrıcısı için kendi durumunu temizleme imkanı verir.
+        </para></listitem></varlistentry><varlistentry>
+        <term><literal>ARGP_KEY_NO_ARGS</literal></term><listitem><para>
+Seçeneği olmayan argümanların yokluğunda bazı özel işlemler ortaktır. Bundan dolayı, eğer çözümleyici işlevde seçeneği olmayan argümanları başarıyla işleme yeteneği yoksa bu işlevler bu anahtarla çağrılır. Bu çağrı, önceden çözümlenmiş argümanlar üzerinde daha genel doğrulama sınamalarının yapılabilmesi için <command>ARGP_KEY_END</command>'li bir çağrıdan önce yapılır.
+        </para></listitem></varlistentry><varlistentry>
+        <term><literal>ARGP_KEY_INIT</literal></term><listitem><para>
+Herhangi bir çözümleme yapılmadan önce kullanılır. Bunun ardından, <varname>durum</varname> yapısının <command>child_input</command> alanının her elemanının değeri, çocuk çözümleyiciler çağrılırken <command>input</command> üyesini ilklendirmek üzere herbirinin durumuna kopyalanır.
+        </para></listitem></varlistentry><varlistentry>
+        <term><literal>ARGP_KEY_SUCCESS</literal></term><listitem><para>
+Bazı argümanlar kalsa bile, istenen çözümleme başarıyla tamamlandığında kullanılır.
+        </para></listitem></varlistentry><varlistentry>
+        <term><literal>ARGP_KEY_ERROR</literal></term><listitem><para>
+Bir hata oluştuğunda ya da çözümleme tamamlandığında kullanılır. Bu takdirde <command>ARGP_KEY_SUCCESS</command> anahtarlı bir çağrı asla yapılmamalıdır.
+        </para></listitem></varlistentry><varlistentry>
+        <term><literal>ARGP_KEY_FINI</literal></term><listitem><para>
+<command>ARGP_KEY_SUCCESS</command> ve <command>ARGP_KEY_ERROR</command> anahtarlı çağrılardan bile sonra kullanılan son anahtar. <command>ARGP_KEY_INIT</command> anahtarlı bir çağrı ile ilklendirilen özkaynaklar bu anahtar kullanılarak yapılan bir çağrı ile serbest bırakılır. Bu sırada, bir başarılı çözümleme sonrası çağrıcıya döndürülen özkaynaklar ayrılmış olarak kalır. Bu durumda, bu özkaynaklar <command>ARGP_KEY_ERROR</command> durumuyla serbest bırakılabilir.
+        </para></listitem></varlistentry></variablelist><para>
+Tüm durumlarda, <command>ARGP_KEY_INIT</command> anahtarı çözümleyici işlev tarafından görülen ilk anahtar; <command>ARGP_KEY_INIT</command> için çözümleyiciden bir hata döndürülmedikçe, <command>ARGP_KEY_FINI</command> ise son anahtardır. Diğer anahtarlar aşağıdaki sıralamalarla görünürler. <varname>sçn-anh</varname> keyfi bir seçenek anahtarını ifade eder:
+     </para><variablelist><varlistentry>
+     <term><varname>sçn-anh</varname>… <command>ARGP_KEY_NO_ARGS ARGP_KEY_END ARGP_KEY_SUCCESS</command></term><listitem><para>
+Çözümlenen argümanlar seçeneği olmayan argümanları içermiyorsa bu sıralama kullanılır.
+        </para></listitem></varlistentry><varlistentry>
+        <term><literal>( <varname>sçn-anh</varname> | <command>ARGP_KEY_ARG</command> )…</literal> <command>ARGP_KEY_END ARGP_KEY_SUCCESS</command></term><listitem><para>
+Seçeneği olamayan argümanları işleme yeteneğine sahip işlev(ler) varsa bu sıralama kullanılır. Çok sayıda argp çözümleyici birlikte kullanılıyorsa çok sayıda çözümleyici işlev olabilir.
+        </para></listitem></varlistentry><varlistentry>
+        <term><literal>( <varname>sçn-anh</varname> | <command>ARGP_KEY_ARG</command> )…</literal> <command>ARGP_KEY_SUCCESS</command></term><listitem><para>
+Seçeneği olmayan argümanlardan bilinmeyenler varsa bu sıralama kullanılır.
+        </para><para>
+Çözümleyici işlevlerin hepsi bir argüman için <command>ARGP_KEY_UNKNOWN</command> ile döndüğünde, eğer  <varname>arg_indisi</varname> bir boş gösterici ise çözümleme bu argümanda durdurulur.  Aksi takdirde bir hata oluşur.
+        </para></listitem></varlistentry></variablelist></para><para>
+Tüm durumlarda, <command>argp_parse</command>'a aktarılan boş gösterici olmayan bir <varname>arg_indisi</varname> için çözümlenmemiş ilk komut satırı argümanı bu gösterici ile döndürülür.
+     </para><para>
+Gerek argp tarafından gerekse bir hata değeri döndüren bir çözümleyici işlev nedeniyle bir hata değeri dönmüşse, her çözümleyici <command>ARGP_KEY_ERROR</command> ile çağrılır. Son çağrı olan <command>ARGP_KEY_FINI</command> anahtarlı çağrı dışında bir çağrı yapılmaz.
+     </para></sect3>
+      <sect3 id="glibc-Argp-Helper-Functions" chunkthis="1">
+      <title>Argp Çözümleyicilere Yardımcı İşlevler</title>
+      <titleabbrev>Argp çözümlemesine yardımcı olan işlevler.</titleabbrev>
+      <para>
+Argp arayüzü, çoğunlukla hata iletileri üretmek için <link linkend="glibc-Argp-Parser-Functions">argp kullanıcısında</link> kullanmak için bazı işlevler içerir. İlk argüman olarak çözümleyici işlevin <varname>durum</varname> argümanını alırlar. Bkz. <xref linkend="glibc-Argp-Parsing-State"/>.
+     </para><para>
+<indexterm scope="glibc-cp"><primary>argp</primary><secondary>kullanım iletileri</secondary></indexterm>
+<indexterm scope="glibc-fn"><primary>argp_usage</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev" id="glibc-argp_usage">
+<funcdef>void <command>argp_usage</command></funcdef>
+<paramdef>(const struct argp_state *<varname>durum</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+Çözümleyici tarafından <varname>durum</varname> ile belirtilen standart kullanım iletisini <varname>durum</varname><literal>->err_stream</literal>'e çıktılar ve yazılımı  <command>exit (argp_err_exit_status)</command> çağrısı ile sonlandırır. Bkz. <xref linkend="glibc-Argp-Global-Variables"/>.
+</para></funcdescr></funcsynopsis></para><para>
+<indexterm scope="glibc-cp"><primary>argp</primary><secondary>sözdizimi hatası iletileri</secondary></indexterm>
+<indexterm scope="glibc-fn"><primary>argp_error</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev" id="glibc-argp_error">
+<funcdef>void <command>argp_error</command></funcdef>
+<paramdef>(const struct argp_state *<varname>durum</varname>,
+ const char              *<varname>biçim</varname>,
+ …)</paramdef>
+</funcprototype><funcdescr><para>
+Yazılım isminden sonra bir iki nokta üstüste koyup, ardından <varname>biçim</varname> ile belirtilen printf biçim dizgesi ve argümanlarını bastıktan sonra buna <literal>Try … --help</literal> iletisini ekler ve yazılımı <command>argp_err_exit_status</command> durumu ile sonlandırır. Bkz. <xref linkend="glibc-Argp-Global-Variables"/>.
+</para></funcdescr></funcsynopsis></para><para>
+<indexterm scope="glibc-cp"><primary>argp</primary><secondary>error messages</secondary></indexterm>
+<indexterm scope="glibc-fn"><primary>argp_failure</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev" id="glibc-argp_failure">
+<funcdef>void <command>argp_failure</command></funcdef>
+<paramdef>(const struct argp_state *<varname>durum</varname>,
+ int                      <varname>çıkış-durumu</varname>,
+ int                      <varname>hatanum</varname>,
+ const char              *<varname>biçim</varname>,
+ …)</paramdef>
+</funcprototype><funcdescr><para>
+Standart GNU hata raporlama işlevi olan <command>error</command> işlevine benzer. Yazılım isminden sonra bir iki nokta üstüste koyup, ardından <varname>biçim</varname> ile belirtilen printf biçim dizgesi ve argümanlarını basar. <varname>hatanum</varname> sıfırdan farklıysa, bu hata durumu ile ilgili standart Unix hata metnini basar. <varname>çıkış-durumu</varname> sıfırdan farklıysa bu değeri çıkış durumu olarak kullanarak yazılımı sonlandırır.
+     </para><para>
+<command>argp_failure</command> ile <command>argp_error</command> arasındaki fark, <command>argp_error</command> hataların çözümlenmesi için iken, <command>argp_failure</command> çözümleme sırasında oluşan diğer sorunlar içindir, ama kuraldışı değer verilmiş seçenekler, ayın yanlış evrede olması gibi girdi ile ilgili sözdizimsel sorunları ifade etmek için değildir.
+</para></funcdescr></funcsynopsis></para><para>
+<indexterm scope="glibc-fn"><primary>argp_state_help</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev" id="glibc-argp_state_help">
+<funcdef>void <command>argp_state_help</command></funcdef>
+<paramdef>(const struct argp_state *<varname>durum</varname>,
+ FILE                    *<varname>akım</varname>,
+ unsigned                 <varname>bayraklar</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+Çözümleyici tarafından <varname>durum</varname> ile belirtilen bir yardım iletisini <varname>akım</varname>'a çıktılar. <varname>bayraklar</varname> argümanı ile yardım iletisinin hangi sıra ile üretileceği belirtilir. Bkz. <xref linkend="glibc-Argp-Help-Flags"/>.
+</para></funcdescr></funcsynopsis></para><para>
+Hata çıktısı <varname>durum</varname><literal>->err_stream</literal>'e gönderilir ve basılan yazılım ismi <varname>durum</varname><literal>->name</literal>'dir.
+     </para><para>
+Bu işlevlerin çıktıları ya da sonlandırma davranışları, <command>argp_parse</command> işlevine  <command>ARGP_NO_EXIT</command> veya <command>ARGP_NO_ERRS</command> bayrağı aktarılarak baskılanabilir. Bkz. <xref linkend="glibc-Argp-Flags"/>.
+     </para><para>
+Bu davranış, argp çözümleyici başka yazılımlar (örn, bir kütüphane) tarafından kullanılmak içinse yararlıdır ve çözümleme hatalarına yanıt olarak yazılımın sonlanmasının istenmediği bir bağlamda kullanılabilir. Bu tür kullanımlar için tasarlanmış argp çözümleyicilerde ve yazılımın sonlanmayacağı durum için bu işlevlerin çağrılarından sonra ilgili hata kodunu döndüren kodlar olmalıdır:
+     </para><para>
+<screen>
+if (<varname>argüman sözdizimi hatalı</varname>)
+  {
+     argp_usage (<varname>durum</varname>);
+     return EINVAL;
+  }
+</screen></para><para>
+Eğer bir çözümleyici işlev sadece <command>ARGP_NO_EXIT</command> etkin iken kullanılacaksa, dönmeyebilir.
+     </para></sect3>
+    <sect3 id="glibc-Argp-Parsing-State" chunkthis="1">
+      <title>Argp Çözümleme Durumu</title>
+      <titleabbrev><varname>durum</varname> argümanı ne ifade eder.</titleabbrev>
+      <para>
+<link linkend="glibc-Argp-Parser-Functions">Argp çözümleyici işlevlerinin</link> üçüncü argümanı seçenek çözümleme durumu hakkında bilgi içeren <command>struct argp_state</command> yapısına bir göstericidir.
+     </para><para>
+<indexterm scope="glibc-tp"><primary sortas="argp_state">struct argp_state</primary></indexterm>
+<funcsynopsis><funcprototype role="veri türü" id="glibc-struct-argp_state">
+<funcdef>struct <command>argp_state</command></funcdef>
+<paramdef></paramdef>
+</funcprototype><funcdescr><para>
+Bu yapının üyeleri şunlardır (değişiklik yapılabilecek üyeler belirtilmiştir):
+    </para><para><glosslist><glossentry><glossterm>
+    <literal>const struct argp *const <command>root_argp</command></literal>
+    </glossterm><glossdef><para>
+Çözümleme için kullanılan en üst seviye argp çözümleyici. Bu çoğunlukla, yazılım tarafından çağrılan <command>argp_parse</command> işlevine aktarılan <command>struct argp</command> ile aynı değildir. Bkz.  <xref linkend="glibc-Argp"/>.  Bu, <command>--help</command> gibi <command>argp_parse</command> tarafından gerçeklenmiş seçenekleri içeren dahili argp çözümleyicidir.
+    </para></glossdef></glossentry><glossentry><glossterm>
+    <literal>int <command>argc</command></literal>
+    </glossterm><glossterm><literal>char **<command>argv</command></literal>
+    </glossterm><glossdef><para>
+Çözümlenecek argüman vektörü. Bu üyenin değeri değiştirilebilir.
+    </para></glossdef></glossentry><glossentry><glossterm>
+    <literal>int <command>next</command></literal>
+    </glossterm><glossdef><para>
+Çözümlenecek sonraki argümanın <command>argv</command> içindeki indisi. Bu üyenin değeri değiştirilebilir.
+        </para><para>
+Girdide kalan tüm argümanları tüketmenin tek yolu <command>next</command> alanındaki değeri kaydettikten sonra <varname>durum</varname><literal>->next = </literal><varname>durum</varname><literal>->argc</literal> ataması yapmaktır. Aynı seçenek bu alanın değeri azaltılarak yeniden çözümlenebilir ve bundan sonra çözümlenecek seçenek <varname>durum</varname><literal>->argv[</literal><varname>durum</varname><literal>->next]</literal> ile belirtilebilir.
+    </para></glossdef></glossentry><glossentry><glossterm>
+    <literal>unsigned <command>flags</command></literal>
+    </glossterm><glossdef><para>
+<command>argp_parse</command>'a aktarılacak bayraklar. Bazı bayraklar sadece <command>argp_parse</command> ilk çağrıldığında etkili olabileceğinden bu üyenin değeri değiştirilebilir. Bkz. <xref linkend="glibc-Argp-Flags"/>.
+    </para></glossdef></glossentry><glossentry><glossterm>
+    <literal>unsigned <command>arg_num</command></literal>
+    </glossterm><glossdef><para>
+Çözümleyici işlev <varname>anahtar</varname> argümanında <command>ARGP_KEY_ARG</command> belirtilerek çağrıldığında, bu üye, ilkinin indisi 0 olmak üzere o anki argümanın indisini gösterir. Her <command>ARGP_KEY_ARG</command>'lı çağrıdan sonra değeri bir artar. Bunun dışında, işlenen <command>ARGP_KEY_ARG</command> argümanlarının sayısını içerir.
+    </para></glossdef></glossentry><glossentry><glossterm>
+    <literal>int <command>quoted</command></literal>
+    </glossterm><glossdef><para>
+Sıfırdan farklıysa değeri, özel <command>--</command> argümanından sonraki ilk <command>argv</command> argümanının indisidir. Bu indisten itibaren hiçbir argüman seçenek olarak yorumlanmaz. Bu değer sadece, bu özel seçenekten önce çözümlenmemiş seçenek kalmadığında atanır.
+    </para></glossdef></glossentry><glossentry><glossterm>
+    <literal>void *<command>input</command></literal>
+    </glossterm><glossdef><para>
+<command>argp_parse</command> işlevine <varname>girdi</varname> argümanı ile aktarılan keyfi bir gösterici.
+    </para></glossdef></glossentry><glossentry><glossterm>
+    <literal>void **<command>child_inputs</command></literal>
+    </glossterm><glossdef><para>
+Çocuk çözümleyicilere aktarılacak değerleri içerir. Bu vektörün eleman sayısı o anki çözümleyicideki çocukların sayısı ile aynı olacaktır. <varname>i</varname> bu çözümleyicinin <command>children</command> alanındaki çocuk çözümleyicinin indisi olmak üzere, <varname>durum</varname><literal>->child_inputs[</literal><varname>i</varname><literal>]</literal> değeri her çocuk çözümleyicinin <varname>durum</varname><literal>->input</literal> alanının değeri olacaktır. Bkz.  <xref linkend="glibc-Argp-Children"/>.
+    </para></glossdef></glossentry><glossentry><glossterm>
+    <literal>void *<command>hook</command></literal>
+    </glossterm><glossdef><para>
+Çözümleyici işlevin kullanması içindir. 0 ile ilklendirilir, başka bir değer verilse bile argp tarafından bu değer yok sayılır.
+    </para></glossdef></glossentry><glossentry><glossterm>
+    <literal>char *<command>name</command></literal>
+    </glossterm><glossdef><para>
+İletileri basarken kullanılacak isim. Bu üye normalde <command>argv[0]</command> ile ilklendirilir. <command>argv[0]</command> mevcut değilse, <command>program_invocation_name</command> ile ilklendirilir.
+    </para></glossdef></glossentry><glossentry><glossterm>
+    <literal>FILE *<command>err_stream</command></literal>
+    </glossterm><glossterm><literal>FILE *<command>out_stream</command></literal>
+    </glossterm><glossdef><para>
+Argp arayüzünün iletileri basarken kullandığı standart G/Ç akımları. Hata iletileri <command>err_stream</command>'e, tüm diğer çıktılar (örn, <command>--help</command> çıktısı) <command>out_stream</command>'e çıktılanır. Bunlar sırasıyla <command>stderr</command> ve <command>stdout</command> olarak ilklendirilir. Bkz. <xref linkend="glibc-Standard-Streams"/>.
+    </para></glossdef></glossentry><glossentry><glossterm>
+    <literal>void *<command>pstate</command></literal>
+    </glossterm><glossdef><para>
+Argp gerçekleniminin kullanımına özeldir.
+    </para></glossdef></glossentry></glosslist>
+  </para></funcdescr></funcsynopsis></para>
+  </sect3></sect2>
+  <sect2 id="glibc-Argp-Children" chunkthis="1">
+    <title>Çocuk Çözümleyiciler</title>
+    <titleabbrev>Çok sayıda argp çözümleyicinin birlikte kullanılması</titleabbrev>
+    <para>
+Bir <command>struct argp</command> yapısının <command>children</command> alanı aynı argüman kümesinin çözümlenmesi için birlikte kullanılacak diğer argp çözümleyicilerle ilgili bilgi içerir. Bu alan, bir <command>struct argp_child</command> vektörüne göstericidir. Vektör, <command>argp</command> alanı sıfır olan bir yapı ile sonlanır.
+    </para><para>
+Çözümleyiciler arasında aynı isimli iki seçeneği belirtilmesi nedeniyle bir çatışma ortaya çıkarsa, çatışmalar ata argp çözümleyici(ler) ya da çocuk çözümleyiciler listesindeki daha önceki argp çözümleyiciler lehine çözümlenir.
+    </para><para>
+<indexterm scope="glibc-tp"><primary sortas="argp_child">struct argp_child</primary></indexterm>
+<funcsynopsis><funcprototype role="veri türü" id="glibc-struct-argp_child">
+<funcdef>struct <command>argp_child</command></funcdef>
+<paramdef></paramdef>
+</funcprototype><funcdescr><para>
+Bir <command>struct argp</command> yapısının <command>children</command> alanı tarafından gösterilen yardımcı argp çözümleyici listesindeki bir girdinin veri türü. Yapı şu üyelere sahiptir:
+    </para><para><glosslist><glossentry><glossterm>
+    <literal>const struct argp *<command>argp</command></literal>
+    </glossterm><glossdef><para>
+Çocuk argp çözümleyici; yapı, listenin son elemanıysa sıfır.
+    </para></glossdef></glossentry><glossentry><glossterm>
+    <literal>int <command>flags</command></literal>
+    </glossterm><glossdef><para>
+Bu çocuk çözümleyici için bayraklar.
+    </para></glossdef></glossentry><glossentry><glossterm>
+    <literal>const char *<command>header</command></literal>
+    </glossterm><glossdef><para>
+Sıfırdan farklıysa, çocuk seçeneklerden önce yardım çıktısına basılacak isteğe bağlı başlık. Bir yan etki olarak, sıfırdan farklı bir değer çocuk seçeneklerin birlikte gruplanmasına sebep olur. Bir başlık basmadan bu yan etkiyi elde etmek isterseniz <command>&quot;&quot;</command> değerini kullanın. Başlık dizgesi basılırken son karakter teamülen <command>:</command> olur. Bkz. <xref linkend="glibc-Argp-Option-Vectors"/>.
+    </para></glossdef></glossentry><glossentry><glossterm>
+    <literal>int <command>group</command></literal>
+    </glossterm><glossdef><para>
+Çocuk seçeneklerin, ata argp çözümleyicinin seçenekleri ile birlikte basılırken, bu seçenekler arasında grup olarak hangi sırada basılacağı bu üye ile belirtilir. <command>struct argp_option</command> yapısının <command>group</command> alanındaki değer ile aynıdır. Bkz. <xref linkend="glibc-Argp-Option-Vectors"/>. Tüm çocuk seçenek grupları, ata seçenekler arasında belli bir gruplama seviyesinde basılır. Eğer bu alan ve <command>header</command> alanı her ikisi de sıfırsa, çocuk seçenekler gruplanmaz, ata seçeneklerle aynı seviyede basılırlar.
+    </para></glossdef></glossentry></glosslist>
+  </para></funcdescr></funcsynopsis></para></sect2>
+  <sect2 id="glibc-Argp-Flags" chunkthis="1">
+    <title><literal>argp_parse</literal> Bayrakları</title>
+    <titleabbrev><command>argp_parse</command> davranışını etkileyen bayraklar.</titleabbrev>
+    <para>
+<command>argp_parse</command> işlevinin öntanımlı davranışı yazılımın komut satırı argümanlarının teamülen çok bilinen bir duruma göre çözümleme yapması için tasarlanmıştır. Bu davranışı değiştirmek için <command>argp_parse</command> işlevinin <varname>bayraklar</varname> argümanında aşağıdaki bayraklar VEYAlanarak belirtilebilir:
+    </para><para><variablelist><varlistentry>
+    <term><literal>ARGP_PARSE_ARGV0</literal></term><listitem><para>
+<command>argp_parse</command> işlevinin <varname>argv</varname> argümanının ilk elemanı yoksayılmaz. <command>ARGP_NO_ERRS</command> etkin olmadıkça argüman vektörünün komut satırında yazılım ismine denk düşen ilk elemanı seçenek çözümleme amaçlarına uygun olarak yoksayılır.
+       </para></listitem></varlistentry><varlistentry>
+       <term><literal>ARGP_NO_ERRS</literal></term><listitem><para>
+Bilinmeyen seçenekler için <command>stderr</command> akımına hata iletileri basılmaz. Bu bayrak etkin olmadıkça, <command>ARGP_PARSE_ARGV0</command> yoksayılır ve hata iletilerinde <command>argv[0]</command> yazılım ismi olarak basılır. Bu bayrak ayrıca  <command>ARGP_NO_EXIT</command> uygular. Hata olduğunda hiçbir bilgi vermeksizin yazılımı sonlandırmanın kötü bir davranış olacağından hareketle bu davranış isteğe bağlı yapılmıştır.
+       </para></listitem></varlistentry><varlistentry>
+       <term><literal>ARGP_NO_ARGS</literal></term><listitem><para>
+Seçenek olmayan argümanlar çözümlenmez. Normalde bunlar çözümleme işlevleri <command>ARGP_KEY_ARG</command> anahtarı ile çağrılarak çözümlenirler. Bir argümanın çözümlenmesi başarısız olduğunda çözümleme normalde durduğundan bu bayrağın kullanılmasına gerek kalmaz. Bkz. <xref linkend="glibc-Argp-Parser-Functions"/>.
+       </para></listitem></varlistentry><varlistentry>
+       <term><literal>ARGP_IN_ORDER</literal></term><listitem><para>
+Seçenekler ve argümanları komut satırında verildikleri sırada çözümlenir. Normalde seçenekler önce çözümlenecek şekilde düzenleme yapılır.
+       </para></listitem></varlistentry><varlistentry>
+       <term><literal>ARGP_NO_HELP</literal></term><listitem><para>
+Normalde standart <command>--help</command> seçeneği ile seçeneklerin kullanım açıklamalarını içeren yardım iletisinin basılıp <command>exit (0)</command> ile çıkılır. Bu bayrak bu davranışı iptal eder.
+       </para></listitem></varlistentry><varlistentry>
+       <term><literal>ARGP_NO_EXIT</literal></term><listitem><para>
+Bir hata iletisi ile sonuçlansa bile hatalarda çıkış yapılmaz.
+       </para></listitem></varlistentry><varlistentry>
+       <term><literal>ARGP_LONG_ONLY</literal></term><listitem><para>
+Argümanların çözümlenmesinde GNU getopts uzun seçenek kuralları kullanılır. Bu bayrak uzun seçenekleri tek <command>-</command> ile (<command>-help</command> biçiminde) belirtilebilmesini mümkün kılar. Bu, daha az kullanışlı bir arayüz ile sonuçlanır ve hem GNU kodlama standartları hem de çoğu GNU yazılımı ile bu davranış uyumsuz olacağından kullanılması önerilmez.
+       </para></listitem></varlistentry><varlistentry>
+       <term><literal>ARGP_SILENT</literal></term><listitem><para>
+İleti basma ve çıkma seçeneklerini, özellikle <command>ARGP_NO_EXIT</command>, <command>ARGP_NO_ERRS</command> ve <command>ARGP_NO_HELP</command> ile ilgili olarak iptal eder.
+       </para></listitem></varlistentry></variablelist>
+  </para></sect2>
+  <sect2 id="glibc-Argp-Help-Filtering" chunkthis="1">
+    <title>Argp Yardım Çıktısının Özelleştirilmesi</title>
+    <titleabbrev>Bir argp çözümleyici için yardım çıktısının özelleştirilmesi.</titleabbrev>
+    <para>
+Bir <command>struct argp</command> yapısının <command>help_filter</command> alanı yardım iletilerinin metninin özelleştirilmesini mümkün kılmak için bir işleve gösterici içerebilir. Böyle bir işlevin prototipi şuna benzer:
+    </para><para>
+<literallayout indent="0">
+    char *<varname>yardım-süzgeci</varname> (int <varname>anahtar</varname>, const char *<varname>metin</varname>, void *<varname>girdi</varname>)
+</literallayout></para><para>
+Burada <varname>anahtar</varname> bir seçenekteki bir anahtar olduğunda <varname>metin</varname> bu seçeneğin yardım metnidir. Bkz. <xref linkend="glibc-Argp-Option-Vectors"/>.  <varname>anahtar</varname> olarak <command>ARGP_KEY_HELP_</command> ile başlayan özel anahtarlardan biri de kullanılabilir; bu durumda, <varname>metin</varname> bu duruma ilişkin yardım metnini içerecektir. Bkz. <xref linkend="glibc-Argp-Help-Filter-Keys"/>.
+    </para><para>
+İşlev ya olduğu gibi bırakılmış olarak ya da <command>malloc</command> kullanılarak ayrılmış başka bir dizgeyi içeren <varname>metin</varname> ile dönmelidir. Metnin oluşturulmasına bağlı olarak ya argp tarafından serbest bırakılarak ya da sıfır yapılarak hiçbir şey basılmaması sağlanabilir. <varname>metin</varname> değeri bir dönüşümün sonunda oluşur. Yani metnin çevirisi gerekiyorsa bu işlem bu işlev tarafından yapılmalıdır. <varname>girdi</varname>, <command>argp_parse</command>'a verilen girdi olabileceği gibi <command>argp_help</command> doğrudan kullanıcı tarafından çağrılmışsa sıfır olabilir.
+    </para>
+    <sect3 id="glibc-Argp-Help-Filter-Keys">
+      <title>Argp Yardım Özelleştirme Anahtarları</title>
+      <titleabbrev>Yardım özelleştirme işlevlerinde belirtilebilecek  <varname>anahtar</varname> değerleri.</titleabbrev>
+      <para>
+Aşağıdaki özel değerler, kullanıcı seçeneklerinin anahtar değerlerine ek olarak bir argp yardım iletisi özelleştirme işlevinin ilk argümanında değer olarak kullanılabilir. Bunlar işlevin <varname>metin</varname> argümanında hangi metnin içerileceğini belirlerler:
+     </para><para><variablelist><varlistentry>
+     <term><literal>ARGP_KEY_HELP_PRE_DOC</literal></term><listitem><para>
+Seçeneklerden önce basılacak yardım metni.
+        </para></listitem></varlistentry><varlistentry>
+        <term><literal>ARGP_KEY_HELP_POST_DOC</literal></term><listitem><para>
+Seçeneklerden sonra basılacak yardım metni.
+        </para></listitem></varlistentry><varlistentry>
+        <term><literal>ARGP_KEY_HELP_HEADER</literal></term><listitem><para>
+Seçenek başlık dizgesi.
+        </para></listitem></varlistentry><varlistentry>
+        <term><literal>ARGP_KEY_HELP_EXTRA</literal></term><listitem><para>
+Tüm diğer açılamalardan sonra kullanılır; bu anahtar için <varname>metin</varname> sıfırdır.
+        </para></listitem></varlistentry><varlistentry>
+        <term><literal>ARGP_KEY_HELP_DUP_ARGS_NOTE</literal></term><listitem><para>
+Tekrarlanan seçenek argümanları engellendiğinde basılacak açıklayıcı bilgi.
+        </para></listitem></varlistentry><varlistentry>
+        <term><literal>ARGP_KEY_HELP_ARGS_DOC</literal></term><listitem><para>
+Argüman açıklama dizgesi; usulen argp çözümleyicideki <command>args_doc</command> alanıdır. Bkz. <xref linkend="glibc-Argp-Parsers"/>.
+        </para></listitem></varlistentry></variablelist>
+      </para>
+    </sect3>
+  </sect2>
+  <sect2 id="glibc-Argp-Help" chunkthis="1">
+    <title><literal>argp_help</literal> İşlevi</title>
+    <titleabbrev>Yardım iletilerinin çözümlenmeden basılması.</titleabbrev>
+    <para>
+Normalde argp arayüzünü kullanan yazılımlarda argüman kullanım iletilerinin basılması için, bu işlem argp tarafından standart <command>--help</command> seçeneği ile özdevinimli olarak yapıldığından, ayrıca kod yazılması gerekmez. Hata durumlarında ise <command>argp_usage</command> ve <command>argp_error</command> kullanılır. Bkz. <xref linkend="glibc-Argp-Helper-Functions"/>.  Ancak, bir yardım iletisinde yazılımın seçenek çözümlemesi dışında bazı bilgilerin basılması istenebilir. Argp arayüzü bu tür istekleri karşılamak üzere <command>argp_help</command> arayüzünü içerir.
+    </para><para>
+<indexterm scope="glibc-fn"><primary>argp_help</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev" id="glibc-argp_help">
+<funcdef>void <command>argp_help</command></funcdef>
+<paramdef>(const struct argp *<varname>argp</varname>,
+ FILE              *<varname>akım</varname>,
+ unsigned           <varname>bayraklar</varname>,
+ char              *<varname>isim</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+<varname>argp</varname> çözümleyici için bir yardım iletisini <varname>akım</varname> akımına çıktılar. Basılacak iletinin türü <varname>bayraklar</varname> ile belirtilir.
+    </para><para>
+Argp arayüzü tarafından <command>--help</command> gibi özdevinimli gerçeklenen seçeneklere ilişkin yardım çıktısı bu çıktıda yer almaz. Bu nedenle çağrıyı bir argp çözümleyici işlev içinden yapıyorsanız en iyisi <command>argp_state_help</command> işlevini kullanmaktır. Bkz. <xref linkend="glibc-Argp-Helper-Functions"/>.
+  </para></funcdescr></funcsynopsis></para></sect2>
+  <sect2 id="glibc-Argp-Help-Flags" chunkthis="1">
+    <title><literal>argp_help</literal> Bayrakları</title>
+    <titleabbrev>Basılacak yardım iletisininin sırasının belirlenmesi.</titleabbrev>
+    <para>
+<command>argp_help</command> (bkz. <xref linkend="glibc-Argp-Help"/>) veya <command>argp_state_help</command> (bkz. <xref linkend="glibc-Argp-Helper-Functions"/>) çağrısı yapıldığında çıktı <varname>bayraklar</varname> argümanında belirtilen değerden etkilenir. Bu değer, aşağıdaki değerler VEYAlanarak oluşturulabilir:
+    </para><para><variablelist><varlistentry>
+    <term><literal>ARGP_HELP_USAGE</literal></term><listitem><para>
+Tüm seçeneklerin listelendiği Unix <literal>Usage:</literal> iletisi.
+       </para></listitem></varlistentry><varlistentry>
+       <term><literal>ARGP_HELP_SHORT_USAGE</literal></term><listitem><para>
+Seçeneklerin açıkça değil, seçeneklerin sadece yer belirtilerek çıktılandığı Unix <literal>Usage:</literal> iletisi; seçenek olmayan argümanların sözdizimi gösterilirken yararlıdır.
+       </para></listitem></varlistentry><varlistentry>
+       <term><literal>ARGP_HELP_SEE</literal></term><listitem><para>
+<literal>Try … for more help</literal> iletisi; burada <command>…</command> yazılımın ismini ve <command>--help</command> seçeneğini içerir.
+       </para></listitem></varlistentry><varlistentry>
+       <term><literal>ARGP_HELP_LONG</literal></term><listitem><para>
+Her seçeneğin kendi bilgilendirme metni bulunan ayrıntılı yardım iletisi.
+       </para></listitem></varlistentry><varlistentry>
+       <term><literal>ARGP_HELP_PRE_DOC</literal></term><listitem><para>
+Ayrıntılı yardım iletisinden önceki argp çözümleyici açıklama dizgesi.
+       </para></listitem></varlistentry><varlistentry>
+       <term><literal>ARGP_HELP_POST_DOC</literal></term><listitem><para>
+Ayrıntılı yardım iletisinden sonraki argp çözümleyici açıklama dizgesi.
+       </para></listitem></varlistentry><varlistentry>
+       <term><literal>ARGP_HELP_DOC</literal></term><listitem><para>
+<command>(ARGP_HELP_PRE_DOC | ARGP_HELP_POST_DOC)</command>
+      </para></listitem></varlistentry><varlistentry>
+      <term><literal>ARGP_HELP_BUG_ADDR</literal></term><listitem><para>
+<command>argp_program_bug_address</command> değişkeninde atanmışsa, bu yazılımla ilgili yazılım hatalarının raporlanacağı yeri belirten ileti.
+       </para></listitem></varlistentry><varlistentry>
+       <term><literal>ARGP_HELP_LONG_ONLY</literal></term><listitem><para>
+Çıktı, <command>ARGP_LONG_ONLY</command> kipine göre değiştirilir.
+       </para></listitem></varlistentry></variablelist></para><para>
+Aşağıdaki bayraklar sadece <command>argp_state_help</command> işlevinde kullanıldığında anlamlıdır. İleti basıldıktan sonra ya yazılım sonlandırılır ya da işlev döner. Bu seçenekler bunlardan birini seçer:
+    </para><para><variablelist><varlistentry>
+    <term><literal>ARGP_HELP_EXIT_ERR</literal></term><listitem><para>
+Yazılımın <command>exit (argp_err_exit_status)</command> ile sonlanmasını sağlar.
+       </para></listitem></varlistentry><varlistentry>
+       <term><literal>ARGP_HELP_EXIT_OK</literal></term><listitem><para>
+Yazılımın <command>exit (0)</command> ile sonlanmasını sağlar.
+       </para></listitem></varlistentry></variablelist></para><para>
+Aşağıdaki bayraklar, standart iletilerin basılmasında kullanılan temel bayrakların birleşiminden oluşur:
+    </para><para><variablelist><varlistentry>
+    <term><literal>ARGP_HELP_STD_ERR</literal></term><listitem><para>
+Hata iletisinin bir çözümleme hatası içerdiği varsayımıyla, nasıl yardım alınacağını belirten bir ileti basılır ve yazılım bir hata ile sonlandırılır.
+       </para></listitem></varlistentry><varlistentry>
+       <term><literal>ARGP_HELP_STD_USAGE</literal></term><listitem><para>
+Bir standart kullanım iletisi basılır ve yazılım bir hata ile sonlandırılır. Bu duruma özel bir hata iletisisin yokluğunda kullanılır.
+       </para></listitem></varlistentry><varlistentry>
+       <term><literal>ARGP_HELP_STD_HELP</literal></term><listitem><para>
+<command>--help</command> seçeneğinin standart sonucu olan ileti basılır ve yazılım başarılı olarak sonlandırılır.
+       </para></listitem></varlistentry></variablelist></para></sect2>
+  <sect2 id="glibc-Argp-Examples" chunkthis="1">
+    <title>Argp Örnekleri</title>
+    <titleabbrev>Argp arayüzünün kullanıldığı basit yazılım örnekleri.</titleabbrev>
+    <para/><para>
+Bu örnek yazılımlarla argp arayüzünün temel kullanımı örneklenmeye çalışılmıştır.
+    </para>
+    <sect3 id="glibc-Argp-Example-1" chunkthis="1">
+      <title>1. Örnek</title>
+      <titleabbrev>Argp kullanan en küçük örnek</titleabbrev>
+      <para>
+Bu örnekte, argp arayüzünü kullanan olası en küçük yazılımın nasıl olacağı gösterilmiştir. Komut satırında mevcut olmayan bir seçenek belirtildiğinde bir hata iletisi basıp çıkmak dışında birşey yapmaz. <command>--help</command> seçeneği ile ise argp arayüzünde gerçeklenmiş seçeneklerin yardım iletisini basar.
+     </para><para>
+<screen>/* 1. Argp örneği -- argp kullanılan en küçük yazılım */
+
+/* Bu, argp kullanılan (olası) en küçük yazılımdır.
+   --help ve --usage ile yardım ve kısa kullanım iletisi
+   basmak dışında, sadece tanımsız bir komut satırı seçeneği
+   ya da argümanı için bir hata iletisi basar. */
+
+#include &lt;argp.h>
+
+int main (int argc, char **argv)
+{
+  argp_parse (0, argc, argv, 0, 0, 0);
+  exit (0);
+}
+</screen>
+     </para><para>
+Çıktısı şöyle birşey oluyor:
+     </para><para>
+<screen>
+<prompt>~/deneme$ </prompt><command>gcc deneme.c</command>
+<prompt>~/deneme$ </prompt><command>./a.out</command>
+<prompt>~/deneme$ </prompt><command>./a.out --help</command>
+Usage: a.out [OPTION...]
+
+  -?, --help                 Give this help list
+      --usage                Give a short usage message
+<prompt>~/deneme$ </prompt><command>./a.out --usage</command>
+Usage: a.out [-?] [--help] [--usage]
+<prompt>~/deneme$ </prompt><command>./a.out --version</command>
+./a.out: unrecognized option `--version'
+Try `a.out --help' or `a.out --usage' for more information.
+<prompt>~/deneme$ </prompt><command>./a.out alooo</command>
+a.out: Too many arguments
+Try `a.out --help' or `a.out --usage' for more information.
+</screen>
+     </para></sect3>
+     <sect3 id="glibc-Argp-Example-2" chunkthis="1">
+       <title>2. Örnek</title>
+       <titleabbrev>Sadece öntanımlı seçeneklerle argp kullanan örnek bir yazılım</titleabbrev>
+       <para>
+Bu yazılımda GNU standart komut satırı biçimi ile uyumlu argp kullanımı dışında herhangi bir seçenek ya da argüman tanımlanmamıştır.
+     </para><para>
+<command>--help</command> ve <command>--usage</command> seçeneklerine ek olarak GNU standartlarına uygun olarak bir de <command>--version</command> seçeneğine sahiptir. GNU standardındaki gibi <command>--help</command> çıktısında açıklayıcı bir dizge ile hata bildirme adresi basar.
+     </para><para>
+<command>argp</command> değişkeni argüman çözümleyici belirtimini içerir. <command>argp_parse</command> işlevine parametreler bu yapının alanları üzerinden aktarılır. Normalde ilk üç alan kullanılır ama bu küçük yazılımda kullanılmamıştır. Argp arayüzünün kullandığı iki genel değişken bu yazılımda kullanılmıştır: <command>argp_program_version</command> ve <command>argp_program_bug_address</command>.  Bunlar, hemen hemen her yazılımda çeşitli görevler için farklı argüman çözümleyiciler kullanılıyor olsa bile, daima birer sabit olarak verildiğinden genel değişkenler olacağı varsayılmıştır.
+     </para><para>
+<screen>/* 2. Argp Örneği - Argp kullanılan az küçük bir yazılım */
+
+/*  Bu yazılımda GNU standart komut satırı biçimi ile uyumlu argp
+    kullanımı dışında herhangi bir seçenek ya da argüman
+    tanımlanmamıştır.
+
+    <command>--help</command> ve <command>--usage</command> seçeneklerine ek olarak GNU standartlarına uygun
+    olarak bir de <command>--version</command> seçeneğine sahiptir. GNU standardındaki gibi
+    <command>--help</command> çıktısında açıklayıcı bir dizge ile hata bildirme adresi basar.
+
+    <command>argp</command> değişkeni argüman çözümleyici belirtimini içerir. <command>argp_parse</command>
+    işlevine parametreler bu yapının alanları üzerinden aktarılır. Normalde
+    ilk üç alan kullanılır ama bu küçük yazılımda kullanılmamıştır. Argp
+    arayüzünün kullandığı iki genel değişken bu yazılımda kullanılmıştır:
+    <command>argp_program_version</command> ve  <command>argp_program_bug_address</command>.
+    Bunlar, hemen hemen her yazılımda çeşitli görevler için farklı
+    argüman çözümleyiciler kullanılıyor olsa bile, daima birer sabit
+    olarak verildiğinden genel değişkenler olacağı varsayılmıştır. */
+
+#include &lt;argp.h>
+
+const char *argp_program_version =
+  "argp-ex2 1.0";
+const char *argp_program_bug_address =
+  "&lt;bug-gnu-utils@gnu.org>";
+
+/* Yazılım açıklaması. */
+static char doc[] =
+  "Argp example #2 -- a pretty minimal program using argp";
+
+/*  Argüman çözümleyicimiz. options, parser, ve
+    args_doc alanları sıfırdır, çünkü bizim seçenek ve
+    argümanımız yok. --help seçeneğinin çıktısında doc ve
+    argp_program_bug_address, --version seçeneğinin çıktısında ise
+    argp_program_version kullanılacak.  */
+static struct argp argp = { 0, 0, 0, doc };
+
+int main (int argc, char **argv)
+{
+  argp_parse (&amp;argp, argc, argv, 0, 0, 0);
+  exit (0);
+}
+</screen>
+     </para><para>
+Çıktısı şöyle birşey oluyor:
+     </para><para>
+<screen>
+<prompt>~/deneme$ </prompt><command>gcc -o argp-ex2 deneme.c</command>
+<prompt>~/deneme$ </prompt><command>./argp-ex2 --version</command>
+argp-ex2 1.0
+<prompt>~/deneme$ </prompt><command>./argp-ex2 --help</command>
+Usage: argp-ex2 [OPTION...]
+Argp example #2 -- a pretty minimal program using argp
+
+  -?, --help                 Give this help list
+      --usage                Give a short usage message
+  -V, --version              Print program version
+
+Report bugs to &lt;bug-gnu-utils@gnu.org>.
+<prompt>~/deneme$ </prompt><command>./argp-ex2 --usage</command>
+Usage: argp-ex2 [-?V] [--help] [--usage] [--version]
+</screen>
+     </para></sect3>
+     <sect3 id="glibc-Argp-Example-3" chunkthis="1">
+     <title>3. örnek</title>
+     <titleabbrev>Kullanıcı seçenekleriyle Argp kullanılan bir yazılım örneği</titleabbrev>
+     <para>
+Bu yazılımda 2. örneğe ek olarak bazı kullanıcı seçenekleri ve argümanları kullanılmıştır.
+     </para><para>
+Bu örnekte <command>argp</command>'nin ilk dört alanını kullandık (<xref linkend="glibc-Argp-Parsers"/>) ve çözümleyici işlev olarak <command>parse_opt</command> işlevini belirttik. Bkz. <xref linkend="glibc-Argp-Parser-Functions"/>.
+     </para><para>
+Bu örnekte, <command>main</command> işlevinde <command>parse_opt</command> ile iletişim için bir yapı kullanıldığına dikkat edin. Bu yapı, bir gösterici olarak <command>argp_parse</command> tarafından <varname>input</varname> argümanında aktarılır. Bkz. <xref linkend="glibc-Argp"/>. <command>parse_opt</command> işlevi tarafından <varname>state</varname> argümanının <command>input</command> alanı ile alınır. Bkz. <xref linkend="glibc-Argp-Parsing-State"/>.  Şüphesiz bunun yerine genel değişkenler kullanmak mümkündür ama böyle bir yapı kullanmak biraz daha esnek ve temizdir.
+     </para><para>
+<screen>
+/* 3. Argp Örneği -- Argp arayüzünü ek seçenek ve argümanlarla
+   kullanan bir yazılım örneği
+*/
+
+/*  Bu yazılımda 2. örneğe ek olarak bazı kullanıcı seçenekleri ve
+    argümanları kullanılmıştır.
+
+    Bu örnekte <command>argp</command>'nin ilk dört alanını kullandık:
+      <command>options</command>  - <command>argp_option</command> vektörüne bir gösterici (aşağıya bakın)
+      <command>parser</command>   - <command>argp</command> tarafından çağrılan ve tek bir seçeneği çözümleyen işlev
+      <command>args_doc</command> - seçenek olmayan argümanların kullanımını açıklayan bir dizge
+      <command>doc</command>      - bu yazılımın açıklamasını içeren dizge; bir düşey sekme (\v)
+                 içeriyorsa, bundan sonraki parça seçeneklerden sonra basılır
+
+    <command>parser</command> işlevi şu argümanları alır:
+      <varname>key</varname>  - Seçeneğin türünü (<command>argp_option</command> yapısının KEY alanından alınarak)
+             ya da bunun dışında birşeyi belirten özel bir anahtar; burada
+             kullandığımız tek özel anahtar bir seçenek olmayan argüman
+             belirten <literal>ARGP_KEY_ARG</literal> anahtarıdır. <literal>ARGP_KEY_END</literal> anahtarı ise
+             tüm argümanların çözümlendiğini belirtir.
+      <varname>arg</varname>  - bir dizge olarak seçenek argümanı; argümansızsa <literal>NULL</literal>
+      <varname>state</varname> - <command>argp_state</command> yapısına bir gösterici; çözümleme durumu ile ilgili
+             faydalı bilgiler içerir. Burada kullanılan, <command>argp_parse</command> işlevinin
+             girdi argümanı olan <command>input</command> alanı ile çözümlenen
+             seçenek olmayan argümanın numarasını içeren <command>arg_num</command> alanıdır.
+    İşlev başarılı ise 0 ile belirtilen anahtar bilinmiyorsa <literal>ARGP_ERR_UNKNOWN</literal>
+    ile ya da başka bir hatayı belirten bir hata kodu ile dönmelidir.
+
+    Bu örnekte, <command>main</command> işlevinde <command>parse_opt</command> ile iletişim için bir yapı
+    kullanıldığına dikkat edin. Bu yapı, bir gösterici olarak <command>argp_parse</command>
+    tarafından <varname>input</varname> argümanında aktarılır. <command>parse_opt</command> işlevi tarafından
+    <varname>state</varname> argümanının <command>input</command> alanı ile alınır. Şüphesiz bunun yerine genel
+    değişkenler kullanmak mümkündür ama böyle bir yapı kullanmak biraz daha
+    esnek ve temizdir.
+
+    <command>options</command> alanı bir <command>argp_option</command> vektörüne bir gösterici içerir; bu yapı
+    aşağıdaki alanlara sahiptir (bu örnekteki gibi dizi ilklendirmesiyle
+    seçenek yapılarınıza atama yapıyorsanız, belirtilmeyen alanlar öntanımlı
+    olarak 0 olacak ve belirtilmeleri gerekmeyecektir):
+      <command>name</command>   - seçeneğin uzun seçenek ismi (sıfır olabilir)
+      <command>key</command>    - bu seçenek ve seçeneğin kısa seçenek ismi (basılabilen bir ascii
+               karakterse) çözümlenirken çözümleyici işleve aktarılacak anahtar.
+      <command>arg</command>    - varsa, bu seçeneğinin argümanının ismi
+      <command>flags</command>  - bu seçeneği açıklayan bayraklar; bazıları:
+               <literal>OPTION_ARG_OPTIONAL</literal> - bu seçeneğin argümanı isteğe bağlıdır
+               <literal>OPTION_ALIAS</literal>        - bu seçenek önceki seçeneğe bir takma addır.
+               <literal>OPTION_HIDDEN</literal>       - <command>--help</command> çıktısında bu seçenek gösterilmez.
+      <command>doc</command>    - <command>--help</command> çıktısında bu seçeneğin açıklamasını içeren dizge
+
+    Bir seçenek vektörü tüm alanları sıfır değeri içeren bir yapı ile
+    sonlanmalıdır.
+*/
+
+#include &lt;argp.h>
+
+const char *argp_yazılım_version =
+  "argp-ex3 1.0";
+const char *argp_yazılım_bug_address =
+  "&lt;bug-gnu-utils@gnu.org>";
+
+/* Yazılım açıklaması. */
+static char doc[] =
+  "Argp example #3 -- a program with options and arguments using argp";
+
+/* Kabul ettiğimiz argümanlar için bir açıklama. */
+static char args_doc[] = "ARG1 ARG2";
+
+/* Kabul ettiğimiz seçenekler. */
+static struct argp_option options[] = {
+  {"verbose",  'v', 0,      0,  "Produce verbose output" },
+  {"quiet",    'q', 0,      0,  "Don't produce any output" },
+  {"silent",   's', 0,      OPTION_ALIAS },
+  {"output",   'o', "FILE", 0,
+    "Output to FILE instead of standard output" },
+  { 0 }
+};
+
+/* parse_opt ile main iletişiminde kullanılır. */
+struct arguments
+{
+  char *args[2];                /* arg1 ve arg2 */
+  int silent, verbose;
+  char *output_file;
+};
+
+/* Tek bir seçeneği çözümlemek için. */
+static error_t
+parse_opt (int key, char *arg, struct argp_state *state)
+{
+  /* argp_parse'daki girdi argümanında bizim arguments
+     yapısına bir gösterci olduğunu biliyoruz. */
+  struct arguments *arguments = state->input;
+
+  switch (key)
+    {
+    case 'q': case 's':
+      arguments->silent = 1;
+      break;
+    case 'v':
+      arguments->verbose = 1;
+      break;
+    case 'o':
+      arguments->output_file = arg;
+      break;
+
+    case ARGP_KEY_ARG:
+      if (state->arg_num >= 2)
+        /* Argümanlar fazla geldi. */
+        argp_usage (state);
+
+      arguments->args[state->arg_num] = arg;
+
+      break;
+
+    case ARGP_KEY_END:
+      if (state->arg_num &amp; 2)
+        /* Argümanlar yetersiz. */
+        argp_usage (state);
+      break;
+
+    default:
+      return ARGP_ERR_UNKNOWN;
+    }
+  return 0;
+}
+
+/* Argp çözümleyicimiz. */
+static struct argp argp = { options, parse_opt, args_doc, doc };
+
+int main (int argc, char **argv)
+{
+  struct arguments arguments;
+
+  /* Öntanımlı değerler. */
+  arguments.silent = 0;
+  arguments.verbose = 0;
+  arguments.output_file = "-";
+
+  /* Argümanlarımız çözümlensin;  parse_opt tarafından
+     görülen her seçenek arguments içine yansıyacak. */
+  argp_parse (&amp;argp, argc, argv, 0, 0, &amp;arguments);
+
+  printf ("ARG1 = %s\nARG2 = %s\nOUTPUT_FILE = %s\n"
+          "VERBOSE = %s\nSILENT = %s\n",
+          arguments.args[0], arguments.args[1],
+          arguments.output_file,
+          arguments.verbose ? "yes" : "no",
+          arguments.silent ? "yes" : "no");
+
+  exit (0);
+}
+</screen>
+      </para></sect3>
+      <sect3 id="glibc-Argp-Example-4" chunkthis="1">
+      <title>4. Örnek</title>
+      <titleabbrev>Çok sayıda Argp çözümleyicinin birarada kullanıldığı bir yazılım örneği.</titleabbrev>
+      <para>
+Bu yazılım, 3. örnekteki özelliklerden fazla olarak daha fazla seçenek içerir ve <command>--help</command> çıktısı için daha fazla yapı kullanılmıştır. Ayrıca, bir öğe listesi kabul eden yazılımlar için belli bir noktadan sonraki girdi argümanlarının nasıl `çalınabileceği' gösterilmiştir. Bundan başka, yazılıma seçenek olmayan argümanların belirtilmediği durumda <varname>key</varname> argümanında <command>ARGP_KEY_NO_ARGS</command> anahtarının kullanımı gösterilmiştir. Bkz. <xref linkend="glibc-Argp-Special-Keys"/>.
+     </para><para>
+Yardım çıktısının yapılanması için iki özellik kullanılmıştır: <emphasis>başlıklar</emphasis> ve iki parçalı seçenek dizgesi. <emphasis>başlıklar</emphasis> seçenekler vektöründeki ilk dört alanı 0 olan girdilerdir. Bkz. <xref linkend="glibc-Argp-Option-Vectors"/>.  İki parçalı açıklama dizgesi <command>doc</command> değişkeninde belirtilmiştir. Açıklama dizgesinin düşey sekme karakterine (<command>'\v'</command> veya <command>'\013'</command>) kadar olan kısmı seçeneklerden önce, kalan kısmı da seçeneklerden sonra basılır. Teamülen, seçeneklerden önce basılan kısım yazılımın ne iş yaptığını kısaca açıklamak içindir. Seçeneklerden sonra basılan kısım ise, yazılımın davranışını daha ayrıntılı açıklayan daha uzun bir dizgedir. Açıklama dizgesinin her iki parçası da çıktıya özdevinimli olarak sığdırılır, belli noktalarda satırları sonlandırmak için satırsonu karakterleri kullanılabilir. Ek olarak, açıklama dizgeleri o anki yerele uygun olarak çevrilmesi için <command>gettext</command> işlevine aktarılır.
+     </para><para>
+<screen>/* 4. Argp Örneği - Biraz daha karmaşık seçenekli bir yazılım */
+
+/*  Bu yazılım, 3. örnekteki özelliklerden fazla olarak daha fazla seçenek
+    içerir ve <command>--help</command> çıktısı için daha fazla yapı kullanılmıştır.
+    Ayrıca, bir öğe listesi kabul eden yazılımlar için belli bir noktadan
+    sonraki girdi argümanlarının nasıl `çalınabileceği' gösterilmiştir.
+    Bundan başka, yazılıma seçenek olmayan argümanların belirtilmediği durumda
+    <varname>key</varname> argümanında <literal>ARGP_KEY_NO_ARGS</literal> anahtarının kullanımı gösterilmiştir.
+
+    Yardım çıktısının yapılanması için iki özellik kullanılmıştır:
+    <emphasis>başlıklar</emphasis> ve iki parçalı seçenek dizgesi.
+    <emphasis>başlıklar</emphasis>, seçenekler vektöründeki ilk dört alanı 0 olan girdilerdir.
+    İki parçalı açıklama dizgesi <varname>doc</varname> değişkeninde belirtilmiştir. Açıklama
+    dizgesinin düşey sekme karakterine (<command>'\v'</command> veya <command>'\013'</command>) kadar olan kısmı
+    seçeneklerden önce, kalan kısmı da seçeneklerden sonra basılır. Teamülen,
+    seçeneklerden önce basılan kısım yazılımın ne iş yaptığını kısaca
+    açıklamak içindir. Seçeneklerden sonra basılan kısım ise, yazılımın
+    davranışını daha ayrıntılı açıklayan daha uzun bir dizgedir. Açıklama
+    dizgesinin her iki parçası da çıktıya özdevinimli olarak sığdırılır,
+    belli noktalarda satırları sonlandırmak için satırsonu karakterleri
+    kullanılabilir. Ek olarak, açıklama dizgeleri o anki yerele uygun olarak
+    çevrilmesi için <command>gettext</command> işlevine aktarılır.
+*/
+
+#include &lt;stdlib.h>
+#include &lt;error.h>
+#include &lt;argp.h>
+
+const char *argp_program_version =
+  "argp-ex4 1.0";
+const char *argp_program_bug_address =
+  "&lt;bug-gnu-utils@prep.ai.mit.edu>";
+
+/* Yazılım açıklaması. */
+static char doc[] =
+  "Argp example #4 -- a yazılım with somewhat more complicated\
+options\
+\vThis part of the documentation comes *after* the options;\
+  note that the text is automatically filled, but it's possible\
+  to force a line-break, e.g.\n&lt;-- here.";
+
+/* Kabul ettiğimiz argümanlar için açıklama. */
+static char args_doc[] = "ARG1 [STRING...]";
+
+/* Kısa seçeneksiz seçenekler için anahtarlar. */
+#define OPT_ABORT  1            /* -abort */
+
+/* Kabul ettiğimiz seçenekler. */
+static struct argp_option options[] = {
+  {"verbose",  'v', 0,       0, "Produce verbose output" },
+  {"quiet",    'q', 0,       0, "Don't produce any output" },
+  {"silent",   's', 0,       OPTION_ALIAS },
+  {"output",   'o', "FILE",  0,
+    "Output to FILE instead of standard output" },
+
+  {0,0,0,0, "The following options should be grouped together:" },
+  {"repeat",   'r', "COUNT", OPTION_ARG_OPTIONAL,
+    "Repeat the output COUNT (default 10) times"},
+  {"abort",    OPT_ABORT, 0, 0, "Abort before showing any output"},
+
+  { 0 }
+};
+
+/* main ile parse_opt'un iletişimi için kullanılır. */
+struct arguments
+{
+  char *arg1;                   /* arg1 */
+  char **strings;               /* [string...] */
+  int silent, verbose, abort;   /* -s, -v, --abort */
+  char *output_file;            /* --output için dosya ismi*/
+  int repeat_count;             /* --repeat için argüman sayısı*/
+};
+
+/* Tek bir seçeneği çözümlemek için. */
+static error_t
+parse_opt (int key, char *arg, struct argp_state *state)
+{
+  /* argp_parse'daki girdi argümanında bizim arguments
+     yapısına bir gösterci olduğunu biliyoruz. */
+  struct arguments *arguments = state->input;
+
+  switch (key)
+    {
+    case 'q': case 's':
+      arguments->silent = 1;
+      break;
+    case 'v':
+      arguments->verbose = 1;
+      break;
+    case 'o':
+      arguments->output_file = arg;
+      break;
+    case 'r':
+      arguments->repeat_count = arg ? atoi (arg) : 10;
+      break;
+    case OPT_ABORT:
+      arguments->abort = 1;
+      break;
+
+    case ARGP_KEY_NO_ARGS:
+      argp_usage (state);
+
+    case ARGP_KEY_ARG:
+      /*  Burada daha fazla argüman alabilecekken çözümlemeyi
+          sonlandırdığımız için state->arg_num == 0 olduğunu biliyoruz. */
+      arguments->arg1 = arg;
+
+      /*  Artık kalan tüm argümanları tüketebiliriz.
+          state->next ilgilendiğimiz ilk dizge olarak çözümlenecek sonraki
+          argümanın state->argv içindeki indisidir.
+          Yani, arguments->strings için değer olarak
+          &amp;state->argv[state->next] kullanabiliriz.
+
+          Buna ek olarak, state->next'e argümanların sonunu atayarak,
+          argp'nin çözümlemeyi burada sonlandırıp dönmesini sağlayabiliriz. */
+      arguments->strings = &amp;state->argv[state->next];
+      state->next = state->argc;
+
+      break;
+
+    default:
+      return ARGP_ERR_UNKNOWN;
+    }
+  return 0;
+}
+
+/* Argp çözümleyicimiz. */
+static struct argp argp = { options, parse_opt, args_doc, doc };
+
+int main (int argc, char **argv)
+{
+  int i, j;
+  struct arguments arguments;
+
+  /* Öntanımlı değerler. */
+  arguments.silent = 0;
+  arguments.verbose = 0;
+  arguments.output_file = "-";
+  arguments.repeat_count = 1;
+  arguments.abort = 0;
+
+  /* Argümanlarımız çözümlensin;  parse_opt tarafından
+     görülen her seçenek arguments içine yansıyacak. */
+  argp_parse (&amp;argp, argc, argv, 0, 0, &amp;arguments);
+
+  if (arguments.abort)
+    error (10, 0, "ABORTED");
+
+  for (i = 0; i &lt; arguments.repeat_count; i++)
+    {
+      printf ("ARG1 = %s\n", arguments.arg1);
+      printf ("STRINGS = ");
+      for (j = 0; arguments.strings[j]; j++)
+        printf (j == 0 ? "%s" : ", %s", arguments.strings[j]);
+      printf ("\n");
+      printf ("OUTPUT_FILE = %s\nVERBOSE = %s\nSILENT = %s\n",
+              arguments.output_file,
+              arguments.verbose ? "yes" : "no",
+              arguments.silent ? "yes" : "no");
+    }
+
+  exit (0);
+}
+</screen></para></sect3></sect2>
+  <sect2 id="glibc-Argp-User-Customization">
+    <title>Argp Arayüzünün Kişiselleştirmesi</title>
+    <titleabbrev>Kullanıcılar <option>--help</option> çıktısının biçimini belirleyebilir.</titleabbrev>
+    <para>
+<indexterm scope="glibc-cp"><primary><command>ARGP_HELP_FMT</command> ortam değişkeni</primary></indexterm>
+Argp <command>--help</command> çıktısının biçimi bazı bakımlardan yazılımın kullanıcıları tarafından belirlenebilir. Bu işlem <command>ARGP_HELP_FMT</command> ortam değişkenine virgül ayraçlı bir takım sözcükler belirterek yapılır. Boşluklar yoksayılır:
+    </para><para><variablelist><varlistentry>
+    <term><literal>dup-args</literal></term></varlistentry><varlistentry>
+    <term><literal>no-dup-args</literal></term><listitem><para>
+Yinelenen argüman kipini açar/kapar. Eğer bir seçenek aynı argümanı farklı seçenek isimleriyle kabul ediyorsa, yinelenen argüman kipinde, argüman her seçenek ismiyle ayrı ayrı gösterilir. Aksi takdirde, argüman sadece ilk uzun seçenekle birlikte gösterilir. Ardarda gösterilen farklı seçenek isimlerinden birinde belirtilen argümanın, diğer seçenek isimleriyle de kullanılacağını kullanıcı bilir. Öntanımlı olan <command>no-dup-args</command>'dır, yani argüman bir defa gösterilir.
+       </para></listitem></varlistentry><varlistentry>
+       <term><literal>dup-args-note</literal></term></varlistentry><varlistentry>
+       <term><literal>no-dup-args-note</literal></term><listitem><para>
+Seçenek argümanı yinelemesi yapılmadığında, kullanıcıya bilgilendirme iletisi çıktılanmasını açar/kapar. Öntanımlı olan <command>dup-args-note</command>'dur.
+       </para></listitem></varlistentry><varlistentry>
+       <term><literal>short-opt-col=<varname>n</varname></literal></term>
+       <listitem><para>
+Kısa seçeneğin basılacağı sütun. Öntanımlı değeri 2'dir.
+       </para></listitem></varlistentry><varlistentry>
+       <term><literal>long-opt-col=<varname>n</varname></literal></term>
+       <listitem><para>
+Uzun seçeneğin basılacağı sütun. Öntanımlı değeri 6'dır.
+       </para></listitem></varlistentry><varlistentry>
+       <term><literal>doc-opt-col=<varname>n</varname></literal></term>
+       <listitem><para>
+Yazılım açıklamasının basılacağı sütun (bkz. <xref linkend="glibc-Argp-Option-Flags"/>). Öntanımlı değeri 2'dir.
+       </para></listitem></varlistentry><varlistentry>
+       <term><literal>opt-doc-col=<varname>n</varname></literal></term>
+       <listitem><para>
+Seçenek açıklamalarının basılacağı sütun. Öntanımlı değeri 29'dur.
+       </para></listitem></varlistentry><varlistentry>
+       <term><literal>header-col=<varname>n</varname></literal></term>
+       <listitem><para>
+Grup başlıklarının basılacağı sütun. Öntanımlı değeri 1'dir.
+       </para></listitem></varlistentry><varlistentry>
+       <term><literal>usage-indent=<varname>n</varname></literal></term>
+       <listitem><para>
+<command>Usage:</command>'den sonraki iletinin basılacağı sütun. Öntanımlı değeri 12'dir.
+       </para></listitem></varlistentry><varlistentry>
+       <term><literal>rmargin=<varname>n</varname></literal></term>
+       <listitem><para>
+Satır sarmalamasının yapılacağı sütun. Öntanımlı değeri 79'dur.
+       </para></listitem></varlistentry></variablelist></para>
+     </sect2>
+   </sect1>
+    <sect1 id="glibc-Suboptions">
+      <title>Alt Seçeneklerin Çözümlenmesi</title>
+      <titleabbrev>Bazı yazılımlar daha ayrıntılı seçenekler gerektirir.</titleabbrev>
+      <para>
+Kimi zaman tek seviyeli seçenekler yetersiz olur. Ya çok fazla seçenek olur ya da birbiriyle ilişkili seçenekler olur.
+     </para><para>
+Bu durumda yazılımlar alt seçenekler kullanır. Bu tür yazılımlara bilinen en iyi örnek <link linkend="tr-man8-mount"><command>mount</command>(8)</link>'dur. <command>-o</command> seçeneği, virgül ayraçlı seçenek listesi olarak tek bir argüman alır. Böyle bir kodun geliştirilmesini kolaylaştırmak için <command>getsubopt</command> işlevi vardır.
+     </para><para>
+<indexterm scope="glibc-fn"><primary>getsubopt</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev" id="glibc-getsubopt">
+<funcdef>int <command>getsubopt</command></funcdef>
+<paramdef>(char             **<varname>altseçenekler</varname>,
+ const char* const *<varname>isimler</varname>,
+ char             **<varname>değerler</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+<varname>altseçenekler</varname> parametresi işlenecek dizgenin adresini içeren bir gösterici olmalıdır. İşlev, bir alt seçeneği çözümledikten sonra sonraki alt seçeneğin adresini, tüm altseçenekler işlenmişse sonlandırıcı boş karakterin (<command>\0</command>) adresini bu argümana yerleştirir.
+     </para><para>
+<varname>isimler</varname> parametresi bilinen altseçenek isimlerini içeren bir dizge dizisidir. Tüm dizgeler boş karakterle, dizge dizisi ise boş gösterici ile sonlandırılmalıdır. İşlev, geçerli altseçeneği bulmak için <varname>isimler</varname> dizisindeki altseçenek isimleriyle karşılaştırma yapar ve bulduğu ismin dizideki indisi ile döner.
+     </para><para>
+Altseçeneğin <command>=</command> karakteri ile bir değerle ilişkilendirlmesi durumunda, değerin göstericisi <varname>değerler</varname> içinde döndürülür. Değer boş karakter sonlandırmalıdır. Bir değer belirtilmemişse boş gösterici kullanılır. Böylece çağrıcı gerekli değerin verilip verilmediğini ya da umulmadık bir değer mi verildi acaba diye sınama yapabilir.
+     </para><para>
+Bir altseçeneğin <varname>isimler</varname> dizisinde olmaması durumunda, alt seçeneğin başlangıç adresi olası değerini de içererek <varname>değerler</varname> argümanına konur ve işlev <command>-1</command> değeriyle döner.
+  </para></funcdescr></funcsynopsis></para></sect1>
+  <sect1 id="glibc-Suboptions-Example">
+    <title>Alt Seçenek Çözümleme Örneği</title>
+    <titleabbrev><command>mount</command> için bunun nasıl yapıldığı gösterilmiştir.</titleabbrev>
+    <para>
+<link linkend="tr-man8-mount"><command>mount</command>(8)</link> yazılımının kodu <command>getsubopt</command> kullanımı için en iyi örnektir:
+    </para><para>
+<screen>#include &lt;stdio.h>
+#include &lt;stdlib.h>
+#include &lt;unistd.h>
+
+int do_all;
+const char *type;
+int read_size;
+int write_size;
+int read_only;
+
+enum
+{
+  RO_OPTION = 0,
+  RW_OPTION,
+  READ_SIZE_OPTION,
+  WRITE_SIZE_OPTION,
+  THE_END
+};
+
+const char *mount_opts[] =
+{
+  [RO_OPTION] = "ro",
+  [RW_OPTION] = "rw",
+  [READ_SIZE_OPTION] = "rsize",
+  [WRITE_SIZE_OPTION] = "wsize",
+  [THE_END] = NULL
+};
+
+int
+main (int argc, char *argv[])
+{
+  char *subopts, *value;
+  int opt;
+
+  while ((opt = getopt (argc, argv, "at:o:")) != -1)
+    switch (opt)
+      {
+      case 'a':
+        do_all = 1;
+        break;
+      case 't':
+        type = optarg;
+        break;
+      case 'o':
+        subopts = optarg;
+        while (*subopts != '\0')
+          switch (getsubopt (&amp;subopts, mount_opts, &amp;value))
+            {
+            case RO_OPTION:
+              read_only = 1;
+              break;
+            case RW_OPTION:
+              read_only = 0;
+              break;
+            case READ_SIZE_OPTION:
+              if (value == NULL)
+                abort ();
+              read_size = atoi (value);
+              break;
+            case WRITE_SIZE_OPTION:
+              if (value == NULL)
+                abort ();
+              write_size = atoi (value);
+              break;
+            default:
+              /* Unknown suboption. */
+              printf ("Unknown suboption `%s'\n", value);
+              break;
+            }
+        break;
+      default:
+        abort ();
+      }
+
+  /* Do the real work. */
+
+  return 0;
+}
+</screen></para></sect1></chapter>
+
+<chapter id="glibc-Environment-Variables">
+  <title>Ortam Değişkenleri</title>
+  <titleabbrev>Yazılımınızı dolaylı yoldan etkileyen parametreler</titleabbrev>
+  <para>
+<indexterm scope="glibc-cp"><primary>ortam değişkenleri</primary></indexterm>
+Bir yazılım çalıştırıldığında, bağlamı hakkında bilgiyi iki yolla alabilir. İlk yöntemde, <xref linkend="glibc-Program-Arguments"/> kısmında açıklanan <command>main</command> işlevinin argümanları olan <varname>argv</varname> ve <varname>argc</varname> parametreleri kullanılırken, ikinci yöntemde bu kısımda açıklanacak olan <wordasword>ortam değişkenleri</wordasword> kullanılır.
+   </para><para>
+<varname>argv</varname> mekanizması, yazılımı çalıştırmak için komut satırına yazılan komut satırı argümanlarını kullanır. Ortam ise, çoğu yazılımın ortaklaşa kullandığı, sıkça değişen ama daha az sıklıkla kullanılan bilgilerden oluşur.
+   </para><para>
+Bu kısımda bahsedilecek ortam değişkenleri kabuğun <command>export</command> komutu kullanılarak atanan ortam değişkenlerinden başka birşey değildir. Kabukta çalıştırılan bütün yazılımlar ortam değişkenlerini kabuktan miras alırlar.
+   </para><para>
+<indexterm scope="glibc-cp"><primary>ortam</primary></indexterm>
+Standart ortam değişkenleri, kullanıcının ev dizini, uçbirim türü, geçerli yerel, vb. hakkında bilgileri kullanır; bunlara ek olarak kendi amaçlarınıza uygun ortam değişkenleri de tanımlayabilirsiniz. Tüm ortam değişkenlerinin ve değerlerinin hepsine birden <wordasword>ortam</wordasword> adı verilir.
+   </para><para>
+Ortam değişkenlerinin isimleri harf büyüklüğüne duyarlıdır ve isimler <command>=</command> karakterini içermemelidir. Sistemce tanımlanmış ortam değişkenlerinin isimlerinin tamamı büyük harflerden oluşur.
+   </para><para>
+Ortam değişkenlerinin değerleri bir dizge olarak ifade edilebilecek herhangi bir değer olabilir. Böyle bir değerin içinde, dizgeyi sonlandırması nedeniyle, bir boş karakter olmamalıdır.
+   </para>
+  <sect1 id="glibc-Environment-Access">
+    <title>Ortama Erişim</title>
+    <titleabbrev>Ortam değişkenlerinin değerleri nasıl okunur ve atanır.</titleabbrev>
+    <para>
+<indexterm scope="glibc-cp"><primary>ortam</primary><secondary>erişim</secondary></indexterm>
+<indexterm scope="glibc-cp"><primary>ortam</primary><secondary>sunum</secondary></indexterm>
+Bir ortam değişkeninin değerine <command>getenv</command> işlevi ile erişebilirsiniz. Bu işlev <filename>stdlib.h</filename> başlık dosyasında bildirilmiştir. Bu bölümdeki işlevlerin hepsini çok evreli yazılımlarda güvenle kullanabilirsiniz. Ortamın böyle rasgele değişmesi hatalara yol açmaz.
+<indexterm scope="glibc-pg"><primary>stdlib.h</primary></indexterm>
+   </para><para>
+<indexterm scope="glibc-fn"><primary>getenv</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev" id="glibc-getenv">
+<funcdef>char *<command>getenv</command></funcdef>
+<paramdef>(const char *<varname>isim</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+Bu işlev <varname>isim</varname> ile ismi belirtilen ortam değişkeninin değeri olan dizgeyi döndürür. Bu dizgeyi değiştirmemelisiniz. GNU kütüphanesinin kullanılmadığı bazı Unix sistemlerinde <command>getenv</command> çağrısının sonraki çağrıları bu değerin üzerine yazar (ama başka bir kütüphane işlevi bunu yapmaz). Eğer <varname>isim</varname> isimli bir ortam değişkeni yoksa, işlev bir boş gösterici ile döner.
+</para></funcdescr></funcsynopsis></para><para>
+<indexterm scope="glibc-fn"><primary>putenv</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev" id="glibc-putenv">
+<funcdef>int <command>putenv</command></funcdef>
+<paramdef>(char *<varname>dizge</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+<command>putenv</command> işlevi ortam değişkenlerini tanımlamak ya da kaldırmak için kullanılır. Ortamda bir değişken tanımlamak için <varname>dizge</varname>,  <varname>isim</varname><literal>=</literal><varname>değer</varname> biçiminde verilmelidir. Aksi takdirde  <varname>dizge</varname>, mevcut bir ortam değişkeninin ismi olarak yorumlanıp, bu değişken ortamdan kaldırılır.
+    </para><para>
+<command>setenv</command> işlevinden farkı, <varname>dizge</varname> parametresi olarak belirtilen dizgenin ortama konulmasıdır. Eğer <command>putenv</command> çağrısından sonra kullanıcı değişkenin değerini değiştirmezse bu dizge ortamda aynen böyle görünecektir. Ayrıca, <varname>dizge</varname> olarak belirtilen isim, değişken ortamdan kaldırıldığında da yazılımın etki alanı içinde varlığını sürdüren bir özdevinimli değişkenin ismi olmamalıdır. Aynısı normal olarak, daha sonra serbest bırakılan özdevimli ayrılmış değişkenler için de geçerlidir.
+    </para><para>
+Bu işlev genişletilmiş Unix arayüzünün bir parçasıdır. Eski SVID kütüphanelerinde de kullanılabildiğinden bunu sağlamak için yazılım içinde herhangi bir başlık dosyasından önce <varname>_XOPEN_SOURCE</varname> veya <varname>_SVID_SOURCE</varname> tanımlamalısınız.
+</para></funcdescr></funcsynopsis></para><para>
+<indexterm scope="glibc-fn"><primary>setenv</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev" id="glibc-setenv">
+<funcdef>int <command>setenv</command></funcdef>
+<paramdef>(const char *<varname>isim</varname>,
+ const char *<varname>değer</varname>,
+ int         <varname>değiştir</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+<command>setenv</command> işlevi ortama yeni bir tanım eklemek için kullanılabilir. <varname>isim</varname> isimli girdi  <varname>isim</varname><literal>=</literal><varname>değer</varname> değeri ile değiştirilir. Bunun, <varname>değer</varname> bir boş dizge olarak verildiğinde de böyle olacağını unutmayın. Bunu yapmak için yeni dizge oluşturulur ve <varname>isim</varname> ve <varname>değer</varname> dizgelerine kopyalanır. <varname>değer</varname> dizgesi olarak boş gösterici kuraldışıdır (boş dizge, boş gösterici değildir). Ortam zaten <varname>isim</varname> isimli bir değişken içeriyorsa bu durumda ne yapılacağı <varname>değiştir</varname> ile belirtilir. <varname>değiştir</varname> değeri sıfırsa hiçbir şey yapılmaz. Aksi takdirde eski girdi yenisi ile değiştirilir.
+    </para><para>
+Bir girdiyi ortamdan bu işlev ile kaldıramayacağınızı lütfen unutmayın.
+    </para><para>
+Bu işlev bir zamanlar BSD kütüphanesinin bir parçasıyken şimdi Unix standardının da parçasıdır.
+</para></funcdescr></funcsynopsis></para><para>
+<indexterm scope="glibc-fn"><primary>unsetenv</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev" id="glibc-unsetenv">
+<funcdef>int <command>unsetenv</command></funcdef>
+<paramdef>(const char *<varname>isim</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+Bu işlevi kullanarak bir değişkeni ortamdan tamamen kaldırabilirsiniz. Eğer ortamda ismi <varname>isim</varname> olan bir ortam değişkeni varsa, bu girdi ortamdan tamamen kaldırılır. Bu işlevin çağrısı, <command>putenv</command> işlevinin <varname>değer</varname> argümanına boş dizge belirtilerek çağrılmasına eşdeğerdir.
+    </para><para>
+<varname>isim</varname> bir boş gösterici ise, bir boş dizge ise ya da dizge bir <command>=</command> karakeri içeriyorsa işlev <command>-1</command> ile döner. Çağrı başarılı olduğunda <command>0</command> döner.
+    </para><para>
+Bu işlev bir zamanlar BSD kütüphanesinin bir parçasıyken şimdi Unix standardının da parçasıdır. Ne var ki, BSD sürümü bir değer döndürmüyordu.
+       </para><para>
+Ortamda değişiklik yapan bir işlev daha vardır. Bu işlevin POSIX.9 [Fortran 77 ile bağlantılı POSIX] içinde olduğundan ve onun POSIX.1'e dahi edilmesi gerektiğinden bahsedilir. Fakat bu şimdiye kadar olmadı. Ama biz bu işlevi bir GNU oluşumu olarak, standart Fortran ortamlarına uyumlu yazılım geliştirilebilmesini sağlamak için bulunduruyoruz.
+</para></funcdescr></funcsynopsis></para><para>
+<indexterm scope="glibc-fn"><primary>clearenv</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev" id="glibc-clearenv">
+<funcdef>int <command>clearenv</command></funcdef>
+<paramdef>(void)</paramdef>
+</funcprototype><funcdescr><para>
+<command>clearenv</command> işlevi ortamdan tüm girdileri kaldırır. <command>putenv</command> ve <command>setenv</command> çağrılarıyla ortama tekrar yeni girdiler eklenebilir.
+    </para><para>
+İşlev başarılı olursa <command>0</command> ile döner. Aksi takdirde sıfırdan farklı bir değer ile döner.
+       </para><para>
+Ortama değişken eklemek için ortam nesnelerinin bellibaşlı gösterimleri ile doğrudan çalışabilirsiniz (örneğin, çalıştıracağınız başka bir yazılımla haberleşmek için; bkz. <xref linkend="glibc-Executing-a-File"/>).
+</para></funcdescr></funcsynopsis></para><para>
+<indexterm scope="glibc-vr"><primary>environ</primary></indexterm>
+<funcsynopsis><funcprototype role="değişken" id="glibc-environ">
+<funcdef>char **<command>environ</command></funcdef>
+<paramdef></paramdef>
+</funcprototype><funcdescr><para>
+Ortamı bir dizge dizisi olarak içerir. Her dizge <varname>isim</varname><literal>=</literal><varname>değer</varname> biçimindedir. Dizgelerin ortmda göründüğü sıra önemsizdir, fakat aynı isim birden fazla görünmez. Dizinin son elemanı bir boş göstericidir.
+    </para><para>
+Bu değişken <filename>unistd.h</filename> başlık dosyasında bildirilmiştir.
+    </para><para>
+Sadece bir ortam değişkeninin değeri ile ilgileniyosanız <command>getenv</command> işlevini kullanın.
+</para></funcdescr></funcsynopsis></para><para>
+Unix sistemleri ve GNU sisteminde <command>environ</command> değişkenin değeri <command>main</command> işlevinde üçüncü bir argüman olarak belirtilebilir. Bkz. <xref linkend="glibc-Program-Arguments"/>.
+    </para></sect1>
+  <sect1 id="glibc-Standard-Environment">
+    <title>Standart Ortam Değişkenleri</title>
+    <titleabbrev>Bu ortam değişkenlerinin yorumlanması standarttır.</titleabbrev>
+    <para>
+<indexterm scope="glibc-cp"><primary>ortam değişkenleri</primary><secondary>standart</secondary></indexterm>
+Bu ortam değişkenlerinin anlamları standarttır. Bu onları daima ortam değişkenleri olarak belirtilebileceği anlamına gelmez; sadece bu değişkenlerle belirtildiklerinde hep aynı anlama gelirler.  Bu ortam değişkenlerinin isimlerini başka amaçlarla kullanmayı denememelisiniz.
+    </para><para><variablelist><varlistentry>
+    <term><literal>HOME</literal></term><listitem><para>
+<indexterm scope="glibc-cp"><primary><command>HOME</command> ortam değişkeni</primary></indexterm>
+<indexterm scope="glibc-cp"><primary>ortam değişkenleri</primary><secondary>standart</secondary><tertiary>ev dizini</tertiary></indexterm>
+Bu dizge kullanıcının <wordasword>ev dizini</wordasword> ya da oturum açtığında içine düştüğü öntanımlı çalışma dizinidir.
+       </para><para>
+Kullanıcı <command>HOME</command> değişkenine herkangi bir değer atayabilir. Bu bakımdan, belli bir kullanıcının ev dizinin yerini öğrenmek için bu değişkene bakmamalısınız, bunu yerine <link linkend="glibc-User-Database">kullanıcı veritabanında</link> kullanıcının ismine bakmalısınız.
+       </para><para>
+Kullanıcı buraya istediği değeri atayabildiğinden, <command>HOME</command> değişkenini başka amaçlar için kullanmak daha iyidir.
+       </para></listitem></varlistentry><varlistentry>
+       <term><literal>LOGNAME</literal></term><listitem><para>
+<indexterm scope="glibc-cp"><primary><command>LOGNAME</command> ortam değişkeni</primary></indexterm>
+Bu kullanıcının sisteme oturum açarken kullandığı isimdir. Ortamdaki değerler keyfi olarak değiştirilebildiğinden bir yazılımı çalıştıran kullanıcının kim olduğuna bakmak için bu değişkenin kullanılması doğru bir yöntem olmayacaktır. En iyisi <command>getlogin</command> (<xref linkend="glibc-Who-Logged-In"/>) gibi bir işlev kullanmaktır.
+       </para><para>
+Kullanıcı buraya istediği değeri atayabildiğinden, <command>LOGNAME</command> değişkenini başka amaçlar için kullanmak daha iyidir.
+       </para></listitem></varlistentry><varlistentry>
+       <term><literal>PATH</literal></term><listitem><para>
+<indexterm scope="glibc-cp"><primary><command>PATH</command> ortam değişkeni</primary></indexterm>
+Bir dosya yolu (path), bir dosyanın hangi dizinlerde aranacağını belirtmek için kulanılır. <command>PATH</command> ortam değişkeni ise çalıştırılacak bir yazılımın aranacağı dizinleri belirtmek için kullanılır.
+       </para><para>
+<command>execlp</command> ve <command>execvp</command> işlevleri (<xref linkend="glibc-Executing-a-File"/>) bu ortam değişkenini kullanır, dolayısıyla bu işlevlerle gerçeklenmiş uygulamalar ve kabuk da bu değişkeni kullanır.
+       </para><para>
+Değişkenin değeri, dizin isimlerinin iki nokta üstüstelerle ayrılmasıyla oluşturulan bir dizgedir. Bir dizin olarak belirtilmiş boş bir dizge <link linkend="glibc-Working-Directory">çalışılan dizini</link> belirtir.
+       </para><para>
+Örneğin, bu ortam değişkeni için değer olarak belirtilen bir dizge:
+       </para><para>
+<screen>:/bin:/etc:/usr/bin:/usr/new/X11:/usr/new:/usr/local/bin
+</screen></para><para>
+ise ve kullanıcı <command>foo</command> isimli bir yazılımı çalıştırmak isterse, kabuk sırayla <command>./foo</command>, <command>/bin/foo</command>, <command>/etc/foo</command>, ... dosyalarını arayacak ve önce hangisini bulursa onu çalıştıracaktır.
+       </para></listitem></varlistentry><varlistentry>
+       <term><literal>TERM</literal></term><listitem><para>
+<indexterm scope="glibc-cp"><primary><command>TERM</command> ortam değişkeni</primary></indexterm>
+Yazılım çıktısını alan uçbirimin çeşidini belirler. Bazı uygulamalar bu değeri özel önceleme dizilimlerinden ya da belli başlı uçbirim çeşitleri ile desteklenen uçbirim kiplerinden yararlanmak için kullanır. Örneğin, <link linkend="termcap-Find">termcap kütüphanesini</link> kullanan çoğu yazılım <command>TERM</command> ortam değişkenini kullanır.
+       </para></listitem></varlistentry><varlistentry>
+       <term><literal>TZ</literal></term><listitem><para>
+<indexterm scope="glibc-cp"><primary><command>TZ</command> ortam değişkeni</primary></indexterm>
+Zaman dilimini belrtir. Bu dizgenin biçimi ve nasıl kullanıldığı hakkında daha ayrıntılı bilgi edinmek için <xref linkend="glibc-TZ-Variable"/> bölümüne bakınız.
+       </para></listitem></varlistentry><varlistentry>
+       <term><literal>LANG</literal></term><listitem><para>
+<indexterm scope="glibc-cp"><primary><command>LANG</command> ortam değişkeni</primary></indexterm>
+Ne <command>LC_ALL</command> değişkeni ne de belli bir kategori için tanımlanan bir ortam değişkeni ile tanımlanmış yerel kategorileri için öntanımlı yereli belirtir. Yereller ile ilgili daha ayrıntılı bilgi için <xref linkend="glibc-Locales"/> bölümüne bakınız.
+       </para></listitem></varlistentry><varlistentry>
+       <term><literal>LC_ALL</literal></term><listitem><para>
+<indexterm scope="glibc-cp"><primary><command>LC_ALL</command> ortam değişkeni</primary></indexterm>
+Bu ortam değişkeni tanımlanmışsa, bunun değeri atanmış diğer tüm  <command>LC_*</command> ortam değişkenlerinin değerlerine göre öncelik kazanır. Yani bu değişken ortamda tanımlıysa diğer tüm  <command>LC_*</command> ortam değişkenleri yoksayılır.
+       </para></listitem></varlistentry><varlistentry>
+       <term><literal>LC_COLLATE</literal></term><listitem><para>
+<indexterm scope="glibc-cp"><primary><command>LC_COLLATE</command> ortam değişkeni</primary></indexterm>
+Dizge sıralaması için kullanılacak yereli belirtir.
+       </para></listitem></varlistentry><varlistentry>
+       <term><literal>LC_CTYPE</literal></term><listitem><para>
+<indexterm scope="glibc-cp"><primary><command>LC_CTYPE</command> ortam değişkeni</primary></indexterm>
+Karakter kümeleri ve karakter sınıflaması için kullanılacak yereli belirtir.
+       </para></listitem></varlistentry><varlistentry>
+       <term><literal>LC_MESSAGES</literal></term><listitem><para>
+<indexterm scope="glibc-cp"><primary><command>LC_MESSAGES</command> ortam değişkeni</primary></indexterm>
+Basılan iletilerin dili ve bunlara yanıtların çözümlenmesi için kullanılacak yereli belirtir.
+       </para></listitem></varlistentry><varlistentry>
+       <term><literal>LC_MONETARY</literal></term><listitem><para>
+<indexterm scope="glibc-cp"><primary><command>LC_MONETARY</command> ortam değişkeni</primary></indexterm>
+Parasal değerleri biçimlemek için kullanılacak yereli belirtir.
+       </para></listitem></varlistentry><varlistentry>
+       <term><literal>LC_NUMERIC</literal></term><listitem><para>
+<indexterm scope="glibc-cp"><primary><command>LC_NUMERIC</command> ortam değişkeni</primary></indexterm>
+Sayıları biçimlemek için kullanılacak yereli belirtir.
+       </para></listitem></varlistentry><varlistentry>
+       <term><literal>LC_TIME</literal></term><listitem><para>
+<indexterm scope="glibc-cp"><primary><command>LC_TIME</command> ortam değişkeni</primary></indexterm>
+Tarih/saat değerlerini biçimlemek için kullanılacak yereli belirtir.
+       </para></listitem></varlistentry><varlistentry>
+       <term><literal>NLSPATH</literal></term><listitem><para>
+<indexterm scope="glibc-cp"><primary><command>NLSPATH</command> ortam değişkeni</primary></indexterm>
+İleti çeviri kataloglarının bulunduğu dizinleri <command>catopen</command> işlevine belirtmek için kullanılır.
+       </para></listitem></varlistentry><varlistentry>
+       <term><literal>_POSIX_OPTION_ORDER</literal></term><listitem><para>
+<indexterm scope="glibc-cp"><primary sortas="POSIX_OPTION_ORDER ortam değişkeni"><command>_POSIX_OPTION_ORDER</command> ortam değişkeni.</primary></indexterm>
+Bu ortam değişkeni tanımlıysa, <command>getopt</command> ve <command>argp_parse</command> işlevleri tarafından komut satırı argümanlarının yeniden sıralanması engellenir. Bkz. <xref linkend="glibc-Argument-Syntax"/>.
+       </para></listitem></varlistentry></variablelist></para>
+     </sect1>
+</chapter>
+
+<chapter id="glibc-System-Calls">
+  <title>Sistem Çağrıları</title>
+  <titleabbrev>Sistemden hizmet istemek</titleabbrev>
+  <para>
+<indexterm scope="glibc-cp"><primary>sistem çağrıları</primary></indexterm>
+Bir <wordasword>sistem çağrısı</wordasword> bir yazılımın çekirdekten bir hizmet isteği yapması için kullanılır. Hizmet genellikle, G/Ç işlemleri gibi sadece çekirdeğin ayrıcalığında olan şeylerdir. Yazılım geliştirenlerin genellikle bu sistem çağrılarını bilmeye ihtiyacı olmaz. Çünkü GNU C kütüphanesi sistem çağrılarının yaptığı hemen herşeyi sanal olarak sağlayan işlevler içerir. Örneğin, bir dosyanın erişim izinlerini değiştiren bir sistem çağrısı vardır, ama GNU C kütüphanesinin <command>chmod</command> işlevi zaten bu işlemi yaptığından bu sistem çağrısını kullanma ihtiyacı ortaya çıkmaz.
+   </para><para>
+<indexterm scope="glibc-cp"><primary>çekirdek çağrıları</primary></indexterm>
+Sistem çağrılarına kimi zaman <wordasword>çekirdek çağrıları</wordasword> dendiği de olur.
+   </para><para>
+Her ne kadar doğrudan sistem çağrıları yapma ihtiyacı duyulmasa da GNU C kütüphanesi bunu yapabilmeniz için <command>syscall</command> işlevini içerir. <command>syscall</command> kullanımı zordur ve <command>chmod</command> gibi işlevleri kullanmak daha taşınabilirdir, ama sistem çağrılarını makine kodu komutları ile kodlamaktan daha kolay ve daha taşınabilirdir.
+   </para><para>
+<command>syscall</command> çağrıları, henüz GNU C kütüphanesinde bulunmayan özel sistem çağrıları ile çalışacağınız zaman oldukça kulllanışlı olacaktır. <command>syscall</command>  tamamen soysal bir yöntemle gerçeklenmiştir; işlev belli bir sistem çağrısının ne yaptığıyla, hatta geçerli olup olmadığıyla bile ilgilenmez.
+   </para><para>
+Bu kısımdaki <command>syscall</command> işlevi ile ilgili açıklama, GNU C kütüphanesinin çalıştığı çeşitli platformlardaki sistem çağrıları için belli bir protokolün varlığı kabulüne dayanır. Bu protokol herhangi bir otorite tarafından tanımlanmamıştır, ancak onu burada açıklamayacağız.
+   </para><para>
+<command>syscall</command> işlevi <filename>unistd.h</filename> başlık dosyasında bildirilmiştir.
+   </para><para>
+<indexterm scope="glibc-fn"><primary>syscall</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev" id="glibc-syscall">
+<funcdef>long int <command>syscall</command></funcdef>
+<paramdef>(long int <varname>sysno</varname>, ...)</paramdef>
+</funcprototype><funcdescr><para>
+<command>syscall</command> temel bir sistem çağrısını uygular.
+   </para><para>
+<indexterm scope="glibc-cp"><primary>sistem çağrı numarası</primary></indexterm>
+<varname>sysno</varname>,  sistem çağrı numarasıdır. Sistem çağrılarının her biri bir numara ile yapılır. Olası tüm sistem çağrılarının numaralarını içeren makrolar <filename>sys/syscall.h</filename> başlık dosyasında tanımlanmıştır.
+   </para><para>
+Kalan argümanlar o sistem çağrısına özel argümanlardır. Her çeşit sistem çağrısı kendine özgü sayıda, birden beşe kadar argümana sahiptir. Eğer kodunuz sistem çağrısının aldığından daha fazla argüman içeriyorsa bunlar basitçe yoksayılacaktır.
+   </para><para>
+İşlevin dönüş değeri sistem çağrısı başarısız olmadıkça, sistem çağrısının dönüş değeri olacaktır. Sistem çağrısı başarısız olursa işlev <command>-1</command> ile döner ve <command>errno</command> değişkenine sistem çağrısından dönen hata kodu atanır. Sistem çağrıları başarılı olduklarında <command>-1</command> döndürmezler.
+<indexterm scope="glibc-cp"><primary>errno</primary></indexterm>
+   </para><para>
+Geçersiz bir <varname>sysno</varname> belirtirseniz, <command>syscall</command> işlevi <command>-1</command> ile döner ve <command>errno</command> = <command>ENOSYS</command> olur.
+   </para><para>
+Örnek:
+   </para><para>
+<screen>#include &lt;unistd.h>
+#include &lt;sys/syscall.h>
+#include &lt;errno.h>
+
+...
+
+int rc;
+
+rc = syscall(SYS_chmod, &quot;/etc/passwd&quot;, 0444);
+
+if (rc == -1)
+   fprintf(stderr, &quot;chmod, errno = %d ile başarısız oldu\n&quot;, errno);
+</screen></para><para>
+Uyumluluk bakımından yıldızları barışmışsa, bu kod şu koda eşdeğerdir:
+   </para><para>
+<screen>#include &lt;sys/types.h>
+#include &lt;sys/stat.h>
+#include &lt;errno.h>
+
+...
+
+int rc;
+
+rc = chmod(&quot;/etc/passwd&quot;, 0444);
+if (rc == -1)
+   fprintf(stderr, &quot;chmod, errno = %d ile başarısız oldu\n&quot;, errno);
+</screen></para></funcdescr></funcsynopsis></para></chapter>
+<chapter id="glibc-Program-Termination">
+  <title>Yazılımın Sonlandırılması</title>
+  <titleabbrev>Sisteme işimiz bitti denmesi ve dönüş durumu</titleabbrev>
+  <para>
+<indexterm scope="glibc-cp"><primary>yazılımın sonlandırılması</primary></indexterm>
+<indexterm scope="glibc-cp"><primary>sürecin sonlandırılması</primary></indexterm>
+<indexterm scope="glibc-cp"><primary>çıkış durum değeri</primary></indexterm>
+Bir yazılımı sonlandırmanın uygun yolu <command>main</command> işlevinden dönmektir. <command>main</command> işlevinden dönen <wordasword>çıkış durum değeri</wordasword> sürecin üst sürecine ya da kabuğa bilgi vermek için kullanılır.
+   </para><para>
+Bir yazılım bundan başka <command>exit</command> işlevini çağırarak da kendini sonlandırabilir.
+   </para><para>
+Bunlara ek olarak yazılımlar sinyallerle sonlandırılabilir; bu ayrıntılı olarak <xref linkend="glibc-Signal-Handling"/> bölümünde anlatılmıştır. <command>abort</command> işlevi bir yazılımı öldüren bir sinyale sebep olur.
+   </para>
+  <sect1 id="glibc-Normal-Termination">
+    <title>Normal Sonlandırma</title>
+    <titleabbrev>Bir yazılım <command>exit</command> çağrısı yaparsa, bir süreç normal olarak sonlanır.</titleabbrev>
+    <para>
+Bir süreç, kendi yazılımı tarafından yapılan bir <command>exit</command> çağrısıyla normal olarak sonlanır. <command>main</command> işlevinden dönmek ile <command>exit</command> çağrısı eşdeğerdir, <command>main</command> işlevinin return deyiminde kullanılan değer, <command>exit</command> işlevinde argüman olur.
+    </para><para>
+<indexterm scope="glibc-fn"><primary>exit</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev" id="glibc-exit">
+<funcdef>void <command>exit</command></funcdef>
+<paramdef>(int <varname>durum</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+<command>exit</command> işlevi sisteme yazılımın işinin bittiğini söyleyen ve sürecin sonlanmasına sebep olan işlevdir.
+    </para><para>
+<varname>durum</varname> yazılımın çıkış durumudur ve sürecin sonlandırma durumu haline gelir. Bu işlev dönmez.
+</para></funcdescr></funcsynopsis></para><para>
+Normal sonlandırma şu eylemlere yolaçar:
+    </para><para>
+    <orderedlist numeration="arabic"><listitem>
+<command>atexit</command> veya <command>on_exit</command> işlevi ile kaydedilen işlevler, kaydedildikleri sıranın tersine bir sıralamayla çağrılırlar. Bu mekanizma sonlanma sırasında bazı temizlik işlemleri (örn, yazılımın sonlanma durum bilgisinin bir dosyaya kaydedlimesi, veritabanlarından kilitlerin kaldırılması gibi) yapabilmenizi sağlar.
+      </listitem><listitem>
+Tüm açık akımlar, tamponlanmış verileri yazılarak kapatılır. Bkz. <xref linkend="glibc-Closing-Streams"/>.  Ek olarak, <command>tmpfile</command> işlevi ile açılmış geçici dosyalar silinir; bkz. <xref linkend="glibc-Temporary-Files"/>.
+      </listitem><listitem>
+<command>_exit</command> çağrılarak yazılım sonlandırılır. Bkz. <xref linkend="glibc-Termination-Internals"/>.
+      </listitem></orderedlist>
+  </para></sect1>
+  <sect1 id="glibc-Exit-Status">
+    <title>Çıkış Durumu</title>
+    <titleabbrev>Çıkış durumu sürecin neden sonlandığı hakkında bilgi verir.</titleabbrev>
+    <para>
+<indexterm scope="glibc-cp"><primary>çıkış dururmu</primary></indexterm>
+Bir yazılım çıkarken, <wordasword>çıkış durumu</wordasword>nu kullanarak, sürecini başlatan sürece sonlanmasının sebebi ile ilgili küçük bir bilgi verir. Bu değer 0 ile 255 arasındadır ve yazılım tarafından <command>exit</command> işlevinde argüman olarak belirtilerek sürece aktarılır.
+    </para><para>
+Normalde, başarı ya da başarısızlık hakkında bilgi vermek için çıkış durumunu kullanmalısınız. Başarısızlık durumunda sebebi için daha fazla bilgi sağlayamazsınız ve zaten çoğu üst süreç de çok fazla ayrıntı istemez.
+    </para><para>
+Yazılımların dönüş değerleri ile ilgili bazı uzlaşımlar vardır. En bilinen uzlaşım başarı durumunda 0, başarısızlık durumunda 1 döndürmektir. Karşılaştırma işlemleri yapan uygulamalar biraz daha farklı bir uzlaşım kullanır: eşleşmeme durumunda 1, karşılaştırmanın yapılamaması durumunda 2 döndürürler. Sizin yazılımınızın da çıkış durumu uzlaşımlarına uygun davranması için mevcut uzlaşımlardan size uygun olanını kullanmalısınız.
+    </para><para>
+Genel bir uzlaşımda, çıkış durumu 128 özel amaçlar için ayrılır. Kısmen, 128 değeri bir alt süreç olarak çalıştırılan başka bir yazılımın çalıştırılmasında başarısızlığı gösterir. Bu uzlaşım evrensel değildir ama yazılımlarınızda buna uyarsanız iyi olur.
+    </para><para>
+<warning><para>Hata sayısını çıkış durumu olarak kullanmayın. Bu aslında hiç de kullanışlı değildir; bir üst süreç genelde kaç tane hata oluştuğu ile ilgilenmez. Dahası, bu çoğunlukla çalışmaz, çünkü çıkış değeri sekiz bitle sınırlıdır. Bu nedenle eğer yazılımınız 256 hata raporlamak isterse üst süreç 0 hatalık bir rapor alacaktır, normal olarak da bu, bir başarı göstergesidir.</para></warning>
+    </para><para>
+Aynı sebeple <command>errno</command> değeri de çıkış durumu olarak kullanılmamalıdır, çünkü hata kodları 255'i aşar.
+    </para><para>
+<note><title>Taşınabilirlik Bilgisi</title><para>POSIX olmayan bazı sistemlerde çıkış durumu değerleri için farklı uzlaşımlar kullanılır. Daha yüksek taşınabilirlik açısından başarı ve başarısızlık durumlarının uzlaşımsal durum değerleri olarak <command>EXIT_SUCCESS</command> ve <command>EXIT_FAILURE</command> makrolarını kullanabilirsiniz. Bu makrolar <filename>stdlib.h</filename> başlık dosyasında bildirilmiştir.
+<indexterm scope="glibc-pg"><primary>stdlib.h</primary></indexterm>
+</para></note>
+    </para><para>
+<indexterm scope="glibc-vr"><primary>EXIT_SUCCESS</primary></indexterm>
+<funcsynopsis><funcprototype role="makro" id="glibc-EXIT_SUCCESS">
+<funcdef>int <command>EXIT_SUCCESS</command></funcdef>
+<paramdef></paramdef>
+</funcprototype><funcdescr><para>
+Bu makro <command>exit</command> işlevinde yazılımın başarıyla tamamlandığını belirtmek için kullanılabilir.
+    </para><para>
+POSIX sistemlerinde, bu makronun değeri <command>0</command>'dır. Başka sistemlerde (sabit olmaması olası) bir tamsayı ifadesi olabilir.
+</para></funcdescr></funcsynopsis></para><para>
+<indexterm scope="glibc-vr"><primary>EXIT_FAILURE</primary></indexterm>
+<funcsynopsis><funcprototype role="makro" id="glibc-EXIT_FAILURE">
+<funcdef>int <command>EXIT_FAILURE</command></funcdef>
+<paramdef></paramdef>
+</funcprototype><funcdescr><para>
+Bu makro <command>exit</command> işlevinde yazılımın başarısızlıkla sonlandığını belirtmek için kullanılabilir.
+    </para><para>
+POSIX sistemlerinde, bu makronun değeri <command>1</command>'dir. Başka sistemlerde (sabit olmaması olası) bir tamsayı ifadesi olabilir. Sıfırdan farklı diğer değerler de ayrıca birer başarısızlık gösterirler. Belli başlı bazı uygulamalar başarısısızlık çeşidini belirten farklı çıkış durum değerleri kullanırlar. Örneğin <command>diff</command> dosyaların farklı olduğunu <command>1</command> ile,
+dosyaların açılışındaki zorlukları ise <command>2</command> ve üstü değerlerle ifade eder.
+</para></funcdescr></funcsynopsis></para><para>
+Bir yazılımın çıkış durumu ile bir sürecin sonlanma durumunu birbirine karıştırmayın. Bir sürecin yazılımının bitişinin yanında sonlanmasının bir çok sebebi olabilir. Sürecin sonlanması sırasında sebep yazılımının sonlanması (yani <command>exit</command>) ise, yazılımın çıkış durumu, sürecin sonlanma durumunun bir parçası haline gelir.
+    </para></sect1>
+  <sect1 id="glibc-Cleanups-on-Exit">
+  <title>Çıkışta Temizlik</title>
+  <titleabbrev>Bir süreç normal sonlanma sırasında kendi temizlik işlevlerini çalıştırabilir.</titleabbrev>
+  <para>
+Yazılımınız normal sonlandırma sırasında kendi temizlik işlevlerini çalıştıracak düzenlemeyi yapabilir. Çeşitli uygulama yazılımlarında kullanılan bir kütüphane yazıyorsanız, tüm uygulamaların çıkış sırasında kütüphanenin temizlik işlevlerini çağırmasında ısrar etmek güvenilir olmazdı. Temizlik işlevlerinin uygulamaya görünmez yapmanın kesin yolu <command>atexit</command> veya <command>on_exit</command> işlevlerini kullanarak bir temizlik işlevini belirtmektir.
+    </para><para>
+<indexterm scope="glibc-fn"><primary>atexit</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev" id="glibc-atexit">
+<funcdef>int <command>atexit</command></funcdef>
+<paramdef>(void (*<varname>işlev</varname>) (void))</paramdef>
+</funcprototype><funcdescr><para>
+<command>atexit</command> işlevi <varname>işlev</varname> işlevini normal yazılım sonlanması sırasında çağrılmak üzere kaydeder. <varname>işlev</varname> argümansız çağrılır.
+    </para><para>
+<command>atexit</command> işlevinin normal dönüş değeri sıfırdır, eğer işlev kaydedilemezse sıfırdan farklı bir değerle döner.
+</para></funcdescr></funcsynopsis></para><para>
+<indexterm scope="glibc-fn"><primary>on_exit</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev" id="glibc-on_exit">
+<funcdef>int <command>on_exit</command></funcdef>
+<paramdef>(void (*<varname>işlev</varname>)(int <varname>durum</varname>, void  *<varname>arg</varname>),
+ void  *<varname>arg</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+Bu işlev <command>atexit</command> işlevinin biraz daha güçlü bir sürümüdür. İki argüman kabul eder: <varname>işlev</varname> işlevi ve bir argümana gösterici. Normal yazılım sonlanması sırasında işlev iki argümanlar çağrılır: <command>exit</command> işlevine aktarılan <varname>durum</varname> ve bir <varname>arg</varname> argümanı.
+    </para><para>
+Bu işlev GNU kütüphanesine sadece SunOS uyumluluğu için dahil edilmiştir. Diğer gerçeklemeler tarafından desteklenmeyebilir.
+</para></funcdescr></funcsynopsis></para><para>
+Burada, <command>exit</command> ve <command>atexit</command> işlevlerinin kullanımını gösteren göstermelik bir yazılıma yer verilmiştir:
+    </para><para>
+<screen>#include &lt;stdio.h>
+#include &lt;stdlib.h>
+
+void
+elveda (void)
+{
+  puts (&quot;Elveda, zalim Dünya....&quot;);
+}
+
+int
+main (void)
+{
+  atexit (elveda);
+  exit (EXIT_SUCCESS);
+}
+</screen></para><para>
+Bu yazılım çalıştırıldığında bir ileti basar ve çıkar.
+  </para></sect1>
+  <sect1 id="glibc-Aborting-a-Program">
+    <title>Anormal Sonlanma</title>
+    <titleabbrev><command>abort</command> işlevi yazılımın anormal sonlanmasına sebep olur.</titleabbrev>
+    <para>
+<indexterm scope="glibc-cp"><primary>yazılımdan anormal çıkış</primary></indexterm>
+<command>abort</command> işlevini kullanarak normal olmayan durumlarda yazılımınızdan çıkabilirsiniz. Bu işlevin prototipi <filename>stdlib.h</filename> başlık dosyasında bulunur.
+<indexterm scope="glibc-pg"><primary>stdlib.h</primary></indexterm>
+    </para><para>
+<indexterm scope="glibc-fn"><primary>abort</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev" id="glibc-abort">
+<funcdef>void <command>abort</command></funcdef>
+<paramdef>(void)</paramdef>
+</funcprototype><funcdescr><para>
+<command>abort</command> işlevi anormal yazılım sonlanmasına sebep olur. Bu işlev, <command>atexit</command> veya <command>on_exit</command> işlevi gibi temizlik işlevleri kaydetmez.
+    </para><para>
+Bu işlev aslında bir <command>SIGABRT</command> sinyali göndererek süreci sonlandırır. Yazılımınız da bu sinyal için bir eylemci içerebilir; bkz. <xref linkend="glibc-Signal-Handling"/>.
+</para></funcdescr></funcsynopsis></para><para>
+<warning><title>Gelecekte Değişiklik Uyarısı</title><para>Federal sansür düzenlemelerinin isteği ile bu işlevin çağrılma olasılığı hakkında size bilgi vermek bize yasaklanabilir. Bir yazılımın bu yolla sonlanmasının kabul edilebilir bir yöntem olmadığını söylemek ihtiyacı duyabilirdik.</para></warning>
+    </para></sect1>
+  <sect1 id="glibc-Termination-Internals">
+    <title>Sonlandırmanın İçyapısı</title>
+    <titleabbrev>Bir süreç sonlanırken neler olur.</titleabbrev>
+    <para>
+Sürecin <command>exit</command> ile sonlanmasında <command>_exit</command> ilkeli kullanılır. İşlev <filename>unistd.h</filename> başlık dosyasında bildirilmiştir.
+<indexterm scope="glibc-pg"><primary>unistd.h</primary></indexterm>
+    </para><para>
+<indexterm scope="glibc-fn"><primary sortas="exit">_exit</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev" id="glibc_exit">
+<funcdef>void <command>_exit</command></funcdef>
+<paramdef>(int <varname>durum</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+<command>_exit</command> işlevi bir sürecin <varname>durum</varname> durumu ile sonlanmasını sağlayan ilkel işlevdir. Bu işlev yapılan bir çağrı <command>atexit</command> veya <command>on_exit</command> işlevi ile kaydedilen temizlik işlevlerini çalıştırmaz.
+</para></funcdescr></funcsynopsis></para><para>
+<indexterm scope="glibc-fn"><primary sortas="Exit">_Exit</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev" id="glibc_Exit">
+<funcdef>void <command>_Exit</command></funcdef>
+<paramdef>(int <varname>durum</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+<command>_Exit</command> işlevi <command>_exit</command> işlevinin ISO C eşdeğeridir. ISO C komitesinin üyeleri <command>_exit</command> ve <command>_Exit</command> tanımlarının uyumluluğundan emin olamadıklarından işlevin POSIX ismini kullanmamışlardır.
+    </para><para>
+Bu işlev ISO C99 standardının parçasıdır ve <filename>stdlib.h</filename> başlık dosyasında bildirilmiştir.
+</para></funcdescr></funcsynopsis></para><para>
+Yazılımın sonlanması ya da bir sinyalin sonucu gibi bir sebeple bir süreç sonlanırken şunlar olur:
+    </para><para><itemizedlist><listitem><para>
+Süreçteki tüm açık dosya tanıtıcılar kapatılır. Bkz. <xref linkend="glibc-Low-Level-I-O"/>. Süreç sonlanırken akımların özdevinimli olarak boşaltılmayacağını unutmayın; bkz. <xref linkend="glibc-I-O-on-Streams"/>.
+      </para></listitem><listitem><para>
+Bir sürecin çıkış durumu <command>wait</command> veya <command>waitpid</command> üzerinden üst sürece raporlanmak üzere kaydedilir; bkz. <xref linkend="glibc-Process-Completion"/>.  Yazılım çıkmışsa bu değer onun sekiz bitlik yazılım çıkış durumunu içerir.
+      </para></listitem><listitem><para>
+Sürecin sonlanmış olan herhangi bir alt süreci yeni bir üst sürece atanır. (GNU dahil çoğu sistemde bu, süreç kimliği 1 olan <command>init</command> sürecidir.)
+      </para></listitem><listitem><para>
+Bir <command>SIGCHLD</command> sinyali üst sürece gönderilir.
+      </para></listitem><listitem><para>
+Eğer süreç, bir denetim uçbirimi olan bir oturum lideri ise, onun önalan işindeki her sürece bir <command>SIGHUP</command> sinyali gönderir ve denetim uçbiriminin bu oturumla ilişkisi kesilir. Bkz. <xref linkend="glibc-Job-Control"/>.
+      </para></listitem><listitem><para>
+Bir sürecin sonlanması bir süreç grubunun öksüz kalmasına sebep olmuşsa ve bu süreç grubundaki bir üye durmuşsa bu üyeye bir <command>SIGCONT</command> sinyali ve gruptaki her üyeye bir <command>SIGHUP</command> sinyali gönderilir. Bkz. <xref linkend="glibc-Job-Control"/>.
+      </para></listitem></itemizedlist></para>
+    </sect1>
+  </chapter>
+</part>
+

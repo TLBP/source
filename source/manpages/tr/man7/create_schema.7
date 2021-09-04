@@ -1,0 +1,97 @@
+.\" http://belgeler.org \N'45' 2006\N'45'11\N'45'26T10:18:35+02:00  
+.TH "CREATE SCHEMA" 7 "" "PostgreSQL" "SQL \N'45' Dil Deyimleri"
+.nh   
+.SH İSİM
+CREATE SCHEMA \N'45' yeni bir şema tanımlar   
+.SH KULLANIM 
+.nf
+\fBCREATE SCHEMA AUTHORIZATION\fR \fIkullanıcı_ismi\fR [ \fIşema_öğesi\fR [ ... ] ]
+\fBCREATE SCHEMA\fR \fIşema_ismi\fR
+\          [ \fBAUTHORIZATION\fR \fIkullanıcı_ismi\fR ] [ \fIşema_öğesi\fR [ ... ] ]
+.fi
+    
+.SH AÇIKLAMA
+\fBCREATE SCHEMA\fR o anki veritabanında yeni bir şema oluşturur. Şema ismi o anki veritabanındaki şema isimlerinden farklı olmalıdır.   
+ 
+Bir şema aslında bir isim alanıdır: isimli nesneler (tablolar, veri türleri, işlevler ve işleçler) içerir ve bu isimler diğer şemalardaki nesnelerin isimlerinin tekrarı olabilir. İsimli nesnelere ya isimlerin önüne şema ismi getirilerek ya da istenen şemaları içeren bir arama yolu atanarak erişilir. Bir \fBCREATE\fR komutunda nitelenmemiş bir nesne isminin belirtilmesiyle nesne o anki şemada oluşturulur (o anki şema, current_schema işlevi ile saptanabilen ve arama yolunun başındaki şemadır).   
+
+İsteğe bağlı olarak, \fBCREATE SCHEMA\fR, yeni şemada bulunacak nesneleri oluşturacak alt komutları içerebilir. Bu alt komutlar, aslında, şema oluşturulduktan sonra verilmiş komutlarmış gibi çalıştırılır. Yalnız, eğer \fBAUTHORIZATION\fR deyimi kullanılmışsa, oluşturulan tüm nesnelerin sahibi bu kullanıcı olur.   
+
+.SH PARAMETRELER     
+.br
+.ns
+.TP 
+\fIşema_ismi\fR
+Oluşturulacak şemanın ismi. Belirtilmezse, şema ismi olarak kullanıcı ismi kullanılır. İsim, sistem şema isimlerinin oluşturulmasında kullanılan pg_ öneki ile başlayamaz.       
+
+.TP 
+\fIkullanıcı_ismi\fR
+Şemanın sahibi olacak kullanıcının ismi. Belirtilmezse, komutu çalıştıran kullanıcının ismi öntanımlıdır. Sadece ayrıcalıklı kullanıcılar kendileri dışında bir kullanıcı için şema oluşturabilir.       
+
+.TP 
+\fIşema_öğesi\fR
+Şema içinde oluşturulacak nesneyi tanımlayan bir SQL deyimi. Şimdilik,  \fBCREATE SCHEMA\fR cümlesinde sadece \fBCREATE TABLE\fR, \fBCREATE VIEW\fR, \fBCREATE INDEX\fR, \fBCREATE SEQUENCE\fR, \fBCREATE TRIGGER\fR ve \fBGRANT\fR deyimleri kullanılabilmektedir. Diğer nesne çeşitleri şema oluşturulduktan ayrı komutlarla oluşturulabilir.       
+
+.PP  
+.SH EK BİLGİ
+Bir şemayı oluşturabilmek için, kullanıcının o anki veritabanında \fBCREATE\fR yetkisi olması gerekir.   
+
+.SH ÖRNEKLER
+Bir şemayı oluşturmak için:   
+
+
+.RS 4
+.nf
+CREATE SCHEMA myschema;
+.fi
+.RE   
+
+Şemayı joe kullanıcısı için, kendi ismiyle oluşturmak için:   
+
+
+.RS 4
+.nf
+CREATE SCHEMA AUTHORIZATION joe;
+.fi
+.RE   
+
+Bir şemanın, bir sanal ve bir gerçek tabloyla oluşturulması:   
+
+
+.RS 4
+.nf
+CREATE SCHEMA hollywood
+\    CREATE TABLE films (title text, release date, awards text[])
+\    CREATE VIEW winners AS
+\        SELECT title, release FROM films WHERE awards IS NOT NULL;
+.fi
+.RE   
+
+Dikkat ederseniz, alt komutların sonunda noktalı virgül kullanılmamıştır.   
+
+Aşağıdaki örnek de aynı sonucu verir:   
+
+
+.RS 1
+.nf
+CREATE SCHEMA hollywood;
+CREATE TABLE hollywood.films (title text, release date, awards text[]);
+CREATE VIEW hollywood.winners AS
+\  SELECT title, release FROM hollywood.films WHERE awards IS NOT NULL;
+.fi
+.RE   
+
+.SH UYUMLULUK
+PostgreSQL\N'39'in de kabul ettiği alt komutların yanında SQL standardı \fBCREATE SCHEMA\fR içinde \fBDEFAULT CHARACTER SET\fR deyimine de izin verir.   
+
+SQL standardı, \fBCREATE SCHEMA\fR içinde bu alt komutların herhangi bir sırada olabileceğini belirtir. PostgreSQL gerçeklemesi şimdilik, alt komutlarda ileri yönde başvurular tüm durumlarda elde edememektedir; ileri yönde başvurulardan kaçınmak için bazan alt komutların yeniden sıralanması gerekli olabilmektedir.   
+
+SQL standardına göre bir şemanın sahibi daima içindeki tüm nenelerin sahibidir. PostgreSQL ise, şemanın içinde başka kullanıcıların nesnelerine de izin verir. Bu sadece eğer şema sahibi şemasında başkalarına \fBCREATE\fR yetkisi verirse mümkün olur.   
+
+.SH İLGİLİ BELGELER
+\fBALTER SCHEMA\fR [alter_schema(7)], \fBDROP SCHEMA\fR [drop_schema(7)].  
+
+.SH ÇEVİREN
+Nilgün Belma Bugüner <nilgun (at) belgeler·gen·tr>, Nisan 2005 
+ 
+    

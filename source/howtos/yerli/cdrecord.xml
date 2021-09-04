@@ -1,0 +1,472 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ********************************************************************
+     $Id: cdrecord.xml,v 1.1 2002/10/17 23:07:55 nilgun Exp $
+     ******************************************************************** -->
+<article id="cd-yazimi" lang="tr">
+  <articleinfo>
+    <title>Linux'da CD Yazımı</title>
+    <authorgroup>
+      <author>
+        <firstname>A. Murat EREN</firstname>
+        <affiliation>
+          <address><email>meren@comu.edu.tr</email></address>
+        </affiliation>
+      </author>
+      <author>
+        <firstname>Necdet YÜCEL</firstname>
+        <affiliation>
+          <address><email>nyucel@comu.edu.tr</email></address>
+        </affiliation>
+      </author>
+    </authorgroup>
+    <pubdate>25 Şubat 2003</pubdate>
+    <revhistory>
+      <revision>
+        <revnumber>0.1</revnumber>
+        <date>25 Şubat 2003</date>
+        <authorinitials>AME, NY</authorinitials>
+        <revremark>İlk sürüm.</revremark>
+      </revision>
+    </revhistory>
+    <abstract>
+      <para>
+Bu kısa belgede, Linux bir makine üzerindeki CD-Yazar ile,
+Veri ve Müzik CD'lerinin kolaylıkla hazırlanabilmesi için çeşitli
+kaynaklardan ve deneyimlerden derlenmiş bilgiler anlatılmıştır.
+      </para>
+      <para>
+Bu belgenin son sürümüne
+<ulink url="http://docs.comu.edu.tr/howto/cd-yazimi.html"/>
+adresinden ulaşabilirsiniz.
+      </para>
+    </abstract>
+    <legalnotice><title>Yasal Uyarı</title><para>
+Bu belgenin, <emphasis>Linux'da CD Yazımı</emphasis>, 0.1 sürümünün <emphasis role="bold">telif hakkı © 2003 <emphasis>A. Murat EREN</emphasis> ve  <emphasis>Necdet YÜCEL</emphasis></emphasis>'e aittir.
+    &notice.gpl;</para>
+      &notice.disc;
+    </legalnotice>
+  </articleinfo>
+  <sect1 id="cd-yazimi_giris">
+    <title>Giriş</title>
+    <para>
+Bu belge, sisteminizin, sahip olduğunuz CD-yazar ile sorunsuz çalışabilecek
+durumda olduğu varsayılarak hazırlanmıştır. Sisteminiz ve siz, Linux üstünde
+CD-yazar cihazınız ile ilk kez haşır-neşir olacaksanız, <ulink
+url="http://wt.xpilot.org/cgi-bin/winni/lsc-orig.pl"/> adresinde Unix benzeri
+işletim sistemlerinde çalıştığı ya da çalışmadığı rapor edilmiş olan CD-yazarların
+listesine göz atarak cihazınızın çalışıp çalışmayacağından emin olabilirsiniz.
+CD-yazarların Linux'a tanıtılması ve yaşanabilecek sorunların çözüm yolları
+bu belgede şimdilik yer almayacaktır. Talep geldiği taktirde, belgenin daha
+içerikli yeni sürümlerini duyurulması düşünülmektedir. Yine de yukarıdaki
+adreslere eposta atarak bize ulaşabilir ve sorularınızı yöneltebilirsiniz.
+</para><para>
+<ulink url="http://www.fokus.gmd.de/research/cc/glone/employees/joerg.schilling/private/cdrecord.html"/> adresinde CD yazımı konusu ile ilgili çok sayıda belgeye bağlar yer almaktadır.
+    </para>
+  </sect1>
+  <sect1 id="cd-yazimi_gerekenler">
+    <title>Gerekli Yazılımlar</title>
+    <para>
+Normal bir veri CD'si hazırlamak için <userinput>cdrecord</userinput>,
+<userinput>mkisofs</userinput> yazılımlarının, Müzik CD'si hazırlamak
+için ise <userinput>sox</userinput>, <userinput>mpg321</userinput> ve
+<userinput>cdrecord</userinput> yazılımlarının sisteminizde hazır
+bulunması gerekmektedir. Bu yazılımlardan ihtiyacınız olacak olanlarının
+sisteminizde var olup olmadığını şimdi kontrol ediniz, eğer yok iseler
+aşağıdaki adreslerden faydalanarak yazılımların son sürümlerini temin
+edebilirsiniz:
+    </para><itemizedlist>
+        <listitem>
+<userinput>cdrecord</userinput>:
+<ulink url="ftp://ftp.berlios.de/pub/cdrecord/"/>
+        </listitem><listitem>
+<userinput>mkisofs</userinput>:
+<ulink url="ftp://ftp.berlios.de/pub/cdrecord/mkisofs/"/>
+        </listitem><listitem>
+<userinput>sox</userinput>:
+<ulink url="http://sox.sourceforge.net/"/>
+        </listitem><listitem>
+<userinput>mpg321</userinput>:
+<ulink url="http://sourceforge.net/project/showfiles.php?group_id=36274"/>
+        </listitem>
+      </itemizedlist>
+  </sect1>
+  <sect1 id="cd-yazimi_baslangic">
+    <title>Başlangıç</title>
+    <para>
+Bilgisayarınıza takılı olan CD-yazarınıza onun SCSI Bus numarası ile
+erişeceğimiz için, öncelikle bu numarayı öğrenmemiz gerekmektedir.
+`<userinput>cdrecord</userinput> <option>-scanbus</option>' komutunu
+makinenizde - root hakları ile - çalıştırdığınızda, aşağıdaki gibi
+bir çıktı ile karşılaşmalısınız:
+    </para>
+<screen>
+<prompt>[root@isildur iso]#</prompt> <userinput>cdrecord -scanbus</userinput>
+Cdrecord 1.10 (i686-pc-linux-gnu) Copyright (C) 1995-2001 Jörg Schilling
+Linux sg driver version: 3.1.22
+Using libscg version 'schily-0.5'
+scsibus0:
+        0,0,0     0) *
+        0,1,0     1) *
+        0,2,0     2) *
+        0,3,0     3) *
+        0,4,0     4) 'PLEXTOR ' 'CD-R   PX-W1210S' '1.04' Removable CD-ROM
+        0,5,0     5) *
+        0,6,0     6) 'QUANTUM ' 'QM39100TD-SW    ' 'N1B0' Disk
+        0,7,0     7) *
+</screen>
+    <para>
+Bu çıktıda 0 numarali SCSI bus üzerindeki 4 numaralı PLEXTOR isimli
+cihazın bizim CD-yazar olarak kullanabileceğimiz bir aygıt olduğu
+açıkça görülebilmektedir. Çıktıda cihazımıza karşılık gelen
+<literal>0,4,0</literal> numarasını unutmayacağız. Eğer CD-yazarınız
+yukarda vermiş olduğumuz adreste çalıştığı rapor edilmiş olan CD-yazarlar
+arasında varsa, çekirdek sürümünüz yeterince yüksek ise, yazıcınızın
+- herhangi bir yolla - kesinlikle çalışır vaziyette bilgisayarınıza
+takılı olduğundan eminseniz ama yine de
+`<userinput>cdrecord</userinput> <option>-scanbus</option>' çıktısında
+görünmüyorsa, cihazınızı Linux'a tanıtmak için yapmanız gereken bir kaç
+basit işlem vardır. Bunun için CD-Writing-HOWTO'dan faydalanabilirsiniz.
+Talep gelirse, bu belgenin ileri sürümlerinde bu konudan da bahsetmeyi
+düşünüyoruz, fakat şimdilik kendi başınasınız :(
+    </para><caution><para>
+Muhtemelen biçok kişinin bildiği gibi, CD-yazar yazma işlemini
+gerçekleştirirken disk ya da diğer bir kaynaktan kesintisiz gelen
+veriyi kullanır. CD yazdığınız esnada bilgisayarınızda yaptığınız
+işlemlerin veri akışını kesintiye uğratmaması gerekmektedir.
+      </para><para>
+Kısa bir süreliğine dahi veri akışı kesilirse, CD yazma işlemi
+kesilir, CD'niz ve vaktiniz de boşa harcanmış olur. Internet'te
+gezmek ya da müzik dinlemek için kullandığınız ve disk üzerinde
+fazla işlem yapmayan programlardan ziyade, dosya kopyalamak ya da
+silmek CD yazma süreci için büyük tehlike arz etmektedir.
+      </para><para>
+Diskinizden 250, 300 Mb'lık bir dosya siler ya da çok hızlı bir
+kaynaktan (mesela kendi diskinizin bir başka parçasından ya da
+yerel ağınızdaki ftp sunucusundan) diskinize büyük bir dosya
+kopyalarsanız, muhtemelen CD yazıcıya yazacağı veri yeterli
+hızda temin edilemeyecek ve CD'niz yanacaktır.
+      </para><para>
+CD yazmak gibi narin bir işlem esnasında koşulları fazla zorlamamak,
+başarı için yeterli olacaktır. Ayrıca, CD'ye yazma işlemini gerçekleştiren
+lazerin, kendini yeniden konumlandırıp yazma işlemine kaldığı
+yerden devam edemeyeceğinden dolayı sarsıntı ve fiziksel şokların
+yaşanması muhtemel platformlar üzerinde yazma işlemi başarısız olabilir.
+      </para></caution>
+  </sect1>
+  <sect1 id="cd-yazimi_veriler">
+    <title>Veri CD'lerinin Yazılması</title>
+    <para>
+      CD'ye yazmaya karar verdiğimiz dosyaları, CD dosya sistemine dönüştürmeli
+      ve bu şekilde CD'ye yazmalıyız. Bunun için ilk önce yazmayı düşündüğümüz
+      dosyaları kendi dosya sistemimiz üzerinde bir dizine toplamalı ve daha
+      sonra da <userinput>mkisofs</userinput> isimli yazılım yardımı ile bu
+      dizini CD dosya sistemine dönüştürmeliyiz. Bir dizin CD dosya sistemine
+      şu şekilde dönüştürülebilir:
+    </para>
+<literallayout>
+<userinput>mkisofs</userinput> -r -o <emphasis>iso_dosyasi.iso cdye_yazilacak_dosyalar</emphasis>/
+</literallayout>
+    <para>
+Bu komut, bulunduğumuz dizinde bulunan <replaceable>cdye_yazilacak_dosyalar/</replaceable>
+isimli dizini, yine bulunduğumuz dizine <replaceable>iso_dosyasi.iso</replaceable>
+ismi ile dönüştürecektir. Aşağıdaki ekran çıktısı, <filename>tez/</filename>
+isimli dizinin <filename>tez.iso</filename> dosyasına dönüştürülmesini
+göstermektedir:
+    </para>
+<screen>
+<prompt>[root@isildur iso]#</prompt> <userinput>mkisofs -r -o tez.iso tez/</userinput>
+Using APPEN00.HTM;1 for tez/Applied_Cryptography/appendixb.html (appendixa.html)
+Using LECTU000.PS;1 for tez/lecture_notes/lecture17.ps (lecture16.ps)
+Using LECTU001.PS;1 for tez/lecture_notes/lecture16.ps (lecture15.ps)
+Using LECTU002.PS;1 for tez/lecture_notes/lecture15.ps (lecture14.ps)
+Using LECTU003.PS;1 for tez/lecture_notes/lecture14.ps (lecture13.ps)
+Using LECTU004.PS;1 for tez/lecture_notes/lecture13.ps (lecture12.ps)
+Using LECTU005.PS;1 for tez/lecture_notes/lecture12.ps (lecture11.ps)
+Using LECTU006.PS;1 for tez/lecture_notes/lecture11.ps (lecture10.ps)
+Using LECTU007.PS;1 for tez/lecture_notes/lecture10.ps (lecture1.ps)
+Using 2001_00.PDF;1 for tez/pointcheval/2001_asiacryptC.pdf (2001_asiacryptA.pdf)
+13.10% done, estimate finish Wed Feb 26 15:20:25 2003
+26.21% done, estimate finish Wed Feb 26 15:20:21 2003
+39.34% done, estimate finish Wed Feb 26 15:20:23 2003
+52.43% done, estimate finish Wed Feb 26 15:20:23 2003
+65.55% done, estimate finish Wed Feb 26 15:20:27 2003
+78.65% done, estimate finish Wed Feb 26 15:20:26 2003
+91.75% done, estimate finish Wed Feb 26 15:20:26 2003
+Total translation table size: 0
+Total rockridge attributes bytes: 44970
+Total directory bytes: 108544
+Path table size(bytes): 618
+Max brk space used 617e4
+38160 extents written (74 Mb)
+</screen>
+    <para>
+Ayrıca, yazmak istediğimiz dosyalar diskimizde değil bir başka CD üzerinde
+bulunuyor olabilirler ya da bir CD'yi bire-bir kopyalamak istiyor olabiliriz
+(İlgilenmeyenler okumaya <link linkend="cd-yazimi_veriler-iso">bir kaç
+satır aşağıdan</link> devam edebilirler).
+Bu durumda izlenebilecek iki yöntem vardır. İlki, CD'den CD'ye doğrudan
+kopyalama, diğeri de kopyalanacak CD'yi iso olarak diskimize kaydettikten
+sonra disk üzerinden CD'ye yazmak. İkisinin sonucu arasında hiçbir fark
+olmayacak, fakat ikinci yöntemi takip ettiğimiz taktirde CD'mizi yakma
+olasılığımız daha az olacaktır. Çünkü, CD'den CD'ye doğrudan kopyalama
+esnasında CD okuyucunun normal okuması esnasında bir kaç sefer deneyip
+okuyabileceği bir kısım, CD yazıcıya olan veri akışını sekteye uğratacak
+ve yazma işlemi başarısızlık ile sonlanacaktır. Yine de kendinize güveniyor
+olabilir ve illa ki CD'den CD'ye doğrudan kopyalama yapmak isteyebilirsiniz.
+    </para><para>
+Örneğin CD yazıcınızın SCSI bus adresi <literal>0,4,0</literal> ve CD
+okuyucu olarak kullanacağınız aygıt <filename>/dev/cdrom</filename> iken
+aşağıdaki komut ile CD'den CD'ye kopyalama yapabilirsiniz. Bu noktada
+yazma hızını (yani komuttaki <option>speed</option> parametresini)
+düşük tutmanız risklerin azalması açısından iyi bir yaklaşım olacaktır:
+    </para>
+<screen>
+<prompt>[root@isildur iso]#</prompt> <userinput>cdrecord -v dev=0,4,0 speed=2 -isosize /dev/cdrom</userinput>
+</screen>
+    <para>
+İlk yönteme göre kopyalama yapmak isteyenlerin, yani CD'den CD'ye
+kopyalama yerine iso dosyasını önce disklerinde oluşturup daha sonra
+CD yazma işlemine geçmek isteyenlerin ihtiyacı olan komut şöyledir
+(kopyalamak istediğiniz CD'nin <filename>/dev/cdrom</filename> aygıtında
+olduğunu varsayarsak):
+    </para>
+<screen>
+<prompt>[root@isildur iso]#</prompt> <userinput>dd if=/dev/cdrom of=iso_dosyasi.iso</userinput>
+</screen>
+    <para id="cd-yazimi_veriler-iso">
+Artık iso dosyamız hazırdır ve iso dosyamızın boyutunun CD'mizin
+kapasitesinden küçük olduğunu teyit ettikten sonra CD'ye yazma işlemine
+başlamamız için önümüzde hiçbir engel yoktur. Fakat yine de, daha sonradan
+ortaya çıkabilecek tatsızlıkları engellemek için, iso dosyasının içini
+kontrol etmek isteyebiliriz; şu anda aklımıza gelmeyen ancak gözümüzle
+gördüğümüzde hatırlayabileceğimiz eksiklik ya da hataların var olmadığından
+emin olmak için. Bunun için iso dosyamızı, sanki bir CD-ROM'muş gibi
+dosya sistemimizde bir yere bağlayıp içinde gezebiliriz:
+    </para>
+<screen>
+<prompt>[root@isildur iso]#</prompt> <userinput>mount -t iso9660 -o ro,loop=/dev/loop0 tez.iso /mnt/cdrom</userinput>
+</screen>
+    <para>
+komutu yeterli olacaktır. Bir problem olmadığından emin olduktan sonra da
+iso dosya sistemini
+    </para>
+<screen>
+<prompt>[root@isildur iso]#</prompt> <userinput>umount /mnt/cdrom</userinput>
+</screen>
+    <para>
+komutu yardımı ile dosya sisteminizden ayırabiliriz. Boş CD'mizi
+CD-yazarın içerisine koyduktan sonra yazma işlemine başlayabiliriz.
+    </para><para>
+Yazma işlemi aşağıdaki komut yardımı ile gerçekleştirilecektir:
+    </para>
+<literallayout>
+<userinput>cdrecord</userinput> dev=<emphasis>scanbus_id_si</emphasis> -eject speed=<emphasis>yazma_hizi iso_dosyasi.iso</emphasis>
+</literallayout>
+    <para>
+Burada belki de üzerinde konuşmamız gereken tek parametre '<literal>dev</literal>'
+parametresidir. Bu parametre, yazma işleminde kullanacağımız cihazın hangi
+cihazımız olduğunu bildirdiğimiz parametredir ve değerinin ne olacağına
+`<userinput>cdrecord</userinput> <option>-scanbus</option>' çıktısına göre
+karar verdiğimizi de hatırlatalım. Aşağıdaki ekran çıktısı, az önce
+hazırladığımız <filename>tez.iso</filename> isimli dosyayı yazdığımızda
+meydana gelen çıktıdır:
+    </para>
+<screen>
+<prompt>[root@isildur iso]#</prompt> <userinput>cdrecord dev=0,4,0 -eject speed=12 tez.iso</userinput>
+Cdrecord 1.10 (i686-pc-linux-gnu) Copyright (C) 1995-2001 Jörg Schilling
+scsidev: '0,4,0'
+scsibus: 0 target: 4 lun: 0
+Linux sg driver version: 3.1.22
+Using libscg version 'schily-0.5'
+Device type    : Removable CD-ROM
+Version        : 2
+Response Format: 2
+Capabilities   : SYNC LINKED
+Vendor_info    : 'PLEXTOR '
+Identifikation : 'CD-R   PX-W1210S'
+Revision       : '1.04'
+Device seems to be: Generic mmc CD-RW.
+Using generic SCSI-3/mmc CD-R driver (mmc_cdr).
+Driver flags   : SWABAUDIO
+Starting to write CD/DVD at speed 12 in write mode for single session.
+Last chance to quit, starting real write in 0 seconds. Operation starts.
+Track 01: Total bytes read/written: 83839360/83839360 (58320 sectors).
+</screen>
+  </sect1>
+  <sect1 id="cd-yazimi_muzik">
+    <title>Müzik CD'lerinin Yazılması</title>
+    <para>
+Müzik CD'si derken, müzik setlerinde ve CD-Walkman'lerde okunabilecek
+müzik CD'lerini kastettiğimizi hatırlatmakta fayda var. Belgenin (kısa
+belgemizin) başında da ifade ettiğimiz gibi, Müzik CD'si hazırlarken
+<userinput>cdrecord</userinput>'a ek olarak <userinput>sox</userinput>
+ve <userinput>mpg321</userinput> yazılımlarının da sistemimizde bulunması
+gerekmektedir.
+    </para><para>
+Müzik CD'si hazırlarken, istediğimiz şey muhtemelen diskimizde mp3
+biçeminde bulunan müzik dosyalarından müzik setlerinde dinlenebilecek
+bir Müzik CD'si oluşturmaktır. Bu işlem, öncelikle mp3 dosyalarımızı
+wav biçemine çevirmemiz, sonrasında CD'ye yazmamızı gerektiren iki
+aşamalı bir süreçtir. İlk önce, mp3 dosyalarımızı bir dizin içerisinde
+topladığınızı varsayıyoruz. Bu dizin içerisindeki mp3 dosyalarını
+<userinput>sox</userinput> ve <userinput>mpg321</userinput> programlarının
+birlikte kullanımı ile wav biçemine şöyle bir komut ile çevirebiliyoruz:
+    </para>
+<literallayout>
+<userinput>mpg123</userinput> -s <emphasis>parcam.mp3</emphasis> | <userinput>sox</userinput> -t raw -r 44100 -s -w -c 2 - <emphasis>parcam.wav</emphasis>
+</literallayout>
+    <para>
+Bunu kendi bilgisayarımızda bir mp3 için yaptığımızda şöyle bir çıktı
+ile karşılaşıyoruz:
+    </para>
+<screen>
+<prompt>[root@isildur iso]#</prompt> <userinput>ls</userinput>
+jaco_pastorius-slang.mp3
+<prompt>[root@isildur iso]#</prompt> <userinput>mpg123 -s jaco_pastorius-slang.mp3 | sox -t raw -r 44100 \</userinput>
+<prompt>></prompt> <userinput>-s -w -c 2 - jaco.wav</userinput>
+High Performance MPEG 1.0/2.0/2.5 Audio Player for Layer 1, 2, and 3.
+Version 0.59q (2002/03/23). Written and copyrights by Joe Drew.
+Uses code from various people. See 'README' for more!
+THIS SOFTWARE COMES WITH ABSOLUTELY NO WARRANTY! USE AT YOUR OWN RISK!
+
+Playing MPEG stream from jaco_pastorius-slang.mp3 ...
+MPEG 1.0 layer III, 128 kbit/s, 44100 Hz stereo
+
+[8:01] Decoding of jaco_pastorius-slang.mp3 finished.
+<prompt>[root@isildur iso]#</prompt> <userinput>ls</userinput>
+jaco_pastorius-slang.mp3  jaco.wav
+<prompt>[root@isildur iso]#</prompt>
+</screen>
+    <para>
+Görüldüğü gibi mp3 dosyamızı wav biçemine başarı ile çevirdik. Burada
+bir tane mp3 dosyasını üzerinde çalıştık fakat, istediğiniz kadar mp3'ü
+bu yolla - toplamları CD boyutunu aşmadığı sürece - wav dosyasına
+çevirebilirsiniz. Bu wav dosyalarını CDDA biçemine dönüştürüp CD'ye
+yazmak için de yardımımıza <userinput>cdrecord</userinput> koşuyor.
+    </para><para>
+Burası enteresan bir nokta: aşağıdaki komutu CD'de yer kaldığı sürece
+istediğiniz kadar tekrarlayabilir ve şarkılarınızı istediğiniz sırada
+yazdırarak Müzik CD'nizi oluşturabilirsiniz:
+    </para>
+<literallayout>
+<userinput>cdrecord</userinput> -pad -v dev=<emphasis>0,4,0</emphasis> -dao speed=<emphasis>12 sarki_adi.wav</emphasis>
+</literallayout>
+    <para>
+Yine bir çıktı ile -kısa- belgemizi noktalayalım. Aşağıdaki çıktı, bir
+müzik CD'sinin yazımından alınmıştır. Şarkıları tek tek el ile yazmaktansa,
+<filename>*.wav</filename> diyerek dizin içerisindeki tüm wav dosyalarını
+CD'ye yazdırabilirsiniz elbette. Fakat bu şekilde şarkılar sizin istediğiniz
+sırada değil alfabetik sırada CD'ye yazılacaklarından, şarkı isimlerini
+istediğiniz sıraya göre numaralandırmalısınız:
+    </para>
+<screen>
+<prompt>[root@isildur iso]#</prompt> <userinput>ls</userinput>
+01miles.wav     03coltrane.wav  05terje.wav     07joe.wav       09kessel.wav
+11tony.wav      02mingus.wav    04terje.wav     06evreniz.wav   08lespaul.wav
+10ella.wav
+<prompt>[root@isildur iso]#</prompt> <userinput>cdrecord -pad -v dev=0,4,0 -dao speed=12 *.wav</userinput>
+Cdrecord 1.10 (i686-pc-linux-gnu) Copyright (C) 1995-2001 Jörg Schilling
+TOC Type: 0 = CD-DA
+scsidev: '0,4,0'
+scsibus: 0 target: 4 lun: 0
+Linux sg driver version: 3.1.22
+Using libscg version 'schily-0.5'
+atapi: 0
+Device type    : Removable CD-ROM
+Version        : 2
+Response Format: 2
+Capabilities   : SYNC LINKED
+Vendor_info    : 'PLEXTOR '
+Identifikation : 'CD-R   PX-W1210S'
+Revision       : '1.04'
+Device seems to be: Generic mmc CD-RW.
+Using generic SCSI-3/mmc CD-R driver (mmc_cdr).
+Driver flags   : SWABAUDIO
+Drive buf size : 2394336 = 2338 KB
+FIFO size      : 4194304 = 4096 KB
+Track 01: audio  56 MB (05:37.58)
+Track 02: audio  48 MB (04:50.14)
+Track 03: audio  45 MB (04:31.83)
+Track 04: audio  49 MB (04:54.87)
+Track 05: audio  62 MB (06:12.29)
+Track 06: audio  57 MB (05:39.70)
+Track 07: audio  34 MB (03:22.81)
+Track 08: audio  27 MB (02:40.52)
+Track 09: audio  34 MB (03:27.46)
+Track 10: audio  32 MB (03:13.25)
+Track 11: audio  42 MB (04:14.53)
+Total size:     492 MB (48:45.10) = 219383 sectors
+Lout start:     492 MB (48:47/08) = 219383 sectors
+Current Secsize: 2048
+ATIP info from disk:
+  Indicated writing power: 6
+  Is not unrestricted
+  Is not erasable
+  Disk sub type: Medium Type A, low Beta category (A-) (2)
+  ATIP start of lead in:  -11634 (97:26/66)
+  ATIP start of lead out: 359849 (79:59/74)
+Disk type:    Short strategy type (Phthalocyanine or similar)
+Manuf. index: 3
+Manufacturer: CMC Magnetics Corporation
+Blocks total: 359849 Blocks current: 359849 Blocks remaining: 140466
+Starting to write CD/DVD at speed 12 in write mode for single session.
+Last chance to quit, starting real write in 0 seconds. Operation starts.
+Waiting for reader process to fill input buffer ... input buffer ready.
+Performing OPC...
+Sending CUE sheet...
+Writing pregap for track 1 at -150
+Starting new track at sector: 0
+Track 01:  56 of  56 MB written (fifo  98%).
+Track 01: Total bytes read/written: 59549184/59550288 (25319 sectors).
+Starting new track at sector: 25319
+Track 02:  48 of  48 MB written (fifo 100%).
+Track 02: Total bytes read/written: 51181056/51181872 (21761 sectors).
+Starting new track at sector: 47080
+Track 03:  45 of  45 MB written (fifo 100%).
+Track 03: Total bytes read/written: 47950848/47952576 (20388 sectors).
+Starting new track at sector: 67468
+Track 04:  49 of  49 MB written (fifo 100%).
+Track 04: Total bytes read/written: 52015104/52016832 (22116 sectors).
+Starting new track at sector: 89584
+Track 05:  62 of  62 MB written (fifo  98%).
+Track 05: Total bytes read/written: 65673216/65674896 (27923 sectors).
+Starting new track at sector: 117507
+Track 06:  57 of  57 MB written (fifo  98%).
+Track 06: Total bytes read/written: 59923968/59924256 (25478 sectors).
+Starting new track at sector: 142985
+Track 07:  34 of  34 MB written (fifo 100%).
+Track 07: Total bytes read/written: 35776512/35778624 (15212 sectors).
+Starting new track at sector: 158197
+Track 08:  27 of  27 MB written (fifo 100%).
+Track 08: Total bytes read/written: 28316160/28318080 (12040 sectors).
+Starting new track at sector: 170237
+Track 09:  34 of  34 MB written (fifo  98%).
+Track 09: Total bytes read/written: 36596736/36597120 (15560 sectors).
+Starting new track at sector: 185797
+Track 10:  32 of  32 MB written (fifo 100%).
+Track 10: Total bytes read/written: 34089984/34092240 (14495 sectors).
+Starting new track at sector: 200292
+Track 11:  42 of  42 MB written (fifo 100%).
+Track 11: Total bytes read/written: 44900352/44902032 (19091 sectors).
+Writing  time:  270.911s
+Fixating...
+Fixating time:    5.080s
+cdrecord: fifo had 8131 puts and 8131 gets.
+cdrecord: fifo was 0 times empty and 5363 times full, min fill was 93%.
+</screen>
+  </sect1>
+  <sect1 id="cd-yazimi_kaynakca">
+    <title>Kaynaklar</title>
+    <para>
+Bu belgede kullanılan yazılımların herbirinin birçok parametresi
+bulunmaktadır. Sadece minimum ihtiyaçlar göz önünde bulunduğu
+taktirde kullanılması gereken parametreler dışında bir parametre
+kullanılmamıştır. Kullanılabilecek parametreler hakkında daha
+ayrıntılı bilgi için yazılımların man dosyalarına göz atınız.
+    </para><para>
+<userinput>cdrecord</userinput>: <ulink url="http://www.fokus.gmd.de/research/cc/glone/employees/joerg.schilling/private/cdrecord.html"/><sbr/>(Jörg Schilling <email>schilling@fokus.fhg.de</email>)
+    </para><para>
+CD-Writing-HOWTO: <ulink url="http://wt.xpilot.org/publications/linux/howtos/cd-writing/html/"/><sbr/>(Winfried Trümper <email>winni@xpilot.org</email>)
+    </para>
+  </sect1>
+</article>

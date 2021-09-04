@@ -1,0 +1,135 @@
+.\" http://belgeler.org \N'45' 2006\N'45'11\N'45'26T10:18:37+02:00  
+.TH "INSERT" 7 "" "PostgreSQL" "SQL \N'45' Dil Deyimleri"
+.nh   
+.SH İSİM
+INSERT \N'45' create new rows in a table   
+.SH KULLANIM 
+.nf
+\fBINSERT INTO\fR \fItablo\fR [ ( \fIsütun\fR [, ...] ) ]
+\    { \fBDEFAULT VALUES\fR | \fBVALUES\fR ( { \fIifade\fR | \fBDEFAULT\fR } [, ...] ) | \fIsorgu\fR }
+.fi
+    
+.SH AÇIKLAMA
+\fBINSERT\fR inserts new rows into a table.    One can insert a single row specified by value expressions,    or several rows as a result of a query.   
+
+The target column names may be listed in any order.  If no list of    column names is given at all, the default is all the columns of the    table in their declared order; or the first \fIN\fR column    names, if there are only \fIN\fR columns supplied by the    \fBVALUES\fR clause or \fIsorgu\fR.  The values    supplied by the \fBVALUES\fR clause or \fIsorgu\fR are    associated with the explicit or implicit column list left\N'45'to\N'45'right.   
+
+Each column not present in the explicit or implicit column list will be    filled with a default value, either its declared default value    or null if there is none.   
+
+If the expression for any column is not of the correct data type,    automatic type conversion will be attempted.   
+
+You must have \fBINSERT\fR privilege to a table in    order to insert into it.  If you use the \fIsorgu\fR clause to insert rows from a    query, you also need to have \fBSELECT\fR privilege on    any table used in the query.   
+
+.SH PARAMETRELER    
+.br
+.ns
+.TP 
+\fItablo\fR
+The name (optionally schema\N'45'qualified) of an existing table.     
+
+.TP 
+\fIsütun\fR
+The name of a column in \fItablo\fR.       The column name can be qualified with a subfield name or array       subscript, if needed.  (Inserting into only some fields of a       composite column leaves the other fields null.)     
+
+.TP 
+\fBDEFAULT VALUES\fR
+All columns will be filled with their default values.     
+
+.TP 
+\fIifade\fR
+An expression or value to assign to the corresponding \fIsütun\fR.     
+
+.TP 
+\fBDEFAULT\fR
+The corresponding \fIsütun\fR will be filled with       its default value.     
+
+.TP 
+\fIsorgu\fR
+A query (\fBSELECT\fR statement) that supplies the       rows to be inserted.  Refer to the \fBSELECT\fR       statement for a description of the syntax.     
+
+.PP  
+.SH ÇIKTI
+On successful completion, an \fBINSERT\fR command returns a command    tag of the form   
+
+
+.nf
+INSERT \fIoid\fR \fImiktar\fR
+.fi   
+
+The \fIcount\fR is the number    of rows inserted.  If \fIcount\fR    is exactly one, and the target table has OIDs, then    \fIoid\fR is the    OID assigned to the inserted row.  Otherwise    \fIoid\fR is zero.   
+
+.SH ÖRNEKLER
+Insert a single row into table films:   
+
+
+.RS 4
+.nf
+INSERT INTO films VALUES
+\  (\N'39'UA502\N'39', \N'39'Bananas\N'39', 105, \N'39'1971\N'45'07\N'45'13\N'39', \N'39'Comedy\N'39', \N'39'82 minutes\N'39');
+.fi
+.RE   
+
+In this example, the len column is    omitted and therefore it will have the default value:   
+
+
+.RS 4
+.nf
+INSERT INTO films (code, title, did, date_prod, kind)
+\    VALUES (\N'39'T_601\N'39', \N'39'Yojimbo\N'39', 106, \N'39'1961\N'45'06\N'45'16\N'39', \N'39'Drama\N'39');
+.fi
+.RE   
+
+This example uses the \fBDEFAULT\fR clause for    the date columns rather than specifying a value:   
+
+
+.RS 4
+.nf
+INSERT INTO films VALUES
+\    (\N'39'UA502\N'39', \N'39'Bananas\N'39', 105, DEFAULT, \N'39'Comedy\N'39', \N'39'82 minutes\N'39');
+INSERT INTO films (code, title, did, date_prod, kind)
+\    VALUES (\N'39'T_601\N'39', \N'39'Yojimbo\N'39', 106, DEFAULT, \N'39'Drama\N'39');
+.fi
+.RE   
+
+To insert a row consisting entirely of default values:   
+
+
+.RS 4
+.nf
+INSERT INTO films DEFAULT VALUES;
+.fi
+.RE   
+
+This example inserts some rows into table    films from a table tmp_films    with the same column layout as films:   
+
+
+.RS 4
+.nf
+INSERT INTO films SELECT * FROM tmp_films
+\    WHERE date_prod < \N'39'2004\N'45'05\N'45'07\N'39';
+.fi
+.RE   
+
+This example inserts into array columns:   
+
+
+.RS 4
+.nf
+\N'45'\N'45' Create an empty 3x3 gameboard for noughts\N'45'and\N'45'crosses
+\N'45'\N'45' (these commands create the same board)
+INSERT INTO tictactoe (game, board[1:3][1:3])
+\    VALUES (1,\N'39'{{"","",""},{"","",""},{"","",""}}\N'39');
+INSERT INTO tictactoe (game, board)
+\    VALUES (2,\N'39'{{,,},{,,},{,,}}\N'39');
+.fi
+.RE   
+
+.SH UYUMLULUK
+\fBINSERT\fR conforms to the SQL standard.  The case in    which a column name list is omitted, but not all the columns are    filled from the \fBVALUES\fR clause or \fIsorgu\fR,    is disallowed by the standard.   
+
+Possible limitations of the \fIsorgu\fR clause are documented under \fBSELECT\fR [select(7)]   
+
+.SH ÇEVİREN
+Nilgün Belma Bugüner <nilgun (at) belgeler·gen·tr>, Nisan 2005 
+ 
+    

@@ -1,0 +1,92 @@
+.\" http://belgeler.org \N'45' 2006\N'45'11\N'45'26T10:18:35+02:00  
+.TH "CREATE TRIGGER" 7 "" "PostgreSQL" "SQL \N'45' Dil Deyimleri"
+.nh   
+.SH İSİM
+CREATE TRIGGER \N'45' yeni bir tetik tanımlar   
+.SH KULLANIM 
+.nf
+\fBCREATE TRIGGER\fR \fIisim\fR { \fBBEFORE\fR | \fBAFTER\fR } { \fIolay\fR [ \fBOR\fR ... ] }
+\    \fBON\fR \fItablo\fR [ \fBFOR\fR [ \fBEACH\fR ] { \fBROW\fR | \fBSTATEMENT\fR } ]
+\    \fBEXECUTE PROCEDURE\fR \fIişlev_ismi\fR ( \fIargümanlar\fR )
+.fi
+     
+.SH AÇIKLAMA
+\fBCREATE TRIGGER\fR yeni bir tetik oluşturur. Tetik belirtilen tablo ile ilişkilendirilecek ve belli bir olay meydana geldiğinde \fIişlev_ismi\fR ile belirtilen işlevi çalıştıracaktır.   
+
+Tetiğin ya bir satır üzerinde işlem yapılmaya çalışılmadan önce (kısıtlar sınanmadan ve \fBINSERT\fR, \fBUPDATE\fR veya \fBDELETE\fR yapılmadan önce) ya da işlem tamamlandıktan sonra (kısıtlar sınandıktan ve \fBINSERT\fR, \fBUPDATE\fR veya \fBDELETE\fR tamamlandıktan sonra) çalışacağı belirtilebilir. Eğer tetik olaydan önce çalışırsa, geçerli satır için işlemi atlayabilir ya da veri girilen satır değişebilir (sadece \fBINSERT\fR ve \fBUPDATE\fR işlemleri için). Eğer tetik olaydan sonra çalışırsa, tüm değişiklikler, son veri girme, güncelleme veya silme işlemi tetiğe görünür olur.   
+
+\fBFOR EACH ROW\fR imli bir tetik işlemi değiştiren her satır için bir defa çağrılır. Örneğin, 10 satırı etkileyen bir \fBDELETE\fR, her satır silinişinde bir kere olmak üzere 10 ayrı defa \fBON DELETE\fR tetiğinin çağrılmasına sebep olur. Tersine, \fBFOR EACH STATEMENT\fR imli bir tetik belirtilen bir işlem için işlemin kaç satırı etkilediğinden bağımsız olarak, sadece bir defa çalıştırılır (hatta, işlem hiçbir satırı değiştirmese bile tetik yine de çalıştırılacaktır).   
+
+Eğer aynı olay için aynı türden çok sayıda tetik tanımlanmışsa, bunlar isimlerine göre alfabetik sırayla çalıştırılırlar.   
+
+\fBSELECT\fR herhangi bir satırı değiştirmediğinden, \fBSELECT\fR tetikleri oluşturamazsınız. Kurallar ve sanal tablolar böyle durumlarda daha uygundur.   
+
+Tetikler hakkında daha fazla bilgi edinmek için
+.br
+http://www.postgresql.org/docs/8.0/static/triggers.html adresine bakınız.   
+
+.SH PARAMETRELER   
+.br
+.ns
+.TP 
+\fIisim\fR
+Yeni tetiği belirtecek isim. Bu isim, aynı tablodaki diğer tetiklerin isimlerinden farklı olmalıdır.      
+
+.TP 
+\fBBEFORE\fR, \fBAFTER\fR
+İşlevin olaydan önce mi sonra mı çağrılacağını belirler.      
+
+.TP 
+\fIolay\fR
+\fBINSERT\fR, \fBUPDATE\fR veya \fBDELETE\fR\N'39'den biri; tetiği çalıştıracak olayı belirtmek için kullanılır. \fBOR\fR kullanarak çok sayıda olay belirtilebilir.      
+
+.TP 
+\fItablo\fR
+Tetiği içerecek tablonun ismi (şema nitelemeli olabilir).      
+
+.TP 
+\fBFOR EACH ROW\fR, \fBFOR EACH STATEMENT\fR
+Tetik işlevinin tetikleyici olay tarafından her satır için bir kere mi yoksa her SQL deyimi için bir kere mi çalıştırılacağını belirler. Eğer hiçbiri belirtilmemişse, \fBFOR EACH STATEMENT\fR öntanımlıdır.      
+
+.TP 
+\fIişlev_ismi\fR
+Tetikle çalıştırılan, kullanıcı tarafından argümansız ve dönüş türü \fBtrigger\fR olarak bildirilmiş ve tanımlanmış bir işlev.      
+
+.TP 
+\fIargümanlar\fR
+Tetik tarafından çalıştırıldığında işleve aktarılacak isteğe bağlı argümanların virgülle ayrılmış listesi. Argümanlar dizge sabitlerdir. Basit isimler ve sayısal sabitler de burada yazılabilir, fakat her biri dizgeye dönüştürülecektir. Tetikleyici işlev dilinin nasıl gerçeklendiğini incelemeniz ve işlev içinde tetik argümanlarına nasıl erişildiğini öğrenmeniz önerilir; normal işlev argümanlarından farklı ele alınıyor olabilirler.      
+
+.PP  
+.SH EK BİLGİ
+Bir tablo içinde bir tetik oluşturmak için, kullanıcı tablo üzerinde \fBTRIGGER\fR yetkisine sahip olmalıdır.   
+
+7.3 öncesi PostgreSQL sürümlerinde, işlevin dönüş türü olarak trigger değil, opaque bildiriliyordu. Eski sürüme ait döküm dosyalarını desteklemek için, \fBCREATE TRIGGER\fR opaque türünde değer döndüren işlevleri kabul edecek, ama işlevin bildirilen dönüş türünün trigger olarak değiştirilmesini belirten bir uyarı alacaksınız.   
+
+Bir tetiği silmek için \fBDROP TRIGGER\fR [drop_trigger(7)] kullanın.   
+
+.SH ÖRNEKLER   
+http://www.postgresql.org/docs/8.0/static/triggers.html adresinde eksiksiz bir örnek bulacaksınız.   
+
+.SH UYUMLULUK   
+\fBCREATE TRIGGER\fR cümlesinin PostgreSQL gerçeklenimi SQL:1999 standardının bir alt kümesini içerir. (SQL\N'45'92\N'39'de tetikler için bir madde yoktur.) Mevcut olmayan işlevsellik şöyle sıralanabilir:    
+
+.IP \fB·\fR 
+SQL:1999 belli sütunların güncellenmesiyle çalıtırılacak tetiklere izin verir (\fBAFTER UPDATE OF col1, col2\fR gibi).      
+
+.IP \fB·\fR 
+SQL:1999 "eski" ve "yeni" satırlar için ya da tetikleyen eylemin (\fBCREATE TRIGGER ... ON tabloismi REFERENCING OLD ROW AS birisim NEW ROW AS yeniisim ...\fR gibi) tanımında kullanmak için tablolara takma isim tanımlamanıza izin verir. PostgreSQL tetik işlevlerinin kullanıcının seçimine bağlı olarak herhangi bir dilde yazılmasına izin verdiğinden veriye erişim seçilen dile özel yollarla olur.      
+
+.IP \fB·\fR 
+PostgreSQL sadece tetikleyen eylem için kullanıcı tanımlı bir işlevin çalıştırılmasına izin verir. SQL:1999 ise, tetiklenen eylem olarak \fBCREATE TABLE\fR gibi başka SQL cümlelerinin çalıştırılmasına izin verir. Bu sınırlamanın, istenen SQL cümlelerini çalıştıracak kullanıcı tanımlı bir işlev oluşturarak çevresinden dolanmak hiç de zor değildir.      
+
+.PP    
+
+SQL:1999, çok sayıda tetiğin oluşturulma zamanı sırasına göre çalıştırılmasına izin verir. PostgreSQL ise çalışılması daha uygun olan isim sıralamasını kullanır.   
+
+.SH İLGİLİ BELGELER
+\fBCREATE FUNCTION\fR [create_function(7)], \fBALTER TRIGGER\fR [alter_trigger(7)], \fBDROP TRIGGER\fR [drop_trigger(7)].   
+
+.SH ÇEVİREN
+Nilgün Belma Bugüner <nilgun (at) belgeler·gen·tr>, Nisan 2005 
+ 
+    

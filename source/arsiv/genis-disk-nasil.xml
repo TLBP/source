@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--DOCTYPE article SYSTEM "../docbook/dtd/docbookx.dtd"-->
+<!-- ********************************************************************
+     $Id: genis-disk-nasil.xml,v 1.2 2002/09/18 20:11:34 nilgun Exp $
+     ******************************************************************** -->
+
+<article id="archive-genis-disk-mini-nasil">
+  <articleinfo>
+    <title>Geniş Disk mini NASIL</title>
+    <author>
+      <firstname>Burak Kelleci, Esin Tolga Akay, Cengiz Günay
+      </firstname>
+      <affiliation>
+      <address>
+        <email>burak@compclub.itu.edu.tr</email>,
+        <email>tolga@compclub.itu.edu.tr</email>,
+        <email>sertan@compclup.ceng.metu.edu.tr</email>
+      </address>
+      </affiliation>
+    </author>
+    <pubdate>v1.1, 23 Ocak 1997</pubdate>
+  </articleinfo>
+<div>
+
+<pre>
+
+Disk geometrisi ve diskler için 1024 silindir sınırı hakkında
+</pre>
+<h3>1. Giriş</h3>
+<pre>
+1024 silindirden daha fazlasına sahip bir diskiniz olduğunu düşünün.
+Üstüne de BIOS'u kullanan bir işletim sistemine sahip olduğunuzu düşünün.
+O zaman bir probleminiz vardır, çünkü alışıldık INT13 BIOS diske G/Ç
+(giriş/çıkış) arabirimi, G/Ç'nin yapıldığı silindir numarası için 10 bit
+kullanır ve böylelikle 1024'ten sonraki silindirler erişilemez.
+
+Neyse ki Linux, BIOS kullanmaz. Öyleyse problem yok. Aslında, iki şey dışında:
+
+1. Sisteminizi açtığınızda, Linux yeni çalışmaya başlamamışken, sizi
+BIOS problemlerinden kurtaramayacaktır. Bunun LILO ve benzeri açılış
+yükleyicilerine birtakım etkileri vardır.
+
+2. Bütün işletim sistemlerinin, bölümlemelerin nerde olduğu hakkında
+anlaşmaları için bir diski kullanmaları gerekmektedir. Bir başka şekilde,
+Linux ve mesela DOS'u aynı diskte kullanıyorsanız, ikisinin de bölümleme
+tablosunu aynı şekilde yorumlaması gerekir. Bunun Linux çekirdeği ve
+fdisk'e etkisi vardır. Aşağıda bütün ilgili durumları içeren, biraz
+detaylı bir açıklama var. Benim 2.0.8 sürüm çekirdek kaynaklarını referans
+kullandığımı unutmayın. Diğer sürümler biraz farkedebilir.
+</pre>
+<h3>2. Açılma</h3>
+<pre>
+Sistem açıldığında, BIOS ilk diskin (ya da disketin) 0. sektörünü
+(MBR-Ana Açılış Kaydı olarak bilinir) okur ve orada bulunan koda atlar
+ve çalıştırır. Genelde bir sürüklemeli açılış yükleyici. Orada bulunan bu
+ufak sürüklemeli açılış yükleyicilerin genelde kendi disk sürücü kodları
+bulunmaz ve BIOS servislerini kullanırlar. Bu da bir Linux çekirdeğinin
+ancak tamamiyle ilk 1024 silindir dahilinde bulunması halinde açılış
+yaptırılabileceğini gösterir.
+
+Bu problem kolayca çözülebilir: Çekirdeğin (ve belki açılış sırasında
+kullanılan başka dosyaların; LILO harita dosyaları gibi), BIOS'un
+erişebildiği bir diskin - genelde bu ilk ya da ikinci disk olur -
+tamamiyle ilk 1024 silindiri içerisinde bulunan bir disk bölümü
+içerisinde olduğundan emin olun.
+
+Bir başka nokta, BIOS ve açılış yükleyicisinin disk geometrisi hakkında
+anlaşmalarıdır. LILO'ya `linear' (doğrusal) opsiyonunu vermek yararlı
+olabilir. Ek detaylar aşağıda.
+</pre>
+<h3>3. Disk Geometrisi ve Bölümler</h3>
+<pre>
+Eğer disklerinizde birçok işletim sistemleri varsa, o zaman herbiri bir ya
+da daha fazla disk bölümü kullanırlar. Bu bölümlerin bulundukları yer
+hakkındaki bir anlaşmazlık, felaketler doğurabilir.
+
+MBR, ana bölümlerin nerede bulunduğunu gösteren bir bölümleme tablosu
+içerir. 4 tablo girişi bulunur ve herbiri şuna benzer
+
+  struct bolum {
+          char aktif;    /* 0x80: açılış yapabilir, 0: yapamaz*/
+          char bas[3];  /* ilk sektör için CHS */
+          char tip;
+          char son[3];    /* son sektör için CHS */
+          int baslangic;      /* 32 bit sektör numarası (0'dan başlayarak) */
+          int uzunluk;     /* 32 bit sektör sayısı*/
+  };
+
+(CHS Silindir/Kafa/Sektör(Cylinders/Headz/Sectors)'ü ifade eder).
+
+Bu yüzden, bu bilgi fazladır: bir bölümün yeri hem 24-bit başlangıç ve
+bitiş bilgileri, hem de 32-bit başlangıç ve uzunluk bilgileri ile verilir.
+
+Linux sadece başlangıç ve uzunluk bilgilerini kullanır ve böylelikle 2^32
+sektörden büyük olmayan bölümlerle uğraşabilir, bu da, en fazla 2TB'lık
+bölümlerdir. Bu bugün varolan disklerden yaklaşık ikiyüz kat daha
+fazladır, onun için önümüzdeki üç-beş yıl falan yeterli olacaktır.
+
+Ne yazık ki, BIOS INT13 çağrısı üç bayt içine kodlanmış CHS kullanır,
+bunun içinde 10 bit silindir numarası için, 8 bit kafa numarası için ve 6
+bit iz sektörü numarası için. Uygun silindir numaraları 0-1023, kafa
+numaraları 0-255 ve iz sektör numaraları i se 1-63 (Evet, bir iz
+üzerindeki sektör numaraları 1'den başlar, 0'dan değil) arasındadır. Bu 24
+bit ile 8455716864 bayt (7.875 GB) adreslenebilir, 1983'te bulunan
+disklerden ikiyüz kat daha büyük.
+
+Daha da ne yazık ki, standart IDE arabirimi iz başına 256 sektör, 65536
+silindir ve 16 kafaya izin verir. Bu kendi içinde 2^37 = 137438953472
+bayta (128 GB) ulaşıma izin verir, ama 63 sektör ve 1024 silindir BIOS
+kısıtlamalarıyla birleştiğinde sadece 528482304 bayt (504 MB)
+adreslenebilir hafıza kalır.
+</pre>
+<h3>4. Çeviri ve Disk Yöneticileri</h3>
+<pre>
+Hiç kimse sabit disklerin gerçek yapısı ile ilgilenmez. Aslında her ize
+düşen sektör sayısı bile değişkendir. Çünkü diskin kenarına yakın izlere,
+iç taraftakilere göre daha fazla sektör düşer. Yani gerçekte her ize düşen
+sabit sayıda sektör yoktur. Kullanıcı için en iyisi, sektörleri doğrusal
+bir dizi şeklinde numaralandırmak ve sektörün yaşadığı gerçek yerin
+bulunmasını disk denetleyicisine bırakmaktır.
+
+Bu lineer numaralandırma LBA olarak bilinmektedir. (c,h,s) sektörünün
+lineer adresi, (C,H,S) geometrisine sahip bir disk için c*H*S + h*S +
+(s-1)'dir. Bütün SCSI ve bazı IDE denetleyiciler, LBA'yce konuşurlar.
+
+Eğer BIOS, 24 bitlik (c,h,s)'yi LBA'ya çevirirse ve LBA modunda çalışan
+disk denetleyicisine beslerse, 7.875 GB adreslenebilmektedir. Bu bütün
+diskler için yeterli olmasa da bir gelişmedir. Bu arada BIOS tarafından
+kullanılan CHS'nin artık gerçekle bir al akası yoktur.
+
+Bunun bir benzeri disk denetleyicisi LBA modunda çalışmazken, fakat BIOS
+çeviriyi bilirken olmaktadır. (Bu genellikle setup'da Large(Geniş/büyük)
+diye geçer.) Şimdi BIOS işletim sistemine (C',H',S') geometrisini
+göstermektedir ve disk denetleyicisiyle konuşmak için de (C,H,S)'yi
+kullanmaktadır. Burda genellikle; S=S', C'=C/N ve H'=H*N'dir ve N, C' %lt;=
+1024 koşulunu sağlayacak şekilde seçilir. (ki C'=C/N'ye yuvarlarken mümkün
+olan en az kapasite boşa harcansın.) Bu metodla, yine, 7.875 GB'a kadar
+adresleme mümkündür.
+
+Eğer BIOS Large ve LBA tanımıyorsa, bu sorunu yazılımla da çözebiliriz.
+OnTrack veya EZ-Drive gibi disk yöneticileri BIOS'un disk kontrol
+rutinlerini kendilerininkilerle değiştirmektedirler. Bu genellikle, disk
+yöneticisinin kodunu MBR (-Master Boot Record- ana açılış kaydı)'ye ve
+devam eden sektörlere yerleştirmesiyle yapılır (OnTrack bu koda DDO der;
+Dynamic Drive Overlay), böylelikle herhangi bir işletim sistemi açılmadan
+önce bu kod çalışabilir. Bu yüzden bilgisayarı disketle açtığımızda, disk
+yönetici disketten yüklenmezse sorunla karşılaşırız.
+
+Olay, çevirmen BIOS durumuyla hemen hemen aynı şekilde çalışır. Eğer
+diskte birkaç işletim sistemi birden çalıştırılıyorsa, disk yöneticileri
+soruna neden olabilir.
+
+Linux, sürüm 1.3.14'ten itibaren OnTrack ve sürüm 1.3.29'dan itibaren
+EZ-Drive disk yöneticilerini desteklemektedir. Aşağıda bazı ek detaylara
+yer verilmiştir.
+</pre>
+<h3>5. IDE Diskler İçin Çekirdekten Disk Çevirisi</h3>
+<pre>
+Eğer Linux çekirdeği bir IDE diskte bir disk yöneticisi belirlerse, diski,
+disk yöneticisinin yaptığı gibi adreslemeye çalışır, ki aynı bölümlemeyi
+görsün. Eğer diskin geometrisi 'hd=cyls, heads,sects' komut satırıyla
+çekirdeğe belirtilirse bunu YAPMAZ. Bu yöntem, disk yöneticisi ile
+uyumluluğu öldürebilir.
+
+Bu adresleme, C&lt;=1024 veya H=255 olana kadar H*C sabit kalmak şartıyla
+kafa sayısı olarak 4,8,16,32,64,128,255 denenerek yapılır.
+
+Detaylar şu şekildedir - altkısım başlıkları denk gelen açılış
+mesajlarında verilen kelimelerdir. Burada ve bu yazının içindeki
+heryerde bölümleme tipleri onaltılık olarak verilmiştir.
+</pre>
+<h3>6. Sonuçlar</h3>
+<pre>
+Peki bütün bunların anlamı ne ? Linux kullanıcıları için tek bir şey;
+LILO &amp; fdisk'in doğru geometri kullanmaları. Doğru tanımı, fdisk için disk
+üzerinde çalışan diğer işletim sistemleri tarafından kullanılan geometri,
+LILO içinse açılış esnasında BIOS ile başarılı etkileşimi sağlayacak
+geometridir. (Bu ikisi genelde çakışır.)
+
+fdisk, diskgeometri hakkında nasıl bilgi alır ? HDIO_GETGEO ioctl (giriş
+çıkış kontrolü)'i kullanarak çekirdeğe sorar. Fakat kullanıcı aradan
+etkiyerek veya komut satırından bu geometriyi çiğneyerek değiştirebilir.
+
+LILO geometri hakkında nasıl bilgi alır ? HDIO_GETGEO ioctl (giriş çıkış
+kontrolü)'i kullanarak çekirdeğe sorar. Fakat kullanılan geometriyi
+`disk=' seçeneği ile çiğneyerek belirleyebilir. LILO'ya linear (doğrusal)
+seçeneği de verilebilir. O zaman, harita dosyasına (map file) CHS yerine
+LBA adreslerini koyarak, kullanılacak geometriye açılış esnasında karar
+verir. (Kesme 13h, Fonksiyon 8 ile sürücü geometrisini öğrenir.)
+
+Çekirdek ne cevap vereceğini nasıl bilebilir ? Herşeyden önce, kullanıcı
+'hd=silindir,kafa,sektör' komut satırı seçeneği ile geometriyi açıkça
+belirtmiş olabilir.  Aksi takdirde, çekirdek donanıma soracaktır.
+</pre>
+<h4>6.1 IDE detayları</h4>
+<pre>
+Üzerinde dikkatle durursak: IDE sürücüsü geometri bilgisi için dört
+kaynağa sahip. Birincisi (G_user) kullanıcı tarafından komut satırından
+belirtilir. İkincisi (G_bios)  32-bit moduna geçmeden önce sistem
+başlangıcında okunan BIOS Fixed Disk Parameter Table (BOIS Sabit Disk
+Parametre Tablosu)'dır (sadece birinci ve ikinci diskler için). Üçüncüsü
+(G_phys) ve dördüncüsü (G_log) IDE denetleyicisi tarafından IDENTIFY
+(tanımla) komutunun cevabı olarak yollanır - bunlar fiziksel ve
+kullanımdaki mantıksal geometrilerdir.
+
+Diğer bir taraftan, sürücünün geometri için iki değere ihtiyacı vardır.
+Bir taraftan HDIO_GETGEO ioctl tarafından gönderilen G_fdisk ve diğer
+taraftan G/Ç (giriş/çıkış) için asıl kullanılan G_used. G_fdisk ve G_used,
+ikisi de, eğer verilmişse G_user'a eşitlenirler, yoksa ve CMOS'ta da bu
+şekilde belirtilmişse G_bios'a, aksi takdirde G_phys'e eşitlenirler. Eğer
+G_log mantıklı görünüyorsa, G_used ona eşitlenir. Aksi takdirde eğer
+G_used mantıksız görünüyorsa ve G_phys mantıklı görünüyorsa, G_used
+G_phys'e eşitlenir. Burada mantıklı lafı kafa sayısının 1-16 sınırları
+içerisinde olmasıdır.
+</pre>
+<h4>6.2. SCSI detayları</h4>
+<pre>
+SCSI için durum biraz farklı; SCSI komutları zaten mantıksal blok
+numaraları kullandıklarından, gerçek G/Ç kullanımda bir `geometri'
+tamamiyle gerçeklenemez oluyor. Ama, bölümleme tablosu hala aynı olduğu
+için fdisk'in hala bir geometri uydurması gerekir ve hatta HDIO_GETGEO'yu
+burada kullanır - aslında fdisk, IDE ve SCSI diskler arasında fark
+tanımaz. Aşağıdaki detaylı açıklamalardan görülebileceği gibi, birtakım
+sürücüler herbiri bir şekilde farklı bir geometri bulmuştur. Açıkçası,
+büyük bir karmaşa.
+
+Eğer DOS veya benzeri kullanmıyorsanız, eğer mümkünse bütün harici çevirme
+seçeneklerinden kaçının ve sadece 64 kafa, iz başına 32 sektör (hoş,
+kullanışlı bir silindir başına 1 MB için), ki diski bir denetleyiciden
+başkasına taşıdığınızda sorun çıkmasın.
+
+Linux fdisk'inin H ve S kafa ve izbaşına sektör sayılarına, LBA sektör
+numaralarını c/h/s adreslerine çevirmek için ihtiyaç duyduğunu, fakat bu
+çeviride C silindir sayısının hiçbir rol oynamadığını unutmayın. Bazı
+sürücüler, (C,H,S) = (1023,255,63) kullanarak diskin en az 1023*255*63
+sektör belirtir. Bu hoş değildir, çünkü gerçek boyutu ortaya koymaz ve de
+birçok fdisk versiyonu kullanıcısını disklerinin 8 GB'ı ile sınırlarlar -
+ki bu günlerde gerçek bir kısıtlama.
+
+Sorunsuz günlere..
+
+</pre>
+<!--/body></html-->
+</div>
+</article>

@@ -1,0 +1,93 @@
+.\" http://belgeler.org \N'45' 2006\N'45'11\N'45'26T10:18:35+02:00  
+.TH "CREATE LANGUAGE" 7 "" "PostgreSQL" "SQL \N'45' Dil Deyimleri"
+.nh   
+.SH İSİM
+CREATE LANGUAGE \N'45' yeni bir yordamsal dil tanımlar   
+.SH KULLANIM 
+.nf
+\fBCREATE\fR [ \fBTRUSTED\fR ] [ \fBPROCEDURAL\fR ] \fBLANGUAGE\fR \fIisim\fR
+\    \fBHANDLER\fR \fIeylemci\fR [ \fBVALIDATOR\fR \fIdoğrulama_işlevi\fR ]
+.fi
+     
+.SH AÇIKLAMA
+\fBCREATE LANGUAGE\fR kullanarak, bir PostgreSQL kulanıcısı bir PostgreSQL veritabanı için yeni bir yordamsal dil kaydı yapabilir. Bundan sonra bu yeni dilde işlevler ve tetik yordamları tanımlanabilir. Yeni bir dil kaydı yapabilmek için kullanıcı, PostgreSQL ayrıcalıklı kullanıcısı yetkilerine sahip olmalıdır.   
+
+\fBCREATE LANGUAGE\fR aslında, bir dilde yazılmış işlevlerin çalıştırılmasından sorumlu bir eylemci ile bu dili ilişkilendirir. Dil eylemcileri hakkında ayrıntılı bilgi edinmek için
+.br
+http://www.postgresql.org/uygulamalar/pgsql/xplang.html adresine bakınız.   
+
+Yordamsal dil kaydı her veritabanına ayrı ayrı yapılmalıdır. Bir dilin bütün veritabanlarında öntanımlı olması için, bu dil template1 veritabanında kayıtlı olmalıdır.   
+
+.SH PARAMETRELER       
+.br
+.ns
+.TP 
+\fBTRUSTED\fR
+Eylemcinin dil için gövenli olduğunu belirtir. Bu, bir yetkisiz kullanıcı erişim kısıtlamalarını aşacak herhangi bir işlevselliği kullanmayacak demektir. Belirtilmezse, sadece PostgreSQL ayrıcalıklı kullanıcısının yetkilerine sahip kullanıcılar bu dili yeni bir işlev tanımlamak için kullanabilecektir.      
+
+.TP 
+\fBPROCEDURAL\fR
+Gereksizdir (etkisi yoktur).      
+
+.TP 
+\fIisim\fR
+Yeni yordamsal dilin ismi. Dil ismi harf büyüklüğüne duyarlıdır. İsim veritabanındaki dil isimleri arasında eşsiz olmalıdır.       
+
+Geriye uyumluluk için isim tek tırnak içine alınabilir.      
+
+.TP 
+\fBHANDLER \fR\fIeylemci\fR
+\fIeylemci\fR yordamsal dilin işlevlerini çalıştırmak için çağrılacak, evvelce kaydedilmiş bir işlevin ismidir. Bir yordamsal dilin eylemci işlevi C gibi bir derlenen dilin 1. sürüm çağrı uzlaşımı ile yazılmış olmalı ve argüman almayan ve dönüş türü language_handler olan bir işlev olarak kaydedilmiş olmalıdır.  language_handler dönüş türü, işlevi bir eylemci işlev olarak tanımlamakta kullanılan bir yer tutucu türdür.      
+
+.TP 
+\fBVALIDATOR \fR\fIdoğrulama_işlevi\fR
+\fIdoğrulama_işlevi\fR yeni dilde yeni bir işlev oluşturulduğunda yeni işlevi doğrulamak için çağrılacak evvelce kaydedilimiş bir işlevin ismidir. Böyle bir işlev belirtilmezse, yeni bir işlev oluşturulduğunda sınanmayacaktır. Doğrulama işlevi, yeni oluşturulacak işlevin nesne kimliği için oid türünde bir argüman almalıdır. İşlev genellikle void döndürecek şekilde tasarlanır.       
+
+Bir doğrulama işlevi genellikle işlev gövdesini sözdizimsel doğruluk bakımından inceler, ama işlevin diğer özelliklerine de (dilin desteklemediği bir argüman türü kullanılmış mı, acaba; gibi) bakar. Bir hatayı sinyallemek için, doğrulama işlevi ereport() işlevini kullanmalıdır. İşlevin dönüş değeri yok sayılır.      
+
+.PP  
+.SH EK BİLGİ
+Bu komut normalde doğrudan kullanıcılar tarafından çalıştırılmaz. Yordamsal diler için PostgreSQL dağıtımında bulunan \fBcreatelang(1)\fR aracı kullanılmalıdır. Bu araç ayrıca, doğru eylemciyi de kuracaktır. (\fBcreatelang\fR yerine \fBCREATE LANGUAGE\fR\N'39'de kullanılabilir.)   
+
+PostgreSQL\N'39'in 7.3 sürümünden önce, eylemci işlevin  language_handler türünde değil, opaque türde yer tutucu döndürmesi gerekirdi. Eski döküm dosyalarını desteklemek için \fBCREATE LANGUAGE\fR opaque türde değer döndüren bir işlevi kabul edecektir, ama işlevin, dönüş türü language_handler olacak şekilde bildirilmesinin gerektiğini bildiren bir uyarı gösterecektir.   
+
+Yeni bir işlev oluşturmak için \fBCREATE FUNCTION\fR [create_function(7)] kullanılır.   
+
+Bir yordamsal dili veritabanından kaldırmak için \fBDROP LANGUAGE\fR [drop_language(7)] ya da daha iyisi \fBdroplang(1)\fR aracını kullanın.   
+ 
+Sistem kataloğu pg_language (bkz.
+.br
+http://www.postgresql.org/uygulamalar/pgsql/catalog\N'45'pg\N'45'language.html), o an kurulu olan diller hakkındaki bilgileri kaydeder. Ayrıca, \fBcreatelang\fR kurulu dilleri listelemek için bir seçeneğe sahiptir.   
+
+Bir kullanıcının bir yordamsal dili kullanabilmesi için, \fBUSAGE\fR yetkisi olması gerekir. Eğer dilin güvenilir olduğu biliniyorsa, \fBcreatelang\fR herkese bu izni özdevinimli olarak verir.   
+
+.SH ÖRNEKLER
+Aşağıdaki iki komut sırayla çalıtırılarak yeni bir dilin ve eylemcisinin kaydını yapacaktır.   
+
+
+.RS 4
+.nf
+CREATE FUNCTION plsample_call_handler() RETURNS language_handler
+\    AS \N'39'$libdir/plsample\N'39'
+\    LANGUAGE C;
+CREATE LANGUAGE plsample
+\    HANDLER plsample_call_handler;
+.fi
+.RE   
+
+.SH UYUMLULUK
+\fBCREATE LANGUAGE\fR bir PostgreSQL oluşumudur.   
+
+.SH İLGİLİ BELGELER
+\fBALTER LANGUAGE\fR [alter_language(7)],
+.br
+\fBCREATE FUNCTION\fR [create_function(7)],
+.br
+\fBDROP LANGUAGE\fR [drop_language(7)],
+.br
+\fBGRANT\fR [grant(7)], \fBREVOKE\fR [revoke(7)], \fBcreatelang(1)\fR, \fBdroplang(1)\fR.   
+
+.SH ÇEVİREN
+Nilgün Belma Bugüner <nilgun (at) belgeler·gen·tr>, Nisan 2005 
+ 
+    

@@ -1,0 +1,458 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--DOCTYPE article SYSTEM "../docbook/dtd/docbookx.dtd"-->
+<!-- ********************************************************************
+     $Id: dial-on-demand.xml,v 1.1 2002/10/17 23:01:01 nilgun Exp $
+     ******************************************************************** -->
+
+<article id="archive-dial-on-demand">
+  <articleinfo>
+    <title>İSTEK ÜZERİNE BAĞLANTI (DIAL ON DEMAND)</title>
+    <author>
+      <firstname>Ahmet Aksoy</firstname>
+      <affiliation>
+        <address><email>ahmetax@linux.org.tr</email></address>
+      </affiliation>
+    </author>
+    <pubdate>v1.0, 14 Aralık 1999</pubdate>
+  </articleinfo>
+<div>
+<pre>
+
+İstek Üzerine Bağlantı, bağlantı sunucusunun istemciden gelen istek üzerine
+bağlantı kurması; önceden saptanan bir zaman diliminde hiçbir veri akışı
+olmaması durumunda da bu bağlantıyı kendiliğinden koparması esasına
+dayanmaktadır.
+
+Bu iş için yaygın olarak kullanılan 2 yazılım bulunmaktadır:
+ 1- diald
+ 2- pppd
+   
+Birinci yöntem, yani diald programının kullanılması halinde bile, pppd demon'u
+mutlaka kullanılmak zorundadır. Oysa pppd'nin yeni sürümlerinde sadece bir
+parametre kullanılarak istek üzerine bağlantı kurmak olanaklı hale gelmiştir.
+Bu nedenle, yazımızda sadece pppd ile bağlantı üzerinde duracağız.
+
+Anlatacağımız yöntem, hem Slackware 4.0, hem de Slackware 7.0 üzerinde
+çalışmaktadır. 
+
+Bu sürümlerde /usr/sbin/ dizininde "pppsetup" isimli bir script bulunmaktadır.
+(RedHat'ta böyle bir programcık bulamadım. Diğer dağıtımlarda olup olmadığını
+da henüz bilmiyorum.)
+
+"pppsetup" scriptini çalıştırmadan önce bilmemiz gereken bazı ayrıntılar var:
+ 1- modemimizin bağlı olduğu kapı
+ 2- Modemin hızı
+ 3- Internet Servis Sağlayıcımızın telefon ve DNS numaraları
+ 4- Bağlantı ismi ve şifre
+
+"pppsetup" komutunu verdiğimizde, önümüze gelen ekrandan, scripti kimin
+yazdığını ve sürüm numarasını öğreniyoruz:
+
+PPPSETUP 1.98 on Slackware
+Written by Robert S. Liesenfeld &lt;xunil@bitstream.net> &lt;IRC:Xunil>
+Changes for 1.98 by Kent Robotti &lt;robotti@erols.com>
+Patched for Slackware by Patrick Volkerding &lt;volkerdi@slackware.com>
+
+Enter tuşu ile sonraki ekrana geçiyoruz: PHONE NUMBER ...
+
+0822 263 0010
+
+Yeni sayfada modemimizin bağlı olduğu kapıyı belirtiyoruz: 
+
+ttyS3 = (COM4: under DOS)
+
+Modemin bağlantı hızını veriyoruz( Burada 460800 baud ile 9600 baud arasında 7
+seçenek var. Yanlarında da ne tür bağlantılara uygun olduğu belirtilmiş.)
+Bizim kullandığımız modemin hat hızı 33600 baud. Bu nedenle bağlantı hızı
+olarak 115200 uygun:
+
+115200  115KBps  - 28.8, 33.6, or 56Kbps modem...
+
+Bu kez bize Servis Sağlayıcımızın geri bağlantı sağlayıp sağlamadığı
+soruluyor: Does your service provider use CALLBACK?
+Yanıtımız olumsuz:
+
+NO  Most Internet providers do not use callback
+
+MODEM INIT STRING ...
+
+Kullandığımız "özel" bir modem değil. Bu nedenle fabrika öndeğerlerini
+kullanabiliriz: AT&amp;FH0
+
+Enter'le geçiyoruz.
+
+Yeni sayfada Servis Sağlayıcımızın domain adı soruluyor.
+What is your (I)nternet (S)ervice (P)rovider's domain name ?
+
+garanti.net.tr
+
+Bu kez Servis Sağlayıcının Ad Sunucusu'nun IP numarası (nameserver IP address)
+:
+
+195.174.219.10
+
+PAP, CHAP, or SCRIPT? ...
+Does your service provider use PAP or CHAP?
+PAP seçiyoruz:
+PAP    AUTHENTICATION
+
+PAP or CHAP LOGIN? ...
+
+xxxxxx
+
+Buraya, bağlantı için kullandığınız kullanıcı adını yazın.
+
+PAP or CHAP PASSWORD? ...
+
+?????
+
+Parolamızı da buraya yazıyoruz.
+
+
+====================================================================
+These are your PPP configuration files and instructions...
+====================================================================
+
+#This is your /etc/ppp/pppscript
+
+TIMEOUT 60
+ABORT ERROR
+ABORT BUSY
+ABORT "NO CARRIER"
+ABORT "NO DIALTONE"
+"" "AT&amp;FH0"
+OK "0822 263 0010"
+TIMEOUT 75
+CONNECT
+
+# This is your /etc/ppp/options file.
+
+....
+
+İşlemler tamamlandı. Sistemimizi hemen kullanmaya başlayabiliriz. Yine bir
+script kullanacağız:
+
+/usr/sbin/ppp-go
+
+Bu script ile hem doğrudan, hem de istek üzerine bağlantı kurabiliriz:
+
+ppp-go
+
+ppp-go -d
+
+İlk komutu verirsek, hemen telefon numarası çevrilir ve bağlantı kurulmaya
+çalışılır. 
+
+-d parametreli komut ise, "istek üzerine bağlantı" işlevini tetikler. pppd
+demonu belleğe yerleştikten sonra, kullanıcılardan gelecek istekleri dinlemeye
+başlar. İlk istek sinyaliyle hemen telefon numarası çevrilir ve bağlantı
+kurulur. Bu durumda, ppp bağlantısı, /etc/ppp/options.demand dosyasında
+bulunan "idle xx" satırında belirlenen xx saniyelik bir süre boyunca
+hareketsiz kalırsa, telefon hattı koparılır ve yeniden dinlemeye geçilir.
+
+
+Herşey bu kadar!
+
+pppsetup scripti tarafından oluşturulan dosyalar /etc/ppp dizini altına
+yerleşir. Yine burada yer alan pppsetup.txt isimli dosyada, oluşturulan
+konfigürasyon dosyalarına ilişkin açıklayıcı bilgiler yer almaktadır.
+
+/etc/ppp/pppsetup.txt dosyasının içeriği aşağıdadır.
+
+=========================================================================PPPSETUP
+1.98 on SLACKWARE.
+
+Written by Robert S. Liesenfeld &lt;xunil@bitstream.net> &lt;IRC:Xunil>
+Changes for 1.98 by Kent Robotti &lt;robotti@erols.com>
+Patched for Slackware by Patrick Volkerding &lt;volkerdi@slackware.com>
+
+You should get these docs if you don't already have them:
+
+ftp://metalab.unc.edu/pub/Linux/docs/howto/PPP-HOWTO
+ftp://metalab.unc.edu/pub/Linux/docs/faqs/PPP-FAQ
+
+Press [Enter] to continue with pppsetup...
+=========================================================================
+These are your PPP configuration files and instructions...
+=========================================================================
+
+# This is your /etc/ppp/pppscript.
+
+TIMEOUT 60
+ABORT ERROR
+ABORT BUSY
+ABORT "NO CARRIER"
+ABORT "NO DIALTONE"
+"" "AT&amp;FH0"
+OK "0822 263 0010"
+TIMEOUT 75
+CONNECT 
+
+# This is your /etc/ppp/options file.
+
+# General configuration options for PPPD:
+lock
+defaultroute
+noipdefault
+modem
+/dev/ttyS3
+115200
+crtscts
+# Uncomment the line below for more verbose error reporting:
+#debug
+# If you have a default route already, pppd may require the other side
+# to authenticate itself, which most ISPs will not do.  To work around this,
+# uncomment the line below.  Note that this may have negative side effects
+# on system security if you allow PPP dialins.  See the docs in /usr/doc/ppp*
+# for more information.
+#noauth
+passive
+asyncmap 0
+name "xxxxxx"
+
+I created the symbolic link: /dev/modem -> /dev/ttyS3
+
+# This is your /etc/ppp/options.demand dialing file.
+
+# General configuration options for PPPD:
+lock
+defaultroute
+noipdefault
+modem
+/dev/ttyS3
+115200
+crtscts
+# Uncomment the line below for more verbose error reporting:
+#debug
+# If you have a default route already, pppd may require the other side
+# to authenticate itself, which most ISPs will not do.  To work around this,
+# uncomment the line below.  Note that this may have negative side effects
+# on system security if you allow PPP dialins.  See the docs in /usr/doc/ppp*
+# for more information.
+#noauth
+passive
+asyncmap 0
+name "xxxxxx"
+ipcp-accept-local
+ipcp-accept-remote
+0.0.0.0:10.10.10.10
+demand
+connect "/usr/sbin/chat -v -f /etc/ppp/pppscript"
+
+If you have a ethernet connection you should change the local:remote
+IP addresses in the options.demand file, to your actual local and
+remote address.  Example: 215.346.117.89:312.217.187.96
+
+# This in your /etc/resolv.conf file.
+
+search garanti.com.tr
+nameserver 195.174.219.10
+
+195.174.219.10   &lt;-IMPORTANT: This should be the IP address of
+                    your service providers nameserver.
+
+# This is your /etc/ppp/pap-secrets file.
+
+Look at /etc/ppp/pap-secrets.
+
+Does everything look correct? if not, run 'pppsetup' again...
+
+=========================================================================
+To connect to your service provider.
+=========================================================================
+
+~# ppp-go      &lt;-Make PPP connection.)
+
+You'll hear and see the modem dialing then once connected,
+logging you in Username: or Login: and Password: etc.
+
+You won't see a Username or Login: and Password: prompt
+if they're using PAP or CHAP to authenticate you.
+
+If they use PAP or CHAP you'll just see CONNECT -- got it.
+
+If the connection was successful you'll see the Local IP and
+Remote IP address printed to the screen, you can press [Enter].
+
+If you run ppp-go in X windows you probably won't see a Local
+and Remote IP address printed to the screen, you'll just see
+the connection process come to a end, wait a few seconds and
+press [Enter] at that point.
+
+If you don't connect for whatever reason e.g. Failed No
+Dialtone, Busy, No Carrier, Whatever, Exit, just press
+[Enter] at that point.
+
+if you have syslogd running, you can see the output messages
+from pppd and chat in the /var/log/messages and or debug file.
+
+Sample /var/log/messages file.
+
+linax pppd[562]: Serial connection established.
+linax pppd[562]: Using interface ppp0
+linax pppd[562]: Connect: ppp0 &lt;--> /dev/modem
+linax pppd[562]: local IP address 215.87.78.18
+linax pppd[562]: remote IP address 205.94.97.35
+
+You don't have a successful PPP connection until you
+receive a local &amp; remote IP address like above.
+
+If you have the X window system, you could connect in a Xterm.
+
+linax # startx
+linax # ppp-go
+linax # netscape mosaic etc.
+
+~# ppp-off     &lt;-To end the ppp connection.)
+
+~# ppp-go -h   &lt;-For help.)
+
+There is no support in linux for "WinModems", if you have a
+WinModem you will not be able to use it in linux.
+
+There is support for plug n play modems, if you have a pnp
+modem you may need "isapnptools" to get it recognized.
+
+=========================================================================
+#### Look at the /usr/doc/pppsetup/pppsetup-1.98.README. ####
+#### A copy of this text can be found in: /etc/ppp/pppsetup.txt ####
+=========================================================================
+
+Done... You can exit now...
+
+End...
+=========================================================================
+PPP-2.3.0 and later has a demand dialing option, you can use it this way,
+the options file for demand dialing will be /etc/ppp/options.demand.
+
+Start ppp-go -d, pppd will just stay in the background until you try to 
+connect to some site, then pppd will dial your service provider and make 
+the ppp connection.
+
+~# ppp-go -d        &lt;-Start pppd this way for demand dialing.)
+ #                  &lt;-It should drop you back to #.)
+ 	      
+~# ftp ftp.funet.fi               &lt;-Pppd will start dialing.)             
+ # lynx http://www.foo.com        &lt;-Pppd will start dialing etc.)
+ # ppp-off -d       &lt;-To end and restart pppd in demand dialing mode.)
+ # ppp-off                        &lt;-To end the ppp connection.)
+
+End...
+=========================================================================
+These are some other ways to make a PPP connection.
+
+The best way to make a PPP connection is to create a chat script, if
+you're having trouble with the chat script you can use these methods
+below to make the PPP connection.
+
+You can also use these methods below to see what's going on when you
+connect to your service provider, i.e. what do they require, do they
+present you with a Login: or Username: and Password: prompt etc.
+
+What steps do you have to go through before they start PPP at there
+end?
+
+First make sure the IP address of your service providers nameserver  
+is in the /etc/resolv.conf file.
+
+nameserver 205.117.312.56   &lt;-For example.)
+ 
+=========================================================================
+Using 'dip' to make the PPP connection.
+=========================================================================
+
+~# dip -tv
+Host name lookup failure
+
+If you get the above messgae when you start 'dip', it's because you
+don't have your hostname in the /etc/hosts file.
+
+~# hostname
+foobar
+
+If your hostname were 'foobar' you should put it in the /etc/hosts file.
+
+127.0.0.1   localhost
+0.0.0.0     foobar.localnet foobar
+
+~# dip -tv
+dip> port /dev/ttyS1
+can't open - problems with locking ttyS1
+
+If you get the above message after "port /dev/modem", it means you have a
+lock file in /var/lock/LCK..ttyS1, remove the lock file and kill dip.
+
+~# rm /var/lock/LCK*
+ # killall -9 dip
+
+~# dip -tv
+
+dip> port /dev/ttyS1    &lt;-Where's the modem? ttyS0 = com1 ttyS1 = com2 etc.)
+dip> speed 115200      &lt;-Modem speed: 19200 38400 57600
+dip> term
+
+at&amp;fw2                 &lt;-Modem init string.)
+atdt1234567            &lt;-Replace 1234567 with the phone number.)
+
+Usally you give your username and password then ppp is started, if
+they use PAP or CHAP you probably won't be asked for a username and
+password, they will just say that PPP has been started or nothing.
+
+Press Ctrl ] to exit dip term mode when PPP is started at their end.
+
+dip> default              &lt;-Use default route.)
+dip> mode ppp             &lt;-Start PPP at your end.)
+
+~# ping metalab.unc.edu   &lt;-To see if you're connected.)
+
+~# dip -k                 &lt;-To kill dip and the PPP connection.)
+
+=========================================================================
+Using 'minicom' to make the PPP connection.
+=========================================================================
+
+Keep the /etc/ppp/options file that was created by pppsetup, it should 
+have at least these options in it.
+
+lock
+defaultroute
+noipdefault
+/dev/ttyS1         &lt;- ttyS0 = com1 ttyS1 = com2 ttyS2 = com3 ttyS3 = com4     
+     
+57600
+modem
+crtscts
+debug
+asyncmap 0
+
+~# minicom -m -s
+
+at&amp;fw2
+atdt1234567
+
+Press Alt Q to exit minicom without reset after PPP is started at
+the other end.
+
+~# pppd                &lt;-Start PPP at your end.)
+
+~# ppp-off             &lt;-To end the PPP connection.)
+ # killall -INT pppd   &lt;-If you don't have 'ppp-off' end it this way.)
+
+End...
+=========================================================================
+
+Son olarak, ppp-go ile kurulan bağlantıyı devre dışı bırakmak istediğimizde
+kullanacağımız scripti de belirtelim: ppp-off.
+
+Bağlantının gerçekleşip gerçekleşmediğinden emin olmak istiyorsanız aşağıdaki
+komutu seveceksiniz:
+tail -f /var/adm/messages &amp;
+
+Hepsi bukadar! Umarım bir-iki sorunuzu yanıtlamışımdır!
+
+Öneri ve eleştirileriniz için lütfen ahmetax@linux.org.tr adresini
+kullanınız.
+</pre>
+</div>
+</article>

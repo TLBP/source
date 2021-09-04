@@ -1,0 +1,130 @@
+.\" http://belgeler.org \N'45' 2006\N'45'11\N'45'26T10:18:38+02:00  
+.TH "UPDATE" 7 "" "PostgreSQL" "SQL \N'45' Dil Deyimleri"
+.nh   
+.SH İSİM
+UPDATE \N'45' update rows of a table   
+.SH KULLANIM 
+.nf
+\fBUPDATE\fR [ \fBONLY\fR ] \fItablo\fR \fBSET\fR \fIsütun\fR = { \fIifade\fR | \fBDEFAULT\fR } [, ...]
+\    [ \fBFROM\fR \fIliste\fR ]
+\    [ \fBWHERE\fR \fIkoşul\fR ]
+.fi
+    
+.SH AÇIKLAMA
+\fBUPDATE\fR changes the values of the specified    columns in all rows that satisfy the condition. Only the columns to    be modified need be mentioned in the \fBSET\fR clause;    columns not explicitly modified retain their previous values.   
+
+By default, \fBUPDATE\fR will update rows in the    specified table and all its subtables. If you wish to only update    the specific table mentioned, you must use the \fBONLY\fR    clause.   
+
+There are two ways to modify a table using information contained in    other tables in the database: using sub\N'45'selects, or specifying    additional tables in the \fBFROM\fR clause. Which    technique is more appropriate depends on the specific    circumstances.   
+
+You must have the \fBUPDATE\fR privilege on the table    to update it, as well as the \fBSELECT\fR    privilege to any table whose values are read in the    \fIifade\fRs or    \fIkoşul\fR.   
+
+.SH PARAMETRELER   
+.br
+.ns
+.TP 
+\fItablo\fR
+The name (optionally schema\N'45'qualified) of the table to update.     
+
+.TP 
+\fIsütun\fR
+The name of a column in \fItablo\fR.       The column name can be qualified with a subfield name or array       subscript, if needed.     
+
+.TP 
+\fIifade\fR
+An expression to assign to the column.  The expression may use the       old values of this and other columns in the table.     
+
+.TP 
+\fBDEFAULT\fR
+Set the column to its default value (which will be NULL if no       specific default expression has been assigned to it).     
+
+.TP 
+\fIliste\fR
+A list of table expressions, allowing columns from other tables       to appear in the \fBWHERE\fR condition and the update       expressions. This is similar to the list of tables that can be       specified in the \fBFROM\fR [from(7)] Clause of a \fBSELECT\fR [select(7)]       statement.  Note that the target table must not appear in the       \fIliste\fR, unless you intend a self\N'45'join (in which       case it must appear with an alias in the \fIliste\fR).     
+
+.TP 
+\fIkoşul\fR
+An expression that returns a value of type boolean.       Only rows for which this expression returns true       will be updated.     
+
+.PP  
+.SH ÇIKTI
+On successful completion, an \fBUPDATE\fR command returns a command    tag of the form 
+.nf
+UPDATE \fIcount\fR.fi
+The \fIcount\fR is the number    of rows updated.  If \fIcount\fR is    0, no rows matched the \fIkoşul\fR (this is not considered    an error).   
+
+.SH EK BİLGİ
+When a \fBFROM\fR clause is present, what essentially happens    is that the target table is joined to the tables mentioned in the    \fIliste\fR, and each output row of the join    represents an update operation for the target table.  When using    \fBFROM\fR you should ensure that the join    produces at most one output row for each row to be modified.  In    other words, a target row shouldn\N'39't join to more than one row from    the other table(s).  If it does, then only one of the join rows    will be used to update the target row, but which one will be used    is not readily predictable.   
+
+Because of this indeterminancy, referencing other tables only within    sub\N'45'selects is safer, though often harder to read and slower than    using a join.   
+
+.SH ÖRNEKLER
+Change the word Drama to Dramatic in the    column kind of the table films:   
+
+
+.RS 4
+.nf
+UPDATE films SET kind = \N'39'Dramatic\N'39' WHERE kind = \N'39'Drama\N'39';
+.fi
+.RE   
+
+Adjust temperature entries and reset precipitation to its default    value in one row of the table weather:   
+
+
+.RS 4
+.nf
+UPDATE weather
+\    SET temp_lo = temp_lo+1, temp_hi = temp_lo+15, prcp = DEFAULT
+\    WHERE city = \N'39'San Francisco\N'39' AND date = \N'39'2003\N'45'07\N'45'03\N'39';
+.fi
+.RE   
+
+Increment the sales count of the salesperson who manages the    account for Acme Corporation, using the \fBFROM\fR    clause syntax:   
+
+
+.RS 4
+.nf
+UPDATE employees SET sales_count = sales_count + 1 FROM accounts
+\  WHERE accounts.name = \N'39'Acme Corporation\N'39'
+\  AND employees.id = accounts.sales_person;
+.fi
+.RE   
+
+Perform the same operation, using a sub\N'45'select in the    \fBWHERE\fR clause:   
+
+
+.RS 2
+.nf
+UPDATE employees SET sales_count = sales_count + 1 WHERE id =
+\  (SELECT sales_person FROM accounts WHERE name = \N'39'Acme Corporation\N'39');
+.fi
+.RE   
+
+Attempt to insert a new stock item along with the quantity of stock. If    the item already exists, instead update the stock count of the existing    item. To do this without failing the entire transaction, use savepoints.   
+
+
+.RS 4
+.nf
+BEGIN;
+\N'45'\N'45' other operations
+SAVEPOINT sp1;
+INSERT INTO wines VALUES(\N'39'Chateau Lafite 2003\N'39', \N'39'24\N'39');
+\N'45'\N'45' Assume the above fails because of a unique key violation,
+\N'45'\N'45' so now we issue these commands:
+ROLLBACK TO sp1;
+UPDATE wines SET stock = stock + 24
+\    WHERE winename = \N'39'Chateau Lafite 2003\N'39';
+\N'45'\N'45' continue with other operations, and eventually
+COMMIT;
+.fi
+.RE   
+
+.SH UYUMLULUK
+This command conforms to the SQL standard, except    that the \fBFROM\fR clause is a    PostgreSQL extension.   
+
+Some other database systems offer a \fBFROM\fR option in which    the target table is supposed to be listed again within \fBFROM\fR.    That is not how PostgreSQL interprets    \fBFROM\fR.  Be careful when porting applications that use this    extension.   
+
+.SH ÇEVİREN
+Nilgün Belma Bugüner <nilgun (at) belgeler·gen·tr>, Nisan 2005 
+ 
+   

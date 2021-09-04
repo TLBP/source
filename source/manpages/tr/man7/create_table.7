@@ -1,0 +1,462 @@
+.\" http://belgeler.org \N'45' 2006\N'45'11\N'45'26T10:18:35+02:00  
+.TH "CREATE TABLE" 7 "" "PostgreSQL" "SQL \N'45' Dil Deyimleri"
+.nh   
+.SH İSİM
+CREATE TABLE \N'45' yeni bir tablo tanımlar   
+.SH KULLANIM 
+.nf
+\fBCREATE\fR [ [ \fBGLOBAL\fR | \fBLOCAL\fR ] { \fBTEMPORARY\fR | \fBTEMP\fR } ] \fBTABLE\fR \fItablo_ismi\fR (
+\  { \fIsütun_ismi\fR \fIveri_türü\fR [ \fBDEFAULT\fR \fIöntanımlı_ifade\fR ]
+\    [ \fIsütun_kısıtı\fR [ ... ] ]
+\    | \fItablo_kısıtı\fR
+\    | \fBLIKE\fR \fIana_tablo\fR [ { \fBINCLUDING\fR | \fBEXCLUDING\fR } \fBDEFAULTS\fR ] }  [, ... ]
+)
+[ \fBINHERITS\fR ( \fIana_tablo\fR [, ... ] ) ]
+[ \fBWITH OIDS\fR | \fBWITHOUT OIDS\fR ]
+[ \fBON COMMIT\fR { \fBPRESERVE ROWS\fR | \fBDELETE ROWS\fR | \fBDROP\fR } ]
+[ \fBTABLESPACE\fR \fItabloalanı\fR ]
+
+Buradaki \fIsütun_kısıtı\fR:
+
+[ \fBCONSTRAINT\fR \fIkısıt_ismi\fR ]
+{ \fBNOT NULL\fR |
+\  \fBNULL\fR |
+\  \fBUNIQUE\fR [ \fBUSING INDEX TABLESPACE\fR \fItabloalanı\fR ]
+\  | \fBPRIMARY KEY\fR [ \fBUSING INDEX TABLESPACE\fR \fItabloalanı\fR ]
+\  | \fBCHECK\fR (\fIifade\fR)
+\  | \fBREFERENCES\fR \fIbaşvuru_tablosu\fR [ ( \fIbaşvuru_sütunu\fR ) ]
+\    [ \fBMATCH FULL\fR | \fBMATCH PARTIAL\fR | \fBMATCH SIMPLE\fR ]
+\    [ \fBON DELETE\fR \fIeylem\fR ] [ \fBON UPDATE\fR \fIeylem\fR ] }
+[ \fBDEFERRABLE\fR | \fBNOT DEFERRABLE\fR ]
+[ \fBINITIALLY DEFERRED\fR | \fBINITIALLY IMMEDIATE\fR ]
+
+ve \fItablo_kısıtı\fR:
+
+[ \fBCONSTRAINT\fR \fIkısıt_ismi\fR ]
+{ \fBUNIQUE\fR ( \fIsütun_ismi\fR [, ... ] )
+\   [ \fBUSING INDEX TABLESPACE\fR \fItabloalanı\fR ]
+\   | \fBPRIMARY KEY\fR ( \fIsütun_ismi\fR [, ... ] )
+\      [ \fBUSING INDEX TABLESPACE\fR \fItabloalanı\fR ]
+\      | \fBCHECK\fR ( \fIifade\fR )
+\      | \fBFOREIGN KEY\fR ( \fIsütun_ismi\fR [, ... ] )
+\         \fBREFERENCES\fR \fIbaşvuru_tablosu\fR [ ( \fIbaşvuru_sütunu\fR [, ... ] ) ]
+\         [ \fBMATCH FULL\fR | \fBMATCH PARTIAL\fR | \fBMATCH SIMPLE\fR ]
+\         [ \fBON DELETE\fR \fIeylem\fR ] [ \fBON UPDATE\fR \fIeylem\fR ] }
+[ \fBDEFERRABLE\fR | \fBNOT DEFERRABLE\fR ]
+[ \fBINITIALLY DEFERRED\fR | \fBINITIALLY IMMEDIATE\fR ]
+.fi
+    
+.SH AÇIKLAMA
+\fBCREATE TABLE\fR o anki veritabanınında yeni bir tabloyu ilk olarak boş bir tablo olarak oluşturacaktır. Tablonun sahibi komutu çalıştıran kullanıcı olacaktır.   
+
+Eğer bir şema ismi belirtilmişse (\fBCREATE TABLE \fR    \fImyschema.mytable ...\fR gibi), tablo belirtilen şemada oluşturulur. Aksi takdirde o an geçerli olan şemada oluşturulur. Geçici tablolar bir özel şema içinde mevcuttur, dolayısıyla bir geçici tablo oluştururken bir şema ismi belirtilmeyebilir. Tablo ismi şema içindeki diğer tabloların, indekslerin ve sanal tabloların isimlerinden farklı olmalıdır.   
+
+\fBCREATE TABLE\fR ayrıca, özdevinimli olarak tablonun bir satırına karşılık olarak karma bir veri türü oluşturur. Bu nedenle, aynı şema içindeki tablolar mevcut veri türleriyle aynı isme sahip olamazlar.   
+
+İsteğe bağlı kısıt deyimleri ile yeni veya güncellenen satırların yerleştirme ve güncelleme işlemlerinin sağlaması gereken kısıtlar (sınamalar) belirtilir. Bir kısıt, tablo içinde çeşitli yollarla geçerli değerlerin tanımlanmasına yardımcı olacak bir SQL nesnesidir.   
+
+Kısıtları tanımlamanın iki yolu vardır: tablo kısıtları ve sütun kısıtları. Bir sütun kısıtı bir sütun tanımının parçası olarak tanımlanır ve birden fazla sütunu kuşatabilir. Her sütun kısıtı ayrıca, bir tablo kısıtı olarak da yazılabilir; bir kısıt sadece bir sütunu etkilediğinde bir  sütun kısıtı sayılabilir.   
+
+.SH PARAMETRELER   
+.br
+.ns
+.TP 
+\fBTEMPORARY\fR veya \fBTEMP\fR
+Belirtilmişse tablo bir geçici tablo olarak oluşturulur. Geçici tablolar bir oturumun sonunda özdevinimli olarak silinir, bazan isteğe bağlı olarak bir hareketin sonunda da silinebilir (aşağıdaki \fBON COMMIT\fR açıklamasına bakınız). şema nitelemeli ismlerle başvurulmadıkça, aynı isimle varolan kalıcı tablolar geçici tablonun varlığı durumunda o anki oturuma görünür olmazlar.  Bir geçici tablo üzerinde oluşturulan indeksler de özdevinimli olarak geçici olacaktır.     
+
+İsteğe bağlı olarak,  \fBTEMPORARY\fR veya \fBTEMP\fR\N'39'den önce \fBGLOBAL\fR veya \fBLOCAL\fR yazılabilir. Bu, PostgreSQL\N'39'de bir şey farkettirmez, ama yine de \fBUyumluluk\fR bölümüne bakın.      
+
+.TP 
+\fItablo_ismi\fR
+Oluşturulacak tablonun ismi (şema nitelemeli olabilir).      
+
+.TP 
+\fIsütun_ismi\fR
+Yeni tabloda oluşturulacak bir sütunun ismi.      
+
+.TP 
+\fIveri_türü\fR
+Sütunun veri türü. Bu, dizi belirteçleri içerebilir. PostgreSQL tarafından desteklenen veri türleri hakkında bilgi edinmek için http://www.postgresql.org/docs/8.0/static/datatype.html adresine bakınız.      
+
+.TP 
+\fBDEFAULT \fR\fIöntanımlı_ifade\fR
+\fBDEFAULT\fR deyimi sütun tanımının içinde görünerek sütun için bir öntanımlı veri değeri atar. Değer, bir değişken içrmeyen bir ifadedir (tablo içinde diğer sütunlara çağraz başvurulara ve altsorgulara izin verilmez). Öntanımlı ifadenin veri türü sütunun veri türü ile eşleşmelidir.      
+
+Önanımlı ifade, sütun için bir değer belirtmeyen bir veri girme işleminde sütun değeri olarak kullanılacaktır. Bir sütun için öntanımlı bir değer belirtilmezse, NULL öntanımlıdır.      
+
+.TP 
+\fBINHERITS \fR( \fIana_tablo\fR [, ... ] )
+İsteğe bağlı \fBINHERITS\fR deyimi, yeni bir tablonun tüm sütunlarını miras alacağı tabloların bir listesini belirtmek için kullanılır.      
+
+\fBINHERITS\fR kullanımı yeni çocuk tablo ile onun abeveyni olan tablo arasında kalıcı bir birliktelik oluşturur. Ebeveynler üzerindeki şema değişiklikleri normalde çocukları da etkiler ve öntanımlı olarak çocuk tablonun verisi ebeveynler tarafından paylaşılır.      
+
+Eğer aynı sütun ismi birden fazla ebeveyn tabloda mevcutsa ve bu tabloların bu sütunları veri türü bakımından eşleşmediği takdirde bir hata raporlanacaktır. Eğer böyle bir durum yoksa, yinelenen sütunlar yani tabloda tek bir sütun oluşturacak şekilde katıştırılırlar. Eğer yeni tablonun sütun isimleri listesi aynı zamanda miras alınmış bir sütun da içeriyorsa, veri türü miras alınan sütunlara benzer şekilde eşleşmeli ve sütun tanımları tek bir sütun olarak katıştırılmalıdır. Ancak, miras alınan ve yeni sütun bildirimlerinin eşdeğer kısıtla belirtmesi gerekmez:  bildirimlerden toplanan tüm kısıtlar birlikte katıştırılır ve tümü yeni tabloya uygulanır. Eğer yeni tablo sütun için açıkça bir öntanımlı değer belirtiyorsa,  bu öntanımlı değer, miras alınan sütun bildirimlerin gelen öntanımlıların yerine geçer. Aksi takdirde, sütun için öntanımlı değer belirten her ebeveyn aynı öntanımlı değeri belirtmelidir, yoksa bir hata raporlanacaktır.       
+
+.TP 
+\fBLIKE \fR\fIana_tablo \fR[ { \fBINCLUDING\fR | \fBEXCLUDING\fR } \fBDEFAULTS\fR ]
+\fBLIKE\fR deyimi, yeni bir tabloya veri türleri ve boş olmayan kısıtları ile birlikte tüm sütun isimlerinin özdevinimli kopyalanacağı bir tablo belirtir.      
+
+\fBINHERITS\fR\N'39'in tersine, yeni tablo ve özgün tablo oluşturma işleminden sonra tamamen birbirlerinin kopyası olurlar. Özgün tabloda yapılacak değişiklikler yeni tabloya uygulanmayacak ve yeni tabloda özgün tablodan alınmış veri olmayacaktır.      
+
+Kopyalanan sütun tanımları için öntanımlı olan ifadeler sadece \fBINCLUDING DEFAULTS\fR belirtilmişse kopyalanacaktır. Öntanımlı davranış öntanımlı olan ifadelerin dışlanması ve sonuç olarak yeni tablonun tüm sütunlarının boş öntanımlılara sahip olmasıdır.      
+
+.TP 
+\fBWITH OIDS\fR, \fBWITHOUT OIDS\fR
+Bu isteğe bağlı deyimler, yeni tablonun satırlarının onlara atanacak OID\N'39'lere (nesne belirteçlerine) sahip olup olmayacağını belirtmekte kullanılır. Eğer ne \fBWITH OIDS\fR ne de \fBWITHOUT OIDS\fR belirtilmişse, öntanımlı değer default_with_oids yapılandırma parametresinin değerine bağlıdır. (Eğer yeni tablo nesne belirteçlerine sahip bir tabloyu miras alıyorsa, tabloyu oluşturan cümle \fBWITHOUT OIDS\fR içerse bile \fBWITH OIDS\fR geçerli olur.)      
+
+Eğer \fBWITHOUT OIDS\fR belirtilmiş ve uygulanmışsa, yeni tablo nesne belirteçlerini saklamaz ve girilen her yeni satır için bir nesne belirteci atanmaz. Nesne belirteci tüketimi azalacağından ve bu suretle 32 bitlik OID sayacının başa dönmesi erteleneceğinden genelde edilen zahmete değer. Sayaç bir kere başa döndü mü, nesne belirteçlerinin artık eşsiz olmayacağı varsayılır ve bu onları nispeten daha az yararlı hale getirir. Nesne belirteçlerinin dışlanması ek olarak, her satır için 4 bayt (çoğu makinede) olmak üzere tablonun disk üzerinde kaplayacağı alanı düşürecek ve başarımı oldukça arttıracaktır.      
+
+Tablo oluşturulduktan sonra nesne belirteçlerini kaldırmak için \fBALTER TABLE\fR [alter_table(7)] kullanın.      
+
+.TP 
+\fBCONSTRAINT \fR\fIkısıt_ismi\fR
+Bir sütun ya da tablo kısıtı için isteğe bağlı bir isim. Belirtilmezse ismi sistem üretir.      
+
+.TP 
+\fBNOT NULL\fR
+Sütunun boş değer içeremeyeceğini belirtir.      
+
+.TP 
+\fBNULL\fR
+Sütunun boş değer içermesine izin verilir. bu öntanımlıdır.      
+
+Bu deyim, sadece standartdışı SQL veritabanlarıyla uyumluluk için vardır. Yeni uygulamalarda kullanımından vazgeçilmelidir.      
+
+.TP 
+.nf \fBUNIQUE \fR( \fIsütun_kısıtı\fR ) \fBUNIQUE \fR( \fIsütun_ismi \fR[, ... ] ) ( \fItablo_kısıtı\fR ) .fi
+\fBUNIQUE\fR kısıtı, bir tablonun bir veya daha fazla sütunundan oluşan bir grubunun sadece eşsiz değerler içerebileceğini belirtir. Eşsiz tablo kısıtının davranışı, çok sayıda sütun belirtilebilmesi dışında sütun kısıtınınki ile aynıdır.      
+
+Eşsizlik kısıtının amacına uygun olarak, boş değerlerin eşit olmadıkları varsayılır.      
+
+Her eşsiz tablo kısıtı, aynı tabloda tanımlanmış diğer eşsizlik veya birincil anahtar kısıtı tarafından isimlendirilmiş sütun grubundan farklı bir sütun grubunu isimlendirmelidir. (Aksi takdirde, yalnızca, aynı kısıt iki kere listelenmiş olur.)      
+
+.TP 
+.nf \fBPRIMARY KEY\fR ( \fIsütun_kısıtı\fR ) \fBPRIMARY KEY \fR( \fIsütun_ismi \fR[, ... ] ) ( \fItablo_kısıtı\fR ) .fi
+Birincil anahtar kısıtı bir tablonun bir sütununun ya da sütunlarının sadece elsiz ve boş olmayan değerler içerebileceğini belirtir. Teknik olarak, \fBPRIMARY KEY\fR sadece \fBUNIQUE\fR ile \fBNOT NULL\fR deyiminin birleşimidir, fakat bir sütun grubunun birincil anahtar olarak belirtilmesi ayrıca, şema tasarımı hakkında hamveri sağlar; bir birincil anahtar uygulanmış gibi diğer tablolar, bu tablonun satırları için bir eşsiz belirteç olarak bu sütun grubuna bel bağlayayabilir.      
+
+İster sütun ister tablo kısıtı olarak belirtilsin, bir tablo için sadece bir birincil anahtar belirtilebilir.      
+
+Birincil anahtar kısıtı, aynı tabloda tanımlanmış bir eşsizlik kısıtı tarafından isimlendirilmiş diğer sütun gruplarından farklı bir sütun grubunu isimlendirmelidir.      
+
+.TP 
+\fBCHECK \fR(\fIifade\fR)
+\fBCHECK\fR deyimi, bir veri girme veya güncelleme işlemi sonucunda yeni ya da güncellenmiş satırların sağlaması gereken bir mantıksal sonuç üreten bir ifadeyi belirtmek için kullanılır. TRUE veya UNKNOWN olarak sonuçlanan ifadeler başarılı kabul edilir. Bir veri girme veya güncelleme işleminin ürettiği bir FALSE sonucunda bir hata olağandışılığı oluşur ve bu veri girme veya güncelleme işlemi veritabanını değiştirmez. Bir tablo kısıtı içinde görünen bir ifade çok sayıda sütunun değeri ile ilgili olabilirken, bir sütun kısıtı olarak belirtilen bir sınama kısıtı sadece bu sütunun değeriyle ilgili olmalıdır.      
+
+Şimdilik, \fBCHECK\fR ifadeleri ne altsorgu içerebilir ne de üzerinde çalışılan satır dışındaki sütunların değerleriyle ilgili olabilir.      
+
+.TP 
+.nf \fBREFERENCES\fR \fIbaşvuru_tablosu\fR [ ( \fIbaşvuru_sütunu\fR ) ] \  [ \fBMATCH FULL\fR | \fBMATCH PARTIAL\fR | \fBMATCH SIMPLE\fR ] \  [ \fBON DELETE\fR \fIeylem\fR ] [ \fBON UPDATE\fR \fIeylem\fR \fBFOREIGN KEY\fR ( \fIsütun_ismi\fR [, ... ] ) \  \fBREFERENCES\fR \fIbaşvuru_tablosu\fR [ ( \fIbaşvuru_sütunu\fR [, ... ] ) ] \  [ \fBMATCH FULL\fR | \fBMATCH PARTIAL\fR | \fBMATCH SIMPLE\fR ] \  [ \fBON DELETE\fR \fIeylem\fR ] \  [ \fBON UPDATE\fR \fIeylem\fR ] } ( \fItablo_kısıtı\fR ) .fi
+Bu deyimler, başvurulan tablonun bir satırının başvurulan sütunlarındaki değerlerle eşleşmesi gereken değerler içermesi istenen yeni tablonun bir ya da daha fazla sütunundan oluşan bir sütun grubunu gerektiren bir yabancı anahtar kısıtı belirtir. Eğer \fIbaşvuru_sütunu\fR belirtilmezse, \fIbaşvuru_tablosu\fR\N'39'nun birincil anahtarı kullanılır. Başvurulan sütunlar, başvurulan tablodaki bir eşsizlik veya bir birincil anahtar kısıtınının sütunları olmalıdır.      
+
+Bşvurulan sütunlara girilen bir değer, başvurulan tablonun ve başvurulan sütunların değerleriyle belirtilen eşleşme türü kullanılarak eşleşmelidir. Üç eşleşme türü vardır: \fBMATCH FULL\fR, \fBMATCH PARTIAL\fR ve aynı zamanda öntanımlı olan \fBMATCH SIMPLE\fR. \fBMATCH FULL\fR, tüm yabancı anahtar sütunları boş olmadıkça, bir çok sütunlu yabancı anahtarın tek sütununun boş olmasına izin vermeyecektir. \fBMATCH SIMPLE\fR, diğer yabancı anahtar sütunları boş değer içermezken, bazı yabancı anahtar sütunlarının boş değer içermesine izin verecektir. \fBMATCH PARTIAL\fR ise henüz gerçeklenmemiştir.      
+
+Ek olarak, başvurulan sütunlardaki veri değiştiğinde, bu tablonun sütunlarının verisi üzerinde bazı eylemler uygulanır. \fBON DELETE\fR deyimi, başvurulan tablodaki başvurulan satır silindiğinde uygulanacak eylemi belirtmekte kullanılır. Benzer şekilde, \fBON UPDATE\fR deyimi, başvurulan tablodaki başvurulan sütun yeni bir değerle güncellendiğinde uygulanacak eylemi belirtmekte kullanılır. Eğer başvurulan satır güncellenmeksizin bu sütunu içeren satır güncellenmişse, bir işlem yapılmaz. \fBNO ACTION\fR sınaması dışında hiçbir göreli eylem, kısıtta ertelenebileceği belirtilmiş olsa bile ertelenemez. Her deyim için olası eylemler şunlardır:      
+
+.RS 
+
+.br
+.ns
+.TP 
+\fBNO ACTION\fR
+Silme veya güncelleme işlemini bir yabancı anahtar kısıtı çelişkisi ürettiğinde bunu belirten bir hatanın üretilmesini sağlar. Eğer kısıt ertelenmişse ve başvurulan satırlar hala mevcutsa, bu hata kısıtın sınanması sırasında üretilecektir. Bu öntanımlı eylemdir.          
+
+.TP 
+\fBRESTRICT\fR
+Silme veya güncelleme işlemini bir yabancı anahtar kısıtı çelişkisi ürettiğinde bunu belirten bir hatanın üretilmesini sağlar. Sınamanın ertelenebilir olmaması dışında \fBNO ACTION\fR\N'39'a benzer.          
+
+.TP 
+\fBCASCADE\fR
+Silinen satıra başvuran bir satırın silinmesini ya da başvuran sütunun değerinin başvurulan sütunun yeni değerine güncellenmesini sağlar.          
+
+.TP 
+\fBSET NULL\fR
+Başvuran sütunların boş olmasını sağlar.          
+
+.TP 
+\fBSET DEFAULT\fR
+Başvuran sütunlara öntanımlı değerlerinin atanmasını sağlar.          
+
+.PP
+.RE
+.IP
+
+
+Eğer başvurulan sütunlar sıkça değişmiyorsa, yabancı anahtar sütununa bir indeks eklemek akıllıca olur, böylece yabancı anahtar sütunu ile ilgili göreli eylemler daha verimli uygulanabilir.      
+
+.TP 
+\fBDEFERRABLE\fR, \fBNOT DEFERRABLE\fR
+Kısıtın ertelenip ertelenmeyeceğini belirler. Ertelenebilir olmayan (not deferrable) bir kısıt her deyimden sonra anında sınanacaktır. Ertelenebilir bir kısıt ise, \fBSET CONSTRAINTS\fR [set\N'45'constraints(7)] deyimi kullanılarak hareketin sonuna kadar ertelenebilir. \fBNOT DEFERRABLE\fR öntanımlıdır. Şimdilik sadece yabancı anahtar kısıtları bu deyimleri kabul etmektedir. Diğer tüm kısıt türleri ertelenebilir değildir.      
+
+.TP 
+\fBINITIALLY IMMEDIATE\fR, \fBINITIALLY DEFERRED\fR
+Eğer bir kısıt ertelenebilirse, bu deyim kısıtın öntanımlı sınama zamanını belirtmek için kullanılabilir. Eğer kısıt \fBINITIALLY IMMEDIATE\fR ise, her deyimden sonra sınanacaktır. Eğer kısıt \fBINITIALLY DEFERRED\fR ise, sadece hareketin sonunda sınanır. Kısıtın sınama zamanı \fBSET CONSTRAINTS\fR [set_constraints(7)] cümlesi ile değiştirilebilir.      
+
+.TP 
+\fBON COMMIT\fR
+Geçici tabloların hareket kümesinin sonundaki davranışı, \fBON COMMIT\fR kullanılarak denetlenebilir. Üç seçeneği vardır:     
+
+.RS 
+
+.br
+.ns
+.TP 
+\fBPRESERVE ROWS\fR
+Hareketin sonunda özel bir eylem yapılmaz. Bu öntanımlı davranıştır.          
+
+.TP 
+\fBDELETE ROWS\fR
+Her hareket kümesinin sonunda geçici tablonun satırları silinir. Aslında, her teslimde (commit) özdevinimli bir \fBTRUNCATE\fR [truncate(7)] yapılır.          
+
+.TP 
+\fBDROP\fR
+Geçici tablo o anki hareket kümesinin sonunda silinecektir.          
+
+.PP
+.RE
+.IP
+
+
+.TP 
+\fBTABLESPACE \fR\fItabloalanı\fR
+\fItabloalanı\fR, yeni tablonun içinde oluşturulacağı tablo alanının ismidir. Belirtilmezse, default_tablespace yapılandırma parametresinin değeri, bu parametrenin değeri boş dizge ise veritabanının öntanımlı tablo alanı kullanılır.      
+
+.TP 
+\fBUSING INDEX TABLESPACE \fR\fItabloalanı\fR
+Bir \fBUNIQUE\fR veya \fBPRIMARY KEY\fR kısıtı ile ilişkili olarak oluşturulacak indeksdeki tablo alanının seçimini mümkün kılar. Belirtilmezse, default_tablespace yapılandırma parametresinin değeri, bu parametrenin değeri boş dizge ise veritabanının öntanımlı tablo alanı kullanılır.      
+
+.PP  
+.SH EK BİLGİ
+Nesne belirteçlerinin (OID) yeni uygulamalarda kullanılması önerilmez: mümkünse, bir \fBSERIAL\fR veya başka bir kayıt listesi üretecinin, tablonun birincil anahtarı olarak kullanılması önerilir. Yine de uygulamanız, bir tablonun belli bir satırını belirtmek için nesne belirteçlerini kullanıyorsa, tablodaki nesne belirteçlerinin sayaç başa döndükten spnra bile satırları eşsiz olarak belirttiğinden emin olmak için tablonun oid sütununda bir eşsizlik kısıtı oluşturmanızı öneririz. Bu nesne belirteçlerinin veritabanı çapında eşsiz olduğunu kabulden kaçının; eğer veritabanı çapında eşsiz bir belirtece ihtiyacınız varsa, tableoid ile tablonun oid sütununu birlikte kullanın.     
+
+.br
+.ns
+.TP 
+\fBİpucu:\fR
+Birincil anahtarı olmayan tablolar için, hem bir OID hem de bir eşsiz veri anahtarı olmaksızın, satırları belirtmek zor olacağından, \fBWITHOUT OIDS\fR kullanımı önerilmez.      
+
+.PP
+
+PostgreSQL eşsizliği güçlendirmek için her eşsizlik kısıtı ve her birincil anahtar kısıtı için bir indeksi özdevinimli olarak oluşturur. Bu suretle, birincil anahtar ütunu için açıkça bir indeks oluşturmak gerekmez. (Daha fazla bilgi için \fBCREATE INDEX\fR [create_index(7)] kılavuz sayfasına bakınız.)     
+
+Eşsizlik kısıtları ve birincil anahtarlar, şimdiki gerçeklenimde miras alınmamaktadır. Bu, eşsizlik kısıtları ile miras almanın birleşimini tersine işlevsiz yapar.     
+
+Bir tablo 1600 sütundan fazla sütun içeremez. (Uygulamada, demet uzunluğu kısıtlarından dolayı etkin sınır daha düşüktür.)   
+
+.SH ÖRNEKLER   
+films ve distributors tablolarını oluşturmak için:      
+
+
+.RS 4
+.nf
+CREATE TABLE films (
+\    code        char(5) CONSTRAINT firstkey PRIMARY KEY,
+\    title       varchar(40) NOT NULL,
+\    did         integer NOT NULL,
+\    date_prod   date,
+\    kind        varchar(10),
+\    len         interval hour to minute
+);
+.fi
+.RE     
+
+
+.RS 4
+.nf
+CREATE TABLE distributors (
+\    did    integer PRIMARY KEY DEFAULT nextval(\N'39'serial\N'39'),
+\    name   varchar(40) NOT NULL CHECK (name <> \N'39'\N'39')
+);
+.fi
+.RE     
+
+2 boyutlu bir dizi ile bir tablo oluşturmak için:     
+
+
+.nf
+CREATE TABLE array_int (
+\    vector  int[][]
+);
+.fi     
+
+films tablosu için bir eşsiz tablo kısıtının tanımlanması. Eşsiz tablo kısıtları tablonun bir veya daha fazla sütunu için tanımlanabilir:     
+
+
+.RS 4
+.nf
+CREATE TABLE films (
+\    code        char(5),
+\    title       varchar(40),
+\    did         integer,
+\    date_prod   date,
+\    kind        varchar(10),
+\    len         interval hour to minute,
+\    CONSTRAINT production UNIQUE(date_prod)
+);
+.fi
+.RE     
+
+Bir sınama sütunu kısıtı tanımlamak için:     
+
+
+.RS 4
+.nf
+CREATE TABLE distributors (
+\    did     integer CHECK (did > 100),
+\    name    varchar(40)
+);
+.fi
+.RE     
+
+Bir sınama tablo kısıtı tanımlamak için:     
+
+
+.RS 4
+.nf
+CREATE TABLE distributors (
+\    did     integer,
+\    name    varchar(40)
+\    CONSTRAINT con1 CHECK (did > 100 AND name <> \N'39'\N'39')
+);
+.fi
+.RE     
+
+films tablosu için bir birincil anahtar tablo kısıtının tanımlanması. Birincil anahtar tablo kısıtları tablonun bir ya da daha fazla sütununda tanımlanabilir:     
+
+
+.RS 4
+.nf
+CREATE TABLE films (
+\    code        char(5),
+\    title       varchar(40),
+\    did         integer,
+\    date_prod   date,
+\    kind        varchar(10),
+\    len         interval hour to minute,
+\    CONSTRAINT code_title PRIMARY KEY(code,title)
+);
+.fi
+.RE     
+
+distributors tablosu için bir birincil anahtar kısıtının tanımlanması. Aşağıdaki iki örnek eşdeğerdir, ilki tablo kısıtı sözdizimini, ikincisi sütun kısıtı sözdizimini kullanır:     
+
+
+.RS 4
+.nf
+CREATE TABLE distributors (
+\    did     integer,
+\    name    varchar(40),
+\    PRIMARY KEY(did)
+);
+.fi
+.RE     
+
+
+.RS 4
+.nf
+CREATE TABLE distributors (
+\    did     integer PRIMARY KEY,
+\    name    varchar(40)
+);
+.fi
+.RE     
+
+Aşağıdaki örnekte, name sütunu için öntanımlı değer olarak bir dizge sabiti atanmakta; did sütununun öntanımlı değeri bir kayıt listesinin sonraki değeri seçilerek üretilmekte; modtime sütununun öntanımlı değeri ise satıra verinin girildiği zaman olmaktadır.     
+
+
+.RS 4
+.nf
+CREATE TABLE distributors (
+\    name      varchar(40) DEFAULT \N'39'Luso Films\N'39',
+\    did       integer DEFAULT nextval(\N'39'distributors_serial\N'39'),
+\    modtime   timestamp DEFAULT current_timestamp
+);
+.fi
+.RE     
+
+distributors tablosunda açıkça bir isim belirterek iki \fBNOT NULL\fR sütun kısıtının tanımlanması:     
+
+
+.RS 4
+.nf
+CREATE TABLE distributors (
+\    did     integer CONSTRAINT no_null NOT NULL,
+\    name    varchar(40) NOT NULL
+);
+.fi
+.RE     
+
+name sütunu için bir eşsizlik kısıtının tanımlanması:     
+
+
+.RS 4
+.nf
+CREATE TABLE distributors (
+\    did     integer,
+\    name    varchar(40) UNIQUE
+);
+.fi
+.RE     
+
+Bu örnek, yukarıdaki örneğe eşdeğerdir:     
+
+
+.RS 4
+.nf
+CREATE TABLE distributors (
+\    did     integer,
+\    name    varchar(40),
+\    UNIQUE(name)
+);
+.fi
+.RE     
+
+diskvol1 tablo alanında cinemas tablosunun oluşturulması:     
+
+
+.RS 4
+.nf
+CREATE TABLE cinemas (
+\        id serial,
+\        name text,
+\        location text
+) TABLESPACE diskvol1;
+.fi
+.RE   
+
+.SH UYUMLULUK   
+\fBCREATE TABLE\fR cümlesi SQL\N'45'92 ve SQL:1999\N'39'un bir alt kümesi ile aşağıda belirtilenler dışında uyumludur.   
+
+.SS Geçici tablolar
+\fBCREATE TEMPORARY TABLE\fR sözdizimi bakımından SQL standardına benzese de etkisi aynı değildir. Standartta, geçici tablolar bir defada tanımlanır ve onlara ihtiyaç oldukça he oturumda özdevinimli olarak mevcut olurlar (başlangıçta boş içerikle). PostgreSQL\N'39'de ise, bir geçici tablonun her gerekişinde oturumda \fBCREATE TEMPORARY TABLE\fR cümlesinin açıkça çalıştırılması gerekir. Bu, farklı oturumların aynı geçici tabloyu farklı amaçlarla kullanabilmesine olanak sağlar. Halbuki standardın yaklaşımı, belirtilen geçici tablo ismiyle erişilen her kopyanın aynı tablo yapısına sahip olması şeklinde bir sınırlama içerir.    
+
+Standardın geçici tabloların davranışıyla ilgili tanımı geniş çapta yoksayılır. Bu noktada, PostgreSQL\N'39'in davranışı çeşitli başka SQL veritabanlarınınkine benzerlik gösterir.    
+
+Standardın yerel ve genel geçici tabloları ayrımsama yöntemi, PostgreSQL\N'39'in sahip olmadığı modül kavramına oturtulduğundan, PostgreSQL aynı yöntemi kullanmaz. Uyumluluk uğruna, PostgreSQL bir geçici tablo bildiriminde \fBGLOBAL\fR ve \fBLOCAL\fR anahtar sözcüklerini kabul eder, ama bunların bir etkisi yoktur.    
+
+Geçici tablolar için \fBON COMMIT\fR deyimi SQL standardıyla benzerlik gösterse de, bazı farklar vardır. Eğer \fBON COMMIT\fR belirtilmezse, SQL öntanımlı davranış olarak \fBON COMMIT DELETE ROWS\fR belirtiken, PostgreSQL öntanımlı davranış olarak \fBON COMMIT PRESERVE ROWS\fR belirtir. \fBON COMMIT DROP\fR seçeneği ise SQL standardında yoktur.    
+
+.SS Sütun Sınama Kısıtları
+SQL standardı, \fBCHECK\fR sütun kısıtlarının sadece uygulandığı sütun ile ilgili olabileceğini söyler; sadece \fBCHECK\fR tablo kısıtları çok sayıda sütun ile ilgili olabilir. PostgreSQL böyle bir sınırlamayı zorunlu kılmaz; sütun ve tablo kısıtlarının farksız olduğunu kabul eder.    
+
+.SS NULL Kısıtı    
+\fBNULL\fR kısıtı (aslında bir kısıt değildir) (ve simetriği olan \fBNOT NULL\fR kısıtı), bir PostgreSQL oluşumudur ve bazı başka veritabanı sistemleriyle uyumluluk adına vardır. Bir sütun için zaten öntanımlı olduğundan varlığı basitçe kuru gürültüdür.    
+
+.SS Kalıtım
+\fBINHERITS\fR deyimi ile çok sayıda miras alınması bir PostgreSQL oluşumudur. SQL:1999 standardı (ama, SQL\N'45'92 değil), farklı bir sözdizimi ve farklı sözcüklerle tek bir miras alma deyimi tanımlar. SQL:1999 tarzı kalıtım henüz PostgreSQL tarafından desteklenmemektedir.    
+
+.SS Nesne Kimlikleri
+PostgreSQL\N'39'in OID kavramı standart değildir.    
+
+.SS Sıfır Sütunluk Tablolar
+PostgreSQL bir tablonun hiç sütun içermeksizin oluşturulmasına izin verir (\fBCREATE TABLE foo();\fR gibi). Bu bir PostgreSQL oluşumudur. SQL standardı sıfır sütunluk tablolara izin vermez. Sıfır sütunluk tablolar kendi başlarına çok kullanışlı olmamakla beraber, buna izin verilmemesi, \fBALTER TABLE DROP COLUMN\fR için tuhaf özel durumlar oluşmasına yol açar, dolayısıyla standardın bu sınırlamasını yoksaymak daha temiz görünür.    
+
+.SS Tablo Alanları
+PostgreSQL\N'39'in tablo alanı kavramı standardın bir parçası değildir. Dolayısıyla, \fBTABLESPACE\fR ve \fBUSING INDEX TABLESPACE\fR deyimleri birer PostgreSQL oluşumudur.    
+
+.SH İLGİLİ BELGELER
+\fBALTER TABLO\fR [alter_table(7)], \fBDROP TABLE\fR [drop_table(7)], \fBCREATE TABLESPACE\fR [create_tablespace(7)].  
+
+.SH ÇEVİREN
+Nilgün Belma Bugüner <nilgun (at) belgeler·gen·tr>, Nisan 2005 
+ 
+    

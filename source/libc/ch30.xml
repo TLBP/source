@@ -1,0 +1,799 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ********************************************************************
+     $Id: ch30.xml,v 1.2 2002/12/20 22:29:48 nilgun Exp $
+******************************************************************** -->
+<part id="glibc-System-Management">
+  <title>Sistem Yönetimi</title>
+  <titleabbrev>Sistemin denetimi ve hakkında bilgi alınması.</titleabbrev>
+  <partintro><para>
+Bu oylumda bir sürecin altında çalıştığı sistemin (işletim sistemi ve donanım) denetimi ve hakkında bilgi alınması ile ilgili oluşumlar açıklanacaktır. Genellikle bilgilendirme oluşumlarını herkes kullanabilir ama sadece ayrıcalıklı süreç değişiklik yapabilir.
+  </para><para>
+Bir dosya isminin uzunluğu gibi sistem parametreleri hakkında bilgi almak için bu oluşumlar sistemin içinde oluşturulur. Bkz. <xref linkend="glibc-System-Configuration"/>.
+  </para></partintro>
+  <chapter id="glibc-Host-Identification">
+    <title>Konak İsimlendirmesi</title>
+    <titleabbrev>Makine isminin saptanması.</titleabbrev>
+    <para>
+Bu kısımda yazılımınızın çalıştığı belli bir sistemin nasıl isimlendirildiği açıklanacaktır. Önce internetin gelişim tarihçesinden dolayı biraz karmaşık olan bilgisayar sistemleri isimlendirilmesininin çeşitli yollarını gözden geçirelim.
+   </para><para>
+Her Unix sistem (bir konak olarak da bilinir) bir ağa bağlı olup olmamasına bağlı olarak bir konak ismine sahiptir. En basit şekli, bilgisayar ağları ortada yokken <command>civciv</command> gibi tek bir sözcüktü.
+<indexterm scope="glibc-cp"><primary>konak ismi</primary></indexterm>
+   </para><para>
+Fakat bir sistem İnternete ya da bir ağa bağlandığında Alan Adı Sisteminin (DNS) parçası olarak daha titiz bir isimlendirme uzlaşımına uyum sağlaması gerekir. DNS'de her konak ismi iki parçadan oluşur:
+<indexterm scope="glibc-cp"><primary>DNS</primary></indexterm>
+<indexterm scope="glibc-cp"><primary>Alan Adı Sistemi</primary></indexterm>
+   </para><para>
+<orderedlist numeration="arabic"><listitem>makine adı
+<indexterm scope="glibc-cp"><primary>makine adı</primary></indexterm>
+</listitem><listitem>alan ismi
+<indexterm scope="glibc-cp"><primary>alan adı</primary></indexterm>
+</listitem></orderedlist></para><para>
+"makine adı" biraz "konak ismi" gibi görünür, fakat aynı şey değildir ve çoğunlukla konak adlarının tamamına hatalı olarak "alan adları" derler.
+   </para><para>
+DNS'de, tam konak adına FQDN (Fully Qualified Domain Name - Tamamen Nitelenmiş Alan Adı) denir ve makine adı, nokta, alan adı şeklindedir. Alan adının kendisi de aslında noktalarla ayrılmış çok sayıda bileşene sahiptir. Örneğin, bir sistemin makine adı <command>truva</command> ve alan adı <command>ulakbim.gov.tr</command> olsun, bu durumda bu sistemin konak ismi (ya da FQDN'si) <command>truva.ulakbim.gov.tr</command> olur.
+<indexterm scope="glibc-cp"><primary>FQDN</primary></indexterm>
+   </para><para>
+Bu karışıklığa ek olarak bir bilgisayarın bilinme gereksinimini karşılamak için DNS tek isim uzayı değildir. Diğer bir isim uzayı da NIS (nam-ı diğer YP) isim uzayıdır. NIS'in amaçlarına uygun olarak NIS alan adı ya da YP alan adı olarak bilinen başka bir alan adı daha vardır ve DNS alan adının gerek duyduğu hiçbir şeye ihtiyaç duymaz.
+<indexterm scope="glibc-cp"><primary>YP</primary></indexterm>
+<indexterm scope="glibc-cp"><primary>NIS</primary></indexterm>
+<indexterm scope="glibc-cp"><primary>NIS alan adı</primary></indexterm>
+<indexterm scope="glibc-cp"><primary>YP alan adı</primary></indexterm>
+   </para><para>
+DNS'de aslında herşey biraz daha karışıktır, aynı sisteme çok sayıda konak ismi vermek mümkündür. Bununla beraber, bunlardan sadece biri gerçek konak ismidir ve "asıl konak ismi" (canonical FQDN) adını alır.
+   </para><para>
+Bazı bağlamlarda, konak ismine "düğüm ismi" dendiği de olur.
+   </para><para>
+DNS konak isimlendirmesi hakkında daha fazla bilgi edinmek için <xref linkend="glibc-Host-Names"/> bölümüne bakınız.
+   </para><para>
+<indexterm scope="glibc-pg"><primary><literal>hostname</literal> komutu</primary></indexterm>
+<indexterm scope="glibc-pg"><primary><literal>hostid</literal> komutu</primary></indexterm>
+<indexterm scope="glibc-pg"><primary>unistd.h</primary></indexterm>
+Bu kısımdaki işlevlerin prototipleri <filename>unistd.h</filename> dosyasında bulunur.
+   </para><para>
+<command>hostname</command>, <command>hostid</command> ve <command>domainname</command> komutları bu işlevleri çağırarak çalışır.
+   </para><para>
+<indexterm scope="glibc-fn"><primary>gethostname</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev" id="glibc-gethostname">
+<funcdef>int <command>gethostname</command></funcdef>
+<paramdef>(char  *<varname>isim</varname>,
+ size_t <varname>boyut</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+Bu işlev çağrıldığı sistemin konak ismini <varname>isim</varname> dizisinde döndürür. <varname>boyut</varname> argümanı bu dizinin bayt cinsinden boyutudur. Dönen değer DNS makine adı değildir. Sistem DNS'de kayıtlı ise bu konak ismidir (FQDN) (yukarı bakınız).
+   </para><para>
+İşlevin normal dönüş değeri <command>0</command>'dır, <command>-1</command> dönüşse hata oluşmuş demektir. GNU C kütüphanesinde <command>gethostname</command> işlevi <varname>boyut</varname> yeterli değilse başarısız olur; bu durumda daha büyük bir diziyle yeniden denemelisiniz. Aşağıdaki hata durumu bu işlev için tanımlanmıştır:
+   </para><para><variablelist><varlistentry>
+   <term><command>ENAMETOOLONG</command></term><listitem><para>
+<varname>boyut</varname> argümanı "konak adının uzunluğu artı bir" değerinden küçük
+      </para></listitem></varlistentry></variablelist>
+  </para><para>
+<indexterm scope="glibc-pg"><primary>sys/param.h</primary></indexterm>
+Bazı sistemlerde, olası en büyük konak ismi uzunluğu için bir sembol vardır: <command>MAXHOSTNAMELEN</command>.  <filename>sys/param.h</filename> dosyasında tanımlıdır. Fakat bunun mevcudiyetine fazla güvenmeyin, en iyisi bir başarısızlık durumunda yeniden denemektir.
+   </para><para>
+<command>gethostname</command> işlevi, konak ismi <varname>isim</varname> dizisine tam olarak sığmasa bile sığdığı kadarını diziye yerleştirir. Bazı durumlarda kırpılmış bir konak ismi bile yeterlidir. Böyle bir durumda hata kodunu yoksayabilirsiniz.
+</para></funcdescr></funcsynopsis></para><para>
+<indexterm scope="glibc-fn"><primary>sethostname</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev" id="glibc-sethostname">
+<funcdef>int <command>sethostname</command></funcdef>
+<paramdef>(const char *<varname>isim</varname>,
+ size_t      <varname>uzunluk</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+<command>sethostname</command> işlevi çağrıldığı sistemin konak ismini <varname>uzunluk</varname> baytlık bir dizge olarak <varname>isim</varname> dizgesindeki değere ayarlar. Sadece bir ayrıcalıklı süreç bu işlemi yapabilir.
+   </para><para>
+<indexterm scope="glibc-cp"><primary sortas="etc/hostname">/etc/hostname</primary></indexterm>
+Genellikle <command>sethostname</command> işlevi sistem açılışı sırasında sadece bir kere çağrılır. Çoğunlukla, işlevin çağrıldığı yazılım konak ismini <command>/etc/hostname</command> dosyasından alır. Konak ismi olarak DNS makine adını değil, tam konak ismini verdiğinizden emin olun.
+   </para><para>
+İşlevin normal dönüş değeri <command>0</command>'dır, <command>-1</command> dönüşse hata oluşmuş demektir. Aşağıdaki hata durumu bu işlev için tanımlanmıştır:
+   </para><para><variablelist><varlistentry>
+   <term><command>EPERM</command></term><listitem><para>
+Süreç yetkisiz olduğundan konak ismini veremiyor
+      </para></listitem></varlistentry></variablelist>
+</para></funcdescr></funcsynopsis>
+</para><para>
+<indexterm scope="glibc-fn"><primary>getdomainnname</primary></indexterm>
+<indexterm scope="glibc-cp"><primary>NIS domain name</primary></indexterm>
+<indexterm scope="glibc-cp"><primary>YP domain name</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev" id="glibc-getdomainnname">
+<funcdef>int <command>getdomainnname</command></funcdef>
+<paramdef>(char  *<varname>isim</varname>,
+ size_t <varname>uzunluk</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+<command>getdomainname</command> işlevi çağrıldığı sistemin NIS (YP) alan adı ile döner. Bu pek popüler bir DNS alan adı değildir.  Bunun yerine <command>gethostname</command> işlevi önerilir.
+   </para><para>
+Bu işlevin özellikleri yukarıdaki <command>gethostname</command> işlevinin benzeridir.
+</para></funcdescr></funcsynopsis>
+</para><para>
+<indexterm scope="glibc-fn"><primary>setdomainname</primary></indexterm>
+<indexterm scope="glibc-cp"><primary>NIS domain name</primary></indexterm>
+<indexterm scope="glibc-cp"><primary>YP domain name</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev" id="glibc-setdomainnname">
+<funcdef>int <command>setdomainnname</command></funcdef>
+<paramdef>(const char *<varname>isim</varname>,
+ size_t      <varname>uzunluk</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+<command>setdomainname</command> işlevi çağrıldığı sistemin NIS (YP) alan adını ayarlar. Bu pek popüler bir DNS alan adı değildir.  Bunun yerine <command>sethostname</command> işlevi önerilir.
+   </para><para>
+Bu işlevin özellikleri yukarıdaki <command>sethostname</command> işlevinin benzeridir.
+</para></funcdescr></funcsynopsis>
+</para><para>
+<indexterm scope="glibc-fn"><primary>gethostid</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev" id="glibc-gethostid">
+<funcdef>long int <command>gethostid</command></funcdef>
+<paramdef>(void)</paramdef>
+</funcprototype><funcdescr><para>
+Bu işlev çağrıldığı makinenin "konak kimliği" ile döner. Teamülen, bu genelde <command>long int</command> bir değere dönüştürülmüş olarak makinenin birincil Internet IP adresidir. Bununla birlikte, bazı sistemlerde bu adres anlamsızdır ama her makine için tam kodlu eşsiz bir numaradır.
+   </para><para>
+Bu geniş çapta kullanılmaz. BSD 4.2'de vardı ama BSD 4.4'de kaldırıldı. POSIX için gerekli değildir.
+   </para><para>
+IP adresini sorgulamak için en uygun yöntem <command>gethostname</command> işlevinin sonucu ile <command>gethostbyname</command> çağrısı yapmaktır. IP adresleri hakkında daha fazla bilgi için <xref linkend="glibc-Host-Addresses"/> bölümüne bakınız.
+</para></funcdescr></funcsynopsis></para><para>
+<indexterm scope="glibc-fn"><primary>sethostid</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev" id="glibc-sethostid">
+<funcdef>int <command>sethostid</command></funcdef>
+<paramdef>(long int <varname>kimlik</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+Bu işlev çağrıldığı makinenin "konak kimliği"ni <varname>kimlik</varname> değerine ayarlar. Sadece ayrıcalıklı süreç bu işlemi yapabilir. Sistem açılışı sırasında sadece bir kere çağrılır.
+   </para><para>
+Sisteme birincil IP adresi vermenin uygun yolu <command>gethostname</command> tarafından döndürülen sistem konak ismi ile IP adresini ilişklendirecek IP adres çözümleyiciyi yapılandırmaktır. Örneğin, sistem için  <command>/etc/hosts</command> dosyasına bir kayıt yerleştirin.
+   </para><para>
+Konak kimlikleri için yukarıdaki <command>gethostid</command> işlevinde daha fazla bilgi bulabilirsiniz.
+   </para><para>
+İşlevin normal dönüş değeri <command>0</command>'dır, <command>-1</command> dönmüşse hata oluşmuş demektir. Aşağıdaki hata durumları bu işlev için tanımlanmıştır:
+   </para><para><variablelist><varlistentry>
+   <term><command>EPERM</command></term><listitem><para>
+Süreç yetkisiz olduğundan konak kimliğini veremiyor
+      </para></listitem></varlistentry><varlistentry>
+      <term><command>ENOSYS</command></term><listitem><para>
+İşletim sistemi konak kimliği verilmesini desteklemiyor. Bazı sistemlerde konak kimliği anlamsızdır ama her makine için tam kodlu eşsiz bir numaradır.
+      </para></listitem></varlistentry></variablelist>
+    </para></funcdescr></funcsynopsis></para>
+  </chapter>
+
+  <chapter id="glibc-Platform-Type">
+    <title>Platform Türü İsimlendirmesi</title>
+    <titleabbrev>İşletim sisteminin ve temel makine türünün saptanması.</titleabbrev>
+    <para>
+Yazılımınızın çalıştığı bilgisayarın türü hakkında bilgi edinmek için <command>uname</command> işlevini kullanabilirsiniz. Bu işlev ve onunla ilgili veri türü <filename>sys/utsname.h</filename> başlık dosyasında bildirilmiştir.
+<indexterm scope="glibc-pg"><primary>sys/utsname.h</primary></indexterm>
+   </para><para>
+Ek olarak, <command>uname</command> işlevi yazılımınızın çalıştığı sistemi kimliklendiren bazı bilgiler verir. Bu bilgi, <xref linkend="glibc-Host-Identification"/> bölümünde açıklanan işlevlerle alınan bilginin aynısıdır.
+   </para><para>
+<indexterm scope="glibc-tp"><primary sortas="utsname">struct utsname</primary></indexterm>
+<funcsynopsis><funcprototype role="veri türü" id="glibc-struct-utsname">
+<funcdef>struct <command>utsname</command></funcdef>
+<paramdef></paramdef>
+</funcprototype><funcdescr><para>
+<command>utsname</command> yapısı <command>uname</command> işlevi tarafından döndürülen bilgiyi tutar.  Şu üyelere sahiptir:
+   </para><para><glosslist><glossentry><glossterm>
+   <literal>char <command>sysname</command>[]</literal>
+   </glossterm><glossdef><para>
+Kullanılan işletim sisteminin ismi.
+   </para></glossdef></glossentry><glossentry><glossterm>
+   <literal>char <command>release</command>[]</literal>
+   </glossterm><glossdef><para>
+İşletim sisteminin o anki dağıtım seviyesi (çekirdeğin kaçıncı defa derlendiğini belirtir).
+   </para></glossdef></glossentry><glossentry><glossterm>
+   <literal>char <command>version</command>[]</literal>
+   </glossterm><glossdef><para>
+İşletim sisteminin sürüm numarası.
+   </para></glossdef></glossentry><glossentry><glossterm>
+   <literal>char <command>machine</command>[]</literal>
+   </glossterm><glossdef><para>
+Kullanılan donanım türü.
+      </para><para>
+Bazı sistemler bu bilgi için doğrudan çekirdeği sorguya çeken bir mekanizma sağlar. Bu mekanizma olmayan sistemlerde, GNU C kütüphanesi bu alanları kütüphanenin derlenmesi sırasında belirtilen yapılandırma ismine göre doldurur.
+      </para><para>
+GNU üç parçalı bir sistem yapılandırma ismi kullanır; bunlar tire işaretleri ile ayrılmış <varname>işlemci</varname>, <varname>üretici</varname> ve <varname>sistem-türü</varname> dizgeleridir. Bu üçlünün her olası birleşimi potansiyel olarak anlamlı olmakla birlikte bazı birleşimleri pratik olarak anlamsızdır ve anlamlı olsa bile belli bir GNU yazılımınca desteklenmesi gerekli değildir.
+      </para><para>
+<command>machine</command> değerinin sadece donanımı belirtmesi sebebiyle üçlü yapılandıma isminin ilk iki parçasından oluşur: <varname>işlemci</varname><literal>-</literal><varname>üretici</varname>.  Örnek olarak bunlardan biri olabilir:
+      </para><para><blockquote><para>
+<command>&quot;sparc-sun&quot;</command>, <command>&quot;i386-</command><varname>birşey</varname><command>&quot;</command>, <command>&quot;m68k-hp&quot;</command>, <command>&quot;m68k-sony&quot;</command>, <command>&quot;m68k-sun&quot;</command>, <command>&quot;mips-dec&quot;</command>
+      </para></blockquote>
+   </para></glossdef></glossentry><glossentry><glossterm>
+   <literal>char <command>nodename</command>[]</literal>
+   </glossterm><glossdef><para>
+Bilgisayarın konak ismidir. GNU C kütüphanesinde, bu değer <command>gethostname</command> işlevinden dönen değer ile aynıdır; bkz. <xref linkend="glibc-Host-Identification"/>.
+      </para><para>
+gethostname() işlevi bir uname() çağrısı ile gerçeklenir.
+   </para></glossdef></glossentry><glossentry><glossterm>
+   <literal>char <command>domainname</command>[]</literal>
+   </glossterm><glossdef><para>
+NIS ya da YP alan adı.  <command>getdomainname</command> işlevinden dönen değer ile aynıdır; bkz. <xref linkend="glibc-Host-Identification"/>.  Bu eleman yapıya görece en son konulandır ve bunun kullanımı yapının kalanının kullanımı açısından taşınabilir değildir.
+      </para></glossdef></glossentry></glosslist>
+</para></funcdescr></funcsynopsis>
+</para><para>
+<indexterm scope="glibc-fn"><primary>uname</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev" id="glibc-uname">
+<funcdef>int <command>uname</command></funcdef>
+<paramdef>(struct utsname *<varname>bilgi</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+<command>uname</command> işlevi makine ve işletim sistemi ile ilgili bilgileri <varname>bilgi</varname> ile gösterilen yapıya yerleştirerek döner. Negatif olmayan bir dönüş değeri işlevin başarılı olduğunu gösterir.
+    </para><para>
+<command>-1</command> bir hata oluştuğu anlamına gelir. Olası tek hata <command>EFAULT</command> olmasına rağmen bu hep bir olasılık olarak kalacaktır.
+    </para></funcdescr></funcsynopsis></para></chapter>
+  <chapter id="glibc-Filesystem-Handling">
+    <title>Dosya Sistemleri ile Çalışma</title>
+    <titleabbrev>Dosya sistemlerinin bağlanması ve sorgulanması.</titleabbrev>
+    <para>
+Dosya sistemindeki tüm dosyalara erişmek için önce o dosya sistemini sisteme bağlamalısınız. Unix'de herşey bir dosya olduğundan bir dosya sisteminin bağlanması hemen hemen herşeyin merkezidir. Bu bölümde bağlı olan dosya sistemlerinin nasıl bulunacağı, hangi dosya sistemlerinin bağlanabileceği ve bağlı olanların nasıl değiştirileceği açıklanacaktır.
+   </para><para>
+Klasik dosya sistemi bir disk sürücününün içeriğidir. Kavram giderek soyutlaşmış ve disk sürücülerden başka şeyler de bağlanabilir olmuştur.
+   </para><para>
+Bazı blok aygıtları disk sürücüleri gibi geleneksel aygıtlara karşılık değildir. Örneğin bir döngü (loop) aygıtı, normal bir dosyayı başka bir dosya sisteminin ortamı gibi kullanan bir blok aygıtıdır. Bu durumda, normal dosya bir dosya sistemi için uygun verileri içeriyorsa, bir döngü aygıtını bağlayarak esasen bir normal dosyayı bağlamış olursunuz.
+   </para><para>
+Bazı dosya sistemlerinin herhangi bir aygıtla ilgisi yoktur.  "proc" dosya sistemi böyledir ve içerdiği dosyaları okumak isterseniz dosya sistemi sürücüsü tarafından o an için oluşturulurlar. Ve o dosyaya yazarsanız yazdığınız veri sistemde değişikliğe sebep olur. Hiçbir veri saklanmaz.
+   </para>
+    <sect1 id="glibc-Mount-Information">
+      <title>Bağlama Bilgileri</title>
+      <titleabbrev>Dosya sistemlerinin bağlanması.</titleabbrev>
+      <para/><para>
+Bazı uygulamalar için, belli bir dosya sisteminin bağlı mı olduğu, bağlıysa nerede bağlı olduğu ya da mevcut dosyasistemlerinin bir listesinin alınması istenebilir hatta gerekli olabilir. GNU C kütüphanesi bu bilginin taşınabilir olarak alınmasını sağlayan işlevler içerir.
+    </para><para>
+Geleneksel olarak Unix sistemlerinde bağlanabilmesi olası tüm dosya sistemlerinin bir listesini içeren <filename>/etc/fstab</filename> isminde bir dosya bulunur. <command>mount</command> uygulaması ile sistemin açılışı sırasında, bağlanması gereken tüm dosya sistemlerini bağlamak için bu dosya kullanılır. Bağlanmış tüm dosya sistemlerine ilişkin bilgiler de ayrı bir dosyada tutulur. Bu dosyanın ismi <filename>mtab</filename> dır ve normalde yeri <filename>/var/run</filename> ya da <filename>/etc</filename> dizinidir. Her iki dosyanında sözdizimi aynıdır ve bu sözdizimi artık nihai duruma gelmiştir. Bu bakımdan dosyalara doğrudan asla yazılmaz. Bu işlem bu bölümde açıklanan işlevlerle yapılır ve ayrıca bu işlevler harici metinsel gösterimi dahili gösterime dönüştüren işlevselliği sağlarlar.
+    </para><para>
+<command>fstab</command> ve <command>mtab</command> dosyalarını sistemde bulunması bir <emphasis>uzlaşım</emphasis> sonucudur. Bu dosyalar sistemde bulunmayabileceği gibi bağlanacak ya da bağlanmış tüm dosya sistemlerini de içermeyebilir. Buna sistem yöneticisi karar verir.  Fakat burada açıklanacak işlevler ve dolayısıyla çoğu uygulama genellikle bu dosyaların varlığına ihtiyaç duyar ve bu dosyaları kullanırlar.
+    </para><para>
+<indexterm scope="glibc-vr"><primary sortas="PATH_FSTAB">_PATH_FSTAB</primary></indexterm>
+<indexterm scope="glibc-vr"><primary sortas="PATH_MNTTAB">_PATH_MNTTAB</primary></indexterm>
+<indexterm scope="glibc-vr"><primary sortas="PATH_MOUNTED">_PATH_MOUNTED</primary></indexterm>
+<indexterm scope="glibc-vr"><primary>FSTAB</primary></indexterm>
+<indexterm scope="glibc-vr"><primary>MNTTAB</primary></indexterm>
+<indexterm scope="glibc-vr"><primary>MOUNTED</primary></indexterm>
+Bu dosya isimleri doğrudan kullanılmamalıdır. Bu dosyalarla taşınabilir bir şekilde çalışmak için <filename>fstab.h</filename> içinde tanımlı <command>_PATH_FSTAB</command> makrosunu, <filename>mntent.h</filename> içinde tanımlı <command>_PATH_MNTTAB</command> ve <command>_PATH_MOUNTED</command> makrolarını, <filename>paths.h</filename> içinde bildirilmiş <command>fstab</command> ve <command>mtab</command> işlevlerini kullanın. Bu makro isimlerine ek olarak başka makrolar da vardır: <command>FSTAB</command>, <command>MNTTAB</command> ve <command>MOUNTED</command>. Bu makroların kullanılması önerilmemektedir ve sadece geriye uyumluluk adına tutulmaktadır. Bunların yerine daima <command>_PATH_MNTTAB</command> ve <command>_PATH_MOUNTED</command> makroları kullanılmalıdır.
+    </para>
+      <sect2 id="glibc-fstab" chunkthis="1">
+        <title><literal>fstab</literal></title>
+        <titleabbrev><filename>fstab</filename> dosyası</titleabbrev>
+        <para>
+Dosya içeriğinin kütüphane içindeki gösterimi olan <command>struct
+fstab</command> yapısı <filename>fstab.h</filename> dosyasında tanımlıdır.
+     </para><para>
+<indexterm scope="glibc-tp"><primary sortas="fstab">struct fstab</primary></indexterm>
+<funcsynopsis><funcprototype role="veri türü" id="glibc-struct-fstab">
+<funcdef>struct <command>fstab</command></funcdef>
+<paramdef></paramdef>
+</funcprototype><funcdescr><para>
+Bu yapı <command>getfsent</command>, <command>getfsspec</command> ve <command>getfsfile</command> işlevlerinde kullanılır.
+   </para><para><glosslist><glossentry><glossterm>
+   <literal>char *fs_spec</literal>
+   </glossterm><glossdef><para>
+Dosya sistemi olarak bağlanacak aygıtı belirtir. Normalde bu, bir sabit disk bölümü gibi bir özel aygıt ismidir, fakat az ya da çok soysal bir dizge de olabilir. <firstterm>NFS</firstterm> için bir makine adı ile bir dizin isminin birleşimi olabilir.
+        </para><para>
+Eleman <command>const</command> olarak bildirilmemiş olsa bile içeriği değiştirilmemelidir. Bunun eski bir ISO C işlevi olmasıyla <command>const</command>'un yokluğu tarihsel sebeplere dayanır. Aynı durum yapının diğer dizge elemanları için de geçerlidir.
+   </para></glossdef></glossentry><glossentry><glossterm>
+   <literal>char *<command>fs_file</command></literal>
+   </glossterm><glossdef><para>
+Yerel sistem üzerindeki bağlama noktasını belirtir. Yani bu dosya sistemindeki bir dosyaya erişilmek istendiğinde bu dizge dosyaya bir önek olur.
+   </para></glossdef></glossentry><glossentry><glossterm>
+   <literal>char *<command>fs_vfstype</command></literal>
+   </glossterm><glossdef><para>
+Dosya sisteminin türü. Çekirdek açısından anlamlı bir dizge olmalıdır.
+   </para></glossdef></glossentry><glossentry><glossterm>
+   <literal>char *<command>fs_mntops</command></literal>
+   </glossterm><glossdef><para>
+Bu dizge <command>mount</command> çağrısı ile çekirdeğe aktarılan seçenekleri içerir. Tekrar belirtelim ki, bu çekirdek açısından anlamlı herhangi bir dizge olabilir.  Diğerlerinden virgülle ayrılmış birden fazla seçenek belirtilebilir. Her seçenek bir isim ile isteğe bağlı ve <command>=</command> karakteri ile tanınan değer alanından oluşur.
+        </para><para>
+Eğer bu elemanın içeriğinin işlenmesi gerekirse bu ideal olarak <command>getsubopt</command> işlevi kullanılarak yapılır; bkz. <xref linkend="glibc-Suboptions"/>.
+   </para></glossdef></glossentry><glossentry><glossterm>
+   <literal>const char *<command>fs_type</command></literal>
+   </glossterm><glossdef><para>
+Bu üyenin ismi yanlış seçilmiştir. Bu eleman bağlı dosya sistemi ile ilgili kipleri içeren bir dizgedir (büyük ihtimalle <command>fs_mntops</command> içindekiler). <command>fstab</command> olası değerleri açıklayan beş makro tanımlar:
+        </para><para><variablelist><varlistentry>
+        <term><command>FSTAB_RW</command></term><listitem><para>
+Dosya sistemi oku/yaz erişimli bağlanır.
+           </para></listitem></varlistentry><varlistentry>
+           <term><command>FSTAB_RQ</command></term><listitem><para>
+Dosya sistemi oku/yaz erişimli bağlanır ama yazma erişimi kotalarla kısıtlanmıştır.
+           </para></listitem></varlistentry><varlistentry>
+           <term><command>FSTAB_RO</command></term><listitem><para>
+Dosya sistemi salt okunur bağlanır
+           </para></listitem></varlistentry><varlistentry>
+           <term><command>FSTAB_SW</command></term><listitem><para>
+Bu gerçek bir dosya sistemini göstermez, bir takas aygıtıdır.
+           </para></listitem></varlistentry><varlistentry>
+           <term><command>FSTAB_XX</command></term><listitem><para>
+Bu girdinin tamamı <command>fstab</command> dosyasında yoksayılır.
+           </para></listitem></varlistentry></variablelist>
+         </para><para>
+Bu değerlerin hepsi dizge olduğundan eşitlik sınaması <command>strcmp</command> kullanılarak yapılmalıdır. Şüphesiz göstericilerin karşılaştırılması daima başarısız olacaktır.
+   </para></glossdef></glossentry><glossentry><glossterm>
+   <literal>int <command>fs_freq</command></literal>
+   </glossterm><glossdef><para>
+Bu eleman gün cinsinden dökümleme sıklığını belirler.
+   </para></glossdef></glossentry><glossentry><glossterm>
+   <literal>int <command>fs_passno</command></literal>
+   </glossterm><glossdef><para>
+Paralel dökümlemede geçiş sayısıdır. Unix sistemlerinde kullanılan <command>dump</command> uygulaması ile yakından ilgilidir.
+   </para></glossdef></glossentry></glosslist>
+   </para><para>
+<filename>fstab</filename> dosyasının içeriğinin tamamının okunması amacıyla GNU C kütüphanesi birbiriyle uyumlu çalışan üç işlev içerir.
+</para></funcdescr></funcsynopsis></para><para>
+<indexterm scope="glibc-fn"><primary>setfsent</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev" id="glibc-setfsent">
+<funcdef>int <command>setfsent</command></funcdef>
+<paramdef>(void)</paramdef>
+</funcprototype><funcdescr><para>
+Bu işlev dosya konumlayıcıyı <filename>fstab</filename> dosyasının başlangıcına hizalar. Bu işlem ya dosyayı açarak ya da konumlayıcıyı sıfırlayarak yapılır.
+     </para><para>
+Dosya tanıtıcı kütüphanenin dahili değeri olduğundan bu işlev evresel değildir.
+     </para><para>
+İşlev başarılı olduğunda sıfırdan farklı bir değerle döner. Bu durumda dosyadaki girdileri okumak için <command>getfs*</command> işlevleri kullanılabilir.
+</para></funcdescr></funcsynopsis>
+</para><para>
+<indexterm scope="glibc-fn"><primary>endfsent</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev" id="glibc-endfsent">
+<funcdef>void <command>endfsent</command></funcdef>
+<paramdef>(void)</paramdef>
+</funcprototype><funcdescr><para>
+Bu işlev evvelce yapılmış <command>setfsent</command> (doğrudan ya da dolaylı <command>getfsent</command>) çağrılarıyla edinilen tüm özkaynakları serbest bırakır.
+</para></funcdescr></funcsynopsis>
+</para><para>
+<indexterm scope="glibc-fn"><primary>getfsent</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev" id="glibc-getfsent">
+<funcdef>struct fstab *<command>getfsent</command></funcdef>
+<paramdef>(void)</paramdef>
+</funcprototype><funcdescr><para>
+Bu işlev <filename>fstab</filename> dosyasındaki sonraki girdi ile döner. Bu işleve yapılan çağrı yazılımın başından itibaren <filename>fstab</filename> dosyasıyla çalışmak için yapılan ilk çağrıysa ya da bu çağrıdan önceki son çağrı <command>endfsent</command> ise dosya açılacaktır.
+     </para><para>
+İşlev <command>struct fstab</command> türünde bir değişkene gösterici ile döner. Bu değişken tüm evrelerce paylaşılmasına rağmen işlev evresel değildir. Bir hata oluşmuşsa işlev bir boş gösterici döndürür.
+</para></funcdescr></funcsynopsis>
+</para><para>
+<indexterm scope="glibc-fn"><primary>getfsspec</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev" id="glibc-getfsspec">
+<funcdef>struct fstab *<command>getfsspec</command></funcdef>
+<paramdef>(const char *<varname>isim</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+<filename>fstab</filename> dosyasından, <command>fs_spec</command> elemanındaki dizgenin <varname>isim</varname> ile gösterilen dizgeyle aynı olduğu sonraki girdiyi döndürür. Normalde her özel aygıt için sadece bir girdi olduğundan bu işlevin aynı argümanla yapılan her çağrısı daima aynı girdiyi döndürür. Bu işleve yapılan çağrı yazılımın başından itibaren <filename>fstab</filename> dosyasıyla çalışmak için yapılan ilk çağrıysa ya da bu çağrıdan önceki son çağrı <command>endfsent</command> ise dosya açılacaktır.
+     </para><para>
+İşlev <command>struct fstab</command> türünde bir değişkene gösterici ile döner. Bu değişken tüm evrelerce paylaşılmasına rağmen işlev evresel değildir. Bir hata oluşmuşsa işlev bir boş gösterici döndürür.
+</para></funcdescr></funcsynopsis>
+</para><para>
+<indexterm scope="glibc-fn"><primary>getfsfile</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev" id="glibc-getfsfile">
+<funcdef>struct fstab *<command>getfsfile</command></funcdef>
+<paramdef>(const char *<varname>isim</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+<filename>fstab</filename> dosyasından, <command>fs_file</command> elemanındaki dizgenin <varname>isim</varname> ile gösterilen dizgeyle aynı olduğu sonraki girdiyi döndürür. Normalde her bağlama noktası için sadece bir girdi olduğundan bu işlevin aynı argümanla yapılan her çağrısı daima aynı girdiyi döndürür. Bu işleve yapılan çağrı yazılımın başından itibaren <filename>fstab</filename> dosyasıyla çalışmak için yapılan ilk çağrıysa ya da bu çağrıdan önceki son çağrı <command>endfsent</command> ise dosya açılacaktır.
+     </para><para>
+İşlev <command>struct fstab</command> türünde bir değişkene gösterici ile döner. Bu değişken tüm evrelerce paylaşılmasına rağmen işlev evresel değildir. Bir hata oluşmuşsa işlev bir boş gösterici döndürür.
+        </para></funcdescr></funcsynopsis></para></sect2>
+      <sect2 id="glibc-mtab" chunkthis="1">
+        <title><literal>mtab</literal></title>
+        <titleabbrev><filename>mtab</filename> dosyası</titleabbrev>
+        <para>
+Aşağıdaki işlevler ve veri yapısı <filename>mtab</filename> dosyasına erişim için kullanılır.
+     </para><para>
+<indexterm scope="glibc-tp"><primary sortas="mntent">struct mntent</primary></indexterm>
+<funcsynopsis><funcprototype role="veri türü" id="glibc-struct-mntent">
+<funcdef>struct <command>mntent</command></funcdef>
+<paramdef></paramdef>
+</funcprototype><funcdescr><para>
+Bu yapı <command>getmntent</command>, <command>getmntent_t</command>, <command>addmntent</command> ve <command>hasmntopt</command> işlevleriyle kullanılır.
+   </para><para><glosslist><glossentry><glossterm>
+   <literal>char *<command>mnt_fsname</command></literal>
+   </glossterm><glossdef><para>
+Bu eleman bağlı dosya sistemini içeren özel aygıtın ismi olan bir dizgeye bir gösterici içerir. Bu eleman <command>struct fstab</command> yapısının <command>fs_spec</command> üyesinin karşılığıdır.
+   </para></glossdef></glossentry><glossentry><glossterm>
+   <literal>char *<command>mnt_dir</command></literal>
+   </glossterm><glossdef><para>
+Dosya sisteminin bağlama noktasını belirten dizgeye bir göstericidir. Bu eleman <command>struct fstab</command> yapısının <command>fs_file</command> üyesinin karşılığıdır.
+   </para></glossdef></glossentry><glossentry><glossterm>
+   <literal>char *<command>mnt_type</command></literal>
+   </glossterm><glossdef><para>
+<command>mnt_type</command> dosya sistemini açıklar ve <command>struct fstab</command> yapısının <command>fs_vfstype</command> üyesinin karşılığıdır. Bu dizgenin içerebileceği sabitler <filename>mntent.h</filename> dosyasında tanımlanmıştır. Fakat çekirdek dosya sistemlerini keyfi isimlerle destekleyebildiğinden bunları sembolik isimler olarak vermenin bir yararı yoktur. Sembolik ismi bilen biri dosya sistemi ismini de bilir ve bu sembollerin listesini <filename>mntent.h</filename> dosyasında bulabilirsiniz.
+        </para><para><variablelist><varlistentry>
+        <term><command>MNTTYPE_IGNORE</command></term><listitem><para>
+Bu sembol <command>&quot;ignore&quot;</command> dizgesinin karşılığıdır. Değer kimi zaman  <filename>fstab</filename> dosyasındaki bir girdiyi silmeden kullanılamaz duruma getirmek için kullanılır.
+           </para></listitem></varlistentry><varlistentry>
+           <term><command>MNTTYPE_NFS</command></term><listitem><para>
+<command>&quot;nfs&quot;</command> dizgesinin karşılığıdır. Bu makronun kullanımı, öntanımlı NFS gerçeklemesi ile ilgilidir ve  2. ve 3. sürümleri desteklemektedir.
+           </para></listitem></varlistentry><varlistentry>
+           <term><command>MNTTYPE_SWAP</command></term><listitem><para>
+Bu sembol <command>&quot;swap&quot;</command> dizgesinin karşılığıdır. <filename>fstab</filename> dosyasında çok sayıda olabilen takas bölümleri ile ilgili girdileri isimlendirir.
+           </para></listitem></varlistentry></variablelist>
+   </para></glossdef></glossentry><glossentry><glossterm>
+   <literal>char *<command>mnt_opts</command></literal>
+   </glossterm><glossdef><para>
+Bu eleman dosya sistemi bağlanırken kullanılan seçenekleri içeren bir dizgedir. <command>struct fstab</command> yapısının <command>fs_mntops</command> üyesinin karşılığı olarak bu dizgenin parçalarına erişmek için <command>getsubopt</command> işlevini kullanmak en iyi yöntemdir; bkz. <xref linkend="glibc-Suboptions"/>.
+        </para><para>
+<filename>mntent.h</filename> dosyasında, çekirdek tarafından anlamlandırılabilen bazı seçeneklerin karşılığı olan dizge değerli makrolar tanımlanmıştır. Bu makrolarla kapsanmayan başka seçenekler de olabilir, bunlar mevcut olanların listesidir:
+        </para><para><variablelist><varlistentry>
+        <term><command>MNTOPT_DEFAULTS</command></term><listitem><para>
+<command>&quot;defaults&quot;</command> dizgesinin karşılığıdır. Bu seçenek tek başına kullanılır, çünkü özelleştirilebilir değerlerin uygun seçilmesi ile oluşturulan bir dizgenin öntanımlı karşılığıdır.
+           </para></listitem></varlistentry><varlistentry>
+           <term><command>MNTOPT_RO</command></term><listitem><para>
+<command>&quot;ro&quot;</command> dizgesinin karşılığıdır.  Dosya sisteminin salt okunur bağlanması anlamına gelen <command>FSTAB_RO</command> değerine bakınız.
+           </para></listitem></varlistentry><varlistentry>
+           <term><command>MNTOPT_RW</command></term><listitem><para>
+<command>&quot;rw&quot;</command> dizgesinin karşılığıdır. Dosya sisteminin oku/yaz erişimiyle bağlanması anlamına gelen <command>FSTAB_RW</command> değerine bakınız.
+           </para></listitem></varlistentry><varlistentry>
+           <term><command>MNTOPT_SUID</command></term><listitem><para>
+<command>&quot;suid&quot;</command> dizgesinin karşılığıdır. Dosya sisteminden bir uygulama başlatıldığında SUID bitine riayet edilecek anlamındadır; bkz. <xref linkend="glibc-How-Change-Persona"/>.
+           </para></listitem></varlistentry><varlistentry>
+           <term><command>MNTOPT_NOSUID</command></term><listitem><para>
+<command>&quot;nosuid&quot;</command> dizgesinin karşılığıdır. Dosya sisteminden bir uygulama başlatıldığında SUID biti yoksayılacak anlamında olup <command>MNTOPT_SUID</command> makrosunun zıddıdır.
+           </para></listitem></varlistentry><varlistentry>
+           <term><command>MNTOPT_NOAUTO</command></term><listitem><para>
+<command>&quot;noauto&quot;</command> dizgesinin karşılığıdır. Sistem açılışında <command>mount</command> uygulaması <filename>fstab</filename> dosyasındaki tüm bağlanabilir dosya sistemlerini bağlamasını belirten <command>-a</command> seçeneği ile çalıştırıldığında bu girdi yoksayılacaktır.
+           </para></listitem></varlistentry></variablelist>
+        </para><para>
+Önceki bölümlerde <command>FSTAB_*</command> girdilerinde bahsedildiği gibi eşitlik sınaması yapmak için <command>strcmp</command> kullanılması önemlidir.
+   </para></glossdef></glossentry><glossentry><glossterm>
+   <command>mnt_freq</command>
+   </glossterm><glossdef><para>
+Bu eleman <command>fs_freq</command>'in karşılığıdır ve ayrıca dökümlemenin yapılma sıklığını gün cinsinden belirtir.
+   </para></glossdef></glossentry><glossentry><glossterm>
+   <command>mnt_passno</command>
+   </glossterm><glossdef><para>
+<command>dump</command> gibi uygulamaların bu dosya sistemi ile ilgilenmemesi anlamında olan <command>fs_passno</command>'nun karşılığıdır.
+        </para></glossdef></glossentry></glosslist>
+</para></funcdescr></funcsynopsis></para><para>
+<filename>mtab</filename> dosyasının içeriğinin tamamının okunması amacıyla GNU C kütüphanesi birbiriyle uyumlu çalışan üç işlev içerir. <filename>fstab</filename> dosyası ile çalışan işlevelerin tersine bu işlevler bir sabit dosyaya erişmez ve ayrıca get işlevlerinin evresel sürümleri de vardır. Bunun yanında GNU C kütüphanesi dosyayı değiştirmek ve bazı seçenekleri sınamak için de işlevler içerir.
+    </para><para>
+<indexterm scope="glibc-fn"><primary>setmntent</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev" id="glibc-setmntent">
+<funcdef>FILE *<command>setmntent</command></funcdef>
+<paramdef>(const char *<varname>dosya</varname>,
+ const char *<varname>kip</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+<command>setmntent</command> işlevi, ailenin diğer işlevlerinin ihtiyaçlarına uygun olarak kullanılmak üzere <filename>fstab</filename> ve <filename>mtab</filename> biçiminde <varname>dosya</varname> isimli dosyayı hazırlar. <varname>kip</varname> parameresi <command>fopen</command> işlevinin <varname>açıştürü</varname> parametrsinin seçiminde kullanılan yolla seçilebilir (bkz. <xref linkend="glibc-Opening-Streams"/>). Eğer dosya yazma amacıyla açılıyorsa ayrıca boş olmasına da izin verilir.
+     </para><para>
+İşlev dosyayı başarıyla açmışsa kullanılacak akım ile döner. Aksi takdirde <command>NULL</command> döner ve hata durumu <command>errno</command> değişkenine atanır.
+</para></funcdescr></funcsynopsis>
+</para><para>
+<indexterm scope="glibc-fn"><primary>endmntent</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev" id="glibc-endmntent">
+<funcdef>int <command>endmntent</command></funcdef>
+<paramdef>(FILE *<varname>akım</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+Bu işlev önceki bir <command>setmntent</command> çağrısından dönen <varname>akım</varname> akımını kapatır ve tüm özkaynaklarını serbest bırakır.
+     </para><para>
+Hata durumunda 0 aksi takdirde 1 ile döner.
+</para></funcdescr></funcsynopsis>
+</para><para>
+<indexterm scope="glibc-fn"><primary>getmntent</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev" id="glibc-getmntent">
+<funcdef>struct mntent *<command>getmntent</command></funcdef>
+<paramdef>(FILE *<varname>akım</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+Bu işlev önceki bir <command>setmntent</command> çağrısından dönen <varname>akım</varname> akımını argüman olarak alır ve dosyadan sonraki girdiyi içeren <command>struct mntent</command> türünde bir değişkene gösterici ile döner.
+     </para><para>
+Kullanılan dosya biçimi gereğince alanları ayırmak için boşluklar ve sekme karakterleri kullanılır. Bu durum, bu karakterleri içeren isimlerin kullanılmasını güçleştirir. Bu bakımdan bu karakterleri dosyalarda kodlarken ve <command>getmntent</command> işlevinde çözümlerken dikkatli olunmalıdır. Bir boşluk karakteri <literal>'\040'</literal> ile, bir sekme karakteri <literal>'\011'</literal> ile, satırsonu karakteri <literal>'\012'</literal> ile ve tersbölü karakteri  <literal>'\\'</literal> ile kodlanır.
+     </para><para>
+Bir hata oluşursa ya da dosya sonuna gelinmişse işlev <command>NULL</command> ile döner.
+     </para><para>
+Bu işlevin çağrıları aynı durağan değişkene bir gösterici ile döndüğünden işlev evresel değildir. Dosyaya çok evreli erişim için <command>getmntent_r</command> işlevi kullanılmalıdır.
+</para></funcdescr></funcsynopsis>
+</para><para>
+<indexterm scope="glibc-fn"><primary>getmntent_r</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev" id="glibc-getmntent_r">
+<funcdef>struct mntent *<command>getmntent_r</command></funcdef>
+<paramdef>(FILE           *<varname>akım</varname>,
+ struct mentent *<varname>sonuç</varname>,
+ char           *<varname>tampon</varname>,
+ int             <varname>tamponboyu</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+<command>getmntent_r</command> işlevi <command>getmntent</command> işlevinin evresel benzeridir. Ayrıca dosyadaki sonraki girdiye bir gösterici ile döner. Döndürdüğü değişken aslında durağan değildir. Döndürdüğü değeri  <varname>sonuç</varname> parametresi ile belirtilen göstericinin gösterdiği değişkende saklar. Ek bilgiler (sonucun elemanları ile gösterilen dizgeler) uzunluğu <varname>tamponboyu</varname> kadar olan <varname>tampon</varname> tamponunda saklanır.
+     </para><para>
+Öncelemeli karakterler (boşluk, sekme, tersbölü) <command>getmentent</command> işlevindeki gibi geri dönüştürülür.
+     </para><para>
+İşlev bir hata durmunda bir boş gösterici ile döner. Olası hatalar:
+     </para><para>
+     <itemizedlist><listitem>dosya okunurken hata oluştu,
+     </listitem><listitem>dosyanın sonuna gelindi,
+     </listitem><listitem>
+<varname>tamponboyu</varname> tam bir girdiyi okumak için yetersiz.
+     </listitem></itemizedlist>
+</para></funcdescr></funcsynopsis>
+</para><para>
+<indexterm scope="glibc-fn"><primary>addmntent</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev" id="glibc-addmntent">
+<funcdef>int <command>addmntent</command></funcdef>
+<paramdef>(FILE                *<varname>akım</varname>,
+ const struct mntent *<varname>girdi</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+<command>addmntent</command> işlevi önceki bir <command>setmntent</command> çağrısı ile açılan dosyaya yeni bir girdi eklemeye imkan verir. Yeni girdi daima dosyanın sonuna eklenir. Yani dosya konumlayıcı dosyanın sonunda olmasa bile bu işlev girdiyi dosya konumlayıcının bulunduğu yere değil daima dosyanın sonuna yazar.
+     </para><para>
+Bunun sonucu olarak bir dosyadan bir girdiyi silmek için bu girdiyi içermeyen  yeni bir dosya oluşturmak, bu dosyayı kapatmak ve eski dosyayı silip yeni dosyanın adını eskisi olarak değiştirmek gerekir.
+     </para><para>
+Bu işlev isimlerin içindeki boşluklar ve sekmeler bakımından dikkatlidir. Bunları ve tersbölü karakterlerini evvelce <command>getmntent</command> işlevinde açıklandığı gibi dönüştürür.
+     </para><para>
+İşlev başarı durumunda 0, aksi takdirde 1 değeri ile döner ve hata durumu <command>errno</command> değişkenine atanır.
+</para></funcdescr></funcsynopsis>
+</para><para>
+<indexterm scope="glibc-fn"><primary>hasmntopt</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev" id="glibc-hasmntopt">
+<funcdef>char *<command>hasmntopt</command></funcdef>
+<paramdef>(const struct mntent *<varname>girdi</varname>,
+ const char          *<varname>seçenek</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+Bu işlev, <varname>girdi</varname> ile gösterilen yapının <command>mnt_opts</command> elemanının içerdiği dizgede <varname>seçenek</varname> dizgesi var mı diye bakar. <varname>seçenek</varname> bir boş gösterici değilse <command>mnt_opts</command> içindeki seçeneğin başlangıcına bir gösterici ile döner. Böyle bir seçenek yoksa işlev boş gösterici döndürür.
+     </para><para>
+Bu işlev belli bir seçeneğin varlığını sınamak için kullanışlıdır ama tüm seçenekler işlenmek zorunda olduğunda dizgedeki tüm seçenekler üzerinde yinelenen <command>getsubopt</command> işlevini kullanmak daha iyidir.
+        </para></funcdescr></funcsynopsis></para></sect2>
+      <sect2 id="glibc-Other-Mount-Information">
+        <title>Diğer Bağlama Bilgileri</title>
+        <titleabbrev>Diğer (libc dışı) bağlama bilgileri</titleabbrev>
+        <para>
+Linux çekirdekli ve <command>proc</command> dosya sistemli bir sistemde  <filename>proc</filename> dosya sistemindeki <filename>mounts</filename> dosyasından o an bağlı olan dosya sistemleri hakkında bilgi edinebilirsiniz. Bu dosyanın biçimi <filename>mtab</filename> dosyasınınkine benzer. Çekirdek bu dosyayı, gerçekten bağlı dosya sistemleri hakkında bilgiyi dışarda aramamak için kendisi güncel tutar.
+     </para></sect2></sect1>
+    <sect1 id="glibc-Mount-Unmount-Remount">
+      <title>Bağlama, Ayırma, Yeniden Bağlama</title>
+      <titleabbrev>Neyin nasıl bağlı olduğunun denetlenmesi.</titleabbrev>
+      <para>
+Bu bölümde dosya sistemlerinin bağlanması, ayrılması ve yeniden bağlanması ile ilgili işlevlerden bahsedilecektir.
+    </para><para>
+Bir dosya sistemini sadece sistem yöneticisi bağlayabilir, ayırabilir veya yeniden bağlayabilir.
+    </para><para>
+Bu işlevler <filename>fstab</filename> ve <filename>mtab</filename> dosyalarına erişmezler. Bunu ayrıca kendiniz sağlamalısınız. Bkz. <xref linkend="glibc-Mount-Information"/>.
+    </para><para>
+Bu bölümdeki semboller <filename>sys/mount.h</filename> dosyasında bildirilmiştir.
+    </para><para>
+<indexterm scope="glibc-fn"><primary>mount</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev" id="glibc-mount">
+<funcdef>int <command>mount</command></funcdef>
+<paramdef>(const char       *<varname>özel_dosya</varname>,
+ const char       *<varname>dizin</varname>,
+ const char       *<varname>dstürü</varname>,
+ unsigned long int <varname>seçenekler</varname>,
+ const void       *<varname>veri</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+<command>mount</command> işlevi bir dosya sistemini bağlamak ya da bağlı bir dosya sistemini yeniden bağlamak için kullanılır. İki işlem açıkça farklıdır ve doğal olmayan bir şekilde aynı işlevin içinde birbirine katıştırılmıştır. Aşağıda açıklanacağı gibi <command>MS_REMOUNT</command> seçeneği ile işlevin sıfırdan bağlama mı yoksa yeniden bağlama mı yapacağı saptanır.
+    </para><para>
+İşlev dosya sistemini bağlamak amacıyla kullanıldığında, dosya sistemini içeren blok aygıtı <varname>özel_dosya</varname> isimli aygıt özel dosyası ile, bağlanacağı nokta ise <varname>dizin</varname> ile belirtilir. Bu durumda <varname>dizin</varname> dizinindeki herşey dosya sistemi sistemden ayrılana kadar erişilebilir olmayacak, onların yerine bağlanan dosya sisteminin kök dizininin içeriği erişilebilir olacaktır.
+    </para><para>
+Bir olağandışılık olarak, eğer dosya sistemi türü bir aygıta ait değilse ("proc" gibi), <command>mount</command> dosya sistemini hemen görür ve <varname>özel_dosya</varname>'yı yoksayarak <varname>dizin</varname> dizinine onu bağlar.
+    </para><para>
+İşlev dosya sistemini yeniden bağlamak amacıyla kullanıldığında, <varname>dizin</varname> dosya sisteminin bağlı olduğu yeri belirtir ve <varname>özel_dosya</varname> yoksayılır. Bir dosya sistemini yeniden bağlamanın amacı, evvelce bağlanırken kullanılan seçenekleri değiştirmektir. Bu işlem dosya sistemini önce ayırıp sonra tekrar bağlamak anlamında yapılmaz.
+    </para><para>
+Sıfırdan bağlama amaçlı kullanımda dosya sisteminin türü <varname>dstürü</varname> argümanı ile belirtilir. Bu tür, çekirdeğin dosya sistemine erişirken kullanacağı dosya sistemi sürücüsünün ismi olarak belirtilir. Kabul edilen değerler sistemden sistem değişir. Linux çekirdekli ve <command>proc</command> dosya sistemli bir sistemde olası dosya sistemi türleri <filename>/proc/filesystems</filename> dosyasında listelenir (komut satırına <command>cat /proc/filesystems</command> yazarak bu listeyi görebilirsiniz). Linux çekirdeğinde <command>mount</command> ile bağlanabilen dosya sistemi türlerinin isimleri, çekirdeğin yapılandırılması sırasında yüklenebilir modül olarak belirtilen dosya sistemi sürücüsü olan modüllerin isimleridir. <varname>dstürü</varname> olarak belitilebilecek çok bilinen bir örnek <command>ext2</command>'dir.
+    </para><para>
+Yeniden bağlama amaçlı kullanımda <varname>dstürü</varname> argümanı yoksayılır.
+    </para><para>
+<varname>seçenekler</varname> ile dosya sistemi ayrılana ya da yeniden bağlanana kadar geçerli olacak çeşitli seçenekler belirtilir. Her seçenek dosya sistemine özgüdür, bazı seçenekleri birçok dosya sistemi kabul etse de bu hepsi için geçerli değildir. Bazı dosya sistemlerinde bu seçeneklerden bazıları (ama asla <command>MS_RDONLY</command> değil) <command>ioctl</command> ile dosya erişimi sırasında değiştirilebilir.
+    </para><para>
+<varname>seçenekler</varname> bir bit dizgesidir. Bit alanları aşağıdaki maske  ve maske değerli makrolar kullanılarak tanımlanmıştır:
+    </para><para><variablelist><varlistentry>
+    <term><command>MS_MGC_MASK</command></term><listitem><para>
+Bu çokbitli alan sihirli bir sayı içerir. Eğer <command>MS_MGC_VAL</command> değerini içermiyorsa, <command>mount</command> aşağıdaki tüm bitlerin sıfır olduğunu ve <varname>veri</varname> argümanının ise içerdiği değerlere bakılmaksızın bir boş dizge olduğunu varsayar.
+       </para></listitem></varlistentry><varlistentry>
+       <term><command>MS_REMOUNT</command></term><listitem><para>
+Bu bit dosya sisteminin yeniden bağlanacağını belirtir. Yokluğu sıfırdan bağlama yapılacak anlamındadır.
+       </para></listitem></varlistentry><varlistentry>
+       <term><command>MS_RDONLY</command></term><listitem><para>
+Bu bit bağlanan dosya sisteminde yazma işlemlerine izin verilmediğini belirtir ve <command>ioctl</command> tarafından bitin durumu değiştirilemez. Bu seçenek hemen tüm dosya sistemlerinde vardır.
+       </para></listitem></varlistentry><varlistentry>
+       <term><command>S_IMMUTABLE</command></term><listitem><para>
+Bu bit bağlanan dosya sisteminde yazma işlemlerine izin verilmediğini belirtir. Fakat uygun olarak yetkilendirilmiş bir  <command>ioctl</command> çağrısı bu bitin durumunu değiştirebilir. Bu seçenek görece diğerlerinden daha yeni olduğundan bir çok dosya sisteminde bulunmayabilir.
+       </para></listitem></varlistentry><varlistentry>
+       <term><command>S_APPEND</command></term><listitem><para>
+Bu bit bağlanan dosya sisteminde yazma işlemlerine sadece dosyaların sonuna ekleme yapılacaksa izin verildiğini belirtir. Bazı dosya sistemlerinde uygun olarak yetkilendirilmiş bir  <command>ioctl</command> çağrısı bu bitin durumunu değiştirebilir. Bu seçenek görece diğerlerinden daha yeni olduğundan bir çok dosya sisteminde bulunmayabilir.
+       </para></listitem></varlistentry><varlistentry>
+       <term><command>MS_NOSUID</command></term><listitem><para>
+Bu bit bağlanan dosya sisteminde dosyaların Setuid and Setgid yetkilerinin yoksayılacağını belirtir.
+       </para></listitem></varlistentry><varlistentry>
+       <term><command>MS_NOEXEC</command></term><listitem><para>
+Bu bit bağlanan dosya sisteminde dosyaların çalıştırılamayacağını belirtir.
+       </para></listitem></varlistentry><varlistentry>
+       <term><command>MS_NODEV</command></term><listitem><para>
+Bu bit bağlanan dosya sisteminde aygıtlara özel dosyaların erişilebilir olmayacağını belirtir.
+       </para></listitem></varlistentry><varlistentry>
+       <term><command>MS_SYNCHRONOUS</command></term><listitem><para>
+Bu bit bağlanan dosya sisteminde dosyalara yapılan tüm yazma işlemlerinin eşzamanlanacağını belirtir. Yani veri her yazma işleminde sonradan dosyaya yazılmak üzere bir tamponda saklanmaz doğrudan dosyaya yazılır.
+       </para></listitem></varlistentry><varlistentry>
+       <term><command>MS_MANDLOCK</command></term><listitem><para>
+Bu bit bağlanan dosya sisteminde dosyalarda zorlayıcı kilitlere izin verildiğini belirtir.
+       </para></listitem></varlistentry><varlistentry>
+       <term><command>MS_NOATIME</command></term><listitem><para>
+Bu bit bağlanan dosya sisteminde dosyaların erişim zamanlarının dosyalara erişildiğinde güncellenmeyeceğini belirtir.
+       </para></listitem></varlistentry><varlistentry>
+       <term><command>MS_NODIRATIME</command></term><listitem><para>
+Bu bit bağlanan dosya sisteminde dizinlerin erişim zamanlarının dizinlere erişildiğinde güncellenmeyeceğini belirtir.
+       </para></listitem></varlistentry></variablelist>
+     </para><para>
+Yukarıdaki bit maskelerinin kapsamında olmayan bütün bitler sıfır olmalıdır; aksi takdirde sonuçları tanımsızdır.
+    </para><para>
+<varname>veri</varname>'nin anlamlandırılması dosya sistemi türüne bağlıdır ve tamamen çekirdekteki dosya sistemi sürücüsü tarafından değerlendirilir.
+    </para><para>
+Örnek:
+    </para><para>
+<screen>
+#include &lt;sys/mount.h>
+
+mount(&quot;/dev/hdb&quot;, &quot;/cdrom&quot;, MS_MGC_VAL | MS_RDONLY | MS_NOSUID, &quot;&quot;);
+
+mount(&quot;/dev/hda2&quot;, &quot;/mnt&quot;, MS_MGC_VAL | MS_REMOUNT, &quot;&quot;);
+</screen></para><para>
+<command>mount</command> işlevinin ilgili argümanları teamülen <command>fstab</command> tablosuna kaydedilir. Bkz. <xref linkend="glibc-Mount-Information"/>.
+    </para><para>
+İşlev başarılı olduğunda sıfırla döner. Aksi takdirde <command>-1</command> döner ve <command>errno</command> değişkenine hata durumu atanır. <command>errno</command> değerleri dosya sistemine bağımlıdır, fakat burada ortak bir listeye yer verilmiştir:
+    </para><para><variablelist><varlistentry>
+    <term><command>EPERM</command></term><listitem><para>
+Süreç sistem yöneticisne ait değil
+       </para></listitem></varlistentry><varlistentry>
+       <term><command>ENODEV</command></term><listitem><para>
+<varname>dstürü</varname> dosya sistemi türünü çekirdek bilmiyor
+       </para></listitem></varlistentry><varlistentry>
+       <term><command>ENOTBLK</command></term><listitem><para>
+<varname>dev</varname> dosyası bir blok aygıtına özel dosya değil
+       </para></listitem></varlistentry><varlistentry>
+       <term><command>EBUSY</command></term><listitem><para>
+         <itemizedlist><listitem>Aygıt zaten bağlı
+         </listitem><listitem>
+Bağlama noktası meşgul (Yani ya bu dizin bazı süreçlerin çalışma dizini ya da onun üzerinde de bir dosya sistemi hala bağlı)
+         </listitem><listitem>
+Yeniden salt-okunur bağlama istendi ama yazma amacıyla açılmış dosyalar var
+         </listitem></itemizedlist>
+       </para></listitem></varlistentry><varlistentry>
+       <term><command>EINVAL</command></term><listitem><para>
+         <itemizedlist><listitem>
+Yeniden bağlama istendi ama belirtilen bağlama noktasında bağlı bir dosya sistemi yok
+         </listitem><listitem>
+Belirtilen dosya sistemi geçersiz süperblok içeriyor.
+         </listitem></itemizedlist>
+       </para></listitem></varlistentry><varlistentry>
+       <term><command>EACCES</command></term><listitem><para>
+         <itemizedlist><listitem>
+Dosya sistemi kalıtsal olarak salt-okunur (aygıt üzerindeki donanımsal bir anahtar nedeniyle olabilir) ve süreç onu oku/yaz olarak bağlamaya çalıştı (<command>MS_RDONLY</command> biti sıfır olarak belirtilerek)
+         </listitem><listitem>
+<varname>özel_dosya</varname> ya da <varname>dizin</varname> dosya erişim izinleri nedeniyle erişilebilir değil
+         </listitem><listitem>
+<varname>özel_dosya</varname> erişilebilir değil, çünkü üzerinde bulunduğu dosya sistemi <command>MS_NODEV</command> seçeneği ile bağlı
+         </listitem></itemizedlist>
+       </para></listitem></varlistentry><varlistentry>
+       <term><command>EM_FILE</command></term><listitem><para>
+İsimsiz (dummy) aygıtlar tablosu dolu. <command>mount</command>, bir aygıtla bağlanamayacak bir dosya sistemini bağlamaya çalışırsa bir dummy aygıt oluşturmak ister.
+       </para></listitem></varlistentry></variablelist>
+</para></funcdescr></funcsynopsis>
+</para><para>
+<indexterm scope="glibc-fn"><primary>umount2</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev" id="glibc-umount2">
+<funcdef>int <command>umount2</command></funcdef>
+<paramdef>(const char *<varname>dosya</varname>,
+ int         <varname>seçenekler</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+<command>umount2</command> bağlı bir dosya sistemini sistemden ayırır.
+    </para><para>
+Ayrılacak dosya istemini <varname>dosya</varname> argümanında bir aygıta özel dosya olarak belirtebileceğiniz gibi bağlama noktası olarak da belirtebilirsiniz. Etkisi aynıdır.
+    </para><para>
+<varname>seçenekler</varname> aşağıdaki maske makrosu ile tek bitlik bir alan olarak belirtilir:
+    </para><para><variablelist><varlistentry>
+    <term><command>MNT_FORCE</command></term><listitem><para>
+Bu bit bağlı dosya sisteminin meşgul olması durumnda bile ayrılacağını belirtir (önce meşgul değil durumuna getirilir). Bu bitin yokluğunda meşgul bir dosya sistemi ayrılmaz ve işlev <command>errno</command> = <command>EBUSY</command> ile başarısız olur. Bu bitin sağladığı zorlamayı bazı sistemler desteklemeyebilir, bazılarında ise meşgul olmama durumu olmayabilir. Yani bu bitin davranışı dosya sistemine bağlıdır.
+       </para></listitem></varlistentry></variablelist>
+     </para><para>
+<varname>seçenekler</varname> ile belirtilen diğer tüm bitler sıfır olmalıdır; aksi takdirde sonuçları tanımsızdır.
+    </para><para>
+Örnek:
+    </para><para><screen>
+#include sys/mount.h
+
+umount2(&quot;/mnt&quot;, MNT_FORCE);
+
+umount2(&quot;/dev/hdd1&quot;, 0);
+
+          </screen></para><para>
+Dosya sistemi ayrıldıktan sonra bağlama noktası olan dizinin içeriğindeki dosyalara erişilebilir.
+    </para><para>
+Dosya sisteminin ayrılması bağlamında <command>umount2</command> dosya sistemin eşzamanlar. Yani açık dosyalara tamponlar boşaltılır.
+    </para><para>
+Ayırma işlemi başarılı olmuşsa işlev sıfırla döner. Aksi takdirde  <command>-1</command> ile döner ve <command>errno</command> değişkenine hata durumu atanır:
+    </para><para><variablelist><varlistentry>
+    <term><command>EPERM</command></term><listitem><para>
+Süreç sistem yöneticisine ait değil
+       </para></listitem></varlistentry><varlistentry>
+       <term><command>EBUSY</command></term><listitem><para>
+Dosya sistemi meğgul olduğundan ayrılamıyor. Yani dosya sistemindeki bir dizin ya bir sürecin çalışma dizini ya da süreçlerden biri bir dosya açmış. Bazı dosya sistemlerinde bu hata durumu <command>MNT_FORCE</command> seçeneği ile aşılabilir.
+       </para></listitem></varlistentry><varlistentry>
+       <term><command>EINVAL</command></term><listitem><para>
+<varname>dosya</varname> aslında bir dosya ama ayrılmak istenen dosya sistemine ait ne bir bağlama noktası ne de aygıta özel bir dosya
+       </para></listitem></varlistentry></variablelist>
+     </para><para>
+Bu işlev dosya sistemlerinin tamamında kullanılabilir değildir.
+</para></funcdescr></funcsynopsis>
+</para><para>
+<indexterm scope="glibc-fn"><primary>umount</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev" id="glibc-umount">
+<funcdef>int <command>umount</command></funcdef>
+<paramdef>(const char *<varname>dosya</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+Bu işlev <command>umount2</command> işlevinde <varname>seçenekler</varname> argümanının sıfır olması durumunda aynı işlevselliğe sahiptir. <command>umount2</command>'den daha geniş kullanım alanına sahip olmakla birlikte bir dosya sisteminin ne olursa olsun ayrılmasını sağlayan <command>umount2</command>'nin dosya sistemince desteklenmesi durumunda kullanılması önerilmemektedir.
+    </para></funcdescr></funcsynopsis>
+  </para></sect1></chapter>
+  <chapter id="glibc-System-Parameters">
+    <title>Sistem Parametreleri</title>
+    <titleabbrev>Çeşitli sistem parametrelerinin okunması ve belirtilmesi.</titleabbrev>
+    <para>
+Bu bölümde çeşitli sistem parametrelerinin okunması ve belirtilmesi için kullanılan <command>sysctl</command> işlevinden bahsedilecektir.
+   </para><para>
+Bu kısımdaki semboller <filename>sysctl.h</filename> dosyasında bildirilmiştir.
+   </para><para>
+<indexterm scope="glibc-fn"><primary>sysctl</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev" id="glibc-sysctl">
+<funcdef>int <command>sysctl</command></funcdef>
+<paramdef>(int    *<varname>isimler</varname>,
+ int     <varname>isim_uzunluğu</varname>,
+ void   *<varname>eski_değer</varname>,
+ size_t *<varname>eski_değer_uzn</varname>,
+ void   *<varname>yeni_değer</varname>,
+ size_t  <varname>yeni_değer_uzn</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+   </para><para>
+<command>sysctl</command> işlevi belirtilen sistem parametresini ya okur ya da belirler. Bu parametreler o kadar çoktur ki, burada hepsinin listelenmesi pratik olmayacaktır. Fakat bazı örnekler verilebilir:
+   </para><para><itemizedlist>
+     <listitem>ağ alan adları
+     </listitem><listitem>sayfalama parametreleri
+     </listitem><listitem>Ağ adres çözümleme protokolü (ARP) zaman aşımı
+     </listitem><listitem>açılabilecek dosyalarını azami sayısı
+     </listitem><listitem>kök dosya sistemi aygıtı
+     </listitem><listitem>çekirdeğin derleme zamanı
+     </listitem></itemizedlist>
+   </para><para>
+Kullanılabilir parametrelerin tamamı çekirdek yapılandırmasına bağlıdır ve sistem çalışırken yüklenebilir modüllerin yüklenmesi ve kaldırılması ile kısmi olarak değiştirilebilir.
+   </para><para>
+<command>sysctl</command> ile ilgili sistem parametreleri bir hiyerarşik dosya sistemindeki gibi bir hiyerarşik yapıda düzenlenmiştir. Belli bir parametreyi belirtmek için, bir dosyanın dosya yolu ile belirtilmesine benzer şekilde parametreyi yapı üzerinde bir yol ile belirtebilirsiniz. Yolu oluşuran her eleman bir tamsayı ile belirtilir ve bu tamsayıların her biri için <filename>sysctl.h</filename> dosyasında bir makro tanımlanmıştır. <varname>isimler</varname> bir tamsayılar dizisi şeklinde bir yol belirtir. Yolu oluşturan her bir eleman sırasıyla dizideki bir elemandır. <varname>isim_uzunluğu</varname> ile dizideki bu elemanların sayısı belirtilir.
+   </para><para>
+Örneğin, tüm sayfalama parametreleri için yolun ilk elemanı <command>CTL_VM</command> değeridir. Serbest sayfa eşikleri için yolun ikinci elemanı <command>VM_FREEPG</command> değeridir. Bu durumda serbest sayfa eşiklerini almak için <varname>isimler</varname> dizisini <command>CTL_VM</command> ve <command>VM_FREEPG</command> elemanlarını içeren bir dizi olarak belirtip, <varname>isim_uzunluğu</varname> = 2 yapılır.
+   </para><para>
+Bir parametre değerinin biçimi parametreye bağlıdır. Kimi zaman bir tamsayı, kimi zaman bir ASCII dizge, kimi zaman özenle oluşturulmuş bir yapıdır. Yukarıdaki örnekte görüldüğü gibi serbest sayfa eşiklerinin kullanıldığı durumda parametre değeri çeşitli tamsayılar içeren bir yapıdır.
+   </para><para>
+Her durumda, dönen parametrenin değerinin adresi için <varname>eski_değer</varname> argümanını kullanabilir ve bu tamponun boyutunu <varname>*eski_değer_uzn</varname> ile belirtebilirsiniz. <varname>*eski_değer_uzn</varname> çift görevlidir, çünkü ayrıca dönen değerin gerçek uzunluğu da burada döndürülür.
+   </para><para>
+Eğer parametre değerinin dönmesini istemiyorsanız <varname>eski_değer</varname> için boş gösterici belirtebilirsiniz.
+   </para><para>
+Bir parametreye değer atamak isterseniz yeni değerin adresini ve uzunluğu <varname>yeni_değer</varname> ve <varname>yeni_değer_uzn</varname> ile belirtin. Bunu istemiyorsanız <varname>yeni_değer</varname> için boş göserici belirtin.
+   </para><para>
+Bir parametrenin o anki değerini okuyup yeni bir değer atamak için aynı <command>sysctl</command> çağrısını kullanabilirsiniz.
+   </para><para>
+Her sistem parametresi için bir dosyanın izinlerine benzeyen erişim izinleri vardır ve bunlar bir paramatrenin okunması ve değiştirilmesi ile ilgili izinlerdir. Amaca uygun olarak her parametrenin sahibinin süper kullanıcı ve grubunun 0 olduğu kabul edilir. Böylece bu etkin kullanıcı ya da grup kimliğine sahip süreçler sistem parametrelerinde daha yüksek erişim iznine sahip olur. Dosyalardaki durumun tersine süper kullanıcı bütün sistem parametrelerinde tam yetkili değildir, çünkü bazı parametre değerleri asla değiştirilemeyecek biçimce tasarlanmıştır.
+   </para><para>
+<command>sysctl</command> başarılı olursa sıfır ile döner. Aksi takdirde <command>-1</command> ile döner ve <command>errno</command> değişkenine hata durumu atanır. Tüm sistem çağrılarına uygulanan hata durumlarına ek olarak aşağıdaki <command>errno</command> kodları olası diğer hataları belirtir:
+   </para><para><variablelist><varlistentry>
+   <term><command>EPERM</command></term><listitem><para>
+Sürecin, sistem parametresinin yolu üzerindeki elemanlardan birine erişim yetkisi yok ya da sistem parametresinin kendisine istenen yolla (okuma ya da yazma) erişim izni yok
+      </para></listitem></varlistentry><varlistentry>
+      <term><command>ENOTDIR</command></term><listitem><para>
+<varname>isim</varname>'in karşılığı olan bir sistem parametresi yok
+      </para></listitem></varlistentry><varlistentry>
+      <term><command>EFAULT</command></term><listitem><para>
+<varname>eski_değer</varname> bir boş gösterici değil ama <varname>eski_değer_uzn</varname> sıfır belirtilmiş, dolayısyla değer döndürecek yer yok
+      </para></listitem></varlistentry><varlistentry>
+      <term><command>EINVAL</command></term><listitem><para>
+        <itemizedlist><listitem>
+Sürecin belirttiği değer parametre için uygun değil
+        </listitem><listitem>
+Sistem parametresinin dönüş değeri için ayrılan yer yetersiz
+        </listitem></itemizedlist>
+      </para></listitem></varlistentry><varlistentry>
+      <term><command>ENOMEM</command></term><listitem><para>
+Bu değer sistem parametresini dönüş değeri için ayrılan yerin çok küçük olması durumunda <command>EINVAL</command> hata durumundan daha doğru bir hata durumu belirtir.
+      </para></listitem></varlistentry></variablelist>
+    </para></funcdescr></funcsynopsis></para><para>
+Linux çekirdekli ve <filename>proc</filename> dosya sistemli bir sisteminiz varsa çoğu sistem parametresine <filename>proc</filename> dosya sisteminin <filename>sys</filename> dizinindeki dosyaları okuyarak ya da onlara yazarak erişebilirsiniz. <filename>sys</filename> dizini, parametre yapısıyla aynı hiyerarşiye sahiptir. Örneğin serbest sayfa eşiklerini göstermek için komut satırında şu komutu verin:
+</para><para><screen># <command>cat /proc/sys/vm/freepages</command>
+</screen></para><para>
+Bazı sistem parametrelerini okumak veya belirtmek için kullanılan biraz daha geleneksel ve daha geniş kullanım alanı bulan ama pek genel amaçlı olmayan bazı GNU C kütüphanesi işlevleri:
+   </para><para><itemizedlist><listitem>
+<command>getdomainname</command>, <command>setdomainname</command>
+   </listitem><listitem>
+<command>gethostname</command>, <command>sethostname</command> (bkz. <xref linkend="glibc-Host-Identification"/>.)
+   </listitem><listitem>
+<command>uname</command> (bksz <xref linkend="glibc-Platform-Type"/>.)
+   </listitem><listitem>
+<command>bdflush</command>
+   </listitem></itemizedlist></para>
+  </chapter>
+</part>
+<!--
+  <div class="tablo">
+    <div class="satir">
+      <div class="solsutun">
+      <table cellpadding="5" cellspacing="0" border="0" class="funcinline">
+        <tr><xsl:apply-templates/></tr>
+      </table>
+      </div>
+      <div class="sagsutun">
+        <xsl:value-of select="@role"/>
+      </div>
+    </div>
+  </div>
+-->

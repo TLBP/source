@@ -1,0 +1,731 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--DOCTYPE article SYSTEM "../docbook/dtd/docbookx.dtd"-->
+<!-- ********************************************************************
+     $Id: yazdirma-nasil.xml,v 1.2 2002/10/03 19:49:13 nilgun Exp $
+     ******************************************************************** -->
+
+<article id="archive-yazdirma-nasil">
+  <articleinfo>
+    <title>Linux Yazıcı NASIL</title>
+    <author role="translator">
+      <firstname>Nurhan Çetin</firstname>
+      <affiliation>
+          <address><email>nurhanc@yeditepe.edu.tr</email></address>
+      </affiliation>
+    </author>
+    <author>
+      <firstname>Grant Taylor</firstname>
+      <affiliation>
+     <address><email>gtaylor+pht@picante.com</email></address>
+   </affiliation>
+   </author>
+    <pubdate>Çeviri: v1.0, 24 Aralık 1997</pubdate>
+    <pubdate>Özgün Belge: v3.10, 10 Eylül 1996</pubdate>
+  </articleinfo>
+<div>
+
+<pre>
+
+<b>Yasal Açıklamalar:</b>
+Telif Hakkı © 1996 Gary Taylor.
+Kişinin ismini değiştirmeden, çoğaltılabilir ve dağıtılabilir.
+
+<b>Legal Stuff:</b>
+This document is Copyright (c) 1996 by Grant Taylor. Please copy and
+distribute it widely, but do not modify the text or omit my name.
+
+<b>Özet</b>
+Bu belge, Linux altında yazdırma ve fakslama gibi işlemleri nasıl
+yapabileceğinizi anlatır.
+
+</pre><h2> 1.  Giriş</h2><pre>
+
+Burada bulamayacağınız soruların cevaplarını ve en son yazılmış belgeleri
+http://www.picante.com/~gtaylor/pht/ adresinde bulabilirsiniz.
+
+</pre><h2> 2. Nasıl yazdırılır? </h2><pre>
+
+Eğer zaten yazıcınızı sisteme tanıttı iseniz veya bu işi sistem
+yöneticiniz hallettiyse, bütün ögreneceğiniz lpr komutunu nasıl
+kullanacağınızdır. Bu da, Yazıcı-Kullanımı-NASIL belgesinde
+belirtilmektedir.
+
+</pre><h2> 3.  Çekirdek Yazıcı Aygıtları</h2>
+<h3> 3.1.  lp aygıtı</h3><pre>
+
+lp aygıtını yüklediğinizi varsayarsak (/proc/devices dosyası lp aygıtını
+içermelidir), Linux çekirdeği /dev/lp0, /dev/lp1 ve /dev/lp2
+dosyalarından birini veya bir kaçını destekler. Bunlar dinamik olarak
+atanmaz, bunun yerine, herbiri özel bir donanım I/O (Girdi/Çıktı) adresine
+karşlık gelir. Bu demektir ki, sisteme tanıtılan ilk yazıcı lp0 veya lp1
+olabilir, bu sizin donanımınıza bağlıdır.
+
+Aynı anda verilen bir bağlantı noktasında, hem plip hem de lp sürücülerini
+koşturamazsınız. Yinede, herhangi birini herhangi bir anda, elle veya v2
+çekirdeklerinde (ve 1.3.x'den daha sonraki sürümlerde) kerneld yardımıyla
+yükleyebilirsiniz. plip sürücüsünü bir bağlantı noktasında, lp sürücüsünü
+diğer bir bağlantı noktasında koşturmanız önerilir.
+
+`tunelp' adlı yardımcı program, Linux lp aygıtının kesinti kullanımını,
+tarama oranı gibi seçeneklerini ayarlar.
+
+1.3.x ve v2 çekirdeklerinde, çekirdek lp= seçeneği ile kesintileri ve I/O
+adreslerini ayarlamanıza izin verir.
+
+lp sürücüsü kurulduğu zaman, LILO/LOADLIN komut satırını kullanarak
+bağlantı noktası adreslerini ve kesintileri ayarlayabilirsiniz.
+
+       Sözdizimi:      lp=port0[,irq0[,port1[,irq1[,port2[,irq2]]]]]
+
+       Örneğin:   lp=0x378,0   veya   lp=0x278,5,0x378,7 **
+
+Unutmayın ki öntanımlı değeri olmadığı için, düşünülebilecek tüm bağlantı
+noktalarını belirtmelisiniz. Kurulmuş bir sürücüyü lp=0 komutunu
+kullanarak devre dışı bırakabilirsiniz.
+
+1.3.x ve v2 çekirdeklerinde bir modül yüklerken, I/O adreslerini veya
+kesintileri insmod komutunu kullanarak belirtebilirsiniz. Ayrıca,
+/etc/conf.modules dosyasında değişiklik yapıp, kerneld'nin bu değişikliği
+kayda almasını sağlayabilirsiniz. Parametreler, io=port0,port1,port2
+ve irq=irq0,irq1,irq2'dir. Daha fazla bilgi için insmod komutunun
+kılavuz sayfalarına bakabilirsiniz.
+
+Eğer standart bağlantı noktası numaralarını bulamıyorsanız, ikinci
+örnekteki gibi kullanmanız önerilir. Diğer bağlantı noktası (lp0)
+0x3bc'dedir.
+
+</pre><h3> 3.2.  Seri Aygıtlar</h3><pre>
+
+Seri aygıtlar, Linux'ta /dev/ttyS1 olarak çağrılanlardır. stty yardımcı
+programı seri bir bağlantı noktası için ayarları etkileşimli olarak
+görmenizi ve kurmanızı sağlar; setserial standart olmayan bağlantı
+noktaları için IRQ ve I/O adreslerini ayarlamanızi ve bazı özelliklerini
+kontrol etmenizi sağlar.
+
+Akış kontrollü yavaş bir seri yazıcı kullanırken, bazı yazıcı işlerinizin
+kesilmiş olduğunu görebilirsiniz. Bu, öntanımlı olarak, bağlantı noktası
+aygıtı kapandıktan 30 saniye sonra, aktarılamayan karakterleri
+tamponundan temizleyen seri bağlantı noktası yüzünden olabilir. Tampon
+4096 karakter tutabilir ve eğer yazıcınız akış kontrolünü kullanıyorsa ve
+yeterince yavaş ise, yazdırma yazılımı seri bağlantı noktasını kapattıktan
+30 saniye sonra, tamponun sonunda yer alan verileri kabul edemez bu
+yüzden tamponun sonundaki içerik kaybolacaktır.  Yazdırılacak uzun
+dosyaların bir kısmı kayboluyor ise, bu sebeptendir.
+
+30 saniyelik aralık, ioctl() sistem çağrısı kullanan seri bağlantı
+noktası veri yapısının "closing_wait" elemanı kullanılarak
+ayarlanabilir. Setserial bu veri elemanı ile ilgilenmez, ama aynı
+veri yapısı içerisindeki diğer elemanları işler ve "closing_wait" ile
+ilgilenmek için setserial'i değiştirmek basittir. Daha sonra, rc.serial
+icerisinde, setserial komutu "closing_wait" elemanını bağlantı noktasının
+diğer parametrelerini ayarladığı aynı zaman ile değiştirir.
+
+</pre><h2> 4.  Hangi kuyruklama yazılımı?</h2><pre>
+
+Son zamanlara kadar, Linux kullanıcıları için seçim çok kolaydı. Herkes
+BSD'nin Net-2 dağıtımındaki lpd yazılımını koşturuyordu. Ama bu değişmeye
+başladı. Sun'nın Solaris sistemi gibi SVR4 tipi sistemler, tamamen
+değişik, lpsched etrafında odaklanmış bir kuyruklama yazılımı içeriyorlar.
+Bazı Linux üreticileri, parasız elde edilebilen LPRng yazılımını sağlamaya
+çalışmaktadırlar. LPRng, lpd'den daha az kod tabanlı ve yönetimi kolay bir
+yazılımdır. Şu an için lpd pek çok Linux kullanıcısı içın iyi bir
+seçimdir. Anlaşılması ve onunla ilgili belge bulunması kolaydır.
+
+Eğer LPRng ile ilgili daha fazla bilgi istiyorsanız,
+  &lt;http://ltpwww.gsfc.nasa.gov:81/ltpcf/about/unix/Depotdoc/LPRng/>.
+bir göz atın.
+
+</pre><h2> 5.  Nasıl çalışır?</h2><pre>
+
+Yazıcı işlerinizin doğru yapılması için, lpd sisteminin nasıl çalıştığını
+bilmeniz gerekir.
+
+Lpd, Line Printer Daemon kelimelerinin kısaltılmışıdır. Hem sunucu süreci
+hem de yazdırma kuyruklaması ile ilgilidir. Bunlar:
+
+     lpd
+        Kuyruklama sunucu süreci.
+
+     lpr
+        Kullanıcı kuyruklama komutu. Lpr, lpd ile haberleşir ve  kuyruğa
+        yeni bir yazdırma işini ekler.
+
+     lpq
+        Bir yazıcı kuyruğundaki işleri listeler.
+
+     lpc
+        Lpd sistemi kontrol komutu. Lpc ile yazıcı kuyruğundaki işleri
+        durdurabilir, başlatabilir ve yeniden sıralayabilirsiniz.
+
+     lprm
+        lprm, yazıcı kuyruğundan bir işi siler.
+
+Peki tüm bunlar nasıl ayarlanıyor? Sistem açıldığında lpd koşmaya başlar.
+Hangi yazıcıların bekletmeyi yöneteceğini öğrenmek için, /etc/printcap
+dosyasını tarar. Her lpr komutu koşturulduğunda, lpr komutu lpd ile
+/dev/printer isimli yuva üzerinden haberleşir ve lpd'ye hem yazdırılacak
+dosyayı, hem dosyanın kime ait olduğunu, hem de nasıl yazdırılacağını
+belirtir. Lpd daha sonra uygun yazıcı üzerinden bu dosyayı bastırır.
+
+Lp sistemleri, yazıcıların çoğu satır yazıcısı iken tasarlanmıştır. Yani,
+insanlar düz ASCII dosyalarını yazdırırlardı. Bugün , ufak bir takım
+eklemelerle lpd, PostScript, metin veya dvi veya diğer biçimlerdeki
+dosyaları yazdıracak hale geldiler.
+
+
+</pre><h2> 6.  Nasıl kurulur?</h2>
+<h3> 6.1.  lpd'nin klasik anlamda ayarlanması</h3><pre>
+
+lpd'nin asgari olarak kurulumu dosyaları kuyruğa atma ve onları basma
+ilerini gerçekleştirir. Böyle bir kurulum, yazıcınızın yazdırılacak
+dosyaların tipinin algılanması veya istenilen çıktıyı üretmesi gibi
+sonuçlar doğurmaz. Gene de bu belgeyi okumaya devam edin.
+
+Ana olarak, lpd'ye bir yazıcı kuyruğu eklemek içın, /etc/printcab
+dosyasına yeni bir giriş eklemeli ve /var/spool/lpd dizininin altına da
+yeni bir kuyruk yaratmalısınız.
+
+/etc/printcap dosyasındakı yeni giriş şöyle olmalı:
+
+       # LOCAL djet500
+       lp|dj|deskjet:\
+               :sd=/var/spool/lpd/dj:\
+               :mx#0:\
+               :lp=/dev/lp0:\
+               :sh:
+
+Bu şekildeki ekleme şunu ifade eder: /var/spool/lpd/dj dizininin altında
+lp veya dj veya deskjet isimli bir kuyruk tanımlanmış, hiçbir işe azami
+bir büyüklük sınırı getirilmemiştir, bastırılacak aygıt /dev/lp0'dır ve
+her yazdırma işinden önce, o işi yazıcıya kimin gönderdiği, dosyanın isminin
+ne olduğu gibi bilgileri gösteren bir ön sayfa (banner) basılmayacaktır.
+
+Şimdi princab ile ilgili kılavuz sayfasını okuyabilirsiniz.
+
+Yukarıda yazılanlar çok basit gözüküyor olabilir, ama malesef bir çıktı
+aldığınızda bir takım sorunlara sebep olabilmektedir. Metin dosyalarini
+basarken bile kullanışsız çıktılar verebilmektedir. Mesela, merdiven
+şeklinde bir çıktı olasıdır:
+
+Bu birinci satır.
+                 Bu ikinci satır.
+                                 Bu üçüncü satır.
+
+Bu demektir ki yukarıda yazılanlardan daha fazlasına ihtiyac vardır. Bu da
+bizi süzme (filtering) kavramına götürür. Eğer printcab dosyasının kılavuz
+sayfasını okuduysanız, kuyruğun if ve of özelliklerine dikkat
+etmişsinizdir. if (input filter) girdi süzgeci anlamına gelir. Bizim
+ihtiyacımız olan özellik de budur.
+
+Eğer filter isimli bir küçük kabuk programcığı yazarsanız ve bu yeni bir
+satırdan önce, enter karakteri eklerse, merdiven şeklinde bir çıktı
+almaktan kurtulabilirsiniz. Dolasıyla printcab dosyasına şöyle bir if
+satırı eklemesi yapılabilir:
+
+       lp|dj|deskjet:\
+               :sd=/var/spool/lpd/dj:\
+               :mx#0:\
+               :lp=/dev/lp0:\
+               :if=/var/spool/lpd/dj/filter:\
+               :sh:
+
+Basit bir süzgeç programcığı da şu olabilir:
+
+       #!perl
+       while(&lt;STDIN>){chop $_; print "$_\r\n";};
+
+Eğer yukarıda yazanları yaptıysanız, artık metin dosyalarını çıktılarını
+kullanışlı bir şekilde elde edersiniz.
+
+Şu an için tek problem, sadece metin biçimindeki dosyaları basmanızdır.
+PostScript veya diğer biçimlerdeki dosyaları bastırmak veya çizimli bir
+çıktı almak daha iyi olacaktır. Bunu da yapmak kolaydır. Bu işi yapacak
+süzgecin adı sihirli-süzgeç (magic filter)'dir. Bu süzgeç herhangi biçımde
+bir dosyayı alıp, sorunsuz biçimde bastıracaktır. Bu süzgeç hakkında
+gerekli bilgi ve nereden bulunabileceği ilerki bölümler de anlatılacaktır.
+
+
+</pre><h3> 6.2.  Dosya İzinleri</h3><pre>
+
+Sisteminizdeki yazıcıyı ilgilendiren dosyaların izinlerini aşağıdaki gibi
+yapmakta fayda vardır. lpd komutu dışındaki dosyaların grup
+belirleyicilerini lp olarak atamak tercih edilen bir yoldur.
+
+       -r-sr-sr-x   1 root     lp    /usr/bin/lpr*
+       -r-sr-sr-x   1 root     lp    /usr/bin/lprm*
+       -rwxr--r--   1 root     root  /usr/sbin/lpd*
+       -r-xr-sr-x   1 root     lp    /usr/sbin/lpc*
+       drwxrwxr-x   4 root     lp    /var/spool/lpd/
+       drwxr-xr-x   2 root     lp    /var/spool/lpd/lp/
+
+Lpd sistemin yetkili kullanıcısı (root) tarafından koşturulmak zorunda
+olduğu için, yukaridaki örnekte bunun grup belirleyicisi "root" olarak
+atanmıştır.
+
+</pre><h2> 7.  Sihirli süzgeci nasıl elde edebiliriz?</h2>
+<h3> 7.1.  APS süzgeci</h3><pre>
+
+En iyi sihirli süzgeç paketlerinden bir tanesi APS süzgecidir (Andreas
+Klemm tarafından geliştirilmiştir).
+
+       Başlık:                  apsfilter
+       Sürüm:                   4.9.1
+       Tanım:                   otomatik olarak dosya tipini bulan lpd için
+                                magicfilter
+       Anathar Sözcükler:       lpd magicfilter aps apsfilter
+       Yazar:                   andreas@knobel.GUN.de (Andreas Klemm)
+       Sürdüren Kişiler:        sledge@hammer.oche.de (Thomas Bueschgens)
+                                andreas@knobel.GUN.de (Andreas Klemm)
+       Bulunabilecek Yer:       sunsite.unc.edu
+                                /pub/Linux/system/Printing/
+                                211KB aps-491.tgz
+       Platformlar:             C-Compiler, gs Postscript emulator,
+                                pbmutils
+       Yasal Açıklamalar:       GPL
+
+APS süzgeçi, yazıcı kuyruğu için, girdi süzgecini yükler ve pek çok
+değişik tipdeki dosyaları, yazıcınızın komut kümesine çevirir. Metin,
+PostScript, dvi, gif gibi dosya tiplerini anlar.
+
+</pre><h3> 7.2.  Magic-filter</h3><pre>
+
+Magic-filter paketi (B.A. McCawley tarafından yazılmıştır), APS süzgeci
+ile aynı işi yapar, fakat bash kabuğu için yazıldığı için, daha kolay
+özelleştirilebilir.
+
+       Sürüm:             0.4
+       Tanım:             /etc/magic dosyasını kullarak otomatik olarak
+                          dosya tiplerini bulan, lpd'yi ayarlamaya yarayan
+                          bash kabuk programcığı
+       Anathar Sözcükler: lpd, /etc/magic, printing, filter
+       Yazar:             B.A.McCauley@bham.ac.uk (Brian McCauley)
+       Bulunabilecek Yer: tsx-11.mit.edu
+                          pub/linux/sources/usr.bin
+                          magic-filter-0.4.tar.gz  5709
+       Yasal Açıklamalar: GNU GPL
+
+</pre><h3> 7.3.  Başka bir Magicfilter</h3><pre>
+
+Aynı isimli başka bir Magic Filter.
+
+       Başlık:            magicfilter
+       Sürüm:             1.1b
+       Tanım:             Özelleştirilebilir otomatik yazıcı süzgeci. C
+                          dilinde yazılmıştır. Bu sürüm, sisteme yüklenmiş
+                          yazılıma dayalı ayar dosyalarını otomatik olarak
+                          yükler.
+       Yazar:             H. Peter Anvin &lt;Peter.Anvin@linux.org>
+       Bulunabilecek Yer: sunsite.unc.edu
+                          /pub/Linux/system/Printing
+                          magicfilter-1.1b.tar.gz 53000
+       Yasal Açıklamalar: GPL
+
+</pre><h2> 8.  lpd altında seri yazıcılar</h2>
+<h3> 8.1.  /etc/printcap dosyası ile kurum</h3><pre>
+
+Lpd, /etc/printcab dosyası içerisinde atayabileceğiniz ve seri bağlantı
+noktasındaki yazıcının çalışmasını kontrol eden beş özellik sağlar.
+Printcab ile ilgili kılavuz sayfasını okuyun ve br#, fc#, xc#, fs# and xs#
+ifadelerinin anlamılarına dikkat edin. Son dört özellik, bağlantı
+noktasının kullanımı için ayarları gösteren bit eşlemeleridir. br#
+özelliği ise, basitçe veri iletişimi hızıdir yani 'br#9600'.
+
+stty yazıcı bağlantı noktasını kurmak için kullanılır, böylece bir
+dosyanın içeriğini ona gösterebilir ve doğru bir şekilde çıktısını
+almasını sağlayabilirsiniz.
+
+stty ayarları printcab işaretleri ayarlarına çevirmek kolaydır. Eğer
+gerekiyorsa, stty ile ilgili kılavuz sayfasını okuyun.
+
+</pre><h2> 9.  Dağıtıcıların Çözümleri</h2>
+<h3> 9.1.  RedHat 2.x ve 3.0.3 (Picasso)</h3><pre>
+
+Redhat, hem yerel hem de uzaktaki yazıcıları sisteminize nasıl
+tanıtmanız gerektiğine dair bir GUI yazıcı yönetim aracına sahiptir. Bu
+araç, ghostscript destekleyen bir yazıcı tipini ve yazdırma için bir aygıt
+dosyasını seçmenizi sağlar ve sonra /etc/printcab dosyasına bir yazıcı
+kuyruğu ekler ve kısa bir PostScript-ve-ASCII sihirli süzgeci yazarak hem
+GhostScript hem de ASCII biçimindeki dosyaların yazıcı tarafından
+tanınmasını sağlar.
+
+RedHat'in son BETA sürümleri LPRng'yi kullanmaktadır.
+
+</pre><h2> 10.  Ağ üzerinden bir yazıcıya nasıl yazdırılır?</h2><pre>
+
+Lpd'nin özellikleriden biri de, fiziksel olarak başka bir makineye bağlı
+bir yazıcıdan çıktı almanızı ağ üzerinden sağlayabilmesidir. Süzgeç kabuk
+programcıkları ve yardımcı programların doğru birleşimi ile, lpr
+komutunu ağ üzerinden çıktı alacak şekilde kullanmanız mümkündür.
+
+</pre><h3> 10.1.  Bir Unix/lpd makinesini üzerinden</h3><pre>
+
+Uzaktaki makinelerin sizin yazıcınızı kullanmasına izin verecekseniz, bu
+makineleri /etc/hosts veya /etc/hosts.lpr dosyalarında belirtmelisiniz. rs
+özelliğini kullanarak yazıcınızdan çıktı alabilecek kullanıcı isimlerini
+de belirleyebilirsiniz. Bunun için lpd komutunun kılavuz sayfasını
+okuyunuz.
+
+</pre><h3> 10.2.  lpd ile</h3><pre>
+
+Uzaktaki bir makineden çıktı almak için /etc/printcab dosyasına şunları
+yazın:
+
+  # REMOTE djet500
+  lp|dj|deskjet:\
+          :sd=/var/spool/lpd/dj:\
+          :rm=redkit.yeditepe.edu.tr:\
+          :rp=redkit_yazıcısı:\
+          :lp=/dev/null:\
+          :sh:
+
+Burada rm ile belirtilen satırda, yazıcının bağli olduğu makinenin adresi
+belirtilmiştir. Yukarıdaki örneğe göre, yazıcının adı redkit_yazıcısı ve
+bu yazıcının bağlı olduğu makinenin ismi ise Yeditepe Üniversitesinde
+bulunan redkit olarak belirtilmiştir. Ayrıca, yerel makine üzerinde bu
+yazıcı için de bir kuyruk dizini (sd ile belirtilen) tanımlanmıştır
+böylece, uzaktaki yazıcının meşgul olması veya kullanılır durumda olmaması
+durumunda, işler yerel makinede bekletilir.
+
+</pre><h3> 10.3.  rlpr ile</h3><pre>
+
+rlpr komutu kullanılarak, bir yazdırma işlemi doğrudan uzaktaki makinenin
+kuyruğuna atılabilir.
+
+Rlpr ağ üzerinde herhangi bir yerde bulunan lpd sunucularına yazıcı
+işlerini TCP/IP kullanarak gönderir.
+
+Lpr'nin aksine, nereden çıktı almak istediğinizi (/etc/printcab dosyası
+üzerinden) açıkca belirtmek durumunda değilsiniz. Dolayısıyla, daha
+esnektir ve daha az yönetim gerektirir.
+
+rlpr, lpr'nin kullanılabileceği her yerde kullanılabilir. Geleneksel BSD
+lpr komutu ile uyumludur.
+
+Yazıcıların nasıl ayarladığını önemsemeksizin, herhangi bir yerden
+herhangi bir yere yazdırma özelliği, rlpr komutunun öne çıkan gücüdür.
+Bilinen lpr gibi bir süzgeç görevini yerine getirerek, uzaktaki bir
+makine üzerinde netscape, xemacs gibi programları çalıştıran istemcilerin
+çıktı almasına izin verir.
+
+Rlpr, bu adresten elde edilebilir:
+
+  ftp://sunsite.unc.edu/pub/Linux/system/Printing/
+
+</pre><h3> 10.4.  Bir Win95, WinNT, LanManager veya Samba yazıcısına erişim</h3><pre>
+
+Bir lpd kuyruğunu smbclient programı üzerinden, TCP/IP tabanlı bir Samba
+yazıcı servisine yöneltmek mümkündür. Kısaca, belirtilen yazıcı için bir
+ayar dosyasını kuyruk dizinine koyarsınız ve "if" gibi smbprint kobuk
+programcığını yüklersiniz.
+
+/etc/printcap dosyası şöyledir:
+
+       lp|uzaktaki-sambayazıcısı:\
+           :lp=/dev/null:sh:\
+           :sd=/var/spool/lpd/lp:\
+           :if=/usr/local/sbin/smbprint:
+
+Bunu nasıl kuracağınızı smbprint kabuk programcığı içinde yer alan
+belgelerden okuyabilirsiniz.
+
+Ayrıca, lpd'yi işin içine katmadan, smbclient komutunu kullanarak, bir
+dosyayı doğrudan Samba yazıcı servisine gönderebilirsiniz. Daha fazla
+bilgi için kılavuz sayfasına bakınız.
+
+</pre><h3> 10.5.  Bir NetWare Yazıcısına erişim</h3><pre>
+
+ncpfs içinde yer alan nprint adlı yardımcı program, smbprint'in NetWare
+için yazılmış olanıdır. ncpfs şu adresten elde edilebilir:
+             ftp://linux01.gwdg.de/pub/ncpfs/
+
+LSM (sürüm 0.16) ncpfs işlevlerini şöyle açıklar:
+
+        ncpfs ile, Linux altında netware sunucularınızın birimlerini
+        bağlayabilirsiniz. Ayrıca netware yazıcı kuyruğuna yazdırma
+        işlemi ve kuyruğa ekleme yapabilirsiniz. Bunun için çekirdeğinizin
+        1.2.x veya 1.3.54 ve yukarı bir sürümü olması gerekir. ncpfs 1.3.54'ten
+        düşük, herhangi bir 1.3.x çekirdeği ile çalışmaz.
+
+Lpd üzerinden nprint'i çalıştırmak için, NetWare yazıcısı üzerinde
+standart girdiyi yazdıracak küçük bir kabuk programcığı yazıp, lpd yazıcı
+kuyruğu için "if" gibi yüklersiniz. Şöyle ki:
+
+       sub2|uzaktaki-NWyazıcısı:\
+               :lp=/dev/null:sh:\
+               :sd=/var/spool/lpd/sub2:\
+               :if=/var/spool/lpd/nprint-programcığı:
+
+nprint programcığı tahminen şoyle olacaktır:
+
+       #! /bin/sh
+       /usr/local/bin/nprint -S net -U name -P passwd -q printq-q -
+
+</pre><h3> 10.6.  Bir EtherTalk (Apple) yazıcısına erişim</h3><pre>
+
+netatalk paketi nprint ve smbclient komutu gibi bir komut içerir. Werner
+Eugster adlı kişinin bu konu ile ilgili çok güzel bir sayfası
+bulunmaktadır. Göz atmanız önerilir:
+
+        http://garnet.berkeley.edu/~weugster/appleprint.html
+
+Netatalk, DEC tulip yongalı SMC Etherpower PCI kartı ile çalışmaz.
+
+</pre><h3> 10.7.  Bir HP veya diğer ethernet yazıcısına erişim</h3><pre>
+
+HP ve diğer bazı yazıcılar, doğrudan lpd ile yazdırabileceğiniz bir
+ethernet arayüzü ile birlikte gelir. Yazıcınız veya ağ bağdaştırıcısı ile
+gelen komutları takip etmelisiniz. Ama genelde bu tipteki yazıcılar,
+lpd'yi çalıştırıp, bir veya daha fazla kuyruk tanımlarlar. Örneğin bir HP
+yazıcısı, şöyle bir printcab dosyası ile çalışabilir:
+
+  lj-5|uzaktaki-hpyazıcısı:\
+          :lp=/dev/null:sh:\
+          :sd=/var/spool/lpd/lj-5:\
+          :rm=yazıcı.bu_adreste.bulunuyor:rp=raw:
+
+</pre><h4> 10.7.1.  Daha eski HP yazıcılarına erişim</h4><pre>
+
+Bazı yazıcılar (JetDirect kartlarının ilk tipleri gibi) karmaşık
+olamayan TCP bağlantısi da dahil olmak üzere, basit protokol
+bağlantılarını desteklerler. Bu tipteki bir yazıcıdan çıktı almak için, bu
+yazıcıya, belirtilen bağlantı noktası üzerinden bir TCP bağlantısı açmak
+durumundasınız. Bu Perl kullanılarak gerçekleştirilebilir:
+
+  #!/usr/bin/perl
+  # Thanks to Dan McLaughlin for writing the original version of this
+  # script (And to Jim W. Jones for sitting next to Dan when writing me
+  # for help ;)
+
+  $fileName = @ARGV[0];
+
+  open(IN,"$fileName") || die "Can't open file $fileName";
+
+  $dpi300     = "\x1B*t300R";
+  $dosCr      = "\x1B&amp;k3G";
+  $ends = "\x0A";
+
+  $port =  9100 unless $port;
+  $them = "bach.sr.hp.com" unless $them;
+
+  $AF_INET = 2;
+  $SOCK_STREAM = 1;
+  $SIG{'INT'} = 'dokill';
+  $sockaddr = 'S n a4 x8';
+
+  chop($hostname = `hostname`);
+  ($name,$aliases,$proto) = getprotobyname('tcp');
+  ($name,$aliases,$port) = getservbyname($port,'tcp')
+      unless $port =~ /^\d+$/;;
+  ($name,$aliases,$type,$len,$thisaddr) =
+          gethostbyname($hostname);
+  ($name,$aliases,$type,$len,$thataddr) = gethostbyname($them);
+  $this = pack($sockaddr, $AF_INET, 0, $thisaddr);
+  $that = pack($sockaddr, $AF_INET, $port, $thataddr);
+
+  if (socket(S, $AF_INET, $SOCK_STREAM, $proto)) {
+  #    print "socket ok\n";
+  }
+  else {
+      die $!;
+  }
+  # Give the socket an address.
+  if (bind(S, $this)) {
+  #    print "bind ok\n";
+  }
+  else {
+      die $!;
+  }
+
+  # Call up the server.
+
+  if (connect(S,$that)) {
+  #    print "connect ok\n";
+  }
+  else {
+      die $!;
+  }
+
+  # Set socket to be command buffered.
+
+  select(S); $| = 1; select(STDOUT);
+
+  #    print S "@PJL ECHO Hi $hostname! $ends";
+  #    print S "@PJL OPMSG DISPLAY=\"Job $whoami\" $ends";
+  #    print S $dpi300;
+
+  # Avoid deadlock by forking.
+
+  if($child = fork) {
+      print S $dosCr;
+      print S $TimesNewR;
+
+      while (&lt;IN>) {
+          print S;
+      }
+      sleep 3;
+      do dokill();
+  } else {
+      while(&lt;S>) {
+          print;
+      }
+  }
+
+  sub dokill {
+      kill 9,$child if $child;
+  }
+
+</pre><h3> 10.8.  Uzaktaki yazıcılar için if (input filter -girdi süzgeci) koşturma</h3><pre>
+
+Lpd'nin tuhaflıklarından bir tanesi "if"'i uzaktaki yazıcılar için
+koşturamamasıdır. Eğer "if" çalıştırmaya, ihtiyaç duyarsanız, bir çift
+kuyruk kurup, işleri tekrar kuyruğa atarak başarabilirsiniz. Şu printcab
+örneğini düşünün:
+
+       lj-5:uzaktaki-hplj:\
+               :lp=/dev/null:sh:\
+               :sd=/var/spool/lpd/lj-5:\
+               :if=/usr/lib/lpd/filter-lj-5:
+       lj-5-uzaktaki:lp=/dev/null:sh:rm=yazıcı.bu_adreste.bulunmakta:\
+               :rp=raw:sd=/var/spool/lpd/lj-5-raw:
+
+  filter-lj-5 kabuk programcığı da:
+
+       #!/bin/sh
+       gs &lt;options> -q -dSAFER -sOutputFile=- - | \
+               lpr -Plj-5-uzaktaki -U$5
+
+Lpr'nin -U seçeneği ile çalışması sadece lpr sunucu süreci olarak
+koşturulursa mümkündür. Bu, işin sahibinin ismini yeni kuyrukta tekrar
+ayarlar. Tabii, eğer kullanıcı ismi 5. argüman değilse (-U$5), o zaman
+daha başka metodlarla bu işi sağlamak gerekir. Bunun için printcab'in
+kılavuz sayfasına bakınız.
+
+</pre><h2> 11.  Bir faks makinesine yazdırma nasıl?</h2><pre>
+
+</pre><h3> 11.1.  Bir faxmodem kullanarak</h3><pre>
+
+Sizin belgelerinizi fakslamanıza ve belgeleri fakstan almanıza yardımcı
+olacak pek çok faks programı vardır. Bunlardan bir tanesi Sam Leffler's
+HylaFax adlı programıdır ve ftp.sgi.com'dan elde edilebilir.
+
+Ayrıca,çok basit bir program olan efax ile de faks göndermek ve mgetty ile
+faks almak da mümkündür.
+
+</pre><h3> 11.2.  Uzaktaki yazdırma servisini kullanarak</h3><pre>
+
+Faks makinesinde görünen bir yazdırılmış bir belgeyi içeren bir elektronik
+postayı göndermenize izin veren, bir servis vardır. Postscript biçimini de
+destekleyen kullanışlı bir servistir. Daha fazla bilgi için, şu adresteki
+bu konu ile ilgili En Çok Sorulan Sorular listesine bakınız:
+        http://www.town.hall.com/fax/faq.html
+
+</pre><h2> 12.  Sözcük İşlem (Word Processing) yazılımlar.</h2><pre>
+
+Linux, dört tip derlemiş dosyayı koşturabilir: iBCS, Win16/Win32 (dosemu
+ile), Linux ve Mac/68k.
+
+</pre><h3> 12.1.  Biçimleme dilleri</h3><pre>
+
+     nroff
+        Bu UNIX'in ilk biçimleme dilidiydi. Kılavuz sayfaları, *roff
+        biçiminde yazılmış bir örnektir. Bir kılavuz sayfasını postscript
+        biçimine groff komutu ile çevirebilirsiniz. Bunu şu komut ile
+        sağlarsınız: man -t foo | lpr
+
+     TeX
+        TeX ve LaTeX UNIX'de en çok kullanılan biçimleme dillerindendir.
+        Teknik çalışmaların çoğu LaTeX'de yazılır çünkü matematiği destekleyen
+        bir kaç metin işlemcisinden biridir. TeX'in çıktı biçimi dvi'dir
+        ve PostScript veya HP'nin PCL biçimlerine dvips veya dvilj kullanılarak
+        çevrilir.
+
+     SGML
+        Unix ve Linux için, en az bir tane bedava SGML ayrıştırıcısı
+        bulunmaktadır. Linuxdoc-SGML belge sisteminin temelini oluşturur.
+        Diğer DTD'leri de destekler.
+
+     HTML
+        Basit projeler için, HTML kullanılabilir ve netscape'den bunların
+        çıktısı alınabilir.
+
+</pre><h3> 12.2.  WYSIWYG</h3><pre>
+
+     LyX
+        LyX, LaTeX'in ön uçudur. Bununla ilgili ev sayfasına göz
+        atabilirsiniz:
+        http://www-pu.informatik.uni-tuebingen.de/users/ettrich
+
+     The Andrew User Interface System (Andrew Kullanıcı Arayüz Sistemi)
+        AUIS, pek çok ana sözcük işlem özelliğini, HTML özelliklerini ve
+        MIME biçiminde elektronik posta ve haber gruplarını destekleyen
+        WYSIWYG tarzındaki bir metin düzenleyicisidir.
+
+</pre><h2> 13.  Ghostscript.</h2><pre>
+
+Ghostscript, Linux'tan çıktı almak için önemli bir programdır. Unix
+altında çalışan pek çok yazıcı yazılımı PostScript üretir. Ancak bu
+yazılımların 100 ile 300 dolar arasında fiyatı vardır. Oysa ki
+Ghostscript bedava bir programdır ve Postscript'ten sizin yazıcınızın
+dilini üretir. Lpd'nin girdi süzgeci ile bağlantığında, sanal bir
+PostScript yazıcısı izlenimi verir.
+
+İki biçimde GhostScript elde edebilirsiniz. İlki ticari sürüm olan Aladdin
+Ghostscript'dir. Bu, Adobe Acrobat'ın pdf biçimini destekler.
+
+İkinci sürüm parasız sürüm olan GNU GhostScript'tir. Aladdin
+Ghostscript'ten pek bir farklı yoktur.
+
+Ghostscript'teki ana sorun, yazı tiplerindedir. Ama ticari olarak
+tescillenmiş yazı tipleri pek çok yerden elde edilebilir.
+
+Ghostscript ile ne yaparsanız yapın, onu, dosya erişimini engelleyen
+(-dSAFER) seçeneği ile koşturduğunuzdan emin olun. PostScript çok işlevli
+bir dildir ama kötü bir PostScript programı başınızı çok ağrıtabilir.
+
+</pre><h3> 13.1.  Ghostscript çıktısını eniyileme</h3><pre>
+
+Eğer GhostScript'in çıktısı istediğiniz gibi değilse, yapılabilcek bir kaç
+
+</pre><h4> 13.1.1.  Çıktı yeri ve boyutu</h4><pre>
+
+Bir sayfadaki görüntünün en-boy oranı, büyüklüğü, yeri, Ghostscript'deki
+yazıcıya özel sürücü tarafından kontrol edilir. Eğer sayfalarınız çok
+kısa, çok uzun ve çok büyük ise, sürücünüzün kaynak modüllerine bakıp,
+ayarlama yapabilirsiniz.
+
+</pre><h4> 13.1.2.  Nokta Büyüklükleri</h4><pre>
+
+Laser olmayan yazıcıların noktaları oldukça büyüktür. Bu çıktıların çok
+karanlık çıkmasına sebep olur. Bu sorunun üstesinden gelmek için,
+aşağıdaki dosyayı (gamma.ps) GhostScript'in lib dizinine yerleştirin ve
+adını gerçek dosyadan önce GhostScript çağrımına yazın. Düşük değerler
+daha parlak bir çıktı almanızı sağlar. Özellikle sürücünüz Floyd-Steinberg
+ise, 0.2 ile 0.15 arasındaki değerler iyi seçim olacaktır.
+
+       ---8&lt;---- gamma.ps ----8&lt;---
+       %!
+       %transfer functions for cyan magenta yellow black
+       {0.3 exp} {0.3 exp} {0.3 exp} {0.3 exp} setcolortransfer
+       ---8&lt;------------------8&lt;---
+
+Renklerle oynamak için, examples adlı alt dizinde bulunan colorcir.ps adlı
+(GhostScript ile beraber gelir) dosyayı kurcalamanız önerilir.
+
+</pre><h2> 14.  Yazıcıya gönderilecek dosyaların ekranda görüntülenmesi.</h2><pre>
+
+</pre><h3> 14.1.  PostScript</h3><pre>
+
+Ghostscript, PostScript görüntüleyicisi olan Ghostview adlı programı
+kullanan X11 sürücüsüne sahiptir. Bunun son sürümleri PDF biçimindeki
+dosyaları da görüntüler.
+
+</pre><h3> 14.2.  TeX dvi</h3><pre>
+
+TeX dvi (TeX DeVice Independant) dosyaları da X11 altında xdvi ile
+görüntülenebilir.
+
+VT100 sürücüsü de vardır. dgvt olarak bilinir. Tmview Linux ve svgalib ile
+çalışır.
+
+</pre></div></article>

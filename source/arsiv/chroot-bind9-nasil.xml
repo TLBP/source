@@ -1,0 +1,354 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--DOCTYPE article SYSTEM "../docbook/dtd/docbookx.dtd"-->
+<!-- ********************************************************************
+     $Id: chroot-bind9-nasil.xml,v 1.1 2002/10/17 23:01:01 nilgun Exp $
+     ******************************************************************** -->
+
+<article id="archive-chroot-bind9-nasil">
+  <articleinfo>
+    <title>CHROOT-BIND NASIL</title>
+    <author role="translator">
+      <firstname>Genco Yılmaz</firstname>
+      <affiliation>
+          <address><email>gencoyilmaz@gmail.com</email></address>
+      </affiliation>
+    </author>
+    <pubdate>Çeviri: v0.01, 1 Eylül 2001</pubdate>
+    <author>
+      <firstname>Scott Wunsch</firstname>
+    </author>
+    <pubdate>Özgün Belge: v1.4</pubdate>
+  </articleinfo>
+<div>
+<p/>{Bu doküman Scott Wunsch'un v1.4 chroot-bind9 dokümanından yararlanılarak
+yazılmıştır.}
+<br/>
+<p/><b><font size="+1">Bu doküman ne anlatır, Chroot Bind 9.x Ne İşe Yarar
+?</font></b>
+<p/>    Bind internet alan adı sunucusunu yükleyip çalıştırdığınız
+zaman, program ön tanımlı bir şekilde root kullanıcı yetkileriyle çalışır.
+Bind daki herhangi bir açık ile root kullanıcı yetkileri ele geçirildiğinde
+hiç de hoş olmayacak durumlarla karşılaşabilirsiniz.Bu nedenle biraz daha
+fazla güvenlik amacıyla bind, hem root kullanıcı yerine başka bir kullanıcı
+ile çalışabilir hem de chroot yardımıyla kendi alanı dışarısında başka
+dizinleri görmesi yasaklanır.Örneğin bu dokümanda bind için artık kök dizini
+/ değildir.Yeni kök dizin /chroot/named 'dir  ve bu dizinin altı görülemez.
+Burada BIND'ın kurulumu anlatılmayacak. Derlenmesi yapılmış bir bind'ı
+nasıl chroot alanda çalıştırabiliriz, ona bakacağız.Eğer BIND 8.x sürümünden
+9.x sürümüne geçmek istiyorsanız, BIND dokümanlarındaki migration kısmına
+bakmanızı tavsiye ederim.Ben geçerken sorun yaşadım. Derleme sorunsuz olmasına
+ragmen, conf dosyalarındaki değişiklik nedeniyle yeni daemon çalışmayabiliyor.
+8.x sürümünde conf dosyalarındaki ufak tefek hatalara rağmen sunucu çalışabiliyordu,
+fakat 9.x sürümünde sunucu, her dosyanın yapısı doğru olana kadar çalışmıyor.Dikkat
+boğuşabilirsiniz.:)
+<br/>
+<p/><b><font size="+2">KURULUM</font></b>
+<br/>
+<p/><b><i><font size="+2">Chroot Bind 9 için Kafes Hazırlanması</font></i></b>
+<p/><b><font size="+2">1) Kullanıcı ve grup yaratılması</font></b>
+<p/>Bind programının root kullanıcı yetkileriyle çalıştırılmasının iyi bir
+fikir olmadığını biliyoruz.Bunun yüzden bind için ayrı bir kullanıcı ve
+grup yaratacağız.Bunun için sistemde varolan herhangi bir kullanıcıyı kullanmayınız.(Örneğin
+nobody) (Aşağıda italik ile yazılanlar komutların ne işe yaradığını anlatan
+kısa açıklamalar içermektedir)
+<br/>
+<table cols="1" width="50%" bgcolor="#CCFFFF" >
+<tr>
+<td>$su - </td>
+</tr>
+</table>
+
+<table cols="1" width="50%" bgcolor="#CCFFFF" >
+<tr>
+<td>#groupadd named</td>
+</tr>
+</table>
+
+<br/>
+<table cols="1" width="60%" bgcolor="#CCFFFF" >
+<tr>
+<td>#useradd named -d /chroot/named -s /bin/false
+-g named -c "Chroot User"</td>
+</tr>
+</table>
+
+<p/><i><font size="+1">{</font>Root kullanıcısının kabuğuna geçtik, named
+kullanıcısı için named adında bir grup oluşturduk. Daha sonrada home dizini
+/chroot/named, kabuğu /bin/false, grubu named olan bir kullanıcı yarattık
+ve gecos alanına Chroot User yazdırdık}</i>
+<p/>Bu işlemlerimizin sonucunda /etc/passwd dosyamıza
+<br/>
+<table border="0" cols="1" width="60%" bgcolor="#CCFFFF" >
+<tr>
+<td>named:x:1121:109:Chroot User:/chroot/named:/bin/false</td>
+</tr>
+</table>
+
+<p/>benzeri bir satır eklendi. /etc/group dosyamıza ise aşağıdaki satır
+eklendi.
+<br/>
+<table border="0" cols="1" width="50%" bgcolor="#CCFFFF" >
+<tr>
+<td>named:x:109:</td>
+</tr>
+</table>
+
+<p/><b><font size="+2">2 ) Dizin Yapısının Oluşturulması</font></b>
+<p/><pre><b>
+/chroot
+  +- named
+       +- dev
+       +- etc
+       |   +- namedb
+       |   +- slave
+       +- var
+           +- run
+</b></pre>
+<br/>
+<br/>
+<br/>
+<table border="0" cols="1" width="60%" bgcolor="#CCFFFF" >
+<tr>
+<td><pre>
+#mkdir /chroot
+#mkdir /chroot/named
+#mkdir /chroot/named/dev
+#mkdir /chroot/named/etc
+#mkdir /chroot/named/etc/namedb
+#mkdir /chroot/named/etc/slave
+#mkdir /chroot/named/var
+#mkdir /chroot/named/var/run</pre></td>
+</tr>
+</table>
+
+<p/><i><font size="+1">{Yukarıdaki işlemler ile chroot bind için gerekli olan
+dizin yapısını oluşturduk}</font></i>
+<p/><b><font size="+2">3) Bind Programının Yerleştirilmesi</font></b>
+<p/>Bind'ın sistem üzerinde kurulu olduğunu farzediyoruz.(Örnegin named.conf
+ve zone dosyalarınız mevcut olmalı) Şimdi bu dosyalarımızı
+<br/>chroot jail'e aktaracağız.
+<br/>
+<br/>
+<table border="0" cols="1" width="60%" bgcolor="#CCFFFF" >
+<tr>
+<td><pre>
+#cp -p /etc/named.conf /chroot/named/etc/
+#cp -a /var/named/* /chroot/named/etc/namedb/</pre></td>
+</tr>
+</table>
+
+<p/>Gerekli dosyalarımızı taşıdık.Normalinde bind 'ın /chroot/named/etc/namedb
+dizinine yazabilmesi gerekir, fakat güvenligi biraz daha artırarak buraya
+named kullanıcısı için yazma izini vermiyoruz. Sunucunuz slave olarak calışıyorsa
+/chroot/named/etc/namedb/slave dizinine yazabilmek için gerekli izini veriyoruz.
+Slave zone dosyalarınızı bu alana aktarmak ve gerekli yol değişikliklerini
+named.conf dosyasında yapmalısınız.
+<p/>.
+<table border="0" cols="1" width="60%" bgcolor="#CCFFFF" >
+<tr>
+<td><pre>
+# chown -R named:named /chroot/named/etc/namedb/slave
+# chown named:named /chroot/named/var/run</pre></td>
+</tr>
+</table>
+{/chroot/named/var/run içinde izin verdik}
+<p/><font size="+2"><b>4) Sistem Destek Dosyaları</b></font>
+<p/>Bind chroot alanında çalıştığından, sunucu çalışamaya başladıktan sonra
+kendi alanının dışına çıkamayacaktır.Fakat bind dışarıdaki birkaç
+<br/>dosyaya erişmek zorundadır.Bu özellik Bind 8 de yoktu.
+<p/>    Bind chroot alan içerisinde <b>/dev/null</b>
+ve <b>/etc/localtime</b> dosyalarına ihtiyaç duyacaktır. /dev/null aygıtının
+yaratılması sistemden sisteme farklılıklar göstermektedir.Emin olmak için
+<b>/dev/MAKEDEV</b>
+betiğimize bakalım. /etc/localtime dosyasını aşağıda belirtildiği şekilde
+kopyalıyoruz. Localtime dosyası bazı sistemlerde <b>/usr/lib/zoneinfo/localtime</b>
+yolunda bulunmaktadır.{Kullandığım sistem slackware 8.0 ve bu dosya hem
+/etc/localtime hem de /usr/share/zoneinfo/localtime
+<br/>yolunda bulunuyor}
+<br/>
+<br/>
+<table border="0" cols="1" width="60%" bgcolor="#CCFFFF" >
+<tr>
+<td><pre>
+#mknod /chroot/named/dev/null c 1 3
+#cp /etc/localtime /chroot/named/etc/</pre></td>
+</tr>
+</table>
+
+<br/>
+<p/><b><font size="+2">5)  Oturumu Açıyoruz</font></b>
+<p/>Bind kayıt tutma işlemini syslogd (System Logging Daemon) aracılıgıyla
+yapar.Fakat, bu işlem /dev/log soketine kayıt bilgileri gönderilerek gerçekleştirilir
+/dev/log bizim kafes ortamımız dışarısında olduğundan bunu kullanamayacagız.
+Ama Linux dünyasında cözümler tükenmiyor abilerimiz buna da bir çözüm bulmuşlar:)
+<p/><b><i><font size="+1">İdeal Çözüm</font></i></b>
+<p/>Bu çözüm için syslogd programınızın  <b>-a </b>seçeneği ile baslatılmayı
+desteklemesi gerekir. Bu seçenek ile /dev/null dışında başka bir soket
+daha belirleyebiliyoruz.
+<br/>(Hatta 19 ek soket, daha fazlasını istiyorsanız, syslogd.c kaynak dosyasındaki
+MAXFUNIX  değerini artırın.)Bu desteğin olup olmadığını man sayfalarından
+görebilirsiniz.
+<p/><b>Redhat Sistemlerde</b>
+<p/>/etc/rc.d/init.d/syslog dosyasındaki "<b>daemon syslogd -m 0</b>"
+satırını  "<b>daemon syslogd -m 0 -a /chroot/named/dev/log</b>" olarak
+değiştiriniz.
+<p/><b>Slackware</b>
+<p/>/etc/rc.d/rc.inet2  dosyasindaki  "<b>/usr/sbin/syslogd</b>"
+satırına  "<b>-a /chroot/named/dev/log</b>" soket satırını ekleyiniz.
+<br/><b>/usr/sbin/syslogd -a /chroot/named/dev/log  </b>Satır solda
+göründüğü gibi olacaktır.
+<p/><b>Syslogd'yi yeniden başlatıyoruz.</b>
+<br/>Değişikliklerin aktif olması için syslogd programını durdurup, yeni
+seçenekler ile tekrar başlatalım. Syslogd 'yi tekrar başlattığımızda
+<br/>/chroot/named/dev dizininde log adında bir soket dosyası bulunmalıdır.Çıktı
+aşağıdaki gibi olacaktır.
+<p/><b>srw-rw-rw-   1 root     root
+0 Mar 13 20:58 log</b>
+<br/>
+<p/><b>Diğer Çözümler</b>
+<br/>Eski bir syslod 'niz varsa başka bir yol bulmak durumundayız.Bazı programlar,
+örneğin "holelogd" proxy gibi davranarak logları chroot ile yaratılan alandan
+alabilmekte ve /dev/log soketine geçebilmektedir.
+<br/>    Ya da bind programını syslogd'yi kullanmak yerine,
+logları direk olarak dosyalara yazmasını söyleyebiliriz Daha fazla bilgi
+için bind dokümanlarına bakabilirsiniz.
+<p/><b><font size="+2">6) İzinler ile Oynayalım </font></b>.
+<br/>
+<br/>
+<table border="0" cols="1" width="60%" bgcolor="#CCFFFF" >
+<tr>
+<td><pre>
+#chown root /chroot
+#chmod 700 /chroot
+#chown named:named /chroot/named
+#chmod 700 /chroot/named</pre></td>
+</tr>
+</table>
+
+<p/><b><font size="+2">7) Chroot ortamdaki yeni bind için ayarları yapıyoruz</font></b>
+<p/>Şu an <u>bind 9.x programının derlenmiş oldugunu kabul ediyoruz ve named
+programı /usr/sbin/named altında bulunmaktadır</u>.Önceden named sunucusunu
+başlatırken
+<br/>komut satırında sadece /usr/sbin/named yazmak yeterli idi.Açılış betiklerinde
+de sadece /usr/sbin/named yazıyordu.Şimdi çevre değiştirdiğimizden named
+programına bunu anlatmalıyız.Şu anki named başlatma komutumuz "/<b>usr/sbin/named
+-u named -t /chroot/named -c /etc/named.conf</b>"
+<p/><b>-u  : </b> Bu seçenek Bind'a root kullanıcı yerine named
+olarak çalışmasını söyler
+<br/><b>-t   :  </b>Bununla, Bind kendini /chroot/named kafesine
+kapatır ve burasının dışını göremez.
+<br/><b>-c  :  </b>Bununla bind a ayar dosyasının kafesimiz içerisinde
+nerede oldugunu bildiriyoruz. Dikkat : /chroot/named/etc/named.conf yazmıyoruz
+/etc/named.conf olmalı.
+<br/>
+<p/>/<b>usr/sbin/named -u named -t /chroot/named -c /etc/named.conf  </b>
+<p/>Yukarıdaki satırı alıp /etc/rc.d/rc.local içerisine yerleştirelim.
+<p/><b>Redhat Sistemlerde</b>
+<p/>Aşağıdaki betiği kendi sisteminize uyarlayarak (named yol tanımını değiştirerek)
+çalıştırabilirsiniz.
+<br/>
+<br/>
+<table border="0" cols="1" width="70%" bgcolor="#CCFFFF" >
+<tr>
+<td><pre>
+#!/bin/sh
+#
+# named       This shell script takes care of starting and stopping
+#             named (BIND DNS server).
+#
+# chkconfig: 345 55 45
+# description: named (BIND) is a Domain Name Server (DNS) \
+# that is used to resolve host names to IP addresses.
+# probe: true
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+# Source networking configuration.
+. /etc/sysconfig/network
+
+# Check that networking is up.
+[ ${NETWORKING} = "no" ] &amp;&amp; exit 0
+
+[ -f /usr/sbin/named ] || exit 0
+
+[ -f /chroot/named/etc/named.conf ] || exit 0
+
+# See how we were called.
+case "$1" in
+  start)
+        # Start daemons.
+        echo -n "Starting named: "
+        daemon /usr/sbin/named -u named -t /chroot/named -c /etc/named.conf
+        echo
+        touch /var/lock/subsys/named
+        ;;
+  stop)
+        # Stop daemons.
+        echo -n "Shutting down named: "
+        killproc named
+        rm -f /var/lock/subsys/named
+        echo
+        ;;
+  status)
+        status named
+        exit $?
+        ;;
+  restart)
+        $0 stop
+        $0 start
+        exit $?
+        ;;
+  reload)
+        /usr/sbin/rndc reload
+        exit $?
+        ;;
+  probe)
+        # named knows how to reload intelligently; we don't want linuxconf
+        # to offer to restart every time
+        /usr/sbin/rndc reload >/dev/null 2>&amp;1 || echo start
+        exit 0
+        ;;
+  *)
+        echo "Usage: named {start|stop|status|restart|reload}"
+        exit 1
+esac
+exit 0
+</pre></td></tr>
+</table>
+
+<br/>
+<p/><font size="+2"><b>8 ) Conf Dosyalarında Değişiklik</b></font>
+<p/>/chroot/named/etc/named.conf dosyamızı açıp şu değişikliği yapalım:
+<p/><b>directory "/etc/namedb";</b>
+<br/><b>pid-file "/var/run/named.pid";</b>
+<br/>
+<p/>Bu satırın bendeki ilk hali directory "/var/named";   idi.
+<br/>Eğer sizde pid-file satırı yoksa ekleyin.Çalıştırma esnasında pid dosyasına
+ulaşmaya çalışılıyor, ulaşılamayınca named çalışmıyor.
+<p/><b><font size="+2">9 ) Son</font></b>
+<br/>Her şey bitti. Şimdi named programızı durdurup yeni seçeneklerimizle
+başlatalım.
+<br/>
+<br/>
+<table border="0" cols="1" width="60%" bgcolor="#CCFFFF" >
+<tr>
+<td><pre><b>
+#killall named
+#/usr/sbin/named -u named -t /chroot/named -c /etc/named.conf</b></pre></td>
+</tr>
+</table>
+
+<p/>NOT: Okumuş olduğunuz doküman ile birlikte chroot jail 9.x bind'ı kendi
+sistemime kurdum.Şu an çalışır durumda.Dokümanda hata bulunduğu takdirde
+<br/><a href="http://www.olympos.gen.tr/documents">http://www.olympos.gen.tr/documents</a>
+adresinden dokümanın düzeltilmiş sürümünü ya da ilerki bind sürümleri için
+yeni jail dokümanlarını bulabilirsiniz.(Eğer dokümanı yenilemişsem olympos
+adresindeki sürüm numarası bu sayfadaki sürüm numarasından farklı olacaktır.
+<br/>Herhangi bir sorun için gencoyilmaz (at) gmail.com adresine mesaj atabilirsiniz.
+<p/>Saygılar
+<br/>
+<br/>
+</div>
+</article>

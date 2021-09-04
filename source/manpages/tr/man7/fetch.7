@@ -1,0 +1,185 @@
+.\" http://belgeler.org \N'45' 2006\N'45'11\N'45'26T10:18:37+02:00  
+.TH "FETCH" 7 "" "PostgreSQL" "SQL \N'45' Dil Deyimleri"
+.nh   
+.SH İSİM
+FETCH \N'45' bir gösterici kullanarak bir sorgudan satırları çeker   
+.SH KULLANIM 
+.nf
+\fBFETCH\fR [ \fIyön\fR { \fBFROM\fR | \fBIN\fR } ] \fIgösterici_ismi\fR
+
+burada \fIyön\fR ya boş ya da şunlardan biri olabilir:
+
+\    \fBNEXT
+\    PRIOR
+\    FIRST
+\    LAST
+\    ABSOLUTE\fR \fImiktar\fR
+\    \fBRELATIVE\fR \fImiktar\fR
+\    \fImiktar\fR
+\    \fBALL
+\    FORWARD
+\    FORWARD\fR \fImiktar\fR
+\    \fBFORWARD ALL
+\    BACKWARD
+\    BACKWARD\fR \fImiktar\fR
+\    \fBBACKWARD ALL\fR
+.fi
+    
+.SH AÇIKLAMA
+\fBFETCH\fR evvelce oluşturulmuş bir göstericiyi kullanarak satırları çeker.   
+
+Bir gösterici \fBFETCH\fR tarafından da kullanılan ortak bir konuma sahiptir. Göstericinin konumu sorgu sonucunun ilk satırının öncesinde, herhangi bir satırında veya son satırının sonrasında olabilir. İlk oluşturulduğunda bir gösterici ilk satırın öncesine konumlanır. Satırlar çekildikten sonra gösterici en son alınan satıra konumlanır.  \fBFETCH\fR\N'39'in satırları çekip çalışması durduğunda gösterici son satırın sonrasına ya da eğer geriye çekilmişse ilk satırın öncesine konumlanır. \fBFETCH ALL\fR göstericiyi daima son satırın sonrasına, \fBFETCH BACKWARD ALL\fR ise daima ilk satırın öncesine konumlandırır.   
+
+\fBNEXT\fR (sonraki), \fBPRIOR\fR (önceki), \fBFIRST\fR (ilk), \fBLAST\fR (son), \fBABSOLUTE\fR (mutlak), \fBRELATIVE\fR (göreli) biçimleri göstericiyi ilgili konuma taşıdıktan sonra tek bir satırı çeker. O konumda bir satır yoksa, sonuç boş olarak döner ve gösterici duruma göre ya ilk satırın öncesine ya da son satırın sonrasına konumlanır.   
+
+\fBFORWARD\fR (ileri) ve \fBBACKWARD\fR (geri) biçimleri, ileri ya da geri yönde belirtilen miktarda satırı çekmek için kullanılabilir. Gösterici son çekilen satıra konumlanmış olarak bırakılır (eğer \fImiktar\fR alınabilecek satır sayısından fazla ise, gösterici duruma göre son satırın sonrasına ya da ilk satırın öncesine konumlanır).   
+
+\fBRELATIVE 0\fR, \fBFORWARD 0\fR, ve \fBBACKWARD 0\fR biçimlerinin hepsi gösterici hareket ettirilmeden o anki satırın çekilmesini sağlar, yani son çekilen satır yeniden çekilir. Bu, ancak, gösterici ilk satırın öncesinde ya da son satırın sonrasında değilse bir satırın çekilmesini sağlar; aksi takdirde, bir satır döndürülmez.   
+
+.SH PARAMETRELER   
+.br
+.ns
+.TP 
+\fIyön\fR
+Çekim yönünü ve çekilecek satır sayısını tanımlar. Aşağıdakilerden biri olabilir:     
+
+.RS 
+
+.br
+.ns
+.TP 
+\fBNEXT\fR
+Sonraki satırı çeker. \fIyön\fR belirtilmezse bu öntanımlıdır.         
+
+.TP 
+\fBPRIOR\fR
+Önceki satırı çeker.         
+
+.TP 
+\fBFIRST\fR
+Sorgunun ilk satırını çeker (\fBABSOLUTE 1\fR ile aynıdır).         
+
+.TP 
+\fBLAST\fR
+Sorgunun son satırını çeker (\fBABSOLUTE \N'45'1\fR ile aynıdır).         
+
+.TP 
+\fBABSOLUTE \fR\fImiktar\fR
+\fImiktar\fR pozitifse, sorgunun \fImiktar\fR\N'39'ıncı satırını; negatifse, sondan \fBabs\fR(\fImiktar\fR)\N'39'ıncı satırını çeker. \fImiktar\fR gereğinden büyükse, gösterici duruma göre ya ilk satırın öncesine ya da son satırın sonrasına konumlanır; özellikle, \fBABSOLUTE 0\fR göstericinin ilk satırın öncesine konumlanmasını sağlar.         
+
+.TP 
+\fBRELATIVE \fR\fImiktar\fR
+Göstericinin konumuna göre, \fImiktar\fR pozitifse, sonraki \fImiktar\fR\N'39'ıncı satırı; negatifse, önceki \fBabs\fR(\fImiktar\fR)\N'39'ıncı satırı çeker. RELATIVE 0 o anki satırı varsa yeniden çeker.         
+
+.TP 
+\fImiktar\fR
+Sonraki \fImiktar\fR satırı çeker (\fBFORWARD \fR\fImiktar\fR ile aynıdır).         
+
+.TP 
+\fBALL\fR
+Kalan satırların hepsini çeker (\fBFORWARD ALL\fR ile aynıdır).         
+
+.TP 
+\fBFORWARD\fR
+Sonraki satırı çeker (\fBNEXT\fR ile aynıdır).         
+
+.TP 
+\fBFORWARD \fImiktar\fR\fR
+Sonraki \fImiktar\fR satırı çeker. \fBFORWARD 0\fR o anki satırı yeniden çeker.         
+
+.TP 
+\fBFORWARD ALL\fR
+Kalan satırların hepsini çeker.         
+
+.TP 
+\fBBACKWARD\fR
+Önceki satırı çeker (\fBPRIOR\fR ile aynı).         
+
+.TP 
+\fBBACKWARD \fImiktar\fR\fR
+Önceki \fImiktar\fR satırı çeker. \fBBACKWARD 0\fR o anki satırı yeniden çeker.         
+
+.TP 
+\fBBACKWARD ALL\fR
+Önceki tüm satırları çeker (geriye doğru tarama).         
+
+.PP
+.RE
+.IP
+
+
+.TP 
+\fImiktar\fR
+Konumu ya da çekilecek satır sayısını belirtmek üzere kullanılan bir işaretli tamsayıdır. \fBFORWARD\fR ve \fBBACKWARD\fR için belirtilen bir negatif \fImiktar\fR yönün değişmesine sebep olur.      
+
+.TP 
+\fIgösterici_ismi\fR
+Açık bir göstericinin ismi.      
+
+.PP  
+.SH ÇIKTILAR
+\fBFETCH\fR başarılı olduğunda şöyle bir çıktı döndürür:   
+
+
+.nf
+FETCH \fImiktar\fR
+.fi   
+
+Burada, \fImiktar\fR çekilen satırların sayısıdır (sıfır olabilir). Yalnız, \fBpsql\fR\N'39'de komutun ismi çıktıda gösterilmez, sadece çekilen satır sayısı gösterilir.   
+
+.SH EK BİLGİ
+\fBFETCH\fR cümlesinin, pozitif bir miktar ile \fBFETCH NEXT\fR veya \fBFETCH FORWARD\fR biçimleri dışında bir biçimle kullanılması düşünülüyorsa, gösterici \fBSCROLL\fR seçeneği ile bildirilmelidir. Basit sorgular için PostgreSQL, \fBSCROLL\fR ile bildirilmemiş göstericilerden geriye doğru satır çekilmesine izin verir, fakat bu davranışın en iyisi olduğuna güvenmeyin. Eğer gösterici \fBNO SCROLL\fR ile bildirilmişse geri yönde satır çekmeye izin verilmez.   
+
+\fBABSOLUTE\fR ile satır çekimleri istenen satırı bir göreli hareketle çekmekten daha hızlı değildir: temel gerçeklenim aradaki satırların tümünü bir şekilde geçmelidir. Negatif mutlak çekimlerin durumu daha bile kötüdür: Sorgunun, son satırı bulana kadar tüm satırları okuması ve buradan, çekilecek satıra kadar olan satırları tekrar geçmesi gerekir. Yine de, sorgunun başa dönmesi hızlı olur (\fBFETCH ABSOLUTE 0\fR ile olduğu gibi).   
+
+Gösterici üzerinden güncelleme PostgreSQL tarafından şimdilik desteklenmemektedir.   
+
+Bir götericiyi tanımlamak için \fBDECLARE\fR [declare(7)] kullanılır.  Veri döndürmeksizin göstericiyi hareket ettirmek için  \fBMOVE\fR [move(7)] kullanabilirsiniz.   
+
+.SH ÖRNEKLER
+Aşağıdaki örnekte bir tablo gösterici kullanılarak incelenmektedir:   
+
+
+.nf
+BEGIN WORK;
+
+\N'45'\N'45' Göstericiyi bildirelim:
+DECLARE liahona SCROLL CURSOR FOR SELECT * FROM films;
+
+\N'45'\N'45' liahona göstericisinden ilk 5 satırı çekelim:
+FETCH FORWARD 5 FROM liahona;
+
+\ code  |          title          | did | date_prod  |   kind   |  len
+\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'+\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'+\N'45'\N'45'\N'45'\N'45'\N'45'+\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'+\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'+\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'
+\ BL101 | The Third Man           | 101 | 1949\N'45'12\N'45'23 | Drama    | 01:44
+\ BL102 | The African Queen       | 101 | 1951\N'45'08\N'45'11 | Romantic | 01:43
+\ JL201 | Une Femme est une Femme | 102 | 1961\N'45'03\N'45'12 | Romantic | 01:25
+\ P_301 | Vertigo                 | 103 | 1958\N'45'11\N'45'14 | Action   | 02:08
+\ P_302 | Becket                  | 103 | 1964\N'45'02\N'45'03 | Drama    | 02:28
+
+\N'45'\N'45' Önceki satırı çekelim:
+FETCH PRIOR FROM liahona;
+
+\ code  |  title  | did | date_prod  |  kind  |  len
+\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'+\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'+\N'45'\N'45'\N'45'\N'45'\N'45'+\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'+\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'+\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'
+\ P_301 | Vertigo | 103 | 1958\N'45'11\N'45'14 | Action | 02:08
+
+\N'45'\N'45' Göstericiyi kapatıp hareketi sonlandıralım:
+CLOSE liahona;
+COMMIT WORK;
+.fi   
+
+.SH UYUMLULUK
+SQL standardındaki \fBFETCH\fR deyimini sadece gömülü SQL\N'39'de kullanmak içindir. Burada açıklanan \fBFETCH\fR ise, veriyi bir konak değişkenine yerleştirilmiş olarak değil, bir \fBSELECT\fR sonucu gibi döndürür. Bunun dışında  \fBFETCH\fR, SQL standardı ile tamamen uyumludur.   
+
+\fBFORWARD\fR ve \fBBACKWARD\fR biçimleriyle \fBFORWARD\fR örtük olma üzere \fBFETCH \fR\fImiktar\fR ve \fBFETCH ALL\fR biçimleri birer PostgreSQL oluşumudur.   
+
+SQL standardı \fBFROM\fR deyimine sadece ismin önünde izin verir; \fBIN\fR kullanımı bir PostgreSQL oluşumudur.   
+
+.SH İLGİLİ BELGELER
+\fBCLOSE\fR [close(7)], \fBDECLARE\fR [declare(7)], \fBMOVE\fR [move(7)].  
+
+.SH ÇEVİREN
+Nilgün Belma Bugüner <nilgun (at) belgeler·gen·tr>, Nisan 2005 
+ 
+   

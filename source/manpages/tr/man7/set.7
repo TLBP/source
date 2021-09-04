@@ -1,0 +1,151 @@
+.\" http://belgeler.org \N'45' 2006\N'45'11\N'45'26T10:18:38+02:00  
+.TH "SET" 7 "" "PostgreSQL" "SQL \N'45' Dil Deyimleri"
+.nh   
+.SH İSİM
+SET \N'45' change a run\N'45'time parameter   
+.SH KULLANIM 
+.nf
+\fBSET\fR [ \fBSESSION\fR | \fBLOCAL\fR ] \fIisim\fR { \fBTO\fR | = } { \fIdeğer\fR | \N'39'\fIdeğer\fR\N'39' | \fBDEFAULT\fR }
+\fBSET\fR [ \fBSESSION\fR | \fBLOCAL\fR ] \fBTIME ZONE\fR { \fIzaman_dilimi\fR | \fBLOCAL\fR | \fBDEFAULT\fR }
+.fi
+    
+.SH AÇIKLAMA
+The \fBSET\fR command changes run\N'45'time configuration    parameters.  Many of the run\N'45'time parameters listed in "Run\N'45'time Configuration"    (runtime\N'45'config.html) can be changed on\N'45'the\N'45'fly with    \fBSET\fR.    (But some require superuser privileges to change, and others cannot    be changed after server or session start.)    \fBSET\fR only affects the value used by the current    session.   
+
+If \fBSET\fR or \fBSET SESSION\fR is issued    within a transaction that is later aborted, the effects of the    \fBSET\fR command disappear when the transaction is rolled    back.  (This behavior represents a change from    PostgreSQL versions prior to 7.3, where    the effects of \fBSET\fR would not roll back after a later    error.)  Once the surrounding transaction is committed, the effects    will persist until the end of the session, unless overridden by another    \fBSET\fR.   
+
+The effects of \fBSET LOCAL\fR last only till the end of    the current transaction, whether committed or not.  A special case is    \fBSET\fR followed by \fBSET LOCAL\fR within    a single transaction: the \fBSET LOCAL\fR value will be    seen until the end of the transaction, but afterwards (if the transaction    is committed) the \fBSET\fR value will take effect.   
+
+.SH PARAMETRELER   
+.br
+.ns
+.TP 
+\fBSESSION\fR
+Specifies that the command takes effect for the current session.       (This is the default if neither \fBSESSION\fR nor       \fBLOCAL\fR appears.)     
+
+.TP 
+\fBLOCAL\fR
+Specifies that the command takes effect for only the current       transaction.  After \fBCOMMIT\fR or \fBROLLBACK\fR,       the session\N'45'level setting takes effect again.  Note that       \fBSET LOCAL\fR will appear to have no effect if it is       executed outside a \fBBEGIN\fR block, since the       transaction will end immediately.     
+
+.TP 
+\fIisim\fR
+Name of a settable run\N'45'time parameter.  Available parameters are       documented in "Run\N'45'time Configuration"    (runtime\N'45'config.html) and below.     
+
+.TP 
+\fIdeğer\fR
+New value of parameter.  Values can be specified as string       constants, identifiers, numbers, or comma\N'45'separated lists of       these.  \fBDEFAULT\fR can be used to specify       resetting the parameter to its default value.     
+
+.PP
+Besides the configuration parameters documented in "Run\N'45'time Configuration"    (runtime\N'45'config.html), there are a few that can only be    adjusted using the \fBSET\fR command or that have a    special syntax:   
+
+
+.br
+.ns
+.TP 
+\fBNAMES\fR
+\fBSET NAMES \fIdeğer\fR\fR is an alias for        SET client_encoding TO \fIdeğer\fR.       
+
+.TP 
+\fBSEED\fR
+Sets the internal seed for the random number generator (the        function random).  Allowed values are        floating\N'45'point numbers between 0 and 1, which are then        multiplied by 2\N'45'1.       
+
+The seed can also be set by invoking the function        setseed:       
+
+.IP
+.RS
+.RS 4
+.nf
+SELECT setseed(\fIdeğer\fR);
+.fi
+.RE
+.RE
+.IP
+
+
+.TP 
+\fBTIME ZONE\fR
+\fBSET TIME ZONE \fIdeğer\fR\fR is an alias        for SET timezone TO \fIdeğer\fR.  The        syntax \fBSET TIME ZONE\fR allows special syntax        for the time zone specification.  Here are examples of valid        values:       
+
+.RS 
+
+.br
+.ns
+.TP 
+\N'39'PST8PDT\N'39'
+The time zone for Berkeley, California.          
+
+.TP 
+\N'39'Europe/Rome\N'39'
+The time zone for Italy.          
+
+.TP 
+\N'45'7
+The time zone 7 hours west from UTC (equivalent            to PDT).  Positive values are east from UTC.          
+
+.TP 
+INTERVAL \N'39'\N'45'08:00\N'39' HOUR TO MINUTE
+The time zone 8 hours west from UTC (equivalent            to PST).          
+
+.TP 
+\fBLOCAL\fR, \fBDEFAULT\fR
+Set the time zone to your local time zone (the one that            the server\N'39's operating system defaults to).          
+
+.PP
+.RE
+.IP
+
+
+See http://www.postgresql.org/docs/8.0/static/datatype\N'45'datetime.html for more information        about time zones.  Also, "Date/Time Support" (http://www.postgresql.org/docs/8.0/static/datetime\N'45'appendix.html)        has a list of the recognized names for time zones.      
+
+.PP   
+
+.SH EK BİLGİ
+The function set_config provides equivalent    functionality. See http://www.postgresql.org/docs/8.0/static/functions\N'45'admin.html.   
+
+.SH ÖRNEKLER
+Set the schema search path:   
+
+
+.RS 4
+.nf
+SET search_path TO my_schema, public;
+.fi
+.RE   
+
+Set the style of date to traditional    POSTGRES with "day before month"    input convention:   
+
+
+.RS 4
+.nf
+SET datestyle TO postgres, dmy;
+.fi
+.RE   
+
+Set the time zone for Berkeley, California:   
+
+
+.RS 4
+.nf
+SET TIME ZONE \N'39'PST8PDT\N'39';
+.fi
+.RE   
+
+Set the time zone for Italy:   
+
+
+.RS 4
+.nf
+SET TIME ZONE \N'39'Europe/Rome\N'39';
+.fi
+.RE   
+
+.SH UYUMLULUK
+\fBSET TIME ZONE\fR extends syntax defined in the SQL    standard.  The standard allows only numeric time zone offsets while    PostgreSQL allows more flexible    time\N'45'zone specifications.  All other \fBSET\fR    features are PostgreSQL extensions.   
+
+.SH İLGİLİ BELGELER
+\fBRESET\fR [reset(7)], \fBSHOW\fR [show(7)]   
+
+.SH ÇEVİREN
+Nilgün Belma Bugüner <nilgun (at) belgeler·gen·tr>, Nisan 2005 
+ 
+    

@@ -1,0 +1,280 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--DOCTYPE article SYSTEM "../../docbook/dtd/docbookx.dtd"-->
+<!-- ********************************************************************
+     $Id: cvs-acikkod-NASIL.xml,v 1.1 2002/10/17 23:17:02 nilgun Exp $
+     ******************************************************************** -->
+
+<article id="cvs-acikkod-nasil" lang="tr">
+
+  <articleinfo>
+
+    <title>CVS ile Açık Kod Yazılım Geliştirme</title>
+    <author>
+      <firstname>Barış Şimşek</firstname>
+      <affiliation>
+        <address>
+          <email>simsek@acikkod.org</email>
+        </address>
+      </affiliation>
+    </author>
+    <pubdate>Mayıs 2004</pubdate>
+     <!-- Most recent revision goes at the top; list in descending order -->
+     <revhistory>
+       <revision>
+          <revnumber>2.0</revnumber>
+          <date>27 Mayıs 2004</date>
+          <authorinitials>BŞ</authorinitials>
+          <revremark>Sunucunun kurulması ve yapılandırılması eklendi.</revremark>
+       </revision><revision>
+          <revnumber>1.0</revnumber>
+          <date>29 Ağustos 2002</date>
+          <authorinitials>BŞ</authorinitials>
+          <revremark>İlk sürüm</revremark>
+       </revision>
+     </revhistory>
+     <legalnotice><title>Yasal Uyarı</title><para>
+Bu belgenin, <emphasis>CVS ile Açık Kod Yazılım Geliştirme</emphasis> 2.0 sürümünün <emphasis role="bold"> telif hakkı © 2002, 2003, 2004 <emphasis>Barış Şimşek</emphasis></emphasis>'e aittir.
+    &notice.gfdl.orig;</para>
+      &notice.disc;
+     </legalnotice>
+     <abstract>
+        <para>
+CVS (Concurrent Versions System), sürüm kontrol sistemidir. Bir projenin gelişim tarihçesini otomatik olarak tutar. Bu belge, CVS ile hiç tanışmamış olanlar için başlangıç niteliğinde hazırlanmıştır.
+        </para>
+        <para>
+Bu belgenin özgün sürümünü <ulink url="http://acikkod.org/show_article.php?id=24&amp;cat=11">acikkod.org</ulink> sitesinde bulabilirsiniz.
+        </para>
+     </abstract>
+
+  </articleinfo>
+<!-- Content follows...include introduction, license information, feedback -->
+  <sect1 id="cvs-acikkod-nasil_gn">
+    <title>Genel Kavramlar</title>
+    <para>
+CVS (Concurrent Versions System), sürüm kontrol sistemidir. Bir projeye ait kaynak kodların tarihçesini tutar.
+    </para><para>
+CVS, kaynak kod tarihçesi tutmasının yanı sıra, farklı fiziksel konumlardan kod geliştirmek isteyenler için kaynak kod deposu sunar. Bir geliştirici, diğer proje üyelerinin yazdığı kodları görebilir, onlara ilave yapabilir. Yaptığı bu ilaveleri diğer geliştiriciler takip edebilir. GNU yazılımları genelde dünyanın dört bir yanına yayılmış dağınık konumdaki yazılımcılar tarafından geliştirilmektedir. Bu göz önüne alındığında, CVS'in GNU dünyası için ne kadar önemli bir araç olduğu daha açık ortaya çıkar.
+    </para><para>
+CVS, bütün dosyaları merkezi bir depoda (repository) bulunur. Geliştiriciler kod deposuna doğrudan ulaşmazlar. CVS programı aracılığı ile depo üzerinde işlemler yaparlar.
+    </para><para>
+Dosyaların her sürümü eşsiz bir sürüm numarasına sahiptir. Sürüm numaraları seçime bağlı olarak '1.1' veya  '1.1.3' biçiminde ya da daha uzun bir biçimde olabilir.
+    </para>
+  </sect1>
+  <sect1 id="cvs-acikkod-nasil_ayar">
+    <title>CVS Sunucunun Kurulması ve Yapılandırılması</title>
+    <para>
+CVS, <ulink url="http://www.cvshome.org"/> sayfasından indirilip kurulabilir. FreeBSD kullananlar portlardan, Linux kullananlar ise kendi paket yöneticilerinden (<filename>.deb</filename>, <filename>.rpm</filename> gibi) yararlanabilirler. <userinput>cvs</userinput> paketinin açıldığı dizinde:
+    </para><para>
+<screen># <userinput>./configure --prefix /usr/local</userinput>
+# <userinput>make</userinput>
+# <userinput>make install</userinput>
+</screen>
+    </para><para>
+komutları verilerek hızlı kurulum yapılabilir.
+    </para><para>
+CVS sunucu (<userinput>pserver</userinput>) 2401. portta çalışır. <filename>/etc/services</filename> dosyasında aşağıdaki satırların olduğundan emin olun:
+    </para><para>
+<screen># <userinput>cat /etc/services | grep cvs</userinput>
+
+cvspserver 2401/tcp #CVS network server
+cvspserver 2401/udp #CVS network server
+</screen>
+    </para><para>
+CVS sunucusu <userinput>inetd</userinput> veya <userinput>xinetd</userinput> ile çalışır. <userinput>inetd</userinput> kullananlar (FreeBSD, Slackware) <filename>/etc/inetd.conf</filename> dosyasında şu satırı bulundurmalılar:
+    </para><para>
+<screen># <userinput>vi /etc/inetd.conf</userinput>
+
+cvspserver stream tcp nowait root /usr/local/bin/cvs cvs
+¬ --allow-root=/var/cvsroot pserver
+</screen>
+    </para><para>
+Bunu yaptıktan sonra inetd'yi yeniden başlatmalısınız.
+    </para><para>
+<screen># <userinput>kill -HUP inetd</userinput></screen>
+    </para><para>
+<userinput>xinetd</userinput> kullananlar ise, <filename>/etc/xinetd.d/cvspserver</filename> dosyasına şunları yazmalı:
+    </para><para>
+<screen>/etc/xinetd.d/cvspserver
+
+service cvspserver
+{
+  disable = no
+  socket_type = stream
+  wait = no
+  user = cvs
+  server = /usr/local/bin/cvs
+  server_args = --allow-root=/var/cvsroot pserver
+  log_on_success += DURATION USERID
+  log_on_failure += USERID
+  nice = 10
+}
+</screen>
+    </para><para>
+<userinput>tcpserver</userinput> kullanmak isteyenler için:
+    </para><para>
+<screen>
+# <userinput>/usr/local/bin/tcpserver -c 25 0 cvspserver /usr/bin/cvs</userinput>
+¬  <userinput>--allow-root=/var/cvsroot pserver&amp;</userinput>
+</screen>
+    </para><para>
+Burada <filename>/var/cvsroot</filename> olarak verilen yol <literal>CVSROOT</literal>'u yani kod deposunu gösterir. Kodlar ve CVS yönetim bilgileri bu dizindedir. <literal>CVSROOT</literal> ortam değişkenine bu değeri atamayı unutmayın.
+    </para><para><userinput>bash</userinput> kabuğu kullananlar:</para><para>
+<screen># <userinput>export CVSROOT=/var/cvsroot</userinput></screen>
+    </para><para><userinput>csh</userinput> kabuğu kullananlar:</para><para>
+<screen>% <userinput>set CVSROOT=/var/cvsroot</userinput></screen>
+    </para><para>
+<filename>/usr/local/bin/cvs</filename> ise <userinput>cvs</userinput>'nin çalışma yoludur (<userinput>which cvs</userinput> komutunu vererek bunu öğrenebilirsiniz).
+    </para><para>
+CVS sunucunun <literal>cvs</literal> kullanıcısı ile çalışacağı varsayılmıştır. Bu kullanıcı hesabını açmanız gerekir.
+    </para><para>
+<screen># <userinput>groupadd cvs</userinput>
+# <userinput>useradd -g cvs -m -d /var/cvsroot -s /bin/bash -c "CVS" cvs</userinput>
+</screen>
+    </para><para>
+Bu ayarları bitirtikden sonra <literal>CVSROOT</literal> dizinini oluşturmak gerekir.
+    </para><para>
+<screen># <userinput>cvs init</userinput></screen>
+    </para><para>
+Bu komutu çalıştırmadan önce <literal>CVSROOT</literal> değerini <userinput>export</userinput> veya <userinput>set</userinput> ile atadığınızdan emin olun. Aksi halde şu şekilde kullanmalısınız.
+    </para><para>
+<screen># <userinput>cvs -d /var/cvsroot init</userinput></screen>
+    </para><para>
+Bu komut <filename>/var/cvsroot</filename> dizinini açacaktır. Ayrıca bu dizin altında yönetim bilgilerinin saklandığı <filename>CVSROOT</filename> dizinini de açar. Bu dizinin haklarını ayarlamayı unutmayın.
+    </para><para>
+<screen># <userinput>chown -R cvs.cvs /var/cvsroot</userinput></screen>
+    </para><para>
+Bundan sonra tüm projeler bu dizin altında bir dizin olarak gözükecektir. Bu dizinlerin kullanıcı haklarını da aynı şekilde ayarlamayı unutmayın.
+    </para><para>
+CVS kullanıcılarını, <filename>$CVSROOT/CVSROOT/passwd</filename> dosyasında tanımlayın.
+    </para><para><filename>/var/cvsroot/CVSROOT/passwd</filename> dosyası:
+<screen>simsek:EvQlNsSbLl08I:cvs
+user1:WfE9wnFM6gsoQ:cvs
+user2:FfJdnVt99Ro/:cvs
+</screen>
+    </para><para>
+Parolalar şifrelenmiş şekilde tutulur. Bu şifreleri üretmek için şu betiği kullanabilirsiniz:
+    </para><para>
+<screen># <userinput>vi /usr/local/bin/sifrele</userinput>
+
+#!/usr/bin/perl
+
+srand (time());
+my $randletter = "(int (rand (26)) + (int (rand (1) + .5) % 2 ? 65 : 97))";
+my $salt = sprintf ("%c%c", eval $randletter, eval $randletter);
+my $plaintext = shift;
+my $crypttext = crypt ($plaintext, $salt);
+
+print "${crypttext}\n";
+</screen>
+    </para><para>
+Bundan sonra <userinput>./sifrele </userinput><varname>parolanız</varname> komutu ile şifrelenmiş parolayı alıp yukarıda belirtilen biçimde <filename>passwd</filename> dosyasına yazın. <filename>CVSROOT/passwd</filename> dosyasındaki satırların en sonundaki <literal>cvs</literal>, bu kullanıcının eşleştirileceği kullanıcıdır ki bu da CVS sunucunun etkin kullanıcısıdır. CVS kullanıcılarımız gerçek olmadığı için gerçek bir kullanıcıyla bu şekilde eşleştirilmesi gerekir. Şifrelenmiş parola olarak <filename>/etc/shadow</filename> dosyasındaki parolaları da kullanabilirsiniz. Oradan kendi parolanızı kopyalayıp yapıştırabilirsiniz.
+    </para>
+  </sect1>
+  <sect1 id="cvs-acikkod-nasil_prj">
+    <title>Proje Başlatmak</title>
+    <para>
+CVS sunucusuna bağlanmadan önce <literal>CVSROOT</literal> ortam değişkenine projeyi başlatacağımız sunucu ile ilgili atama yapılmalıdır:
+    </para><para>
+<screen># <userinput>export CVSROOT=':pserver:simsek@cvs.acikkod.org:/var/cvsroot'</userinput></screen>
+    </para><para>
+İlk adım, sunucuya bağlanıp bağlanamadığımızı görelim:
+    </para><para>
+<screen># <userinput>cvs login</userinput>
+CVS password:
+</screen>
+    </para><para>
+Parolanızı girdiğinizde hata vermiyorsa her şey yolunda demektir. Hata veriyorsa <filename>/var/cvsroot</filename> dizininin kullanıcı haklarının <literal>cvs</literal> kullanıcısına ait olup olmadığını, <filename>/etc/inetd.conf</filename>'da <userinput>cvs</userinput>'nin yolunun doğru verildiğine emin olun.
+    </para><para>
+Parolanızı girdiğinizde hata vermiyorsa her şey yolunda demektir. Şimdi bir projeye başlayabiliriz. Proje yöneticisi (proje yöneticisi olmak <literal>root</literal> olmak demek değildir. Bu işlemkeri yapmak için önce kendi kullanıcı adınıza geçin) olarak projeyi açalım. Bunun için bir kaç yol var.
+    </para>
+    <sect2>
+      <title>Başlamış Bir Projeyi CVS'ye Yerleştirmek</title>
+      <para>
+Eğer daha önce başladığımız bir projeyi CVS sunucuya yerleştirmek istiyorsak bu projeyi <literal>import</literal> etmemiz gerekir. Projenin <literal>/home/simsek/test</literal> altında yer aldığını varsayıyoruz.
+    </para><para>
+<screen>$ <userinput>cd /home/simsek/test</userinput>
+$ <userinput>cvs import -m "CVS e tasiniyoruz" test AcikkodORG ikincisurum</userinput>
+N test/6
+N test/orig.sh
+N test/rsync-cron.sh
+
+No conflicts created by this import
+</screen>
+      </para><para>
+Kodlarımız <literal>$CVSROOT/test</literal> dizinine yerleştirilmiş oldu. Eğer <literal>CVSROOT</literal> ortam değişkeni belirlenmemişse <userinput>-d</userinput> seçeneği ile <literal>CVSROOT</literal>'u belirtmemiz gerekirdi. Burada <literal>test</literal> proje adı, <literal>AcikkodORG</literal> dağıtıcı ismi, <literal>ikincisurum</literal> ise sürüm bilgisidir. Kodlarınız <literal>$CVSROOT</literal> altında proje ismi ile aynı dizin içerisine yerleştirilir.
+      </para>
+    </sect2>
+    <sect2>
+      <title>Sıfırdan Projeye Başlamak</title>
+      <para>
+Eğer CVS sunucusuna uzakten erişiyorsanız sıfırdan projeye başlamakla başlamış bir projeyi CVS'ye yerleştirmek arasında bir fark yoktur. Ama CVS sunucusuna doğrudan erişiminiz varsa <literal>$CVSROOT</literal> altında o dizini açmak yeterlidir.
+    </para><para>
+<screen># <userinput>mkdir -p /var/cvsroot/test</userinput></screen>
+    </para><para>
+Yalnız dizin haklarını ayarlamayı unutmayın. İşlerimizi <literal>root</literal> olarak yaptığımızdan açtığımız dizin ve dosyalar bu kullanıcı hakları ile açılıyor. CVS, yalnızca çalıştığı kullanıcının dizinlerine ulaşabilir.
+    </para><para>
+<screen># <userinput>chown -R cvs.cvs /var/cvsroot/test</userinput></screen>
+      </para>
+    </sect2>
+  </sect1>
+  <sect1 id="cvs-acikkod-nasil_dcmd">
+    <title>Geliştirici Komutları</title>
+    <para>
+Buraya kadar anlatılanlar sistem yöneticisinin yapması gerekenleri içermektedir. Şimdi geliştiricilerin nasıl çalışacağına bakabiliriz.
+    </para><para>
+Her geliştirici CVSROOT değişkenini belirlemelidir (yapmazsa her defasında  <userinput>-d</userinput> ile vermek zorundadır). <literal>CVSROOT</literal> değişkeninin otomatik belirlenmesi için <literal>.bashrc</literal> veya <literal>.cshrc</literal> dosyasına yazabilirsiniz. Örneğin <literal>/home/simsek/.bashrc</literal> dosyama yazdığım gibi:
+    </para><para>
+<screen>CVSROOT=:pserver:simsek@acikkod.org:/var/cvsroot
+export CVSROOT
+</screen>
+    </para><para>
+Artık CVS sunucusuna bağlanabilirsiniz.
+    </para><para>
+<screen>$ <userinput>cvs login</userinput>
+CVS password: parolanız
+</screen>
+    </para><para>
+CVS sunucusuna bağlandık. <literal>.cvspass</literal> isminde bir dosya oluştuğuna dikkat edin. Eğer girişte bir hata oluşmuşsa ekrana hata mesajı verilir. Muhtemel hatalar: 1. Yanlış parola, 2. Erişim hakları, dizin hakları
+    </para><para>
+Kullanıcı giriş yaptıktan sonra basitçe aşağıdaki işlemleri yapabilir.
+    </para><procedure>
+      <step>
+<para>Kodları sunucudan çalışma dizinimize çekelim:</para>
+<screen>$ <userinput>cvs co test</userinput></screen>
+      </step><step>
+<para>Çalışma dizinindeki kodlarda değişiklik yapalım:</para>
+<screen>$ <userinput>vi test.c</userinput></screen>
+      </step><step>
+<para>Kodları sunucuya yükleyelim:</para>
+<screen>$ <userinput>cvs commit</userinput></screen>
+      </step><step>
+<para>Çalışma dizinimizdeki kodları güncelleyelim:</para>
+<screen>$ <userinput>cvs update</userinput></screen>
+      </step><step>
+<para>Yeni dosya ekleyelim:</para>
+<screen>
+$ <userinput>vi yeni.c</userinput>
+$ <userinput>cvs add yeni.c</userinput>
+$ <userinput>cvs commit</userinput>
+</screen>
+      </step><step>
+<para>Mevcut Dosyayı Silelim:</para>
+<screen>
+$ <userinput>rm silinecek.c</userinput>
+$ <userinput>cvs delete silinecek.c</userinput>
+$ <userinput>cvs commit</userinput>
+</screen>
+      </step><step>
+<para>Bir dağıtım ertesinde yeni sürüme geçelim:</para>
+<screen>
+$ <userinput>cvs update</userinput>
+$ <userinput>cvs tag rel-0-0-1</userinput>
+</screen>
+      </step><step>
+<para>Belli bir sürümün kodlarını çekmek istersek:</para>
+<screen>$ <userinput>cvs co -r rel-0-0-5 test</userinput></screen>
+      </step></procedure><para>
+CVS'in daha pek çok özelliği mevcuttur. Bir sonraki güncellemede bunlar eklenecek, şimdilik bu kadar.
+    </para>
+  </sect1>
+</article>

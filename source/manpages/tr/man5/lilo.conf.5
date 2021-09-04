@@ -1,0 +1,401 @@
+.\" http://belgeler.org \N'45' 2006\N'45'11\N'45'26T10:18:33+02:00  
+.\" @(#)lilo.conf.5 1.0 950728 aeb 
+.\" This page is based on the lilo docs, which carry the following 
+.\" COPYING condition: 
+.\" 
+.\" LILO program code, documentation and auxiliary programs are 
+.\" Copyright 1992\N'45'1994 Werner Almesberger. 
+.\" All rights reserved. 
+.\" 
+.\" Redistribution and use in source and binary forms of parts of or the 
+.\" whole original or derived work are permitted provided that the 
+.\" original work is properly attributed to the author. The name of the 
+.\" author may not be used to endorse or promote products derived from 
+.\" this software without specific prior written permission. This work 
+.\" is provided "as is" and without any express or implied warranties. 
+.\"   
+.TH "lilo.conf" 5 "20 Mart 2000" "" ""
+.nh    
+.SH İSİM
+lilo.conf \N'45' \fBlilo\fR için yapılandırma dosyası     
+.SH AÇIKLAMA     
+Bu dosya, varsayılan olarak \fB/etc/lilo.conf\fR, bir önyükleyici olan \fBlilo\fR tarafından okunur. Ayrıntılı bilgi \fBlilo(8)\fR\N'39'da bulunabilir.     
+
+Bu dosya aşağıdaki örneğe benzer:     
+
+.IP
+.IP
+.RS
+.nf
+boot = /dev/hda
+delay = 40
+compact
+vga = normal
+root = /dev/hda1
+read\N'45'only
+image = /zImage\N'45'2.5.99
+\        label = try
+image = /zImage\N'45'1.0.9
+\        label = 1.0.9
+image = /tamu/vmlinuz
+\    label = tamu
+\    root = /dev/hdb2
+\    vga = ask
+other = /dev/hda3
+\    label = dos
+\    table = /dev/hda
+.fi
+.RE
+.IP
+
+
+.PP
+Bu ayar dosyası, \fBlilo\fR\N'39'nun /dev/hda üzerindeki MBR\N'39'yi kullandığını belirtmektedir. (\fBlilo\fR kullanmanın çeşitli yolları ve diğer işletim sistemleri ile etkileşimi için \fBlilo\fR kılavuzlarından user.tex dosyasına bakınız.)     
+
+Açılış esnasında, önyükleyici, sizin  tuşuna basmanız için 4 saniye (40 desisaniye) kadar bekleyecektir. Şayet bunu yapmazsanız, ilk çekirdek yüklenecektir. Şayet  tuşuna basarsanız, önyükleyici hangi çekirdeği yüklemek istediğinizi soracaktır. Şayet muhtemel seçenekleri unutmuşsanız,  tuşuna basarak (US klavye için \N'34'?\N'34' tuşuna) bir menü açabilirsiniz. Şimdi yeni bir çekirdek ile eskisi arasında veya başka bir kök dosya sistemindeki bir çekirdek (her zaman kullandığınız kök dosya sistemine salakça bir şeyler yapmış olabilirisiniz) arasında seçim yapma şansına sahipsiniz. Bu noktada başka bir işletim sistemini (tabii ki bilgisayarınızda yüklü olmak koşulu ile) açabilirsiniz. \fBlilo.conf\fR içinde tanımlı 16 çekirdek biteşlemi bulunabilir.     
+
+Aşağıda görebileceğiniz gibi, bir ayar dosyası, bir miktar genel seçenek ile başlar (örneğimizdeki ilk altı satır gibi). Daha sonra çeşitli biteşlemler için seçenekler tanımlanır. Bir biteşlem için tanımlı bir seçenek varsa, genel tanımlı seçenek göz ardı edilir.     
+   
+.SH GENEL SEÇENEKLER     
+Pek çok anahtar sözcük mevcuttur. Aşağıdaki tanımlamalar tamamen user.tex dosyasından alınmıştır (sadece birazcık kısaltılmışlardır).     
+
+
+
+.br
+.ns
+.TP 
+\fBbackup=\fR\fIyedekleme_dosyası\fR
+Orjinal önyükleme sektörünü  \fIyedekleme_dosyası\fRna kopyalar. Bu dosya /boot/boot.NNNN gibi normal bir dosya olabileceği gibi /dev/null gibi bir aygıt da olabilir.       
+
+.TP 
+\fBboot=\fR\fIönyükleme_aygıtı\fR
+Önyükleme sektörünün içinde bulunduğu aygıt (mesela bir sabit disk bölümü). Şayet bu anahtar sözcük atlanırsa, kök olarak bağlanmış olan aygıttaki önyükleme sektörü okunur (veya muhtemelen yazılır).       
+
+.TP 
+\fBchange\N'45'rules\fR
+Önyükleme zamanı değişikliklerini disk bölümü türü  numaralarına (\N'96'hiding\N'39') tanımlar. Ayrıntılı bilgi için user.tex\N'39'in \N'34'\fIDisk bölümü türü değişiklik kurallarını\fR bölümünü okuyunuz.       
+
+.TP 
+\fBcompact\fR
+Okuma isteklerini tek bir okuma isteği haline getirebilmek için bitişik sektörleri okuma isteklerini birleştirmeye çalışır. Bu yükleme zamanını epeyce kısaltır ve biteşlemi mümkün mertebe küçük tutar. Bir disket sürücüden açılış yapılıyorsa, bu seçeneği kullanmanız şiddetle tavsiye edilir.       
+
+.TP 
+\fBdefault=\fR\fIisim\fR
+\fIisim\fR ile belirtilen biteşlem dosyasını öntanımlı önyükleme biteşlemi olarak kabul eder. Şayet bu seçenek atlanmışsa, ayar dosyasında rastlanan ilk biteşlem kullanılır.       
+
+.TP 
+\fBdelay=\fR\fIdesisaniyeler\fR
+Önyükleyicinin, biteşlemi yüklemeden önce beklemesi istenen süreyi tanımlar. İstenen sürenin saniye cinsinden değerinin on katı yazılır. Bu seçenek, klavye etkin hale geldikten hemen sonra doğrudan sabit diskten açılan sistemler için uygundur. Şayet \fBdelay\fR seçeneğine sıfır atanmışsa veya bu seçenek kullanılmamışsa, önyükleyici açılış esnasında beklemez.       
+
+.TP 
+\fBdisk=\fR\fIaygıt\N'45'ismi\fR
+Belirtilen disk için standart dışı parametreleri tanımlar. Ayrıntıli bilgi için user.tex\N'39'in \N'34'\fIDisk geometrisi\fR\N'34' bölümüne bakınız. Genellikle \fBbios=\fR parametresi oldukça kullanışlıdır. BIOS, diskinizi 0x80, 0x81, 0x82 şeklinde numaralandırır ve hangi bölümün Linux bölümü olduğu bilinemez. Alışılmamış bir yüklemeniz varsa, BIOS bölümü ile Linux bölümünü eşleştirmeniz gerekebilir. Örneğin:       
+
+.RS 
+
+.br
+.ns
+.TP 
+
+.IP
+.RS
+.nf
+disk=/dev/sda
+\        bios=0x80
+disk=/dev/hda
+\        bios=0x81
+.fi
+.RE
+.IP
+
+
+.PP
+.RE
+.IP
+
+
+.IP 
+Burada, SCSI diskin ilk BIOS diski olduğu ve birinci IDE girişine takılı master konumlu IDE diskin ikinci BIOS diski olduğu belirtilmiştir.       
+
+.TP 
+\fBdisktab=\fR\fIdisktab_dosyası\fR
+Disk parametreleri tablosunun adını verir. Şayet bu seçenek atlanmışsa, ilk olarak /etc/disktab dosyasına bakılır. disktab\N'39'ların kullanımı oldukça cesaret kırıcı olabilir.       
+
+.TP 
+\fBfix\N'45'table\fR
+Bu seçenek, \fBlilo\fR\N'39'nun, disk bölümleme tablolarındaki 3D adresleri ayarlamasını sağlar. Her disk bölümü girdisi bir 3D adrese (sektör/kafa/silindir) ve bölümün ilk ve son sektörlerinin adresinden oluşan düz bir adrese sahiptir. Eğer bir disk bölümü iz\N'45'hizalı değilse ve eğer aynı diski başka bir işletim sistemi ile birlikte kullanıyorsanız, bu işletim sistemleri 3D adresleri değiştirebilir. \fBlilo\fR, kendi önyükleme sektörünü sadece her iki adresin karşılığı olan yere yükleyebilir. Şayet \fBfix\N'45'table\fR belirtilmiş ise, lilo hatalı 3D adreslerini tekrar ayarlayabilir.       
+
+.RS 
+
+.br
+.ns
+.TP 
+\fBUYARI:\fR
+Diğer işletim sistemlerinin, sonradan bu ayarları sıfırlamamasının bir garantisi yoktur. Bu değişikliğin beklenmedik etkileri olabilir. Doğru olan yöntem; diski iz\N'45'hizalı bölümleme yapabilen bir uygulama ile bölümlemektir. Ayrıca, bazı disklerde (mesela adres dönüşüm tablosu etkin olan bazı EIDE disklerde), bazı durumlarda, karmakarışık disk bölümleme tablosu girdilerine sahip olmak kaçınılmaz olabilir.       
+
+.PP
+.RE
+.IP
+
+
+.TP 
+\fBforce\N'45'backup=\fR\fIyedekleme_dosyası \fR
+\fBbackup\fR seçeneği ile aynıdır, fakat eski bir yedekleme dosyası varsa üzerine yazmaya zorlar.       
+
+.TP 
+\fBignore\N'45'table\fR
+\fBlilo\fR\N'39'ya bozuk bölüm tablosunu gözardı etmesini söyler.       
+
+.TP 
+\fBinstall=\fR\fIönyükleme_sektörü \fR
+Belirtilen dosyayı, yeni önyükleme sektörü olarak yükler. Bu seçenek atlanırsa, /boot/boot.b öntanımlı olarak kullanılır.       
+
+.TP 
+\fBlinear\fR
+3D adresleme yerine doğrusal adresler üretir. Doğrusal adresler çalışma zamanında kullanılır ve disk geometrisine dayanmaz. Unutmayın ki, açılış disketleri, bu seçenek kullanıldığı durumlarda taşınabilir olmayabilirler. Çünkü disk geometrisini belirleyen BIOS servisi disketler için güvenilir çalışmayabilir.  Büyük diskler ile \N'34'doğrusal\N'34' adresleme kullanıldığı durumlarda, \fB/sbin/lilo\fR, disk alanına ulaşılamadığını söyleyebilir. Çünkü 3D adresleme açılış zamanından önce bilinemez.       
+
+.TP 
+\fBlba32\fR
+Sektör/kafa/silindir adreslemesi yerine 32 bitlik mantıksal blok adreslemesi (LBA) üretilir. Şayet BIOS paket adreslemeyi destekliyorsa, diske erişebilmek için paket çağrıları kullanılır. Böylece 8.4 GB\N'39'den daha büyük disklerde herhangi bir bölümden açılış yapabilirsiniz. 3D adreslemeden kaynaklanan sınır böylece aşılmış olur. Şayet BIOS paket adreslemeyi desteklemiyorsa, lba32 adresler tıpkı doğrusal adreslemede olduğu gibi 3D\N'39'ye çevrilir. Disketlerde, lba32 kullanımında, adresler 3D olarak saklanır.       
+
+.TP 
+\fBlock\fR
+Daha sonraki açılışlar için, önyükleme komut satırının özdevinimli kaydedilmesini etkinleştirir. Bu yolla, elle müdahale edilmediği sürece, lilo belli bir tercih üzerinde \N'34'kilitli\N'34' kalır.       
+
+.TP 
+\fBmap=\fR\fImap_dosyası\fR
+map dosyasının yerini tanımlar. Şayet bu seçenek atlanmış ise, /boot/map dosyası kullanılır.       
+
+.TP 
+\fBmessage=\fR\fIileti_dosyası\fR
+Önyükleme ekranından önce gösterilmek üzere bir ileti içeren dosyanın adını belirtir. LILO yazdıktan sonra  tuşuna basmak için beklenirken herhangi bir ileti görünmez.  İletideki FF karakteri () yerel ekranı temizler. İletinin boyu 65535 bayt ile sınırlıdır. İleti dosyası değiştirilirse veya taşınırsa \fImap_dosyası\fR yeniden düzenlenmek zorundadır.       
+
+.TP 
+\fBnowarn\fR
+Muhtemel tehlikeler hakkındaki uyarıyı kapatır.       
+
+.TP 
+\fBoptional\fR
+İsteğe bağlı bir seçenek belirtmek için biteşlem tanımlarında kullanılır. Aşağıya bakınız.       
+
+.TP 
+\fBpassword=\fR\fIparola\fR
+Parola belirtmek için biteşlem tanımlarında kullanılır. Aşağıya bakınız.       
+
+.TP 
+\fBprompt\fR
+Herhangi bir tuşa basılmasını beklemeksizin, önyükleme ekranına girmeye zorlar. \fBprompt\fR belirtilmiş ve \fBtiemout\fR belirtilmemişse sistemin başıboş bir biçimde yeniden açılması imkansızdır.       
+
+.TP 
+\fBrestricted\fR
+Biteşlem tanımlarında kullanılır. Aşağıya bakınız.       
+
+.TP 
+\fBserial=\fR\fIparametreler\fR
+Seri port üzerinden kontrolü olanaklı kılar. Tanımlanmış seri port üzerinden ilklendirilme yapılır ve önyükleyici buradan ve klavyeden girdi kabul eder. Seri hat üzerinden \fBbreak\fR göndermek  konsoldan  tuşuna basmak ile aynı şeydir. Şayet seri bağlantının güvenliğinden tam emin değilseniz, bütün önyükleme biteşlemleri parola korumalı olmalıdır. Parametreler dizgesi aşağıdaki söz dizimine sahiptir:       
+
+
+
+.RS 
+
+.br
+.ns
+.TP 
+
+\fIport\fR[,\fIhız\fR[\fIeşlikbiti\fR[\fIgenişlik\fR]]]       
+
+.PP
+.RE
+.IP
+
+
+.IP 
+.RS 
+
+.br
+.ns
+.TP 
+\fIport\fR
+Sıfırdan başlamak üzere,  seri hatların numarası. 0 (sıfır) COM1 yani /dev/ttyS0\N'39'a karşılık gelir. Şayet varsa, dört portun tamamı da kullanılabilir.       
+
+.TP 
+\fIhız\fR
+Seri portun saniyedeki bit sayısı cinsinden iletişim hızı. Şu hızlar desteklenmektedir: 110, 150, 300, 600, 1200, 2400, 4800 ve 9600 b/s.  Öntanımlı değer 2400 b/s\N'39'dir.       
+
+.TP 
+\fIeşlikbiti\fR
+Seri hat üzerinde kullanılan eşlik biti.Önyükleyici girdi olarak eşlik bitini yoksayar ve 8. biti ayırır. Eşlik bitini tanımlamakta şu karakterler kullanılır (büyük veya küçük harf olabilir): eşlik bitinin olmaması  n (none), tek eşlik biti için o (odd), çift eşlik biti için e (even).       
+
+.TP 
+\fIgenişlik\fR
+Bir karakteri oluşturan bit sayısı. Sadece 7 ve 8 bit desteklenmektedir. Öntanımlı değeri eşlik bitinin olmdığı durumda 8, eşlik bitinin tek veya çift olması durumunda ise 7\N'39'dir.       
+
+.PP
+.RE
+.IP
+
+
+.IP 
+Şayet \N'96'serial\N'39' tanımlı ise, \N'96'delay\N'39'ın değeri özdevinimli olarak 20\N'39'ye yükseltilir.       
+
+.IP 
+ÖRNEK:  serial=0,2400n8  COM1\N'39'i öntanımlı değerlerle ilklendirir.       
+
+.TP 
+\fBtimeout=\fR\fIdesisaniyeler\fR
+Klavye girdisi bekleme zamanaşımı süresi tanımlar. İstenen süre, saniye cinsinin on katı şeklinde belirtilir. Belirtilen süre içinde bir tuşa basılmazsa, ilk biteşlem öntanımlı olarak yüklenir. Aynı şekilde, kullanıcı uzun süre hareketsiz kalırsa, parola girdisi başarısız sayılır. Öntanımlı değer sonsuzdur.       
+
+.TP 
+\fBverbose=\fR\fIseviye\fR
+Çoğu işlemin raporlama yapmasını etkinleştirir. Yüksek numaralar daha fazla ayrıntı elde edilmesini sağlar. Şayet \fBlilo\fR komut satırında \fB\N'45'v\fR belirtilmişse, buna uygun olarak seviye yükseltilir. En yüksek değer 5 olabilir.       
+
+.PP
+
+Ayrıca, çekirdek ayar parametreleri olan \fBappend\fR, \fBramdisk\fR, \fBread\N'45'only\fR, \fBread\N'45'write\fR, \fBroot\fR ve \fBvga\fR genel seçenekler içinde tanımlanabilir. Çekirdek biteşlemi yapılandırma bölümlerinde belirtilmemişse, bu değerler onlar için öntanımlı olarak kullanılırlar.     
+   
+.SH İMAGE BÖLÜMLERİNDEKİ SEÇENEKLER          
+\fBimage\fR bölümleri ya Linux çekirdeğinin biteşleminin bulunduğu bir dosya ya da aygıtı belirten bir     
+
+.IP
+\fBimage\fR=\fIdosyayolu\fR     
+
+.PP
+satırı ile ya da herhangi bir sistem açılışını belirten     
+
+.IP
+\fBother\fR=\fIdosyayolu\fR     
+
+.PP
+satırı ile başlar.     
+
+Birinci durumda, \fBimage\fR satırında önyükleme için bir aygıt belirtilmişse,     
+
+.IP
+\fBrange\fR=\fIbaşlangıç\N'45'bitiş\fR     
+
+.PP
+satırı ile önyüklemenin yapılacağı bölümü gösteren sektör aralığı belirtilmelidir.     
+
+İkinci durumda (başka bir sistemin yüklenmesi), üç seçenek sözkonusudur:     
+
+
+
+.br
+.ns
+.TP 
+\fBloader=\fR\fIzincir\N'45'yükleyici\fR
+Kullanılması istenen zincir yükleyiciyi tanımlar. Öntanımlı olarak /boot/chain.b kullanılır. Önyüklemenin ilk disk veya disket dışında bir yerden yapılması gerekiyorsa, zincir yükleyici mutlaka tanımlanmalıdır.       
+
+.TP 
+\fBtable=\fR\fIaygıt\fR
+Bölümleme tablosunu içeren aygıt belirtilir. Bu seçenek atlanmış ise, önyükleyici bölümleme bilgilerini yüklenen işletim sistemine bildirmeyecektir. (Bazı işletim sistemleri, nereden yüklendiklerini saptamak için değişik yöntemler kullanırlar. Örneğin; MS\N'45'DOS genellikle disk  veya bölümünün açılış sektöründe geometri bilgisini saklar.) Önemli: \N'39'table\N'39' seçeneği ile gösterilen bir bölüm tablosunda bir değişiklik söz konusu ise \fB/sbin/lilo\fR yeniden çalıştırılmalıdır.       
+
+.TP 
+\fBunsafe\fR
+Eşlem oluşturulması sırasında açılış sektörüne erişilmez. Bu seçenekle, bazı sağlık kontrolleri (mesela bölümleme tablosu kontrolü) yapılmaz. Şayet açılış sektörü sabit biçimli bir disket aygıtı üzerinde ise, \fBunsafe\fR seçeneği, eşlem yükleyicinin çalıştırılması esnasında, sürücüye okunabilir bir disk koyma ihtiyacını ortadan kaldırır. \fBunsafe\fR ve \fBtable\fR seçenekleri birbirleriyle uyumsuzdur, her ikisi birden belirtilemez.       
+
+.PP
+
+Her iki durum için ortak olan seçenekler şunlardır:     
+
+
+
+.br
+.ns
+.TP 
+\fBlabel=\fR\fIisim\fR
+Önyükleyici, biteşlemi tanımlamak için her bir biteşlemin ana dosya adını (yol tanımlaması gerekmez) kullanır. Bu seçenekle değişik isimler tanımlamak da mümkündür.       
+
+.TP 
+\fBalias=\fR\fIisim\fR
+Aynı girdi için ikinci bir isim kullanma imkanı verir.       
+
+.TP 
+\fBlock\fR
+(Yukarıya bakınız.)       
+
+.TP 
+\fBoptional\fR
+Şayet eşlem oluşturma sırasında kullanılabilir durumda değilse, biteşlemi atlar. Test çekirdekleri tanımlamak için oldukça kullanışlı bir seçenektir.       
+
+.TP 
+\fBpassword=\fR\fIparola\fR
+Biteşleme parola koruması sağlar.       
+
+.TP 
+\fBrestricted\fR
+Sadece, komut satırında bir parametre belirtildiğinde parola sorulmasını sağlar (örneğin, komut satırından tek kullanıcılı kipe geçilmek istendiğinde).       
+
+.PP
+   
+.SH ÇEKİRDEK SEÇENEKLERİ     
+Şayet yüklenen çekirdek bir Linux çekirdeği ise, komut satırından çekirdeğe parametre aktarmak mümkündür.     
+
+
+
+.br
+.ns
+.TP 
+\fBappend=\fR\fIdizge\fR
+Dizge içinde boşluklarla ayrılarak belirtilen seçenekleri çekirdeğe ilave eder. Genellikle, tespit edilmesi tehlikeli olabilecek ve özellikleri özdevinimli olarak saptanamayan donanım parçalarının parametrelerini tanımlamak için kullanılır. Örneğin:       
+
+
+
+.RS 
+
+.br
+.ns
+.TP 
+
+append="hdc=ide\N'45'scsi hdd=ide\N'45'scsi"       
+
+.PP
+.RE
+.IP
+
+
+.TP 
+\fBliteral=\fR\fIdizge\fR
+\fBappend\fR\N'39'e benzer ama diğer bütün seçenekleri iptal eder (mesela kök aygıt ayarları gibi). Çok önemli seçenekler farkına varılmaksızın kaldırılabileceği için, bu seçeneği genel seçenekler bölümünde kullanmamak daha mantıklı olacaktır.       
+
+.TP 
+\fBramdisk=\fR\fIboyut\fR
+İsteğe bağlı olan RAM diskin boyutunu tanımlar. Değer 0 ise, RAM disk oluşturulmaz. Bu seçenek atlanmış ise, RAM disk önyükleme biteşlemi içindeki ayarlara göre oluşturulur.       
+
+.TP 
+\fBread\N'45'only\fR
+Bu seçenek kök dosya sisteminin salt okunur kipte bağlanmasını sağlar. Genel olarak, sistem açılış işlemleri, daha sonra, kök dosya sistemini oku\N'45'yaz kipinde tekrar bağlar (mesela \fBfsck\fR yapıldıktan sonra).       
+
+.TP 
+\fBread\N'45'write\fR
+Kök dosya sisteminin oku\N'45'yaz kipinde bağlanmasını sağlar.       
+
+.TP 
+\fBroot=\fR\fIkök_aygıtı\fR
+Kök bölümü olarak bağlanacak aygıtı belirtir. Şayet özel bir isim belirtilmişse, kök aygıtı, kök dosya sisteminin o an bağlı olduğu aygıta göre düzenlenir. Şayet \fB\N'45'r\fR ile kök değiştirilmişse, belirtilen aygıt kullanılır. Şayet bu seçenek kullanılmamışsa,  çekirdek biteşlemi içindeki kök ayarları kullanılır. (Derleme sırasında, çekirdek Makefile\N'39'ında ROOT_DEV değişkeni ile ayarlanabilir ve daha sonra \fBrdev\fR(8) ile değiştirilebilir.)       
+
+.TP 
+\fBvga=\fR\fIkip\fR
+Önyükleme esnasındaki kullanılacak vga metin kipini tanımlar. Şu değerler geçerlidir (harf büyüklüğüne bakılmaz):       
+
+\fBnormal\fR: normal 80x25 metin kipi.       
+
+\fBextended\fR (veya \fBext\fR): 80x50 metin kipi.       
+
+\fBask\fR: dur ve kullanıcı girdisi için bekle (önyükleme esnasında).       
+
+\fInumara\fR: bu sayıya karşılık gelen metin kipini kullan. Olası kiplerin bir listesi vga=ask kullanarak ve önyükleme sırasında [Enter] tuşuna basarak elde edilebilir.       
+
+Şayet bu değişken kullanılmazsa, çekirdek biteşleminde bulunan VGA kip ayarları kullanılır. (Derleme sırasında, çekirdek Makefile\N'39'ında SVGA_MODE değişkeni ile ayarlanabilir ve daha sonra \fBrdev(8)\fR ile değiştirilebilir.)       
+
+.PP
+   
+.SH İLGİLİ BELGELER     
+\fBlilo(8)\fR, \fBrdev(8)\fR.     
+
+\fBlilo\fR dağıtımı, yukarıdaki bilgilerin elde edildiği oldukça geniş bir belgeleme içermektedir.     
+   
+.SH ÇEVİREN     
+Yalçın Kolukısa <yalcink01 (at) yahoo.com>, Ocak 2004
+    
+   

@@ -1,0 +1,304 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ********************************************************************
+     $Id: part7.xml,v 1.12 2002/12/20 23:23:58 nilgun Exp $
+     ********************************************************************-->
+  <part id="bashref_job.control">
+    <title>İş Denetimi</title>
+    <titleabbrev>
+İş denetiminin nedir ve Bash onu size nasıl kullandırır.
+    </titleabbrev>
+    <partintro><para>
+Bu oylumda, iş denetiminin ne olduğu, nasıl çalıştığı ve onun yeteneklerine Bash ile nasıl erişeceğiniz anlatılmıştır.
+    </para></partintro>
+
+    <chapter id="bashref_job.control.basics" label="1">
+      <title>İş Denetiminin Temelleri</title>
+<titleabbrev>İş denetimi nasıl çalışır.</titleabbrev>
+<indexterm scope="bashref_concept.index"><primary>artalan</primary></indexterm>
+<indexterm scope="bashref_concept.index"><primary>önalan</primary></indexterm>
+<indexterm scope="bashref_concept.index"><primary>iş denetimi</primary></indexterm>
+<indexterm scope="bashref_concept.index"><primary>işlerin bekletilmesi</primary></indexterm>
+      <para id="bashref_definitions-job.cont">
+İş denetimi, bir sürecin çalışmasını seçerek durdurma (bekletme) ve daha sonra çalışmasını sürdürme (yeniden başlatma) yeteneği demektir. Bir kullanıcı bu araçla genellikle Bash ve sistemin uçbirim sürücüsü tarafından ortak olarak sağlanan bir etkileşimli arayüz üzerinden çalışır.
+      </para><para>
+Kabuk bir iş ile her boruhattını ilişkilendirir. Halen çalışmakta olan ve <command>jobs</command> komutu ile listelenebilen işlerin listesini bir tabloda saklar. Bash bir işi eşzamansız olarak başlattığında şöyle bir ileti gösterir:
+      </para><para>
+<screen>[1] 25647</screen>
+      </para><para>
+Bu ileti, işin iş numarasının 1 ve bu işle ilişkilendirilen boruhattındaki son sürecin süreç kimliğinin (PID) 25647 olduğunu ifade eder. Bir tek boruhattındaki süreçlerin tümü aynı işin üyeleridir. Bash iş denetimi için esas olarak iş soyutlaması kullanır.
+      </para><para>
+İş denetiminin kullanıcı arayüzünün gerçeklenmesini kolaylaştırmada,
+işletim sistemi, kullanılan uçbirim sürecinin grup kimliği diye bir
+kavram sağlar. Bu süreç grubunun üyeleri (süreçlerin süreç grubu kimliği,
+kullanılan uçbirimin süreç grubu kimliğine eşittir) klavyeden üretilen
+<literal>SIGINT</literal> gibi sinyalleri alır. Bu süreçler önalanda
+olduklarını söylerler. Artalan süreçleri, süreç grubu kimliği uçbiriminkinden
+farklı olan süreçlerdir. Bu süreçler klavyeden üretilen sinyallerden
+bağışıktır. Sadece önalan süreçleri uçbirime yazar ve uçbirimi
+okuyabilir. Uçbirimi okumaya (ya da yazmaya) çalışan artalan süreçleri
+bir <literal>SIGTTIN</literal> (<literal>SIGTTOU</literal>) sinyali
+yakalanmadıkça, süreci bekleten uçbirim sürücüsü üzerinden gönderir.
+      </para><para>
+Bash'in çalıştığı işletim sistemi üzerinde iş denetimi destekleniyorsa,
+Bash onu kullanacak araçları içerir. Bir süreç çalışırken
+<emphasis>bekletme karakteri</emphasis> nin tuşlanması (genelde
+<literal>^Z</literal>, Control-Z'dir) sürecin durdurulmasına ve denetimin
+Bash'e geçmesine sebep olur. Gecikmeli bekletme karakterinin (genelde
+<literal>^Y</literal>, Control-Y'dir) tuşlanması, uçbirimden girdi
+okumaya çalıştığı zaman sürecin durdurulmasına sebep olur ve denetim Bash'e
+döndürülür. Bundan sonra kullanıcı bu işin durumunu değiştirebilir:
+<command>bg</command> komutunu kullanarak artalanda,
+<command>fg</command> komutunu kullanark önalanda işi devam
+ettirebilir ya da <command>kill</command> komutu ile süreci
+öldürebilir. Bir <literal>^Z</literal> hemen etkisini gösterir ve
+çıktının askıda kalmasına ve baştanyazmanın iptal edilmesine
+sebep olan bir yan etkisi vardır.
+      </para><para>
+Kabuktaki bir işi ifade etmede kullanılan bir kaç yol vardır.
+<literal>%</literal> karakteri bir işin ismini ifade eder.
+      </para><para>
+İş numarası <literal>n</literal>'e, <literal>%n</literal> olarak
+başvurulabilir. <literal>%+</literal> ve <literal>%%</literal>
+sembolleri, artalanda başlatılan ya da önalanda olan durmuş son işin
+yani o anki iş kavramının kabuktaki karşılığıdır. Tek bir <literal>%</literal> (iş belirtimine eşlik etmeksizin) ayrıca o anki işi belirtmek için kullanılabilir. Önceki iş ise
+<literal>%-</literal> sembolü ile ifade edilir. İşlerle ilgili çıktılarda ise (örn. <command>jobs</command> komutunun çıktısı), o anki iş daima bir <literal>+</literal> ile önceki iş ise <literal>-</literal> ile imlenir.
+      </para><para>
+Bir işe onu başlatan ismi bir önek olarak kullanarak ya da komut satırının
+içinde geçen bir dizge kullanılarak erişilebilir. Örneğin,
+<literal>%ce</literal> durmuş olan <literal>ce</literal> işini
+ifade eder. <literal>%?ce</literal> şeklinde bir kullanımda ise
+komut satırında <literal>ce</literal> dizgesi geçen bir iş ifade
+edilebilir. Eğer önek ve dizge birden fazla işle eşleşirse, Bash bir
+hata uyarısı verir.
+      </para><para>
+Bir işin isimlendirilmesi onu önalana almak için kullanılabilir:
+<literal>%1</literal>, <command>fg</command><option> %1</option>
+komutuna eşdeğerdir ve 1 numaralı işi artalandan önalana almak içindir.
+Benzer olarak, <literal>%1 &amp;</literal>,
+<command>bg</command><option> %1</option> komutuna eşdeğerdir ve
+1 numaralı işin artalanda sürdürülmesini sağlar.
+      </para><para>
+Kabuk herhangi bir yerde bir iş durumunu değiştirdiğinde anında öğrenir.
+Normalde Bash bir işi, durumundaki değişiklikleri raporlamadan önce
+bir komut istemi basmaya hazır hale gelene kadar herhangi bir çıktısına
+kesme uygulamadan bekler. <command>set</command> yerleşiği
+<option>-b</option> seçeneği ile çalıştırılmışsa, Bash bu değişiklikleri
+anında raporlar. Her çocuk sürecin çıkışında varsa <literal>SIGCHLD</literal>
+sinyal kapanı çalıştırılır.
+      </para><para>
+Durmuş işler varken Bash çıkmaya çalışırsa, kabuk durmuş işlerin varlığını
+belirten bir uyarı iletisi basar. Bundan sonra onların durumunu öğrenmek
+için <command>jobs</command> komutu kullanılabilir. Bir ara komut
+olmaksızın çıkmak için ikinci bir istek daha gelirse, kabuk bir ileti
+daha göstermez ve durmuş işler sonlandırılır.
+      </para>
+    </chapter>
+
+    <chapter id="bashref_job.control.builtins" label="2">
+      <title>İş Denetim Yerleşikleri</title>
+      <titleabbrev>İş denetimi ile etkileşim için kullanılan yerleşik komutlar.</titleabbrev>
+<indexterm scope="bashref_concept.index">
+<primary>yerleşik komutlar</primary><secondary>iş denetimi</secondary></indexterm>
+      <sect1 id="bashref_job.control.builtins-bg">
+        <title>Bg Yerleşiği</title>
+<indexterm scope="bashref_commands.index"><primary>bg</primary></indexterm>
+        <para>
+<synopsis>
+<command>bg</command> [<emphasis>iş-belirtimi</emphasis>] &hellip;
+</synopsis>
+        </para><para>
+<literal>&amp;</literal> ile başlatılmışçasına artalanda bekleyen
+<replaceable>iş-belirtimi</replaceable> işini sürdürür.
+<replaceable>iş-belirtimi</replaceable> verilmemişse, o anki iş
+kullanılır. İş denetimi etkin değilken çalıştırılmadıkça veya
+iş denetimi etkinleştirilerek çalıştırıldığında belirtilen
+<replaceable>iş-belirtimi</replaceable>nin bulunamaması dışında ya da
+<replaceable>iş-belirtimi</replaceable> iş denetimsiz başlatılan bir
+iş olmadıkça dönüş durumu sıfırdır.
+        </para>
+      </sect1>
+      <sect1 id="bashref_job.control.builtins-fg">
+        <title>Fg Yerleşiği</title>
+<indexterm scope="bashref_commands.index"><primary>fg</primary></indexterm>
+        <para>
+<synopsis><command>fg</command> [<emphasis>iş-belirtimi</emphasis>]
+</synopsis>
+        </para><para>
+Önalandaki <replaceable>iş-belirtimi</replaceable> işini sürdürür ve
+onu o anki iş yapar. Eğer <replaceable>iş-belirtimi</replaceable>
+verilmeksizin çalıştırılırsa o anki iş kullanılır. Normalde dönüş
+durumu önalana yerleştirilen komutun çıkış durumudur. İş denetimi
+etkin değilse veya iş denetimini etkinleştirerek çalıştırıldığında,
+<replaceable>iş-belirtimi</replaceable> geçerli bir işi belirtmiyorsa
+veya <replaceable>iş-belirtimi</replaceable> iş denetimsiz başlatılmış
+bir işi belirtiyorsa dönüş durumu sıfırdan farklıdır.
+        </para>
+      </sect1>
+      <sect1 id="bashref_job.control.builtins-jobs">
+        <title>Jobs Yerleşiği</title>
+<indexterm scope="bashref_commands.index"><primary>jobs</primary></indexterm>
+        <para>
+<synopsis><command>jobs</command> [<command>-lnprs</command>] [<emphasis>iş-belirtimi</emphasis>]
+
+<command>jobs -x</command> <emphasis>komut</emphasis> [<emphasis>argümanlar</emphasis>]
+</synopsis>
+  </para><para>
+İlk satır etkin işleri listeler. Seçeneklerin anlamları:
+        </para><glosslist>
+            <glossentry>
+              <glossterm><command>-l</command></glossterm>
+              <glossdef><para>
+Normal bilgilere ek olarak süreç kimliklerini de (PID) listeler.
+              </para></glossdef>
+            </glossentry><glossentry>
+              <glossterm><command>-n</command></glossterm>
+              <glossdef><para>
+Sadece kullanıcının durumları hakkında aldığı son uyarıdan beri
+durumları değişen işler hakkında bilgi gösterir.
+              </para></glossdef>
+            </glossentry><glossentry>
+              <glossterm><command>-p</command></glossterm>
+              <glossdef><para>
+Sadece işlerin süreç grup liderlerinin süreç kimliklerini listeler.
+              </para></glossdef>
+            </glossentry><glossentry>
+              <glossterm><command>-r</command></glossterm>
+              <glossdef><para>
+Sadece çalışan işler çıktılanır.
+              </para></glossdef>
+            </glossentry><glossentry>
+              <glossterm><command>-s</command></glossterm>
+              <glossdef><para>
+Sadece durmuş işler çıktılanır.
+              </para></glossdef>
+            </glossentry>
+          </glosslist><para>
+<replaceable>iş-belirtimi</replaceable> verilmişse, çıktı bu iş ile
+ilgili bilgilerle sınırlıdır, verilmemişse tüm işlerin durumları
+listelenir.
+        </para><para>
+<option>-x</option> seçeneği verilmişse, <replaceable>argümanlar</replaceable>
+ile belirtilen tüm iş belirtimlerini, işlerin süreç grup liderinin
+süreç grup kimliğine yerleştirilip <replaceable>komut</replaceable>
+çalıştırılır. Dönüş durumu komutun çıkış durumudur.
+        </para>
+      </sect1>
+      <sect1 id="bashref_job.control.builtins-kill">
+        <title>Kill Yerleşiği</title>
+<indexterm scope="bashref_commands.index"><primary>kill</primary></indexterm>
+        <para>
+<synopsis><command>kill</command> [<command>-s</command> <emphasis>sinyal-belirtimi</emphasis>] [<command>-n</command> <emphasis>sinyal-numarası</emphasis>] [<command>-</command><emphasis>sinyal-belirtimi</emphasis>] <emphasis>iş-belirtimi</emphasis>
+<command>kill</command> [<command>-s</command> <emphasis>sinyal-belirtimi</emphasis>] [<command>-n</command> <emphasis>sinyal-numarası</emphasis>] [<command>-</command><emphasis>sinyal-belirtimi</emphasis>] <emphasis>pid</emphasis>
+
+<command>kill</command> -l [<emphasis>çıkış-durumu</emphasis>]
+</synopsis>
+        </para><para>
+<replaceable>pid</replaceable> ile belirtilen süreç kimliğine
+veya <replaceable>iş-belirtimi</replaceable> ile belirtilen işin
+sürecine <replaceable>sinyal-belirtimi</replaceable> veya
+<replaceable>sinyal-numarası</replaceable> ile belirtilen sinyali
+gönderir. <replaceable>sinyal-belirtimi</replaceable> ya
+harf büyüklüğüne duyarsız olarak <literal>SIGINT</literal> gibi bir sinyal ismi (<literal>SIG</literal> öneki olmadan da verilebilir) ya da bir sinyal numarası olabilir.
+<replaceable>sinyal-numarası</replaceable> ise bir sinyal numarası
+olmalıdır. <replaceable>sinyal-belirtimi</replaceable> veya
+<replaceable>sinyal-numarası</replaceable> verilmezse öntanımlı
+olarak <literal>SIGTERM</literal> kullanılır. <option>-l</option>
+seçeneği ile sinyal isimleri listelenir. Bu seçenekle birlikte
+bir argüman verilmişse, bu argümanlara karşı düşen sinyal isimleri
+listelenir ve dönüş durumu sıfırdır. <replaceable>çıkış-durumu</replaceable>
+ile bir sinyal numarası ya da bir sinyal ile sonlandırılan bir
+sürecin çıkış durumu belirtilebilir. En azından bir sinyal başarıyla
+gönderilmişse çıkış durumu sıfırdır. Bir hata oluşur veya geçersiz
+bir seçenek saptanırsa sıfırdan farklıdır.
+        </para><para>
+İş denetimi etkin değilken, <command>kill</command> yerleşiği
+<replaceable>iş-belirtimi</replaceable> argümanını kabul etmez.
+Bunlar süreç kimlikleri olarak verilmelidir.
+        </para>
+      </sect1>
+      <sect1 id="bashref_job.control.builtins-wait">
+        <title>Wait Yerleşiği</title>
+<indexterm scope="bashref_commands.index"><primary>wait</primary></indexterm>
+        <para>
+<synopsis>
+<command>wait</command> [ <emphasis>iş-belirtimi</emphasis> | <emphasis>pid</emphasis> &hellip; ]
+</synopsis>
+        </para><para>
+İş belirtimi <replaceable>iş-belirtimi</replaceable> ile veya süreç kimliği
+<replaceable>pid</replaceable> ile belirtilen bir çocuk süreçlerin her birinin çıkmasını
+bekler. Dönüş durumu çıkmasını beklediği sürecin çıkış durumudur.
+Hiçbir argüman verilmeden çalıştırılırsa etkin tüm çocuk süreçler için
+bekler, bu durumda çıkış durumu sıfırdır. Ne
+<replaceable>iş-belirtimi</replaceable> ne de
+<replaceable>pid</replaceable> kabuğun bir çocuk sürecini
+belirtiyorsa 127 durumu ile döner.
+        </para><para>
+İş denetimi etkin değilken, <command>wait</command> yerleşiği
+<replaceable>iş-belirtimi</replaceable> argümanını kabul etmez.
+Bunlar süreç kimlikleri olarak verilmelidir.
+        </para>
+      </sect1>
+      <sect1 id="bashref_job.control.builtins-disown">
+        <title>Disown Yerleşiği</title>
+<indexterm scope="bashref_commands.index"><primary>disown</primary></indexterm>
+        <para>
+<synopsis><command>disown</command> [<command>-ar</command>] [<command>-h</command>] [<emphasis>iş-belirtimi</emphasis> ...]
+</synopsis>
+        </para><para>
+Seçeneksiz kullanımda her <replaceable>iş-belirtimi</replaceable>
+etkin işler tablosundan kaldırılır.  <option>-h</option> seçeneği
+ile  iş tablodan kaldırılmaz ama imlenir böylece kabuk bir
+<literal>SIGHUP</literal> alırsa bunu işe göndermez.
+<replaceable>iş-belirtimi</replaceable> ve <option>-a</option> ile
+<option>-r</option> seçenekleri verilmezse, o anki iş kullanılır.
+<replaceable>iş-belirtimi</replaceable> verilmeden <option>-a</option>
+seçeneğinin kullanılması tüm işlerin imlenmesi ya da kaldırılması
+demektir. <replaceable>iş-belirtimi</replaceable> verilmeden
+<option>-r</option> seçeneğinin kullanılması ise işlemi işlerin
+çalıştırılması ile sınırlar.
+        </para>
+      </sect1>
+      <sect1 id="bashref_job.control.builtins-suspend">
+        <title>Suspend Yerleşiği</title>
+<indexterm scope="bashref_commands.index"><primary>suspend</primary></indexterm>
+        <para>
+<synopsis><command>suspend</command> [<command>-f</command>]
+</synopsis>
+        </para><para>
+Bu kabuğun çalışmasını bir <literal>SIGCONT</literal> sinyali alana
+kadar askıya alır. <option>-f</option> seçeneği kullanıldığında
+kabuk bir giriş kabuğu olsa bile askıya alınır.
+        </para>
+      </sect1>
+    </chapter>
+
+    <chapter id="bashref_job.control.vars" label="3">
+      <title>İş Denetim Değişkenleri</title>
+      <titleabbrev>İş denetiminin kişiselleştirmesinde kullanılan değişkenler.</titleabbrev>
+<indexterm scope="bashref_concept.index">
+<primary>Readline</primary><secondary>nasıl kullanılır</secondary></indexterm>
+<glosslist>
+<indexterm scope="bashref_param-var.index">
+<primary><literal>auto_resume</literal></primary></indexterm>
+<glossentry><glossterm id="bashref-auto_resume"><literal>auto_resume</literal></glossterm>
+<glossdef><para>
+Bu değişken kabuğun kullanıcı ve iş denetimi ile nasıl etkileşeceğini
+kontrol eder. Bu değişken varsa, yönlendirmesiz tek sözcüklük basit
+komutlar bir mevcut işin yeniden başlatılması için aday kabul edilir.
+Bir belirsizliğe izin verilmez; girilen dizge ile başlayan birden
+fazla iş varsa en son erişilen iş seçilmiş olacaktır. Bu bağlamda,
+durmuş işin ismi onu başlatmakta kullanılan komut satırıdır. Bu
+değişkene <literal>exact</literal> değeri atanırsa, verilen
+dizge tıpatıp bir durmuş işin ismi olmalıdır. Değişkene
+<literal>substring</literal> değeri atanırsa, verilen dizge
+bir durmuş işin isminin bir altdizgesi olması gerekir.
+<literal>substring</literal>, <literal>%?</literal> iş kimliği
+ile benzer işlevsellik sağlar
+(<xref linkend="bashref_job.control.basics"/> bölümüne bakınız).
+Bunların dışında bir dizge atanırsa, verilen dizge bir durmuş işin
+isminin bir öneki olmalıdır. Bu, <literal>%</literal> iş kimliği
+ile benzer işlevsellik sağlar.
+</para></glossdef></glossentry>
+</glosslist>
+    </chapter>
+  </part>

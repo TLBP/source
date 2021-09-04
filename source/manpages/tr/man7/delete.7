@@ -1,0 +1,96 @@
+.\" http://belgeler.org \N'45' 2006\N'45'11\N'45'26T10:18:36+02:00  
+.TH "DELETE" 7 "" "PostgreSQL" "SQL \N'45' Dil Deyimleri"
+.nh   
+.SH İSİM
+DELETE \N'45' bir tablo satırını siler   
+.SH KULLANIM 
+.nf
+\fBDELETE FROM\fR [ \fBONLY\fR ] \fItablo\fR [ \fBWHERE\fR \fIkoşul\fR ]
+.fi
+    
+.SH AÇIKLAMA
+\fBDELETE\fR, belirtilen tablodan yeri \fBWHERE\fR deyimi ile saptanan satırı siler. \fBWHERE\fR deyiminin yokluğunda tablonun tüm satırlarını siler; sonuç, geçerli ama boş bir tablo olur.   
+
+.br
+.ns
+.TP 
+\fBİpucu:\fR
+\fBTRUNCATE\fR [truncate(7)] bir PostgreSQL oluşumu olarak, bir tablodaki tüm satırları silmek için daha hızlı bir mekanizma içerir.   
+
+.PP
+
+Öntanımlı olarak, \fBDELETE\fR belirtilen tablodakinden başka, tablonun alt tablolarındaki satırları da silecektir. Sadece belirttiğiniz tablodaki satırların silinmesini istiyorsanız, cümlede \fBONLY\fR kullanmalısınız.   
+
+Bir tablodan satır silebilmek için, tablo üzerinde \fBDELETE\fR izninizin olması gereğinden başka, \fIkoşul\fR ile belirtilen değerleri tablodan okuyabilmek için de \fBSELECT\fR izniniz olması gerekir.   
+
+.SH PARAMETRELER    
+.br
+.ns
+.TP 
+\fItablo\fR
+Mevcut bir tablonun ismi (şema nitelemeli olabilir).     
+
+.TP 
+\fIkoşul\fR
+Silinecek satırları seçmekte kullanılacak, boolean türünde değer döndüren bir ifade.     
+
+.PP  
+.SH ÇIKTI
+Başarılı bir işlemin ardından, \fBDELETE\fR komutu şöyle bir çıktı ile döner:   
+
+
+.nf
+DELETE \fImiktar\fR
+.fi   
+
+Burada \fImiktar\fR silinen satırların sayısıdır. \fImiktar\fR 0 ise \fIkoşul\fR ile eşleşen bir satır bulunamamış demektir (bu bir hata sayılmaz).   
+
+.SH EK BİLGİ
+PostgreSQL, \fBWHERE\fR deyiminin koşulu olarak başka tabloların sütunlarına da başvurmanızı mümkün kılar. Örneğin, belli bir yapımcının bütün filmlerini silmek için şöyle bir cümle yazılabilir:   
+
+
+.RS 4
+.nf
+DELETE FROM films
+\  WHERE producer_id = producers.id AND producers.name = \N'39'foo\N'39';
+.fi
+.RE   
+
+Burada yapılan aslında, films ve producers tabloları arasında katılım oluşturup, koşula uyan  films satırlarını silinmiş olarak imlemektir. Bu sözdizimi standart değildir. Standart yol:   
+
+
+.RS 2
+.nf
+DELETE FROM films
+\  WHERE producer_id IN (SELECT id FROM producers WHERE name = \N'39'foo\N'39');
+.fi
+.RE   
+
+şeklinde yazmaktır. Yine de, bazı durumlarda ilk sözdizimi alt seçimli ikinci tarza göre hem daha kolay yazılmakta hem de işlemin yerine getirilmesi daha hızlı olabilmektedir. Katılımlı sözdizimine tek itiraz, kullanılan tabloların listesinin açıkça belli olmayışı, bu sebeple de biraz daha hataya açık olması, ayrıca kendine katılımlı işlemin yapılamayışıdır.   
+
+.SH ÖRNEKLER
+Müzikâller dışında tüm filmleri silmek için:   
+
+
+.RS 4
+.nf
+DELETE FROM films WHERE kind <> \N'39'Musical\N'39';
+.fi
+.RE   
+
+films tablosunu temizlemek için:   
+
+
+.RS 4
+.nf
+DELETE FROM films;
+.fi
+.RE   
+
+.SH UYUMLULUK
+Bir PostgreSQL oluşumu olarak  \fBWHERE\fR deyiminin koşulunda başka tabloların sütunlarına da başvurulabilmesi dışında, bu komut SQL standardına uygundur.   
+
+.SH ÇEVİREN
+Nilgün Belma Bugüner <nilgun (at) belgeler·gen·tr>, Nisan 2005 
+ 
+    

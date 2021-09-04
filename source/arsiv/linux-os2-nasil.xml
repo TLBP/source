@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--DOCTYPE article SYSTEM "../docbook/dtd/docbookx.dtd"-->
+<!-- ********************************************************************
+     $Id: linux-os2-nasil.xml,v 1.2 2002/09/18 20:11:34 nilgun Exp $
+     ******************************************************************** -->
+
+<article id="archive-linux-os2-nasil">
+  <articleinfo>
+    <title>Linux + OS/2 Mini NASIL</title>
+    <author>
+      <firstname>H. İlker Temir</firstname>
+      <affiliation>
+          <address><email>itemir@cisco.com</email></address>
+      </affiliation>
+    </author>
+    <pubdate>v1.0, 1 Kasım 1996</pubdate>
+  </articleinfo>
+<div>
+
+<pre>
+
+Bu dokümanın yazılımı sırasında Hamish Moffat
+(moffatt@yallara.cs.rmit.edu.au) tarafından yazılmış "Linux + OS/2 (+ DOS)
+mini-HOWTO, version 0.2. May 20, 1996." dokümanından faydalanılmıştır.
+
+<b>İÇİNDEKİLER</b>
+
+1. Ön bilgiler
+2. Kurulum (Sistemin "sıfırdan" Linux ve OS/2 ile kurulumu)
+3. Daha önceden Linux kurulmuş bir bilgisayara OS/2 kurmak
+4. Daha önceden OS/2 kurulmuş bir bilgisayara Linux kurmak
+5. Sorulabilecek muhtemel sorular
+
+
+</pre><h2>1. Ön bilgiler </h2><pre>
+
+Herşeyden önce bu dokümanda anlatılan herşey (aksi belirtilmedikçe)
+denenmiştir, her ne kadar bu işlemler sırasında çıkabilecek sorunların
+nasıl giderileceği açıklanmışsa da ortaya çıkabilecek hiç bir zarar, veri
+kaybi vs'de sorumluluk kabul edilmeyecektir.
+
+Ayrıca bu doküman, linux ve OS/2'yi daha önceden kurmuş ve az da olsa
+bilgisayar bilgisi olduğu düşünülen kullanıcılar için yazılmıştır, aksi
+taktirde kullanıcıların biraz daha fazla vakit harcamaları gerekebilir (Bu
+durumda bana mail atabilirsiniz)
+
+Yazdığım açıklamalar için OS/2 Warp 3.0 kullandım, diğer versiyonlarda
+ufak tefek farklılıklar görülebilir, ancak aynı işlemlerin
+yapılabileceğini sanıyorum.
+
+</pre><h2>2. Kurulum</h2><pre>
+
+Bu kısmı bilgisayarınızı "sıfırdan" kurduğunuzu düşünerek yazıyorum, eğer
+şu anki sistemizde değişiklik yapmak amacında iseniz lütfen 3 ve 4.
+bölüm(ler)e geçin.
+
+Öncelikle sistemizi ne şekilde düzenleyeceğinizi planlamanız oldukça
+yerinde bir davranış olacaktır, örneğin bilgisayarınızda hangi sistemleri
+kullanacağınız (Linux ve OS/2 dışında hangi bölüme ne kadar yer
+ayıracağınız, kullanacağınız sistemlerin dosya yapılari (FAT, HPFS, e2fs
+vs vs). Tüm bunları baştan planlarsanız, kurulum işlemini "başınız fazla
+ağrımadan" halletmeniz mümkün.
+
+Bilgisayarınızı OS/2 sistem disketi ile açın ve fdisk programını
+çalıştırın. Öncelikle OS/2 açılış düzenleyicisini (boot manager) kurun.
+Ardından kullanmak istediğiniz bölümleri oluşturun, burda unutmamanız
+gereken bir diskte yalnızca 4 birincil (primary) bölüm olabileceğidir
+(Bunlardan birini OS/2 açılış yükleyicisi, ikisini Linux ve OS/2 için
+kullanacağınızi düşünürseniz geriye yalnızca bir bölüm kalır).
+Oluşturduğunuz bölümleri "açılış yükleyicisi menüsüne ekle" (add to boot
+manager menu) seçeneği ile - birer isim vererek, Linux OS/2 gibi açılış
+yükleyicisi menüsüne ekleyin ve OS/2'nin kurulumunu tamamlayın.
+
+Daha sonra linux açılış disketi (boot disk) ile bilgisayarı açıp linux'un
+fdisk'ini kullanarak linux bölümünün tipini "Linux Native (83)" yapın, ve
+kurulum işlemini tamamlayın. Özel bir dikkat göstermeniz gereken tek nokta
+linux yükleyicisinin (lilo) kurlumudur. Linux yükleyicisini "superblock"a
+değil de kendi kullandığı bölümün "boot sectör"üne kurmanız gerekiyor,
+aksi taktirde OS/2'nin açılış yükleyicisini silmiş olursunuz. Bunu
+yapmanızdaki amaç OS/2'nin linux'u -dosya yapısını bilmediği için- direkt
+olarak açamayışıdır. Bu şekilde yapılan bir düzenleme ile OS/2 kontrolü
+linux'un bulunduğu bölümdeki açılış sektörüne (boot sector) verir, burada
+bulunan linux yükleyicisi ise linux'u açar ve yükler. Ancak linux
+yükleyicisi olmadan sistemin çalışması beklenemez. Ayrıca ana yükleyici
+olarak OS/2 kullanıldığı için linux yükleyicisinin açılıştaki bekleme
+süresini (delay=0) sıfıra indirebilirsiniz.
+
+Duyduğuma göre OS/2'nin eski versiyonları (Bunu deneme şansım olmadı)
+formatlanmamış bölümleri açılış yükleyicisinin menüsüne eklemiyormuş.
+Böyle bir durumda, (bu benim fikrim değil) önce bu bölümü (linux)
+formatlayıp, menüye ekledikten sonra üzerine linux kurmayı
+deneyebilirsiniz. (Lütfen bu konuda bilgisi/fikri olan varsa bana
+bildirsin)
+
+</pre><h2>3. Daha önceden Linux kurulmuş bir bilgisayara OS/2 kurmak</h2><pre>
+
+Böyle bir durumda önce bilgisayarınızı linux ile açın ve /etc/lilo.conf
+dosyasında bulunan "boot = " satırını (Bu muhtemelen /dev/hda
+şeklindedir), linux'un bulunduğu bölümle değiştirin. Örneğin eğer linux
+diskinizin ilk bölümünde ise /dev/hda1. Bu dosyayı bu haliyle kayıt
+ettikten sonra /sbin/lilo'yu çalıştırarak bilgilerinizi güncelleyin, bu 2.
+maddede açıklanan linux yükleyicisinin kendi açılış sektörüne yüklenmesini
+sağlayacaktır.
+
+Daha sonra linux'u kapatıp OS/2'yi kurun ve OS/2 disk bölümlerini
+oluştururken açılış düzenleyicisini kurmayı unutmayın, OS/2 bölümü ile
+beraber 83. tip (Type 83) -Linux Native- olan bölümü de açılış
+düzenleyicisinin menüsüne ekleyin.
+
+OS/2'nin kurulumunu tamamlayın. Sistemizi bir dahaki açışınızda ekranan
+gelen menüden istediğiniz sistemi (OS/2, Linux vs) açmanız mümkün.
+
+4. Daha önceden OS/2 kurulmuş bir bilgisayara Linux kurmak
+
+Bu durumda yapmanız gereken fazla birşey yok, 2. maddeye bakın, OS/2
+kurulum kısmını geçip kalan kısmı uygulamanız yeterli olacaktır.
+
+Ancak eğer OS/2 DOS ile aynı bölümde bulunuyorsa ve "dual-boot" yoluyla
+açılış yapılıyorsa (DOS'ta BOOT/DOS ve BOOT/OS2 gibi) DOS'u ve OS/2'yi
+ayrı ayrı açılış menüsüne yükleme şansınız -maalesef- bulunmuyor. Açılışı
+eskisi gibi "dual-boot" yoluyla yapmanız ve açılış menüsünden DOS-OS/2
+bölümünü seçmeniz gerekecektir.
+
+<b>2,3,4. MADDELER İÇİN NOT:</b>
+
+Başıma hiç gelmedi ancak, bazı kaynaklarda OS/2'nin linux bölümlerini
+açılış yükleyicisinin menüsüne eklerken -bozuk olduğunu iddia ederek-
+sorun çıkardığını okudum. Bu yüzden her zaman ilk tercihinizin linux
+kurulumunu yapmadan bu bölümü açılış menüsüne eklemek olmasında fayda var.
+
+</pre><h2>5. Sorulabilecek muhtemel sorular </h2><pre>
+
+<b>1 .Soru : Açılışta OS/2 açılış düzenleyicisi (boot manager) yerine linux yükleyicisi
+(lilo) çıkıyor ? </b>
+
+1. Cevap : Linux yükleyicisini 2. bölümde anlatılanın aksine, "boot
+sector" yerine "super block"a kurmuşsunuz, bu sorunu gidermek için 3.
+bölümde anlatıldığı şekilde linux yükleyicisini "boot sector"e yükleyerek,
+OS/2 setup disketi ile bilgisayarı açıp, tekrar fdisk'i çalıştırın, açılış
+düzenleyicisini kurduktan sonra çıkıp (çeşitli rivayetlere göre fdisk'i
+çalıştırdıktan sonra kayıt edip çıkmak yeterli oluyor(muş) !!),
+bilgisayari kapayıp açtığınızda, bilgisayarınız "normale" dönecektir.
+
+<b>2. Soru : OS/2 açılış düzenleyicisinde Linux'u seçtiğimde "xxxxxxxx"
+şeklinde bir hata veriyor ve linux açılmıyor ? </b>
+
+2. Cevap : Linux yükleyicisini kurmamışsınız veya hatalı kurmuşsunuz, bunu
+düzenlemek için 1,2 ve 3. maddeleri okuyun. Ayrıca aşağıda /etc/lilo.conf
+dosyası için bir örnek bulunuyor
+
+  boot = /dev/hda1
+  delay = 50         ; Bu değeri 0 yaptığınız taktirde sistem OS/2 'den sonra beklemeyecektir.
+  vga = normal
+  ramdisk = 0
+
+  image = /vmlinuz
+    root = /dev/hda1
+    label = linux
+    read-only
+
+<b>3. Soru : Bilgisayarıma hem OS/2 hem Linux'u "başarıyla" kurdum ancak
+yalnızca OS/2 (veya Linux) çalışıyor, diğer sisteme ulaşamıyorum. </b>
+
+3. Cevap : Bu durumda önce linux'u açın (linux açılış disketi gerekebilir
+(Boot &amp; Root)) 1. soruda anlatılanları uygulayıp sorunu giderin.
+
+<b>4. Soru : Linux'u veya OS/2'yi ikinci diskimden çalıştırmam mümkün mü ?
+(Bu pek konumuzla alakalı değil ama !!)</b>
+
+4. Cevap : OS/2'yi mümkün, Linux'u çalıştırmanın mümkün olduğu da benzer
+şekilde söyleniyor (güvenilir kaynaklar (!!) tarafından) ancak hiç bir
+durumda DOS'u 2. diskten çalıştırmayı beceremedim, okuduğum hiç birşey de
+buna alternatif getiremedi, lütfen fikriniz varsa bana bir mail atın. Bunu
+yapmak için OS/2'nin fdisk'inde ikinci diske geçip (Yanılmıyorsam -Tab-
+ile olacaktı) buradaki bölümleri (OS/2 veya Linux) açılış düzenleyicisi
+menüsüne eklemek gerekiyor.
+
+<b>5. Soru : Herşeyi denedim, bütün soruları okudum ama bilgisayarımı bile
+(diskten) açamıyorum !!!!! </b>
+
+5. Cevap : Böyle birşey olacağını sanmam ama yine de birşeyler düşünelim.
+Emektar bir DOS disketi ile açıp fdisk'i bir çalıştırın, "set active
+partition" seçeneği ile çalıştığından emin olduğunuz bir bölümü (OS/2 veya
+linux) aktif hale getirin. Dikkat : Bu durumda açılış düzenleyicisini
+devreden çıkarmış olursunuz. Bundan sonraki duruma göre ya diğer
+soru/cevaplarda söylenenleri uygulayın ya da bu işi gerçekten iyi bilen
+birini bulun ;-)
+
+<b>SON NOTLAR: </b>
+
+Bütün bu anlatılanlar
+
+  1. 1 GB Seagate diskli bir Pentium 100'de
+  2. 540 MB Seagate/1.3 GB Maxtor diskli bir 80486DX4 100'de
+  3. 420 MB Seagate diskli bir 80486DX2 66'da
+
+OS/2 Warp 3.0 ve muhtemel Slackware Linux versiyonları kullanılarak
+denenmiş ve sorun çıkmadan çalışmıştır. Burada yazılanlara ekleme/düzeltme
+gönderirseniz memnun olurum.
+
+Herkese bol OS/2'li ve Linux'lu günler .......
+<!--
+H.İlker TEMİR
+E-Mail : (Öncelik sırası ile, zamanla devre dışı kalanlar olabilir)
+  i-temir@bi.net.tr
+  ilker@compclup.ceng.metu.edu.tr
+  e110141@narwhal.cc.metu.edu.tr
+  hit@www2.phys.hun.edu.tr
+-->
+</pre></div></article>

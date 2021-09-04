@@ -1,0 +1,825 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--DOCTYPE article SYSTEM "../docbook/dtd/docbookx.dtd"-->
+<!-- ********************************************************************
+     $Id: majordomo-liste-kurulum.xml,v 1.1 2002/11/25 23:29:45 nilgun Exp $
+     ******************************************************************** -->
+
+<article id="majordomo-liste-nasil">
+  <articleinfo>
+    <title>Majordomo Liste Yöneticisi Kurulumu NASIL</title>
+    <author>
+      <firstname>Genco Yılmaz</firstname>
+      <affiliation>
+          <address><email>gencoyilmaz@gmail.com</email></address>
+      </affiliation>
+    </author>
+    <pubdate>Ekim 2002</pubdate>
+
+    <revhistory>
+       <revision>
+          <revnumber>1.0</revnumber>
+          <date>Ekim 2002</date>
+          <authorinitials>Genco Yılmaz</authorinitials>
+          <revremark>
+             İlk sürüm - Belgenin özgün sürümü
+             <ulink url="https://genco.marketweb.net.tr/Belgeler/"/>
+             adresinde bulunabilir.
+          </revremark>
+       </revision>
+     </revhistory>
+
+     <!-- Provide a good abstract; a couple of sentences is sufficient -->
+     <abstract>
+        <para>
+          Majordomo internet üzerindeki eposta listelerinin idaresinde görev
+          alan bir programdır.
+        </para>
+     </abstract>
+  </articleinfo>
+<para role='only.html'>Ek - <ulink url="fdl.html">GNU Free Documentation License</ulink></para>
+  <sect1 id="majordomo-liste-nasil_nedir">
+    <title>Majordomo Nedir?</title>
+    <para>
+      Kelime anlamı olarak konuşan ve düzenleme yapan kişi anlamına gelmektedir.
+      Latincede "Major Domus" = "Ev efendisi"
+    </para><para>
+      Majordomo internet üzerindeki eposta listelerinin idaresinde görev alan bir
+      programdır. Eposta aracılığıyla gönderilen komutlar majordomo tarafından
+      işleme alınır.
+    </para>
+  </sect1>
+  <sect1 id="majordomo-liste-nasil_kurulum">
+    <title>Majordomo kurulumu ve ayarları</title>
+    <sect2>
+      <title>Majordomo kurmak için nelere ihtiyacınız var?</title>
+      <para>
+        <orderedlist>
+          <listitem>
+             Perl 4.036 sürümü ya da 5.002 (İsterseniz daha yüksek bir sürüm
+             kullanın. Seçim sizin).
+          </listitem>
+          <listitem>
+            Bir C derleyici. gcc sizin için yeterli olacaktır :)
+          </listitem>
+        </orderedlist>
+      </para>
+    </sect2>
+    <sect2>
+      <title>Majordomo programını nereden alacaksınız?</title>
+      <para>
+        <ulink url="http://www.greatcircle.com/majordomo/1.94.5/majordomo-1.94.5.tar.gz"/>
+        adresinden ya da <ulink url="http://genco.marketweb.net.tr/Documents/download/majordomo-1.94.5.tar.gz"/>
+        adresinden programın güncel sürümlerini edinebilirsiniz.
+      </para>
+    </sect2>
+    <sect2>
+      <title>Kuruluma Hazırlık</title>
+      <para>
+        İlk önce sistemimize <literal>majordomo</literal> kullanıcısını ekleyelim.
+        Kullanıcıyı sisteme eklerken ev dizinini <literal>/usr/local/majordomo</literal>
+        olarak ayarlayınız. Program bu dizin altına kurulacak.
+</para><para><screen># adduser majordomo</screen>
+       </para><para>
+         Majordomo sizin belirlemiş oldugunuz bir UID ve GID ile çalışmak
+         durumundadır. Örneğin benim kullanmış olduğum sistem <emphasis role="bold">Slackware 7.1</emphasis>
+         ve  majordomo kullanıcısını UID: 1042, GID: 12 olacak şekilde oluşturuyorum.
+       </para><para>
+         Burada 12 no'lu grup kimliği <literal>mail</literal> grubuna ait,
+         siz isterseniz majordomo kullanıcısını başka bir gruba dahil edebilirsiniz.
+       </para><para>
+         Majordomo'nun <literal>resend</literal> programının düzgün şekilde çalışabilmesi
+         için, majordomo kullanıcısı sendmail'in yapılandırma dosyasında
+         <literal>Trusted User</literal> olarak tanımlanmalıdır. Bunun için
+         <literal>/etc/mail/sendmail.cf</literal> dosyası içinde
+</para><para><screen>
+Troot
+Tdaemon
+Tuucp
+</screen></para><para>
+        satırlarının altına <literal>Tmajordomo</literal> yazalım. Daha sonra
+        <literal>sendmail</literal> sürecine <literal>HUP</literal> sinyalini
+        gönderelim.
+</para><para><screen>
+# kill -HUP `head -n 1 /var/run/sendmail.pid`
+</screen>
+      </para>
+      <para>
+        İndirmiş olduğumuz paketi aşağıdaki komut ile <literal>/usr/local</literal>
+        dizini altına açıyoruz ve <literal>/usr/local/majordomo-1.94.5</literal>
+        dizini oluşuyor. Şimdi aşağıdaki işlemleri sırasıyla yapalım.
+</para><para><screen>
+# tar -zxvf majordomo-1.94.5.tar.gz -C /usr/local
+# mv /usr/local/majordomo-1.94.5 /usr/local/majordomo
+</screen></para><para>
+        dizinimizin adını <literal>majordomo</literal> olarak değiştirdik.
+</para><para><screen>
+# chown -R majordomo:mail /usr/local/majordomo
+</screen></para><para>
+        Kullanıcı ve grup ayarlarını yaptık.(Ben grup olarak mail tanımladım,
+        siz majordomo'yu hangi gruba atadıydanız burada o grubu yazıyorsunuz.
+</para><para><screen>#su - majordomo</screen></para><para>
+        <literal>majordomo</literal> kullanıcısı olduk. Şimdi ev dizinimize
+        bakıyoruz.
+</para><para><screen>$ pwd</screen></para><para>
+        komutunun çıktısı <literal>/usr/local/majordomo</literal> olması gerekir.
+      </para>
+    </sect2>
+    <sect2>
+      <title>Makefile Dosyasının Yapılandırılması</title>
+      <para>
+        <literal>/usr/local/majordomo/Makefile</literal> dosyasını aşağıdaki
+        gibi düzenleyelim.
+      </para>
+      <caution>
+        <para>
+          Perl programının dosya yolunu düzeltmek durumunda kalabilirsiniz.
+          Öntanımlı olarak <literal>/bin/perl</literal> yazıyor, fakat ben de
+          <literal>/usr/bin/perl</literal> yolundaydı.Diğer kısımları da aşağıdaki
+          dosyaya bakarak değiştirebilirsiniz.
+        </para>
+      </caution>
+      <para>
+<screen>
+# This is the Makefile for Majordomo.
+#
+#------------- Configure these items ----------------#
+#
+
+# Put the location of your Perl binary here:
+ PERL = /usr/bin/perl/usr/bin/perl
+
+# What do you call your C compiler?
+ CC = cc
+
+# Where do you want Majordomo to be installed? This CANNOT be the
+# current directory (where you unpacked the distribution)
+ W_HOME = /usr/local/majordomo
+ W_HOME = /usr/local/majordomo
+
+
+# Where do you want man pages to be installed?
+ MAN = $(W_HOME)/man
+
+# You need to have or create a user and group which majordomo will run as.
+# Enter the numeric UID and GID (not their names!) here:
+ W_USER = 1042
+ W_GROUP = 12
+
+# These set the permissions for all installed files and executables (except
+# the wrapper), respectively. Some sites may wish to make these more
+# lenient, or more restrictive.
+ FILE_MODE = 644
+ EXEC_MODE = 755
+ HOME_MODE = 751
+
+# If your system is POSIX (e.g. Sun Solaris, SGI Irix 5 and 6, Dec Ultrix MIPS,
+# BSDI or other 4.4-based BSD, Linux) use the following four lines. Do not
+# change these values!
+ WRAPPER_OWNER = root
+ WRAPPER_GROUP = $(W_GROUP)
+ WRAPPER_MODE = 4755
+ POSIX = -DPOSIX_UID=$(W_USER) -DPOSIX_GID=$(W_GROUP)
+# Otherwise, if your system is NOT POSIX (e.g. SunOS 4.x, SGI Irix 4,
+# HP DomainOS) then comment out the above four lines and uncomment
+# the following four lines.
+# WRAPPER_OWNER = $(W_USER)
+# WRAPPER_GROUP = $(W_GROUP)
+# WRAPPER_MODE = 6755
+# POSIX =
+
+# Define this if the majordomo programs should *also* be run in the same
+# group as your MTA, usually sendmail. This is rarely needed, but some
+# MTAs require certain group memberships before allowing the message sender
+# to be set arbitrarily.
+# MAIL_GID = numeric_gid_of_MTA
+
+
+# This is the environment that (along with LOGNAME and USER inherited from the
+# parent process, and without the leading "W_" in the variable names) gets
+# passed to processes run by "wrapper"
+ W_SHELL = /bin/sh
+ W_PATH = /bin:/usr/bin:/usr/ucb
+ W_MAJORDOMO_CF = $(W_HOME)/majordomo.cf
+
+# A directory for temp files..
+ TMPDIR = /usr/tmp
+
+#--------YOU SHOULDN'T HAVE TO CHANGE ANYTHING BELOW THIS LINE.-------------
+</screen>
+      </para>
+    </sect2>
+    <sect2>
+      <title>majordomo.cf Dosyasının Yapılandırılması</title>
+      <para>
+        Yine aynı dizindeki <literal>/usr/local/majordomo/sample.cf</literal> dosyasını
+        <literal>majordomo.cf</literal> dosyasına kopyalayalım (majordomo.cf
+        dosyası var olmak zorunda değildir).
+</para><para><screen>
+$ cp sample.cf majordomo.cf
+</screen></para><para>
+        Ve <literal>majordomo.cf</literal> dosyasını aşağıdaki şekilde sizin
+        sisteminize uyarlayarak düzenleyeniz. (sendmail programının yoluna dikkat!)
+      </para>
+      <warning>
+        <para>
+          smtp makina adresi olarak aşağıda yazılmış olan <literal>olympos.gen.tr</literal>
+          sizin smtp makina adresine çeviriniz.
+        </para>
+      </warning>
+      <para>
+<screen>
+# A sample configuration file for majordomo. You must read through this and
+# edit it accordingly!
+#
+
+
+# $whereami -- What machine am I running on?
+#
+ $whereami = "olympos.gen.tr";
+
+# $whoami -- Who do users send requests to me as?
+#
+ $whoami = "Majordomo\@$whereami";
+
+# $whoami_owner -- Who is the owner of the above, in case of problems?
+#
+ $whoami_owner = "Majordomo-Owner\@$whereami";
+
+# $homedir -- Where can I find my extra .pl files, like majordomo.pl?
+# the environment variable HOME is set by the wrapper
+#
+ if ( defined $ENV{"HOME"}) {
+ $homedir = $ENV{"HOME"};
+ } else {
+ $homedir = "/usr/local/majordomo";
+ }
+
+# $listdir -- Where are the mailing lists?
+#
+ $listdir = "$homedir/lists";
+
+# $digest_work_dir -- the parent directory for digest's queue area
+# Each list must have a subdirectory under this directory in order for
+# digest to work. E.G. The bblisa list would use:
+# /usr/local/mail/digest/bblisa
+# as its directory.
+#
+ $digest_work_dir = "/usr/local/mail/digest";
+
+# $log -- Where do I write my log?
+#
+ $log = "$homedir/Log";
+
+# $sendmail_command -- Pathname to the sendmail program
+# usually /usr/lib/sendmail, but some newer BSD systems
+# seem to prefer /usr/sbin/sendmail
+#
+#$sendmail_command = "/usr/lib/sendmail";
+ $sendmail_command = "/usr/bin/sendmail";
+</screen>
+      </para>
+    </sect2>
+    <sect2>
+      <title>Kurulum</title>
+      <para>
+<screen>
+$ make wrapper
+</screen></para><para>
+        komutunu vererek <literal>wrapper</literal> programının uygun şekilde
+        derlenebildiğini sınıyoruz.
+</para><para><screen>
+$ make install
+</screen>
+      </para>
+      <para>
+        Sıra <literal>wrapper</literal>'ı yüklemeye geldi.İlk önce
+        <literal>root</literal> olalım.
+</para><para><screen>
+$ su root
+# make install-wrapper
+</screen></para><para>
+        Komutunu root olarak çalıştıralım. Çünkü wrapper programı setuid olarak
+        yüklenmek zorundadır.
+      </para>
+      <para>
+        <literal>/etc/mail/aliases</literal> dosyasının içine şu satırları
+        yazalım:
+</para><para><screen>
+majordomo: "|/usr/local/majordomo/wrapper majordomo"
+majordomo-owner : can@olympos.gen.tr,
+owner-majordomo : can@olympos.gen.tr,
+</screen>
+      </para>
+      <warning><para>
+        <literal>can@olympos.gen.tr</literal> adresini kendi adresiniz şeklinde
+        değiştiriniz.
+      </para></warning>
+      <para>
+        Değişikliklerin etkin olması için <literal>newaliases</literal> komutunu
+        çalıştırıyoruz.
+</para><para><screen># newaliases</screen>
+      </para>
+    </sect2>
+    <sect2>
+      <title>Kurulumun Sınanması</title>
+      <para>
+        Programların ve izinlerin düzgün şekilde çalışıp çalışmadığını sınamak
+        için sistemdeki herhangi bir kullanıcı ile (majordomo ve root dışında
+        normal bir kullanıcı) majordomo ev dizinine geçelim.
+</para><para><screen>
+$ cd /usr/local/majordomo
+</screen></para><para>
+        sonra aşağıdaki komutu çalıştıralım.
+      </para><caution><para>
+        <literal>/usr/local/majordomo</literal> dizininde dizin listelemesi
+        yapamazsınız.
+      </para></caution>
+      <para>
+        Bu nedenle <literal>ls</literal> komutunu vermeden aşağıdaki
+        komutu çalıştıralım.
+</para><para><screen>
+$ ./wrapper config-test
+</screen></para><para>
+        Bu komutun çıktısı hemen hemen aşağıdaki şekilde olacaktır.
+</para><para><screen>
+------------------------------------------------------------
+---------------- Config-test for Majordomo -----------------
+------------------------------------------------------------
+
+
+--------------------- Obvious things: ---------------------
+------------------ environment variables ------------------
+HOME=/usr/local/majordomo-1.94.5
+LOGNAME=majordomo
+MAJORDOMO_CF=/usr/local/majordomo-1.94.5/majordomo.cf
+PATH=/bin:/usr/bin:/usr/ucb
+SHELL=/bin/sh
+USER=majordomo
+--------------------- euid/egid checks ---------------------
+effective user = majordomo (uid 1111)
+effective group = users users (gid 100 100 )
+---------------------- uid/gid checks ----------------------
+real user = majordomo (uid 1111)
+real group = users users (gid 100 100 )
+------------------------------------------------------------
+
+Non obvious things that cause headaches:
+
+------------------------------------------------------------
+Good: 'require'd /usr/local/majordomo-1.94.5/majordomo.cf okay.
+Good: found ctime.pl okay.
+Good: found majordomo_version.pl okay.
+Good: found majordomo.pl okay.
+Good: found shlock.pl okay.
+Good: found config_parse.pl okay.
+
+You're running Majordomo Version 1.94.5.
+
+--==> Majordomo home directory is /usr/local/majordomo-1.94.5.
+
+------------------- Include directories -------------------
+/usr/local/majordomo-1.94.5
+/usr/lib/perl5/i386-linux
+/usr/lib/perl5
+/usr/lib/perl5/site_perl/i386-linux
+/usr/lib/perl5/site_perl
+/usr/lib/perl5/site_perl
+.
+--------------------------- Home ---------------------------
+Good: changedir to /usr/local/majordomo-1.94.5 succeeded.
+Good: Created a mock lock file.
+---------------------- temp directory ----------------------
+Good: Created a temp file in $TMPDIR (/usr/tmp).
+---------------------- list directory ----------------------
+Hmmm, list directory /usr/local/majordomo-1.94.5/lists doesn't exist
+or isn't a directory.
+Let me try to make it for you...
+Good: list directory /usr/local/majordomo-1.94.5/lists created.
+
+--------------------------- log ---------------------------
+Logfile /usr/local/majordomo-1.94.5/Log didn't exist, trying to create...
+okay, now chmod'ing..
+Good: logfile /usr/local/majordomo-1.94.5/Log exists and is writeable.
+------------------------- Mailers -------------------------
+You have defined a mailer for delivery.
+Attempting to verify that this is a valid mailer...looks okay.
+You have defined a mailer for delivering administrative messages.
+Attempting to verify that this is a valid mailer...looks okay.
+------------------ Checking majordomo.cf ------------------
+Checking to see if there are new variables that should be in
+your majordomo.cf file...Nope, none that I see.
+
+Have you configured where Majordomo is?
+$whereami is olympos.gen.tr
+Good: yup!
+----------------------- end of tests -----------------------
+
+
+Nothing bad found! Majordomo _should_ work correctly.
+
+If it doesn't, check your configuration file
+(/usr/local/majordomo-1.94.5/majordomo.cf)
+closely, and if it still looks okay, consider asking the majordomo-users
+mailing list at "majordomo-users@greatcircle.com" for assistance. Be sure
+and fully specify what your problems are, and what type of machine (and
+operating system) you are using.
+
+Enjoy!
+
+I see you haven't registered this version of Majordomo.
+By registering, you will be notified of patches and further releases
+of Majordomo. Shall I send email to majordomo-registration@greatcircle.com
+to register this version? (I'll cc Majordomo-Owner@olympos.gen.tr)
+[yes]
+</screen></para><para>
+        Majordomo programınızı kayıt ettirmek istiyorsanız &lt;enter>'a
+        basabilirsiniz.
+      </para>
+      <para>
+        Son adımlara geldik. <literal>majordomo</literal> adresine ileti
+        gövdesinde sadece <literal>lists</literal> yazan bir komut gonderelim.
+        Komuta karşılık <literal>majordomo</literal>'dan aşağıdaki cevabı
+        alıyorsak işimiz hemen hemen tamamdır.
+</para><para><screen>
+>>>> lists
+ Majordomo@olympos.gen.tr serves the following lists:
+
+
+Use the 'info &lt;list>' command to get more information
+about a specific list.
+>>>>
+</screen>
+      </para>
+    </sect2>
+  </sect1>
+  <sect1 id="majordomo-liste-nasil_sorunlar">
+    <title>Yaşanabilecek Olası Sorunlar</title>
+    <para>
+      <emphasis role="bold">Okumanızı tavsiye ederim.</emphasis>
+    </para>
+    <itemizedlist>
+      <listitem>
+        <para>
+          Majordomo'da dizinler ve dosyalar 770 ya da 775 izinlerinde olmak
+          durumundadırlar. Fakat 755 de işi görmektedir. Bütün kurulum bittikten
+          sonra şu şekilde bir hata alabilirsiniz. (ki ben aldım):
+</para><para><screen>
+----- Transcript of session follows -----
+ 550 5.2.4 :include:/usr/local/majordomo/lists/deneme... Cannot open ¬
+     /usr/local/majordomo/lists/deneme: Group writable directory
+</screen></para><para>
+Aşağıdaki komut ile <literal>lists</literal> dizinimizin kipini 755  yapıyoruz. Sorun düzeliyor.
+</para><para><screen>
+$ chmod 755 /usr/local/majordomo/lists
+</screen>
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          "Sendmail Restricted Shell" kullanan bir sistem çalıştırıyorsanız ek
+          birkac işlem yapmak durumundasınız. Sendmail, <literal>smrsh</literal>
+          kullandığından çalıştırılabilir programların hepsi <literal>/etc/smrsh</literal>
+          dizini altında bulunmak zodundadır.(Red Hat'ta hep bu işlemi yapmak zorunda
+          kalmıştım). Aşağıdaki komutlarla <literal>/etc/smrsh</literal>
+          dizinine <literal>/usr/local/majordomo/wrapper</literal> programından
+          sembolik bağ vermiş olacağız.
+</para><para><screen>
+# ln -s /usr/local/majordomo/wrapper /etc/smrsh/wrapper
+</screen>
+        </para>
+      </listitem>
+    </itemizedlist>
+    <para>
+      Buna benzer birçok sorunun cevabı
+      <ulink url="http://www.greatcircle.com/majordomo/majordomo-faq.html"/>
+      adresinde bulunmaktadır. Bunlar benim yaşadıklarım.
+    </para>
+  </sect1>
+  <sect1 id="majordomo-liste-nasil_liste">
+    <title>Yeni liste açılması</title>
+    <para>
+      arkadas adında bir yeni liste açacağımızı düşünelim.
+</para><para><screen>$touch /usr/local/majordomo/lists/arkadas</screen></para><para>
+      Bu komut ile eposta adreslerinin tutulacağı dosyayı oluşturuyoruz.
+</para><para><screen>$touch /usr/local/majordomo/lists/arkadas.info</screen></para><para>
+      <literal>arkadas.info</literal> dosyasını oluşturuyoruz. Bu dosya içine
+      yazdıklarınız liste için tanıtım iletisi niteliğindedir.
+    </para><para>
+      Majordomo kurulumunuza göre aşagıdaki satırları <literal>/etc/mail/aliases</literal>
+      dosyasına ekleyip <literal>newaliases</literal> komutunu çalıştıralım.
+</para><para><screen>
+arkadas: "|/usr/local/majordomo/wrapper resend -l arkadas arkadas-list"
+arkadas-list: :include:/usr/local/majordomo/lists/arkadas
+arkadas-test: can@olympos.gen.tr,
+arkadas-owner: can@olympos.gen.tr,
+owner-arkadas: can@olympos.gen.tr,
+arkadas-approval : can@olympos.gen.tr,
+arkadas-request: "|/usr/local/majordomo/wrapper majordomo -l arkadas"
+</screen></para><para>
+      (Aman newaliases komutunu çalıştırmayı unutmayın:)
+    </para><para>
+      Aşağıdaki satırı eposta iletimizin gövdesinde majordomo adresine göndererek
+      <literal>config</literal> dosyamızı oluşturalım.
+</para><para><screen>config arkadas arkadas.admin</screen></para><para>
+      Bu komut size <literal>/usr/local/majordomo/lists/arkadas.config</literal>
+      adında öntanımlı bir yapılandırma dosyası oluşturacaktır.
+    </para><para>
+      Şimdi listenizi test edebilirsiniz. Majordomo adresine
+</para><para><screen>subscribe can@olympos.gen.tr</screen></para><para>
+      komutunu gönderin. Üyelik için bir doğrulama satırı alacaksınız.
+      Bu satırı tekrar aynı adrese gönderdiğinizde üyeliğiniz onaylanacaktır.
+    </para><para>
+      ŞİMDİ.. <literal>arkadas.config</literal> dosyasını değiştirmeyi göreceğiz.
+    </para>
+    <variablelist>
+      <varlistentry>
+        <term>Yönetici parolası nasıl değiştirilir?</term>
+        <listitem>
+          <para>
+            <literal>arkadas.config</literal> dosyasının içinde
+</para><para>
+<screen>admin_passwd = default.arkadas</screen>
+</para><para>
+            yazan bir satır bulacaksınız. <literal>default.arkadas</literal>
+            kelimesini yeni parolanızla değiştirebilirsiniz.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>lists komut çıktısında gelen tanımlamaları nasıl değiştiririm?</term>
+        <listitem>
+          <para>
+            Majordomo'ya <literal>lists</literal> komutu gönderildiğinde listenin
+            ne olduğu ilgili bir açıklama satırı görürsünüz.
+            <literal>description = öğrencilerin listesi</literal>
+            satırında "öğrencilerin listesi" dizgesini kendi listenize
+            göre değiştirin.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>İletilere nasıl dipnot ekleyebilirim?</term>
+        <listitem>
+          <para>
+            Dosya içinde iki <literal>END</literal> satırı arasına yazacağınız herşey
+            gönderilen her iletinin alt kısmına eklenir.
+</para><para><screen>
+message_footer &lt;&lt; END
+
+BENİM YENİ
+DİPNOTUM
+
+END
+</screen></para>
+          <warning><para>
+            Bu kısımda yeralan her <literal>--</literal> açıklama olarak ele
+            alınıp yoksayılacağından yazarken dikkatli olun.
+          </para></warning>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>Listeye üye olmayanlarda listeye mesaj atabiliyor. Bunu nasıl engellerim?</term>
+        <listitem>
+          <para>
+            <literal>restrict_post = arkadas</literal>
+            satırını yerleştirmeniz, sadece liste üyelerinin mesaj atmasını sağlar.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>Her epostanın konu satırına nasıl önek yapabilirim?</term>
+        <listitem>
+          <para>
+            <literal>subject_prefix = konu_öneki</literal>
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>Herkesin listeme üye olmasını istemiyorum, benden onay almalarını istiyorum</term>
+        <listitem>
+          <para>
+            <literal>subscribe_policy = closed</literal>
+            satırı liste yönecisinden onay alınmasını sağlar.
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </sect1>
+  <sect1 id="majordomo-liste-nasil_majorcool">
+    <title>Majorcool Kurulumu ve Ayarları</title>
+    <para>
+      <literal>Majorcool</literal> programı listeye web tabanlı erişim sağlar.
+      <literal>Majorcool</literal> programını
+      <ulink url="http://ncrinfo.ncr.com/pub/contrib/unix/MajorCool/majorcool.tar.gz"/>
+      ya da <ulink url="http://genco.marketweb.net.tr/Documents/download/majorcool.tar.gz"/>
+      adreslerinden alabilirsiniz.
+    </para>
+    <para>
+      İlk önce majorcool programı için bir dizin yaratalım.
+</para><para><screen>
+# mkdir /usr/local/majordomo/majorcool
+</screen></para><para>
+      Elimizeki tar dosyasını bu dizine açalım.
+</para><para><screen>
+# tar -zxvf majorcool.tar.gz -C /usr/local/majordomo/majorcool/
+</screen></para><para>
+      Aşağıdaki dosyaları açıp <literal>PERLBIN</literal> yazan ilk satırı
+      perl programınızın yolu ile değiştirin.
+      <orderedlist>
+        <listitem>/usr/local/majordomo/majorcool/majorcool.cgi</listitem>
+        <listitem>/usr/local/majordomo/majorcool/majorcool.pl</listitem>
+      </orderedlist>
+      Aynı zamanda <literal>/usr/local/majordomo/majorcool/Configure</literal>
+      dosyası içindeki
+</para><para><screen>
+PERLBIN="/usr/local/bin/perl" # How to start a perl script
+</screen></para><para>
+      yazan satırda <literal>/usr/local/bin/perl</literal>'ü kendi perl
+      yolunuzla değiştiriniz.
+    </para><para>
+      Majorcool dizinine geçip <literal>Configure</literal> betiğini çalıştıralım.
+</para><para><screen>
+# cd /usr/local/majordomo/majorcool
+# sh Configure
+</screen></para><para>
+      Betik çalıştıktan sonra karşınıza gelecek sorular ve cevapları aşağıda.
+</para><para><screen>
+1) What is the installation directory of Majordomo?
+/usr/local/majordomo
+
+2) What is the path to your Majordomo configuration file?
+/usr/local/majordomo/majordomo.cf
+
+3) Where would you like temp files created when MajorCool runs?
+/tmp
+
+4) What is the root directory for your Web server?
+/usr/local/apache/htdocs
+<emphasis>Bu dizin sizin web sunucunun kök dizini olmalı</emphasis>
+
+5) Where is the cgi-bin directory for your Web server?
+/usr/local/apache/cgi-bin
+<emphasis>Buradaki dizin adresi sizin cgi-bin dizininizin yolu olmalı</emphasis>
+
+6) What is your server's URL for '/usr/local/apache/cgi-bin'?
+/cgi-bin
+
+7) Where is the image directory for your Web server?
+/usr/local/apache/icons
+<emphasis>Apache icons dizinin yolu majorcool için yeterli olmaktadır</emphasis>
+
+8) What is your server's URL for '/usr/local/apache/icons'?
+/icons
+
+9)Where is the root directory for documents on your Web server?
+/usr/local/apache/htdocs
+
+10) What are you going to call this MajorCool CGI?
+majorcool
+
+11) <emphasis>Bundan sonra sorulan header ve footer kısımlarını boş bıraktım</emphasis>
+<emphasis>isterseniz siz birşeyler yazabilirsiniz.</emphasis>
+
+12) Where in /usr/local/apache/htdocs should the Help file be installed?
+/mc_default_help.htm
+
+13) What scheme will the Web server be using?
+http
+
+14) Which user-id?
+nobody
+<emphasis>Yüklenen dosyalar genelde cgi-bin dizininde ve kök dizininde olduğundan</emphasis>
+<emphasis>dosyaların iyeliğini nobody kullanıcısına veriyorum</emphasis>
+
+15) Which group-id?
+nogroup
+<emphasis>Nobody hangi gruba dahil ise bu soruya cevap olarak onu yazıyorsunuz</emphasis>
+
+16) What is the name you call your site?
+Majoolcool Site
+<emphasis>majorcool html dosyasının &lt;title> kısmında yazmasını istediğiniz satırı yazın</emphasis>
+
+17) What URL should be used for the site home?
+http://www.olympos.gen.tr/cgi-bin/majorcool
+<emphasis>Buraya kendi web sunucunuzun adresini yazıyorsunuz.</emphasis>
+<emphasis>Örneğin http://sizinwebsunucu/cgi-bin/majorcool</emphasis>
+
+18) Provide end-user BROWSE access [Y]?
+<emphasis>Her kullanıcıya bütün listeleri görebilme hakkı vermek istiyorsanız "Y" deyin.</emphasis>
+
+19) Provide administrator MODIFY access [Y]?
+<emphasis>Kendinize yönetici olarak değiştirme tuşunu etkin kılmak istiyorsanız "Y" deyin.</emphasis>
+
+20) Provide list CREATE access [Y]?
+<emphasis>Liste yaratabilmek istiyorsanız "Y" deyin.</emphasis>
+
+21)Provide list RENAME access [Y]?
+<emphasis>Yeniden adlandırabilme iznini vermek istiyorsanız "Y" deyin.</emphasis>
+
+22) Provide list DELETE access [Y]?
+<emphasis>Silme izini istiyorsanız "Y" deyin.</emphasis>
+
+23) Where do you want to keep the Key Cache file?
+/usr/local/majordomo/.majordomo_keys
+
+24) Which address mapping function will you use?
+simple
+<emphasis>Burada simple yerine karşınıza çıkan diger seçenekleri de yazabilirsiniz.</emphasis>
+<emphasis>Diğer seçeneklerde direk olarak eposta adres karşılaştırması yerine DNS/smtp</emphasis>
+<emphasis>doğrulaması yapabiliyor ve bir adresi birkaç adrese bağlama imkanı elde edebiliyorsunuz.</emphasis>
+
+25) Program to execute (if applicable)?
+<emphasis>Burayı boş bırakarak default programı çalıştırıyoruz ve biraz sonra</emphasis>
+<emphasis>gelen RENAME, DELETE sorularında da aynı işlemi yaparal boş bırakıyoruz.</emphasis>
+
+26) Require administrators to type the list name [N]?
+<emphasis>Yöneticinin liste adı yazmasına gerek kalmasın istiyorsanız N deyin.</emphasis>
+
+27) Require admin password change to be confirmed [Y]?
+<emphasis>Yönetici parolası için doğrulama gereksin diyorsanız Y deyin.</emphasis>
+
+28) Do list members see noadvertised lists [N]?
+<emphasis>ne anlama geliyor bilemiyorum.</emphasis>
+
+29) Do you trust that users are who they say [N]?
+<emphasis>Kim olduklarını söyleyen kullanıcılara güvenmek istemiyorsanız N deyin.</emphasis>
+
+30) Do you want to use instruct mode (aka paranoia mode) [N]?
+<emphasis>Öğretici kipi kullanmak istemiyorsanız N diyelim.</emphasis>
+<emphasis>Bundan sonraki sorularda öntanımlı değerleri kullanabilirsiniz.</emphasis>
+
+31) Perform sub/unsub by having requester use e-mail [N]?
+
+32) Allow admins to get config file (sent via e-mail) [Y]?
+
+33) Save Majordomo comments in list config file [Y]?
+
+34) Use 'server push' effects if supported [Y]?
+
+35) Return to prior screen after Prefs session [N]?
+
+36) Allow Internet 'spiders' to index this CGI [Y]?
+
+37) Update interval?
+[50]:
+
+
+38) Accept the new version? [yes|no|list|edit|diff]? yes
+</screen></para><para>
+      Bundan sonra majorcool programı test edilecektir. Program
+      <literal>default.sh</literal> adında bir dosya oluşturur ve girdiğiniz
+      bilgiler kayıt edilir. Program test edilirken bir sorun yaşarsanız
+      aynı bilgileri girmek durumunda kalmıyacaksınız.
+    </para>
+    <para>
+      Belgede herhangi bir hata ile karşılaşırsanız
+      <email>gyilmaz@marketweb.net.tr</email> adresine yazabilirsiniz.
+    </para>
+    <para>
+      Saygılar
+    </para>
+  </sect1>
+  <sect1 id="majordomo-liste-nasil_yasal">
+    <title>Yasal Açıklamalar</title>
+    <!-- Legal Sections -->
+    <sect2>
+      <title>Telif Hakkı ve Lisans</title>
+
+      <!-- The LDP recommends, but doesn't require, the GFDL -->
+      <para>
+       Bu belgenin, <emphasis>Majordomo Liste Yöneticisi Kurulumu NASIL</emphasis>,
+       1.0 sürümünün
+       <emphasis role="bold">
+         telif hakkı © 2002 <emphasis>Genco Yılmaz</emphasis></emphasis>'a
+       aittir. Bu belgeyi, Free Software Foundation tarafından yayınlanmış
+       bulunan GNU Özgür Belgeleme Lisansının 1.1 ya da daha sonraki sürümünün
+       koşullarına bağlı kalarak kopyalayabilir, dağıtabilir ve/veya
+       değiştirebilirsiniz. Bu Lisansın bir kopyasını
+<ulink url="fdl.html">GNU Free Documentation License</ulink> bölümünde bulabilirsiniz.
+      </para>
+
+      <para>
+       Linux, Linus Torvalds adına kayıtlı bir ticarî isimdir.
+      </para>
+    </sect2>
+
+    <sect2>
+      <title>Feragatname</title>
+
+      <para>
+        Bu belgedeki bilgilerin kullanımından doğacak sorumluluklar,
+        ve olası zararlardan belge yazarı sorumlu tutulamaz.
+        Bu belgedeki bilgileri uygulama sorumluluğu uygulayana aittir.
+      </para>
+
+      <para>
+        Tüm telif hakları aksi özellikle belirtilmediği sürece sahibine
+        aittir. Belge içinde geçen herhangi bir terim bir ticarî isim
+        ya da kuruma itibar kazandırma olarak algılanmamalıdır. Bir ürün
+        ya da markanın kullanılmış olması ona onay verildiği anlamında
+        görülmemelidir.
+      </para>
+    </sect2>
+  </sect1>
+</article>

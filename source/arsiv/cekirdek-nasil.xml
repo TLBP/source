@@ -1,0 +1,996 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--DOCTYPE article SYSTEM "../docbook/dtd/docbookx.dtd"-->
+
+<!-- ********************************************************************
+     $Id: cekirdek-nasil.xml,v 1.2 2002/09/18 20:11:34 nilgun Exp $
+     ******************************************************************** -->
+
+<article id="archive-cekirdek-nasil">
+  <articleinfo>
+    <title>Linux Çekirdek NASIL</title>
+    <author>
+      <firstname>Görkem Çetin ve Sertan Girgin</firstname>
+      <affiliation>
+        <email>gorkem@gelecek.com.tr</email> ve <email>sertan@compclup.ceng.metu.edu.tr</email>
+      </affiliation>
+    </author>
+    <pubdate>v1.0, 4 Aralık 1996</pubdate>
+  </articleinfo>
+<div>
+
+<pre>
+
+Bu doküman, çekirdeğin konfigürasyonu, derlenmesi ve güncelleştirilmesi
+için gerekli bilgileri içerir.
+</pre>
+<h3>1. Giriş</h3>
+<pre>
+Çekirdek-NASIL dokümanı, çekirdek derlerken karşılanan sorunları en aza
+indirmek ve kullanıcının ihtiyacını da gözönünde bulundurarak derleme
+aşamasını en kısa zamanda ve en uygun yoldan gerçekleştirmek için
+yazılmıştır. Linux çekirdeğini derlemek uzun bir işlem gerektirir ve
+kullanıcının önüne pekçok seçenekler sunar.
+</pre>
+<h4>1.1 Gereksinimler </h4>
+<pre>
+Buradaki birtakım programlar, makinanızda GNU tar, find ve xargs
+komutlarının bulunduğunu farzeder. Bu komutlar neredeyse standartlaşmış
+olduklarından nadiren sorun çıkartırlar. Ayrıca bilgisayarınızdaki
+dosya yapısından da haberdar olmanız gerekir.
+
+Bu dosya hazırlanırken son kararlı çekirdek sürümü 2.0.23 idi, örnekler de
+bu sürüme göre hazırlandı. Çekirdek sürekli değişim ve gelişim içinde
+olduğundan yeni çekirdekteki bir değişiklik, dosyada verilen bilgilerin
+yanlış olmasına neden olabilir. Bu durumu gözönünde bulundurunuz.
+
+Her linux çekirdeğine bir sürüm kodu verilir :  1.0.9, 1.3.50 , 2.0.0
+gibi. Her kodun ikinci numarası, çekirdeğin geliştirilme aşamasında mı,
+yoksa kararlı mı olduğu konusunda fikir verir. Bu sayı çift ise,
+hataları ayıklanmış ve onaylanmış bir çekirdek anlamına gelir. Diğer
+durumda, sayı eğer tek ise çekirdek henüz geliştirilme aşamasındadır ve
+kararlı olmayabilir.
+</pre>
+<h3>2. Bazı önemli noktalar</h3>
+
+<h4>2.1 Nedir bu çekirdek denilen şey ?</h4>
+<pre>
+Genel anlamda çekirdek, programların ve donanımın arasında bekleyerek
+iletişimi sağlayan bir arabirimdir. Çalışan tüm programların ve süreçlerin
+hafıza ile olan ilişkilerini düzenler. İşlemcinin gücünün tüm bu
+programlar arasında adil bir şekilde dağıtımını üzerine alır. Tüm bu
+işlemleri kullanıcının haberi olmadan heran, durmaksızın yapar.
+</pre>
+<h4>2.2 Neden çekirdeği yükseltmem gerekiyor ?</h4>
+<pre>
+Linux üzerinde çalışan binlerce kişi sürekli olarak varolan linux
+programları üzerinde çalışırlar. Çekirdek ile ilgili her yeni düşünce ,
+anında programa geçirilir. Artık daha hızlı çalışan aygıt sürücüleri,
+daha hızlı hafıza yönetimi veya kararlılığı yüksek bir çekirdek oluşmuştur.
+Hatalar da sürekli kapandığından yükseltme işlemi kullanıcının lehine
+olur.
+</pre>
+<h4>2.3 Yeni çekirdekler benim donanımımı destekler mi ? </h4>
+<pre>
+Donanım-NASIL dosyasında çekirdeğin desteklediği tüm donanımlar vardır.
+Ayrıca çekirdeğin derlenmesi aşamasında 'make config' komutunun ardından
+destek gören tüm donanımın listesi ekrana sırayla gelir.  Bu listedeki
+bazı aygıt sürücüleri ise slackware dağıtımından ayrı olarak modül olarak
+linux ile ilgili ftp adreslerinden bulunabilir.
+</pre>
+<h4>2.4 Modül nedir ? </h4>
+<pre>
+Modüller, derleme esnasında çekirdek üzerine eklenmeyen programcıklardır.
+Kullanıcı bunları çekirdekten ayrı derler, istediği zaman çekirdeğe
+ekleyip çıkartabilir. Bunlar yapılırken makinayı kapatmaya da gerek
+kalmaz. Çok kullanılan ve popüler bazı aygıt sürücüleri (PCMCIA sürücüleri
+gibi) modül olarak derlenirler.
+</pre>
+<h4>2.5 Sabit diskimde ne kadar boş yere ihtiyacım var ?</h4>
+<pre>
+Bu sisteminizde yapacağınız konfigürasyona bağlıdır. Örneğin sürüm 2.0.10
+yaklaşık 6Mb disk alanı kaplar. Açıldığı zaman ise toplam kapladığı alan
+24 Mb olur. Derleme aşamasından sonra bu rakam 30 Mb'ı geçer. Her eklenen
+aygıt sürücü desteği sabit diskten bir miktar daha yer alır. Genellikle
+yeni çıkan çekirdek kaynak kodu bir önceki sürümden daha büyüktür.
+</pre>
+<h4>2.6 Çekirdeğin derlenmesi ne kadar sürer ? </h4>
+<pre>
+Kullandığınız sisteme göre bu süre değişkenlik gösterir. 16 Mb 486DX4/100
+makinasında, 5 dosya sistemi desteği, ağ desteği ve ses kartı sürücüsü ile
+yaklaşık 20 dakika sürer. Aynı konfigürasyonu içeren çekirdeğin derlenmesi
+ise daha zayıf bir makina olan 8Mb 386DX/40 altında 1.5 saati bulur.
+Derlerken gidip çayınızı için, biraz televizyon seyredin. Makinanız 386
+ise bir banyo alıp dışarı çıkın, alışveriş yapın. Çok ümitsiz bir
+durumdaysanız, yapılacak en iyi şey en yakın bilgisayar şirketine
+uğrayarak yeni fiyatları sormak :-)
+</pre>
+<h3>3. Ayarlar</h3>
+
+<h4>3.1 Çekirdeğin alınması</h4>
+<pre>
+Çekirdek kaynak kodu ,ftp://ftp.metu.edu.tr/ adresindeki
+/pub/linux/tsx/sources/system dizininden veya tsx-11.mit.edu adresinin
+arşivini tutan herhangi bir adresten alınabilir. Bu dizin altındaki linux
+sürümlerinin bir tanesini (v1.2, v2.0, v2.1 gibi) seçtikten sonra
+altındaki dosyayı alabilirsiniz. Dosyanın ismi linux-x.y.z.tar.gz
+yapısındadır. Buradaki x.y.z sayısı sürüm sayısını gösterir. y sayısının
+tek olması durumunda henüz çekirdeğin test aşmasında olduğu anlaşılabilir.
+Bu sayı çift ise sözkonusu çekirdek kararlıdır.
+
+Aşağıdaki örnekte ftp.metu.edu.tr adresinden 2.0.20 sürümünün alınışı
+gösterilmektedir:
+
+$ ftp ftp.metu.edu.tr
+Connected to ephesus.cc.metu.edu.tr.
+220-
+220-Welcome to METU Ftp Site !
+220-
+220-All logins and transfers are logged with your hostname.
+220-If you do not agree with this policy, please cancel now.
+220-
+220 ephesus FTP server (Version wu-2.4(5) Wed Jan 10 18:06:56 EET 1996) ready.
+Name (ftp.metu.edu.tr:gorkem): ftp
+331 Guest login ok, send your complete e-mail address as password.
+Password:
+230-##########################################################################
+230-##    Welcome to the Middle East Technical University Ftp Archive       ##
+230-##########################################################################
+230-
+230-
+230-Hello ftp@compclup.ceng.metu.edu.tr !
+230-You are the 19. anonymous user.
+230-Maximum number of users allowed is 100.
+230-Local Time is Tue Nov  5 12:19:41 1996.
+230-
+230-Mirrored sites are placed under the directory /pub
+230-This archive is maintained by ftpload@ftp.metu.edu.tr
+230-You can reach this archive via FSP at port 21.
+230-
+230-You can reach public directories via "cd dirname"
+230-command independent of your current location;
+230-e.g. "cd linux" instead of "cd /pub/linux"
+230-
+230 Guest login ok, access restrictions apply.
+ftp> cd /pub/linux/tsx/sources/system/
+250-Please read the file README
+250-  it was last modified on Mon Sep 16 11:36:00 1996 - 50 days ago
+250 CWD command successful.
+ftp> dir
+200 PORT command successful.
+150 Opening ASCII mode data connection for /bin/ls.
+total 66
+-rw-r--r--  1 ftpload  ftp-adm     36981 Sep 16 12:36 CREDITS
+drwxr-xr-x  3 ftpload  ftp-adm       512 Oct 13 15:59 Historic
+-rw-r--r--  1 ftpload  ftp-adm     12056 Sep 16 12:36 README
+drwxr-xr-x  2 ftpload  ftp-adm       512 Oct 14 11:47 SillySounds
+drwxr-xr-x  2 ftpload  ftp-adm       512 Oct 13 18:17 testing
+drwxr-xr-x  2 ftpload  ftp-adm       512 Oct 14 11:47 v1.0
+drwxr-xr-x  2 ftpload  ftp-adm      2048 Oct 31 21:55 v1.1
+drwxr-xr-x  2 ftpload  ftp-adm      1024 Jun 25 11:34 v1.2
+drwxr-xr-x  2 ftpload  ftp-adm      6656 Sep 27 04:24 v1.3
+drwxr-xr-x  2 ftpload  ftp-adm      1536 Nov  2 00:05 v2.0
+drwxr-xr-x  2 ftpload  ftp-adm       512 Nov  2 21:33 v2.1
+226 Transfer complete.
+ftp> cd v2.0
+250 CWD command successful.
+ftp> bin
+200 Type set to I.
+ftp> dir linux*
+200 PORT command successful.
+150 Opening ASCII mode data connection for /bin/ls.
+total 141009
+-rw-r--r--  1 ftpload  ftp-adm   5859566 Jul  3 11:22 linux-2.0.1.tar.gz
+-rw-r--r--  1 ftpload  ftp-adm   5940281 Jul 27 06:39 linux-2.0.10.tar.gz
+-rw-r--r--  1 ftpload  ftp-adm   5952403 Aug  5 03:01 linux-2.0.11.tar.gz
+-rw-r--r--  1 ftpload  ftp-adm   5954278 Aug  9 12:53 linux-2.0.12.tar.gz
+-rw-r--r--  1 ftpload  ftp-adm   5981780 Aug 16 06:19 linux-2.0.13.tar.gz
+-rw-r--r--  1 ftpload  ftp-adm   5984960 Aug 20 11:52 linux-2.0.14.tar.gz
+-rw-r--r--  1 ftpload  ftp-adm   5986368 Aug 25 06:20 linux-2.0.15.tar.gz
+-rw-r--r--  1 ftpload  ftp-adm   5990228 Aug 31 14:03 linux-2.0.16.tar.gz
+-rw-r--r--  1 ftpload  ftp-adm   5991606 Sep  2 06:37 linux-2.0.17.tar.gz
+-rw-r--r--  1 ftpload  ftp-adm   5993351 Sep  5 10:38 linux-2.0.18.tar.gz
+-rw-r--r--  1 ftpload  ftp-adm   5997342 Sep 11 10:21 linux-2.0.19.tar.gz
+-rw-r--r--  1 ftpload  ftp-adm   5861789 Jul  5 12:09 linux-2.0.2.tar.gz
+-rw-r--r--  1 ftpload  ftp-adm   5997693 Sep 13 08:53 linux-2.0.20.tar.gz
+-rw-r--r--  1 ftpload  ftp-adm   5999162 Sep 20 09:51 linux-2.0.21.tar.gz
+-rw-r--r--  1 ftpload  ftp-adm   6009488 Oct  8 13:02 linux-2.0.22.tar.gz
+-rw-r--r--  1 ftpload  ftp-adm   6010694 Oct 18 08:20 linux-2.0.23.tar.gz
+-rw-r--r--  1 ftpload  ftp-adm   5931967 Jul  6 07:53 linux-2.0.3.tar.gz
+-rw-r--r--  1 ftpload  ftp-adm   5926911 Jul  8 08:48 linux-2.0.4.tar.gz
+-rw-r--r--  1 ftpload  ftp-adm   5927899 Jul 10 08:23 linux-2.0.5.tar.gz
+-rw-r--r--  1 ftpload  ftp-adm   5929807 Jul 12 07:22 linux-2.0.6.tar.gz
+-rw-r--r--  1 ftpload  ftp-adm   5931378 Jul 15 07:38 linux-2.0.7.tar.gz
+-rw-r--r--  1 ftpload  ftp-adm   5936467 Jul 20 02:52 linux-2.0.8.tar.gz
+-rw-r--r--  1 ftpload  ftp-adm   5939510 Jul 26 04:09 linux-2.0.9.tar.gz
+-rw-r--r--  1 ftpload  ftp-adm   5843677 Jun  9 23:36 linux-2.0.tar.gz
+226 Transfer complete.
+ftp> get linux-2.0.20.tar.gz
+200 PORT command successful.
+150 Opening BINARY mode data connection for linux-2.0.20.tar.gz (5997693 bytes).
+226 Transfer complete.
+5997693 bytes received in 136 secs (43 Kbytes/sec)
+ftp> quit
+221 Goodbye.
+</pre>
+<h4>3.2 Arşivi nasıl açarım ?</h4>
+<pre>
+Sisteme root olarak giriş yapın ve /usr/src dizinine geçin.
+Linux'un kurulması aşamasında çekirdekleri de kurmuş iseniz bu dizinde
+'linux' isminde ve eski çekirdeğin kaynak kodlarını kapsayan bir alt dizin
+göreceksiniz. Genellikle her kullanıcının yaptığı, bu dizinin ismini o an
+çalışan çekirdeğin sürümüne göre ile değiştirmektir. Çekirdek sürümünü
+bulmak için ise 'uname -r' komutunu kullanabilirsiniz.
+
+ $ uname -r
+   2.0.23
+
+Bu komuttan çekirdeğin 2.0.23 sürümü olduğunu anlayabiliriz. Çekirdek
+kaynak kodlarının bulunduğu dizinin ismine de , örneğin linux-2.0.23
+verilebilir.
+
+ # mv linux linux-2.0.23
+
+Çekirdek kodunu içeren paketi açmadan önce /usr/src dizinine kopyalayın,
+ve açmadan önce bu dizinde 'linux' isimli bir dizinin olmadığına emin
+olun. Şimdi /usr/src içinde iken (tüm kaynak kodunun bu dizinde olduğunu
+farzederek) arşivlenmiş kodu 'tar' komutu yardımıyla açalım.
+
+ # tar -zxf linux-x.y.z.tar.gz
+
+Komutun işletimi bitince 'linux' dizini oluşur. İlk defa derleme işlemi
+yapacaksanız aşağıdaki komutları sırasıyla yazın.
+
+ # cd /usr/include
+ # rm -rf asm linux scsi
+ # ln -s /usr/src/linux/include/asm-i386 asm
+ # ln -s /usr/src/linux/include/linux linux
+ # ln -s /usr/src/linux/include/scsi scsi
+ # cd /usr/src/linux
+ # make mrproper
+</pre>
+<h4>3.3 Çekirdek konfigürasyonu </h4>
+<pre>
+/usr/src/linux dizini altında iken 'make config' yazın. Bu komut, bir
+konfigürasyon dosyası yaratmak amacıyla sorular sorar. Bu işlemler
+yapılırken bash'e ihtiyaç duyulduğundan, /bin/bash dosyasının varlığından
+emin olun.
+
+Karşınıza çıkan sorulara 'y' (evet) veya 'n' (hayır) ile cevap vermeniz
+gerekir. Bazı aygıt sürücülerde 'm' seçeneği de olabilir. Bunun anlamı,
+sistem o programı 'modül' olarak derleyecek ve çekirdeğe dahil etmeyecek
+demektir. Kullanıcı derleme aşamasından sonra istediği zaman bu modülü
+çekirdeğe dahil edebilir, işini bitirdikten sonra da çıkarabilir.
+
+2.0.x ve daha yukarı sürümlerde '?' tuşuna basmakla daha ayrıntılı bilgi
+alınabilir.
+</pre>
+<h5>3.3.1 Matematik işlemci emülasyonu (Kernel math emulation)</h5>
+<pre>
+Kullandığınız makinanın işlemcisi yardımcı matematik işlemcisine sahip
+değilse (486SX, 386SX veya daha düşük makinalar) bu seçeneğe evet cevabını
+vermelisiniz. Matematik işlemcisi olan bir makinada evet cevabını
+verilmesi durumunda da yardımcı işlemci kullanılır ve emülatör hesaba
+katılmaz. Nasıl olursa olsun, çekirdeği gereksiz programlar ve modüllerle
+şişirmemelidir.
+</pre>
+<h5>3.3.2 Normal (MFM/RLL) disk ve IDE disk/cdrom desteği</h5>
+      (Normal (MFM/RLL) disk and IDE disk/cdrom support)
+<pre>
+Hemen herkesin kullandığı PC sabit disklerinin standart olması sebebiyle
+bu seçeneğe 'y' cevabı verilebilir. Daha ileride SCSI sabit disk ve cdrom
+desteğini de soracaktır.
+
+Ardından gelecek olan 'old disks-only' ve 'new IDE' sürücülerinnden birini
+seçerken, aralarındaki farkın ilkinde tek arabirim üzerinden iki adet
+diski desteklemesi, diğerinde ise ikinci arabirim ile birlikte IDE/ATAPI
+cdrom'ları desteklemesidir. Yeni teknolojili sürücü, ilkinden daha fazla
+yer kaplar (4 Mb fazla).
+</pre>
+<h5>3.3.3 Ağ desteği (Networking support)</h5>
+<pre>
+Makinanız herhangi bir ağ üzerinde ise (Internet gibi) veya Internet'e
+bağlanmak için SLIP, PPP, term gibi programları kullanmak istiyorsanız bu
+bölüme 'y' cevabı vermelisiniz. Fakat, ağ üzerinde olmasanız bile
+her geçen gün yeni yeni uygulama programlarının ve paketlerin ağ desteğine
+ihtiyacı olduğunu düşünürsek (X Window gibi) bu bölümü 'y' cevabı
+vermeniz şart görünüyor.
+</pre>
+<h5>3.3.4 En fazla 16Mb hafıza (Limit Memory to low 16Mb) </h5>
+<pre>
+Bazı hatalı 386 DMA denetleyicileri hafızanın 16Mb'dan yüksek bölümlerine
+ulaşamazlar. Çok nadir görülen bu durum makinanızda varsa bu seçeneği 'y'
+ile geçin.
+</pre>
+<h5>3.3.5 System V IPC (System V IPC) </h5>
+<pre>
+IPC (Interprocess Communication - Süreçlerarası İletişim) 'nin en iyi
+tanımı Perl kitaplarında bulunabilir. Bazı Perl programları ve oyunlar
+(DOOM gibi) bu seçenek olmadan çalışamazlar. Bu durumda ne yaptığınızı iyi
+bilmiyorsanız bu seçeneğe 'n' - hayır cevabı vermeyin.
+</pre>
+<h5>3.3.6 İşlemci tipi (386, 486, Pentium, PPro)</h5>
+<pre>
+Burada, çekirdeğinizi hangi tür makina için derliyorsanız, o makinanın
+tipini giriniz.
+</pre>
+<h5>3.3.7 SCSI desteği (SCSI Support)</h5>
+<pre>
+SCSI aygıtlarınız var ise bu seçenek için 'evet' deyin. Daha sonra da
+karşınıza gelecek SCSI aygıtlar arasından size uygun olanları alın.
+Daha geniş bilgi için SCSI-NASIL belgesi yol gösterebilir.
+</pre>
+<h5>3.3.8 Ağ kartı desteği (Network Device Support) </h5>
+<pre>
+Ağa bağlanmak için bir kart kullanacaksanız veya SLIP, PPP bağlantıları,
+ya da paralel iskele üzerinden yapacağınız her türlü işlemler için bu
+seçeneği işaretleyin. Ardından ekrana gelen kart tiplerinden ve
+protokollerden uygun olanlarını seçin.
+</pre>
+<h5>3.3.9 Dosya sistemleri (Filesystems)</h5>
+<pre>
+Burada, aşağıdaki dosya sistemlerinden kullanmak istediklerinizi
+seçebilirsiniz.
+
+  * minix : Yeni dağıtımlar , artık tarih olmaya başlayan bu dosya
+    sistemini desteklememekteler. Bazı kurtarma disketleri yaratmak için
+    daha yaygın, fakat daha az kararlı olan ext2 dosya sistemine tercih
+    edilirler.
+
+  * Genişletilmiş dosya sistemi - Extended file system (ext) : Bu da artık
+    kullanımı olmayan bir dosya sistemi. Desteğini ekleyip eklememek size
+    kalmış.
+
+  * Genişletilmiş dosya sistemi-2 - Second extended file system (ext2) :
+    Linux'un kullandığı en önemli dosya sistemi. Alınması gerekir.
+
+  * xiafs : Artık kullanılmıyor.
+
+  * msdos : Sabit diskinizde DOS bölümü varsa ya da DOS disketi kullanmak
+    istiyorsanız, alın.
+
+  * umsdos : Ms-dos dosya sistemine bazı yenilikler (uzun dosya isimleri
+    gibi) getirilerek oluşturulan bir teknoloji. Msdos desteği
+    almadıysanız buna da gerek yok.
+
+  * /proc : Bu aslında gerçek bir dosya sistemi değil, çekirdek ve
+    süreçler arasında arabirim görevi yapan bir yapıdır. Pek çok program
+    bu dosya sistemini kullanır (ps , free gibi). 'y' cevabını
+    vermelisiniz.
+
+  * NFS : Linux makinanız bir ağ üzerinde kurulu iken ağ üzerindeki
+    diğer makinaların dosya sistemlerini kullanabilmenizi sağlar.
+
+  * ISO9660 : CD-ROM sürücünüzü Linux altında kullanabilmek 'y' cevabı
+    verin.
+
+  * OS/2 HPFS : Linux -henüz- OS/2 dosya sistemlerine yazamıyor. Bu
+    desteği almak için 'y' cevabı verin
+
+  * System V : Bir UN*X sürümü olan System V makinalarının dosya
+    sistemleri üzerinde çalışabilmeyi sağlar.
+</pre>
+<h5>3.3.9.1 Hangi dosya sistemlerine ihtiyacım olacağını nasıl anlarım ?</h5>
+<pre>
+"Mount" komutu yardımıyla, o an sisteminizde kullanılan dosya sistemleri
+ve sabit disk bölümlendirmeleri hakkında bilgi sahibi olusunuz :
+
+ # mount
+ /dev/hda2 on / type ext2 (defaults,rw)
+ /dev/hda4 on /home type ext2 (defaults)
+ /dev/hda3 on /dos type msdos (defaults)
+ none on /proc type proc (defaults)
+ /dev/fd0 on /mnt type msdos (defaults)
+
+Her satırdaki "type" sözcüğünün yanındaki kelime, karşılık gelen sabit
+disk parçasındaki dosya sistemini gösterir. Bilgisayar Topluluğu
+makinasında bulunan sabit diski üzerindeki / ve /home dizini 'ext2', /proc
+dizini 'proc' ve  /dos dizini ise 'msdos' dosya sistemidir. Bunların
+dışında /mnt dizini altına bir disket sürücü vardır.
+
+Halihazırdaki çekirdeğin desteklediği dosya sistemlerini görmek için
+şu komutu kullanabilirsiniz:
+
+ $ cat /proc/filesystems
+         ext2
+         minix
+         msdos
+         vfat
+ nodev   proc
+ nodev   nfs
+ nodev   smbfs
+ nodev   ncpfs
+</pre>
+<h5>3.3.10 Karakter aygıtları (Character devices)</h5>
+<pre>
+Bu bölümde yazıcı, fare ve bazı teyp yedekleme sürücüleri gibi karakter
+aygıtları için sürücüleri ekleyebilirsiniz.
+</pre>
+<h5>3.3.11 Ses kartı</h5>
+<pre>
+Linux, geniş bir yelpazede ses kartlarını da destekliyor. Linux'un ses
+kapasitesini duyabilmek için bu desteği ekleyin. Daha fazla bilgi
+Ses-NASIL belgesi altında bulunabilir.
+
+NOT : Yukarıda tüm konfigürasyon seçenekleri işaretlenmemiştir, zira
+sürekli gelişme ve değişiklikler gösterirler.
+</pre>
+<h5>3.3.12 Çekirdek işlemleri (Kernel Hacking)</h5>
+<pre>
+Çekirdekten doğan hataların bulunmasını kolaylaştıran bu seçenek,
+programcılara yönelik. Fakat çekirdeğin kararlılığını azaltabilir. Seçim
+size kalmış.
+
+Tüm bu işlemlerin ardından 'make config' komutunun görevi bitmiş olur.
+Makefile dosyasına bir göz atın, değiştirmeyi düşündüğünüz bölümler varsa
+üzerinde düşünün.
+</pre>
+<h3>4. Çekirdeğin derlenmesi</h3>
+
+<h4>4.1 Temizlik </h4>
+<pre>
+Fazla dosyaları temizlemek, gerekli olan dosyaların da yerinde olup
+olmadığını kontrol etmek için , sırasıyla
+
+ # make dep
+ # make clean
+
+yazın. Ardından tüm nesne dosyaları ve eski sürümden kalan dosyalar
+silinecektir. Bu adımı es geçmeyin.
+</pre>
+<h4>4.2 Çekirdeğin derlenmesi</h4>
+<pre>
+Temizlik işleminden sonra,
+
+ # make zImage                   , veya
+ # make zdisk
+
+yazın. İlk seçenekte çekirdek derlenip arch/i386/boot dizini altına
+'zImage' adı altında atılacaktır. Atılmadan önce yerden kazanmak için
+sıkıştırılır. Diğer durumda ise yeni çekirdek sabit disk yerine A: disket
+sürücüsüne yazılır. Disket üzerine yazmanın bir avantajı, kararlı olmayan
+ve sistemi açmayan çekirdek ile karşılaşılması halinde, sistemi sabit disk
+üzerindeki eski çekirdekten açabilme imkanı bırakmasıdır.  Çekirdeğin
+sabit diskten yanlışlıkla silinmesi durumunda da disketten kopyalama şansı
+da verir.
+
+'make oldconfig' komutu , önceden derlenmiş çekirdeğin konfigürasyon
+dosyasını okur ve derlemeyi bu dosyayı baz alarak yapar. Eski bir
+çekirdeğiniz ve bunun karşılığı olan konfigürasyon dosyanız yoksa,
+sözkonusu komutu yazmayın.
+</pre>
+<h4>4.3 Çekirdeğin kurulması</h4>
+<pre>
+LILO (Linux Loader - Linux Yükleyici), bilgisayarın açılışı anında
+çekirdek ile ilgili düzenlemeleri okur, buna göre hangi çekirdekten açması
+gerektiğini anlar. Konfigürasyon dosyası biraz karmaşık olmasına rağmen
+kullanım aşamasında büyük yararlar sağlar. /etc/lilo.conf dosyasının
+içinde gerekli olan kurulum bilgileri vardır. Bu dosyanın bir bölüm
+aşağıda görülüyor.
+
+ image = /vmlinuz
+          label = Linux
+          root = /dev/hda1
+          ...
+
+'image =' ibaresi kurulu olan çekirdeğe işaret eder. Çoğu kullanıcı bu
+kısma 'vmlinuz' yazar. 'label =' bölümünde hangi işletim sistemi veya
+çekirdek sürümünün açılışta kullanılacağı yazılır. Hemen altındaki 'root'
+bölümünde ise 'label =' kısmında seçilen işletim sisteminin hiyerarşik
+yapıda en üst dizin yapısı yazılır. Eski çekirdeğin bir yedeğini alın ve
+yeni derlediğiniz çekirdeği 'image =' satırında belirtilen yere
+kopyalayın.
+
+ # cp zImage /vmlinuz
+
+Şimdi LILO programını çalıştırın. Komut satırında 'lilo' yazmak
+yeterlidir.
+
+ # lilo
+ Added linux *
+ Added dos
+
+LILO ve konfigürasyonu hakkında , aşağıdaki adresten daha fazla bilgi
+alınabilir.
+
+ftp.metu.edu.tr:/pub/linux/sunsite/docs/howto/mini/LILO
+
+Yeni bir çekirdeği derledikten sonra LILO üzerinden ekleme yapmak ve
+açılış anında kullanmak için /etc/lilo.conf dosyasındaki
+
+ image = /vmlinuz
+          label = Linux
+          root = /dev/hda1
+          ...
+
+satırlarının kopyasını çıkarın, 'image' , 'label' ve 'root' yerine
+sırasıyla yeni derlenen çekirdeğin sabit disk üzerindeki yerini, ismini ve
+linux işletim sisteminizin kök dizinini yazın. Bunlara ek olarak, açılış
+anında bekleme sağlamak ve seçim yapabilmek için konfigürasyon dosyasının
+başına 'delay = xxx' ekleyebilirsiniz. xxx sayısı, gecikme zamanını
+saniyenin onda biri olarak verilir. Bu sayede açılış anında , örneğin
+'shift' tuşuna basılarak istenen çekirdeğin ismi (label = satırında
+yazılan isim) seçilir ve çalıştırılır.
+</pre>
+<h3>5. Çekirdeğin yamanması (patch)</h3>
+
+<h4>5.1 Yama uygulanması </h4>
+<pre>
+Çekirdeğin her yeni sürümüyle birlikte bir önceki sürümünün yaması da
+gelir. Yamayı uygulamak, tüm çekirdeğin tekrar derlenmesinden daha
+kolaydır. Örnek olarak, elinizde 2.0.10 çekirdeği var ve ftp adresinde
+2.0.11 sürümü çıkmış. Halihazırdaki çekirdeği 2.0.11 sürümüne yükseltelim:
+
+Yamayı önce /usr/src dizinine kopyalayın. Bu dizin altında iken
+
+ # zcat patch-2.0.11.gz | patch -p0     , veya
+ # patch -p0 &lt; patch-2.0.11   (eğer sıkıştırılmış değilse)
+
+yazın. Bu komutun ardından satırlar ekrandan kaymaya başlayacak ve yama
+işlemi tamamlanacaktır. Satırlar bazen o kadar hızlı kayar ki neler
+yazdığını bile göremeyebilirsiniz. Yamanın başarılı bir şekilde
+tamamlandığından emin olmak amacıyla, /usr/src/linux dizini altında .rej
+uzantılı dosyalara bakın.
+
+ # find . -name '*.rej' -print
+
+Komut, .rej uzantılı dosyalar bulunursa yama işlemi tamamlanamamış
+demektir. Eğer yama işlemi tamamlanırsa, sırasıyla
+
+ # make clean
+ # make config
+ # make dep
+
+komutlarını yazın. Bu komutlarla ilgili detaylı bilgi 4. konunun başında
+anlatılmıştır.
+
+'patch' komutunun alabildiği bazı seçenekler vardır. 'patch -s' komutu
+oluşabilecek tüm hata mesajlarını ekrana yazar. Diğer yama seçenekleri
+'man patch' yazarak görülebilir.
+
+Yama uygulanan bir çekirdeği eski haline getirmek için 'patch -R' komutunu
+kullanın.
+
+Birkaç yamanın ardından, .orig uzantılı dosyalar etrafta dolaşmaya başlar.
+Bu dosyalar gereksizdir, büyük yer kapladıkları için ise silinmeleri
+gerekir. Aşağıdaki komut yardımıyla /usr/src/linux dizini altında .orig
+uzantılı dosyaları silebilirsiniz.
+
+      find .  -name '*.orig' -exec rm -f {} ';'
+</pre>
+<h4>5.2  Diğer yamalar</h4>
+<pre>
+Standart olmayan ve Slackware ile dağıtılmayan bazı yamaların standart
+yamalarla çakışması olasılığı büyüktür. Eğer programınız çalışmazsa kaynak
+programın üzerinde oynamanız gerekebilir. Bu nedenle yamanın çalıştığından
+emin olun. Daha önce yama üzerinde deneyimi olan birisinden yardım isteyin
+veya çekirdeğinizi yedekleyin.
+</pre>
+<h3>6. Diğer paketler</h3>
+<pre>
+Çekirdeğin, kaynak kodunda ayrıntılı olarak açıklanmayan, buna rağmen
+önemli olduğunu düşündüğüm bazı önemli özellikleri burada açıklanmıştır.
+</pre>
+<h4>6.1.  Klavye (kbd)</h4>
+<pre>
+Linux konsolunun özelliği sonucu, font değişikliği, klavye tuşlarının
+yeniden tanımlanması, video ekran modunun değiştirilmesi gibi bazı
+özellikler bu işletim sistemi altında kolayca yapılabilmektedir.  Hemen
+her dil için font ve klavye tuşları tanımı desteği bulunmaktadır.
+</pre>
+<h4>6.2 Linux yardımcı programları (util-linux)</h4>
+<pre>
+Rik Faith (faith@cs.unc.edu) , Linux yardımcı programlarından oluşan büyük
+bir paketi Internet üzerine koydu. Halen Nicolai Langfeldt
+(util-linux@math.uio.no) tarafından düzenlenen ve güncellenen bu paketin
+içinde setterm, rdev ve ctrlaltdel gibi, çekirdek ile ilgili programlar
+bulunuyor. Fakat paketin önce düşünüp sonra kurulması gerekiyor ,
+kullanıcı sonradan ciddi problemlere yol açabilecek sorunlarla karşı
+karşıya gelebiliyor. Bu paketi kurmadan önce iki kez düşünün.
+</pre>
+<h4>6.3  Sabit disk seçenekleri (hdparm)</h4>
+<pre>
+Diğer paketlere benzer şekilde bu paket de önceden çekirdek yaması
+yapısındaydı. Ardından standart çekirdeğin içine alınarak her sürümde
+dağıtılmaya başlandı. Fakat hemen sabit diskin optimizasyonu için
+kullanılan programlar ayrı olarak dağıtılmaya başlandı.
+</pre>
+<h4>6.4  Standart fare - gpm (general purpose mouse) </h4>
+<pre>
+Bu program görsel ekranda (virtual console) dosya kesip yapıştırmanızı
+sağlayan fareyi sürer.
+</pre>
+
+<h3>7. Bazı tuzaklar</h3>
+
+<h4>7.1  make clean</h4>
+<pre>
+Eğer rutin bir çekirdek güncellemesinden sonra yeni çekirdeğiniz gerçekten
+garip şeyler yapıyorsa, büyük ihtimalle yeni çekirdeğinizi derlemeden
+önce "make clean" komutunu kullanmayı unutmuşsunuzdur. Belirtiler
+sisteminizin sık sık çökmesinden garip G/Ç hatalarına veya düşük
+performansa kadar herşey olabilir. "make dep" komutunu çalıştırdığınızdan
+da emin olun.
+</pre>
+<h4>7.2  Büyük veya yavaş çekirdekler</h4>
+<pre>
+Eğer çekirdeğiniz çok fazla hafıza harcıyorsa, çok büyükse, ve/veya yeni
+786DX6/440 makinanızda bile derlenmesi sonsuza kadar sürüyorsa, büyük
+ihtimalle ayarlanmış bir çok gereksiz parça (aygıt sürücüleri,
+dosyasistemleri, vb.) vardır. Eğer bu parçaları kullanmıyorsanız, onları
+ayarlamayın, çünkü hafıza harcayacaktır. Büyük çekirdeklerin en belirgin
+özelliği sürekli hafızadan diske ve diskten hafızaya takas yapmalarıdır;
+eğer diskiniz çok fazla ses yapıyorsa ve kapandığında bir jetin inişine
+benzer ses çıkaran eski Fujitsu Eagle'lardan değilse, çekirdek
+ayarlarınızı gözden geçirin.
+
+Çekirdeğinizin ne kadar hafıza kullandığını makinanızın toplam
+hafızasından /proc/meminfo dosyasındaki "total mem" değerini çıkararak
+veya "free" komutunun çıktısından öğrenebilirsiniz. Ayrıca "dmesg"
+komutunu kullanarak (veya çekidek log dosyasına bakarak) da bu değere
+ulaşabilirsiniz.
+
+Memory: 15124k/16384k available (552k kernel code, 384k reserved, 324k
+data)
+
+şeklinde bir satır göreceksiniz. Benim 386'ım (daha az özellikle
+ayarlanmış) şunu söylüyor.
+
+Memory: 7000k/8192k available (496k kernel code, 384k reserved, 312k data)
+</pre>
+<h4>7.3 Çekirdek derlenmiyor</h4>
+<pre>
+Eğer çekirdek derlenmiyorsa, yama başarısız olmuş veya kaynak kod bir
+şekilde bozulmuş olabilir. Derleyicinizin sürümü doğru olmayabilir veya
+bozulmuş da olabilir (örneğin, "include" dosyaları hatalıdır). README
+dosyasında anlatılan sembolik bağlantılar ın doğru kurulduğuna emin olun.
+Genelde, eğer standart bir çekidek derlenmiyorsa, sistemle ilgili ciddi
+bir sorun vardır ve bazı uygulamaların (tools) yeniden yüklenmesi gerekli
+olabilir.
+
+Belkide bir 1.2.x çekirdeğini ELF derleyiciyle (gcc 2.6.3 veya üstü)
+derliyorsunuzdur. Eğer derleme sırasında bir sürü "... undefined" mesajı
+alıyorsanız, sizin probleminiz bu olabilir. Birçok durumda bunu düzeltmek
+çok kolaydır. Şu satırları arch/i386/ Makefile dosyasının başına ekleyin:
+
+  AS=/usr/i486-linuxaout/bin/as
+  LD=/usr/i486-linuxaout/bin/ld -m i386linux
+  CC=gcc -b i486-linuxaout -D__KERNEL__ -I$(TOPDIR)/include
+
+Daha sonra yeniden "make dep" ve "make zImage" komutlarını çalıştırın.
+
+Çok nadir durumlarda, gcc donanım problemlerinden dolayı çökebilir. Hata
+mesajı "xxx exited with signal 15" benzeri birşey olacaktır ve genellikle
+gizemli gözükecektir. Eğer problemle karşılaşırsanız önce gcc'yi yeniden
+kurmayı deneyin. Sadece eğer çekirdek dışsal cache kapatıldığında, hafıza
+azaltıldığında vb. durumlarda düzgün derleniyorsa kuşkulanmalısınız.
+</pre>
+<h4>7.4 Çekirdeğin yeni sürümü açılış yapmıyor</h4>
+<pre>
+LILO'yu çalıştırmadınız veya LILO düzgün ayarlanmamış. Bir seferinde
+soruna sebep olan ayar dosyasındaki bir problemdi; "boot=/dev/hda"
+yerine "boot=/dev/hda1" diyordu (İlk başta sıkıcı olabilir, ama
+çalışan bir ayar dosyasız olduktan sonra, onu değiştirmeniz gerekmez.).
+
+{
+You did not run LILO, or it is not configured correctly. One thing
+  that ``got'' me once was a problem in the config file; it said `boot=
+  /dev/hda1' instead of `boot = /dev/hda' (This can be really annoying
+  at first, but once you have a working config file, you shouldn't need
+  to change it.).
+}
+</pre>
+<h4>7.5  LILO'yu çalıştırmayı unuttunuz veya sistem hiç açılmıyor</h4>
+<pre>
+Bu durumda yapacağınız en iyi şey floppy diskten açılış yapmak ve daha
+sonra açılış yapabilen başka bir floppy hazırlamaktır (mesela "make
+zimage" işinizi görür). Kök (/) dosyasisteminizin nerede olduğunu ve
+türünü (örneğin second extended, minix) bilmeniz gerekecek. Aşağıdaki
+örnekte ayrıca /usr/src/linux kaynak ağacının hangi dosyasistemi üzerinde
+olduğunu, dosyasisteminin türünü ve nereye bindirildiğini bilmeniz
+gerekecek.
+
+İzleyen örnekte, root /dev/hda1 ve normalde /usr 'a bindirilmiş olan
+/usr/src/linux 'u tutan dosyasistemi de /dev/hda3. Her ikiside second
+extended dosyasistemi. /usr/src/linux/arch/i386/boot da yer alan, çalışan
+cekirdek görüntüsü ise zImage.
+
+Mantık şu; eğer çalışan bir zImage varsa, bunu yeni floppy için kullanmak
+mümkündür. Daha iyi veya kötü çalışabilecek (sisteminizin kurulumuna bağlı
+olarak) başka bir alternatife örnekten sonra değineceğiz.
+
+Öncelikle bir boot/root disk ikilisinden veya kurtarma diskiden açılış
+yapın ve çalışan çekirdek görüntüsünün bulunduğu dosya sistemini bindirin.
+
+ # mkdir /mnt
+ # mount -t ext2 /dev/hda3 /mnt
+
+Eğer mkdir size dizinin  zaten var olduğunu söylerse buna aldırmayın.
+Şimdi çekirdek görüntüsünün bulunduğu dizine geçin.
+
+ # /mnt + /usr/src/linux/arch/i386/boot - /usr = /mnt/src/linux/arch/i386/boot
+
+Formatlanmış bir disk'i "A:" sürücüsüne yerleştirin (boot veya root
+diskini değil!), çekirdek görüntüsünü disk'e aktarın ve kök
+dosyasisteminize göre ayarlayın:
+
+      cd /mnt/src/linux/arch/i386/boot
+      dd if=zImage of=/dev/fd0
+      rdev /dev/fd0 /dev/hda1
+
+/ dizinine geçin ve normal /usr dosyasistemini "umount" edin:
+
+      cd /
+      umount /mnt
+
+Artık sisteminizi bu floppy'den normal olarak yeniden açabilirsiniz.
+Yeniden açılış yaptıktan sonra lilo'yu çalıştırmayı (veya yanlış
+yaptığınız neyse onu) unutmayın!
+
+Yukarıda bahsedildiği gibi başka bir genel alternatif var. Eğer / de
+çalışan bir çekirdek görüntünüz (örneğin /vmlinuz) varsa onu boot disk
+olarak kullanabilirsiniz. Yukarıdaki koşulların olduğunu ve çekirdek
+görüntüsünün /vmlinuz olduğunu varsayarsak, s adece yukarıdaki örnekte şu
+değişiklikleri yapın: /dev/hda3 'ü /dev/hda1 (/ dosyasistemi) ile,
+/mnt/src/linux 'u /mnt ile ve if=/zImage 'i de if=/vmlinuz ile
+değiştirin. /mnt/src/linux 'un çıkarımıyla ilgili not gözardı edilebilir.
+
+LILO'yu büyük sürücülerle (1024 silindirden fazla) kullanmak sorunlara yol
+açabilir. Bu konuda yardım için bkz. LILO mini-NASIL.
+</pre>
+<h4>7.6  `warning: bdflush not running'</h4>
+<pre>
+Bu vahim bir durum olabilir. 1.0 'dan sonraki çekirdek sürümlerinde (20
+Nisan 1994 civarı) periyodik olarak dosyasistemi bufferlarını boşaltan
+"update" isimli program güncelleştirildi/değiştirildi. "bdflush" kaynak
+kodunu alın (çekirdek kaynak kodunu aldığınız yerde olmalıdır) ve kurun
+(bunu yaparken sisteminizi eski çekirdek altında çalıştırmak
+isteyebilirsiniz). Kendisini "update" olarak kuracak ve yeniden açılıştan
+sonra yeni kernel artık şikayet etmeyecektir.
+</pre>
+<h4>7.7  undefinded symbols hakkında birşeyler söylüyor ve derlenmiyor</h4>
+<pre>
+Büyük ihtimalle bir ELF derleyiciniz (gcc 2.6.3 ve sonrası) ve 1.2.x (veya
+öncesi) çekirdek kodunuz var. Bunu düzeltmenin olağan yolu şu üç satırı
+arch/i386/Makefile dosyasının başına eklemektir:
+
+  AS=/usr/i486-linuxaout/bin/as
+  LD=/usr/i486-linuxaout/bin/ld -m i386linux
+  CC=gcc -b i486-linuxaout -D__KERNEL__ -I$(TOPDIR)/include
+
+Bu a.out kütüphaneleri ile 1.2.x çekirdeği derleyecektir.
+</pre>
+<h4>7.8  IDE/ATAPI CD-ROM sürücüm çalışmıyor</h4>
+<pre>
+Şaşırtıcı şekilde çok kişi belki de ters gidebilecek birkaç şeyden dolayı
+ATAPI sürücülerini çalıştıramıyor.
+
+Eğer CD-ROM sürücünüz belirli bir IDE arabirim üzerindeki tek aygıtsa,
+jumper ayarları "master" ve "single" olmalıdır.
+
+Create Labs ses kartlarının üzerinde IDE arabirimi bulunur. Ancak bu bazı
+ilginç problemler yol açıyor. Şöyle ki bazı anakartlarda yerleştirilmiş
+bir IDE arabirimi varken, diğer birçoğunda iki IDE arabirimi bulunur
+(genelde IRQ15 'de). Bu durumda genel eğilim soundblaster arabirimini
+üçüncü bir IDE kapısı (port) yapmaktır (genelde IRQ11). Ancak bu, üçüncü
+IDE arabirimini desteklemeyen linux sürümleri 1.2.x 'de problemlere yol
+açar. Bu problemi gidermek için birkaç seçeneğiniz var.
+
+Eğer ikinci bir IDE kapınız varsa ve onu kullanmıyorsanız veya üzerinde
+iki sürücü yoksa, ATAPI sürücünüzü ses kartından alarak ikinci arabirime
+yerleştirin. Daha sonra ses kartı üzerindeki arabirimi iptal
+edebilirsiniz.
+
+Eğer ikinci bir arabiriminiz yoksa, ses kartınız üzerindeki arabirimin
+(ses kartının ses bolumunun değil) jumper ayarlarını IRQ15 ve ikinci
+arabirim olarak değiştirin.
+
+Eğer herhangi bir nedenle sürücünüz "üçüncü" arabirimde olmadıysa, veya
+başka problemler varsa, bir 1.3.x çekirdeği (örneğin 1.3.57) alın ve
+/drivers/block/README.ide dosyasını okuyun. Orada çok daha fazla bilgi
+bulabilirsiniz.
+</pre>
+<h4>7.9 obsolete routing requests hakkında garip şeyler söylüyor</h4>
+<pre>
+Route programının ve route manipulation yapan diğer programların yeni
+sürümlerini alın. /usr/include/linux/route.h dosyası değiştirildi.
+</pre>
+<h4>7.10  Firewalling 1.2.0 'da çalışmıyor</h4>
+<pre>
+En az 1.2.1 sürümüne yükseltme yapın.
+</pre>
+<h4>7.11  ``Not a compressed kernel Image file''</h4>
+<pre>
+/usr/src/linux dizininde yaratılan vmlinux dosyasını boot görüntüsü olarak
+kullanmayın; doğru dosya [..]/arch/i386/boot/zImage dosyasıdır.
+</pre>
+<h4>7.12  1.3.x 'e yükselttikten sonra console terminal ile problemler</h4>
+<pre>
+/etc/termcap dizininde bulunan console termcap girişindeki "dumb"
+keilmesini "linux" ile değiştirin. Ayrıca bir terminfo tanımı de yapmanız
+gerekebilir.
+</pre>
+<h4>7.13  Çekirdek yükseltmesinden sonra derleme yapmıyor</h4>
+<pre>
+Linux çekirdek kaynak kodunda, /usr/include dizinindeki standart include
+dosyaları (sonu .h ile biten) tarafından kullanılan bir takım include
+dosyaları bulunur. tipik olarak şu şekilde kulanılırlar
+(xyzzy.h/usr/include/linux dizininde bir dosya olmak üzere):
+
+ # include &lt;linux/xyzzy.h>
+
+Normalde, çekidek kaynak kodunun include/linux dizinine /usr/include
+isimli bir bağlantı vardır. Eğer bu link yoksa veya yanlış bir yer
+gösteriyorsa, birçok şey derlenmiyecektir. Eğer çekirdek kaynak kodunuzun
+diskinizde çok fazla yer kapladığını düşünüp onu sildiyseniz, bu problem
+olabilir. Başka bir problem yaratabilecek şey dosya izinleridir ; eğer
+root'unuzun diğer kullanıcıların dosyaları görmesine izin vermeyen bir
+umask'ı varsa ve çekirdek kaynak kodunu p (dosya modlarını koru)
+parametresi olmadan açtıysanız, o kullanıcılar C derleyicisini
+kullanamayacaktır. Chmod komutu bu durumu düzeltmek için kullanılabilir.
+Ancak include dosyalarını yeniden açmak daha kolay olacaktır. Bunu,
+başlangıçta tüm kaynak kodu açarken kullandığınız komuta şu parametreleri
+ekleyerek yapabilirsiniz:
+
+ # tar zxvpf linux.x.y.z.tar.gz linux/include
+
+Not: "make config" eğer yoksa /usr/src/linux bağlantısını yeniden
+yaratacaktır.
+</pre>
+<h3>8.  2.0.x sürümüne yükseltme hakkında notlar</h3>
+<pre>
+Çekirdek sürümü 2.0.x çekirdek kurulumuna birkaç değişiklik getirdi.
+Sürüm 2.0.x'e yükseltirken ihtiyacınız olacak bilgiler 2.0.x kaynak
+ağacında bulunan Document/Changes dosyasında bulunmaktadır. Büyük
+ihtimalle gcc, libc ve SysVInit gibi birkaç anahtar paketi yükseltmeniz ve
+bazı sistem dosyalarında değişiklikler yapmanız gerekebilir, dolayısıyla
+bu dosyayı okuyun.
+</pre>
+<h3>9.  Modüller</h3>
+<pre>
+Yüklenebilir çekirdek modülleri hafıza kullanımını azaltır ve ayar yapmayı
+kolaylaştırır. Bu modüller dosyasistemlerini, ethernet kart sürücülerini,
+teyp ve yazıcı sürücülerini vb. içerecek şekilde genişliyor.
+</pre>
+<h4>9.1  Modül yardımcılarını (utilities) yükleme</h4>
+<pre>
+Modül yardımcıları çekirdek kaynak kodunu aldığınız yerde
+modules-x.y.z.tar.gz dosyasında bulunabilir; şu an kullandığınız çekirdek
+sürümüne eşit veya altında olan en yüksek patchlevel x.y.z dosyasını alın.
+Dosyayı "tarr zxvf modules-x.y.z.tar.gz" komut uyla açın, yarattığı dizine
+geçin (modules-x.y.z), README dosyasını okuyun ve kurulum komutlarını
+uygulayın (genelde "make install" gibi kolay bir komuttur). Bu adımdan
+sonra,insmod, rmmod, ksyms, lsmod, genksyms, modprobe ve depmod
+programları /sbin diz inide kurulmuş olmalıdır. Eğer istiyorsanız,
+yardımcı programları ınsmod içindeki "hw" örnek sürücüsüyle
+deneyebilirsiniz; daha fazla bilgi altdizindeki INSTALL dosyasında
+bulunabilir.
+
+insmod çalışan çekirdeğe modülleri ekler. Modüller genellikle .o
+eklentilidir; yukarıda bahsedilen örnek sürücünün ismi drv_hello.o,
+dolayısıyla bu sürücüyü eklemek için girilmesi gereken komut "insmod
+drv_hello.o". Çekirdeğin kullandığı modülleri görmek için lsmod programını
+kullanın. Çıktı şuna benzer birşey olacaktır:
+
+      # lsmod
+      Module:        #pages:  Used by:
+      drv_hello          1
+
+Çıktının anlamı ise; "drv_hello" isimli modül bir sayfa (4K) hafıza
+kullanıyor ve başka bir çekirdek modülü ona bağımlı değil. Bu modülü
+kaldırmak için "rmmod drv_hello" komutunu kullanın. Burada dikkat edilmesi
+gereken husus rmmod programının parametre olarak lsmod'un çıktısı olan
+modül ismini istemesidir, dosya ismini değil. Dİğer modül yardımcılarının
+amaçları manual sayfalarında bulunabilir.
+</pre>
+<h4>9.2.  Çekirdek ile dağıtılan modüller</h4>
+<pre>
+Sürüm 1.2.2'den beri birçok dosyasistemi, bazı SCSI sürücüler, bir takım
+ethernet adapter sürücüleri ve benzeri birçok şey modül olarak
+yüklenebiliyor. Bunları kullanmak için, normal çekirdekte bunları
+ayarlamadığınıza emin olun (make config sırasında bu nlar hakkındaki
+sorulara y ile cevap vermeyin). Yeni bir çekirdek derleyin ve bununla
+yeniden açılış yapın. Daha sonra /usr/src/linux dizinine geçin ve "make
+modules" komutunu çalıştırın. Bu çekirdek ayarlarında belirtmediğiniz tüm
+modülleri derleyecek ve bunlara bağlantıları /usr/src/linux/modules
+dizinine yerleştirecektir. Modülleri doğrudan bu dizinden veya onları
+x.y.z çekirdek sürümü olmak üzere /lib/modules/x.y.z dizinine
+yerleştircecek "make modules_install" komutunu çalıştırarak
+kullanabilirsiniz.
+
+
+Modüller özellikle dosyasistemlerinde yaralı olabilir. Minix veya msdos
+dosyasistemlerini çok sık kullanmıyor olabilirsiniz. Bu durumda msdos
+disketini kullanmak için önce "insmod /usr/src/linux/modules/msdos.o"
+komutunu, işiniz bitince de "rmmod msdos"  komutunu kullanmak normal
+işleyiş sırasında çekirdekte 50K hafıza tasarrufu yapmanızı sağlar. Minix
+dosyasistemi için küçk bir not: "rescue" disklerinde kullanmak için bunu
+herzaman doğrudan çekirdek içine ayarlamalısınız.
+
+{
+ A small note is in order for the minix filesystem: you
+  should always configure it directly into the kernel for use in
+  ``rescue'' disks.
+}
+</pre>
+<h3>10.  Diğer ayar seçenekleri</h3>
+<pre>
+Bu kısım ayarlar kısmında listelenmemiş bazı seçilmiş çekirdek ayar
+seçenekleri hakkında bilgiler kapsamaktadır. Device sürücülerinini büyük
+kısmı burada listelenmemiştir.
+</pre>
+<h4>10.1  Genel kurulum</h4>
+<pre>
+Normal floppy disk desteği - /drivers/block/README.fd dosyasını okumak
+isteyebilirsiniz; bu özellikle IBM Thinkpad kullanıcıları için önemlidir.
+
+XT harddisk support - if you want to use that 8 bit XT controller
+collecting dust in the corner.
+
+PCI bios support - PCI desteğiniz varsa, bunu seçebilirsiniz. Dikkat
+etmeniz gereken bir husus var. Bazı eski PCI anakartları bu seçenekle
+kullanıldıkları zaman sistemi kilitleyebilirler.
+
+Kernel support for ELF binaries - ELF yapısı program desteği artık iyice
+yerleşmiş durumda. Alın.
+</pre>
+<h4>10.2. Bağlantı ve ağ seçenekleri</h4>
+<pre>
+Bunlar NET-2-NASIL dosyasında detaylı olarak anlatılmıştır.
+</pre>
+<h3>11. İpuçları</h3>
+
+<h4>11.1 make veya patch komutlarının çıktılarını görme</h4>
+<pre>
+Bu iki komutun hata mesajlarını bir dosyaya yönlendirebilirsiniz.
+Öncelikle hangi kabuk altında çalıştığınızı anlayın.
+
+ # echo $SHELL
+
+Eğer sh veya bash kullanıyorsanız,
+
+ # (komut) 2>&amp;1 | tee (çıktı dosyası)
+
+yardımıyla "komut" un çıktısını "çıktı dosyası" na yazabilirsiniz.
+
+Csh veya tcsh ile,
+
+ # (command) |&amp; tee (output file)
+</pre>
+<h4>11.2 Alternatif çekirdek kurmak</h4>
+<pre>
+Eskisine dokunmadan yeni bir çekirdeği kurmak mümkündür. Diğer UNIX
+benzeri işletim sistemlerinin aksine, LILO bir çekirdeği disk üzerindeki
+herhangi bir bölümden kurabilir. LILO konfigürasyon dosyasının sonuna
+
+      image = /usr/src/linux/arch/i386/zImage
+          label = yeni_çekirdek
+
+gibi iki satır eklenirse, eski çekirdeğe dokunmadan yeni çekirdeği
+kullanarak sistem açılabilir. LILO'ya , yeni bir çekirdeği yüklemesini
+söylemek için en iyi yol sistem açılış esnasında "shift" tuşuna basmaktır.
+Bu esnada ekranda "LILO" yazacak ve siz yeni çekirdeğin ismini yazdıktan
+sonra sistem bunu kullanarak açılacaktır.
+
+Aynı anda birkaç çekirdek kaynak kodunu sistemde bulundurmayı
+düşünüyorsanız, izlenecek en güvenilir yol, her birine
+/usr/src/linux-x.y.z ismini vermektir (x.y.z halihazırdaki çekirdek
+sürümünü gösterir). Ardından sembolik bir bağlantı yardımıyla istediğiniz
+kaynak dizinini seçebilirsiniz, örneğin
+
+ # ln -sf linux-1.2.2 /usr/src/linux
+
+komutu, linux-1.2.2 dizinini aktif hale getirir. Artık kaynak dosyalarının
+bulunduğu dizin linux-1.2.2 dizinidir.
+</pre>
+<h4>11.3 Yeni çekirdekler hakkında</h4>
+<pre>
+Russell Nelson (nelson@crynwr.com) yeni çekirdek sürümleri hakkında kısa
+bilgiler verior. Bu belgelere , ftp://ftp.emlist.com/pub/kchanges veya
+http://www.crynwr.com/kchanges adreslerinden erişilebilir.
+
+
+</pre>
+</div>
+</article>
+

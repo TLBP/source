@@ -1,0 +1,2320 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ********************************************************************
+     $Id: builtin.xml,v 1.2 2002/12/20 22:29:48 nilgun Exp $
+******************************************************************** -->
+<chapter id="pylib-builtin">
+  <title>2. Built-in Objects</title>
+<para>Names for built-in exceptions and functions and a number of
+constants are found in a separate symbol table. This table is
+searched last when the interpreter looks up the meaning of a name,
+so local and global user-defined names can override built-in names.
+Built-in types are described together here for easy
+reference.<footnote><para>Most descriptions sorely lack explanations of the exceptions that may be raised -- this will be fixed in a future version of
+this manual.</para></footnote></para>
+<para>The tables in this chapter document the priorities of operators
+by listing them in order of ascending priority (within a table) and
+grouping operators that have the same priority in the same box.
+Binary operators of the same priority group from left to right.
+(Unary operators group from right to left, but there you have no
+real choice.) See chapter 5 of the<ulink url="http://www.python.org/doc/current/ref/ref.html">Python Reference
+Manual</ulink> for the complete picture on operator
+priorities.</para>
+
+<sect1 id="pylib-built-in-funcs">
+  <title>2.1 Built-in Functions</title>
+<para>The Python interpreter has a number of functions built into it
+that are always available. They are listed here in alphabetical
+order.</para>
+
+<funcsynopsis><funcprototype role="işlev" id="pylib__import__">
+<funcdef><function>__import__</function></funcdef>
+<paramdef>(<replaceable>name</replaceable>[, <replaceable>globals</replaceable>[, <replaceable>locals</replaceable>[, <replaceable>fromlist</replaceable>[, <replaceable>level</replaceable>]]]])</paramdef>
+</funcprototype><funcdescr><para>
+This function is invoked by the <keyword>import</keyword> statement.
+It mainly exists so that you can replace it with another function
+that has a compatible interface, in order to change the semantics
+of the <keyword>import</keyword> statement. For examples of
+why and how you would do this, see the standard library modules
+<module>ihooks</module>
+and <link linkend="pylib-module-rexec"><module>rexec</module></link>. See also the built-in module <link linkend="pylib-module-imp"><module>imp</module></link>, which defines some useful operations out of
+which you can build your own <function>__import__()</function>
+function.</para>
+<para>For example, the statement "<literal>import spam</literal>"
+results in the following call: <literal>__import__('spam', globals(), locals(), [], -1)</literal>; the statement "<literal>from spam.ham import eggs</literal>" results in "<literal>__import__('spam.ham', globals(), locals(),
+['eggs'], -1)</literal>". Note that even though <literal>locals()</literal>
+and <literal>['eggs']</literal> are passed in as arguments, the
+<function>__import__()</function> function does not set the
+local variable named <literal>eggs</literal>; this is done by subsequent
+code that is generated for the import statement. (In fact, the
+standard implementation does not use its <varname>locals</varname> argument
+at all, and uses its <varname>globals</varname> only to determine the
+package context of the <keyword>import</keyword>
+statement.)</para>
+<para>When the <varname>name</varname> variable is of the form
+<literal>package.module</literal>, normally, the top-level package (the
+name up till the first dot) is returned, <emphasis>not</emphasis> the module
+named by <varname>name</varname>. However, when a non-empty
+<varname>fromlist</varname> argument is given, the module named by
+<varname>name</varname> is returned. This is done for compatibility with
+the bytecode generated for the different kinds of import statement;
+when using "<literal>import spam.ham.eggs</literal>", the
+top-level package <module>spam</module> must be placed in
+the importing namespace, but when using "<literal>from
+spam.ham import eggs</literal>", the <literal>spam.ham</literal> subpackage
+must be used to find the <literal>eggs</literal> variable. As a
+workaround for this behavior, use <function>getattr()</function> to extract the desired components. For
+example, you could define the following helper:</para>
+<screen>
+def my_import(name):
+    mod = __import__(name)
+    components = name.split('.')
+    for comp in components[1:]:
+        mod = getattr(mod, comp)
+    return mod
+</screen>
+<para><varname>level</varname> specifies whether to use absolute or relative
+imports. The default is <literal>-1</literal> which indicates both
+absolute and relative imports will be attempted. <literal>0</literal>
+means only perform absolute imports. Positive values for
+<varname>level</varname> indicate the number of parent directories to
+search relative to the directory of the module calling <function>__import__</function>.</para>
+<note><title>Changed in version 2.5:</title><para>The level parameter was added.</para>
+<para>Keyword support for parameters was added.</para>
+</note></funcdescr></funcsynopsis>
+
+<funcsynopsis><funcprototype role="işlev" id="pylib-abs">
+<funcdef><function>abs</function></funcdef>
+<paramdef>(<replaceable>x</replaceable>)</paramdef>
+</funcprototype><funcdescr><para>
+Return the absolute value of a number. The argument may be a
+plain or long integer or a floating point number. If the argument
+is a complex number, its magnitude is returned.
+</para></funcdescr></funcsynopsis>
+
+<funcsynopsis><funcprototype role="işlev" id="pylib-all">
+<funcdef><function>all</function></funcdef>
+<paramdef>(<replaceable>iterable</replaceable>)</paramdef>
+</funcprototype><funcdescr><para>
+Return True if all elements of the <varname>iterable</varname> are
+true. Equivalent to:</para>
+<screen>
+def all(iterable):
+    for element in iterable:
+        if not element:
+            return False
+    return True
+</screen>
+<para>New in version 2.5.</para>
+</funcdescr></funcsynopsis>
+
+<funcsynopsis><funcprototype role="işlev" id="pylib-any">
+<funcdef><function>any</function></funcdef>
+<paramdef>(<replaceable>iterable</replaceable>)</paramdef>
+</funcprototype><funcdescr><para>
+Return True if any element of the <varname>iterable</varname> is true.
+Equivalent to:</para>
+<screen>
+def any(iterable):
+    for element in iterable:
+        if element:
+            return True
+    return False
+</screen>
+<para>New in version 2.5.</para>
+</funcdescr></funcsynopsis>
+
+<funcsynopsis><funcprototype role="işlev" id="pylib-basestring">
+<funcdef><function>basestring</function></funcdef>
+<paramdef>()</paramdef>
+</funcprototype><funcdescr><para>
+This abstract type is the superclass for <class>str</class> and <class>unicode</class>. It cannot be
+called or instantiated, but it can be used to test whether an
+object is an instance of <class>str</class> or <class>unicode</class>. <literal>isinstance(obj, basestring)</literal> is
+equivalent to <literal>isinstance(obj, (str, unicode))</literal>.</para>
+<para>New in version 2.3.</para>
+</funcdescr></funcsynopsis>
+
+<funcsynopsis><funcprototype role="işlev" id="pylib-bool">
+<funcdef><function>bool</function></funcdef>
+<paramdef>([<replaceable>x</replaceable>])</paramdef>
+</funcprototype><funcdescr><para>
+Convert a value to a Boolean, using the standard truth testing
+procedure. If <varname>x</varname> is false or omitted, this returns
+<literal>False</literal>; otherwise it returns <literal>True</literal>. <class>bool</class> is also a class,
+which is a subclass of <class>int</class>. Class <class>bool</class> cannot be subclassed further. Its only instances
+are <literal>False</literal> and <literal>True</literal>.</para>
+<para>New in version 2.2.1.</para>
+<note><title>Changed in version 2.3:</title><para>If no argument is given, this
+function returns <literal>False</literal>.</para></note>
+</funcdescr></funcsynopsis>
+
+<funcsynopsis><funcprototype role="işlev" id="pylib-callable">
+<funcdef><function>callable</function></funcdef>
+<paramdef>(<replaceable>object</replaceable>)</paramdef>
+</funcprototype><funcdescr><para>
+Return true if the <varname>object</varname> argument appears callable,
+false if not. If this returns true, it is still possible that a
+call fails, but if it is false, calling <varname>object</varname> will
+never succeed. Note that classes are callable (calling a class
+returns a new instance); class instances are callable if they have
+a <method>__call__()</method> method.
+</para></funcdescr></funcsynopsis>
+
+<funcsynopsis><funcprototype role="işlev" id="pylib-chr">
+<funcdef><function>chr</function></funcdef>
+<paramdef>(<replaceable>i</replaceable>)</paramdef>
+</funcprototype><funcdescr><para>
+Return a string of one character whose ASCII code is the
+integer <varname>i</varname>. For example, <literal>chr(97)</literal> returns the
+string <literal>'a'</literal>. This is the inverse of <function>ord()</function>. The argument must be in the range [0..255],
+inclusive; <exception>ValueError</exception> will be raised if
+<varname>i</varname> is outside that range.
+</para></funcdescr></funcsynopsis>
+
+<funcsynopsis><funcprototype role="işlev" id="pylib-classmethod">
+<funcdef><function>classmethod</function></funcdef>
+<paramdef>(<replaceable>function</replaceable>)</paramdef>
+</funcprototype><funcdescr><para>
+Return a class method for <varname>function</varname>.</para>
+<para>A class method receives the class as implicit first argument,
+just like an instance method receives the instance. To declare a
+class method, use this idiom:</para>
+<screen>
+class C:
+    @classmethod
+    def f(cls, arg1, arg2, ...): ...
+</screen>
+<para>The <literal>@classmethod</literal> form is a function decorator - see
+the description of function definitions in chapter 7 of the
+<ulink url="http://www.python.org/doc/current/ref/ref.html">Python Reference Manual</ulink> for details.</para>
+<para>It can be called either on the class (such as
+<literal>C.f()</literal>) or on an instance (such as
+<literal>C().f()</literal>). The instance is ignored except for its
+class. If a class method is called for a derived class, the derived
+class object is passed as the implied first argument.</para>
+<para>Class methods are different than C++ or Java static methods. If
+you want those, see <function>staticmethod()</function> in
+this section.</para>
+<para>For more information on class methods, consult the documentation
+on the standard type hierarchy in chapter 3 of the<ulink url="http://www.python.org/doc/current/ref/types.html">Python Reference Manual</ulink> (at the bottom).</para>
+<para>New in version 2.2.</para>
+<note><title>Changed in version 2.4:</title><para> Function
+decorator syntax added.</para></note>
+</funcdescr></funcsynopsis>
+
+<funcsynopsis><funcprototype role="işlev" id="pylib-cmp">
+<funcdef><function>cmp</function></funcdef>
+<paramdef>(<replaceable>x</replaceable>, <replaceable>y</replaceable>)</paramdef>
+</funcprototype><funcdescr><para>
+Compare the two objects <varname>x</varname> and <varname>y</varname> and
+return an integer according to the outcome. The return value is
+negative if <varname>x </varname><literal>&lt; </literal><varname>y</varname>, zero if <varname>x </varname><literal>== </literal><varname>y</varname> and strictly positive if <varname>x </varname><literal>&gt; </literal><varname>y</varname>.
+</para></funcdescr></funcsynopsis>
+
+<funcsynopsis><funcprototype role="işlev" id="pylib-compile">
+<funcdef><function>compile</function></funcdef>
+<paramdef>(<replaceable>string</replaceable>, <replaceable>filename</replaceable>, <replaceable>kind</replaceable>[, <replaceable>flags</replaceable>[, <replaceable>dont_inherit</replaceable>]])</paramdef>
+</funcprototype><funcdescr><para>
+Compile the <varname>string</varname> into a code object. Code objects
+can be executed by an <keyword>exec</keyword> statement or
+evaluated by a call to <function>eval()</function>. The
+<varname>filename</varname> argument should give the file from which the
+code was read; pass some recognizable value if it wasn't read from
+a file (<literal>'&lt;string&gt;'</literal> is commonly used). The
+<varname>kind</varname> argument specifies what kind of code must be
+compiled; it can be <literal>'exec'</literal> if <varname>string</varname>
+consists of a sequence of statements, <literal>'eval'</literal> if it
+consists of a single expression, or <literal>'single'</literal> if it
+consists of a single interactive statement (in the latter case,
+expression statements that evaluate to something else than
+<literal>None</literal> will be printed).</para>
+<para>When compiling multi-line statements, two caveats apply: line
+endings must be represented by a single newline character
+(<literal>'\n'</literal>), and the input must be terminated by at least
+one newline character. If line endings are represented by
+<literal>'\r\n'</literal>, use the string <method>replace()</method> method to change them into <literal>'\n'</literal>.</para>
+<para>The optional arguments <varname>flags</varname> and
+<varname>dont_inherit</varname> (which are new in Python 2.2) control which
+future statements (see <ulink url="http://www.python.org/peps/pep-0236.html">PEP
+236</ulink>) affect the compilation of <varname>string</varname>. If neither is
+present (or both are zero) the code is compiled with those future
+statements that are in effect in the code that is calling compile.
+If the <varname>flags</varname> argument is given and
+<varname>dont_inherit</varname> is not (or is zero) then the future
+statements specified by the <varname>flags</varname> argument are used in
+addition to those that would be used anyway. If
+<varname>dont_inherit</varname> is a non-zero integer then the
+<varname>flags</varname> argument is it - the future statements in effect
+around the call to compile are ignored.</para>
+<para>Future statements are specified by bits which can be bitwise
+or-ed together to specify multiple statements. The bitfield
+required to specify a given feature can be found as the <literal>compiler_flag</literal> attribute on the <class>_Feature</class> instance in the <module>__future__</module> module.
+</para></funcdescr></funcsynopsis>
+
+<funcsynopsis><funcprototype role="işlev" id="pylib-complex">
+<funcdef><function>complex</function></funcdef>
+<paramdef>([<replaceable>real</replaceable>[, <replaceable>imag</replaceable>]])</paramdef>
+</funcprototype><funcdescr><para>
+Create a complex number with the value <varname>real</varname> +
+<varname>imag</varname>*j or convert a string or number to a complex
+number. If the first parameter is a string, it will be interpreted
+as a complex number and the function must be called without a
+second parameter. The second parameter can never be a string. Each
+argument may be any numeric type (including complex). If
+<varname>imag</varname> is omitted, it defaults to zero and the function
+serves as a numeric conversion function like <function>int()</function>, <function>long()</function> and <function>float()</function>. If both arguments are omitted, returns <literal>0j</literal>.
+</para></funcdescr></funcsynopsis>
+
+<funcsynopsis><funcprototype role="işlev" id="pylib-delattr">
+<funcdef><function>delattr</function></funcdef>
+<paramdef>(<replaceable>object</replaceable>, <replaceable>name</replaceable>)</paramdef>
+</funcprototype><funcdescr><para>
+This is a relative of <function>setattr()</function>. The
+arguments are an object and a string. The string must be the name
+of one of the object's attributes. The function deletes the named
+attribute, provided the object allows it. For example,
+<literal>delattr(<varname>x</varname>, '<varname>foobar</varname>')</literal> is
+equivalent to <literal>del <varname>x</varname>.<varname>foobar</varname></literal>.
+</para></funcdescr></funcsynopsis>
+
+<funcsynopsis><funcprototype role="işlev" id="pylib-dict">
+<funcdef><function>dict</function></funcdef>
+<paramdef>([<replaceable>mapping-or-sequence</replaceable>])</paramdef>
+</funcprototype><funcdescr><para>
+Return a new dictionary initialized from an optional positional
+argument or from a set of keyword arguments. If no arguments are
+given, return a new empty dictionary. If the positional argument is
+a mapping object, return a dictionary mapping the same keys to the
+same values as does the mapping object. Otherwise the positional
+argument must be a sequence, a container that supports iteration,
+or an iterator object. The elements of the argument must each also
+be of one of those kinds, and each must in turn contain exactly two
+objects. The first is used as a key in the new dictionary, and the
+second as the key's value. If a given key is seen more than once,
+the last value associated with it is retained in the new
+dictionary.</para>
+<para>If keyword arguments are given, the keywords themselves with
+their associated values are added as items to the dictionary. If a
+key is specified both in the positional argument and as a keyword
+argument, the value associated with the keyword is retained in the
+dictionary. For example, these all return a dictionary equal to
+<literal>{"one": 2, "two": 3}</literal>:</para>
+<itemizedlist>
+<listitem><simpara>
+<literal>dict({'one': 2, 'two': 3})</literal>
+</simpara></listitem><listitem><simpara>
+<literal>dict({'one': 2, 'two': 3}.items())</literal>
+</simpara></listitem><listitem><simpara>
+<literal>dict({'one': 2, 'two': 3}.iteritems())</literal>
+</simpara></listitem><listitem><simpara>
+<literal>dict(zip(('one', 'two'), (2, 3)))</literal>
+</simpara></listitem><listitem><simpara>
+<literal>dict([['two', 3], ['one', 2]])</literal>
+</simpara></listitem><listitem><simpara>
+<literal>dict(one=2, two=3)</literal>
+</simpara></listitem><listitem><simpara>
+<literal>dict([(['one', 'two'][i-2], i) for i in (2, 3)])</literal>
+</simpara></listitem></itemizedlist>
+<para>New in version 2.2.</para>
+<note><title>Changed in version 2.3:</title><para>Support for
+building a dictionary from keyword arguments added.</para>
+</note></funcdescr></funcsynopsis>
+
+<funcsynopsis><funcprototype role="işlev" id="pylib-dir">
+<funcdef><function>dir</function></funcdef>
+<paramdef>([<replaceable>object</replaceable>])</paramdef>
+</funcprototype><funcdescr><para>
+Without arguments, return the list of names in the current
+local symbol table. With an argument, attempts to return a list of
+valid attributes for that object. This information is gleaned from
+the object's <literal>__dict__</literal> attribute, if
+defined, and from the class or type object. The list is not
+necessarily complete. If the object is a module object, the list
+contains the names of the module's attributes. If the object is a
+type or class object, the list contains the names of its
+attributes, and recursively of the attributes of its bases.
+Otherwise, the list contains the object's attributes' names, the
+names of its class's attributes, and recursively of the attributes
+of its class's base classes. The resulting list is sorted
+alphabetically. For example:</para>
+<screen>
+&gt;&gt;&gt; import struct
+&gt;&gt;&gt; dir()
+['__builtins__', '__doc__', '__name__', 'struct']
+&gt;&gt;&gt; dir(struct)
+['__doc__', '__name__', 'calcsize', 'error', 'pack', 'unpack']
+</screen>
+<note><para>Because <function>dir()</function> is supplied primarily as a convenience for
+use at an interactive prompt, it tries to supply an interesting set
+of names more than it tries to supply a rigorously or consistently
+defined set of names, and its detailed behavior may change across
+releases.</para></note>
+</funcdescr></funcsynopsis>
+
+<funcsynopsis><funcprototype role="işlev" id="pylib-divmod">
+<funcdef><function>divmod</function></funcdef>
+<paramdef>(<replaceable>a</replaceable>, <replaceable>b</replaceable>)</paramdef>
+</funcprototype><funcdescr><para>
+Take two (non complex) numbers as arguments and return a pair
+of numbers consisting of their quotient and remainder when using
+long division. With mixed operand types, the rules for binary
+arithmetic operators apply. For plain and long integers, the result
+is the same as <literal>(<varname>a</varname> // <varname>b</varname>, <varname>a</varname> %
+<varname>b</varname>)</literal>. For floating point numbers the result is
+<literal>(<varname>q</varname>, <varname>a</varname> % <varname>b</varname>)</literal>, where
+<varname>q</varname> is usually <literal>math.floor(<varname>a</varname> /
+<varname>b</varname>)</literal> but may be 1 less than that. In any case
+<literal><varname>q</varname> * <varname>b</varname> + <varname>a</varname> %
+<varname>b</varname></literal> is very close to <varname>a</varname>, if
+<literal><varname>a</varname> % <varname>b</varname></literal> is non-zero it has the
+same sign as <varname>b</varname>, and <literal>0 &lt;= abs(<varname>a</varname> %
+<varname>b</varname>) &lt; abs(<varname>b</varname>)</literal>.</para>
+<note><title>Changed in version 2.3:</title><para>Using
+<function>divmod()</function> with complex numbers is deprecated.</para>
+</note></funcdescr></funcsynopsis>
+
+<funcsynopsis><funcprototype role="işlev" id="pylib-enumerate">
+<funcdef><function>enumerate</function></funcdef>
+<paramdef>(<replaceable>iterable</replaceable>)</paramdef>
+</funcprototype><funcdescr><para>
+Return an enumerate object. <varname>iterable</varname> must be a
+sequence, an iterator, or some other object which supports
+iteration. The <method>next()</method> method of the
+iterator returned by <function>enumerate()</function> returns
+a tuple containing a count (from zero) and the corresponding value
+obtained from iterating over <varname>iterable</varname>. <function>enumerate()</function> is useful for obtaining an indexed
+series: <literal>(0, seq[0])</literal>, <literal>(1, seq[1])</literal>,
+<literal>(2, seq[2])</literal>, ....</para>
+<para>New in version 2.3.</para>
+</funcdescr></funcsynopsis>
+
+<funcsynopsis><funcprototype role="işlev" id="pylib-eval">
+<funcdef><function>eval</function></funcdef>
+<paramdef>(<replaceable>expression</replaceable>[, <replaceable>globals</replaceable>[, <replaceable>locals</replaceable>]])</paramdef>
+</funcprototype><funcdescr><para>
+The arguments are a string and optional globals and locals. If
+provided, <varname>globals</varname> must be a dictionary. If provided,
+<varname>locals</varname> can be any mapping object.</para>
+<note><title>Changed in version 2.4:</title><para>formerly <varname>locals</varname> was required to be a dictionary.</para></note>
+<para>The <varname>expression</varname> argument is parsed and evaluated as a
+Python expression (technically speaking, a condition list) using
+the <varname>globals</varname> and <varname>locals</varname> dictionaries as global
+and local name space. If the <varname>globals</varname> dictionary is
+present and lacks '__builtins__', the current globals are copied
+into <varname>globals</varname> before <varname>expression</varname> is parsed.
+This means that <varname>expression</varname> normally has full access to
+the standard <link linkend="pylib-module-builtin"><module>__builtin__</module></link> module and restricted
+environments are propagated. If the <varname>locals</varname> dictionary is
+omitted it defaults to the <varname>globals</varname> dictionary. If both
+dictionaries are omitted, the expression is executed in the
+environment where <keyword>eval</keyword> is called. The
+return value is the result of the evaluated expression. Syntax
+errors are reported as exceptions. Example:</para>
+<screen>
+
+&gt;&gt;&gt; x = 1
+&gt;&gt;&gt; print eval('x+1')
+2
+</screen>
+<para>This function can also be used to execute arbitrary code objects
+(such as those created by <function>compile()</function>). In
+this case pass a code object instead of a string. The code object
+must have been compiled passing <literal>'eval'</literal> as the
+<varname>kind</varname> argument.</para>
+<tip><para>Dynamic execution of statements is supported by the
+<keyword>exec</keyword> statement. Execution of statements
+from a file is supported by the <function>execfile()</function> function. The <function>globals()</function> and <function>locals()</function>
+functions returns the current global and local dictionary,
+respectively, which may be useful to pass around for use by
+<function>eval()</function> or <function>execfile()</function>.</para>
+</tip></funcdescr></funcsynopsis>
+
+<funcsynopsis><funcprototype role="işlev" id="pylib-execfile">
+<funcdef><function>execfile</function></funcdef>
+<paramdef>(<replaceable>filename</replaceable>[, <replaceable>globals</replaceable>[, <replaceable>locals</replaceable>]])</paramdef>
+</funcprototype><funcdescr><para>
+This function is similar to the <keyword>exec</keyword>
+statement, but parses a file instead of a string. It is different
+from the <keyword>import</keyword> statement in that it does
+not use the module administration -- it reads the file
+unconditionally and does not create a new module.<footnote><para>It is used relatively rarely so does not warrant being made
+into a statement.</para></footnote></para>
+<para>The arguments are a file name and two optional dictionaries. The
+file is parsed and evaluated as a sequence of Python statements
+(similarly to a module) using the <varname>globals</varname> and
+<varname>locals</varname> dictionaries as global and local namespace. If
+provided, <varname>locals</varname> can be any mapping object.</para>
+<note><title>Changed in version 2.4:</title><para>Formerly <varname>locals</varname> was required to be a dictionary.</para></note>
+<para>If the <varname>locals</varname>
+dictionary is omitted it defaults to the <varname>globals</varname>
+dictionary. If both dictionaries are omitted, the expression is
+executed in the environment where <function>execfile()</function> is called. The return value is
+<literal>None</literal>.</para>
+<warning><para> The default
+<varname>locals</varname> act as described for function <function>locals()</function> below: modifications to the default
+<varname>locals</varname> dictionary should not be attempted. Pass an
+explicit <varname>locals</varname> dictionary if you need to see effects of
+the code on <varname>locals</varname> after function <function>execfile()</function> returns. <function>execfile()</function> cannot be used reliably to modify a function's locals.</para></warning>
+</funcdescr></funcsynopsis>
+
+<funcsynopsis><funcprototype role="işlev" id="pylib-file">
+<funcdef><function>file</function></funcdef>
+<paramdef>(<replaceable>filename</replaceable>[, <replaceable>mode</replaceable>[, <replaceable>bufsize</replaceable>]])</paramdef>
+</funcprototype><funcdescr><para>
+Constructor function for the <class>file</class> type,
+described further in section <xref linkend="bltin-file-objects"/>. The
+constructor's arguments are the same as those of the <function>open()</function> built-in function described below.</para>
+<para>When opening a file, it's preferable to use <function>open()</function> instead of invoking this constructor
+directly. <class>file</class> is more suited to type
+testing (for example, writing "<literal>isinstance(f, file)</literal>").</para>
+<para>New in version 2.2.</para>
+</funcdescr></funcsynopsis>
+
+<funcsynopsis><funcprototype role="işlev" id="pylib-filter">
+<funcdef><function>filter</function></funcdef>
+<paramdef>(<replaceable>function</replaceable>, <replaceable>list</replaceable>)</paramdef>
+</funcprototype><funcdescr><para>
+Construct a list from those elements of <varname>list</varname> for
+which <varname>function</varname> returns true. <varname>list</varname> may be
+either a sequence, a container which supports iteration, or an
+iterator, If <varname>list</varname> is a string or a tuple, the result
+also has that type; otherwise it is always a list. If
+<varname>function</varname> is <literal>None</literal>, the identity function is
+assumed, that is, all elements of <varname>list</varname> that are false
+are removed.</para>
+<para>Note that <literal>filter(function, <varname>list</varname>)</literal> is
+equivalent to <literal>[item for item in <varname>list</varname> if
+function(item)]</literal> if function is not <literal>None</literal> and
+<literal>[item for item in <varname>list</varname> if item]</literal> if function
+is <literal>None</literal>.</para>
+</funcdescr></funcsynopsis>
+
+<funcsynopsis><funcprototype role="işlev" id="pylib-float">
+<funcdef><function>float</function></funcdef>
+<paramdef>([<replaceable>x</replaceable>])</paramdef>
+</funcprototype><funcdescr><para>
+Convert a string or a number to floating point. If the argument
+is a string, it must contain a possibly signed decimal or floating
+point number, possibly embedded in whitespace. Otherwise, the
+argument may be a plain or long integer or a floating point number,
+and a floating point number with the same value (within Python's
+floating point precision) is returned. If no argument is given,
+returns <literal>0.0</literal>.</para>
+<note><para> When passing in a
+string, values for NaN and Infinity may be returned,
+depending on the underlying C library. The specific set of strings
+accepted which cause these values to be returned depends entirely
+on the C library and is known to vary.</para></note>
+</funcdescr></funcsynopsis>
+
+<funcsynopsis><funcprototype role="işlev" id="pylib-float">
+<funcdef><function>frozenset</function></funcdef>
+<paramdef>([<replaceable>iterable</replaceable>])</paramdef>
+</funcprototype><funcdescr><para>
+Return a frozenset object whose elements are taken from
+<varname>iterable</varname>. Frozensets are sets that have no update
+methods but can be hashed and used as members of other sets or as
+dictionary keys. The elements of a frozenset must be immutable
+themselves. To represent sets of sets, the inner sets should also
+be <class>frozenset</class> objects. If <varname>iterable</varname>
+is not specified, returns a new empty set,
+<literal>frozenset([])</literal>.</para>
+<para>New in version 2.4.</para>
+</funcdescr></funcsynopsis>
+
+<funcsynopsis><funcprototype role="işlev" id="pylib-getattr">
+<funcdef><function>getattr</function></funcdef>
+<paramdef>(<replaceable>object</replaceable>, <replaceable>name</replaceable>)</paramdef>
+</funcprototype><funcdescr><para>
+Return the value of the named attributed of <varname>object</varname>.
+<varname>name</varname> must be a string. If the string is the name of one
+of the object's attributes, the result is the value of that
+attribute. For example, <literal>getattr(x, 'foobar')</literal> is
+equivalent to <literal>x.foobar</literal>. If the named attribute does
+not exist, <varname>default</varname> is returned if provided, otherwise
+<exception>AttributeError</exception> is raised.</para>
+</funcdescr></funcsynopsis>
+
+<funcsynopsis><funcprototype role="işlev" id="pylib-globals">
+<funcdef><function>globals</function></funcdef>
+<paramdef>()</paramdef>
+</funcprototype><funcdescr><para>
+Return a dictionary representing the current global symbol
+table. This is always the dictionary of the current module (inside
+a function or method, this is the module where it is defined, not
+the module from which it is called).</para>
+</funcdescr></funcsynopsis>
+
+<funcsynopsis><funcprototype role="işlev" id="pylib-hasattr">
+<funcdef><function>hasattr</function></funcdef>
+<paramdef>(<replaceable>object</replaceable>, <replaceable>name</replaceable>)</paramdef>
+</funcprototype><funcdescr><para>
+The arguments are an object and a string. The result is
+<literal>True</literal> if the string is the name of one of the object's
+attributes, <literal>False</literal> if not. (This is implemented by
+calling <literal>getattr(<varname>object</varname>, <varname>name</varname>)</literal>
+and seeing whether it raises an exception or not.)</para>
+</funcdescr></funcsynopsis>
+
+<funcsynopsis><funcprototype role="işlev" id="pylib-hash">
+<funcdef><function>hash</function></funcdef>
+<paramdef>(<replaceable>object</replaceable>)</paramdef>
+</funcprototype><funcdescr><para>
+Return the hash value of the object (if it has one). Hash
+values are integers. They are used to quickly compare dictionary
+keys during a dictionary lookup. Numeric values that compare equal
+have the same hash value (even if they are of different types, as
+is the case for 1 and 1.0).</para>
+</funcdescr></funcsynopsis>
+
+<funcsynopsis><funcprototype role="işlev" id="pylib-help">
+<funcdef><function>help</function></funcdef>
+<paramdef>([<replaceable>object</replaceable>])</paramdef>
+</funcprototype><funcdescr><para>
+Invoke the built-in help system. (This function is intended for
+interactive use.) If no argument is given, the interactive help
+system starts on the interpreter console. If the argument is a
+string, then the string is looked up as the name of a module,
+function, class, method, keyword, or documentation topic, and a
+help page is printed on the console. If the argument is any other
+kind of object, a help page on the object is generated.</para>
+<para>New in version 2.2.</para>
+</funcdescr></funcsynopsis>
+
+<funcsynopsis><funcprototype role="işlev" id="pylib-hex">
+<funcdef><function>hex</function></funcdef>
+<paramdef>(<replaceable>x</replaceable>)</paramdef>
+</funcprototype><funcdescr><para>
+Convert an integer number (of any size) to a hexadecimal
+string. The result is a valid Python expression.</para>
+<note><title>Changed in version 2.4:</title><para>Formerly only returned an
+unsigned literal.</para></note>
+</funcdescr></funcsynopsis>
+
+<funcsynopsis><funcprototype role="işlev" id="pylib-id">
+<funcdef><function>id</function></funcdef>
+<paramdef>(<replaceable>object</replaceable>)</paramdef>
+</funcprototype><funcdescr><para>
+Return the “identity” of an object. This is an integer (or
+long integer) which is guaranteed to be unique and constant for
+this object during its lifetime. Two objects with non-overlapping
+lifetimes may have the same <function>id()</function> value.
+(Implementation note: this is the address of the object.)</para>
+</funcdescr></funcsynopsis>
+
+<funcsynopsis><funcprototype role="işlev" id="pylib-input">
+<funcdef><function>input</function></funcdef>
+<paramdef>([<replaceable>prompt</replaceable>])</paramdef>
+</funcprototype><funcdescr><para>
+Equivalent to <literal>eval(raw_input(<varname>prompt</varname>))</literal>.</para>
+<warning><para> This function
+is not safe from user errors! It expects a valid Python expression
+as input; if the input is not syntactically valid, a <exception>SyntaxError</exception> will be raised. Other exceptions may
+be raised if there is an error during evaluation. (On the other
+hand, sometimes this is exactly what you need when writing a quick
+script for expert use.)</para></warning>
+<para>If the <link linkend="pylib-module-readline"><module>readline</module></link> module was loaded, then
+<function>input()</function> will use it to provide elaborate
+line editing and history features.</para>
+<para>Consider using the <function>raw_input()</function>
+function for general input from users.</para>
+</funcdescr></funcsynopsis>
+
+<funcsynopsis><funcprototype role="işlev" id="pylib-int">
+<funcdef><function>int</function></funcdef>
+<paramdef>([<replaceable>x</replaceable>[, <replaceable>radix</replaceable>]])</paramdef>
+</funcprototype><funcdescr><para>
+Convert a string or number to a plain integer. If the argument
+is a string, it must contain a possibly signed decimal number
+representable as a Python integer, possibly embedded in whitespace.
+The <varname>radix</varname> parameter gives the base for the conversion
+and may be any integer in the range [2, 36], or zero. If
+<varname>radix</varname> is zero, the proper radix is guessed based on the
+contents of string; the interpretation is the same as for integer
+literals. If <varname>radix</varname> is specified and <varname>x</varname> is not
+a string, <exception>TypeError</exception> is raised.
+Otherwise, the argument may be a plain or long integer or a
+floating point number. Conversion of floating point numbers to
+integers truncates (towards zero). If the argument is outside the
+integer range a long object will be returned instead. If no
+arguments are given, returns <literal>0</literal>.</para>
+</funcdescr></funcsynopsis>
+
+<funcsynopsis><funcprototype role="işlev" id="pylib-isinstance">
+<funcdef><function>isinstance</function></funcdef>
+<paramdef>(<replaceable>object</replaceable>, <replaceable>classinfo</replaceable>)</paramdef>
+</funcprototype><funcdescr><para>
+Return true if the <varname>object</varname> argument is an instance of
+the <varname>classinfo</varname> argument, or of a (direct or indirect)
+subclass thereof. Also return true if <varname>classinfo</varname> is a
+type object and <varname>object</varname> is an object of that type. If
+<varname>object</varname> is not a class instance or an object of the given
+type, the function always returns false. If <varname>classinfo</varname> is
+neither a class object nor a type object, it may be a tuple of
+class or type objects, or may recursively contain other such tuples
+(other sequence types are not accepted). If <varname>classinfo</varname> is
+not a class, type, or tuple of classes, types, and such tuples, a
+<exception>TypeError</exception> exception is raised.</para>
+<note><title>Changed in version 2.2:</title><para>Support for a
+tuple of type information was added.</para></note>
+</funcdescr></funcsynopsis>
+
+<funcsynopsis><funcprototype role="işlev" id="pylib-issubclass">
+<funcdef><function>issubclass</function></funcdef>
+<paramdef>(<replaceable>class</replaceable>, <replaceable>classinfo</replaceable>)</paramdef>
+</funcprototype><funcdescr><para>
+Return true if <varname>class</varname> is a subclass (direct or
+indirect) of <varname>classinfo</varname>. A class is considered a subclass
+of itself. <varname>classinfo</varname> may be a tuple of class objects, in
+which case every entry in <varname>classinfo</varname> will be checked. In
+any other case, a <exception>TypeError</exception> exception is
+raised.</para>
+<note><title>Changed in version 2.3:</title><para>Support
+for a tuple of type information was added.</para></note>
+</funcdescr></funcsynopsis>
+
+<funcsynopsis><funcprototype role="işlev" id="pylib-iter">
+<funcdef><function>iter</function></funcdef>
+<paramdef>(<replaceable>object</replaceable>[, <replaceable>sentinel</replaceable>])</paramdef>
+</funcprototype><funcdescr><para>
+Return an iterator object. The first argument is interpreted
+very differently depending on the presence of the second argument.
+Without a second argument, <varname>object</varname> must be a collection object
+which supports the iteration protocol (the <method>__iter__()</method> method), or it must support the sequence
+protocol (the <method>__getitem__()</method> method with
+integer arguments starting at <literal>0</literal>). If it does not
+support either of those protocols, <exception>TypeError</exception> is raised. If the second argument,
+<varname>sentinel</varname>, is given, then <varname>object</varname> must be a callable
+object. The iterator created in this case will call <varname>object</varname>
+with no arguments for each call to its <method>next()</method> method; if the value returned is equal to
+<varname>sentinel</varname>, <exception>StopIteration</exception> will
+be raised, otherwise the value will be returned.</para>
+<para>New in version 2.2.</para>
+</funcdescr></funcsynopsis>
+
+<funcsynopsis><funcprototype role="işlev" id="pylib-len">
+<funcdef><function>len</function></funcdef>
+<paramdef>(<replaceable>s</replaceable>)</paramdef>
+</funcprototype><funcdescr><para>
+Return the length (the number of items) of an object. The
+argument may be a sequence (string, tuple or list) or a mapping
+(dictionary).
+</para></funcdescr></funcsynopsis>
+
+<funcsynopsis><funcprototype role="işlev" id="pylib-list">
+<funcdef><function>list</function></funcdef>
+<paramdef>(<replaceable>sequence</replaceable>)</paramdef>
+</funcprototype><funcdescr><para>
+Return a list whose items are the same and in the same order as
+<varname>sequence</varname>'s items. <varname>sequence</varname> may be either a
+sequence, a container that supports iteration, or an iterator
+object. If <varname>sequence</varname> is already a list, a copy is made
+and returned, similar to <varname>sequence</varname><literal>[:]</literal>. For
+instance, <literal>list('abc')</literal> returns <literal>['a', 'b',
+'c']</literal> and <literal>list( (1, 2, 3) )</literal> returns <literal>[1, 2,
+3]</literal>. If no argument is given, returns a new empty list,
+<literal>[]</literal>.
+</para></funcdescr></funcsynopsis>
+
+<funcsynopsis><funcprototype role="işlev" id="pylib-locals">
+<funcdef><function>locals</function></funcdef>
+<paramdef>()</paramdef>
+</funcprototype><funcdescr><para>
+Update and return a dictionary representing the current local
+symbol table.</para>
+<warning><para>
+The contents of this dictionary should not be modified; changes may
+not affect the values of local variables used by the
+interpreter.</para></warning>
+</funcdescr></funcsynopsis>
+
+<funcsynopsis><funcprototype role="işlev" id="pylib-long">
+<funcdef><function>long</function></funcdef>
+<paramdef>([<replaceable>x</replaceable>[, <replaceable>radix</replaceable>]])</paramdef>
+</funcprototype><funcdescr><para>
+Convert a string or number to a long integer. If the argument
+is a string, it must contain a possibly signed number of arbitrary
+size, possibly embedded in whitespace. The <varname>radix</varname>
+argument is interpreted in the same way as for <function>int()</function>, and may only be given when <varname>x</varname> is a
+string. Otherwise, the argument may be a plain or long integer or a
+floating point number, and a long integer with the same value is
+returned. Conversion of floating point numbers to integers
+truncates (towards zero). If no arguments are given, returns
+<literal>0L</literal>.
+</para></funcdescr></funcsynopsis>
+
+<funcsynopsis><funcprototype role="işlev" id="pylib-map">
+<funcdef><function>map</function></funcdef>
+<paramdef>(<replaceable>function</replaceable>, <replaceable>list</replaceable>, ...)</paramdef>
+</funcprototype><funcdescr><para>
+Apply <varname>function</varname> to every item of <varname>list</varname> and
+return a list of the results. If additional <varname>list</varname>
+arguments are passed, <varname>function</varname> must take that many
+arguments and is applied to the items of all lists in parallel; if
+a list is shorter than another it is assumed to be extended with
+<literal>None</literal> items. If <varname>function</varname> is
+<literal>None</literal>, the identity function is assumed; if there are
+multiple list arguments, <function>map()</function> returns a
+list consisting of tuples containing the corresponding items from
+all lists (a kind of transpose operation). The <varname>list</varname>
+arguments may be any kind of sequence; the result is always a list.
+</para></funcdescr></funcsynopsis>
+
+<funcsynopsis><funcprototype role="işlev" id="pylib-max">
+<funcdef><function>max</function></funcdef>
+<paramdef>(<replaceable>s</replaceable>[, <replaceable>args</replaceable>...] [<replaceable>key</replaceable>])</paramdef>
+</funcprototype><funcdescr><para>
+With a single argument <varname>s</varname>, return the largest item of
+a non-empty sequence (such as a string, tuple or list). With more
+than one argument, return the largest of the arguments.</para>
+<para>The optional <varname>key</varname> argument specifies a one-argument
+ordering function like that used for <method>list.sort()</method>. The <varname>key</varname> argument, if
+supplied, must be in keyword form (for example, "<literal>max(a,b,c,key=func)</literal>").</para>
+<note><title>Changed in version 2.5:</title><para>Added support for the
+optional <varname>key</varname> argument.</para></note>
+</funcdescr></funcsynopsis>
+
+<funcsynopsis><funcprototype role="işlev" id="pylib-min">
+<funcdef><function>min</function></funcdef>
+<paramdef>(<replaceable>s</replaceable>[, <replaceable>args</replaceable>...] [<replaceable>key</replaceable>])</paramdef>
+</funcprototype><funcdescr><para>
+With a single argument <varname>s</varname>, return the smallest item
+of a non-empty sequence (such as a string, tuple or list). With
+more than one argument, return the smallest of the arguments.</para>
+<para>The optional <varname>key</varname> argument specifies a one-argument
+ordering function like that used for <method>list.sort()</method>. The <varname>key</varname> argument, if supplied, must be in keyword form (for example, "<literal>min(a,b,c,key=func)</literal>").</para>
+<note><title>Changed in version 2.5:</title><para>Added support for the
+optional <varname>key</varname> argument.</para></note>
+</funcdescr></funcsynopsis>
+
+<funcsynopsis><funcprototype role="işlev" id="pylib-object">
+<funcdef><function>object</function></funcdef>
+<paramdef>()</paramdef>
+</funcprototype><funcdescr><para>
+Return a new featureless object. <class>object</class>
+is a base for all new style classes. It has the methods that are
+common to all instances of new style classes.</para>
+<para>New in version 2.2.</para>
+<note><title>Changed in version 2.3:</title><para> This function
+does not accept any arguments. Formerly, it accepted arguments but
+ignored them.</para></note>
+</funcdescr></funcsynopsis>
+
+<funcsynopsis><funcprototype role="işlev" id="pylib-oct">
+<funcdef><function>oct</function></funcdef>
+<paramdef>(<replaceable>x</replaceable>)</paramdef>
+</funcprototype><funcdescr><para>
+Convert an integer number (of any size) to an octal string. The
+result is a valid Python expression.</para>
+<note><title>Changed in version 2.4:</title><para>Formerly only returned an
+unsigned literal.</para></note>
+</funcdescr></funcsynopsis>
+
+<funcsynopsis><funcprototype role="işlev" id="pylib-open">
+<funcdef><function>open</function></funcdef>
+<paramdef>(<replaceable>filename</replaceable>[, <replaceable>mode</replaceable>[, <replaceable>bufsize</replaceable>]])</paramdef>
+</funcprototype><funcdescr><para>
+Open a file, returning an object of the <class>file</class> type described in section <xref linkend="pylib-bltin-file-objects"/>. If the
+file cannot be opened, <exception>IOError</exception> is
+raised. When opening a file, it's preferable to use <function>open()</function> instead of invoking the <class>file</class> constructor directly.</para>
+<para>The first two arguments are the same as for <literal>stdio</literal>'s
+<link linkend="glibc-fopen"><function>fopen()</function></link>: <varname>filename</varname> is the file
+name to be opened, and <varname>mode</varname> is a string indicating how
+the file is to be opened.</para>
+<para>The most commonly-used values of <varname>mode</varname> are
+<literal>'r'</literal> for reading, <literal>'w'</literal> for writing
+(truncating the file if it already exists), and <literal>'a'</literal>
+for appending (which on <emphasis>some</emphasis> Unix systems means that <emphasis>all</emphasis> writes append to
+the end of the file regardless of the current seek position). If
+<varname>mode</varname> is omitted, it defaults to <literal>'r'</literal>. When
+opening a binary file, you should append <literal>'b'</literal> to the
+<varname>mode</varname> value to open the file in binary mode, which will
+improve portability. (Appending <literal>'b'</literal> is useful even on
+systems that don't treat binary and text files differently, where
+it serves as documentation.) See below for more possible values of
+<varname>mode</varname>.</para>
+<para>The optional
+<varname>bufsize</varname> argument specifies the file's desired buffer
+size: 0 means unbuffered, 1 means line buffered, any other positive
+value means use a buffer of (approximately) that size. A negative
+<varname>bufsize</varname> means to use the system default, which is
+usually line buffered for tty devices and fully buffered for other
+files. If omitted, the system default is used.<footnote><para>Specifying a buffer size currently has no effect on systems
+that don't have <link linkend="glibc-setvbuf"><function>setvbuf()</function></link>. The interface
+to specify the buffer size is not done using a method that calls
+<link linkend="glibc-setvbuf"><function>setvbuf()</function></link>, because that may dump core
+when called after any I/O has been performed, and there's no
+reliable way to determine whether this is the case.</para></footnote></para>
+<para>Modes <literal>'r+'</literal>, <literal>'w+'</literal> and <literal>'a+'</literal>
+open the file for updating (note that <literal>'w+'</literal> truncates
+the file). Append <literal>'b'</literal> to the mode to open the file in
+binary mode, on systems that differentiate between binary and text
+files; on systems that don't have this distinction, adding the
+<literal>'b'</literal> has no effect.</para>
+<para>In addition to the standard <link linkend="glibc-fopen"><function>fopen()</function></link>
+values <varname>mode</varname> may be <literal>'U'</literal> or
+<literal>'rU'</literal>. Python is usually built with universal newline
+support; supplying <literal>'U'</literal> opens the file as a text file,
+but lines may be terminated by any of the following: the
+Unix end-of-line convention
+<literal>'\n'</literal>, the Macintosh convention <literal>'\r'</literal>, or
+the Windows convention <literal>'\r\n'</literal>. All of these external
+representations are seen as <literal>'\n'</literal> by the Python
+program. If Python is built without universal newline support a
+<varname>mode</varname> with <literal>'U'</literal> is the same as normal text
+mode. Note that file objects so opened also have an attribute
+called <literal>newlines</literal> which has a value of
+<literal>None</literal> (if no newlines have yet been seen),
+<literal>'\n'</literal>, <literal>'\r'</literal>, <literal>'\r\n'</literal>, or a
+tuple containing all the newline types seen.</para>
+<para>Python enforces that the mode, after stripping <literal>'U'</literal>,
+begins with <literal>'r'</literal>, <literal>'w'</literal> or
+<literal>'a'</literal>.</para>
+<note><title>Changed in version 2.5:</title><para> Restriction on
+first letter of mode string introduced.</para></note>
+</funcdescr></funcsynopsis>
+
+<funcsynopsis><funcprototype role="işlev" id="pylib-ord">
+<funcdef><function>ord</function></funcdef>
+<paramdef>(<replaceable>c</replaceable>)</paramdef>
+</funcprototype><funcdescr><para>
+Given a string of length one, return an integer representing
+the Unicode code point of the character when the argument is a
+unicode object, or the value of the byte when the argument is an
+8-bit string. For example, <literal>ord('a')</literal> returns the
+integer <literal>97</literal>, <literal>ord(u'\u2020')</literal> returns
+<literal>8224</literal>. This is the inverse of <function>chr()</function> for 8-bit strings and of <function>unichr()</function> for unicode objects. If a unicode argument
+is given and Python was built with UCS2 Unicode, then the
+character's code point must be in the range [0..65535] inclusive;
+otherwise the string length is two, and a <exception>TypeError</exception> will be raised.</para>
+</funcdescr></funcsynopsis>
+
+<funcsynopsis><funcprototype role="işlev" id="pylib-pow">
+<funcdef><function>pow</function></funcdef>
+<paramdef>(<replaceable>x</replaceable>, <replaceable>y</replaceable>[, <replaceable>z</replaceable>])</paramdef>
+</funcprototype><funcdescr><para>
+Return <varname>x</varname> to the power <varname>y</varname>; if <varname>z</varname>
+is present, return <varname>x</varname> to the power <varname>y</varname>, modulo
+<varname>z</varname> (computed more efficiently than
+<literal>pow(<varname>x</varname>, <varname>y</varname>) % <varname>z</varname></literal>). The
+two-argument form <literal>pow(<varname>x</varname>, <varname>y</varname>)</literal> is
+equivalent to using the power operator:
+<literal><varname>x</varname>**<varname>y</varname></literal>.</para>
+<para>The arguments must have numeric types. With mixed operand types,
+the coercion rules for binary arithmetic operators apply. For int
+and long int operands, the result has the same type as the operands
+(after coercion) unless the second argument is negative; in that
+case, all arguments are converted to float and a float result is
+delivered. For example, <literal>10**2</literal> returns
+<literal>100</literal>, but <literal>10**-2</literal> returns
+<literal>0.01</literal>. (This last feature was added in Python 2.2. In
+Python 2.1 and before, if both arguments were of integer types and
+the second argument was negative, an exception was raised.) If the
+second argument is negative, the third argument must be omitted. If
+<varname>z</varname> is present, <varname>x</varname> and <varname>y</varname> must be of
+integer types, and <varname>y</varname> must be non-negative. (This
+restriction was added in Python 2.2. In Python 2.1 and before,
+floating 3-argument <literal>pow()</literal> returned platform-dependent
+results depending on floating-point rounding accidents.)</para>
+</funcdescr></funcsynopsis>
+
+<funcsynopsis><funcprototype role="işlev" id="pylib-property">
+<funcdef><function>property</function></funcdef>
+<paramdef>([<replaceable>fget</replaceable>[, <replaceable>fset</replaceable>[, <replaceable>fdel</replaceable>[, <replaceable>doc</replaceable>]]]])</paramdef>
+</funcprototype><funcdescr><para>
+Return a property attribute for new-style classes (classes that
+derive from <class>object</class>).</para>
+<para><varname>fget</varname> is a function for getting an attribute value,
+likewise <varname>fset</varname> is a function for setting, and
+<varname>fdel</varname> a function for del'ing, an attribute. Typical use
+is to define a managed attribute x:</para>
+<screen>
+class C(object):
+    def __init__(self): self.__x = None
+    def getx(self): return self._x
+    def setx(self, value): self._x = value
+    def delx(self): del self._x
+    x = property(getx, setx, delx, "I'm the 'x' property.")
+</screen>
+<para>If given, <varname>doc</varname> will be the docstring of the property
+attribute. Otherwise, the property will copy <varname>fget</varname>'s
+docstring (if it exists). This makes it possible to create
+read-only properties easily using <function>property()</function> as a decorator:</para>
+<screen>
+class Parrot(object):
+    def __init__(self):
+        self._voltage = 100000
+
+    @property
+    def voltage(self):
+        """Get the current voltage."""
+        return self._voltage
+</screen>
+<para>turns the <method>voltage()</method> method into a
+“getter” for a read-only attribute with the same name.</para>
+<para>New in version 2.2.</para>
+<note><title>Changed in version 2.5:</title><para> Use
+<varname>fget</varname>'s docstring if no <varname>doc</varname> given.</para></note>
+</funcdescr></funcsynopsis>
+
+<funcsynopsis><funcprototype role="işlev" id="pylib-range">
+<funcdef><function>range</function></funcdef>
+<paramdef>([<replaceable>start</replaceable>[, <replaceable>stop</replaceable>[, <replaceable>step</replaceable>]]])</paramdef>
+</funcprototype><funcdescr><para>
+This is a versatile function to create lists containing
+arithmetic progressions. It is most often used in <tt class=
+"keyword">for</tt> loops. The arguments must be plain integers. If
+the <varname>step</varname> argument is omitted, it defaults to
+<literal>1</literal>. If the <varname>start</varname> argument is omitted, it
+defaults to <literal>0</literal>. The full form returns a list of plain
+integers <literal>[<varname>start</varname>, <varname>start</varname> +
+<varname>step</varname>, <varname>start</varname> + 2 * <varname>step</varname>,
+...]</literal>. If <varname>step</varname> is positive, the last element is
+the largest <literal><varname>start</varname> + <varname>i</varname> *
+<varname>step</varname></literal> less than <varname>stop</varname>; if
+<varname>step</varname> is negative, the last element is the smallest
+<literal><varname>start</varname> + <varname>i</varname> * <varname>step</varname></literal>
+greater than <varname>stop</varname>. <varname>step</varname> must not be zero (or
+else <exception>ValueError</exception> is raised). Example:</para>
+<screen>
+&gt;&gt;&gt; range(10)
+[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+&gt;&gt;&gt; range(1, 11)
+[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+&gt;&gt;&gt; range(0, 30, 5)
+[0, 5, 10, 15, 20, 25]
+&gt;&gt;&gt; range(0, 10, 3)
+[0, 3, 6, 9]
+&gt;&gt;&gt; range(0, -10, -1)
+[0, -1, -2, -3, -4, -5, -6, -7, -8, -9]
+&gt;&gt;&gt; range(0)
+[]
+&gt;&gt;&gt; range(1, 0)
+[]
+</screen>
+</funcdescr></funcsynopsis>
+
+<funcsynopsis><funcprototype role="işlev" id="pylib-raw_input">
+<funcdef><function>raw_input</function></funcdef>
+<paramdef>([<replaceable>prompt</replaceable>])</paramdef>
+</funcprototype><funcdescr><para>
+If the <varname>prompt</varname> argument is present, it is written to
+standard output without a trailing newline. The function then reads
+a line from input, converts it to a string (stripping a trailing
+newline), and returns that. When EOF is read, <exception>EOFError</exception> is raised. Example:</para>
+<screen>
+&gt;&gt;&gt; s = raw_input('--&gt; ')
+--&gt; Monty Python's Flying Circus
+&gt;&gt;&gt; s
+"Monty Python's Flying Circus"
+</screen>
+<para>If the <link linkend="pyyib-module-readline"><module>readline</module></link> module was loaded, then
+<function>raw_input()</function> will use it to provide
+elaborate line editing and history features.</para>
+</funcdescr></funcsynopsis>
+
+<funcsynopsis><funcprototype role="işlev" id="pylib-reduce">
+<funcdef><function>reduce</function></funcdef>
+<paramdef>(<replaceable>function</replaceable>, <replaceable>sequence</replaceable>[, <replaceable>initializer</replaceable>])</paramdef>
+</funcprototype><funcdescr><para>
+Apply <varname>function</varname> of two arguments cumulatively to the
+items of <varname>sequence</varname>, from left to right, so as to reduce
+the sequence to a single value. For example, <literal>reduce(lambda x,
+y: x+y, [1, 2, 3, 4, 5])</literal> calculates
+<literal>((((1+2)+3)+4)+5)</literal>. The left argument, <varname>x</varname>, is
+the accumulated value and the right argument, <varname>y</varname>, is the
+update value from the <varname>sequence</varname>. If the optional
+<varname>initializer</varname> is present, it is placed before the items of
+the sequence in the calculation, and serves as a default when the
+sequence is empty. If <varname>initializer</varname> is not given and
+<varname>sequence</varname> contains only one item, the first item is
+returned.</para>
+</funcdescr></funcsynopsis>
+
+<funcsynopsis><funcprototype role="işlev" id="pylib-reload">
+<funcdef><function>reload</function></funcdef>
+<paramdef>(<replaceable>module</replaceable>)</paramdef>
+</funcprototype><funcdescr><para>
+Reload a previously imported <varname>module</varname>. The argument
+must be a module object, so it must have been successfully imported
+before. This is useful if you have edited the module source file
+using an external editor and want to try out the new version
+without leaving the Python interpreter. The return value is the
+module object (the same as the <varname>module</varname> argument).</para>
+<para>When <literal>reload(module)</literal> is executed:</para>
+<itemizedlist>
+<listitem><simpara>
+Python modules' code is recompiled and the module-level code
+reexecuted, defining a new set of objects which are bound to names
+in the module's dictionary. The <literal>init</literal> function of
+extension modules is not called a second time.
+</simpara></listitem><listitem><simpara>
+As with all other objects in Python the old objects are only
+reclaimed after their reference counts drop to zero.
+</simpara></listitem><listitem><simpara>
+The names in the module namespace are updated to point to any
+new or changed objects.
+</simpara></listitem><listitem><simpara>
+Other references to the old objects (such as names external to
+the module) are not rebound to refer to the new objects and must be
+updated in each namespace where they occur if that is desired.
+</simpara></listitem>
+</itemizedlist>
+<para>There are a number of other caveats:</para>
+<para>If a module is syntactically correct but its initialization
+fails, the first <keyword>import</keyword> statement for it
+does not bind its name locally, but does store a (partially
+initialized) module object in <literal>sys.modules</literal>. To reload
+the module you must first <keyword>import</keyword> it again
+(this will bind the name to the partially initialized module
+object) before you can <function>reload()</function> it.</para>
+<para>When a module is reloaded, its dictionary (containing the
+module's global variables) is retained. Redefinitions of names will
+override the old definitions, so this is generally not a problem.
+If the new version of a module does not define a name that was
+defined by the old version, the old definition remains. This
+feature can be used to the module's advantage if it maintains a
+global table or cache of objects -- with a <keyword>try</keyword> statement it can test for the table's presence
+and skip its initialization if desired:</para>
+<screen>
+try:
+    cache
+except NameError:
+    cache = {}
+</screen>
+<para>It is legal though generally not very useful to reload built-in
+or dynamically loaded modules, except for <link linkend="pylib-module-sys"><module>sys</module></link>, <link linkend="pylib-module-main"><module>__main__</module></link> and
+<link linkend="pylib-module-builtin"><module>__builtin__</module></link>. In many cases, however,
+extension modules are not designed to be initialized more than
+once, and may fail in arbitrary ways when reloaded.</para>
+<para>If a module imports objects from another module using <keyword>from</keyword> ... <keyword>import</keyword> ...,
+calling <function>reload()</function> for the other module
+does not redefine the objects imported from it -- one way around
+this is to re-execute the <keyword>from</keyword> statement,
+another is to use <keyword>import</keyword> and qualified
+names (<varname>module</varname>.<varname>name</varname>) instead.</para>
+<para>If a module instantiates instances of a class, reloading the
+module that defines the class does not affect the method
+definitions of the instances -- they continue to use the old class
+definition. The same is true for derived classes.</para>
+</funcdescr></funcsynopsis>
+
+<funcsynopsis><funcprototype role="işlev" id="pylib-repr">
+<funcdef><function>repr</function></funcdef>
+<paramdef>(<replaceable>object</replaceable>)</paramdef>
+</funcprototype><funcdescr><para>
+Return a string containing a printable representation of an
+object. This is the same value yielded by conversions (reverse
+quotes). It is sometimes useful to be able to access this operation
+as an ordinary function. For many types, this function makes an
+attempt to return a string that would yield an object with the same
+value when passed to <function>eval()</function>.
+</para></funcdescr></funcsynopsis>
+
+<funcsynopsis><funcprototype role="işlev" id="pylib-reversed">
+<funcdef><function>reversed</function></funcdef>
+<paramdef>(<replaceable>seq</replaceable>)</paramdef>
+</funcprototype><funcdescr><para>
+Return a reverse iterator. <varname>seq</varname> must be an object
+which supports the sequence protocol (the __len__() method and the
+<method>__getitem__()</method> method with integer arguments
+starting at <literal>0</literal>).</para>
+<para>New in version 2.4.</para>
+</funcdescr></funcsynopsis>
+
+<funcsynopsis><funcprototype role="işlev" id="pylib-round">
+<funcdef><function>round</function></funcdef>
+<paramdef>(<replaceable>x</replaceable>[, <replaceable>n</replaceable>])</paramdef>
+</funcprototype><funcdescr><para>
+Return the floating point value <varname>x</varname> rounded to
+<varname>n</varname> digits after the decimal point. If <varname>n</varname> is
+omitted, it defaults to zero. The result is a floating point
+number. Values are rounded to the closest multiple of 10 to the
+power minus <varname>n</varname>; if two multiples are equally close,
+rounding is done away from 0 (so. for example,
+<literal>round(0.5)</literal> is <literal>1.0</literal> and
+<literal>round(-0.5)</literal> is <literal>-1.0</literal>).</para>
+</funcdescr></funcsynopsis>
+
+<funcsynopsis><funcprototype role="işlev" id="pylib-set">
+<funcdef><function>set</function></funcdef>
+<paramdef>([<replaceable>iterable</replaceable>])</paramdef>
+</funcprototype><funcdescr><para>
+Return a set whose elements are taken from <varname>iterable</varname>.
+The elements must be immutable. To represent sets of sets, the
+inner sets should be <class>frozenset</class> objects. If
+<varname>iterable</varname> is not specified, returns a new empty set,
+<literal>set([])</literal>.</para>
+<para>New in version 2.4.</para>
+</funcdescr></funcsynopsis>
+
+<funcsynopsis><funcprototype role="işlev" id="pylib-setattr">
+<funcdef><function>setattr</function></funcdef>
+<paramdef>(<replaceable>object</replaceable>, <replaceable>name</replaceable>, <replaceable>value</replaceable>)</paramdef>
+</funcprototype><funcdescr><para>
+This is the counterpart of <function>getattr()</function>.
+The arguments are an object, a string and an arbitrary value. The
+string may name an existing attribute or a new attribute. The
+function assigns the value to the attribute, provided the object
+allows it. For example, <literal>setattr(<varname>x</varname>,
+'<varname>foobar</varname>', 123)</literal> is equivalent to
+<literal><varname>x</varname>.<varname>foobar</varname> = 123</literal>.</para>
+</funcdescr></funcsynopsis>
+
+<funcsynopsis><funcprototype role="işlev" id="pylib-slice">
+<funcdef><function>slice</function></funcdef>
+<paramdef>([<replaceable>start</replaceable>,] <replaceable>stop</replaceable>[, <replaceable>step</replaceable>])</paramdef>
+</funcprototype><funcdescr><para>
+Return a slice object representing the set of indices specified
+by <literal>range(<varname>start</varname>, <varname>stop</varname>,
+<varname>step</varname>)</literal>. The <varname>start</varname> and <varname>step</varname>
+arguments default to <literal>None</literal>. Slice objects have
+read-only data attributes <literal>start</literal>, <literal>stop</literal> and <literal>step</literal> which merely
+return the argument values (or their default). They have no other
+explicit functionality; however they are used by
+<indexterm scope="pylib-genindex"><primary>Numerical Python</primary></indexterm>
+Numerical Python and other third party
+extensions. Slice objects are also generated when extended indexing
+syntax is used. For example: "<literal>a[start:stop:step]</literal>" or "<literal>a[start:stop, i]</literal>".</para>
+</funcdescr></funcsynopsis>
+
+<dl>
+<dd>
+<table cellpadding="0" cellspacing="0">
+<tr valign="baseline">
+<td><nobr><b><tt id='l2h-68' xml:id='l2h-68' class=
+"function">sorted</tt></b>(</nobr></td>
+<td><varname>iterable</varname><big>[</big><varname>,
+cmp</varname><big>[</big><varname>, key</varname><big>[</big><varname>,
+reverse</varname><big>]</big><big>]</big><big>]</big>)</td>
+</tr>
+</table>
+</dd>
+<dd>Return a new sorted list from the items in <varname>iterable</varname>.
+<para>The optional arguments <varname>cmp</varname>, <varname>key</varname>, and
+<varname>reverse</varname> have the same meaning as those for the
+<method>list.sort()</method> method (described in
+section <a href=
+"typesseq-mutable.html#typesseq-mutable">3.6.4</a>).</para>
+<para><varname>cmp</varname> specifies a custom comparison function of two
+arguments (iterable elements) which should return a negative, zero
+or positive number depending on whether the first argument is
+considered smaller than, equal to, or larger than the second
+argument: "<literal><varname>cmp</varname>=<tt class=
+"keyword">lambda</tt> <varname>x</varname>,<varname>y</varname>: <tt class=
+"function">cmp</tt>(x.lower(), y.lower())</literal>"</para>
+<para><varname>key</varname> specifies a function of one argument that is used
+to extract a comparison key from each list element: "<tt class=
+"samp"><varname>key</varname>=<function>str.lower</function></tt>"</para>
+<para><varname>reverse</varname> is a boolean value. If set to
+<literal>True</literal>, then the list elements are sorted as if each
+comparison were reversed.</para>
+<para>In general, the <varname>key</varname> and <varname>reverse</varname> conversion
+processes are much faster than specifying an equivalent
+<varname>cmp</varname> function. This is because <varname>cmp</varname> is called
+multiple times for each list element while <varname>key</varname> and
+<varname>reverse</varname> touch each element only once.</para>
+<para><span class="versionnote">New in version 2.4.</span></para>
+</dd>
+</dl>
+<dl>
+<dd>
+<table cellpadding="0" cellspacing="0">
+<tr valign="baseline">
+<td><nobr><b><tt id='l2h-69' xml:id='l2h-69' class=
+"function">staticmethod</tt></b>(</nobr></td>
+<td><varname>function</varname>)</td>
+</tr>
+</table>
+</dd>
+<dd>Return a static method for <varname>function</varname>.
+<para>A static method does not receive an implicit first argument. To
+declare a static method, use this idiom:</para>
+<div class="verbatim">
+<pre>
+class C:
+    @staticmethod
+    def f(arg1, arg2, ...): ...
+</pre></div>
+<para>The <literal>@staticmethod</literal> form is a function decorator -
+see the description of function definitions in chapter 7 of the
+<em class="citetitle"><a href="../ref/function.html" title=
+"Python Reference Manual">Python Reference Manual</a></em> for
+details.</para>
+<para>It can be called either on the class (such as
+<literal>C.f()</literal>) or on an instance (such as
+<literal>C().f()</literal>). The instance is ignored except for its
+class.</para>
+<para>Static methods in Python are similar to those found in Java or
+C++. For a more advanced concept, see <tt class=
+"function">classmethod()</tt> in this section.</para>
+<para>For more information on static methods, consult the
+documentation on the standard type hierarchy in chapter 3 of the
+<em class="citetitle"><a href="../ref/types.html" title=
+"Python Reference Manual">Python Reference Manual</a></em> (at the
+bottom). <span class="versionnote">New in version 2.2.</span>
+<span class="versionnote">Changed in version 2.4: Function
+decorator syntax added.</span></para>
+</dd>
+</dl>
+<dl>
+<dd>
+<table cellpadding="0" cellspacing="0">
+<tr valign="baseline">
+<td><nobr><b><tt id='l2h-70' xml:id='l2h-70' class=
+"function">str</tt></b>(</nobr></td>
+<td><big>[</big><varname>object</varname><big>]</big>)</td>
+</tr>
+</table>
+</dd>
+<dd>Return a string containing a nicely printable representation of
+an object. For strings, this returns the string itself. The
+difference with <literal>repr(<varname>object</varname>)</literal> is that
+<literal>str(<varname>object</varname>)</literal> does not always attempt to
+return a string that is acceptable to <tt class=
+"function">eval()</tt>; its goal is to return a printable string.
+If no argument is given, returns the empty string,
+<literal>”</literal>.</dd>
+</dl>
+<dl>
+<dd>
+<table cellpadding="0" cellspacing="0">
+<tr valign="baseline">
+<td><nobr><b><tt id='l2h-71' xml:id='l2h-71' class=
+"function">sum</tt></b>(</nobr></td>
+<td><varname>sequence</varname><big>[</big><varname>,
+start</varname><big>]</big>)</td>
+</tr>
+</table>
+</dd>
+<dd>Sums <varname>start</varname> and the items of a <varname>sequence</varname>,
+from left to right, and returns the total. <varname>start</varname>
+defaults to <literal>0</literal>. The <varname>sequence</varname>'s items are
+normally numbers, and are not allowed to be strings. The fast,
+correct way to concatenate sequence of strings is by calling
+<literal>”.join(<varname>sequence</varname>)</literal>. Note that
+<literal>sum(range(<varname>n</varname>), <varname>m</varname>)</literal> is equivalent
+to <literal>reduce(operator.add, range(<varname>n</varname>),
+<varname>m</varname>)</literal> <span class="versionnote">New in version
+2.3.</span></dd>
+</dl>
+<dl>
+<dd>
+<table cellpadding="0" cellspacing="0">
+<tr valign="baseline">
+<td><nobr><b><tt id='l2h-72' xml:id='l2h-72' class=
+"function">super</tt></b>(</nobr></td>
+<td><varname>type</varname><big>[</big><varname>,
+object-or-type</varname><big>]</big>)</td>
+</tr>
+</table>
+</dd>
+<dd>Return the superclass of <varname>type</varname>. If the second
+argument is omitted the super object returned is unbound. If the
+second argument is an object, <literal>isinstance(<varname>obj</varname>,
+<varname>type</varname>)</literal> must be true. If the second argument is a
+type, <literal>issubclass(<varname>type2</varname>, <varname>type</varname>)</literal>
+must be true. <function>super()</function> only works for
+new-style classes.
+<para>A typical use for calling a cooperative superclass method
+is:</para>
+<div class="verbatim">
+<pre>
+class C(B):
+    def meth(self, arg):
+        super(C, self).meth(arg)
+</pre></div>
+<para>Note that <function>super</function> is implemented as part
+of the binding process for explicit dotted attribute lookups such
+as "<literal>super(C, self).__getitem__(name)</literal>".
+Accordingly, <function>super</function>is undefined for
+implicit lookups using statements or operators such as "<tt class=
+"samp">super(C, self)[name]</tt>". <span class="versionnote">New in
+version 2.2.</span></para>
+</dd>
+</dl>
+<dl>
+<dd>
+<table cellpadding="0" cellspacing="0">
+<tr valign="baseline">
+<td><nobr><b><tt id='l2h-73' xml:id='l2h-73' class=
+"function">tuple</tt></b>(</nobr></td>
+<td><big>[</big><varname>sequence</varname><big>]</big>)</td>
+</tr>
+</table>
+</dd>
+<dd>Return a tuple whose items are the same and in the same order
+as <varname>sequence</varname>'s items. <varname>sequence</varname> may be a
+sequence, a container that supports iteration, or an iterator
+object. If <varname>sequence</varname> is already a tuple, it is returned
+unchanged. For instance, <literal>tuple('abc')</literal> returns
+<literal>('a', 'b', 'c')</literal> and <literal>tuple([1, 2, 3])</literal>
+returns <literal>(1, 2, 3)</literal>. If no argument is given, returns a
+new empty tuple, <literal>()</literal>.</dd>
+</dl>
+<dl>
+<dd>
+<table cellpadding="0" cellspacing="0">
+<tr valign="baseline">
+<td><nobr><b><tt id='l2h-74' xml:id='l2h-74' class=
+"function">type</tt></b>(</nobr></td>
+<td><varname>object</varname>)</td>
+</tr>
+</table>
+</dd>
+<dd>Return the type of an <varname>object</varname>. The return value is a
+type<a id='l2h-75' xml:id='l2h-75'></a> object. The <tt class=
+"function">isinstance()</tt> built-in function is recommended for
+testing the type of an object.
+<para>With three arguments, <function>type</function> functions
+as a constructor as detailed below.</para>
+</dd>
+</dl>
+<dl>
+<dd>
+<table cellpadding="0" cellspacing="0">
+<tr valign="baseline">
+<td><nobr><b><tt id='l2h-76' xml:id='l2h-76' class=
+"function">type</tt></b>(</nobr></td>
+<td><varname>name, bases, dict</varname>)</td>
+</tr>
+</table>
+</dd>
+<dd>Return a new type object. This is essentially a dynamic form of
+the <keyword>class</keyword> statement. The <varname>name</varname>
+string is the class name and becomes the <tt class=
+"member">__name__</tt> attribute; the <varname>bases</varname> tuple
+itemizes the base classes and becomes the <tt class=
+"member">__bases__</tt> attribute; and the <varname>dict</varname>
+dictionary is the namespace containing definitions for class body
+and becomes the <literal>__dict__</literal> attribute. For
+example, the following two statements create identical <tt class=
+"class">type</tt> objects:
+<div class="verbatim">
+<pre>
+  &gt;&gt;&gt; class X(object):
+  ...     a = 1
+  ...
+  &gt;&gt;&gt; X = type('X', (object,), dict(a=1))
+</pre></div>
+<span class="versionnote">New in version 2.2.</span></dd>
+</dl>
+<dl>
+<dd>
+<table cellpadding="0" cellspacing="0">
+<tr valign="baseline">
+<td><nobr><b><tt id='l2h-77' xml:id='l2h-77' class=
+"function">unichr</tt></b>(</nobr></td>
+<td><varname>i</varname>)</td>
+</tr>
+</table>
+</dd>
+<dd>Return the Unicode string of one character whose Unicode code
+is the integer <varname>i</varname>. For example, <literal>unichr(97)</literal>
+returns the string <literal>u'a'</literal>. This is the inverse of
+<function>ord()</function> for Unicode strings. The valid
+range for the argument depends how Python was configured - it may
+be either UCS2 [0..0xFFFF] or UCS4 [0..0x10FFFF]. <tt class=
+"exception">ValueError</tt> is raised otherwise. <span class=
+"versionnote">New in version 2.0.</span></dd>
+</dl>
+<dl>
+<dd>
+<table cellpadding="0" cellspacing="0">
+<tr valign="baseline">
+<td><nobr><b><tt id='l2h-78' xml:id='l2h-78' class=
+"function">unicode</tt></b>(</nobr></td>
+<td><big>[</big><varname>object</varname><big>[</big><varname>, encoding</varname>
+<big>[</big><varname>,
+errors</varname><big>]</big><big>]</big><big>]</big>)</td>
+</tr>
+</table>
+</dd>
+<dd>Return the Unicode string version of <varname>object</varname> using
+one of the following modes:
+<para>If <varname>encoding</varname> and/or <varname>errors</varname> are given,
+<literal>unicode()</literal> will decode the object which can either be
+an 8-bit string or a character buffer using the codec for
+<varname>encoding</varname>. The <varname>encoding</varname> parameter is a string
+giving the name of an encoding; if the encoding is not known,
+<exception>LookupError</exception> is raised. Error handling is
+done according to <varname>errors</varname>; this specifies the treatment
+of characters which are invalid in the input encoding. If
+<varname>errors</varname> is <literal>'strict'</literal> (the default), a
+<exception>ValueError</exception> is raised on errors, while a
+value of <literal>'ignore'</literal> causes errors to be silently
+ignored, and a value of <literal>'replace'</literal> causes the official
+Unicode replacement character, <literal>U+FFFD</literal>, to be used to
+replace input characters which cannot be decoded. See also the
+<module><a href="module-codecs.html">codecs</a></module>
+module.</para>
+<para>If no optional parameters are given, <literal>unicode()</literal> will
+mimic the behaviour of <literal>str()</literal> except that it returns
+Unicode strings instead of 8-bit strings. More precisely, if
+<varname>object</varname> is a Unicode string or subclass it will return
+that Unicode string without any additional decoding applied.</para>
+<para>For objects which provide a <tt class=
+"method">__unicode__()</tt> method, it will call this method
+without arguments to create a Unicode string. For all other
+objects, the 8-bit string version or representation is requested
+and then converted to a Unicode string using the codec for the
+default encoding in <literal>'strict'</literal> mode.</para>
+<para><span class="versionnote">New in version 2.0.</span>
+<span class="versionnote">Changed in version 2.2: Support for
+<method>__unicode__()</method> added.</span></para>
+</dd>
+</dl>
+<dl>
+<dd>
+<table cellpadding="0" cellspacing="0">
+<tr valign="baseline">
+<td><nobr><b><tt id='l2h-79' xml:id='l2h-79' class=
+"function">vars</tt></b>(</nobr></td>
+<td><big>[</big><varname>object</varname><big>]</big>)</td>
+</tr>
+</table>
+</dd>
+<dd>Without arguments, return a dictionary corresponding to the
+current local symbol table. With a module, class or class instance
+object as argument (or anything else that has a <tt class=
+"member">__dict__</tt> attribute), returns a dictionary
+corresponding to the object's symbol table. The returned dictionary
+should not be modified: the effects on the corresponding symbol
+table are undefined.<a name="tex2html4" href=
+"#foot1082"><sup>2.4</sup></a></dd>
+</dl>
+<dl>
+<dd>
+<table cellpadding="0" cellspacing="0">
+<tr valign="baseline">
+<td><nobr><b><tt id='l2h-80' xml:id='l2h-80' class=
+"function">xrange</tt></b>(</nobr></td>
+<td><big>[</big><varname>start,</varname><big>]</big>
+<varname>stop</varname><big>[</big><varname>, step</varname><big>]</big>)</td>
+</tr>
+</table>
+</dd>
+<dd>This function is very similar to <tt class=
+"function">range()</tt>, but returns an “xrange object” instead
+of a list. This is an opaque sequence type which yields the same
+values as the corresponding list, without actually storing them all
+simultaneously. The advantage of <function>xrange()</function>
+over <function>range()</function> is minimal (since <tt class=
+"function">xrange()</tt> still has to create the values when asked
+for them) except when a very large range is used on a
+memory-starved machine or when all of the range's elements are
+never used (such as when the loop is usually terminated with
+<keyword>break</keyword>).
+<para><span class="note"><b class="label">Note:</b> <tt class=
+"function">xrange()</tt> is intended to be simple and fast.
+Implementations may impose restrictions to achieve this. The C
+implementation of Python restricts all arguments to native C longs
+("short" Python integers), and also requires that the number of
+elements fit in a native C long.</span></para>
+</dd>
+</dl>
+<dl>
+<dd>
+<table cellpadding="0" cellspacing="0">
+<tr valign="baseline">
+<td><nobr><b><tt id='l2h-81' xml:id='l2h-81' class=
+"function">zip</tt></b>(</nobr></td>
+<td><big>[</big><varname>iterable, ...</varname><big>]</big>)</td>
+</tr>
+</table>
+</dd>
+<dd>This function returns a list of tuples, where the
+<varname>i</varname>-th tuple contains the <varname>i</varname>-th element from
+each of the argument sequences or iterables. The returned list is
+truncated in length to the length of the shortest argument
+sequence. When there are multiple arguments which are all of the
+same length, <function>zip()</function> is similar to
+<function>map()</function> with an initial argument of
+<literal>None</literal>. With a single sequence argument, it returns a
+list of 1-tuples. With no arguments, it returns an empty list.
+<span class="versionnote">New in version 2.0.</span>
+<para><span class="versionnote">Changed in version 2.4: Formerly,
+<function>zip()</function> required at least one argument and
+<literal>zip()</literal> raised a <exception>TypeError</exception>
+instead of returning an empty list.</span></para>
+</dd>
+</dl>
+<para><br /></para>
+<hr />
+<h4>Footnotes</h4>
+<dl>
+<dt><a name="foot418">... module.</a><a href=
+"built-in-funcs.html#tex2html2"><sup>2.2</sup></a></dt>
+<dd>It is used relatively rarely so does not warrant being made
+into a statement.</dd>
+<dt><a name="foot1196">... used.</a><a href=
+"built-in-funcs.html#tex2html3"><sup>2.3</sup></a></dt>
+<dd>Specifying a buffer size currently has no effect on systems
+that don't have <tt class="cfunction">setvbuf()</tt>. The interface
+to specify the buffer size is not done using a method that calls
+<tt class="cfunction">setvbuf()</tt>, because that may dump core
+when called after any I/O has been performed, and there's no
+reliable way to determine whether this is the case.</dd>
+<dt><a name="foot1082">... undefined.</a><a href=
+"built-in-funcs.html#tex2html4"><sup>2.4</sup></a></dt>
+<dd>In the current implementation, local variable bindings cannot
+normally be affected this way, but variables retrieved from other
+scopes (such as modules) can be. This may change.</dd>
+</dl>
+</sect1>
+
+<sect1 id="pylib-non-essential-built-in-funcs">
+  <title>Non-essential Built-in Functions</title>
+<para>There are several built-in functions that are no longer
+essential to learn, know or use in modern Python programming. They
+have been kept here to maintain backwards compatibility with
+programs written for older versions of Python.</para>
+<para>Python programmers, trainers, students and bookwriters should
+feel free to bypass these functions without concerns about missing
+something important.</para>
+<dl>
+<dd>
+<table cellpadding="0" cellspacing="0">
+<tr valign="baseline">
+<td><nobr><b><tt id='l2h-87' xml:id='l2h-87' class=
+"function">apply</tt></b>(</nobr></td>
+<td><varname>function, args</varname><big>[</big><varname>,
+keywords</varname><big>]</big>)</td>
+</tr>
+</table>
+</dd>
+<dd>The <varname>function</varname> argument must be a callable object (a
+user-defined or built-in function or method, or a class object) and
+the <varname>args</varname> argument must be a sequence. The
+<varname>function</varname> is called with <varname>args</varname> as the argument
+list; the number of arguments is the length of the tuple. If the
+optional <varname>keywords</varname> argument is present, it must be a
+dictionary whose keys are strings. It specifies keyword arguments
+to be added to the end of the argument list. Calling <tt class=
+"function">apply()</tt> is different from just calling
+<literal><varname>function</varname>(<varname>args</varname>)</literal>, since in that
+case there is always exactly one argument. The use of <tt class=
+"function">apply()</tt> is equivalent to
+<literal><varname>function</varname>(*<varname>args</varname>,
+**<varname>keywords</varname>)</literal>. Use of <tt class=
+"function">apply()</tt> is not necessary since the “extended call
+syntax,” as used in the last example, is completely equivalent.
+<div class="versionnote"><b>Deprecated since release 2.3.</b> Use
+the extended call syntax instead, as described above.</div>
+</dd>
+</dl>
+<dl>
+<dd>
+<table cellpadding="0" cellspacing="0">
+<tr valign="baseline">
+<td><nobr><b><tt id='l2h-88' xml:id='l2h-88' class=
+"function">buffer</tt></b>(</nobr></td>
+<td><varname>object</varname><big>[</big><varname>,
+offset</varname><big>[</big><varname>,
+size</varname><big>]</big><big>]</big>)</td>
+</tr>
+</table>
+</dd>
+<dd>The <varname>object</varname> argument must be an object that supports
+the buffer call interface (such as strings, arrays, and buffers). A
+new buffer object will be created which references the
+<varname>object</varname> argument. The buffer object will be a slice from
+the beginning of <varname>object</varname> (or from the specified
+<varname>offset</varname>). The slice will extend to the end of
+<varname>object</varname> (or will have a length given by the
+<varname>size</varname> argument).</dd>
+</dl>
+<dl>
+<dd>
+<table cellpadding="0" cellspacing="0">
+<tr valign="baseline">
+<td><nobr><b><tt id='l2h-89' xml:id='l2h-89' class=
+"function">coerce</tt></b>(</nobr></td>
+<td><varname>x, y</varname>)</td>
+</tr>
+</table>
+</dd>
+<dd>Return a tuple consisting of the two numeric arguments
+converted to a common type, using the same rules as used by
+arithmetic operations. If coercion is not possible, raise
+<exception>TypeError</exception>.</dd>
+</dl>
+<dl>
+<dd>
+<table cellpadding="0" cellspacing="0">
+<tr valign="baseline">
+<td><nobr><b><tt id='l2h-90' xml:id='l2h-90' class=
+"function">intern</tt></b>(</nobr></td>
+<td><varname>string</varname>)</td>
+</tr>
+</table>
+</dd>
+<dd>Enter <varname>string</varname> in the table of “interned” strings
+and return the interned string - which is <varname>string</varname> itself
+or a copy. Interning strings is useful to gain a little performance
+on dictionary lookup - if the keys in a dictionary are interned,
+and the lookup key is interned, the key comparisons (after hashing)
+can be done by a pointer compare instead of a string compare.
+Normally, the names used in Python programs are automatically
+interned, and the dictionaries used to hold module, class or
+instance attributes have interned keys. <span class=
+"versionnote">Changed in version 2.3: Interned strings are not
+immortal (like they used to be in Python 2.2 and before); you must
+keep a reference to the return value of <tt class=
+"function">intern()</tt> around to benefit from it.</span></dd>
+</dl>
+</sect1>
+
+<sect1 id="pylib-module-exceptions">
+  <title>2.3 Built-in Exceptions</title>
+<para><a name="module-exceptions" id="module-exceptions"></a></para>
+<para>Exceptions should be class objects. The exceptions are defined
+in the module <module>exceptions</module>. This module never
+needs to be imported explicitly: the exceptions are provided in the
+built-in namespace as well as the <tt class=
+"module">exceptions</tt> module.</para>
+<div class="note"><b class="label">Note:</b> In past versions of
+Python string exceptions were supported. In Python 1.5 and newer
+versions, all standard exceptions have been converted to class
+objects and users are encouraged to do the same. String exceptions
+will raise a <literal>DeprecationWarning</literal> in Python 2.5 and
+newer. In future versions, support for string exceptions will be
+removed.
+<para>Two distinct string objects with the same value are considered
+different exceptions. This is done to force programmers to use
+exception names rather than their string value when specifying
+exception handlers. The string value of all built-in exceptions is
+their name, but this is not a requirement for user-defined
+exceptions or exceptions defined by library modules.</para>
+</div>
+<para>For class exceptions, in a <keyword>try</keyword><a id=
+'l2h-92' xml:id='l2h-92' name="l2h-92"></a> statement with an
+<keyword>except</keyword><a id='l2h-93' xml:id='l2h-93' name=
+"l2h-93"></a> clause that mentions a particular class, that clause
+also handles any exception classes derived from that class (but not
+exception classes from which <emphasis>it</emphasis> is derived). Two exception
+classes that are not related via subclassing are never equivalent,
+even if they have the same name.</para>
+<para>The built-in exceptions listed below can be generated by the
+interpreter or built-in functions. Except where mentioned, they
+have an “associated value” indicating the detailed cause of the
+error. This may be a string or a tuple containing several items of
+information (e.g., an error code and a string explaining the code).
+The associated value is the second argument to the <tt class=
+"keyword">raise</tt><a id='l2h-94' xml:id='l2h-94' name=
+"l2h-94"></a> statement. For string exceptions, the associated
+value itself will be stored in the variable named as the second
+argument of the <keyword>except</keyword> clause (if any).
+For class exceptions, that variable receives the exception
+instance. If the exception class is derived from the standard root
+class <exception>BaseException</exception>, the associated
+value is present as the exception instance's <tt class=
+"member">args</tt> attribute. If there is a single argument (as is
+preferred), it is bound to the <literal>message</literal>
+attribute.</para>
+<para>User code can raise built-in exceptions. This can be used to
+test an exception handler or to report an error condition “just
+like” the situation in which the interpreter raises the same
+exception; but beware that there is nothing to prevent user code
+from raising an inappropriate error.</para>
+<para>The built-in exception classes can be sub-classed to define new
+exceptions; programmers are encouraged to at least derive new
+exceptions from the <exception>Exception</exception> class and
+not <exception>BaseException</exception>. More information on
+defining exceptions is available in the <em class=
+"citetitle"><a href="../tut/tut.html" title=
+"Python Tutorial">Python Tutorial</a></em> under the heading
+“User-defined Exceptions.”</para>
+<para>The following exceptions are only used as base classes for other
+exceptions.</para>
+<dl>
+<dt><b><span class="typelabel">exception</span> <tt id=
+'l2h-95' xml:id='l2h-95' class=
+"exception">BaseException</tt></b></dt>
+<dd>The base class for all built-in exceptions. It is not meant to
+be directly inherited by user-defined classes (for that use
+<exception>Exception</exception>). If <tt class=
+"function">str()</tt> or <function>unicode()</function> is
+called on an instance of this class, the representation of the
+argument(s) to the instance are returned or the emptry string when
+there were no arguments. If only a single argument is passed in, it
+is stored in the <literal>message</literal> attribute. If more
+than one argument is passed in, <literal>message</literal> is
+set to the empty string. These semantics are meant to reflect the
+fact that <literal>message</literal> is to store a text
+message explaining why the exception had been raised. If more data
+needs to be attached to the exception, attach it through arbitrary
+attributes on the instance. All arguments are also stored in
+<literal>args</literal> as a tuple, but it will eventually be
+deprecated and thus its use is discouraged. <span class=
+"versionnote">New in version 2.5.</span></dd>
+</dl>
+<dl>
+<dt><b><span class="typelabel">exception</span> <tt id=
+'l2h-96' xml:id='l2h-96' class="exception">Exception</tt></b></dt>
+<dd>All built-in, non-system-exiting exceptions are derived from
+this class. All user-defined exceptions should also be derived from
+this class. <span class="versionnote">Changed in version 2.5:
+Changed to inherit from <tt class=
+"exception">BaseException</tt>.</span></dd>
+</dl>
+<dl>
+<dt><b><span class="typelabel">exception</span> <tt id=
+'l2h-97' xml:id='l2h-97' class=
+"exception">StandardError</tt></b></dt>
+<dd>The base class for all built-in exceptions except <tt class=
+"exception">StopIteration</tt>, <tt class=
+"exception">GeneratorExit</tt>, <tt class=
+"exception">KeyboardInterrupt</tt> and <tt class=
+"exception">SystemExit</tt>. <tt class=
+"exception">StandardError</tt> itself is derived from <tt class=
+"exception">Exception</tt>.</dd>
+</dl>
+<dl>
+<dt><b><span class="typelabel">exception</span> <tt id=
+'l2h-98' xml:id='l2h-98' class=
+"exception">ArithmeticError</tt></b></dt>
+<dd>The base class for those built-in exceptions that are raised
+for various arithmetic errors: <tt class=
+"exception">OverflowError</tt>, <tt class=
+"exception">ZeroDivisionError</tt>, <tt class=
+"exception">FloatingPointError</tt>.</dd>
+</dl>
+<dl>
+<dt><b><span class="typelabel">exception</span> <tt id=
+'l2h-99' xml:id='l2h-99' class=
+"exception">LookupError</tt></b></dt>
+<dd>The base class for the exceptions that are raised when a key or
+index used on a mapping or sequence is invalid: <tt class=
+"exception">IndexError</tt>, <exception>KeyError</exception>.
+This can be raised directly by <tt class=
+"function">sys.setdefaultencoding()</tt>.</dd>
+</dl>
+<dl>
+<dt><b><span class="typelabel">exception</span> <tt id=
+'l2h-100' xml:id='l2h-100' class=
+"exception">EnvironmentError</tt></b></dt>
+<dd>The base class for exceptions that can occur outside the Python
+system: <exception>IOError</exception>, <tt class=
+"exception">OSError</tt>. When exceptions of this type are created
+with a 2-tuple, the first item is available on the instance's
+<literal>errno</literal> attribute (it is assumed to be an
+error number), and the second item is available on the <tt class=
+"member">strerror</tt> attribute (it is usually the associated
+error message). The tuple itself is also available on the
+<literal>args</literal> attribute. <span class=
+"versionnote">New in version 1.5.2.</span>
+<para>When an <exception>EnvironmentError</exception> exception is
+instantiated with a 3-tuple, the first two items are available as
+above, while the third item is available on the <tt class=
+"member">filename</tt> attribute. However, for backwards
+compatibility, the <literal>args</literal> attribute contains
+only a 2-tuple of the first two constructor arguments.</para>
+<para>The <literal>filename</literal> attribute is
+<literal>None</literal> when this exception is created with other than 3
+arguments. The <literal>errno</literal> and <tt class=
+"member">strerror</tt> attributes are also <literal>None</literal> when
+the instance was created with other than 2 or 3 arguments. In this
+last case, <literal>args</literal> contains the verbatim
+constructor arguments as a tuple.</para>
+</dd>
+</dl>
+<para>The following exceptions are the exceptions that are actually
+raised.</para>
+<dl>
+<dt><b><span class="typelabel">exception</span> <tt id=
+'l2h-101' xml:id='l2h-101' class=
+"exception">AssertionError</tt></b></dt>
+<dd><a id='l2h-102' xml:id='l2h-102' name="l2h-102"></a>Raised when
+an <keyword>assert</keyword> statement fails.</dd>
+</dl>
+<dl>
+<dt><b><span class="typelabel">exception</span> <tt id=
+'l2h-103' xml:id='l2h-103' class=
+"exception">AttributeError</tt></b></dt>
+<dd>Raised when an attribute reference or assignment fails. (When
+an object does not support attribute references or attribute
+assignments at all, <exception>TypeError</exception> is
+raised.)</dd>
+</dl>
+<dl>
+<dt><b><span class="typelabel">exception</span> <tt id=
+'l2h-104' xml:id='l2h-104' class="exception">EOFError</tt></b></dt>
+<dd>Raised when one of the built-in functions (<tt class=
+"function">input()</tt> or <function>raw_input()</function>)
+hits an end-of-file condition (EOF) without reading any data.
+(N.B.: the <method>read()</method> and <tt class=
+"method">readline()</tt> methods of file objects return an empty
+string when they hit EOF.)</dd>
+</dl>
+<dl>
+<dt><b><span class="typelabel">exception</span> <tt id=
+'l2h-105' xml:id='l2h-105' class=
+"exception">FloatingPointError</tt></b></dt>
+<dd>Raised when a floating point operation fails. This exception is
+always defined, but can only be raised when Python is configured
+with the <b class="programopt">--with-fpectl</b> option, or the
+<literal>WANT_SIGFPE_HANDLER</literal> symbol is defined in
+the <span class="file">pyconfig.h</span> file.</dd>
+</dl>
+<dl>
+<dt><b><span class="typelabel">exception</span> <tt id=
+'l2h-106' xml:id='l2h-106' class=
+"exception">GeneratorExit</tt></b></dt>
+<dd>Raise when a generator's <method>close()</method> method
+is called. It directly inherits from <tt class=
+"exception">Exception</tt> instead of <tt class=
+"exception">StandardError</tt> since it is technically not an
+error. <span class="versionnote">New in version 2.5.</span></dd>
+</dl>
+<dl>
+<dt><b><span class="typelabel">exception</span> <tt id=
+'l2h-107' xml:id='l2h-107' class="exception">IOError</tt></b></dt>
+<dd>Raised when an I/O operation (such as a <tt class=
+"keyword">print</tt> statement, the built-in <tt class=
+"function">open()</tt> function or a method of a file object) fails
+for an I/O-related reason, e.g., “file not found” or “disk
+full”.
+<para>This class is derived from <tt class=
+"exception">EnvironmentError</tt>. See the discussion above for
+more information on exception instance attributes.</para>
+</dd>
+</dl>
+<dl>
+<dt><b><span class="typelabel">exception</span> <tt id=
+'l2h-108' xml:id='l2h-108' class=
+"exception">ImportError</tt></b></dt>
+<dd>Raised when an <keyword>import</keyword> statement fails
+to find the module definition or when a <literal>from ...
+import</literal> fails to find a name that is to be imported.</dd>
+</dl>
+<dl>
+<dt><b><span class="typelabel">exception</span> <tt id=
+'l2h-109' xml:id='l2h-109' class=
+"exception">IndexError</tt></b></dt>
+<dd>Raised when a sequence subscript is out of range. (Slice
+indices are silently truncated to fall in the allowed range; if an
+index is not a plain integer, <exception>TypeError</exception>
+is raised.)</dd>
+</dl>
+<dl>
+<dt><b><span class="typelabel">exception</span> <tt id=
+'l2h-110' xml:id='l2h-110' class="exception">KeyError</tt></b></dt>
+<dd>Raised when a mapping (dictionary) key is not found in the set
+of existing keys.</dd>
+</dl>
+<dl>
+<dt><b><span class="typelabel">exception</span> <tt id=
+'l2h-111' xml:id='l2h-111' class=
+"exception">KeyboardInterrupt</tt></b></dt>
+<dd>Raised when the user hits the interrupt key (normally
+<kbd>Control-C</kbd> or <kbd>Delete</kbd>). During execution, a
+check for interrupts is made regularly. Interrupts typed when a
+built-in function <function>input()</function> or <tt class=
+"function">raw_input()</tt> is waiting for input also raise this
+exception. The exception inherits from <tt class=
+"exception">BaseException</tt> so as to not be accidentally caught
+by code that catches <exception>Exception</exception> and thus
+prevent the interpreter from exiting. <span class=
+"versionnote">Changed in version 2.5: Changed to inherit from
+<exception>BaseException</exception>.</span></dd>
+</dl>
+<dl>
+<dt><b><span class="typelabel">exception</span> <tt id=
+'l2h-112' xml:id='l2h-112' class=
+"exception">MemoryError</tt></b></dt>
+<dd>Raised when an operation runs out of memory but the situation
+may still be rescued (by deleting some objects). The associated
+value is a string indicating what kind of (internal) operation ran
+out of memory. Note that because of the underlying memory
+management architecture (C's <tt class="cfunction">malloc()</tt>
+function), the interpreter may not always be able to completely
+recover from this situation; it nevertheless raises an exception so
+that a stack traceback can be printed, in case a run-away program
+was the cause.</dd>
+</dl>
+<dl>
+<dt><b><span class="typelabel">exception</span> <tt id=
+'l2h-113' xml:id='l2h-113' class=
+"exception">NameError</tt></b></dt>
+<dd>Raised when a local or global name is not found. This applies
+only to unqualified names. The associated value is an error message
+that includes the name that could not be found.</dd>
+</dl>
+<dl>
+<dt><b><span class="typelabel">exception</span> <tt id=
+'l2h-114' xml:id='l2h-114' class=
+"exception">NotImplementedError</tt></b></dt>
+<dd>This exception is derived from <tt class=
+"exception">RuntimeError</tt>. In user defined base classes,
+abstract methods should raise this exception when they require
+derived classes to override the method. <span class=
+"versionnote">New in version 1.5.2.</span></dd>
+</dl>
+<dl>
+<dt><b><span class="typelabel">exception</span> <tt id=
+'l2h-115' xml:id='l2h-115' class="exception">OSError</tt></b></dt>
+<dd>This class is derived from <tt class=
+"exception">EnvironmentError</tt> and is used primarily as the
+<module><a href="module-os.html">os</a></module> module's
+<literal>os.error</literal> exception. See <tt class=
+"exception">EnvironmentError</tt> above for a description of the
+possible associated values. <span class="versionnote">New in
+version 1.5.2.</span></dd>
+</dl>
+<dl>
+<dt><b><span class="typelabel">exception</span> <tt id=
+'l2h-116' xml:id='l2h-116' class=
+"exception">OverflowError</tt></b></dt>
+<dd>Raised when the result of an arithmetic operation is too large
+to be represented. This cannot occur for long integers (which would
+rather raise <exception>MemoryError</exception> than give up).
+Because of the lack of standardization of floating point exception
+handling in C, most floating point operations also aren't checked.
+For plain integers, all operations that can overflow are checked
+except left shift, where typical applications prefer to drop bits
+than raise an exception.</dd>
+</dl>
+<dl>
+<dt><b><span class="typelabel">exception</span> <tt id=
+'l2h-117' xml:id='l2h-117' class=
+"exception">ReferenceError</tt></b></dt>
+<dd>This exception is raised when a weak reference proxy, created
+by the <function><module><a href=
+"module-weakref.html">weakref</a></module>.proxy()</function> function, is
+used to access an attribute of the referent after it has been
+garbage collected. For more information on weak references, see the
+<link linkend="pylib-module-weakref.html"><module>weakref</module></link>
+module.</dd>
+<note><title>New in version 2.2:</title><para>Previously
+known as the <link linkend="pylib-module-weakref.html"><module>weakref</module></link>.<exception>ReferenceError</exception> exception.</para></note>
+</dl>
+<dl>
+<dt><b><span class="typelabel">exception</span> <tt id=
+'l2h-118' xml:id='l2h-118' class=
+"exception">RuntimeError</tt></b></dt>
+<dd>Raised when an error is detected that doesn't fall in any of
+the other categories. The associated value is a string indicating
+what precisely went wrong. (This exception is mostly a relic from a
+previous version of the interpreter; it is not used very much any
+more.)</dd>
+</dl>
+<dl>
+<dt><b><span class="typelabel">exception</span> <tt id=
+'l2h-119' xml:id='l2h-119' class=
+"exception">StopIteration</tt></b></dt>
+<dd>Raised by an iterator's <method>next()</method> method
+to signal that there are no further values. This is derived from
+<exception>Exception</exception> rather than <tt class=
+"exception">StandardError</tt>, since this is not considered an
+error in its normal application. <span class="versionnote">New in
+version 2.2.</span></dd>
+</dl>
+<dl>
+<dt><b><span class="typelabel">exception</span> <tt id=
+'l2h-120' xml:id='l2h-120' class=
+"exception">SyntaxError</tt></b></dt>
+<dd>Raised when the parser encounters a syntax error. This may
+occur in an <keyword>import</keyword> statement, in an
+<keyword>exec</keyword> statement, in a call to the built-in
+function <function>eval()</function> or <tt class=
+"function">input()</tt>, or when reading the initial script or
+standard input (also interactively).
+<para>Instances of this class have attributes <tt class=
+"member">filename</tt>, <literal>lineno</literal>, <tt class=
+"member">offset</tt> and <literal>text</literal> for easier
+access to the details. <function>str()</function> of the
+exception instance returns only the message.</para>
+</dd>
+</dl>
+<dl>
+<dt><b><span class="typelabel">exception</span> <tt id=
+'l2h-121' xml:id='l2h-121' class=
+"exception">SystemError</tt></b></dt>
+<dd>Raised when the interpreter finds an internal error, but the
+situation does not look so serious to cause it to abandon all hope.
+The associated value is a string indicating what went wrong (in
+low-level terms).
+<para>You should report this to the author or maintainer of your
+Python interpreter. Be sure to report the version of the Python
+interpreter (<literal>sys.version</literal>; it is also printed at the
+start of an interactive Python session), the exact error message
+(the exception's associated value) and if possible the source of
+the program that triggered the error.</para>
+</dd>
+</dl>
+<dl>
+<dt><b><span class="typelabel">exception</span> <tt id=
+'l2h-122' xml:id='l2h-122' class=
+"exception">SystemExit</tt></b></dt>
+<dd>This exception is raised by the <tt class=
+"function">sys.exit()</tt> function. When it is not handled, the
+Python interpreter exits; no stack traceback is printed. If the
+associated value is a plain integer, it specifies the system exit
+status (passed to C's <tt class="cfunction">exit()</tt> function);
+if it is <literal>None</literal>, the exit status is zero; if it has
+another type (such as a string), the object's value is printed and
+the exit status is one.
+<para>Instances have an attribute <literal>code</literal> which
+is set to the proposed exit status or error message (defaulting to
+<literal>None</literal>). Also, this exception derives directly from
+<exception>BaseException</exception> and not <tt class=
+"exception">StandardError</tt>, since it is not technically an
+error.</para>
+<para>A call to <function>sys.exit()</function> is translated
+into an exception so that clean-up handlers (<tt class=
+"keyword">finally</tt> clauses of <keyword>try</keyword>
+statements) can be executed, and so that a debugger can execute a
+script without running the risk of losing control. The <tt class=
+"function">os._exit()</tt> function can be used if it is absolutely
+positively necessary to exit immediately (for example, in the child
+process after a call to <function>fork()</function>).</para>
+<para>The exception inherits from <tt class=
+"exception">BaseException</tt> instead of <tt class=
+"exception">StandardError</tt> or <tt class=
+"exception">Exception</tt> so that it is not accidentally caught by
+code that catches <exception>Exception</exception>. This allows
+the exception to properly propagate up and cause the interpreter to
+exit. <span class="versionnote">Changed in version 2.5: Changed to
+inherit from <exception>BaseException</exception>.</span></para>
+</dd>
+</dl>
+<dl>
+<dt><b><span class="typelabel">exception</span> <tt id=
+'l2h-123' xml:id='l2h-123' class=
+"exception">TypeError</tt></b></dt>
+<dd>Raised when an operation or function is applied to an object of
+inappropriate type. The associated value is a string giving details
+about the type mismatch.</dd>
+</dl>
+<dl>
+<dt><b><span class="typelabel">exception</span> <tt id=
+'l2h-124' xml:id='l2h-124' class=
+"exception">UnboundLocalError</tt></b></dt>
+<dd>Raised when a reference is made to a local variable in a
+function or method, but no value has been bound to that variable.
+This is a subclass of <exception>NameError</exception>.
+<span class="versionnote">New in version 2.0.</span></dd>
+</dl>
+<dl>
+<dt><b><span class="typelabel">exception</span> <tt id=
+'l2h-125' xml:id='l2h-125' class=
+"exception">UnicodeError</tt></b></dt>
+<dd>Raised when a Unicode-related encoding or decoding error
+occurs. It is a subclass of <exception>ValueError</exception>.
+<span class="versionnote">New in version 2.0.</span></dd>
+</dl>
+<dl>
+<dt><b><span class="typelabel">exception</span> <tt id=
+'l2h-126' xml:id='l2h-126' class=
+"exception">UnicodeEncodeError</tt></b></dt>
+<dd>Raised when a Unicode-related error occurs during encoding. It
+is a subclass of <exception>UnicodeError</exception>.
+<span class="versionnote">New in version 2.3.</span></dd>
+</dl>
+<dl>
+<dt><b><span class="typelabel">exception</span> <tt id=
+'l2h-127' xml:id='l2h-127' class=
+"exception">UnicodeDecodeError</tt></b></dt>
+<dd>Raised when a Unicode-related error occurs during decoding. It
+is a subclass of <exception>UnicodeError</exception>.
+<span class="versionnote">New in version 2.3.</span></dd>
+</dl>
+<dl>
+<dt><b><span class="typelabel">exception</span> <tt id=
+'l2h-128' xml:id='l2h-128' class=
+"exception">UnicodeTranslateError</tt></b></dt>
+<dd>Raised when a Unicode-related error occurs during translating.
+It is a subclass of <exception>UnicodeError</exception>.
+<span class="versionnote">New in version 2.3.</span></dd>
+</dl>
+<dl>
+<dt><b><span class="typelabel">exception</span> <tt id=
+'l2h-129' xml:id='l2h-129' class=
+"exception">ValueError</tt></b></dt>
+<dd>Raised when a built-in operation or function receives an
+argument that has the right type but an inappropriate value, and
+the situation is not described by a more precise exception such as
+<exception>IndexError</exception>.</dd>
+</dl>
+<dl>
+<dt><b><span class="typelabel">exception</span> <tt id=
+'l2h-130' xml:id='l2h-130' class=
+"exception">WindowsError</tt></b></dt>
+<dd>Raised when a Windows-specific error occurs or when the error
+number does not correspond to an <tt class="cdata">errno</tt>
+value. The <literal>winerror</literal> and <tt class=
+"member">strerror</tt> values are created from the return values of
+the <tt class="cfunction">GetLastError()</tt> and <tt class=
+"cfunction">FormatMessage()</tt> functions from the Windows
+Platform API. The <literal>errno</literal> value maps the
+<literal>winerror</literal> value to corresponding
+<literal>errno.h</literal> values. This is a subclass of <tt class=
+"exception">OSError</tt>. <span class="versionnote">New in version
+2.0.</span> <span class="versionnote">Changed in version 2.5:
+Previous versions put the <tt class="cfunction">GetLastError()</tt>
+codes into <literal>errno</literal>.</span></dd>
+</dl>
+<dl>
+<dt><b><span class="typelabel">exception</span> <tt id=
+'l2h-131' xml:id='l2h-131' class=
+"exception">ZeroDivisionError</tt></b></dt>
+<dd>Raised when the second argument of a division or modulo
+operation is zero. The associated value is a string indicating the
+type of the operands and the operation.</dd>
+</dl>
+<para>The following exceptions are used as warning categories; see the
+<module><a href="module-warnings.html">warnings</a></module>
+module for more information.</para>
+<dl>
+<dt><b><span class="typelabel">exception</span> <tt id=
+'l2h-132' xml:id='l2h-132' class="exception">Warning</tt></b></dt>
+<dd>Base class for warning categories.</dd>
+</dl>
+<dl>
+<dt><b><span class="typelabel">exception</span> <tt id=
+'l2h-133' xml:id='l2h-133' class=
+"exception">UserWarning</tt></b></dt>
+<dd>Base class for warnings generated by user code.</dd>
+</dl>
+<dl>
+<dt><b><span class="typelabel">exception</span> <tt id=
+'l2h-134' xml:id='l2h-134' class=
+"exception">DeprecationWarning</tt></b></dt>
+<dd>Base class for warnings about deprecated features.</dd>
+</dl>
+<dl>
+<dt><b><span class="typelabel">exception</span> <tt id=
+'l2h-135' xml:id='l2h-135' class=
+"exception">PendingDeprecationWarning</tt></b></dt>
+<dd>Base class for warnings about features which will be deprecated
+in the future.</dd>
+</dl>
+<dl>
+<dt><b><span class="typelabel">exception</span> <tt id=
+'l2h-136' xml:id='l2h-136' class=
+"exception">SyntaxWarning</tt></b></dt>
+<dd>Base class for warnings about dubious syntax</dd>
+</dl>
+<dl>
+<dt><b><span class="typelabel">exception</span> <tt id=
+'l2h-137' xml:id='l2h-137' class=
+"exception">RuntimeWarning</tt></b></dt>
+<dd>Base class for warnings about dubious runtime behavior.</dd>
+</dl>
+<dl>
+<dt><b><span class="typelabel">exception</span> <tt id=
+'l2h-138' xml:id='l2h-138' class=
+"exception">FutureWarning</tt></b></dt>
+<dd>Base class for warnings about constructs that will change
+semantically in the future.</dd>
+</dl>
+<dl>
+<dt><b><span class="typelabel">exception</span> <tt id=
+'l2h-139' xml:id='l2h-139' class=
+"exception">ImportWarning</tt></b></dt>
+<dd>Base class for warnings about probable mistakes in module
+imports. <span class="versionnote">New in version 2.5.</span></dd>
+</dl>
+<dl>
+<dt><b><span class="typelabel">exception</span> <tt id=
+'l2h-140' xml:id='l2h-140' class=
+"exception">UnicodeWarning</tt></b></dt>
+<dd>Base class for warnings related to Unicode. <span class=
+"versionnote">New in version 2.5.</span></dd>
+</dl>
+<para>The class hierarchy for built-in exceptions is:</para>
+<div class="verbatim">
+<pre>
+BaseException
+ +-- SystemExit
+ +-- KeyboardInterrupt
+ +-- Exception
+      +-- GeneratorExit
+      +-- StopIteration
+      +-- StandardError
+      |    +-- ArithmeticError
+      |    |    +-- FloatingPointError
+      |    |    +-- OverflowError
+      |    |    +-- ZeroDivisionError
+      |    +-- AssertionError
+      |    +-- AttributeError
+      |    +-- EnvironmentError
+      |    |    +-- IOError
+      |    |    +-- OSError
+      |    |         +-- WindowsError (Windows)
+      |    |         +-- VMSError (VMS)
+      |    +-- EOFError
+      |    +-- ImportError
+      |    +-- LookupError
+      |    |    +-- IndexError
+      |    |    +-- KeyError
+      |    +-- MemoryError
+      |    +-- NameError
+      |    |    +-- UnboundLocalError
+      |    +-- ReferenceError
+      |    +-- RuntimeError
+      |    |    +-- NotImplementedError
+      |    +-- SyntaxError
+      |    |    +-- IndentationError
+      |    |         +-- TabError
+      |    +-- SystemError
+      |    +-- TypeError
+      |    +-- ValueError
+      |    |    +-- UnicodeError
+      |    |         +-- UnicodeDecodeError
+      |    |         +-- UnicodeEncodeError
+      |    |         +-- UnicodeTranslateError
+      +-- Warning
+           +-- DeprecationWarning
+           +-- PendingDeprecationWarning
+           +-- RuntimeWarning
+           +-- SyntaxWarning
+           +-- UserWarning
+           +-- FutureWarning
+           +-- ImportWarning
+           +-- UnicodeWarning
+</pre>
+<div class="footer"><a href="exception_hierarchy.txt" type=
+"text/plain">Download as text (original file name: <span class=
+"file">../../Lib/test/exception_hierarchy.txt</span>).</a></div>
+</div>
+</sect1>
+
+<sect1 id="pylib-node8.html">
+  <titile>2.4 Built-in Constants</titile>
+<para>A small number of constants live in the built-in namespace. They
+are:</para>
+<dl>
+<dt><b><tt id='l2h-141' xml:id='l2h-141'>False</tt></b></dt>
+<dd>The false value of the <class>bool</class> type.
+<span class="versionnote">New in version 2.3.</span></dd>
+</dl>
+<dl>
+<dt><b><tt id='l2h-142' xml:id='l2h-142'>True</tt></b></dt>
+<dd>The true value of the <class>bool</class> type.
+<span class="versionnote">New in version 2.3.</span></dd>
+</dl>
+<dl>
+<dt><b><tt id='l2h-143' xml:id='l2h-143'>None</tt></b></dt>
+<dd>The sole value of <literal><module><a href=
+"module-types.html">types</a></module>.NoneType</literal>.
+<literal>None</literal> is frequently used to represent the absence of a
+value, as when default arguments are not passed to a function.</dd>
+</dl>
+<dl>
+<dt><b><tt id='l2h-144' xml:id=
+'l2h-144'>NotImplemented</tt></b></dt>
+<dd>Special value which can be returned by the “rich comparison”
+special methods (<method>__eq__()</method>, <tt class=
+"method">__lt__()</tt>, and friends), to indicate that the
+comparison is not implemented with respect to the other type.</dd>
+</dl>
+<dl>
+<dt><b><tt id='l2h-145' xml:id='l2h-145'>Ellipsis</tt></b></dt>
+<dd>Special value used in conjunction with extended slicing
+syntax.</dd>
+</dl>
+</sect1>
+
+</chapter>

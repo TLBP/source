@@ -1,0 +1,90 @@
+.\" http://belgeler.org \N'45' 2006\N'45'11\N'45'26T10:18:34+02:00  
+.TH "CREATE AGGREGATE" 7 "" "PostgreSQL" "SQL \N'45' Dil Deyimleri"
+.nh   
+.SH İSİM
+CREATE AGGREGATE \N'45' yeni bir ortak değer işlevi tanımlar   
+.SH KULLANIM 
+.nf
+\fBCREATE AGGREGATE\fR \fIisim\fR (
+\    \fBBASETYPE = \fR\fIgirdi_veri_türü\fR,
+\    \fBSFUNC = \fR\fIdurum_işlevi\fR,
+\    \fBSTYPE = \fR\fIdurum_veri_türü\fR
+\    [ , \fBFINALFUNC = \fR\fIson_işlev\fR ]
+\    [ , \fBINITCOND = \fR\fIilk_değer\fR ]
+)
+.fi
+    
+.SH AÇIKLAMA
+\fBCREATE AGGREGATE\fR yeni bir ortak değer işlevi tanımlar. Temel ve çok kullanılan ortak değer işlevleri dağıtıma dahil edilmiş ve bunlar
+.br
+http://www.postgresql.org/docs/8.0/static/functions\N'45'aggregate.html adresinde açıklanmıştır. Eğer yeni türlerin tanımlanması ya da dağıtımla gelmeyen bir ortak değer işlevine ihtiyaç olursa istenen özellikleri sağlamak için \fBCREATE AGGREGATE\fR kullanılabilir.   
+
+Bir şema ismi verilmişse (\fBCREATE AGGREGATE myschema.myagg ...\fR gibi), ortak değer işlevi belirtilen şema içinde oluşturulur.   
+
+Bir ortak değer işlevi, ismi ve girdi veri türü ile tanımlanır. Eğer iki ortak değer işlevi farklı veri türleri ile çalışıyorlarsa, aynı şema içinde aynı isimle tanımlanabilir. Ayrıca, bir ortak değer işlevi gerek ismi gerekse girdi veri türü bakımından aynı şema içindeki sıradan işlevlerden de farklı olmalıdır.   
+
+Bir ortak değer işlevi bir ya da iki sıradan işlevden oluşur: \fIdurum_işlevi\fR ile belirtilen bir durum geçiş işlevi ve \fIson_işlev\fR ile isteğe bağlı olarak belirtilebilen bir son hesap işlevi. Bunlar şöyle kullanılır:   
+
+
+.nf
+\fIdurum_işlevi\fR( \fIdahili_durum\fR, \fIsonraki\N'45'veri\N'45'öğesi\fR )
+\      \N'45'\N'45'\N'45'> sonraki\N'45'dahili\N'45'durum
+\fIson_işlev\fR( \fIdahili_durum\fR )
+\      \N'45'\N'45'\N'45'> ortak\N'45'değer
+.fi   
+
+PostgreSQL ortak değerin o anki dahili durumunu saklamak üzere \fIdurum_veri_türü\fR ile belirtilen veri türünde bir geçici değişken oluşturur. Her girdi öğesinde, yeni bir dahili durum değerini hesaplamak üzere durum geçiş işlevi çağrılır. Tüm veri işlendikten sonra, döndürülecek ortak değeri hesaplamak için son işlev çağrılır. Eğer bir son işlev yoksa, son durum değeri olduğu gibi döndürülür.   
+
+Bir ortak değer işlevine dahili durum değeri için bir ilk değer olarak, bir \fIilk_değer\fR sağlanabilir. Bu veritabanında text türünde bir sütun olarak belirtilir ve saklanır, fakat bu, durum değerinin veri türündeki bir sabitin geçerli bir harici gösterimi olmalıdır. Eğer verilmezse, durum değeri NULL olarak ayrılır.   
+
+Eğer durum geçiş işlevi argümanlarına bağımlı olarak bildirilmişse, NULL girdilerle çağrılamaz. Böyle bir geçiş işleviyle cümle çalıştırıldığında davranışı şöyle açıklayabiliriz. NULL girdi değerleri yoksayılır (işlev çağrılmamıştır ve önceki durum değeri beklemektedir). Eğer ilk durum değeri NULL ise, ilk NULL olmayan girdi değeri durum değeri yapılır ve geçiş işlevi ikinci NULL olmayan girdi değeriyle çağrılır. Bu, max gibi ortak değer işlevlerini gerçeklerken kullanışlıdır. Bu davranış sadece \fIdurum_veri_türü\fR ile \fIgirdi_veri_türü\fR aynı ise kullanılabilir. Bu veri türleri farklı olduğunda, ya NULL olmayan bir \fIilk_değer\fR ya da argümanlarına bağımlı olmayan bir geçiş işlevi sağlamalısınız.   
+
+Eğer durum geçiş işlevi argümanlarına bağımlı değilse, koşulsuz olarak her girdi değeriyle çağrılabilecek, NULL girdi değerleriyle ve kendinin NULL geçiş değerleriyle çalışacaktır. Bu, işlev yazarının, ortak değerin boş değerlerle elde edilebilmesi bakımından tam denetime sahip olmasıyla mümkün olur.   
+
+Eğer son işlev argümanlarına bağımlı olarak bildirilmişse, son durum değeri NULL olduğunda çağrılmayacak; bunun yerine kendiliğinden bir NULL sonuç döndürülecektir. (Şüphesiz bu, argümanlarına bağımlı olarak işlem yapabilen işlevler için normal bir davranıştır.) Her durumda, bir son işlev bir NULL değer döndürecek bir seçeneğe sahip olabilir. Örneğin, avg işlevinin son işlevi sıfır girdi satırı varsa, NULL döndürür.   
+
+.SH PARAMETRELER   
+.br
+.ns
+.TP 
+\fIisim\fR
+Oluşturulacak ortak değer işlevinin ismi (şema nitelemeli olabilir).      
+
+.TP 
+\fIgirdi_veri_türü\fR
+Bu ortak değer işlevinin üzerinde işlem yapacağı girdinin veri türü. Girdi değerlerinin türüyle ilgilenmeyen bir ortak değer işlevi için (count(*) gibi), "ANY" olarak belirtilebilir.      
+
+.TP 
+\fIdurum_işlevi\fR
+Her girdi değeri için çağrılacak durum geçiş işlevinin ismi.  Bu normalde iki argümanlı bir işlevdir; ilk argümanı \fIdurum_veri_türü\fR türünde, ikincisi ise \fIgirdi_veri_türü\fR türündedir. Eğer bir ortak değer işlevi girdi veri türü ile ilgilenmiyorsa işlev \fIdurum_veri_türü\fR türünde tek bir argüman alabilir. Her durumda işlev \fIdurum_veri_türü\fR türünde bir değer döndürmelidir. Bu işlev o anki durum değerini ve o anki girdi veri öğesini alıp, sonraki durum değeri ile döner.      
+
+.TP 
+\fIdurum_veri_türü\fR
+Durum geçiş işlevinin durum değerinin veri türü.      
+
+.TP 
+\fIson_işlev\fR
+Tüm girdi değerleri işleme sokulup, ortak değer hesaplanacağı zaman çağrılan son işlevin ismi. İşlev \fIdurum_veri_türü\fR türünde tek bir argüman almalıdır. Ortak değer işlevinin dönüş türü bu işlevin dönüş türü olarak tanımlanır. Eğer  \fIson_işlev\fR belirtilmemişse, son durum değeri işlevin dönüş değeri olarak kullanılır ve dönüş türü \fIdurum_veri_türü\fR olur.      
+
+.TP 
+\fIilk_değer\fR
+Durum değeri için ilk değer. \fIdurum_veri_türü\fR türünde kabul edilebilecek bir dizge sabit olmalıdır. Belirtilmezse, durum değeri NULL olarak ayrılır.      
+
+.PP
+\fBCREATE AGGREGATE\fR deyiminin parametrelerini tam da yukarıdaki sırasıyla yazmak şart değildir, istenen sırada yazılabilir.   
+
+.SH ÖRNEKLER
+http://www.postgresql.org/docs/8.0/static/xaggr.html adresine bakınız.   
+
+.SH UYUMLULUK
+\fBCREATE AGGREGATE\fR bir PostgreSQL oluşumudur. SQL standardı kullanıcı tanımlı ortak değer işlevlerini desteklememektedir.   
+
+.SH İLGİLİ BELGELER
+\fBALTER AGGREGATE\fR [alter_aggregate(7)],
+.br
+\fBDROP AGGREGATE\fR [drop_aggregate(7)].  
+
+.SH ÇEVİREN
+Nilgün Belma Bugüner <nilgun (at) belgeler·gen·tr>, Nisan 2005 
+ 
+    

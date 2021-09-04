@@ -1,0 +1,716 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--DOCTYPE article SYSTEM "../../docbook/dtd/docbookx.dtd"-->
+<!-- ********************************************************************
+     $Id: ORACLE-8i-R3-Kurulumu-NASIL.xml,v 1.4 2002/09/30 18:21:14 nilgun Exp $
+     ******************************************************************** -->
+
+<article id="oracle-8ir3-kurulum-nasil" lang="tr">
+<?dbhtml dir="../howto"?>
+  <articleinfo>
+
+    <!-- Use "HOWTO", "mini HOWTO", "FAQ" in title, if appropriate -->
+    <title>ORACLE 8i R3 Enterprise (8.1.7) Linux Kurulumu NASIL</title>
+    <author>
+      <firstname>Celal Ünalp</firstname>
+      <affiliation>
+        <address>
+          <email>celal@elikasu.com.tr</email>
+        </address>
+      </affiliation>
+    </author>
+
+     <pubdate>24 Mayıs 2001</pubdate>
+     <pubdate> </pubdate>
+
+     <!-- Most recent revision goes at the top; list in descending order -->
+     <revhistory>
+       <revision>
+          <revnumber>1.0</revnumber>
+          <date>24 Mayıs 2001</date>
+          <authorinitials>Celal Ünalp <email>celal@elikasu.com.tr</email>
+          </authorinitials>
+          <revremark>İlk sürüm</revremark>
+       </revision>
+     </revhistory>
+
+     <!-- Provide a good abstract; a couple of sentences is sufficient -->
+     <abstract>
+        <para>
+          Bu belgede bir veritabanı yazılımı olan ORACLE-8.1.7 paketinin
+          Red Hat Linux 6.2 ve 7.x dağıtımlarına nasıl kurulacağı anlatılmıştır.
+        </para>
+     </abstract>
+
+  </articleinfo>
+
+  <sect1 id="oracle-8ir3-kurulum-nasil_intro">
+    <title>ORACLE 8i Release 3</title>
+    <para>
+      Günümüz elektronik ticaret dünyasında kullanılan en popüler veritabanı
+      olan oracle, 8i ailesinin üçüncü sürümünde neler değişti? Aslında
+      8.1.6 ile karşılaştırdığımızda sistemde çok köklü yenilikler olduğu açık.
+      R3 tamamıyla Java mimarisi üzerine kurulmuştur. Bu yüzden
+      <literal>oracle 9i Application Server</literal> ailesine çok yakındır.
+      Bazı özellikleri:
+      <variablelist>
+        <varlistentry>
+          <term>Yeni Java Servisleri</term>
+          <listitem>
+            <para>
+              Entity Beans (EJB 1.1)<sbr/>
+              Java Servlets &amp; Java Server Pages<sbr/>
+              Java 2 Enterprise Edition APIs<sbr/>
+              ORACLE 8i JVM Accelerator
+            </para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>Güçlendirilmiş Güvenlik</term>
+          <listitem>
+            <para>
+              HTTP üzerinden SSL desteği<sbr/>
+              thin JDBC için şifreleme<sbr/>
+              3DES şifreleme yetenekleri<sbr/>
+              Entrust PKI ile tümleştirme
+            </para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>Genişletilmiş XML Desteği</term>
+          <listitem>
+            <para>
+              Enhanced XML Development Kits (XDK)
+            </para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>HTTP için PL/SQL Ağgeçidi</term>
+          <listitem>
+            <para>
+              Apache için ORACLE HTTP Dinleyici
+            </para>
+          </listitem>
+        </varlistentry>
+      </variablelist>
+    </para>
+    <para>
+      Oracle ayrıca bu sürümünde gelişmiş güvenlik sistemi ile güvenliği en
+      üst standartlarda tutarak en düşük maliyeti sunuyor.
+      <literal>Parallel server</literal> modülü ile topyekün sistem çökmesi
+      ve data kaybı gibi ihtimalleri kolaylıkla ortadan kaldırabiliyoruz.
+      Yine standart olarak gelen bir modül olan
+      <literal>Oracle Spatial</literal> daha çok kablosuz erişim uygulamaları
+      için ideal bir çözüm sunuyor. <literal>Tuning, migration, management,
+      partitioning</literal> paketleriyle Oracle kendi dünyasında eksiksiz
+      bir yapı kurmuş durumda.
+    </para>
+  </sect1>
+  <sect1 id="oracle-8ir3-kurulum-nasil_rh62">
+    <title>Red Hat 6.2 Kurulumu</title>
+    <sect2>
+      <title>Kuruluma Başlamadan Önce</title>
+      <para>
+        <itemizedlist>
+          <listitem>
+            <para>
+              Genel Linux kullanımı,
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Red Hat Linux Dosya Sistemi,
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Sistem kitaplıklarının yapılandırması,
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Kullanıcı yönetimi,
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Temel Java kullanımı ve
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Veritabanları
+            </para>
+          </listitem>
+        </itemizedlist>
+        konularında bilginiz olduğunu varsayıyorum. Eğer bu konularda
+        eksikleriniz varsa bir an önce gidermeniz, zaman ve psikoloji
+        açısından daha iyi olacaktır.
+      </para>
+      <para>
+        Ve son olarak ORACLE'a gerçekten ihtiyacınız yoksa daha basit
+        veritabanları kullanın!
+      </para>
+    </sect2>
+    <sect2>
+      <title>Celal'in Makinası</title>
+      <para>
+         <ulink url="http://otn.oracle.com/">ORACLE TechNet</ulink> tarafından
+         önerilen donanım ve yazılım gereksinimlerine uyulması, başarılı bir
+         kurulumun ilk adımı olacaktır. Aynı şekilde Oracle, katı standartlarıyla
+         Linuxta alışık olduğunuz rahat yapılandırmalardan büyük ölçüde fedakarlık
+         etmenizi gerektiriyor.
+       </para>
+       <para>
+         Şimdi kurulum için tavsiye edilen makine nasıl olmalı ona bir bakalım:
+       </para>
+       <para>
+         Oracle 8i R3, Intel işlemcili makinalar için hazırlanmıştır. Tavsiye
+         edilen bir işlemci hızı olmasa bile bence bulabileceğiniz en hızlı
+         işlemciyi kullanın.
+         <itemizedlist>
+          <listitem>
+            <para>
+              <command>Hafıza:</command> Kurulacak makine için önerilen
+              en az 128 MB RAM.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              <command>Takas Alanı:</command> Önerilen en az 400 MB, veritabanı
+              ihtiyaçlarınıza göre artabilir.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              <command>CD-ROM:</command> CD den kurulum yapacaksanız gerekli.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              <command>Disk Alanı:</command> Kurulum sırasında yapacağınız
+              tercihlere göre değişecektir:
+<literallayout>
+<command>Kurulum Türü            Gerekli Disk Alanı</command>
+  Tipik                       800 MB
+  En küçük                    600 MB
+  Özelleştirilmiş             1 GB'a kadar artabilir
+</literallayout>
+            </para>
+            <warning>
+              <para>
+                Bu rakamlar kurulum sırasında <literal>STARTER DATABASE</literal>
+                yaratmadığımızda geçerlidir. Hazır bir veritabanı kurulum sırasında
+                yaratılacaksa bu rakamlara en az 1.2GB ekleyerek gerekli disk
+                alanını  hesaplamalısınız.
+              </para>
+            </warning>
+            <para>
+              Geçici disk alanı kurulum sırasında büyük önem taşımaktadır.
+              <literal>/tmp</literal> altında en az 75 MB boş yer olmasına özen gösterin.
+            </para>
+          </listitem>
+        </itemizedlist>
+      </para>
+      <sect3>
+        <title>İşletim Sistemi</title>
+        <para>
+          <ulink url="http://otn.oracle.com/">ORACLE TechNet</ulink> belgelerinde:<sbr/>
+          GLIBC 2.1 sürümü ya da daha üstünü,<sbr/>
+          Motif 1.2 sürümünü destekleyen herhangi bir Pencere Yöneticisi önermiştir.
+          (<literal>Oracle 8i R3 kurulumu sadece X Pencere Sistemi üzerinde çalışan
+          bir pencere yöneticisi bulunan sistemlere yapılabilir.</literal>)
+        </para>
+        <para>
+          Bu aşamada bütün gereksinimleri karşılayan sistem <ulink url="http://www.redhat.com/"
+          >Red Hat</ulink> 6.2 olarak karşımıza çıkıyor. RedHat'ın <ulink
+          url="http://www.redhat.com/products/software/linux/eeoracle"
+          >Oracle Optimized Linux</ulink> geliştiren tek dağıtım olmasında
+          bunun payı büyük.
+        </para>
+        <para>
+          Kurulum ve sonrasında ihtiyacımız olacak dosyalar:
+          (<literal>/usr/bin</literal> altında)
+          make<sbr/>ar<sbr/>ld<sbr/>nm<sbr/>awk<sbr/>tee<sbr/>test
+        </para>
+      </sect3>
+      <sect3>
+        <title>Şimdi gelelim benim makinama</title>
+        <para>
+          <command>Donanım:</command><sbr/>
+          HP Brio BA600
+          <itemizedlist>
+            <listitem>
+              <para>
+                Pentium III 700 Mhz
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+                Intel anakart
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+                256MB RAM
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+                10GB IDE sabit disk
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+                50X CD-Rom
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+                3Com 3C905C TX 10/100 Ağ bağdaştırıcı
+              </para>
+            </listitem>
+          </itemizedlist>
+        </para>
+        <para>
+          <command>Dosya Sistemi:</command>
+<literallayout>
+/           2 GB
+/home       2 GB
+/app        5.5 GB (Oracle sunucu buraya kurulacak.)
+Takas       500 MB
+</literallayout>
+        </para>
+      </sect3>
+      <sect3>
+        <title>RedHat Linux 6.2 Kurulumu</title>
+        <para>
+          Linux için RedHat 6.2 standart dağıtımını kullandım.
+        </para>
+        <para>
+          Sunucu kurulumu seçildi ve geliştirme paketleri de kuruldu.
+        </para>
+        <para>
+          Makinamın adını <literal>test.basari.com.tr</literal> olarak
+          belirliyorum.
+        </para>
+        <para>
+          Oracle kurulum öncesi ayarlamalarından önce Linux işletim sistemini
+          yapılandıralım:
+        </para>
+        <para>
+          RedHat 6.2 için en son güncellemeleri yapalım:
+<literallayout>
+  db3-3.1.17-4.6x.i386.rpm
+  mount-2.10r-0.6.x.i386.rpm
+  rpm-4.0.2-6x.i386.rpm
+</literallayout>paketlerini ve son olarak da
+<literallayout>kernel-enterprise-2.2.19-6.2.1.i686.rpm</literallayout>
+          paketini kurdum.
+        </para>
+        <para>
+          LILO'nun sistem belleğini doğru olarak görmesini sağlamalıyız.
+        </para>
+        <para>
+          <literal>/etc/lilo.conf</literal> dosyası içine
+<screen>
+image = /boot/vmlinuz- enterprise-2.2.19-6.21
+label = linux
+root = /dev/hda1
+</screen>satırları sonuna<screen>append="mem=256M"</screen>satırını ekliyoruz.
+<screen># lilo -v</screen>komutunu vererek liloyu güncelliyoruz.
+        </para>
+        <para>
+          Performans artışı sağladığını düşündüğüm bazı ayarlamalar:
+        </para>
+        <para>
+          <literal>/etc/profile</literal>  dosyası içine PIII makinamızda daha
+          iyi sonuçlar alabilmek için
+<screen>
+CFLAGS='-O9 -funroll-loops -ffast-math -malign-double -mcpu=pentiumpro \
+-march=pentiumpro -fomit-frame-pointer -fno-exceptions'
+</screen>satırını ekliyoruz.
+        </para>
+        <para>
+          <literal>/etc/sysctl.conf</literal>  dosyası içine
+<screen>fs.file-max = 16384</screen>(128 MB RAM için bu değerin yarısını almalısınız.)
+<screen>fs.inode-max = 65536</screen>(128 MB RAM için bu değerin yarısını almalısınız.)
+        </para>
+        <para>
+          satırlarını ekliyoruz.
+        </para>
+        <para>
+          Son olarak da IDE sabit diskimiz için performans artışı sağlayacak ekleme:<sbr/>
+          (hdparm ile oynamadan önce gerekli belgeleri mutlaka okumalısınız.)
+        </para>
+        <para>
+          <literal>/etc/rc.d/rc.local</literal> dosyasının sonuna
+          <screen>hdparm -d 1 -X66 /dev/hda</screen>satırını ekliyoruz.
+        </para>
+        <para>
+          İşletim sistemi optimizasyonuyla ilgili düzenlemelerim burada bitiyor.
+        </para>
+      </sect3>
+    </sect2>
+    <sect2>
+      <title>Kurulum Öncesi ORACLE Gereksinimleri</title>
+      <para>
+        Oracle standartlarından bir kısmı <literal>OFA</literal> (Oracle Flexible
+        Architecture - Oracle Esnek Mimarisi) diye adlandırılır ve bağlama noktası
+        belirlemede bize en uygun yolu gösterir. Buna göre Oracle yazılım ve
+        veritabanı dosyaları ayrı bağlama noktalarına kurulmalıdır. Ancak
+        tipik kurulum seçildiğinde Oracle kurulumu tek bir bağlama noktasına
+        (<literal>/app</literal>) yapacaktır. Biz bu yolu takip edeceğiz.
+        Yine aynı doğrultuda Oracle kurulumunu, güncelleme ve yönetim işlerini
+        yapacak sadece bir kullanıcı tanımlayacağız.
+      </para>
+      <para>
+        Önerilen ve bu kurulumda kullanılacak değerler:
+<literallayout>
+        kullanıcı ismi           oracle
+        Birincil grup            dba
+        İkincil grup             oinstall
+        Kullanıcının kabuğu      /bin/bash
+        Kullanıcı Ev Dizini      /home/oracle
+        Kullanıcı maskesi        022
+</literallayout>
+      </para>
+      <para>
+        Oracle kurulum dosyalarına sahiplik edecek ve kurulum işlemini yapacak
+        kullanıcıyı ve gruplarını oluşturalım. (grup kimliğ için 800'den
+        başlamayı tercih ettim)
+<screen>
+# groupadd -g 801 dba
+# groupadd -g 802 oinstall
+# useradd -g 801 -d /home/oracle oracle
+</screen>(şifre vermeyi unutmuyoruz)
+      </para>
+      <para>
+        <literal>oracle</literal> kullanıcısına ikinci grup kimliğini vermek
+        için  <literal>/etc/group</literal> dosyasında <screen>oinstall:x:802:</screen>
+        satırının sonuna <literal>oracle</literal> yazarak kaydetmeliyiz.
+        <screen>oinstall:x:802:oracle</screen>şeklinde olmalı.
+      </para>
+      <para>
+        <literal>root</literal> kullanıcısıyla yapacağımız son iş, Oracle
+        sunucusunun kurulacağı dizine <literal>oracle</literal> kullanıcısı
+        için gerekli izinleri vermek olacak. Kurulum yapmak için
+        <literal>oracle</literal> kullanıcısının <literal>/app</literal>
+        dizinine sahip olması gereklidir.
+        <screen># chown oracle:dba /app</screen> Artık oracle kullanıcısıyla
+        sisteme girip bundan sonraki düzenlemeleri yapabiliriz.
+      </para>
+      <para>
+        Kullanıcı isminizi <literal>oracle</literal> yapın.
+      </para>
+      <warning>
+        <para>
+          Oracle veritabanı sistemlerinde (örneğin MySQL'den farklı olarak) bir
+          sunucu sadece bir tek veritabanı içerir. Oracle sistemlerinde bir
+          veritabanı <literal>SID</literal> (Oracle Server Instance Identifier -
+          Oracle Sunucu Kimliği) tanımlamasıyla ifade edilir.
+        </para>
+      </warning>
+      <para>
+        Ben kurulum sonunda yaratılacak veritabanı için <literal>SID</literal>
+        tanımlamasını <literal>CLK</literal> olarak seçiyorum.
+      </para>
+      <para>
+        <literal>/home/oracle</literal> dizini altında <literal>.profile</literal>
+        adında bir dosya yoksa yaratıp düzenlemeye başlayalım.
+      </para>
+      <para>
+        <literal>oracle</literal> kullanıcısı için ortam değişkeni tanımlarını
+        yapalım.
+<screen>
+#/home/oracle/.profile
+
+BASH_ENV=$HOME/.bashrc
+USERNAME=""
+ORACLE_BASE=/app/oracle
+ORACLE_HOME=/app/oracle/product/8.1.7
+NLS_LANG=AMERICAN_AMERICA.WE8ISO8859P9
+ORA_NLS33=$ORACLE_HOME/ocommon/nls/admin/data
+PATH=$PATH:$HOME/bin:$ORACLE_HOME/bin
+LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$ORACLE_HOME/lib
+export LD_LIBRARY_PATH
+export USERNAME BASH_ENV PATH ORACLE_BASE ORACLE_HOME NLS_LANG ORA_NLS33
+DISPLAY=test.basari.com.tr:0.0
+ORACLE_SID=CLK
+export DISPLAY ORACLE_SID
+umask 022
+</screen>
+        <command>ORACLE_HOME:</command> Ortan değişkenlerinin en önemlisi.
+        Bütün Oracle sunucu dosyalarının bulunacağı yer.<sbr/>
+        <command>ORACLE_BASE:</command> Bütün Oracle dosyalarının üstündeki
+        dizin.<sbr/>
+        <command>NLS_LANG:</command> Kurulum diyaloglarında kullanılacak dil.
+        (ingilizce seçiyoruz)<sbr/>
+        <command>ORA_NLS33:</command> Sunucu çalışırken kullanacağı dil
+        dosyalarının yeri.<sbr/>
+        <command>DISPLAY:</command> Kurulum pencerelerinin açılacağı terminal.
+        (Biz konsoldayız)<sbr/>
+        <command>ORACLE_SID:</command> Yaratılacak veritabanı için Oracle Sunucu
+        Kimliği.
+      </para>
+      <para>
+        <literal>/home/oracle/.profile</literal> dosyasıyla işimiz bitti.
+      </para>
+      <para>
+        <literal>oracle</literal> kullanıcısıyla sisteme tekrar girip yaptığımız
+        ayarları <literal>set</literal> komutuyla kontrol edelim.
+      </para>
+    </sect2>
+    <sect2>
+      <title>Kuruluma Başlıyoruz</title>
+      <para>
+        <literal>Oracle 8i R3 CD</literal>sindeki bir dosyayı düzenlememiz
+        gerektiği için CD'deki bütün dosyaları sabit diske almamız gerekiyor.
+        Dosyaların sahibi <literal>oracle</literal> kullanıcısı ve
+        <literal>dba</literal> grubu olmalıdır.
+      </para>
+      <para>
+        <literal>/home/oracle/Oracle8iR3</literal> dizinini yaratalım.
+        Bütün dosyaları buraya kopyalayalım.
+      </para>
+      <para>
+        <literal>/home/oracle/Oracle8iR3/install/oraparam.ini</literal>
+        dosyasındaki<screen>DISTRIBUTION=FALSE</screen>satırını
+        <screen>DISTRIBUTION=TRUE</screen>şekline getirelim.
+        <screen>JRE_LOCATION=../stage/Components/oracle.swd.jre/1.1.8/1/DataFiles/Expanded/linux</screen>
+        satırını şu şekilde değiştiriyoruz. (Aksi takdirde kurulum Java
+        hatalarından tamamlanamıyor.)
+        <screen>JRE_LOCATION=../stage/Components/oracle.swd.jre/1.1.8/1/DataFiles/Expanded</screen>
+        Aynı dosyadaki<screen>JRE_MEMORY_OPTIONS=" -mx256m"</screen> satırını
+        da şu şekilde değiştiriyoruz<screen>JRE_MEMORY_OPTIONS=" -mx32m"</screen>
+        Bu değer kurulum sırasında Java Sanal Makinası için kullanılabilir en
+        fazla bellek miktarını belirliyor. Makinamız çok hızlı olsa da
+        <literal>256m</literal> değeri kurulumda takas kullanımını zorunlu hale
+        getiriyor. Bu da kurulum süresini çok fazla uzatıyor.
+      </para>
+      <para>
+        Bu dosyayla da işimiz bitince kuruluma başlayabiliriz.
+      </para>
+      <para>
+        X açıkken konsoldan şu komutu veriyoruz.
+        <screen>/home/oracle/Oracle8iR3/install/linux/runInstaller</screen>
+        <literal>Oracle Universal Installer Welcome</literal> penceresi
+        açılacak ve etkileşimli kurulum başlayacaktır.
+<screen>
+<command>ORACLE UNIVERSAL INSTALLER (OUI)</command>
+
+<command>Welcome Screen</command>
+</screen>Next düğmesiyle geçiyoruz.
+<screen><command>File Locations Screen</command></screen>
+        Üstteki kutucuk otomatikman <literal>products.jar</literal> isimli
+        dosyanın tam yerini gösterecektir.
+      </para>
+      <para>
+        Alttaki kutucuk ise daha önce belirlediğimiz <literal>ORACLE_HOME</literal>
+        dizinini göstermelidir.
+<screen>
+Next
+
+<command>Available Products Screen</command>
+</screen>Sunucu kurduğumuz için <literal>Oracle 8i Enterprise Edition 8.1.7</literal>
+        seçiyoruz.
+<screen>
+Next
+
+<command>Installation Types Screen</command>
+</screen>
+        <itemizedlist>
+          <listitem>
+            <para>
+              <command>Typical:</command> Kurulum sırasında çalışır halde
+              çok amaçlı bir veritabanı yaratacaktır.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              <command>Minimal:</command> Kurulum sırasında çalışır halde
+              genel amaçlı (dedicated) bir veritabanı yaratacaktır.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              <command>Custom:</command> Bütün ayarlamaları biz yapıyoruz.
+            </para>
+          </listitem>
+        </itemizedlist><literal>Typical</literal> seçiyoruz.
+      </para>
+      <para>
+<screen>
+Next
+
+<command>Database Identification Screen</command>
+</screen><literal>Global Database Name</literal> olarak
+        <literal>test.basari.com.tr</literal> veriyorum.
+      </para>
+      <para>
+        <literal>SID</literal> olarak daha önce belirttiğim gibi
+        <literal>CLK</literal> giriyorum.
+<screen>
+Next
+
+<command>JDK Location Screen</command>
+</screen><literal>/home/oracle/Oracle8iR3/stage/Components/oracle.swd.jre/1.1.8/1/DataFiles/Expand</literal>
+olarak giriyoruz.
+<screen>
+Next
+
+<command>Summary Screen</command>
+</screen>Bu aşamada kurulacak bütün programların ayrıntılı listesini
+        görebilirsiniz.
+<screen><command>End of Installation</command></screen>
+      </para>
+    </sect2>
+  </sect1>
+
+  <sect1 id="oracle-8ir3-kurulum-nasil_rh7x">
+    <title>RedHat 7.X Üzerine Kurulum</title>
+    <para>
+      Oracle yaptığı duyuruda Red Hat 7.X kullanıcılarının kurulum sırasında
+      sorun yaşayacağını bildirmiştir.  Sorunun glibc sürüm çakışmasından
+      kaynaklandığı anlatılmış ve çıkarılan yama ile sorun çözülmüştür.
+      <literal>glibc-2.1.3</literal> kullanılarak hazırlanan
+      <literal>Oracle 8i R3</literal>, kurulum sonunda daha yeni bir
+      <literal>glibc</literal> ile karşılaşınca geçersiz bağlar oluşturuyor.
+      Bu adresten çekilebilen yama içindeki talimatlar yerine getirilmeden
+      Red Hat 7.X üzerine kurulum yapılamıyor.
+    </para>
+    <para>
+      <ulink url="ftp://205.227.44.220/server/patches/unix/LINUX"
+      >ftp://205.227.44.220/server/patches/unix/LINUX</ulink>
+    </para>
+    <para>
+      Yama çıkarılmadan önce bulunan başka bir çözümü burada anlatmak istiyorum.
+      Red Hat 7.1 sunucu kurulumlu makinada uygulayarak kurulumu başarıyla
+      tamamladım.
+    </para>
+    <para>
+      Kuruluma anlatıldığı gibi başlanıyor ve <literal>installation type</literal>
+      ekranında <literal>custom</literal> seçiliyor. Hemen sonrasında
+      <literal>OUI</literal> bize kurulum sırasında bir veritabanı yaratmak
+      isteyip istemediğimizi soruyor. <literal>No</literal> diyerek kurulumu
+      tamamlıyoruz. Sunucuyu çalıştırmadan önce yapılması gerekenler:
+    </para>
+    <para>
+      Eğer yüklü değillerse, <literal>compat-egcs-6.2-1.1.2.9</literal> ve
+      <literal>compat-glibc-6.2-2.1.3.2</literal> paketlerini kuruyoruz.
+    </para>
+    <para>
+      <literal>ORACLE_HOME</literal> altındaki  <literal>env_*.mk</literal>
+      şeklindeki bütün dosyaları buluyoruz. (Çok değil)
+    </para>
+    <para>
+      Her birinin içindeki <literal>CC=cc</literal> yazan yerleri
+      <literal>CC=i386-glibc21-linux-gcc</literal> şeklinde,
+      <screen>LINK=$(PURECMDS) gcc $(LDFLAGS) $(COMPOBJS)</screen>satırlarını da
+      <screen>LINK=$(PURECMDS) i386-glibc21-linux-gcc $(LDFLAGS) $(COMPOBJS)</screen>
+      şeklinde değiştiriyoruz.
+    </para>
+    <para>
+      Daha sonra <literal>ORACLE_HOME/bin</literal> dizini altındaki
+      <literal>genclntsh</literal> betiğindeki
+<screen>
+LD="ld -shared -L${ORACLE_HOME}/lib"
+LD_RUNTIME="-R${ORACLE_HOME}/lib"
+LD_OPT="-h ${CLNT_LIB}"
+</screen>Satırlarını şu şekilde değiştiriyoruz:
+<screen>
+LD="i386-glibc21-linux-gcc -shared -L${ORACLE_HOME}/lib"
+LD_RUNTIME="-Wl,-R${ORACLE_HOME}/lib"
+LD_OPT="-Wl,-h${CLNT_LIB}"
+</screen><literal>genclntsh</literal> betiğini çalıştırıp
+      <literal>libclntsh.so</literal> dosyasını doğru şekilde oluşturuyoruz.
+    </para>
+    <para>
+      Son olarak <literal>ORACLE_HOME/bin</literal> altındaki
+      <literal>relink</literal> komutunu kullanarak bitiriyoruz.
+      <screen>$ relink all</screen>
+    </para>
+    <para>
+      Artık Oracle Red Hat 7.1 üzerinde çalışmaya hazır.
+    </para>
+  </sect1>
+
+  <sect1 id="oracle-8ir3-kurulum-nasil_theend">
+    <title>Sonuç</title>
+    <para>
+      Bu belge kurulum işlemleri adım adım uygulanarak hazırlanmıştır.
+    </para>
+    <para>
+      Bölümler hakkında ayrıntılı bilgi için web adreslerini ziyaret etmenizi
+      öneririm:<sbr/>
+      <ulink url="http://www.oracle.com">http://www.oracle.com</ulink>
+      ORACLE_HOME<sbr/>
+      <ulink url="http://otn.oracle.com">http://otn.oracle.com</ulink>
+      Oracle technology Network/ Her konuda pdf ve html dökümanı.<sbr/>
+      <ulink url="http://www.redhat.com">http://www.redhat.com</ulink>
+      Red Hat Home.<sbr/>
+      <ulink url="http://www.oraclefans.com">http://www.oraclefans.com</ulink>
+      Oracle Fan Club #1<sbr/>
+      <ulink url="http://www.orafans.com">http://www.orafans.com</ulink>
+      Oracle fan Club #2<sbr/>
+      <ulink url="http://www.orafaq.org">http://www.orafaq.org</ulink>
+      Oracle için binlerce Soru ve Yanıtı<sbr/>
+      <ulink url="http://www.orasoft.org">http://www.orasoft.org</ulink>
+      Linux üzerinde çalışan oracle uygulamaları.<sbr/>
+      <ulink url="http://www.linuxdoc.org">http://www.linuxdoc.org</ulink>
+      Linux Documentation Project Home<sbr/>
+      <ulink url="http://groups.yahoo.com/group/oracle-on-linux"
+      >http://groups.yahoo.com/group/oracle-on-linux</ulink>
+      9000 üyeli bir eposta listesi.<sbr/>
+      <ulink url="http://www.blackdown.com">http://www.blackdown.com</ulink>
+      Java Development for Linux<sbr/>
+      <ulink url="http://www.javasoft.com">http://www.javasoft.com</ulink>
+      SUN Java Home<sbr/>
+      <ulink url="http://www.ibm.com/java">http://www.ibm.com/java</ulink>
+      IBM Java Home
+    </para>
+  </sect1>
+
+  <sect1 id="oracle-8ir3-kurulum-nasil_legal">
+      <title>Yasal Açıklamalar</title>
+    <!-- Legal Sections -->
+    <sect2 id="oracle-8ir3-kurulum-nasil_copyright">
+      <title>Telif Hakkı ve Lisans</title>
+
+      <!-- The LDP recommends, but doesn't require, the GFDL -->
+      <para>
+       Bu belgenin, <emphasis>ORACLE 8i R3 Enterprise (8.1.7) Linux Kurulumu NASIL</emphasis>,
+       1.0 sürümünün
+       <emphasis role="bold">
+         telif hakkı © 2000 <emphasis>Celal Ünalp</emphasis></emphasis>'e
+       aittir. Bu belgeyi, Free Software Foundation tarafından yayınlanmış
+       bulunan GNU Özgür Belgeleme Lisansının 1.1 ya da daha sonraki sürümünün
+       koşullarına bağlı kalarak kopyalayabilir, dağıtabilir ve/veya
+       değiştirebilirsiniz. Bu Lisansın bir kopyasını
+       <ulink url="http://www.gnu.org/copyleft/fdl.html">
+       http://www.gnu.org/copyleft/fdl.html</ulink> adresinde bulabilirsiniz.
+      </para>
+
+      <para>
+       Linux, Linus Torvalds adına kayıtlı bir ticarî isimdir.
+      </para>
+    </sect2>
+
+    <sect2 id="oracle-8ir3-kurulum-nasil_disclaimer">
+      <title>Feragatname</title>
+
+      <para>
+        Bu belgedeki bilgilerin kullanımından doğacak sorumluluklar,
+        ve olası zararlardan belge yazarı sorumlu tutulamaz.
+        Bu belgedeki bilgileri uygulama sorumluluğu uygulayana aittir.
+      </para>
+
+      <para>
+        Tüm telif hakları aksi özellikle belirtilmediği sürece sahibine
+        aittir. Belge içinde geçen herhangi bir terim bir ticarî isim
+        ya da kuruma itibar kazandırma olarak algılanmamalıdır. Bir ürün
+        ya da markanın kullanılmış olması ona onay verildiği anlamında
+        görülmemelidir.
+      </para>
+    </sect2>
+  </sect1>
+</article>

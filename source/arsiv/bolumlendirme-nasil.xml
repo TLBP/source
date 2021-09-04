@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--DOCTYPE article SYSTEM "../docbook/dtd/docbookx.dtd"-->
+
+<!-- ********************************************************************
+     $Id: bolumlendirme-nasil.xml,v 1.2 2002/09/18 20:11:34 nilgun Exp $
+     ******************************************************************** -->
+
+<article id="archive-bolumlendirme-nasil">
+  <articleinfo>
+    <title>LINUX Bölümlendirme NASIL</title>
+    <author>
+      <firstname>Zeynep Dilli</firstname>
+      <email>dilli@compclup.ceng.metu.edu.tr</email>
+    </author>
+    <pubdate>v1.0, 16 Aralık 1996</pubdate>
+  </articleinfo>
+<div>
+<pre>
+
+Diskinizi nasıl bölümleyeceğinize ve bu bölümleri nerelere koyacağınıza
+karar verirken göz önüne alınacak çeşitli durumlar vardır.
+</pre>
+<h3>TAKAS ALANIM NE KADAR BÜYÜK OLMALI?</h3>
+<pre>
+Takas bölümlemeleri konusunda aşağıdaki genel kurallar vardır:
+
+1. Linux'ta, RAM ve takas alanı toplanır (Bu bütün UNIX'ler için doğru
+değildir). örneğin, eğer 8 MB RAM'ınız ve 12 MB takas alanınız varsa,
+toplam 20 MB sanal belleğiniz vardır.
+
+2. Takas alanınızın büyüklüğünü belirlerken, en az 16 MB toplam sanal
+belleğiniz olmalıdır. Bu yüzden 4 MB RAM için en azından 12 MB'lık
+takas, 8 MB'lık RAM için en azından 8 MB'lık takas düşünün.
+
+3. Takas alanınızın büyüklüğünü belirlerken, çok fazla takas alanının pek
+de işe yaramayabileceğini unutmayın.
+
+Her işlemin bir "çalısma kümesi" vardır. Bu, çok yakın gelecekte işlemci
+tarafından okunacak olan bir küme bellek-içi sayfadır. Linux bu bellek
+erişimlerini kestirmeye çalışır (yakın geçmişte kullanılmış olan
+sayfaların yakın gelecekte de kullanılacağını varsayarak) ve bu sayfaları,
+eğer mümkünse, RAM'da tutar. Eğer programın iyi bir "referans
+yerelliği"varsa bu varsayım doğru olacak ve Linux kestirme algoritması
+çalışacaktır.
+
+Bir çalışma kümesini ana bellekte tutmak yalnızca yeterli ana bellek varsa
+işe yarayacaktır. Eğer bir makinada çok fazla sayıda işlem işletiyorsanız,
+çekirdek (kernel) çok yakın gelecekte yeniden başvuracağı sayfaları diske
+koymak zorunda kalır (başka bir çalışma kümesinin bir sayfasından bir
+sayfa çıkışı ve sonra kullanılacak sayfaya bir sayfa-girişi yaratır). Bu
+genellikle sayfalama etkinliğinde çok ağır bir artışa ve dikkate değer bir
+başarım (performans) düşüşüne neden olur. Bu durumdaki bir makineye
+"thrashing" yapıyor denir.
+
+Thrashing bir makinada işlemler asıl olarak RAM'dan değil diskten
+çalışıyorlardır. Başarımın, yaklaşık olarak, bellek erişim hızının disk
+erişim hızına oranı kadar düşmesini bekleyin.
+
+PDP ve VAX'ın günlerinden kalma çok eski bir pratik kural, bir programın
+çalışma kümesinin, programın sanal boyutunun yaklaşık %25'i kadar
+olduğuydu. Bu yüzden, RAM'ınızın üç katından daha fazla takas alanı
+sağlamak büyük olasılıkla yararsızdır.
+
+Ancak bunun yalnızca pratik bir kural olduğunu aklınızdan çıkartmayın.
+Programların çok çok büyük ya da çok çok küçük çalışma kümelerinin olduğu
+senaryolar yaratmak kolaylıkla olasıdır. örneğin, çok rastgele erişilen
+büyük bir veri kümesi olan bir simülasyon programının, data segment'inde
+neredeyse hiç bir kullanma yerelliği olmayacaktır, dolayısıyla çalışma
+kümesi oldukça büyük olacaktır.
+
+Öbür taraftan, aynı anda açık pek çok JPEG dosyasıyla çalışan bir xv'un,
+çok büyük bir data segment'ti olacaktır. Ama resim dönüşümlerinin hepsi
+tek bir resim üzerinde yapılır, xv'un kapladığı belleğin çoğuna hiç
+dokunulmaz. Aynı şey, aynı anda yalnızca tek bir dosyanın değiştirilmekte
+olduğu bir metin editörü için de geçerlidir. Bu programların - eğer doğru
+düzgün tasarlanmışlarsa - çok yüksek bir referans yerellikleri vardır ve
+bunlardan büyük parçalar, performans üzerine ciddi etkileri olmadan, takas
+olarak tutulabilir.
+
+İnsan, komut satırı çağından kalma %25 sayısının, birden fazla sayıda
+belgeyi edit eden çağdaş GUI programları için artık doğru olmadığından
+kuşkulanabilir, ancak ben bu sayıları doğrulamaya çalışan yeni yazılar
+görmedim.
+
+Böylece 16 MB RAM'ı olan bir konfigürasyonda, küçük bir konfigürasyon için
+hiç takasa gerek yoktur ve 48 MB'tan fazla takas büyük olasılıkla
+yararsızdır. Gereken kesin bellek miktarı makinadaki uygulama
+yazılımlarına bağlıdır (ne bekliyordunuz? :-).
+</pre>
+<h3>TAKAS ALANIMI NEREYE KOYMALIYIM? </h3>
+<pre>
+1. Mekanik yavaş, elektronik hızlıdır.
+
+Çağdaş hard disk'lerin pek çok kafası vardır. Aynı izin (track) kafaları
+arasındagezmek hızlıdır, çunkü bu iş tümüyle elektroniktir. İzlerin
+arasında gezinmek yavaştır, çünkü bu gerçek dünyanın maddelerini hareket
+ettirmeyi gerektirir.
+
+Bu yüzden pek çok kafası olan bir diskinizle daha az sayıda kafası olan ve
+diğer bakımlardan tümüyle aynı olan başka bir diskiniz varsa, çok kafalı
+disk daha hızlı olacaktır.
+
+
+2. Disk kafanızın takas alanına rastgele bir izden gideceğini varsayarsak,
+eski disklerde bütün izlerde aynı sayıda sektör vardır. Bu disklerde
+takasınızı diskinizin ortasına koymak daha hızlı olacaktır.
+
+3. Elbette disk kafanız rastgele hareket etmeyecektir. Eğer takas alanınız
+bir diskin ortasında sürekli meşgul bir ev bölümlemesi (home partition)
+ve neredeyse hiç kullanılmayan bir arşiv bölümlemesinin ortasındaysa, daha
+da kısa kafa hareketleri olsun diye takasınız ev bölümlemesinin ortasında
+olsaydı, daha iyi olacaktı.
+
+4. Daha yeni diskler KBK (kuşak bit kayıdı) kullanır. Bunların dış izlerde
+daha fazla sayıda sektörleri vardır. Değişmez bir dönüş hızıyla, bu, dış
+izlerde ıç izlere oranla çok daha büyük bir başarım sağlar. Takasınızı
+hızlı izlere koyun.
+
+Özet: Takasınızı başka işlerle meşgul olmayan çok kafalı hızlı bir diskin
+üzerine koyun. Eğer birden fazla diskiniz varsa: Takası parçalayın ve
+bütün disklerinize ve hatta farklı farklı deneticilere dağıtın. Daha da
+iyisi: Daha fazla RAM alın.
+</pre>
+
+<h3>DİSKİMİ NASIL BÖLÜMLEMELIYIM?</h3>
+<pre>
+1. Disk alanı, işletim sistemi tarafında bloklar ve blok parçaları
+birimiyle yönetilir. ext2 dosya sisteminde, bloklar ve blok parçaları aynı
+boyda olmak zorundadır, dolayısıyla incelemizi bloklarla
+sınırlandırabiliriz.
+
+Dosyalar her boyda olurlar. Blok sınırlarında sona ermezler. Bu yüzden her
+dosyada, her dosyanın son bloğunun son bölümünün bir kısmı boşa harcanmış
+olur. Dosya boyutlarının rastgele olduğunu varsayarak, diskinizdeki her
+dosya için yaklaşık yarım blok boşa harcanıyordur.
+
+Diskinizdeki dosya sayısını, bir diskteki ayrılmış inodes sayısından
+tahmin edebilirsiniz. Benim diskimde
+
+   # df -i
+   Filesystem           Inodes   IUsed   IFree  %IUsed Mounted on
+   /dev/hda3              64256   12234   52022    19%  /
+   /dev/hda5              96000   43058   52942    45%  /var/spool/news
+
+/ dizgesinde yaklaşık 12000dosya ve news dizgesinde yaklaşık 44000 dosya
+var. 1 KB'lık bir blok boyuyla, 6+22 = 28 MB kadar disk alanı, dosyaların
+kuyruk bloklarında kayboluyor. Eğer blok boyumu 4 KB olarak seçseydim,
+bunun 4 katını yitirmiştim.
+
+Veri aktarımı büyük bitişik veri parçaları için daha hızlıdır.  ext2 bu
+yüzden büyüyen dosyalar için önceden 8 blokluk birimlerle alan ayırmaya
+çalışır (kullanılmayan önceden ayrılmış alanlar, dosya kapatıldığında
+serbest bırakılırlar).
+
+Dosyalara genellikle sırayla ulaşıldığından, bir dosyanın bitişik olmadan
+yerleştirilmesi, başarım için kötüdür. İşletim sistemini bir disk
+ulaşımında dallandırmaya ve disk kafasını hareket ettirmeye zorlar. Buna
+"dış parçalama" ya da kısaca "parçalama" denir ve bu, DOS dosya
+sistemlerinde yaygın bir sorundur. ext2'nin, dış parçalamadan kaçınmak
+için bazı taktikleri vardır.
+
+ext2 sizi büyük dosya sistemleri için büyük bloklar seçmeye zorlamaz (0.5
+TB ve ötesi büyüklüğünde çok büyük dosya sistemleri dışında, bunlarda
+küçük blok boyutları verimsizleşir). Bu yüzden, DOS'un aksine, blok
+boyutunu küçük tutmak için, büyük diskleri çok sayıda bölüme ayırmaya
+gerek yoktur. Eğer olasıysa, 1 KB'lık blok boyutunu kullanın. Bazı
+bölümlemeler için 2 KB'lık bir blok boyutuyla deneyler yapmak
+isteyebilirsiniz, ama ender rastlanan hatalara rastlamayı bekleyin: çoğu
+kullanıcı blok boyutu olarak 1KB kullanır.
+
+ext2 ile, bölümleme kararları yedekleme de gözönüne alınarak ve değişik
+dosya ömürlerinden doğacak dış parçalamadan kaçınılarak verilmelidir.
+
+2. Dosyaların ömürleri vardır. Bir dosya yaratıldıktan sonra, sistemde bir
+süre duracak sonra da silinecektir. Dosya ömürleri sistemin bir yerinden
+bir yerine önemli biçimde değişir ve biraz dosyanın yol adına bağlıdır.
+örneğin, /bin, /sbin,/usr/sbin, /usr/bin ve buna benzer dizinlerdeki
+dosyaların büyük olasılıkla çok uzun ömürleri olacaktır. /home'daki
+dosyaların orta uzunlukta bir ömürleri olacaktır, /var'daki dosyalar
+genellikle kısa ömürlüdür: /var/spool/news'daki hiç bir dosya bir kaç
+günden uzun kalmaz, /var/spool/lpd'deki dosyalar ömürlerini dakika ya da
+saniyelerle ölçerler.
+
+3. Eğer günlük yedekleme miktarı tek bir yedekleme ortamının
+kapasitesinden azsa, bu yedekleme için iyi olur. Günlük bir yedekleme, ya
+tam bir yedekleme ya da arttırmalı yedekleme olabilir.
+
+Bölümleme boyutlarınızı, tek bir yedekleme ortamına tümüyle sığacakları
+biçimde küçük tutabilirsiniz (günlük tam yedeklemeleri seçin). Her
+koşulda, birbölüm günlük değişimi (bütün değiştirilen dosyalar) tek bir
+yedekleme ortamına sığacak kadar küçük olmalıdır (arttırmalı yedeklemeyi
+seçin ve yedekleme ortamını haftalık/aylık tam döküm için değiştirmeye
+hazır olun - kullanıcının başında durmadığı işlemler olası değildir).
+
+Yedekleme taktiğiniz bu karara bağlıdır.
+
+Disk alanı planlar ve satın alırken, bir kenara yedekleme için yeterli
+miktarda para ayırmayı unutmayın! Yedeklenmemiş veri değersizdir! Hemen
+hemen herkes için, veriyi yeniden oluşturmanın maliyeti, yedekleme
+maliyetinden çok daha fazladır!
+
+4. Başarım (performans) için değişik ömürlü dosyaları değişik bölümlerde
+tutmak yararlıdır. Bu biçimde, news bölümündeki kısa ömürlü dosyalar büyük
+miktarda parçalanabilir. Bu / ya da /home bölümünün başarımını etkilemez.
+
+Yaygın bir model, /, /home ve /var bölümlerini yukarıda anlatıldığı gibi
+yaratır. Bunu kurmak ve bunun bakımını yapmak kolaydır ve bu model,
+değişik ömürlerin ters etkilerinden kaçınmak için ömürleri yeterince iyi
+ayırt eder. Yedekleme modeline de iyi uyar: Neredeyse kimse USENET haber
+gruplarını (spool) yedeklemekle uğraşmaz ve /var'daki yalnız bazı dosyalar
+yedeklemeye değer. (akla var/spool/mail geliyor) öbür taraftan, / pek sık
+değişmez ve istendiğinde yedeklenebilir (yapılanış değişikliklerinden
+sonra) ve pek çok çağdaş yedekleme ortamına tam bir yedekleme olarak
+sığacak kadar küçüktür (kurulmuş yazılım miktarına göre 250'den 500 MB'ta
+kadar planlayın). /home değerli kullanıcı verileri içerir ve günden güne
+yedeklenmelidir. Bazı kuruluşların çok büyük /home'ları vardır ve
+artırmalı yedekleme kullanmalıdırlar.
+
+Bazı sistemler /tmp'i de ayrı bir bölüme koyarlar, diğerleri aynı etkiyi
+elde etmek için bunu sanal olarak /var/tmp'e bağlarlar (bunun, /var'ın
+erişilebilir olmayacağı ve sistemin, siz bir tane yaratana ya da /var'ı
+elle yükleyene kadar bir /tmp'sinin olmayacağı tek kullanıcı modunu
+etkileyebileceğine dikkat) ya da bunu bir RAM disketine koyarlar (örneğin
+Solaris bunu yapar). Bu /tmp'i /'in dışında tutar, iyi bir fikir.
+
+</pre>
+</div>
+</article>

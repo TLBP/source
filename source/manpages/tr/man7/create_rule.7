@@ -1,0 +1,103 @@
+.\" http://belgeler.org \N'45' 2006\N'45'11\N'45'26T10:18:35+02:00  
+.TH "CREATE RULE" 7 "" "PostgreSQL" "SQL \N'45' Dil Deyimleri"
+.nh   
+.SH İSİM
+CREATE RULE \N'45' bir yeniden yazma kuralı tanımlar   
+.SH KULLANIM 
+.nf
+\fBCREATE\fR [ \fBOR REPLACE\fR ] \fBRULE\fR \fIisim\fR \fBAS ON\fR \fIolay\fR
+\    \fBTO\fR \fItablo\fR [ \fBWHERE\fR \fIkoşul\fR ]
+\    \fBDO\fR [ \fBALSO\fR | \fBINSTEAD\fR ] { \fBNOTHING\fR | \fIkomut\fR | ( \fIkomut\fR ; \fIkomut\fR ... ) }
+.fi
+    
+.SH AÇIKLAMA
+\fBCREATE RULE\fR belirtilen bir tabloya uygulanması için yeni bir kural tanımlar. \fBCREATE OR REPLACE RULE\fR ya yeni bir kural oluşturur ya da o tabloda mevcut aynı isimde bir kural varsa o kuralı değiştirir.   
+
+PostgreSQL kural sistemi veritabanı tablolarında veri girme, güncelleme veya silme işlemlerini gerçekleştirecek ek bir eylem tanımlamayı mümkün kılar. Başka bir deyişle, bir kural, belirtilen bir tablo üzerinde her komut çalıştırılışında ek komutların çalıştırılmasına sebep olur. Bundan başka, bir \fBINSTEAD\fR kuralı ile bir komutun bir başka komut ile değiştirilebilmesi, hatta hiç çalıştırılmaması da mümkündür. Kurallar, sanal tabloların oluşturulmasında da kullanılabilir. Bir kuralın aslında bir komut dönüştürme mekanizası mı yoksa bir komut makrosu mu olduğunu bilmek önemlidir. Dönüşüm, verilen komutlar çalıştırılmadan önce meydana gelir. Eğer, bir işlemin herbir fiziksel satır için tek tek uygulanmasını istiyorsanız, bunu şüphesiz bir kuralla değil, bir tetikle yaparsınız. Kural sistemi hakkında daha ayrıntılı bilgi edinmek için
+.br
+http://www.postgresql.org/docs/8.0/static/rules.html adresine bakınız.   
+
+Şimdilik, \fBON SELECT\fR kuralları koşulsuz \fBINSTEAD\fR kuralları olmalı ve tek bir \fBON SELECT\fR komutundan oluşan eylemler içermelidirler. Bu şekilde, bir \fBON SELECT\fR kuralı aslında bir tabloyu bir sanal tabloya döndürür, ancak tabloda ne varsa değil, kuralın \fBSELECT\fR komutunun döndürdüğü satırlar kullanılır. Sanal tabloları, önce bir gerçek tablo ardından da buna bir  \fBON SELECT\fR kuralı uygulayıp oluşturmak yerine bir \fBCREATE VIEW\fR komutu yazarak oluşturmak daha iyi bir çözümdür.   
+
+Bir sanal tablo üzerinde \fBON INSERT\fR, \fBON UPDATE\fR ve \fBON DELETE\fR kuralları tanımlayıp, diğer tabloların ilgili güncellemelerini bu güncelleme eylemleri ile değiştirerek güncellenebilir bir sanal tablo görüntüsü oluşturabilirsiniz.   
+
+Sanal tablo güncellemeleri için koşullu kurallar kullanmak isterseniz bir hileye başvurabilirsiniz: belirteceğiniz her eylemin bir koşulsuz \fBINSTEAD\fR kuralı içermesini sağlamalısınız. Eğer kural, koşullu ise ya da \fBINSTEAD\fR kuralı değilse, sistem güncelleme eylemini uygulamayı hala reddetmeye çalışacaktır. Çünkü, bazı durumlarda, sanal tablonun taklidi üzerinde uygulanacak eylemin sonuna geldiğini varsayacaktır. Eğer, koşullu kurallardaki tüm kullanışlı durumların uygulanmasını istiyorsanız, sistemin asla bir tablo taklidini güncelleme çağrısı yapılmadığını anlamasını sağlamak için koşulsuz bir \fBDO INSTEAD NOTHING\fR kuralı ekleyin. Ardından da \fBINSTEAD\fR içermeyen koşullu kuralları oluşturun; uygulandıkları yerlerde, bunlar öntanımlı \fBINSTEAD NOTHING\fR eylemine eklenir.   
+
+.SH PARAMETRELER   
+.br
+.ns
+.TP 
+\fIisim\fR
+Oluşturulacak kuralın ismi. Bu aynı tablodaki diğer kuralların isimlerinden farklı olmalıdır. Aynı tabloda ve aynı olay türünde çok sayıda kural varsa, bunlar alfabetik sırada uygulanır.     
+
+.TP 
+\fIolay\fR
+\fBSELECT\fR, \fBINSERT\fR, \fBUPDATE\fR ve \fBDELETE\fR cümlelerinden biridir.     
+
+.TP 
+\fItablo\fR
+Kuralın uygulanacağı tablo ya da sanal tablonun ismi (şema nitelemeli olabilir).     
+
+.TP 
+\fIkoşul\fR
+Herhangi bir koşullu SQL ifadesi (boolean döndüren). \fBNEW\fR ve \fBOLD\fR olması ve ortak değer işlevleri içermemesi dışında bu koşullu ifade hiçbir tabloya başvuru yapamaz.     
+
+.TP 
+\fBINSTEAD\fR
+Komutların "özgün komutların yerine" çalıştırılacağını belirtir.     
+
+.TP 
+\fBALSO\fR
+Komutların "özgün komutlara ek olarak" çalıştırılacağını belirtir.      
+
+\fBALSO\fR ve \fBINSTEAD\fR birlikte belirtilemez. \fBALSO\fR öntanımlıdır.     
+
+.TP 
+\fIkomut\fR
+Kuralın eylemleri olan komut ya da komutlar. Geçerli komutlar \fBSELECT\fR, \fBINSERT\fR, \fBUPDATE\fR, \fBDELETE\fR veya \fBNOTIFY\fR\N'39'dır.     
+
+.PP
+\fIkoşul\fR ve \fIkomut\fR içinde, özel tablo isimleri \fBNEW\fR ve \fBOLD\fR başvurulacak tablonun değerlerini nitelemek için kullanılabilir. \fBNEW\fR, \fBON INSERT\fR ve \fBON UPDATE\fR kurallarında veri girilecek ya da güncellenecek yeni bir satırı belirtirken kullanılabilir. \fBOLD\fR ise, \fBON UPDATE\fR ve \fBON DELETE\fR kurallarında güncellenecek ya da silinecek mevcut bir satırı belirtirken kullanılabilir.   
+
+.SH EK BİLGİ
+Üzerinde bir kural tanımlayabilmeniz için tablo üzerinde \fBRULE\fR yetkiniz olmalıdır.   
+
+Döngüsel kurallardan kaçınmaya çalışmanız çok önemlidir. Örneğin, aşağıdaki iki kural tanımı PostgreSQL tarafından kabul edildiği halde sorgunun defalarca baştan uygulanması nedeniyle PostgreSQL bir hata raporlayacaktır:   
+
+
+.RS 4
+.nf
+CREATE RULE "_RETURN" AS
+\    ON SELECT TO t1
+\    DO INSTEAD
+\        SELECT * FROM t2;
+
+CREATE RULE "_RETURN" AS
+\    ON SELECT TO t2
+\    DO INSTEAD
+\        SELECT * FROM t1;
+
+SELECT * FROM t1;
+.fi
+.RE   
+
+Şimdilik, bir kural eylemi bir \fBNOTIFY\fR komutu içeriyorsa, ne olursa olsun, kuralın uygulanacağı bir satır olmasa bile, \fBNOTIFY\fR komutu çalıştırılır. Örnek:   
+
+
+.RS 2
+.nf
+CREATE RULE notify_me AS ON UPDATE TO mytable DO ALSO NOTIFY mytable;
+
+UPDATE mytable SET name = \N'39'foo\N'39' WHERE id = 42;
+.fi
+.RE   
+
+\fBUPDATE\fR sırasında, \fBid = 42\fR koşulu ile eşleşen bir satır olmasa bile, bir \fBNOTIFY\fR olayı gönderilecektir. Bu, gerçekleme ile ilgili bir kısıtlamadır; ileriki sürümlerde düzeltilebilir.   
+
+.SH UYUMLULUK
+\fBCREATE RULE\fR, sorgunun tamamını yeniden yazma sistemi olarak bir PostgreSQL oluşumudur.   
+
+.SH ÇEVİREN
+Nilgün Belma Bugüner <nilgun (at) belgeler·gen·tr>, Nisan 2005 
+ 
+   

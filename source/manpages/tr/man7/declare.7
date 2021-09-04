@@ -1,0 +1,102 @@
+.\" http://belgeler.org \N'45' 2006\N'45'11\N'45'26T10:18:36+02:00  
+.TH "DECLARE" 7 "" "PostgreSQL" "SQL \N'45' Dil Deyimleri"
+.nh   
+.SH İSİM
+DECLARE \N'45' bir gösterici tanımlar   
+.SH KULLANIM 
+.nf
+\fBDECLARE\fR \fIisim\fR [ \fBBINARY\fR ] [ \fBINSENSITIVE\fR ] [ [ \fBNO\fR ] \fBSCROLL\fR ]
+\    \fBCURSOR\fR [ { \fBWITH\fR | \fBWITHOUT\fR } \fBHOLD\fR ] \fBFOR\fR \fIsorgu\fR
+\    [ \fBFOR\fR { \fBREAD ONLY\fR | \fBUPDATE\fR [ \fBOF\fR \fIsütun\fR [, ...] ] } ]
+.fi
+    
+.SH AÇIKLAMA
+\fBDECLARE\fR büyükçe bir sorgunun zamanaşımı içinde az sayıda satırın bir kullanıcı tarafından çekilmesi için kullanılabilecek göstericilerin bildirimini yapmakta kullanılır. \fBFETCH\fR [fetch(7)] kullanılarak veri ister metin ister ikilik biçimde göstericiden döndürülebilir.   
+
+Normal göstericiler \fBSELECT\fR\N'39'in ürettiği gibi veriyi metin biçiminde döndürür. Veri doğal ortamında ikilik biçimde saklandığından, sistemin metin biçimine dönüşüm yapması gerekir. Metin biçiminde gelen veriyi istemci uygulamanın, üzerinde işlem yapabilmek için ikilik biçime dönüştürmesi gerekebilir. Bundan başka metin biçimindeki veri çoğunlukla ikilik biçimdeki veriden daha fazla yer kaplar. İkilik göstericiler veriyi daha kolay işlenebilen ikilik gösterimde döndürürler. Ancak, veriyi metin biçiminde göstermeyi tasarlıyorsanız, verinin metin biçiminde alınması istemci tarafında daha az çaba gerektirecektir.   
+
+Bir örnek vermek gerekirse, bir sorgunun bir tamsayı değer içeren bir sütundan veri döndürmesini istiyorsanız, bir öntanımlı gösterici ile 1 içeren bir dizge alırken, bir ikilik gösterici bu değerin 4 baytlık alan içeren dahili gösterimini döndürecektir (big\N'45'endian \N'45'\N'45' en kıymetli bayt ilk).   
+
+İkilik göstericiler dikkatli kullanılmalıdır. \fBpsql\fR dahil çoğu uygulama, ikilik göstericileri bilmez ve veriyi metin biçiminde döndürür.   
+
+.br
+.ns
+.TP 
+\fBBilgi:\fR
+"Gelişmiş sorgulama" (extended query) protokolünü kullanan bir istemci uygulaması, verilen bir \fBFETCH\fR komutuyla, Bind protokolünün veriyi ikilik biçimde mi yoksa metin biçiminde mi alacağını belirtir. Bu seçim göstericinin bildirilmesi sırasında belli bir biçime zorlanabilir. Gelişmiş sorgu protokolü kullanarak bir ikilik gösterici alınabileceğini ummak,  bu nedenle atıldır; her gösterici metin ya da ikilik olarak ele alınabilir.    
+
+.PP
+
+.SH PARAMETRELER   
+.br
+.ns
+.TP 
+\fIisim\fR
+Oluşturulacak göstericinin ismi.      
+
+.TP 
+\fBBINARY\fR
+Göstericinin metin değil ikilik biçimde veri döndürmesini sağlar.      
+
+.TP 
+\fBINSENSITIVE\fR
+Göstericiden alınan verinin, gösterici etkinken, soruladığı tablolardaki güncellemelerden etkilenmeyeceğini belirtir. PostgreSQL\N'39'de tüm göstericiler böyledir ve bu sözcük şimdilik etkisizdir, sadece SQL standardıyla uyum için vardır.      
+
+.TP 
+\fBSCROLL\fR, \fBNO SCROLL\fR
+Göstericinin satırları sıralı olmayan biçimde döndürmek için kullanılabileceğini belirtmek için kullanılır.  \fBSCROLL\fR deyiminin belirtilmesi, sorgunun çalıştırılma planının karmaşıklığına bağlı olarak, sorgunun çalışması sırasında bir başarım kaybı oluşturabilir. \fBNO SCROLL\fR ise, göstericinin satırları sıralı olmayan biçimde döndürmek için kullanılamayacağını belirtir.      
+
+.TP 
+\fBWITH HOLD\fR, \fBWITHOUT HOLD\fR
+\fBWITH HOLD\fR, göstericinin oluşturulduğu hareketin tamamlanmasından sonra kullanılmaya devam edilebileceğini belirtir. \fBWITHOUT HOLD\fR ise göstericinin oluşturulduğu hareket dışında kullanılamayacağını belirtir. Ne \fBWITHOUT HOLD\fR ne de \fBWITH HOLD\fR belirtilmişse, \fBWITHOUT HOLD\fR öntanımlıdır.      
+
+.TP 
+\fIsorgu\fR
+Gösterici tarafından döndürülecek satırları üretecek bir \fBSELECT\fR cümlesi. Geçerli sorgular hakkında bilgi edinmek için \fBSELECT\fR [select(7)] kılavuz sayfasına bakınız.      
+
+.TP 
+\fBFOR READ ONLY\fR, \fBFOR UPDATE\fR
+\fBFOR READ ONLY\fR göstericinin salt okunur kipte kullanılacağını belirtir. \fBFOR UPDATE\fR ise göstericinin tabloları güncellemekte kullanılacağını belirtir. Gösterici güncellemeleri PostgreSQL\N'39'de desteklenmediğinden, \fBFOR UPDATE\fR kullanımı bir hata iletisine sebep olacak, \fBFOR READ ONLY\fR  deyiminin ise bir etkisi olmayacaktır.      
+
+.TP 
+\fIsütun\fR
+Gösterici tarafından güncellenecek sütunlar. Gösterici güncellemeleri PostgreSQL\N'39'de desteklenmediğinden, \fBFOR UPDATE\fR kullanımı bir hata iletisine sebep olur.      
+
+.PP
+\fBBINARY\fR, \fBINSENSITIVE\fR ve \fBSCROLL\fR sözcükleri herhangi bir sırada kullanılabilir.   
+
+.SH EK BİLGİ
+\fBWITH HOLD\fR belirtilmedikçe, bu cümle ile oluşturulan gösterici sadece o anki hareketin içinde kullanılmış olabilir. Bu nedenle, \fBWITH HOLD\fR\N'39'suz \fBDECLARE\fR bir hareket kümesinin dışında kullanışsız olduğu gibi, kullanıldığı takdirde PostgreSQL bir hata iletisi üretecektir. Bir hareket kümesini tanımlamak için \fBBEGIN\fR [begin(7)], \fBCOMMIT\fR [commit(7)] ve \fBROLLBACK\fR [rollback(7)] kullanılır.    
+
+Eğer \fBWITH HOLD\fR belirtilmiş ve göstericinin oluşturulduğu hareket baaşarıyla tamamlanmışsa, bu gösterici aynı oturumun daha sonraki hareketleri tarafından erişilebilir olacaktır. (Fakat hareket kesintiye uğramış ve tamamlanmamışsa, gösterici iptal edilir.) \fBWITH HOLD\fR ile oluşturulmuş bir gösterici, doğrudan bir \fBCLOSE\fR komutuyla ya da dolaylı olarak oturum sonunda kapatılır. Şimdiki gerçeklenimde, böyle bir gösterici tarafından sunulan satırlar ya geçici bir dosyaya ya da belleğe kopyalanarak daha sonraki hareketler için kullanılabilir kalması sağlanır.    
+
+Bir gösterici satırların geri yönde  çekilmesi için kullanılacaksa, bu gösterici bildirilirken \fBSCROLL\fR seçeneği belirtilmelidir. Bu SQL standardının gereğidir. Ancak, önceki sürümlerle uyumluluk için, eğer göstericinin sorgusu desteklenmek için ek bir masraf gerektirmeyecek kadar basitse, PostgreSQL \fBSCROLL\fR olmaksızın geriye doğru satır çekmeye izin verecektir. Yine de, uygulama geliştiriciler önerimiz, \fBSCROLL\fR belirtmeden oluşturulmuş göstericilere, geriye doğru satır çekimi için güvenmemeleri olacaktır. Eğer, \fBNO SCROLL\fR belirtilmişse hiçbir durumda geri yönde satır çekmeye izin verilmeyecektir.    
+
+SQL standardı sadece gömülü SQLde göstericiler için hükümler içerir. PostgreSQL sunucusu göstericiler için bir \fBOPEN\fR deyimi gerçeklemez; bir gösterici bildirildiği andan itibaren açık kabul edilir. Yine de,  PostgreSQL\N'39'in gömülü SQL önişlemcisi olan \fBECPG\fR, \fBDECLARE\fR ve \fBOPEN\fR deyimlerini de içererek, standart SQL uzlaşımlarını destekler.    
+
+.SH ÖRNEKLER
+Bir göstericiyi bildirmek için:    
+
+
+.RS 4
+.nf
+DECLARE liahona CURSOR FOR SELECT * FROM films;
+.fi
+.RE    
+
+Gösterici kullanımı ile ilgili daha fazla örnek için \fBFETCH\fR [fetch(7)] kılavuz sayfasına bakınız.   
+
+.SH UYUMLULUK
+SQL standardı sadece gömülü SQL\N'39'de  ve modüllerde göstericilere izin verir. PostgreSQL ise, göstericilerin etkileşimli olarak kullanımına izin verir.   
+
+SQL standardı göstericilerin tablo verisini güncellemek için kullanımına izin verir. PostgreSQL göstericilerinin ise hepsi salt okunurdur.   
+
+İkilik göstericiler bir PostgreSQL oluşumudur.   
+
+.SH İLGİLİ BELGELER
+\fBCLOSE\fR [close(7)], \fBFETCH\fR [fetch(7)], \fBMOVE\fR [move(7)]  
+
+.SH ÇEVİREN
+Nilgün Belma Bugüner <nilgun (at) belgeler·gen·tr>, Nisan 2005 
+ 
+   

@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ********************************************************************
+     $Id: start.xml,v 1.8 2002/12/20 22:46:09 nilgun Exp $
+     ******************************************************************** -->
+
+ <chapter id="pgsql-tutorial-start">
+  <title>Başlangıç</title>
+
+  <bridgehead renderas="sect1">Kurulum</bridgehead>
+   <para>
+<productname>PostgreSQL</productname> kullanmadan önce kurulumu gerçekleştirmeniz gerekmekte. <productname>PostgreSQL</productname>, işletim sisteminizin önkurulumu esnasında yüklenmiş olabileceği gibi, sistem yöneticisi tarafından da önceden kurulmuş olabilir. Böyle bir durumda dağıtımınızın belgelerinden ya da sistem yöneticinizden PostgreSQL'e nasıl ulaşabileceğinize dair bilgileri edinebilirsiniz.
+   </para><para>
+PostgreSQL'in kurulu olduğu ya da onu kullanabileceğiniz konusunda emin değilseniz, PostgreSQL'i kendiniz kurabilirsiniz. Kurulum işlemi zor olmamakla birlikte sizin için de iyi bir alıştırma niteliği taşır. <productname>PostgreSQL</productname> her kullanıcı tarafından kurulabilir; ayrıcalıklı kullanıcı (<systemitem>root</systemitem>) hakları gerekmemektedir.
+   </para><para>
+Eğer PostgreSQL'i kendiniz kuracaksanız bu konuda PostgreSQL 8.0 kitabının <ulink url="http://&pgsql-web;/docs/8.0/static/installation.html">Sunucu Yönetimi</ulink> oylumunda yer alan kurulum bölümüne bakıp, kurulum tamamlandığında buraya dönebilirsiniz. Ortam değişkenlerinin belirlenmesinin anlatıldığı bölüme bakmayı unutmayın.
+   </para><para>
+Eğer sistem yöneticiniz kurulum işlemlerini öntanımlı yoldan yapmadıysa biraz daha yapacak işiniz var demektir. Örneğin eğer sunucu makineniz uzakta bir sistem ise, <envar>PGHOST</envar> ortam değişkenine veritabanı sunucusunun ismini atamalısınız. Ayrıca, <envar>PGPORT</envar> ortam değişkenine de atama yapmanız gerekebilir. Son olarak, eğer çalıştırmayı denediğiniz bir uygulama veritabanına bağlanamadığını belirten bir hata iletisi veriyorsa; sistem yöneticiniz ile bağlantı kurmayı deneyin, eğer yönetici siz iseniz, belgeleri tekrar gözden geçirip çalışma ortamını doğru ayarlayıp ayarlamadığınıza bir kez daha bakın. Eğer bir önceki paragrafı anlamadıysanız, bir sonraki bölümü okuyun.
+   </para>
+  <sect1 id="pgsql-tutorial-arch">
+   <title>Mimarinin Temelleri</title>
+   <para>
+Daha ileri bölümleri okumadan önce, PostgreSQL'in temel sistem mimarisini anlamanızda yarar var. <productname>PostgreSQL</productname> bölümlerinin birbirleri ile nasıl ilişki içinde olduğunu anlamanız yönünde bu kısım bir derece de olsa yararlı olacaktır.
+   </para><para>
+<productname>PostgreSQL</productname>, veritabanı dilinde sunucu/istemci temeline dayanan bir sistem kullanmaktadır. Bir <productname>PostgreSQL</productname> oturumu birbirleriyle ilişkili çalışan şu süreçlerden oluşur:
+   </para><itemizedlist><listitem><para>
+Veritabanı dosyalarını yöneten bir sunucu süreci istemci uygulamalarından gelen bağlantıları kabul eder ve istenilen işlemleri onlar adına gerçekleştirir. Veritabanı sunucu uygulamasının ismi <userinput>postmaster</userinput>'dır.
+      </para></listitem><listitem><para>
+Kullanıcının istemci uygulaması veritabanında sorgulamanın gerçekleşmesini isteyen uygulamadır. İstemci uygulamaları çok çeşitlidir: salt metin (text) tabanlı bir istemci aracı, grafiksel arayüzlü bir uygulama, veritabanına bağlanıp ilgili HTML sayfaları olarak göstercek bir web sunucusu veya özelleşmiş bir veritabanı onarım aracı. Bazı istemci uygulamaları <productname>PostgreSQL</productname> dağıtımları ile sağlanmakta olup çoğu da kullanıcılar tarafından geliştirilmektedir.
+      </para></listitem></itemizedlist>
+   <para>
+Genellikle, sunucu/istemci uygulamalarında, sunucu ve istemci ayrı makinelerde olurlar. Böyle bir durumda birbileri ile TCP/IP ağ bağlantısı üzerinden haberleşirler. Bir istemci makinenin erişebildiği dosyaların veritabanı sunucusu olan makine üzerinde erişilebilir olamayabileceğini (ya da farklı bir dosya ismi ile erişilebilineceğini) aklınızdan çıkarmayın.
+   </para><para>
+PostgreSQL sunucusu çoklu istemci bağlantılarına izin verebilmektedir. Bu amaçla her yeni bağlantı için yeni bir süreç başlatır (<quote>fork</quote>). Bu noktada, istemci ve yeni sunucu süreci özgün <userinput>postmaster</userinput> süreciyle etkileşime girmeden haberleşebilirler. Bu arada, <userinput>postmaster</userinput> istemci bağlantılarını bekler, istemcileri ilgili sunucu süreci ile ilişkilendirmeye çalışır. (Tabii ki, bunların hepsi kullanıcıdan habersiz olarak artalanda gerçekleşir. İşlemin nasıl gerçekleştiğini bilin istedik.)
+   </para>
+  </sect1><sect1 id="pgsql-tutorial-createdb">
+    <title>Bir Veritabanının Oluşturulması</title><para>
+Veritabanına sunucusuna erişiminiz olup olmadığını görmek için yapılacak ilk sınama bir veritabanı oluşturmaya çalışmaktır. Çalışan bir <productname>PostgreSQL</productname> sunucusu çok sayıda veritabanını yönetebilir. Genellikle, her proje ya da her kullanıcı için ayrı bir veritabanı kullanılır.
+   </para><para>
+Muhtemelen, sistem yöneticiniz sizin için bir veritabanını zaten oluşturmuştur ve size oluşturduğu veritabanı ismini de söylemiştir. Böyle bir durumda bu adımı geçerek bir sonraki bölüme bakabilirsiniz.
+   </para><para>
+Bu örnekte, yeni bir veritabanını <literal>mydb</literal> ismiyle şöyle oluşturabilirsiniz:
+   </para><para>
+<screen><prompt>$</prompt> <userinput>createdb mydb</userinput></screen>
+   </para><para>
+Çıktısının şöyle olması lazım:
+   </para><para>
+<screen>CREATE DATABASE</screen>
+   </para><para>
+Bu çıktıyı alıyorsanız, bu adım tamamlanmış demektir.
+   </para><para>
+Ama, <userinput>createdb</userinput> komutunun bulunamadığına ilişkin, şöyle bir çıktı alıyorsanız,
+   </para><para>
+<screen>createdb: command not found</screen>
+   </para><para>
+<productname>PostgreSQL</productname> olması gerektiği gibi kurulmamış demektir. Ya hiç kurulum yapılmamıştır ya da dosya arama yolları (<envar>$PATH</envar>) doğru yapılandırılmamıştır. Komutu dosya yolunu belirterek kullanmayı deneyin:
+   </para><para>
+<screen>
+<prompt>$</prompt> <userinput>/usr/local/pgsql/bin/createdb mydb</userinput>
+</screen>
+   </para><para>
+Bu dosya yolu sisteminizde farklı olabilir. Böyle bir durumda sistem yöneticisi ile bağlantı kurmayı deneyin ya da kurulum adımlarını tekrar gözden geçirip sorunu tespit etmeye çalışın.
+   </para><para>
+Çıktı şöyle de olabilirdi:
+   </para><para>
+<screen>createdb: could not connect to database template1: could not connect to server:
+No such file or directory
+        Is the server running locally and accepting
+        connections on Unix domain socket "/tmp/.s.PGSQL.5432"?
+</screen>
+   </para><para>
+Böyle bir hatanın anlamı ya sunucu başlatılmamıştır ya da <userinput>createdb</userinput> sunucunun aradığı yerde değildir. Kurulum adımlarını yeniden gözden geçirin ya da sistem yöneticisi ile temasa geçin.
+   </para><para>
+Yanıt şöyle de olabilirdi:
+<screen>
+createdb: could not connect to database template1: FATAL:  user "nilgun" does not
+exist
+</screen>
+   </para><para>
+Burada "nilgun" yerine sizin kullanıcı isminiz görünecektir. Bu, sistem yöneticinizin sizin için bir  <productname>PostgreSQL</productname> kullanıcısı hesabı açmadığı anlamına gelir. (<productname>PostgreSQL</productname> kullanıcı hesapları, sistem kullanıcı hesaplarından ayrıdır.) Eğer sistem yöneticisi sizseniz, hesapların oluşturulması ile ilgili bilgi edinmek için PostgreSQL 8.0 belgelerindeki <ulink url="http://&pgsql-web;/docs/8.0/static/user-manag.html">Veritabanı Kullanıcıları ve Grupları</ulink> kısmına bakın. İlk kullanıcı hesabını oluşturmak için PostgreSQL'i kuran işletim sistemi kullanıcısı (genellikle bu kullanıcı <literal>postgres</literal>'dir) olmanız gerekecektir. İsterseniz, bu amaçla, bir sistem kullanıcı isminden farklı bir <productname>PostgreSQL</productname> kullanıcı ismini de kullanabilirsiniz; <productname>PostgreSQL</productname> kullanıcı isminini belirtmek için ya  <option>-U</option> seçeneğini kullanmalı ya da bu ismi <envar>PGUSER</envar> ortam değişkenine atamalısınız.
+   </para><para>
+Eğer bir kullanıcı hesabınız varsa, ama bir veritabanı oluşturma izniniz yoksa, şöyle bir çıktı alacaksınız:
+   </para><para>
+<screen>
+createdb: database creation failed: ERROR:  permission denied to create database
+</screen>
+   </para><para>
+Her kullanıcının yeni bir veritabanı oluşturma yetkisi yoktur.  Eğer <productname>PostgreSQL</productname> sizin veritabanı oluşturma isteğinizi geri çeviriyorsa, sistem yöneticisinin size gerekli izinleri vermesi gerekmektedir. Böyle bir durumda sistem yöneticisi ile temasa geçin. Eğer sistem yöneticisi siz iseniz böyle bir izin işlemi için sunucuyu hangi kullanıcı ile başlatmışsanız onun ile sisteme giriş yapın ve bu eğiticiyi okuyup uygulamak isteyenlere gerekli hakları tanıyın.<footnote><para>
+Bunun neden böyle çalıştığına dair açıklama: <productname>PostgreSQL</productname> kullanıcı isimleri sistem kullanıcı isimlerinden bağımsızdır. Eğer bir veritabanına bağlanıyorsanız, hangi <productname>PostgreSQL</productname> kullanıcı adı ile bağlanacağınızı belirtebilirsiniz; bunu yapmazsanız, sistem kullanıcısı isminiz öntanımlı <productname>PostgreSQL</productname> kullanıcı isminiz olarak kullanacaktır. Böyle bir durumda veritabanı sunucusunu başlatan kullanıcı ile aynı isme sahip bir <productname>PostgreSQL</productname> kullanıcısı olacaktır ve böyle bir durumda bu kullanıcı her zaman veritabanı oluşturma izinlerine sahip olacaktır. Her seferinde o kullanıcı ile sisteme girmektense <option>-U</option> seçeneği ile PostgreSQL'e bağlanmak istediğiniz kullanıcı adını belirtebilirsiniz.</para></footnote>
+   </para><para>
+İsterseniz başka isimler ile de veritabanları oluşturabilirsiniz. <productname>PostgreSQL</productname> istediğiniz sayıda veritabanı oluşturma imkanını sunmaktadır. Veritabanı isminin ilk karakteri bir harf olmalı ve isim 63 karakterden daha uzun olmamalıdır. Tercihen kullanıcı adınız ile aynı ismi taşıyan veritabanları oluşturulması tavsiye olunur. Çoğu araç, böyle bir veritabanı ismini öntanımlı olarak kabul eder ve bu sizi az da olsa yazmaktan kurtarır. Yeni bir veritabanı oluşturmak için, basitçe şunu yazın:
+   </para><para>
+<screen>
+<prompt>$</prompt> <userinput>createdb</userinput>
+</screen>
+   </para><para>
+Eğer veritabanınızı artık kullanmak istemiyorsanız onu kaldırabilirsiniz. Örnek olarak, eğer siz <literal>mydb</literal> adlı veritabanının sahibi iseniz, bunu şöyle silebilirsiniz:
+   </para><para>
+<screen><prompt>$</prompt> <userinput>dropdb mydb</userinput>
+</screen>
+   </para><para>
+(Bu komut için, veritabanı ismi öntanımlı olarak kullanıcı ismi değildir. Daima bu ismi belirtmeniz gerekir.) Bu işlem sonucunda fiziksel olarak veritabanınız ile ilgili bütün dosyalar silinecektir ve veritabanınızı geri alamayacaksınız. Bu yüzden bu komutu uygulamadan önce kararınızı tekrar gözden geçirmeniz tavsiye olunur.
+   </para><para>
+<userinput>createdb</userinput> ve <userinput>dropdb</userinput> hakkında daha fazla bilgi edinmek için PostgreSQL 8.0 belgelerindeki <ulink url="http://&pgsql-web;/docs/8.0/static/app-createdb.html">createdb</ulink> ve <ulink url="http://&pgsql-web;/docs/8.0/static/app-dropdb.html">dropdb</ulink> komutlarının açıklamalarına bakınız.
+   </para>
+  </sect1><sect1 id="pgsql-tutorial-accessdb">
+   <title>Bir Veritabanına Erişim</title><para>
+Veritabanını oluşturduktan sonra, ona şöyle erişebilirsiniz:
+   </para><itemizedlist><listitem><para>
+<userinput>psql</userinput> adlı etkileşimli <productname>PostgreSQL</productname> uçbirim uygulaması ile veritabanına giriş yapıp, istediğiniz işlemleri gerçekleştirir ve SQL komutlarınızı çalıştırabilirsiniz.
+      </para></listitem><listitem><para>
+<application>PgAccess</application> gibi çizgesel arayüzlü bir uygulama ya da ODBC destekli ofis yazılımlarını kullanarak veritabanı oluşturabilir ve üzerinde işlem yapabilirsiniz. Bu tür uygulamalar ve kullanımları bu eğitmenin kapsamı dışındadır.
+      </para></listitem><listitem><para>
+Uygun yazılım geliştirme dilleri ile kendi uygulamalarınızı da yazabilirsiniz. Bu konu hakkında ayrıntılı bilgiyi <productname>PostgreSQL</productname> 8.0 belgelerindeki <ulink url="http://&pgsql-web;/docs/8.0/static/client-interfaces.html">İstemci Arayüzleri</ulink> oylumunda bulabilirsiniz.
+      </para></listitem></itemizedlist>
+    <para>
+Bu belgedeki alıştırmaları denemek için muhtemelen <userinput>psql</userinput>'i kullanmak isteyeceksiniz. <userinput>psql</userinput>'i <literal>mydb</literal> adlı veritabanına erişmek için şu şekilde başlatabilirsiniz:
+    </para><para>
+<screen><prompt>$</prompt> <userinput>psql mydb</userinput></screen>
+    </para><para>
+Eğer bir veritabanı ismi belirtmezseniz öntanımlı olarak kullanıcı adınız ile aynı ismi taşıyan  veritabanına erişilmeye çalışılacaktır. Bu konudan önceki bölümde bahsetmiştik.
+   </para><para>
+<userinput>psql</userinput> sizi aşağıdaki gibi bir çıktı ile karşılayacaktır:
+   </para><para>
+<screen>
+Welcome to psql &pgsql-version;, the PostgreSQL interactive terminal.
+
+Type:  \copyright for distribution terms
+       \h for help with SQL commands
+       \? for help with psql commands
+       \g or terminate with semicolon to execute query
+       \q to quit
+
+mydb=&gt;
+</screen>
+   </para><para>
+Son satır şu şekilde de olabilir:
+   </para><para>
+<screen>mydb=#</screen>
+   </para><para>
+Bunun anlamı, çoğunlukla olduğu gibi eğer PostgreSQL'i kendiniz kurduysanız, veritabanının en yetkili kullanıcısı olduğunuz anlamına gelir. En yetkili kullanıcı olmak, hiçbir izin işlemine tabi tutulmayacağınız anlamına gelir. Fakat bu konu bu eğitmenin kapsamında değildir.
+   </para><para>
+Eğer <userinput>psql</userinput>'i çalıştırmakta sorun yaşarsanız önceki bölüme dönün.  <userinput>psql</userinput> ile  <userinput>createdb</userinput> arasında çalıştırma sorunlarına tanı konulması bakımından fark yoktur. Eğer <userinput>createdb</userinput> çalışıyorsa, <userinput>psql</userinput>'in de çalışması gerekir.
+   </para><para>
+Son satırda yer alan <literal>mydb=&gt;</literal> komut satırı <userinput>psql</userinput>'in kendi çalışma alanı içine <acronym>SQL</acronym> sorguları yazmanızı beklediği anlamına gelir. Şu komutları deneyiniz:
+   </para><para>
+<screen>
+<prompt>mydb=&gt;</prompt> <userinput>SELECT version();</userinput>
+                            version
+----------------------------------------------------------------
+ PostgreSQL &pgsql-version; on i586-pc-linux-gnu, compiled by GCC 2.96
+(1 row)
+
+<prompt>mydb=&gt;</prompt> <userinput>SELECT current_date;</userinput>
+    date
+------------
+ 2002-08-31
+(1 row)
+
+<prompt>mydb=&gt;</prompt> <userinput>SELECT 2 + 2;</userinput>
+ ?column?
+----------
+        4
+(1 row)
+</screen>
+   </para><para>
+Bunun dışında <userinput>psql</userinput> kendine ait, standart <acronym>SQL</acronym> komutu olmayan, bir kaç dahili komuta daha sahiptir. Bu tür komutlar bir tersbölü karakteri (<userinput>\</userinput>) ile başlar. Bu komutların birkaçı karşılama ekranında listelenmişti. Örnek olarak, çeşitli <productname>PostgreSQL</productname> <acronym>SQL</acronym> komutları hakkında yardım almak için şunu yazabilirsiniz:
+   </para><para>
+<screen><prompt>mydb=&gt;</prompt> <userinput>\h</userinput></screen>
+   </para><para>
+<userinput>psql</userinput>'den çıkmak için şunu kullanabilirsiniz:
+   </para><para>
+<screen><prompt>mydb=&gt;</prompt> <userinput>\q</userinput></screen>
+   </para><para>
+Böylece <userinput>psql</userinput>'den çıkıp sistemin komut satırına geri döneceksiniz. (Daha fazla dahili komut için psql satırında <userinput>\?</userinput> komutunu kullanabilirsiniz.) <userinput>psql</userinput>'in tam olarak ne yapabildiği hakkında ayrıntılı bilgiyi <productname>PostgreSQL</productname> 8.0 belgelerindeki <ulink url="http://&pgsql-web;/docs/8.0/static/app-psql.html">psql komut açıklamasında</ulink> bulabilirsiniz. Eğer PostgreSQL kurulumunu tam olarak gerçekleştirdiyseniz sistemin komut satırında <userinput>man psql</userinput> yazarak da bu bilgilere ulaşabilirsiniz. Bu eğitmende bu özelliklerin hepsine değinmeyeceğiz ama kendiniz hepsini deneyebilirsiniz.
+   </para>
+  </sect1>
+ </chapter>
+

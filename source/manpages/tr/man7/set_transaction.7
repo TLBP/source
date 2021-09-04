@@ -1,0 +1,61 @@
+.\" http://belgeler.org \N'45' 2006\N'45'11\N'45'26T10:18:38+02:00  
+.TH "SET TRANSACTION" 7 "" "PostgreSQL" "SQL \N'45' Dil Deyimleri"
+.nh   
+.SH İSİM
+SET TRANSACTION \N'45' set the characteristics of the current transaction   
+.SH KULLANIM 
+.nf
+\fBSET TRANSACTION\fR \fIhareket_kipi\fR [, ...]
+\fBSET SESSION CHARACTERISTICS AS TRANSACTION\fR \fIhareket_kipi\fR [, ...]
+
+where \fIhareket_kipi\fR is one of:
+
+\    \fBISOLATION LEVEL\fR { \fBSERIALIZABLE\fR | \fBREPEATABLE READ\fR
+\        | \fBREAD COMMITTED\fR | \fBREAD UNCOMMITTED\fR }
+\    \fBREAD WRITE\fR | \fBREAD ONLY\fR
+.fi
+    
+.SH AÇIKLAMA
+The \fBSET TRANSACTION\fR command sets the    characteristics of the current transaction. It has no effect on any    subsequent transactions.  \fBSET SESSION    CHARACTERISTICS\fR sets the default transaction    characteristics for subsequent transactions of a session.  These    defaults can be overridden by \fBSET TRANSACTION\fR    for an individual transaction.   
+
+The available transaction characteristics are the transaction    isolation level and the transaction access mode (read/write or    read\N'45'only).   
+
+The isolation level of a transaction determines what data the    transaction can see when other transactions are running concurrently:   
+
+
+.br
+.ns
+.TP 
+\fBREAD COMMITTED\fR
+A statement can only see rows committed before it began. This        is the default.      
+
+.TP 
+\fBSERIALIZABLE\fR
+All statements of the current transaction can only see rows committed        before the first query or data\N'45'modification statement was executed in        this transaction.      
+
+.PP   
+
+The SQL standard defines two additional levels, \fBREAD    UNCOMMITTED\fR and \fBREPEATABLE READ\fR.    In PostgreSQL \fBREAD    UNCOMMITTED\fR is treated as    \fBREAD COMMITTED\fR, while \fBREPEATABLE    READ\fR is treated as \fBSERIALIZABLE\fR.   
+
+The transaction isolation level cannot be changed after the first query or    data\N'45'modification statement (\fBSELECT\fR,    \fBINSERT\fR, \fBDELETE\fR,    \fBUPDATE\fR, \fBFETCH\fR, or    \fBCOPY\fR) of a transaction has been executed.  See    http://www.postgresql.org/docs/8.0/static/mvcc.html for more information about transaction    isolation and concurrency control.   
+
+The transaction access mode determines whether the transaction is    read/write or read\N'45'only.  Read/write is the default.  When a    transaction is read\N'45'only, the following SQL commands are    disallowed: \fBINSERT\fR, \fBUPDATE\fR,    \fBDELETE\fR, and \fBCOPY TO\fR if the    table they would write to is not a temporary table; all    \fBCREATE\fR, \fBALTER\fR, and    \fBDROP\fR commands; \fBCOMMENT\fR,    \fBGRANT\fR, \fBREVOKE\fR,    \fBTRUNCATE\fR; and \fBEXPLAIN ANALYZE\fR    and \fBEXECUTE\fR if the command they would execute is    among those listed.  This is a high\N'45'level notion of read\N'45'only that    does not prevent all writes to disk.   
+
+.SH EK BİLGİ
+If \fBSET TRANSACTION\fR is executed without a prior    \fBSTART TRANSACTION\fR or  \fBBEGIN\fR,    it will appear to have no effect, since the transaction will immediately    end.   
+
+It is possible to dispense with \fBSET TRANSACTION\fR    by instead specifying the desired \fItransaction_modes\fR in    \fBBEGIN\fR or \fBSTART TRANSACTION\fR.   
+
+The session default transaction modes can also be set by setting the    configuration parameters default_transaction_isolation    (runtime\N'45'config.html#GUC\N'45'DEFAULT\N'45'TRANSACTION\N'45'ISOLATION)    and default_transaction_read_only    (http://www.postgresql.org/docs/8.0/static/runtime\N'45'config.html#GUC\N'45'DEFAULT\N'45'TRANSACTION\N'45'READ\N'45'ONLY).    (In fact \fBSET SESSION CHARACTERISTICS\fR is just a    verbose equivalent for setting these variables with \fBSET\fR.)    This means the defaults can be set in the configuration file, via    \fBALTER DATABASE\fR, etc.  Consult http://www.postgresql.org/docs/8.0/static/runtime\N'45'config.html    for more information.   
+
+.SH UYUMLULUK
+Both commands are defined in the SQL standard.    \fBSERIALIZABLE\fR is the default transaction    isolation level in the standard.  In    PostgreSQL the default is ordinarily    \fBREAD COMMITTED\fR, but you can change it as    mentioned above.  Because of lack of predicate locking, the    \fBSERIALIZABLE\fR level is not truly    serializable. See http://www.postgresql.org/docs/8.0/static/mvcc.html for details.   
+
+In the SQL standard, there is one other transaction characteristic    that can be set with these commands: the size of the diagnostics    area.  This concept is specific to embedded SQL, and therefore is    not implemented in the PostgreSQL server.   
+
+The SQL standard requires commas between successive \fIhareket_kipi\fR, but for historical    reasons PostgreSQL allows the commas to be    omitted.   
+
+.SH ÇEVİREN
+Nilgün Belma Bugüner <nilgun (at) belgeler·gen·tr>, Nisan 2005 
+ 
+   

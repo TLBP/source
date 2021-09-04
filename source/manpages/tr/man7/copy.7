@@ -1,0 +1,318 @@
+.\" http://belgeler.org \N'45' 2006\N'45'11\N'45'26T10:18:34+02:00  
+.TH "COPY" 7 "" "PostgreSQL" "SQL \N'45' Dil Deyimleri"
+.nh   
+.SH İSİM
+COPY \N'45' bir tablo ile bir dosya arasında veri kopyalar   
+.SH KULLANIM 
+.nf
+\fBCOPY\fR \fItablo_ismi\fR [ ( \fIsütun\fR [, ...] ) ]
+\    \fBFROM\fR { \N'39'\fIdosya_ismi\fR\N'39' | \fBSTDIN\fR }
+\    [ [ \fBWITH\fR ]
+\          [ \fBBINARY\fR ]
+\          [ \fBOIDS\fR ]
+\          [ \fBDELIMITER\fR [ \fBAS\fR ] \N'39'\fIayraç\fR\N'39' ]
+\          [ \fBNULL\fR [ \fBAS\fR ] \N'39'\fIboş_dizge\fR\N'39' ]
+\          [ \fBCSV\fR [ \fBQUOTE\fR [ \fBAS\fR ] \N'39'\fItırnak\fR\N'39' ]
+\                [ \fBESCAPE\fR [ \fBAS\fR ] \N'39'\fIöncelem\fR\N'39' ]
+\                [ \fBFORCE NOT NULL\fR \fIsütun\fR [, ...] ]
+
+\fBCOPY\fR \fItablo_ismi\fR [ ( \fIsütun\fR [, ...] ) ]
+\    \fBTO\fR { \N'39'\fIdosya_ismi\fR\N'39' | \fBSTDOUT\fR }
+\    [ [\fB WITH\fR ]
+\          [ \fBBINARY\fR ]
+\          [ \fBOIDS\fR ]
+\          [ \fBDELIMITER\fR [ \fBAS\fR ] \N'39'\fIayraç\fR\N'39' ]
+\          [ \fBNULL\fR [ \fBAS\fR ] \N'39'\fIboş_dizge\fR\N'39' ]
+\          [ \fBCSV\fR [ \fBQUOTE\fR [ \fBAS\fR ] \N'39'\fItırnak\fR\N'39' ]
+\                [ \fBESCAPE\fR [ \fBAS\fR ] \N'39'\fIöncelem\fR\N'39' ]
+\                [ \fBFORCE QUOTE\fR \fIsütun\fR [, ...] ]
+.fi
+    
+.SH AÇIKLAMA
+\fBCOPY\fR PostgreSQL tabloları ile standart dosya sistemi dosyaları arasında veri taşımak için kullanılır. \fBCOPY TO\fR bir tablonun içeriğini bir dosyaya, \fBCOPY FROM\fR ise bir dosyadaki veriyi bir tabloya kopyalar (mevcut bir tabloya veri eklemek şeklinde).   
+
+Eğer bir sütun listesi verilmişse, sadece belirtilen sütunların verileri kopyalamaya konu olur. Eğer sütun listesindeki sütunlar, tablodaki sütunların hepsini içermiyorsa, \fBCOPY FROM\fR veri sağlanmamış sütunlara öntanımlı değerlerini yazar.   
+
+Bir dosya ismi ile kullanılan \fBCOPY\fR, PostgreSQL sunucusunun okumak ve yazmak için doğrudan bir dosyaya erişmesini sağlar. Dosya sunucu tarafından erişilebilir olmalı ve dosya ismi sunucuya göre belirtilmelidir. \fBSTDIN\fR veya \fBSTDOUT\fR belirtildiğinde, veri istemci ile sunucu arasındaki bağlantı üzerinden iletilir.   
+
+.SH PARAMETRELER   
+.br
+.ns
+.TP 
+\fItablo_ismi\fR
+Mevcut bir tablonun ismi (şema nitelemeli olabilir).     
+
+.TP 
+\fIsütun\fR
+Kopyalanacak sütunların isteğe bağlı listesi. Bir sütun listesi belirtilmemişse, sütunların hepsi kullanılır.     
+
+.TP 
+\fIdosya_ismi\fR
+Girdi veya çıktı dosyasının mutlak dosya yoluyla ismi.     
+
+.TP 
+\fBSTDIN\fR
+Girdinin istemci uygulamadan geldiğini belirtir.     
+
+.TP 
+\fBSTDOUT\fR
+Çıktının istemci uygulamaya gittiğini belirtir.     
+
+.TP 
+\fBBINARY\fR
+Saklanacak ya da okunacak verinin metin biçiminde değil, ikilik biçimde olacağını belirtir. İkilik kipte \fBDELIMITER\fR, \fBNULL\fR veya \fBCSV\fR seçeneklerini belirtemezsiniz.     
+
+.TP 
+\fBOIDS\fR
+Her satır için nesne kimliklerinin kopyalanacağını belirtir. (Eğer nesne kimlikleri olmayan bir tablo için \fBOIDS\fR belirtilmişse, bir hata oluşur.)     
+
+.TP 
+\fIayraç\fR
+Dosyanın her satırındaki sütunları ayıran tek karakter. Metin kipinde sekme, \fBCSV\fR kipinde virgül öntanımlıdır.     
+
+.TP 
+\fIboş_dizge\fR
+Bir boş değer belirten dizge. Metin kipinde \\N, \fBCSV\fR kipinde tırnak içine alınmamış boş dizge öntanımlıdır. NULL ile boş dizge arasında ayrım yapılmamasını istediğiniz yerlerde metin kipinde bile boş dizge kullanmayı tercih etmelisiniz.      
+
+.RS 
+
+.br
+.ns
+.TP 
+\fBBilgi:\fR
+\fBCOPY FROM\fR kullanırken, bu dizge ile eşleşen her veri öğesi bir NULL değer olarak saklanacaktır, dolayısıyla aynı dizgeyi \fBCOPY TO\fR için de kullanmaya dikkat etmelisiniz.     
+
+.PP
+.RE
+.IP
+
+
+.TP 
+\fBCSV\fR
+Virgül Ayraçlı Değer kipini seçer (\fBCSV\fR \N'45' Comma Separated Value).     
+
+.TP 
+\fItırnak\fR
+\fBCSV\fR kipinde kullanılan tırnak karakterini belirtmek içindir. Çift tırnak (") öntanımlıdır.     
+
+.TP 
+\fIöncelem\fR
+\fBCSV\fR kipindeki \fBQUOTE\fR veri karakteri (genelde çift tırnaktır) veri içinde kullanıldığında bu karakteri önceleyen karakter.     
+
+.TP 
+\fBFORCE QUOTE\fR
+\fBCSV COPY TO\fR kipinde, belirtilen sütunlardaki NULL olmayan değerler için tırnak kullanımını zorunlu hale getirir. NULL değerler asla tırnak içine alınmaz.     
+
+.TP 
+\fBFORCE NOT NULL\fR
+\fBCSV COPY FROM\fR kipinde, belirtilen her sütunun tırnaklı değer içerdiği, dolayısıyla bir NULL değer içermediği kabulü ile işlem yapılır. \fBCSV\fR kipindeki öntanımlı boş dizge (\N'39'\N'39') için, bu seçenek eksik değerlerin sıfır uzunluklu dizge olarak ele alınmasına sebep olur.     
+
+.PP  
+.SH EK BİLGİ
+\fBCOPY\fR sadece normal tablolarla kullanılabilir, sanal tablolarla kullanılamaz.    
+
+\fBBINARY\fR seçeneği, tüm verinin metin değil ikilik biçimde saklanmasına/okunmasına sebep olur. Kısmen daha hızlı olsa da, ikilik biçimli dosyalar makine mimarileri ve farklı PostgreSQL sürümleri arasında daha az taşınabilirdir.    
+
+\fBCOPY TO\fR tarafından okunan tablolarda \fBSELECT\fR, \fBCOPY FROM\fR ile veri girilen tablolarda ise \fBINSERT\fR yetkiniz olmalıdır.    
+
+Bir \fBCOPY\fR cümlesindeki isimli dosyalar istemci tarafından değil, sunucu tarafından okunur/yazılır. Bu nedenle, ya sunucu tarafında olmalı ya da sunucu makinedeki veritabanına erişiminiz olmalıdır. Bunlar PostgreSQL kullanıcısı (sunucuyu çalıştıran kullanıcı) tarafından okuma/yazma anlamında erişebilir olmalıdır, istemcinin değil. Bir dosyaya \fBCOPY\fR isminin verilebilmesi, sunucunun erişebildiği her dosyaya okuma ve yazma yetkisi olduğundan, sadece veritabanı ayrıcalıklı kullanıcı için mümkündür.    
+
+\fBCOPY\fR sözcüğünü \fBpsql\fR\N'39'in \fB\\copy\fR komutuyla karıştırmayın. \fB\\copy\fR komutu \fBpsql\fR istemcisinin erişebildiği bir dosyanın verisini almak/saklamak için \fBCOPY FROM STDIN\fR veya \fBCOPY TO STDOUT\fR çağrısı yapar. Bu nedenle, \fB\\copy\fR kullanıldığında dosyaya erişilebilirlik ve erişim izinleri bakımından sunucu değil istemci etkindir.    
+
+\fBCOPY\fR ile kullanılacak dosyanın daima mutlak dosya yolu ile belirtilmesi önerilir. Bu, \fBCOPY TO\fR durumunda zorunludur, ama \fBCOPY FROM\fR için bir dosyayı göreli dosya yolu ile belirtebilirsiniz; göreli dosya yolu, istemcinin çalışma dizinine göre değil, sunucu sürecinin çalışma dizinine (veri dizininin altında bir yer) göre yorumlanacaktır.    
+
+\fBCOPY FROM\fR hedef tablodaki tetikleri ve sınama kısıtlarını da çağıracaktır. Ancak, kurallar çağrılmayacaktır.    
+
+\fBCOPY\fR girdi ve çıktısı DateStyle  değerinden etkilenecektir. Öntanımlı olmayan DateStyle değerleri kullanabilen diğer PostgreSQL kurulumlarına taşınabilirlik bakımından, \fBCOPY TO\fR kullanmadan önce DateStyle değeri olarak \fBISO\fR belirtmelisiniz.    
+
+\fBCOPY\fR, işlemi ilk hatada durdurur. Bunun \fBCOPY TO\fR için sorunlara yol açmaması gerekir, ama hedef tablo hatadan önceki satırları almış olacaktır. Bu satırlar görünür ve erişilebilir olmayacak ama yine de diskte yer kaplıyor olacaktır. Eğer hata çok büyük bir kopyalama işleminde gerçekleşmişse, bu, diskin önemli bir bölümünün yararsız kullanımına yol açacaktır. Yararsız kısımlardan kurtulmak için \fBVACUUM\fR kullanmayı deneyebilirsiniz.    
+
+.SH DOSYA BİÇİMLERİ   
+.SS Metin Biçimi
+\fBCOPY\fR cümlesi \fBBINARY\fR veya \fBCSV\fR seçenekleri olmaksızın kullanılırken, verinin okunması veya yazılmasında, bir metin dosyasının her satırına bir tablonun bir satırı karşılık getirilir. Bir satırdaki sütunlar ayraç karakteri ile ayrılırlar. Sütunların değerleri ya çıktı işlevleri tarafından üretilmiş ya da girdi işlevleri tarafından özniteliklerinin veri türünde oldukları kabul edilen dizgelerdir. Belirtilen boş dizgeler sütunlara NULL değerler olarak yerleştirilir. Eğer girdi dosyasının bir satırı umulandan daha az ya da daha fazla sütun içeriyorsa, \fBCOPY FROM\fR bir hata oluşturacaktır. Eğer \fBOIDS\fR belirtilmişse, nesne kimliği, veri sütunlarından önce, ilk sütun olarak okunur ya da yazılır.    
+
+Verinin sonu sadece bir tersbölü ve nokta (\\.) içeren  tek bir satırla ifade edilebilir. Veri dosyadan okunurken veri sonunun imlenmesi, dosya sonu zaten iyi algılanabildiğinden gerekli değildir; sadece 3.0 öncesi istemci protokolünü kullanan istemci uygulamaları ile veri kopyalanırken gerekli olur.    
+
+Sütun verisi içinde ayraç ve tırnak karakterleri kullanılırken, bunların ayraç ve tırnak karakterleri olarak algılanmaması için tersbölü karakteri (\\) bunları öncelemekte kullanılabilir. Bir sütun değerinin içinde yer aldığında bir tersbölü ile öncelenmesi gereken karakterler şunlardır: tersbölü karakterinin kendisi, satırsonu, satırbaşı karakterleri ile ayraç ve tırnak olarak kullanılan karakterler.    
+
+Belirtilmiş bir boş dizge \fBCOPY TO\fR tarafından tersbölü eklenmeden gönderilir; bunun aksine, \fBCOPY FROM\fR girdi olan boş dizgeyi tersbölüleri silmeden önce eşleştirir. Bu nedenle, \\N gibi bir boş dizge aslında bir veri değeri olan \\N ile karışmaz (\\\\N olarak ifade edildiğinden).    
+
+\fBCOPY FROM\fR tarafından tanınan tersbölü öncelemeli dizgeler:    
+
+
+.RS 4
+.nf
+\ Dizge          Anlamı
+\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'       \N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'
+\  \\b           Terbölü (ASCII 8)
+\  \\f           Sayfa ileri (ASCII 12)
+\  \\n           Satırsonu (ASCII 10)
+\  \\r           Satırbaşı (ASCII 13)
+\  \\t           Sekme (ASCII 9)
+\  \\v           Düşey sekme (ASCII 11)
+\  \\rakamlar    tersbölüden sonra gelen sekizlik tabandaki üç rakam
+\               bir karakterin sayısal değerini belirtir
+.fi
+.RE    
+
+Şu an, \fBCOPY TO\fR tersbölü karakterini izleyen sekizlik rakamlar çıktılamayacak, ama yukarıda listelenmiş diğer dizgeleri kullanacaktır.    
+
+Yukarıdaki listede belirtilmemiş ama terbölü öncelemeli olarak belirtilmiş başka karakterler de olabilir, bu karakterler kendileri olarak değerlendirilecektir. Yine de tersbölülerin gereksiz yere kullanılmasından kaçınılmalıdır, çünkü istemeden veri sonunu imleyen \\. ile boş dizgeyi imleyen \\N dizgeleri üretilebilir. Bu dizgeler, bir tersbölü işlemi yapılmadan önce algılanmaya çalışılacaktır.    
+
+\fBCOPY\fR için veri üreten uygulamaların veri içindeki satırsonu ve satırbaşı karakterlerini mutlaka \\n ve \\r dizgelerine dönüştürerek döndürmeleri önerilir. Şimdilik bu karakterler bu dizgelerle gösterilebiliyor olsa da ileride bu gösterimler kabul edilmeyebilir. Ayrıca bu karakterler, bilhassa dosyanın farklı makineler arasında aktarılması sırasında (örneğin, Unix ile Windows) bozulmalara yol açabilir.    
+
+\fBCOPY TO\fR her satırı Unix tarzı satırsonu ("\\n") ile sonlandıracaktır. Microsoft Windows üzerinde çalışan sunucular ise bunun yerine satırbaşı/satırsonu ("\\r\\n") çıktılayacaktır, fakat sadece bir sunucu dosyasına kopyalama için; platformlar arasında tutarlılığı sağlamak için \fBCOPY TO STDOUT\fR sunucu platformundan bağımsız olarak daima "\\n" gönderecektir. \fBCOPY FROM\fR satırsonları ister satırbaşı, ister satırsonu, ister satırbaşı/satırsonu ile bitsin, satırları düzgün olarak elde edebilir. Veri içinde tersbölü ile öncelenmemiş satırsonu ve satırbaşı karakterlerinden dolayı hata oluşması riskini en aza indirmek için \fBCOPY FROM\fR satırsonlarının beklendiği gibi bitmediğinden şikayet edecektir.    
+
+.SS CSV Biçimi
+Bu biçim, hesap çizelgesi uygulamaları gibi başka uygulamalarla veri alışverişi yapmak için kullanılır. Bu kipte, PostgreSQL\N'39'in standart metin kipi tarafından kullanılan önceleme mekanizması yerine, bilinen CSV önceleme mekanizması kullanılır.    
+
+Her kayıttaki değerler \fBDELIMITER\fR karakteri ile ayrılır. Eğer değer ayraç karakteri, \fBQUOTE\fR karakteri, NULL dizge, bir satırsonu ya da satırbaşı karakteri içeriyorsa, değerin tamamı \fBQUOTE\fR karakterleri ile sarmalanır ve değerin içindeki \fBQUOTE\fR veya \fBESCAPE\fR karakteri önceleme karakteri ile öncelenir. Ayrıca, belli sütunlarda NULL olmayan değerleri çıktılarken mutlaka tırnak kullanılacağını belirtmek için \fBFORCE QUOTE\fR kullanabilirsiniz.    
+
+\fBCSV\fR biçiminde, bir NULL değeri bir boş dizgeden ayırmanın standart bir yolu yoktur. PostgreSQL\N'39'in \fBCOPY\fR oluşumu bunu tırnaklarla elde eder. Bir NULL, NULL dizge olarak çıktılanır ve tırnak içine alınmazken, NULL dizge ile eşleşen bir veri değeri tırnak içine alınır. Bu nedenle, öntanımlı ayarları kullanarak, bir NULL dizge tırnak içine alınmamış bir boş dizge olarak yazılırken, bir boş dizge tırnakların içine alınarak ("") yazılır. Değerlerin okunması da benzer şekilde yapıllır. Belli sütunlar için NULL dizge karşılaştırmasını önlemek için \fBFORCE NOT NULL\fR kullanabilirsiniz.    
+
+.br
+.ns
+.TP 
+\fBBilgi:\fR
+CSV kipi gömülü satırsonu ve satırbaşı karakterleri içeren tırnak içine alınmış değerlerli CSV dosyalarını tanır ve bunları üretir. Bu bakımdan bu dosyaların metin kipindeki gibi her satırı bir tablo satırına karşılık gelmeyebilir. Eğer CSV dosyası, kendisinde kullanılan satır sonlandırma uzlaşımıyla uyuşmayan, gömülü satır sonlandırma karakterleri içeren alanlar içeriyorsa, PostgreSQL\N'39'in \fBCOPY\fR oluşumu bu dosyayı girdi olarak reddedecektir. Bu nedenle, gömülü satır sonlandırma karakterleri içeren verinin CSV kipinde değil, metin ya da ikilik kipte alınması daha güvenli olur.     
+
+Çoğu uygulama standarddan çok bir uzlaşımın sonucu gibi görünen dosya biçimli, tuhaf CSV dosyalar üretir. Bu bakımdan, bu mekanizmanın bazı dosyaları kabul etmediğini ya da \fBCOPY\fR oluşumunun ürettiği dosyaların başka uygulamalar tarafından işlenemediğini keşfedebilirsiniz.     
+
+.PP
+
+.SS İkilik Biçim
+\fBCOPY BINARY\fR için kullanılan dosya biçimi PostgreSQL 7.4\N'39'de değişmiştir. Yeni dosya biçimi, bir dosya başlığı, sıfır ya da daha fazla sayıda satır verisi içeren demet ve bir dosya kuyruğu içerir. Başlık ve veri şimdi ağ bayt sıralamasındadır.    
+
+.B Dosya başlığı
+.RS 4
+Dosya başlığı, değişken uzunluktaki başlık ek veri alanı ile biten, 15 baytlık sabit uzunlukta  bir alandan oluşur. Sabit uzunluklu alanlar şunlardır:     
+
+.br
+.ns
+.TP 4
+İmza
+11 bayt uzunluktaki PGCOPY\\n\\377\\r\\n\\0 dizgesi; bu dizgenin sonundaki boş karakter (\\0) imzanın bir parçası olarak gereklidir. (Bu imza, temiz 8 bitlik olmayan bir aktarımla anlaşılırlığı bozulan dosyaların kolayca tanımlanabilmesi için tasarlanmıştır. Bu imza, böyle bir aktarımda, satırsonu dönüşüm süzgeçleri, boş karakterlerin kaldırılması, eşlik değişiklikleri ya da yüksek bitlerin kaldırılmasıyla değiştirilecektir.)        
+
+.TP 4
+Seçenekler alanı
+Dosya biçiminin önemli niteliklerini açıklayan 32 bitlik tamsayı bit maskesi. Bitler 0\N'39'dan (LSB) 31\N'39'e (MSB) kadar numaralanmıştır. Bu alan da, dosya biçiminin diğer tamsayı alanları gibi ağ bayt sıralamasında (en kıymetli bayt ilk bayttır) saklanmıştır. 16\N'45'31 arasındaki bitler dosya biçimi bakımından yaşamsal önemdeki nitelikler için yedek olarak ayrılmıştır; bir okuyucu bu bitlerden beklenmeyen birinin etkin olduğunu saptarsa, dosyayı reddetmelidir. 0\N'45'15 arasındaki bitler ise dosya biçiminin geriye doğru uyumluluğu ile ilgili alanlar için ayrılmıştır; bir okuyucu bu bitlerden beklenmeyen birinin etkin olduğunu saptarsa, bunu yoksaymalıdır. Şimdilik sadece bir bit tanımlıdır, kalan bitler sıfır olmalıdır:       
+
+.RS 4
+
+.br
+.ns
+.TP 4
+Bit 16
+Bu bit 1 ise, veri, nesne kimliklerini içeriyor, 0 ise içermiyor demektir.           
+
+.PP
+.RE
+.IP
+
+
+.TP 4
+Başlık ek veri alanı uzunluğu
+Kendisi hariç, başlığın kalanının bayt cinsinden uzunluğunu veren 32 bitlik bir tamsayı. Şimdilik bu alanın değeri sıfırdır ve hemen ardından ilk demet gelmektedir. İleride başlığın ek veriler içermesi gerekirse bu değişebilir. Bir okuyucu böyle bir ek veriye rastlarsa ve onunla ne yapacağını bilmiyorsa, basitçe atlaması önerilir.        
+
+.PP     
+
+Başlığın ek veri alanının kendinden menkul parçalardan oluşacağı düşünülmüştür. Bayrakları içeren alan ise okuyucuya ek veri alanında nelerin bulunduğunu açıklamak için tasarlanmamıştır. Başlığın ek veri alanının neleri içereceği daha sonraki dağıtımlara bırakılmıştır.     
+
+Bu tasarım, hem geriye uyumlu başlık eklemelerine (başlık ek veri parçaları veya düşük baytlardaki ek seçenek bitleri) hem de geriye uyumlu olmayan değişikliklere (yüksek baytlardaki seçenek bitleri bu değişiklikleri belirtmek için kullanılabileceği gibi gerekirse destek verisi ek veri alanına eklenebilir) izin verir.     
+    
+.RE
+
+.B Demetler
+.RS 4
+Her demet, içindeki alan sayısını belirten 16 bitlik bir tamsayı ile başlar. (Şimdilik, bir tablo aynı sayıda alan içereceğinden tüm demetlerin aynı sayıda alan içereceği belli ise de bu her zaman doğru olmayabilir.) Bundan sonra alanlar gelir. Her alan, alan uzunluğunu belirten 32 bitlik bir tamsayı ile başlar (bu tamsayı, alan uzunluğuna dahil değildir ve sıfır da olabilir). Özel bir durum olarak \N'45'1 değeri bir NULL alan değeri belirtir ve bu alan sıfır uzunluktadır.     
+
+Alanlar arasında adımlama anlamında herhangi bir ek alan bulunmaz.     
+
+Şimdilik, bir \fBCOPY BINARY\fR dosyasındaki tüm veri değerlerinin ikilik biçimde olacağı kabul edilmektedir. Gelecekte, sütun biçim kodlarının belirtileceği bir başlık alanının eklenebileceği umulmaktadır.     
+
+Demet verisinin ikilik biçimini daha iyi anlayabilmek için PostgreSQL\N'39'in kaynak dosyalarına bakınız. Her sütunun veri türü *send ve *recv işlevlerinde görülebilir. Bu işlevler genellike kaynak paketinin src/backend/utils/adt/ dizininde bulunur.     
+
+Nesne kimlikleri dosyada bulunuyorsa, OID alanı alan sayısını belirten tamsayıdan hemen sonra gelir ve alan sayısına dahil edilmemesi dışında normal bir alandır. Yani, normal alanlar gibi uzunluğunu belirten bir tamsayı ile başlar. Böylece 4 baytlık ve 8 baytlık nesne kimliklerinin belirtilebilmesi mümkün olur, hatta istenirse, nesne kimliklerinin boş olarak gösterilmesini de mümkün kılar.     
+
+.RE
+
+.B Dosya Kuyruğu
+.RS 4
+Dosya kuyruğu \N'45'1 içeren 16 bitlik bir tamsayıdan oluşur. Bu, bir demetin alan sayısı değerinden kolayca ayrılır.     
+
+Eğer alan sayısını belirten tamsayı ne \N'45'1 ne de umulan sütun sayısını içeriyorsa, okuyucunun bir hata raporlaması gerekir. Bu, verinin düzgün olarak alınıp alınmadığıyla ilgili ek bir sınama da sağlar.     
+
+.RE
+  
+.SH ÖRNEKLER
+Alan ayracı olarak | kullanarak istemciye bir tablonun kopyalanması:   
+
+
+.RS 4
+.nf
+COPY country TO STDOUT WITH DELIMITER \N'39'|\N'39';
+.fi
+.RE   
+
+Verinin bir dosyadan country tablosuna kopyalanması:   
+
+
+.RS 4
+.nf
+COPY country FROM \N'39'/usr1/proj/bray/sql/country_data\N'39';
+.fi
+.RE   
+
+\fBSTDIN\fR\N'39'den bir tabloya kopyalanmaya uygun veri örneği:   
+
+
+.RS 4
+.nf
+AF      AFGHANISTAN
+AL      ALBANIA
+DZ      ALGERIA
+ZM      ZAMBIA
+ZW      ZIMBABWE
+.fi
+.RE   
+
+Burada her satırın içindeki boşluklar aslında birer sekme karakteridir.   
+
+Aşağıda aynı veri ikilik biçimde çıktılanmıştır. Buradaki veri bir Unix aracı olan \fBod \N'45'c\fR ile süzüldükten sonra gösterilmiştir. Tablo üç alana sahiptir; ilk alan char(2) türünde, ikinci alan text türünde, üçüncü alan ise integer türündedir. Tüm satırların üçüncü sütunları birer NULL değer içermektedir.   
+
+
+.nf
+0000000   P   G   C   O   P   Y  \\n 377  \\r  \\n  \\0  \\0  \\0  \\0  \\0  \\0
+0000020  \\0  \\0  \\0  \\0 003  \\0  \\0  \\0 002   A   F  \\0  \\0  \\0 013   A
+0000040   F   G   H   A   N   I   S   T   A   N 377 377 377 377  \\0 003
+0000060  \\0  \\0  \\0 002   A   L  \\0  \\0  \\0 007   A   L   B   A   N   I
+0000100   A 377 377 377 377  \\0 003  \\0  \\0  \\0 002   D   Z  \\0  \\0  \\0
+0000120 007   A   L   G   E   R   I   A 377 377 377 377  \\0 003  \\0  \\0
+0000140  \\0 002   Z   M  \\0  \\0  \\0 006   Z   A   M   B   I   A 377 377
+0000160 377 377  \\0 003  \\0  \\0  \\0 002   Z   W  \\0  \\0  \\0  \\b   Z   I
+0000200   M   B   A   B   W   E 377 377 377 377 377 377
+.fi   
+
+.SH UYUMLULUK
+SQL standardında \fBCOPY\fR diye bir deyim yoktur.   
+
+Aşağıdaki sözdizimi PostgreSQL\N'39'in 7.3 sürümünden önce kullanılmaktaydı ve hala desteklenmektedir:   
+
+
+.nf
+\fBCOPY\fR [ \fBBINARY\fR ] \fItablo_ismi\fR [ \fBWITH OIDS\fR ]
+\    \fBFROM\fR { \N'39'\fIdosya_ismi\fR\N'39' | \fBSTDIN\fR }
+\    [ [\fBUSING\fR] \fBDELIMITERS\fR \N'39'\fIayraç\fR\N'39' ]
+\    [ \fBWITH NULL AS\fR \N'39'\fIboş_dizge\fR\N'39' ]
+
+\fBCOPY\fR [ \fBBINARY\fR ] \fItablo_ismi\fR [ \fBWITH OIDS\fR ]
+\    \fBTO\fR { \N'39'\fIdosya_ismi\fR\N'39' | \fBSTDOUT\fR }
+\    [ [\fBUSING\fR] \fBDELIMITERS\fR \N'39'\fIayraç\fR\N'39' ]
+\    [ \fBWITH NULL AS\fR \N'39'\fIboş_dizge\fR\N'39' ]
+.fi
+
+
+.SH ÇEVİREN
+Nilgün Belma Bugüner <nilgun (at) belgeler·gen·tr>, Nisan 2005 
+ 
+    

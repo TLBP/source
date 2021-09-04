@@ -1,0 +1,1323 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--DOCTYPE article SYSTEM "../../docbook/dtd/docbookx.dtd"-->
+<!-- ********************************************************************
+     $Id: DNS-NASIL.xml,v 1.4 2002/09/30 18:21:13 nilgun Exp $
+     ******************************************************************** -->
+
+<article id="dns-nasil" lang="tr">
+<?dbhtml dir="../howto"?>
+  <articleinfo>
+    <title>DNS NASIL</title>
+    <authorgroup>
+      <author role="translator">
+        <firstname>Onur Volkan</firstname>
+        <surname>Hatem</surname>
+        <affiliation>
+          <address>
+            <email>volkan@compclup.ceng.metu.edu.tr</email> veya
+            <email>hatem@ceng.metu.edu.tr</email>
+          </address>
+        </affiliation>
+      </author>
+      <author>
+        <firstname>
+        Nicolai Langfeldt
+        </firstname>
+        <affiliation>
+          <address>
+            <email>janl@math.uio.no</email>
+          </address>
+        </affiliation>
+      </author>
+    </authorgroup>
+
+    <revhistory>
+      <para><emphasis role="bold">Bu çevirinin sürüm bilgileri:</emphasis></para>
+      <revision>
+         <revnumber>0.1</revnumber>
+         <date>?</date>
+         <authorinitials>Onur Volkan HATEM <email>volkan@compclup.ceng.metu.edu.tr</email></authorinitials>
+      </revision>
+    </revhistory>
+    <revhistory>
+      <para><emphasis role="bold">Özgün belgenin sürüm bilgileri:</emphasis></para>
+      <revision>
+         <revnumber>1.1</revnumber>
+         <date>30 Haziran 1996</date>
+         <authorinitials>
+           Nicolai Langfeldt <email>janl@math.uio.no</email>
+         </authorinitials>
+      </revision>
+    </revhistory>
+
+    <abstract>
+      <para>
+        Nasıl (en kısa sürede) DNS yöneticisi olunur.
+      </para>
+      <para>
+        Bu belge, çevirmeninden değil, internetteki kaynaklardan birinden alındı.
+        Çevirisi eksik kalmış (ya da kaybolmuş) bölümleri var.
+      </para>
+    </abstract>
+  </articleinfo>
+
+  <sect1 id="dns-nasil_preample">
+    <title>Nasıl (en kısa sürede) DNS yöneticisi olunur</title>
+    <para>
+      Anahtar sözcükler: DNS, bind, named, dialup, ppp, slip, İnternet, domain
+      (alan), name (ad), hosts (...), resolving (çözümleme)
+    </para>
+    <sect2>
+      <title>Legal Stuff - Yasal Açıklamalar</title>
+      <para>
+        ©opyright 1995 Nicolai Langfeldt. Do not modify without amending copyright,
+        distribute freely but retain copyright message. The author wishes to thank
+        Arnt Gulbrandsen who read the drafts to this work countless times and
+        provided many useful suggestions.
+      </para>
+      <para>
+        ©opyright 1995 Nicolai Langfeldt. Telif hakkı ile uyuşmayan değişiklikler
+        yapmaktan kaçınınız, telif hakkı yazısı ıle birlikte olması şartıyla
+        serbestçe dağıtabilirsiniz.
+      </para>
+    </sect2>
+  </sect1>
+
+  <sect1 id="dns-nasil_intro">
+    <title>Giriş</title>
+    <para>
+      <emphasis role="bold">Nedir, ne değildir?</emphasis>
+    </para>
+    <para>
+      DNS (alan adı sistemi), ağ yöneticiliğinin en az anlaşılan alanlarından
+      biridir. Bu "NASIL" bazı şeyleri biraz daha açık hale getirecek.
+      Bu döküman <emphasis>basit</emphasis> bir DNS ad sunucusunun nasıl
+      kurulacağını anlatmaktadır.
+      Daha karmaşık kurulumlar için "Gerçek Dökümanlar"ı
+      <emphasis>okumanız</emphasis> gerekiyor.  "Gerçek Dökümanlar"ın neler
+      içerdiğini <xref linkend="dns-nasil_bigger"/> bölümünde anlatacağım.
+    </para>
+    <para>
+      Bu dökümanı okumaya başlamadan önce bilgisayarınızın ağ yapılandırmasının
+      (network configuration) tamamlanmış olması gerekmektedir. Yani
+      bilgisayarınızdan dışarıya, dışarıdan bilgisayarınıza her türlü ağ
+      bağlantısının yapılabiliyor olması gerekiyor. Özellikle <literal>127.0.0.1</literal>
+      adresine <literal>telnet</literal> bağlantısı kurdugunuzda kendi
+      bilgisayarınıza bağlanabiliyor olmalısınız. Buna ek olarak, başlarken,
+      <literal>/etc/host.conf</literal>, <literal>/etc/resolv.conf</literal> ve
+      <literal>/etc/hosts</literal> dosyalarının iyi bir şekilde yapılandırılmış
+      olmaları gerekiyor. Bu dosyaların ne yaptıkları ve nasıl yapılandırıldıkları
+      bu dökümanda anlatılmamaktadır. Eger az önce saydığım kurulumlar tamam
+      değilse "NET-2 HOWTO" dökümanını okumanız gerekecek.
+    </para>
+    <para>
+      Eğer <literal>SLIP</literal> veya <literal>PPP</literal> kullanıyorsanız
+      onların da calışır durumda olmaları gerekmektedir (Bkz. PPP HOWTO).
+    </para>
+    <para>
+      <emphasis>Makineniz</emphasis> dediğimde üzerine DNS kurmaya çalıştığınız
+      bilgisayarı kastediyor olacağım. Ağ yapılandırmanızla ilgili olan diğer
+      bilgisayar(lar)ınızı değil.
+    </para>
+    <para>
+      "Ad sorguları"nı (name queries) engelleyen bir "firewall" un arkasında
+      olmadığınızı varsayıyorum. Eger bu tür bir yapılandırmanın ardındaysanız
+      <xref linkend="dns-nasil_qanda"/> bölümünü okumanız gerekiyor.
+    </para>
+    <para>
+      Ad sunuculugu UNIX'te <literal>named</literal> adı verilen bir programla
+      yapılır. <literal>Named</literal>, eşgüdümü <emphasis>The Internet Software
+      Consortium</emphasis> (İnternet Yazılım Konsorsiyumu) için Paul Vixie
+      tarafından yapılan <literal>BIND</literal> pakedinin bir parçasıdır.
+      <literal>Named</literal> bir çok Linux dağıtımına dahil edilir ve genellikle
+      <literal>/usr/sbin/named</literal> olarak kurulur. Eğer
+      <literal>named</literal>'niz varsa muhtemelen kullanabiliyor olacaksınız;
+      yoksa derlenmiş <literal>named</literal>'yi bir Linux ftp sunucusundan
+      (<ulink url="ftp://ftp.metu.edu.tr/pub/sunsite">ftp.metu.edu.tr/pub/sunsite
+      </ulink>) ya da kaynak kodunun son sürümünü <ulink
+      url="ftp://ftp.vix.com/pub/bind">ftp.vix.com/pub/bind</ulink>'dan
+      alabilirsiniz.
+    </para>
+    <para>
+      DNS Internet üzerinde dağıtık bir veri tabanıdır. Nasıl kurduğunuza dikkat
+      edin. Yapacağınız yanlış bir hareket diğer insanları da etkileyecektir.
+      DNS'iniz tutarlı ve düzgün olduğu sürece iyi bir hizmet alırsınız.
+    </para>
+    <para>
+      Bu belgede bazı şeyleri basite indirgemek için bir takım varsayımlar yaptım
+      (yarı gerçekler de diyebiliriz). Söylediklerime inanırsanız çalısır durumda
+      bir sisteminiz olacak.
+    </para>
+    <tip>
+      <para>
+        Değiştirmenizi isteyeceğim (eğer varsa) tüm dosyaların yedeğini alın ki
+        bir şeyler ters giderse sisteminizi eski, çalışır haline geri
+        getirebilesiniz.
+      </para>
+    </tip>
+  </sect1>
+
+  <sect1 id="dns-nasil_caching">
+    <title>"caching only" Ad sunucusu</title>
+    <para>
+      <emphasis role="bold">DNS yapılandırmasında ilk deneme olan bu kısım
+      dialup kullanıcıları için çok kullanışlıdır.</emphasis>
+    </para>
+    <para>
+      "Cache only" ad sunucusu ad sorgularınızın cevabını bulacak ve bir daha
+      ihtiyacınız olduğunda cevabı hatırlayacaktır.
+    </para>
+    <para>
+      Öncelikle <literal>/etc/named.conf</literal> adlı dosyaya ihtiyacınız
+      olacak. <literal>Named</literal> ilk çalıştığında bu dosyayı okur.
+      Şimdilik sadece şunları kapsaması yeterli olacak:
+    </para>
+    <para>
+<programlisting>
+;       nicholais caching ad sunucusu için açılış dosyası
+;
+directory /var/named
+;
+;       type    domain                  kaynak dosya ya da host
+cache           .                       root.cache
+primary         0.0.127.in-addr.arpa    pz/127.0.0
+</programlisting>
+    </para>
+    <para>
+      `<literal>directory</literal>' (dizin) satırı named'ye dosyalar için
+      nereye bakması gerektiğini söyler. Gerekli diğer dosyaların yerleşimleri
+      bu dizinin altında olacaktır. Linux Dosya-sistemi Standart'ına göre bu
+      dizin <literal>/var/named</literal>'dir. Bence
+      <literal>/local/named</literal> daha uygun bir dizindir ama standartlara
+      uymakta yarar var.
+    </para>
+    <para>
+      Bu kurulumda cache dosyası olan <literal>/var/named/root.cache</literal>
+      şunları kapsamalıdır:
+<programlisting>
+ .       518400  NS      D.ROOT-SERVERS.NET.
+ .       518400  NS      E.ROOT-SERVERS.NET.
+ .       518400  NS      I.ROOT-SERVERS.NET.
+ .       518400  NS      F.ROOT-SERVERS.NET.
+ .       518400  NS      G.ROOT-SERVERS.NET.
+ .       518400  NS      A.ROOT-SERVERS.NET.
+ .       518400  NS      H.ROOT-SERVERS.NET.
+ .       518400  NS      B.ROOT-SERVERS.NET.
+ .       518400  NS      C.ROOT-SERVERS.NET.
+ ;
+ D.ROOT-SERVERS.NET.     3600000 A       128.8.10.90
+ E.ROOT-SERVERS.NET.     3600000 A       192.203.230.10
+ I.ROOT-SERVERS.NET.     3600000 A       192.36.148.17
+ F.ROOT-SERVERS.NET.     3600000 A       192.5.5.241
+ G.ROOT-SERVERS.NET.     3600000 A       192.112.36.4
+ A.ROOT-SERVERS.NET.     3600000 A       198.41.0.4
+ H.ROOT-SERVERS.NET.     3600000 A       128.63.2.53
+ B.ROOT-SERVERS.NET.     3600000 A       128.9.0.107
+ C.ROOT-SERVERS.NET.     3600000 A       192.33.4.12
+</programlisting>
+    </para>
+    <para>
+      Bu dosya dünyadaki "root sunucular"ı listeler. Bu liste zamanla
+      değişmektedir ve yeniden düzenlenmesi gerekecektir. Bu dosyayı güncel
+      tutmak için <xref linkend="dns-nasil_maint"/> bölümüne bakınız.
+    </para>
+    <para>
+      <literal>named.boot</literal> dosyasındaki ikinci satır
+      <literal>primary</literal> satırıdır. Nasıl kullanıldığını bir sonraki
+      bölümde anlatacağım. Şimdilik bu dosyayı <literal>127.0.0</literal> adıyla
+      <literal>pz</literal> altdizinine yerleştirin:
+    </para>
+    <para>
+<programlisting>
+;       /var/named/pz/127.0.0
+@               IN      SOA     linux.bogus. hostmaster.linux.bogus. (
+                                1       ; Serial
+                                28800   ; Refresh
+                                7200    ; Retry
+                                604800  ; Expire
+                                86400)  ; Minimum TTL
+                        NS      ns.linux.bogus.
+1                       PTR     localhost.
+</programlisting>
+    </para>
+    <para>
+      Bir sonraki adımda aşağıdakine benzeyen bir <literal>/etc/resolv.conf</literal>
+      dosyası gerekecek:
+<programlisting>
+  search alt-alan.sizin-alan.edu sizin-alan.edu
+  nameserver 127.0.0.1
+</programlisting>
+    </para>
+    <para>
+      <literal>search</literal> (ara) satırı bağlanmak isteyeceğiniz adlar için
+      hangi alanlara bakılması gerektigini belirtir.
+    </para>
+    <para>
+      <literal>nameserver</literal> (ad sunucusu) bilgisayarınızın ad sunucusuna
+      ulaşabileceği adresi gösterir. Şu anda bu adres kendi bilgisayarınıza işaret
+      etmektedir. (Not: <literal>named</literal> bu dosyayı hiçbir zaman okumaz,
+      sadece <literal>resolver</literal> (çözümleyici) için gereklidir.)
+      Bu dosyanın ne yaptığını göstermek için:
+    </para>
+    <para>
+      Eğer bir istemci "sunsite.unc.edu" adına bakacak olursa adres bulunana kadar sırasıyla
+<programlisting>
+    "foo.alt-alan.sizin-alan.edu"
+    "foo.sizin-alan.edu"
+    "foo"
+</programlisting>
+      adları denenecektir.
+    </para>
+    <para>
+      Eğer bir istemci "foo" adına bakacak olursa adres bulunana kadar sırasıyla
+<programlisting>
+    "sunsite.unc.edu.alt-alan.sizin-alan.edu"
+    "sunsite.unc.edu.sizin-alan.edu"
+    "sunsite.unc.edu"
+</programlisting>
+      adları denenecektir.
+    </para>
+    <para>
+      Arama süresini uzatacağından <literal>search</literal> satırına çok sayıda
+      alan adı koymak istemeyebilirsiniz.
+    </para>
+    <para>
+      Aşağıdaki örnek <literal>alt-alan.sizin-alan.edu</literal> alanına ait olduğunuzu
+      varsayar. Bu durumda bilgisayarınızın adresi
+      <literal>bilgisayarınız.alt-alan.sizin-alan.edu</literal> olacaktır.
+      <literal>search</literal> satırı en üst alan adını kapsamamalıdır (Bu durumda
+      <literal>TLD</literal> -en üst alan- <literal>edu</literal> dur). Eğer başka
+      bir alana ait bilgisayarlara çok sık erişme gereksinimi duyuyorsanız aşağıdaki
+      gibi bir arama satırını <literal>/etc/resolv.conf</literal> dosyasına
+      ekleyebilirsiniz:
+<programlisting>
+search alt-alan.sizin-alan.edu. sizin-alan.edu. diğer-alan.com.
+</programlisting>
+    </para>
+    <para>
+      Daha sonra <literal>libc</literal>'nizin sürümüne bağlı olarak
+      <literal>/etc/nsswitch.conf</literal> ya da <literal>/etc/host.conf</literal>
+      dosyasını düzeltmeniz gerekecektir. <literal>/etc/nsswitch.conf</literal>
+      değişik veri türlerini hangi dosya ya da veri tabanlarından alacağınızı
+      gösteren uzun bir dosyadır. Genellikle baş kısmında kullanışlı notlar içerir.
+      <literal>hosts:</literal> ile başlayan satırı bulun, ilgili satır şu şekilde
+      olmalı:
+<programlisting>
+hosts:      files dns
+</programlisting>
+    </para>
+    <para>
+      Eğer <literal>hosts:</literal> ile başlayan bir satır yoksa ekleyin. Bu
+      satır öncelikle <literal>/etc/host.conf</literal> dosyasına daha sonra
+      dns'e bakılması gerektiğini söyler.
+    </para>
+    <para>
+      <literal>/etc/host.conf</literal> muhtemelen sadece birkaç satır içeriyor
+      olacaktır. <literal>order</literal> ile başlayan satırı bulun ve aşağıdaki
+      gibi olacak şekilde değiştirin:
+<programlisting>
+order hosts,bind
+</programlisting>
+    </para>
+    <para>
+      Eğer <literal>order</literal> satırı yoksa ekleyin. Bu satır ad çözümleyen
+      yordamlara öncelikle <literal>/etc/hosts</literal> dosyasına bakılmasını,
+      başarısız olunması halinde ad sunucusuna (sizin <literal>resolv.conf</literal>
+      dosyanızda <literal>127.0.0.1</literal> olan) bakılmasını soyler. Adı geçen
+      dosyalar <literal>resolv(8) man</literal> dosyasında anlatılmaktadır (Bu
+      dosyayı gormek için <literal>man 8 resolv</literal> komutunu verin).
+    </para>
+    <sect2 id="dns-nasil_starting">
+      <title>Named'yi çalıştırmak</title>
+      <para>
+        <literal>Named</literal>yi çalıştırma zamanı geldi. Eger dialup bağlantı
+        kullanıyorsanız önce bağlantıyı kurun. Daha sonra "ndc start" yazın.
+        Çalışmayacak olursa <literal>/usr/sbin/ndc start</literal>'ı deneyin.
+        Şimdi kurulumunuzu test edebilirsiniz. <literal>tail -f /var/adm/messages</literal>
+        komutunu verdiğinizde (<literal>syslog</literal> mesaj dosyasına halen
+        yazılmakta olan mesajları gösterir) aşağıdakilere benzer satırlar
+        görmelisiniz:
+<programlisting>
+ Jun 30 21:50:55 roke named[2258]: starting.  named 4.9.4-REL Sun
+ Jun 30 21:29:0 3 MET DST 1996   janl@roke.slip.ifi.uio.no:/var/tmp/bind/named
+ Jun 30 21:50:55 roke named[2258]: cache zone "" loaded (serial 0)
+ Jun 30 21:50:55 roke named[2258]: primary zone "0.0.127.in-addr.arpa" loaded
+ (serial 1)
+</programlisting>
+      </para>
+      <para>
+        Eğer bir hata mesajı görecek olursanız mesajın içinde ilgili dosyanın adını
+        arayın (umarım <literal>named.boot</literal> ya da <literal>named.cache</literal>
+        dosyalarından biridir :-) <literal>Named</literal>yi öldürün (kill pid) ve
+        ilgili dosyayı yeniden gözden geçirin.
+<programlisting>
+  $ nslookup
+  Default Server:  localhost
+  Address:  127.0.0.1
+
+  >
+</programlisting>
+      </para>
+      <para>
+        <literal>nslookup</literal> çalıştırıldıktan sonra gördükleriniz yukarıdakiler
+        gibiyse her şey yolunda demektir. Başka bir şey görecek olursanız şu ana kadar
+        yaptıklarınızı gözden geçirmeniz gerekecek. <literal>named.boot</literal>
+        dosyanızı her değiştirdiğinizde <literal>named</literal>'yi
+        <literal>ndc restart</literal> komutuyla yeniden çalıtırmanız gerekecektir.
+      </para>
+      <para>
+        imdi bir sorgu denemesi yapabilirsiniz. Yakınınızdaki bir bilgisayara bakmayı
+        deneyin.
+<programlisting>
+  > eel.cc.metu.edu.tr
+  Server:  localhost
+  Address:  127.0.0.1
+
+  Name:  eel.cc.metu.edu.tr
+  Address: 144.122.202.113
+</programlisting>
+      </para>
+      <para>
+        <literal>nslookup</literal> <literal>named</literal>'nin
+        <literal>eel.cc.metu.edu.tr</literal> adresini aramasını istedi, daha sonra
+        <literal>root.cache</literal> dosyanızdaki root sunuculardan birine bağlandı
+        ve nereye bakması gerektiğini sordu. Sonucu almak için
+        <literal>/etc/resolv.conf</literal> dosyanızda sıralamış olduğunuz tüm
+        alanların taranması gerekeceğinden biraz beklemeniz gerekebilir.
+      </para>
+      <para>
+        Tekrar deneyecek olursanız:
+<programlisting>
+  > eel.cc.metu.edu.tr
+  Server:  localhost
+  Address:  127.0.0.1
+
+  Non-authoritative answer:
+  Name:  eel.cc.metu.edu.tr
+  Address: 144.122.202.113
+</programlisting>
+      </para>
+      <para>
+        Bu defa <literal>Non-authoritative answer:</literal> (yetkisiz cevap) uyarısını
+        aldık. Bu, <literal>named</literal>'nin bu defa dışarıdaki ad sunucularına
+        sormak yerine kendi cebine (<literal>cache</literal>) bakıp cevabı burada
+        bulduğu anlamına geliyor. Ancak buradaki bilgi geçerliliğini yitirmiş
+        (eskimiş) olabilir. Bu küçük tehlikeyi hatırlatmak amacıyla yukarıdaki
+        uyarıyı alırız. <literal>nslookup</literal>'tan çıkmak için
+        <literal>exit</literal> komutunu verin.
+      </para>
+      <para>
+        Eğer dialup kullanıcısı iseniz (ppp, slip) lütfen <xref linkend="dns-nasil_dialup"/>
+        adlı bölümü okuyun. Burada birtakım öneriler bulacaksınız.
+      </para>
+      <para>
+        caching named'yi nasıl kuracağınızı öğrendiniz, kutlama için bira, süt ya da
+        her neyi seviyorsanız alabilirsiniz :).
+      </para>
+    </sect2>
+  </sect1>
+
+  <sect1 id="dns-nasil_simple">
+    <title><emphasis>Basit</emphasis> bir alan</title>
+    <para>
+      <emphasis role="bold">Kendi alanınızı nasıl kurarsınız?</emphasis>
+    </para>
+    <para>
+      Bu bölüme <emphasis>başlamadan</emphasis> önce DNS'in nasıl çalıştıgına
+      dair bir miktar teorik bilgi vereceğim. Okumanızı öneririm. Eğer
+      istemiyorsanız en azından hızlıca bir göz gezdirin.
+      <literal>named.boot</literal> dosyasının neler içermesi gerektiğinden
+      bahsetmeye başladığımda durun.
+    </para>
+    <para>
+      DNS hiyerarşik bir sistemdir. En üst basamak `<literal>.</literal>'
+      şeklinde yazılır ve <literal>root</literal> denir. `<literal>.</literal>'un
+      altında birkaç TLD (en üst alan) vardır. En ünlüleri <literal>ORG</literal>,
+      <literal>COM</literal>, <literal>EDU</literal> ve <literal>NET</literal>'tir.
+      <literal>prep.ai.mit.edu</literal>'nün adresini bulmak istediğinizde ad
+      sunucunuz <literal>EDU</literal> alanına hizmet veren bir sunucuya ulaşmak
+      zorunda. Önce <literal>root.cache</literal> dosyasına bakar, `<literal>.</literal>'
+      sunucu <literal>EDU</literal> alanının ad sunucu listesini verir. Şöyle ki:
+<programlisting>
+  $ nslookup
+  Default Server:  localhost
+  Address:  127.0.0.1
+</programlisting>
+    </para>
+    <para>
+      Bir root sunucunun adresini soralım:
+<programlisting>
+  > server c.root-servers.net.
+  Default Server:  c.root-servers.net
+  Address:  192.33.4.12
+</programlisting>
+    </para>
+    <para>
+      Sorgu tipini NS (ad sunucusu) yapalım:
+<programlisting>
+  > set q=ns
+</programlisting>
+    </para>
+    <para>
+      <literal>EDU</literal> alanını sorgulayalım:
+<programlisting>
+  > edu.
+</programlisting>
+    </para>
+    <para>
+      <literal>EDU</literal>'nun ardındaki `<literal>.</literal>' çok önemlidir.
+      Sunucuya <literal>root</literal>'un (`<literal>.</literal>') hemen altındaki
+      <literal>EDU</literal> alanını sorguladığımızı söyler ki bu da arama alanını
+      daraltır.
+<programlisting>
+    edu     nameserver = A.ROOT-SERVERS.NET
+    edu     nameserver = H.ROOT-SERVERS.NET
+    edu     nameserver = B.ROOT-SERVERS.NET
+    edu     nameserver = C.ROOT-SERVERS.NET
+    edu     nameserver = D.ROOT-SERVERS.NET
+    edu     nameserver = E.ROOT-SERVERS.NET
+    edu     nameserver = I.ROOT-SERVERS.NET
+    edu     nameserver = F.ROOT-SERVERS.NET
+    edu     nameserver = G.ROOT-SERVERS.NET
+    A.ROOT-SERVERS.NET      internet address = 198.41.0.4
+    H.ROOT-SERVERS.NET      internet address = 128.63.2.53
+    B.ROOT-SERVERS.NET      internet address = 128.9.0.107
+    C.ROOT-SERVERS.NET      internet address = 192.33.4.12
+    D.ROOT-SERVERS.NET      internet address = 128.8.10.90
+    E.ROOT-SERVERS.NET      internet address = 192.203.230.10
+    I.ROOT-SERVERS.NET      internet address = 192.36.148.17
+    F.ROOT-SERVERS.NET      internet address = 192.5.5.241
+    G.ROOT-SERVERS.NET      internet address = 192.112.36.4
+</programlisting>
+    </para>
+    <para>
+      Bu bize <literal>*.root-servers.net</literal> sunucularının
+      <literal>EDU</literal> alanına hizmet verdiğini gösterir. Şimdi
+      <literal>mit.edu</literal> alanına kimin hizmet verdiğine bakalım:
+<programlisting>
+  >mit.edu
+  Server: c.root-servers.net
+  Address:  192.33.4.12
+
+  Non-authoritative answer:
+  mit.edu nameserver = STRAWB.mit.edu
+  mit.edu nameserver = W20NS.mit.edu
+  mit.edu nameserver = BITSY.mit.edu
+
+  Authoritative answers can be found from:
+  STRAWB.mit.edu  internet address = 18.71.0.151
+  W20NS.mit.edu   internet address = 18.70.0.160
+  BITSY.mit.edu   internet address = 18.72.0.3
+</programlisting>
+    </para>
+    <para>
+      steawb, w20ns ve bitsy sunucuları mit.edu alanına hizmet veriyorlar.
+      Bunlardan w20ns'i ai.mit.edu için sorgulayalım:
+<programlisting>
+  > server W20NS.mit.edu.
+</programlisting>
+    </para>
+    <para>
+      Makina adlarında küçük/büyük harf ayırımı yoktur, ama bunları yazmak için
+      faremi kullandığımdan <literal>nslookup</literal>'ın verdiği çıktının
+      aynısını yazıyorum.
+<programlisting>
+  Server:  W20NS.mit.edu
+  Address:  18.70.0.160
+
+  > ai.mit.edu.
+  Server:  W20NS.mit.edu
+  Address:  18.70.0.160
+
+  Non-authoritative answer:
+  ai.mit.edu      nameserver = WHEATIES.AI.MIT.EDU
+  ai.mit.edu      nameserver = ALPHA-BITS.AI.MIT.EDU
+  ai.mit.edu      nameserver = GRAPE-NUTS.AI.MIT.EDU
+  ai.mit.edu      nameserver = TRIX.AI.MIT.EDU
+  ai.mit.edu      nameserver = MUESLI.AI.MIT.EDU
+
+  Authoritative answers can be found from:
+  AI.MIT.EDU      nameserver = WHEATIES.AI.MIT.EDU
+  AI.MIT.EDU      nameserver = ALPHA-BITS.AI.MIT.EDU
+  AI.MIT.EDU      nameserver = GRAPE-NUTS.AI.MIT.EDU
+  AI.MIT.EDU      nameserver = TRIX.AI.MIT.EDU
+  AI.MIT.EDU      nameserver = MUESLI.AI.MIT.EDU
+  WHEATIES.AI.MIT.EDU     internet address = 128.52.32.13
+  WHEATIES.AI.MIT.EDU     internet address = 128.52.35.13
+  ALPHA-BITS.AI.MIT.EDU   internet address = 128.52.32.5
+  ALPHA-BITS.AI.MIT.EDU   internet address = 128.52.37.5
+  GRAPE-NUTS.AI.MIT.EDU   internet address = 128.52.32.4
+  GRAPE-NUTS.AI.MIT.EDU   internet address = 128.52.36.4
+  TRIX.AI.MIT.EDU internet address = 128.52.32.6
+  TRIX.AI.MIT.EDU internet address = 128.52.38.6
+  MUESLI.AI.MIT.EDU       internet address = 128.52.32.7
+  MUESLI.AI.MIT.EDU       internet address = 128.52.39.7
+</programlisting>
+    </para>
+    <para>
+      Yukarıda görüldüğü gibi ai.mit.edu alanının sunucusu weaties.ai.mit.edu'dur.
+<programlisting>
+  > server WHEATIES.AI.MIT.EDU.
+  Default Server:  WHEATIES.AI.MIT.EDU
+  Addresses:  128.52.32.13, 128.52.35.13
+</programlisting>
+    </para>
+    <para>
+      Şimdi sorgu tipini değiştiriyorum. İhtiyacımız olan sunucunun adını bulduk.
+      Bakalım wheaties prep.ai.mit.edu hakkında ne biliyor?
+<programlisting>
+  > set q=any
+  > prep.ai.mit.edu.
+  Server:  WHEATIES.AI.MIT.EDU
+  Addresses:  128.52.32.13, 128.52.35.13
+
+  prep.ai.mit.edu CPU = dec/decstation-5000.25    OS = unix
+  prep.ai.mit.edu
+  inet address = 18.159.0.42, protocol = tcp
+  #21 #23 #25 #79
+  prep.ai.mit.edu preference = 1, mail exchanger = life.ai.mit.edu
+  prep.ai.mit.edu internet address = 18.159.0.42
+  ai.mit.edu      nameserver = alpha-bits.ai.mit.edu
+  ai.mit.edu      nameserver = wheaties.ai.mit.edu
+  ai.mit.edu      nameserver = grape-nuts.ai.mit.edu
+  ai.mit.edu      nameserver = mini-wheats.ai.mit.edu
+  ai.mit.edu      nameserver = trix.ai.mit.edu
+  ai.mit.edu      nameserver = muesli.ai.mit.edu
+  ai.mit.edu      nameserver = count-chocula.ai.mit.edu
+  ai.mit.edu      nameserver = life.ai.mit.edu
+  ai.mit.edu      nameserver = mintaka.lcs.mit.edu
+  life.ai.mit.edu internet address = 128.52.32.80
+  alpha-bits.ai.mit.edu   internet address = 128.52.32.5
+  wheaties.ai.mit.edu     internet address = 128.52.35.13
+  wheaties.ai.mit.edu     internet address = 128.52.32.13
+  grape-nuts.ai.mit.edu   internet address = 128.52.36.4
+  grape-nuts.ai.mit.edu   internet address = 128.52.32.4
+  mini-wheats.ai.mit.edu  internet address = 128.52.32.11
+  mini-wheats.ai.mit.edu  internet address = 128.52.54.11
+  mintaka.lcs.mit.edu     internet address = 18.26.0.36
+</programlisting>
+    </para>
+    <para>
+      `<literal>.</literal>'tan başlayarak bir alt düzeydeki alanların ad
+      sunucularını bulduk. Kendi DNS sunucunuzu kullanmış olsaydınız,
+      <literal>named</literal>'niz bütün bu bilgileri saklayacak ve bir süre
+      için bu sorguları yeniden yapmaya gerek duymayacaktı.
+    </para>
+    <para>
+      Çok az bahsettigimiz fakat en az diğerleri kadar önemli bir alan daha
+      var: <literal>in-addr.arpa</literal>. O da diğer alanlar gibi hiyerarşik
+      bir yapıya sahiptir. Bu alan <emphasis>internet adresi</emphasis>nden
+      <emphasis>ad</emphasis>a ulaşmamızı sağlar. Önemli bir nokta:
+      <literal>in-addr.arpa</literal> alanında <literal>ip</literal>'ler tersten
+      yazılırlar. <literal>192.128.52.43</literal> gibi bir adresin adını öğrenmek
+      istediğinizde <literal>named</literal> prep.ai.mit.edu örneğinde olduğu
+      gibi davranır:
+<programlisting>
+  arpa.                           sunucularını bul
+  in-addr.arpa.                   sunucularını bul
+  192.in-addr.arpa.               sunucularını bul
+  128.192.in-addr.arpa.           sunucularını bul
+  52.128.192.in-addr.arpa.        sunucularını bul
+  43.52.128.192.in-addr.arpa.     kayıtlarını  bul
+</programlisting>
+    </para>
+    <para>
+      Zekice di mi? ("evet" deyin).
+    </para>
+    <para>
+      Yalan söyledim. DNS böyle çalışmaz. Ama neredeyse bu şekilde...
+    </para>
+    <sect2>
+      <title>Kendi alanımız</title>
+      <para>
+        Şimdi kendi alanımızı tanımlayacagız. Adı <literal>linux.bogus</literal>
+        olacak ve içinde bu alana ait bilgisayarların tanımları olacak. Tamamen
+        -hayali- bir ad verdim ki diğer insanları rahatsız etmeyelim.
+      </para>
+      <para>
+        Bu bölüme <literal>named.boot</literal> dosyasına aşağıdaki satırı
+        yazarak başlıyoruz:
+<programlisting>
+  primary         0.0.127.in-addr.arpa    pz/127.0.0
+</programlisting>
+      </para>
+      <para>
+        Bu dosyada alan adlarının sonunda `<literal>.</literal>' olmadığına
+        lütfen dikkat edelim. İlk satır <literal>pz/127.0.0</literal> dosyasını
+        <literal>0.0.127.in-addr.arpa</literal>'yı tanımlayan dosya olarak gösterir.
+        Bir önceki kurulumda bu dosyayı hazırlamıştık:
+<programlisting>
+$TTL 3D
+@               IN      SOA     linux.bogus. hostmaster.linux.bogus. (
+                                1       ; Serial
+                                28800   ; Refresh
+                                7200    ; Retry
+                                604800  ; Expire
+                                86400)  ; Minimum TTL
+                                NS      ns.linux.bogus.
+1                       PTR     localhost.
+</programlisting>
+      </para>
+      <para>
+        Bu dosyada <literal>named.boot</literal> dosyasındakinin aksine alan
+        adlarının sonlarındaki `<literal>.</literal>'ların olmasına lütfen
+        dikkat edelim.
+      </para>
+      <para>
+        Bazıları her bölge (zone) dosyasını <literal>$ORIGIN</literal>
+        direktifiyle başlatmaktan yanadırlar ki bence gereksiz birşeydir. Alan
+        dosyasının orijini (DNS hiyerarsisinde ait oldugu yer) <literal>named.boot</literal>
+        dosyasının <literal>domain</literal> sütununda yeralır. Bu durumda:
+<programlisting>
+  0.0.127.IN-ADDR.ARPA. IN      SOA ...
+</programlisting>
+      </para>
+      <para>
+        <emphasis role="bold">NS</emphasis>, "Name server RR" (ad sunucusu kaynak
+        kaydı) dır. DNS'e alanın ad sunucusunu söyler. Son olarak PTR kaydı 1 in
+        (<literal>1.0.0.127</literal>'ye denk gelir) <literal>localhost</literal>
+        olduğunu söyler.
+      </para>
+      <para>
+        <emphasis role="bold">SOA</emphasis>, (yetki başlangıcı) kaydı tüm alan
+        dosyaları için başlıktır ve her alan dosyasındaki ilk kayıt olmalıdır.
+        Alanın nereden kaynaklandığını (<literal>linux.bogus</literal> adlı
+        bilgisayar), kayıtlardan kimin sorumlu olduğunu
+        (<literal>hostmaster@linux.bogus</literal>), sürüm numarasını
+        (<literal>serial: 1</literal>) ve caching only ile ikincil ad sunucusuyla
+        ilgili diğer bilgileri tutar. Geri kalan değerler
+        <literal>refresh</literal> (yenile), <literal>retry</literal> (yeniden
+        dene), <literal>expire</literal> (bitiş) ve <literal>minimum</literal>
+        (en az) için bu NASILdaki sayıları kullanabilirsiniz.
+      </para>
+      <para>
+        NS kaydı <literal>0.0.127.in-addr.arpa</literal> alanına hangi sunucunun
+        hizmet verdiğini gösterir (<literal>ns.linux.bogus</literal>). PTR kaydı
+        <literal>1.0.0.127.in-addr.arpa</literal>'nın (<literal>127.0.0.1</literal>)
+        <literal>localhost</literal> olduğunu gösterir.
+      </para>
+      <para>
+        Şimdi <literal>named</literal>'yi yeniden çalıştırın
+        (<literal>ndc restart</literal>) ve test etmek için
+        <literal>nslookup</literal>'ı kullanın:
+<screen>
+  $ nslookup
+  Default Server:  localhost
+  Address:  127.0.0.1
+
+  > 127.0.0.1
+  Server:  localhost
+  Address:  127.0.0.1
+
+  Name:    localhost
+  Address:  127.0.0.1
+</screen>
+      </para>
+      <para>
+        <literal>localhost</literal>'un adresini <literal>127.0.0.1</literal>'den
+        alabiliyor, iyi. Zorlamayın. Simdi asıl işimiz olan
+        <literal>linux.bogus</literal> alan tanımı ıçin <literal>named.boot</literal>'a
+        bir <literal>primary</literal> satırı ekleyelim:
+<programlisting>
+  primary               linux.bogus                     pz/linux.bogus
+</programlisting>
+      </para>
+      <para>
+        !!!!!!!! <literal>linux.bogus</literal>'un sonunda "." olmadığına dikkat edin
+        <literal>linux.bogus</literal> alan dosyasına tamamen -hayali- veri
+        yerleştirelim:
+<programlisting>
+  ;
+  ; Zone file for linux.bogus
+  ;
+  ; Mandatory minimum for a working domain
+  ;
+  @       IN      SOA     linux.bogus. hostmaster.linux.bogus. (
+                          199511301       ; serial, todays date + todays serial #
+                          28800           ; refresh, seconds
+                          7200            ; retry, seconds
+                          3600000         ; expire, seconds
+                          86400 )         ; minimum, seconds
+                  NS      ns.linux.bogus.
+                  NS      ns.friend.bogus.
+                  MX      10 mail.linux.bogus   ; Primary mail Exchanger
+                  MX      20 mail.friend.bogus. ; Secondary mail Exchanger
+
+  localhost       A       127.0.0.1
+  ns              A       127.0.0.2
+  mail            A       127.0.0.4
+</programlisting>
+      </para>
+      <para>
+        Bu dosyada yeni bir RR tipiyle karşılaşıyoruz:
+        <emphasis role="bold">MX</emphasis>. Ya da "mail exchanger"
+        (posta ..........). Posta sistemlerine <literal>birisi@linux.bogus</literal>
+        adına posta gönderildiğinde postanın hangi bilgisayara verilmesi gerektiğini
+        söylerler. Adresten önceki sayı "öncelik" (priority) değeridir. Sayı ne kadar
+        küçük olursa adres o derece önceliklidir. Yani posta,
+        <literal>mail.linux.bogus</literal>'a verilemezse
+        <literal>mail.friend.bogus</literal> denenir. <literal>Named</literal>'yi
+        yeniden başlatın ve  <literal>nslookup</literal>'la test edin:
+<programlisting>
+  $ nslookup
+  > set q=any
+  > linux.bogus
+  Server:  localhost
+  Address:  127.0.0.1
+
+  linux.bogus
+  origin = linux.bogus
+  mail addr = hostmaster.linux.bogus
+  serial = 199511301
+  refresh = 28800 (8 hours)
+  retry   = 7200 (2 hours)
+  expire  = 604800 (7 days)
+  minimum ttl = 86400 (1 day)
+  linux.bogus     nameserver = ns.linux.bogus
+  linux.bogus     nameserver = ns.friend.bogus
+  linux.bogus     preference = 10, mail exchanger = mail.linux.bogus.linux.bogus
+  linux.bogus     preference = 20, mail exchanger = mail.friend.bogus
+  linux.bogus     nameserver = ns.linux.bogus
+  linux.bogus     nameserver = ns.friend.bogus
+  ns.linux.bogus  internet address = 127.0.0.2
+  mail.linux.bogus        internet address = 127.0.0.4
+</programlisting>
+      </para>
+      <para>
+        Biraz dikkatli inceleyecek olursanız bir hata olduğunu farkedeceksiniz.
+<programlisting>
+  linux.bogus     preference = 10, mail exchanger = mail.linux.bogus.linux.bogus
+</programlisting>
+      </para>
+      <para>
+        yanlış, doğrusu şöyle olmalı:
+<programlisting>
+  linux.bogus     preference = 10, mail exchanger = mail.linux.bogus
+</programlisting>
+      </para>
+      <para>
+        Kasten bir yanlış yaptım ki öğrenebilesiniz :). Alan dosyasına baktığımızda
+        görürüz ki:
+<programlisting>
+  MX      10 mail.linux.bogus   ; Primary mail Exchanger
+</programlisting>
+      </para>
+      <para>
+        en sonda olması gereken "." yazılmamıştır. Doğrusu ya
+<programlisting>
+  @               MX      10 mail.linux.bogus.    ; Primary mail Exchanger
+</programlisting>
+      </para>
+      <para>
+        ya da
+<programlisting>
+  @               MX      10 mail                 ; Primary mail Exchanger
+</programlisting>
+      </para>
+      <para>
+        şeklinde olmalıdır. Daha kolay yazıldığından ikincisini tercih ediyorum.
+        Alan dosyasında alan adı ya "." ile bitirilerek yazılmalı ya da hiç
+        yazılmamalıdır. Tekrar uyarıyorum, <literal>named.boot</literal> dosyasında
+        alan adlarının sonunda "." olmamalıdır. Bu hatanın kaç defa sorun çıkarmış
+        olduğunu tahmin bile edemezsiniz.
+      </para>
+      <para>
+        Yeni alan dosyasındaki uyarıdan sonra bazı ek bilgilerle son hali:
+<programlisting>
+;
+; Zone file f r linux.bogus
+;
+; Mandatory minimum for a working domain
+;
+@       IN      SOA     linux.bogus. hostmaster.linux.bogus. (
+199511301       ; serial, todays date + todays serial #
+28800           ; refresh, seconds
+7200            ; retry, seconds
+604800          ; expire, seconds
+86400 )         ; minimum, seconds
+
+NS      ns              ; Inet Address of name server
+NS      ns.friend.bogus.
+MX      10 mail         ; Primary mail Exchanger
+MX      20 mail.friend.bogus. ; Secondary mail Exchanger
+
+localhost       A       127.0.0.1
+ns              A       127.0.0.2
+mail            A       127.0.0.4
+;
+; Extras
+;
+@               TXT     "Linux.Bogus, your DNS consultants"
+
+ns              MX      10 mail
+MX      20 mail.friend.bogus.
+HINFO   "Pentium" "Linux 1.2"
+TXT     "RMS"
+richard         CNAME   ns
+www             CNAME   ns
+
+donald          A       127.0.0.3
+MX      10 mail
+MX      20 mail.friend.bogus.
+HINFO   "i486"  "Linux 1.2"
+TXT     "DEK"
+
+mail            MX      10 mail
+MX      20 mail.friend.bogus.
+HINFO   "386sx" "Linux 1.0.9"
+
+ftp             A       127.0.0.5
+MX      10 mail
+MX      20 mail.friend.bogus.
+HINFO   "P6" "Linux 1.3.59"
+</programlisting>
+      </para>
+      <para>
+        İlk üç <emphasis role="bold">A</emphasis> kaydını ilgili kayıtların yanına
+        koymak isteyebilirsiniz.
+      </para>
+      <para>
+        Bu dosyada birkaç yeni RR var:
+        <itemizedlist>
+          <listitem>
+            <para>
+              <emphasis role="bold">HINFO</emphasis> (
+              <emphasis role="bold">H</emphasis>ost
+              <emphasis role="bold">INFO</emphasis>rmation) iki bölümden oluşmakta.
+              Birinci bölüm makinenin üstündeki donanım ya da MİB ile ilgili ikinci
+              bölüm de yazılım ya da işletim sistemi ile ilgilidir. "ns"in MİBi pentium,
+              işletim sistemi de Linux 1.2 dir.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              <emphasis role="bold">TXT</emphasis> kaydı serbest bir kayıttır.
+              İstediginiz herhangi bir şey için kullanabilirsiniz.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              <emphasis role="bold">CNAME</emphasis> (
+              <emphasis role="bold">C</emphasis>anonical
+              <emphasis role="bold">NAME</emphasis>) aynı makinaya birden fazla ad
+              verebilmek için kullanılır. <literal>www</literal> ve
+              <literal>richard</literal> <literal>ns</literal> için birer lakaptır.
+            </para>
+          </listitem>
+        </itemizedlist>
+      </para>
+      <para>
+        Önemli not: A, MX, CNAME ve SOA kayıtları HİÇBİR ZAMAN CNAME kaydına işaret
+        etmemelidir. Sadece A tipi kayıtlara işaret etmelidirler. Yani:
+<programlisting>
+foobar  CNAME   richard                 ; HAYIR!
+</programlisting>
+      </para>
+      <para>
+        yanlıştır, doğrusu
+<programlisting>
+foobar  CNAME   ns                      ; EVET!
+</programlisting>
+      </para>
+      <para>
+        olmalıdır.
+      </para>
+      <para>
+        Dikkat edilmesi gereken başka bir nokta ise CNAME'in e-posta adresi
+        olamayacağıdır: <literal>webmaster@www.linux.bogus</literal> geçersiz
+        bir adrestir. E-posta adresi olarak geçerli olabilmesi için A kaydı
+        olması gerekmektedir:
+<programlisting>
+www     A       127.0.0.2
+</programlisting>
+      </para>
+      <para>
+        Paul Vixie, CNAME kullanımını tavsiye etmiyor. Bunu kullanmamayı ciddi
+        bir şekilde düşünün.
+      </para>
+      <para>
+        Yeni veritabanını <literal>ndc reload</literal> komutuyla yeniden yükleyin.
+<programlisting>
+    $ nslookup
+    Default Server:  localhost
+    Address:  127.0.0.1
+
+    > ls -d linux.bogus
+</programlisting>
+      </para>
+      <para>
+        Tüm kayıtları listele.
+<programlisting>
+[localhost]
+linux.bogus.                   SOA   linux.bogus hostmaster.linux.bogus. (1995
+11301 28800 7200 604800 86400)
+linux.bogus.                   NS    ns.linux.bogus
+linux.bogus.                   NS    ns.friend.bogus
+linux.bogus.                   MX    10   mail.linux.bogus
+linux.bogus.                   MX    20   mail.friend.bogus
+linux.bogus.                   TXT   "Linux.Bogus, your DNS consultants"
+localhost                      A     127.0.0.1
+mail                           A     127.0.0.4
+mail                           MX    10   mail.linux.bogus
+mail                           MX    20   mail.friend.bogus
+mail                           HINFO 386sx       Linux 1.0.9
+donald                         A     127.0.0.3
+donald                         MX    10   mail.linux.bogus
+donald                         MX    20   mail.friend.bogus
+donald                         HINFO i486        Linux 1.2
+donald                         TXT   "DEK"
+www                            CNAME ns.linux.bogus
+richard                        CNAME ns.linux.bogus
+ftp                            A     127.0.0.5
+ftp                            MX    10   mail.linux.bogus
+ftp                            MX    20   mail.friend.bogus
+ftp                            HINFO P6          Linux 1.3.59
+ns                             A     127.0.0.2
+ns                             MX    10   mail.linux.bogus
+ns                             MX    20   mail.friend.bogus
+ns                             HINFO Pentium     Linux 1.2
+ns                             TXT   "RMS"
+linux.bogus.                   SOA   linux.bogus hostmaster.linux.bogus. (1995
+11301 28800 7200 604800 86400)
+</programlisting>
+      </para>
+      <para>
+        Yeterince iyi, bakalım sadece <literal>www</literal> için ne diyecek.
+<programlisting>
+  > set q=any
+  > www.linux.bogus.
+  Server:  localhost
+  Address:  127.0.0.1
+
+  www.linux.bogus canonical name = ns.linux.bogus
+
+  ns.linux.bogus
+
+  linux.bogus     nameserver = ns.linux.bogus
+  linux.bogus     nameserver = ns.friend.bogus
+  ns.linux.bogus  internet address = 127.0.0.2
+</programlisting>
+      </para>
+      <para>
+        ve <literal>ns.linux.bogus</literal>'un adresi
+        <literal>127.0.0.2</literal>; iyi görünüyor.
+      </para>
+    </sect2>
+    <sect2>
+      <title>Aşağıya Doğru</title>
+      <para>
+        Elbette bu alan tamamiyle --hayali--, tüm adresler de öyle. Gerçek bir
+        alan için asıl alan adlarını ve internet adreslerini kullanın. Bunu
+        tamamladıktan sonra bir reverse lookup alan dosyası gerekiyor.
+        <literal>127.0.0</literal> dosyasına benzeyen bu dosya her makine
+        için bir PTR RR içerecek.
+<programlisting>
+  127.0.0.2       PTR     ns.linux.bogus.
+  127.0.0.3       PTR     donald.linux.bogus.
+  127.0.0.4       PTR     mail.linux.bogus.
+  127.0.0.5       PTR     ftp.linux.bogus.
+</programlisting>
+      </para>
+      <para>
+        (SOA RR yi unutmayın)
+      </para>
+      <para>
+        Dosya adı <literal>127.0.0 0.0.127.in-addr.arpa</literal> örneğinde
+        olduğu gibi tersine çevrilmeli.
+      </para>
+      <para>
+        <literal>linux.bogus</literal> alanıyla oynamayı bitirdikten sonra
+        <literal>named.boot</literal> dosyanızdan çıkarmayı unutmayın.
+      </para>
+    </sect2>
+  </sect1>
+
+  <sect1 id="dns-nasil_qanda">
+    <title>Firewall ve diğer özel durumlar</title>
+    <para>
+    <itemizedlist>
+      <listitem>
+        <para>
+          <emphasis role="bold">Soru:</emphasis> Firewall'un ardından nasıl
+          DNS kullanırım?
+        </para>
+        <para>
+          <emphasis role="bold">Cevap:</emphasis> Birkaç ipucu: "forwarders",
+          "slave" <emphasis>(Bu bölümler çeviride yok - NBB)</emphasis>
+          ve bu NASIL'ın sonundaki referanslara bakın.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          <emphasis role="bold">Soru:</emphasis> DNS in her defasında geçerli
+          adreslerden diğerini göndermesini nasıl sağlarım?(www.busy.site için
+          127.0.0.[2-5] ten biri)
+        </para>
+        <para>
+          <emphasis role="bold">Cevap:</emphasis> www.busy.site için birkaç A
+          kaydı tanımlayın ve bind 4.9.3 veya daha yenisini kullanın. Daha eski
+          sürümlerde çalışmayacaktır.
+        </para>
+      </listitem>
+    </itemizedlist>
+    </para>
+  </sect1>
+
+  <sect1 id="dns-nasil_maint">
+    <title>Bakım</title>
+    <para>
+      Çalısır durumda tutmak.
+    </para>
+    <para>
+      <literal>root.cache</literal> dosyasını güncel tuttuğunuz sürece sorun
+      çıkmayacaktır. <literal>dig</literal> programını çalıştırdıgınızda kendi
+      sunucunuz için gerekli <literal>root.cache</literal> dosyasını oluşturacak
+      çıktıyı verecektir. <literal>dig</literal>i tekrar bu root sunuculardan
+      birinin adresiyle çalıştırın ve yeni cache dosyanızı oluşturun.<sbr/>
+      (<literal>dig .@e.root-servers.net > root.cache.yeni</literal>)
+    </para>
+    <para>
+      cache dosyasını yeniledikten sonra <literal>ndc restart</literal>
+      demeyi unutmayın.
+    </para>
+    <para>
+      <literal>named.cache</literal>'i otomatik olarak güncellemek için aşağıdaki
+      betiği de kullanabilirsiniz. <literal>Crontab</literal>'a koyun ve unutun.
+      Aşağıdaki betik posta sisteminizin çalıştığını ve <literal>hostmaster</literal>
+      aliasının olduğunu varsayar.
+<programlisting>
+#!/bin/sh
+#
+# Update the nameserver cache information file once per month.
+# This is run automatically by a cron entry.
+#
+(
+echo "To: hostmaster "
+echo "From: system "
+echo "Subject: Automatic update of the named.boot file"
+echo
+
+export PATH=/sbin:/usr/sbin:/bin:/usr/bin:
+cd /var/named
+
+dig . @rs.internic.net >named.cache.new
+
+echo "The named.boot file has been updated to contain the following
+information:"
+echo
+cat named.boot.new
+
+chown root.root named.cache.new
+chmod 444 named.cache.new
+rm -f named.cache.old
+mv named.cache named.cache.old
+mv named.cache.new named.cache
+ndc restart
+echo
+echo "The nameserver has been restarted to ensure that the update is complete.
+"
+echo "The previous named.cache file is now called
+/var/named/named.cache.old."
+) 2>&amp;1 | /usr/lib/sendmail -t
+exit 0
+</programlisting>
+    </para>
+  </sect1>
+
+  <sect1 id="dns-nasil_dialup">
+    <title>Dialup bağlantılar için otomatik kurulum</title>
+    <para>
+      Bu bölüm herşeyi otomatikleştirmek için ne yaptığımı anlatıyor. Benim
+      seçtiğim yol size hiç uymayabilir de. Ama bir fikir vermeli. Dialup
+      için <literal>ppp</literal> kullanıyorum. Fakat <literal>slip</literal>'in
+      <literal>dip</literal>'i de yaptığım şeylerin pek çoğunu yapabilmeli.
+    </para>
+    <para>
+      Normalde ağa bağlı olmadığımda <literal>resolv.conf</literal> dosyam sadece
+<screen>
+ domain uio.no
+</screen>
+      satırını içerir.
+    </para>
+    <para>
+      Bu çözümleme yordamlarının bir ad sunucusuna bağlanmaya çalısıp beni
+      bekletmelerini engeller. Fakat ağa bağlandığımda gerçek bir
+      <literal>resolv.conf</literal> dosyasına ihtiyaç duyarım, bu nedenle de
+      iki tane hazır dosya bulunduruyorum: <literal>resolv.conf.yerel</literal>
+      ve <literal>resolv.conf.bağlı</literal>. İkincisi dökümanda anlattığım
+      <literal>resolv.conf</literal> dosyasına benziyor. Ağa bağlanmak için
+      küçük bir betiğimim var: <literal>ppp-on</literal>
+<screen>
+#!/bin/sh
+echo calling...
+pppd
+</screen>
+    </para>
+    <para>
+      <literal>pppd</literal>'nin nasıl bağlanacağını gösteren bir dosyası
+      vardır. Bağlantı sağlanır sağlanmaz pppd <literal>ip-up</literal> adlı
+      betiği çalıştırır:
+<screen>
+#!/bin/sh
+interface="$1"
+device="$2"
+speed="$3"
+myip="$4"
+upip="$5"
+...
+cp -v /etc/resolv.conf.connected /etc/resolv.conf
+...
+/usr/sbin/named
+</screen>
+    </para>
+    <para>
+      <literal>Named</literal>'yi burada çalıştırıyorum. <literal>pppd</literal>
+      bağlantıyı kestiğinde pppd <literal>ip-down</literal> adli betiği çalıştırır.
+<screen>
+#!/bin/sh
+cp /etc/resolv.conf.local /etc/resolv.conf
+read namedpid /var/run/named.pid
+kill $namedpid
+</screen>
+    </para>
+    <para>
+      <literal>irc</literal> ve <literal>talk</literal> gibi programlar çok
+      sayıda varsayımda bulunarak çalışırlar. Bu tür programlar için
+      <literal>hosts</literal> dosyasını düzeltmeniz gerekmekte. Bunun için de:
+<screen>
+cp /etc/hosts.ppp /etc/hosts
+echo $myip      roke >>/etc/hosts
+</screen>
+      satırlarını <literal>ip-up</literal>'a ekliyorum.
+      <literal>hosts.ppp</literal>:
+<screen>
+ 127.0.0.1       localhost
+</screen>
+      echo satırı da bilgisayarım için verilen ip yi yazıyor.
+    </para>
+    <para>
+      Ağa bağlı olmadığınızda <literal>named</literal> çalıştırmak pek zekice
+      bir davranış değil bence. Her defasında ağa sorgular gönderip bekleyecek
+      olan <literal>named</literal> sizi iyice yavaşlatacaktır. Eğer dialup
+      kullanıyorsanız bağlantıyı her kapatışınızda <literal>named</literal>'yi
+      öldürmeniz gerekmektedir.
+    </para>
+    <para>
+     Bazıları yavaş bağlantılarda "forwarders" kullanmayı tercih ediyorlar.
+     Eğer internet servis sağlayıcınızın 1.2.3.4 ve 1.2.3.5 adreslerinde
+     ad sunucuları varsa <literal>named.boot</literal> dosyasına aşağıdaki
+     satırı ekleyebilirsiniz:
+<screen>
+ forwarders 1.2.3.4 1.2.3.5
+</screen>
+    </para>
+    <para>
+      Bu sırada <literal>named.cache</literal> dosyanız da boş olabilir. Bu
+      bilgisayarınızdan kaynaklanacak olan ip trafiğini azaltacaktır. Özellikle
+      geçirdiğiniz trafik üzerinden ödeme yaptığınız zaman önem kazanmaktadır.
+    </para>
+  </sect1>
+
+  <sect1 id="dns-nasil_bigger">
+    <title>Daha geniş bilgi</title>
+    <para>
+      <emphasis role="bold">Dökümanlar ve araçlar</emphasis>
+      <itemizedlist>
+        <listitem>
+          <para>
+            DNS &amp; BIND,<sbr/>
+            O'Reilly &amp; Associates, Sebastopol, CA, ISBN 0-937175-82-X.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            TCP/IP Network Administration,<sbr/>
+            by Craig Hunt from O'Reilly..., ISBN 0-937175-82-X.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            DNS ve diğer pek çok sey için yararlı başka bir kitap:<sbr/>
+            Zen ve motorsiklet bakım sanatı.
+          </para>
+        </listitem>
+      </itemizedlist>
+    </para>
+    <para>
+      <emphasis role="bold">Online dökümanlar:</emphasis><sbr/>
+      <ulink url="http://www.dns.net/dnsrd/">http://www.dns.net/dnsrd/</ulink><sbr/>
+      <ulink url="http://www.vix.com/isc/bind.html">http://www.vix.com/isc/bind.html</ulink>
+    </para>
+    <para>
+      <emphasis role="bold">RFC'ler:</emphasis>
+      <itemizedlist>
+        <listitem>
+          <para>
+            RFC 1918<sbr/>
+            Y. Rekhter, R. Moskowitz, D. Karrenberg, G. de Groot, E. Lear,
+            Address Allocation for Private Internets, 02/29/1996.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            RFC 1912<sbr/>
+            D. Barr, Common DNS Operational and Configuration Errors, 02/28/1996.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            RFC 1713<sbr/>
+            A. Romao, Tools for DNS debugging, 11/03/1994.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            RFC 1712<sbr/>
+            C. Farrell, M. Schulze, S. Pleitner, D. Baldoni, DNS Encoding of
+            Geographical Location, 11/01/1994.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            RFC 1183<sbr/>
+            R. Ullmann, P. Mockapetris, L. Mamakos, C. Everhart, New DNS RR
+            Definitions, 10/08/1990.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            RFC 1035<sbr/>
+            P. Mockapetris, Domain names - implementation and specification,
+            11/01/1987.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            RFC 1034<sbr/>
+            P. Mockapetris, Domain names - concepts and facilities,
+            11/01/1987.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            RFC 1033<sbr/>
+            M. Lottor, Domain administrators operations guide, 11/01/1987.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            RFC 1032<sbr/>
+            M. Stahl, Domain administrators guide, 11/01/1987.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            RFC 974<sbr/>
+            C. Partridge, Mail routing and the domain system, 01/01/1986.
+          </para>
+        </listitem>
+      </itemizedlist>
+    </para>
+  </sect1>
+
+</article>

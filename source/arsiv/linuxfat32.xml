@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--DOCTYPE article SYSTEM "../docbook/dtd/docbookx.dtd"-->
+<!-- ********************************************************************
+     $Id: linuxfat32.xml,v 1.2 2002/09/18 20:11:34 nilgun Exp $
+     ******************************************************************** -->
+
+<article id="archive-linuxfat32">
+  <articleinfo>
+    <title>Turkuaz ve FAT 32</title>
+    <author>
+      <firstname>Koray Toksöz</firstname>
+      <affiliation>
+      <address><email>ktoksoz@esentepe.sau.edu.tr</email></address>
+      </affiliation>
+    </author>
+    <pubdate>14 Ocak 1999</pubdate>
+  </articleinfo>
+<div>
+<center><h1>Turkuaz ve Windows '98</h1></center>
+<h3>Önsöz:</h3>
+Geçenlerde, sistemime Turkuaz kurduktan sonra Turkuaz ile uzerinde Windows '98 kurulu olan sabit diskime (FAT 32) mount komutu ile ulaşmaya çalıştığımda Turkuaz 1.03 ün FAT 32'yi desteklemediğini fark ettim. Internette küçük bir araştırmadan sonra, bu sorunu bir çok kullanıcının da yaşadığını gördüm ve sorunun Turkuaz 1.03 ün kullandığı kernelin 2.0.32 olduğunu ve FAT 32 yi desteklemediğini öğrendim. Bu yazımda, daha yeni bir kernel derleyerek bu sorunun nasıl aşılabileceğinden bahsedeceğim. Ayrıca, bu yazının, "yeni bir kernel nasıl derlenir" sorusuna da yanıt olacağı kanaatindeyim.
+<hr/>
+
+<h2>Önemli Not</h2>
+<font color="red">
+<p>Çekirdeği yeniden derlerken yapacağınız en ufak bir yanlışlık, sisteminizi
+çalışmaz hale getirebilir. Bu sebepten ötürü çok dikkatli olmanızı tavsiye ederim.
+Aşağıda anlatılanları uygulayıp uygulamamak sizin sorumluluğunuzdadır. Hiç bir şart
+altında sorumluluk bana ait değildir.</p>
+</font>
+<p>
+<br/>
+Öncelikle, yeni bir kernel kaynak kodu bulmalıyız. <a href="ftp://ftp.linux.org.tr"
+target="_new">ftp.linux.org.tr</a> adresinden yenilerini elde edebiliriz.</p>
+<p>Eğer siz de benim gibi, Linux'i PCNET dergisinin vermiş olduğu CD lerden elde
+ettiyseniz, PCNET dergisinin Ağustos '98 de vermiş olduğu dergide bulunan Slackware
+3.5 in sağlamış olguğu kerneli kullanabilirsiniz. (CD yi turkuazda kullanabilmek
+için,<i>mount -t iso9660 /dev/cdrom /mnt/cdrom </i> komutunu vermeniz yeterli
+olacaktır.) Kernel, bu CD de, linux/slakware/k1 dizininin altında bulunmakta.
+(lx2034.tgz dosyası) bu dizin altındaki iki dosyayı (lx2034.tgz ve linuxinc.tgz)
+root (/) dizinine kopyalayın (<i>cp lx2034.tgz /</i> ve <i>cp linuxinc.tgz /</i>)
+şimdi sıkıştırılmış halde bulunan bu dosyaları <i>tar -zvxf lx2034.tgz</i> ve
+<i> tar -zvxf linuxinc.tgz</i> komutları ile açacağız.</p>
+<p>şimdi sıra kurulum işlemi sırasında kullanılacak olan sembolik linklerin
+tanımlanmasına geldi. (Config programi bu işlemi kendi kendisine yapıyor olabilir.
+Pek dikkat etmedim) öncelikle <i> cd /usr/src/</i> komutu ile /usr/src dizinine
+geçeceğiz. Sıkıştırılmış kernelin bu dizin altına açılması gerekiyor. Şimdi,
+<i>rm -r linux</i> komutu ile eski linux sürümümüzün bağlı olduğu sembolik linki
+yada eski linuxumuzun kaynak dosyalarını sileceğiz. Bu adımdan sonra, <i>ln -s
+linux-2.0.34 linux</i> komutu ile kaynak dosyalarımıza bir sembolik link yaratıyoruz.
+(tabii ki linux-2.0.34, yeni kaynak dosyalarımızın bulunduğu dizinin ismi.)
+<i>cd linux/include</i> komutu ile işlemci çekirdeğine özel tanımlama dosyalarının
+oldugu dizine geçiyoruz. <i>rm asm</i> komutu ile sembolik linki sildikten sonra,
+<i>ln -s asm-i386 asm</i> komutu ile yeni bir link tanımlıyoruz.
+<i>cd /usr/src/linux</i> komutu ile linux kaynak kodlarımızın bulunduğu dizine
+geçtikten sonra, <i>make menuconfig</i> komutu ile (ya da xwindow ortamı için
+<i> make xconfig</i>) çekirdek ayarlamalarımızı yapıyoruz. Bu bölümde, çeşitli
+çekirdek ayarlamaları yapılmakdatır. Eğer neyi değiştirdiğini bilmiyor iseniz
+değiştirmeyin. <i> make zlilo</i> komutu ile çekirdeğin sıkıştırılmış bir "image"ını
+oluşturuyoruz. (<i>make zImage</i> komutu "image" oluşturur. Fakat Win'98 ile dual
+boot olduğuna göre, <i>make zlilo</i> diyoruz.) Eğer sistemde modül olarak
+kullanılacak şeyler varsa, <i> make modules</i> ve <i>make madules_install</i>
+komutlarını da kullanıyoruz. Şimdi sırada zImage dosyasını eskisinin yerine
+(yada vmlinuz un yerine) kopyalayacağız. Turkuaz için
+<i>cp /usr/src/linux/arch/i386/boot/zImage /boot</i> yazmak yeterli olacaktır.
+Şimdi <i>cd /boot</i> ve ardından da <i>rm vmlinuz</i> komutlarını veriyoruz.
+Son olarak vmlinuz e bir link yaratıp sisteim resetleme işlemleri kaldı. Bunun için
+<i>ln zImage vmlinuz</i> dememiz yeterli olacaktır. <i>lilo</i> ile lilomuzu da
+ayarlıyoruz. Şimdi CTRL+ALT+DEL tuşlarına basarak sistemi yeniden açabiliriz.</p>
+<p>Eğer anlatılan bütün işlemler doğru olarak yapıldıysa, sitemimizi yeni çekirdeğe
+yükseltmiş olacağız.</p>
+<p>şimdi de hareket noktamızı teşkil eden Turkuaz 1.03 de FAT32 tanıtma işlemini
+deneyebiliriz.</p>
+<p><i>cd /mnt</i></p>
+<p><i>mkdir hdem</i></p>
+<p><i>mount -t vfat /dev/hda1 /mnt/hdem</i></p>
+<p>komutları FAT32 partitionuna sahip sabit diskimizi Turkuazda kullanmamız için
+yeterli olacaktır.</p>
+<p>ayrıca, sistemimizi 2.0.32 den 2.0.34 e yükseltmek ile, CD-ROM lardaki uzun
+dosya isimlerini de görebileceğiz.</p>
+<hr/>
+<p align="right"><i>
+<font size="4">Koray Toksöz</font><br/>
+<font size="2">
+<a href="mailto:ktoksoz@esentepe.sau.edu.tr">ktoksoz@esentepe.sau.edu.tr</a>
+</font>
+<br/>
+Bu sayfa, NEdit Version 5.0.2 ile hazırlanmıştır.
+</i></p>
+</div>
+</article>

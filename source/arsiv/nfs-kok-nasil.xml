@@ -1,0 +1,295 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--DOCTYPE article SYSTEM "../docbook/dtd/docbookx.dtd"-->
+<!-- ********************************************************************
+     $Id: nfs-kok-nasil.xml,v 1.2 2002/09/18 20:11:34 nilgun Exp $
+     ******************************************************************** -->
+
+<article id="archive-nfs-kok-nasil">
+  <articleinfo>
+    <title>NFS-kök Mini NASIL</title>
+    <author role="translator">
+      <firstname>H. Caglar Bilir</firstname>
+    </author>
+    <pubdate>Çeviri: v1.0, 10 Kasım 1997</pubdate>
+    <author>
+      <firstname>Andreas Kostyrka</firstname>
+      <affiliation>
+          <address><email>andreas@ag.or.at</email></address>
+      </affiliation>
+    </author>
+    <pubdate>Özgün Belge: v8, 8 Ağustos 1997</pubdate>
+  </articleinfo>
+<div>
+
+<pre>
+
+  Bu minik NASIL dökumanı, kök dosya sistemlerini NFS yoluyla yükleyen
+  ''disksiz'' bir Linux iş istasyonunun nasıl kurulacağını anlatmaya calısacak.
+  Bu dokümanın yeni sürümünü ftp://sunsite.unc.edu/pub/Linux/docs/HOWTO/mini/NFS-Root
+  veya size daha yakın bir adresten bulabilirsiniz.
+
+  </pre><h2> 1. Telif Hakkı</h2><pre>
+
+  Başka bir şekilde belirtilmedikçe , Linux NASIL dökumanlarının telif hakları
+  yazarlarına aittir. Linux NASIL dökumanları yukarıdaki telif hakkı işareti bütün
+  kopyalarda bulunmak şartı ile bütün veya parça olarak yeniden oluşturulup,
+  fiziksel veya elektronik herhangi bir aygıt yolu ile dağıtılabilir. Ticari dağıtıma
+  izin verilmekte ve teşfik edilmektedir. Fakat yazarın bu dağıtımlardan haberi olmalıdır.
+
+  Bütün ceviriler , türevsel işler veyahut herhangi Linux NASIL dökumanı
+  birleştirici işler bu telif hakkına dikkat edilerek yapılmalıdır.Bu, bir NASIL
+  dökumanından türetilen işin üzerinde, dağıtımda fazladan kısıtlamalar
+  koyulamaması demektir.Bu kuralların istisnaları belli bazı durumlarda mümkündür;
+  bu gibi durumlarda lütfen Linux NASIL koordinatörü ile aşağıda verilen adresten
+  bağlantıya geçiniz.
+
+  Kısacası biz, bu bilginin mümkün olan bütün kanallardan dağıtımına destek
+  olmak isteriz. Fakat, biz NASIL dökumanları üzerindeki telif hakkımızı korumayı ve
+  NASIL ' ların  tekrar dağıtım planlarından haberdar olmak isteriz.
+
+  Eğer herhangi bir sorununuz varsa,  bu minik nasıl'ın yazarı Andreas Kostyrka
+  (mailto:andreas@ag.or.at) veya Linux NASIL koordinatörü Greg Hankins
+  (mailto:gregh@sunsite.unc.edu) ile e-posta yoluyla haberleşebilirsiniz.
+
+  </pre><h3> 1.1. Yardımda Bulunanlar</h3><pre>
+
+  + Avery Pennarun &lt;apenwarr@foxnet.net> (Lilo'suz nasıl çalıştırılır)
+
+  + Ofer Maor &lt;ofer@hadar.co.il> (disksiz iş istasyonlarının nasıl kurulacağına
+    dair daha iyi bir minik NASIL sağladı)
+
+  + Christian Leutloff &lt;leutloff@sundancer.tng.oche.de> (Ağdan açılış hakkında
+    bilgiler sağladı)
+
+  </pre><h2> 2. Genel Bakış</h2><pre>
+
+  Genel olarak bir iş istasyonu için şu sorunlar vardır :
+
+  + Kendi IP adresini kendisi bulmalıdır ve eğer gerekirse kalan diğer ağ
+    konfigürasyonunu da ...
+
+  + NFS sunucusunu ve kök dosya sisteminin bağlanma yolunu bilmelidir.
+
+  Linux çekirdeğinde ( 1.3.7x ) NFSROOT'un şu anki sürümü şu çözümlere müsaade
+  etmektedir :
+
+  + IP adresi RARP tarafından bulunabilir veya bütün ağ konfigürasyonu çekirdeğe
+    LILO veya LADLIN tarafından çekirdek parametreleri yoluyla iletilebilir.
+
+  + NFS yolu bağlanmaya çekirdek parametreleri yoluyla iletilebilir. Eğer bu
+    yapılmazsa, çekirdek RARP sunucusunu aynı zamanda NFS sunucusu
+    farzeder ve varsayılan değerleri alır.(Cekirdek için varsayılan değer :
+    /tftpboot/&lt;makinanın IP adresi>)
+
+  + İstemci konfigürasyonu BOOTP tarafından bulunabilir.
+
+  Disksiz bir sistemi kurmaya başlamadan önce LILO veya LOADLIN'den hangisi ile
+  başlatacağınıza karar vermelisiniz. Böyle yapmanın avantajı esneklik dezavantajı ise
+  hızdır. Bir Linux çekirdeğini LILO'suz başlatmak daha hızlıdır. Bunun hesaba katılıp
+  katılmaması size kalmıştır.
+
+  </pre><h2> 3. Sunucu Uzerinde Kurulum </h2>
+  <h3> 3.1 Çekirdekleri Derleme  </h3><pre>
+
+  Sunucunun çekirdeğinde RARP desteği sağlamak iyi bir düşünce olabilir. Fakat eğer
+  makineyi çekirdek parametresiz başlatacaksanız buna kesinlikle sahip olmalısınız.
+  Öte yandan, eğer istemci, sunucu ile aynı altağ'da değil ise bu size bir yarar
+  sağlamaz.
+
+  İş istasyonunun çekirdeği aşağıdakileri minimum set olarak derlenmiş durumda
+  bulundurmalıdır :
+
+  + Çekirdeğe eklenmiş NFS dosya sistemi (ext2 desteği çekirdeğe eklenmiş olmak
+    zorunda değil,bir modül yeterli)
+
+  + "Root on NFS" geçerli olmalıdır.
+
+  + İş istsyonunun ağ kartı için eternet sürücüsü çekirdeğe eklenmiş olmalıdır.
+
+  + İsteklerinize bağlı olarak NFS kökü için RARP veya BOOTP desteği eklemelisiniz.
+
+  Eğer iş istasyonu çekirdek parametreleri olmadan başlatılacaksa kök cihazını 0:255'e
+  ayarlamanız gerekir. Bunu ` mknod /dev/nfsroot b 0 255 ` ile bir geçici cihaz dosyası
+  oluşturarak yapın. Bu şekilde bir cihaz dosyası oluşturulduktan sonra,
+  ` rdev &lt;kernel image> /dev/nfsroot ` ile çekirdek imajının kök cihazını kurabilirsiniz.
+
+  </pre><h3> 3.2. Kök Dosya Sisteminin Oluşturulması</h3>
+  <h4> 3.2.1. Dosya  Sistemini Kopyalama</h4><pre>
+
+  Uyarı : Bu kılavuzu kullanırken, üretim çevrelerine duyarlı olmadığını gözönünde
+  bulundurmanız gerekir. İstemciler için kök dosya sistemini kurmak için daha iyi bir
+  yol olarak NFS-Kök-İstemci minik Nasıl'ını görmeniz önerilir. (Ofer Maor)
+
+  Kök ağacını nereye yerleştireceğinize karar verditen sonra, (örnek olarak) şu
+  komutlarla oluşturun : ` mkdir -p &lt;dizin> ` ve ` tar cClf / - | tar xpCf &lt;dizin> - `
+
+  Çekirdeğinizi LILO'suz başlatırsanız kök dizini /tftpboot/&lt;IP adresi> olmalıdır.
+  Eğer istemezseniz, Çekirdek  kaynaklarında Makefile dosyasında değişiklik
+  yapabilirsiniz. Bunun için dosyada ` NFS_ROOT = -DNFS_ROOT=" ` gibi bir satır
+  aramalısınız. Eğer bunu değiştirirseniz çekirdeği tekrar derlemelisiniz.
+
+  </pre><h4> 3.2.2. Kök Dosya Sisteminde Değişiklikler</h4><pre>
+
+  Şimdi gereksiz dosyaları düzenleyin ve /etc/rc.d dizinini kontrol edin. Bazı
+  önemli noktalar :
+
+  + Önemli şeylerden biri eth0 kurulumudur. İş istasyonu bütün veya en azından bir
+    parça kurulmuş eth0 ile gelir. İş istasyonunun IP adresini sunucunun IP adresinin
+    aynına ayarlamak, yapılacak akıllıca bir şey değildir. (Yazarın geçmiş
+    deneyimlerinden irinde başına geldiği gibi...)
+
+  + Başka bir nokta da iş istasyonunun /etc/fstab'ıdır. NFS dosya sistemine göre
+    kurulmalıdır.
+
+  + Uyarı : Sunucunun kök dosya sistemi ile istemcinin kök dosya sistemini
+    karıştırmayın. (Sunucu üzerinde rc.inet1'i yamadığım halde iş istasyonunun
+    hala neden çalışmadığını bilmiyorum.)
+
+  </pre><h4> 3.2.3. Dosya Sisteminin Taşınması</h4><pre>
+
+  Kök dizini iş istasyonuna taşıyın. Bakınız exports(5). Bu değişiklikten sonra
+  nfsd/mountd'yi yeniden başlatmanız gerekecek. Bu redhat'ta  /etc/rc.d/init.d/nfs stop ;
+  /etc/rc.d/init.d/nfs start yazılarak kolayca yapılabilir.
+
+  </pre><h4> 3.2.4. RARP Kurulumu</h4><pre>
+
+  RARP'ı agda herhangi biryerde kurun. Eğer nfsroot parametresi kullanmadan
+  başlatırsanız, RARP sunucusu NFS sunucusu olmalıdır. Bu genelde NFS sunucusu olur.
+  Bunu yapmak için bir çekirdeği RARP desteği ile çalıştırmanız gerekecek.
+
+  Bunun için /sbin/rarp -s &lt;ip adresi> &lt;donanım adresi> komutunu çalıştırın. (ve
+  sunucunun /etc/rc.d dizininde herhangi bir yere kurun.)
+
+  komutta ;
+
+  ip adresi
+    iş istasyonunun IP adresi, ve
+
+  donanım adresi
+    iş istasyonunun ethernet kartının ağ adresidir.
+
+  Örnek : /sbin/rarp -s 131.131.90.200 00:00:c0:47:10:12
+
+  Sunucu IP adreslerini öğrendikten sonra ( /etc/hosts veya DNS lookups ) IP adresi
+  yerine semboik isimleri de kullanabilirsiniz.
+
+  </pre><h4> 3.2.5. BOOTP Kurulumu </h4><pre>
+
+  BOOTP kurulumu için /etc/bootptab dosyasını yenilemelisiniz. Lütfen bootpd(8) ve
+  bootptab(5) yardım sayfalarına bakın.
+
+  </pre><h4> 3.2.6. Donanım Adreslerinin Öğrenilmesi</h4><pre>
+
+  Donanım adreslerini bilmiyorum ? Nasıl öğrenebilirim ?
+
+  + Hazırladğınız çekirdek diskini başlatınız ve ağ kartınıntanındığı satırı bekleyiniz.
+    Bu satır genellikle 6 basamaklı onaltılık düzende sayı içerir ve bu, kartın
+    adresidir.
+
+  + İş istasyonunu TCP/IP iletişim protokolünü sağlayan herhangi bir işletim sistemi
+    ile başlatın. Daha sonra iş istasyonunun çalışıp çalışmadığını ping aracılığıyla
+    test edin. ARP-ön belleğe ` /sbin/arp -a ` komutunu işleterek bakın.
+
+  </pre><h2> 4. İş İstasyonunun Başlatılması</h2>
+  <h3> 4.1. BOOT ROM Kullanmak</h3><pre>
+
+  Kendime bu kötülüğü hiç yapmadığım için size sadece aşağıdaki ipuçlarını verebilirim
+  (Christian Leutloff &lt;leutloff@sundancer.tng.oche.de>) :
+
+  + ''Normal'' bootrom'ları kullanamazsınız.
+
+  + Gero Kuhlmann tarafından oluşturulan, Linux için !bootromlar! oluşturan bir !netboot!
+    paketi vardır.Yerel Linux yansısından edinilebilir.
+
+  + Bootrom'unuzla birlikte gelen dökumanları dikkatle okuyun.
+
+  + Sunucu üzerindeki `tftpd` dosyasını sunucunun kullanımına açmanız gerekebilir.
+    Fakat bu, bootrom'unuzun çekirdeği yükleme şekline de bağlıdır.
+
+  </pre><h3> 4.2. Salt Çekirdek Diski Kullanmak</h3><pre>
+
+  Eğer kök dosya sistemlerini varsayılan isimlendirme için doğr isimlendirme ile
+  aldıysanız ve NFS sunucunuz da aynı zamanda RARP sunucusu ise (bu kutuların aynı
+  altağda olduğunu gösterir.), bir diske "cat" ederek çekirdeği başlatabilirsiniz.
+  (Çekirdek kök aygıtını 0:255'e ayarlamanız gerekir.) Bu sunucudaki kök dizinin
+  ` /tftpboot/IP adresi ` olduğunu farzeder.(Bu değer çekirdek derlenirken
+  değiştirilebilir.)
+
+  </pre><h3> 4.3. RARP ile önyükleyici Kullanmak</h3><pre>
+
+  Başlatırken çekirdeğe gereken bütün parametreleri verin ve ` nfsroot=
+  &lt;sunucu ipadresi>:&lt;/path/to/mount> ` komutunu ekleyin. Burada sunucu ipadresi;
+  NFS sunucunuzun IP adresi ve /path/to/mount da kök dizinin yoludur.
+
+  İpuçları:
+
+  + LILO kullanırken 'lock' özelliğini kullanmayı düşünün : Sadece gereken
+    parametreleri yazın ve "lock"u ekleyin. Bir dahaki açılışta LILO'nun zamanaşımına
+    uğramasını bekleyin.
+
+  + İş istasyonuna özel başlangıç diski oluştururken, lilo.conf'daki ` append= `
+    özelliğini de kullanabilirsiniz.
+
+  </pre><h3> 4.4. Önyükleyiciyi RARP Olmadan Kullanmak</h3><pre>
+
+  NFSroot'a ek olarak ` nfsaddrs=&lt;wst-IP>:&lt;srv-IP>:&lt;gw-IP>:&lt;netm-IP>:&lt;hostname> `
+  komut satırı argumanını çekirdeğe veriniz. Çekirdek verilen parametrelerle
+  eth0'ı kuracaktır :
+
+    wst-IP
+      makinenin IP adresi
+
+    srv-IP
+      NFS sunucusunun IP adresi
+
+    gw-IP
+      geçit makinasının IP adresi
+
+    netm-IP
+      netmask
+
+    hostname
+      makina adı
+
+  </pre><h2> 5. Bilinen Problemler</h2>
+  <h3> 5.1. /sbin/init Başlamıyor</h3><pre>
+
+  Şu anki dağıtımların bazılarında /sbin/init'in dinamik olarak bağlanması /sbin/init
+  ile ilgili popüler problemlerden birisidir. Bu yüzden istemci için doğru /lib
+  kurulumu sağlamalısınız.Denenebilecek kolay şeylerden birisi /sbin/init
+  (istemci için)'i statik bağlı bir "Merhaba Dünya!" programı ile yerdeğiştirmektir.
+
+  </pre><h3> 5.2. /dev Sorunları</h3><pre>
+
+  Eğer açılış sırasında tty'lerle ilgili bazı karışmış mesajlar alırsanız,istemciden
+  /dev dizini altında MAKEDEV çalıştırmalısınız. Bunun 64 bitlik bazı İşletim
+  sistemleriyle çalışmadığına dair söylentiler vardır, buna rastgelirseniz hangi
+  işletim sistemi ile problem yaşadığınızı bana bir mektup atarak belirtirseniz iyi
+  olur. Potansiyel bir çözüm açılış işleminin başlarında küçük bir /dev ram diski
+  oluşturmak, alet uçlarını her defasında tekrar yüklemek olabilir.
+
+  </pre><h2> 6. Diğer Başlıklar</h2><pre>
+
+  + ftp://sunsite.unc.edu/system/Network/admin/bootpc.v045.tgz adresinde bir BOOTP
+    istemcisi vardır.
+
+    initrd ile (Linux 2.0'da dahil edilmiştir) disksiz iş istasyonları için çalışması
+    kolayca sağlanabilir. initrd gerçekten özelleşmiş kurulumlar için gelişmiş bir
+    seçenektir.
+
+  + bootpd temelli sade açılışlar için bu gerçekte çok gerekli değildir çünkü
+    Linux 2.0 RARP yerine BOOTP seçeneğinin de kullanılmasını içerir.(Daha kesin
+    olması için çekirdek içinde ikisini de derleyebilirsiniz ve daha hızlı olan tepki
+    galip gelir.)
+
+  + Çekirdek kaynağının dökumantasyon dizininde NFS-kök sistemlerini belgeleyen bir
+    dosya vardır.
+
+  + Ortalıkta dolaşan bir yama programı, NFS üzerinde değişimin olmasını sağlıyor.
+    Bu yama bana gönderildi fakat ben onu bir şekilde kaybetmeyi başardım.
+
+    Onu muhtemelen http://www.linuxhq.com/'daki gayriresmmi yamalar bölümünden
+    edinebilirsiniz.
+
+</pre></div></article>

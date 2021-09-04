@@ -1,0 +1,108 @@
+.\" http://belgeler.org \N'45' 2006\N'45'11\N'45'26T10:18:37+02:00  
+.TH "REVOKE" 7 "" "PostgreSQL" "SQL \N'45' Dil Deyimleri"
+.nh   
+.SH İSİM
+REVOKE \N'45' remove access privileges   
+.SH KULLANIM 
+.nf
+\fBREVOKE\fR [ \fBGRANT OPTION FOR\fR ]
+\    { { \fBSELECT\fR | \fBINSERT\fR | \fBUPDATE\fR | \fBDELETE\fR | \fBRULE\fR | \fBREFERENCES\fR | \fBTRIGGER\fR }
+\    [,...] | \fBALL\fR [ \fBPRIVILEGES\fR ] }
+\    \fBON\fR [ \fBTABLE\fR ] \fItablo_ismi\fR [, ...]
+\    \fBFROM\fR { \fIkullanıcı_ismi\fR | \fBGROUP\fR \fIgrup_ismi\fR | \fBPUBLIC\fR } [, ...]
+\    [ \fBCASCADE\fR | \fBRESTRICT\fR ]
+
+\fBREVOKE\fR [ \fBGRANT OPTION FOR\fR ]
+\    { { \fBCREATE\fR | \fBTEMPORARY\fR | \fBTEMP\fR } [,...] | \fBALL\fR [ \fBPRIVILEGES\fR ] }
+\    \fBON DATABASE\fR \fIdbismi\fR [, ...]
+\    \fBFROM\fR { \fIkullanıcı_ismi\fR | \fBGROUP\fR \fIgrup_ismi\fR | \fBPUBLIC\fR } [, ...]
+\    [ \fBCASCADE\fR | \fBRESTRICT\fR ]
+
+\fBREVOKE\fR [ \fBGRANT OPTION FOR\fR ]
+\    { \fBEXECUTE\fR | \fBALL\fR [ \fBPRIVILEGES\fR ] }
+\    \fBON FUNCTION\fR \fIişlev_ismi\fR ([\fItür\fR, ...]) [, ...]
+\    \fBFROM\fR { \fIkullanıcı_ismi\fR | \fBGROUP\fR \fIgrup_ismi\fR | \fBPUBLIC\fR } [, ...]
+\    [ \fBCASCADE\fR | \fBRESTRICT\fR ]
+
+\fBREVOKE\fR [ \fBGRANT OPTION FOR\fR ]
+\    { \fBUSAGE\fR | \fBALL\fR [ \fBPRIVILEGES\fR ] }
+\    \fBON LANGUAGE\fR \fIdil_ismi\fR [, ...]
+\    \fBFROM\fR { \fIkullanıcı_ismi\fR | \fBGROUP\fR \fIgrup_ismi\fR | \fBPUBLIC\fR } [, ...]
+\    [ \fBCASCADE\fR | \fBRESTRICT\fR ]
+
+\fBREVOKE\fR [ \fBGRANT OPTION FOR\fR ]
+\    { { \fBCREATE\fR | \fBUSAGE\fR } [,...] | \fBALL\fR [ \fBPRIVILEGES\fR ] }
+\    \fBON SCHEMA\fR \fIşema_ismi\fR [, ...]
+\    \fBFROM\fR { \fIkullanıcı_ismi\fR | \fBGROUP\fR \fIgrup_ismi\fR | \fBPUBLIC\fR } [, ...]
+\    [ \fBCASCADE\fR | \fBRESTRICT\fR ]
+
+\fBREVOKE\fR [ \fBGRANT OPTION FOR\fR ]
+\    { \fBCREATE\fR | \fBALL\fR [ \fBPRIVILEGES\fR ] }
+\    \fBON TABLESPACE\fR \fItablo_alanı_ismi\fR [, ...]
+\    \fBFROM\fR { \fIkullanıcı_ismi\fR | \fBGROUP\fR \fIgrup_ismi\fR | \fBPUBLIC\fR } [, ...]
+\    [ \fBCASCADE\fR | \fBRESTRICT\fR ]
+.fi
+    
+.SH AÇIKLAMA
+The \fBREVOKE\fR command revokes previously granted    privileges from one or more users or groups of users.  The key word    \fBPUBLIC\fR refers to the implicitly defined group of    all users.   
+
+See the description of the \fBGRANT\fR [grant(7)] command for    the meaning of the privilege types.   
+
+Note that any particular user will have the sum    of privileges granted directly to him, privileges granted to any group he    is presently a member of, and privileges granted to    \fBPUBLIC\fR.  Thus, for example, revoking \fBSELECT\fR privilege    from \fBPUBLIC\fR does not necessarily mean that all users    have lost \fBSELECT\fR privilege on the object: those who have it granted    directly or via a group will still have it.   
+
+If \fBGRANT OPTION FOR\fR is specified, only the grant    option for the privilege is revoked, not the privilege itself.    Otherwise, both the privilege and the grant option are revoked.   
+
+If a user holds a privilege with grant option and has granted it to    other users then the privileges held by those other users are    called dependent privileges. If the privilege or the grant option    held by the first user is being revoked and dependent privileges    exist, those dependent privileges are also revoked if    \fBCASCADE\fR is specified, else the revoke action    will fail.  This recursive revocation only affects privileges that    were granted through a chain of users that is traceable to the user    that is the subject of this \fBREVOKE\fR command.    Thus, the affected users may effectively keep the privilege if it    was also granted through other users.   
+
+.SH EK BİLGİ
+Use \fB()\fRpsql\N'39's \fB\\z\fR command to    display the privileges granted on existing objects.  See \fBGRANT\fR [grant(7)] for information about the format.   
+
+A user can only revoke privileges that were granted directly by    that user.  If, for example, user A has granted a privilege with    grant option to user B, and user B has in turned granted it to user    C, then user A cannot revoke the privilege directly from C.    Instead, user A could revoke the grant option from user B and use    the \fBCASCADE\fR option so that the privilege is    in turn revoked from user C.  For another example, if both A and B    have granted the same privilege to C, A can revoke his own grant    but not B\N'39's grant, so C will still effectively have the privilege.   
+
+When a non\N'45'owner of an object attempts to \fBREVOKE\fR privileges     on the object, the command will fail outright if the user has no     privileges whatsoever on the object.  As long as some privilege is     available, the command will proceed, but it will revoke only those     privileges for which the user has grant options.  The \fBREVOKE ALL     PRIVILEGES\fR forms will issue a warning message if no grant options are     held, while the other forms will issue a warning if grant options for     any of the privileges specifically named in the command are not held.     (In principle these statements apply to the object owner as well, but     since the owner is always treated as holding all grant options, the     cases can never occur.)    
+
+If a superuser chooses to issue a \fBGRANT\fR or \fBREVOKE\fR     command, the command is performed as though it were issued by the     owner of the affected object.  Since all privileges ultimately come     from the object owner (possibly indirectly via chains of grant options),     it is possible for a superuser to revoke all privileges, but this may     require use of \fBCASCADE\fR as stated above.    
+
+.SH ÖRNEKLER
+Revoke insert privilege for the public on table    films:   
+
+
+.RS 4
+.nf
+REVOKE INSERT ON films FROM PUBLIC;
+.fi
+.RE   
+
+Revoke all privileges from user manuel on view    kinds:   
+
+
+.RS 4
+.nf
+REVOKE ALL PRIVILEGES ON kinds FROM manuel;
+.fi
+.RE   
+
+Note that this actually means "revoke all privileges that I    granted".   
+
+.SH UYUMLULUK   
+The compatibility notes of the \fBGRANT\fR [grant(7)] command     apply analogously to \fBREVOKE\fR.  The syntax summary is:   
+
+
+.nf
+
+\fBREVOKE\fR [ \fBGRANT OPTION FOR\fR ] \fIizinler\fR
+\    \fBON\fR \fInesne\fR [ ( \fIsütun\fR [, ...] ) ]
+\    \fBFROM\fR { \fBPUBLIC\fR | \fIkullanıcı_ismi\fR [, ...] }
+\    { \fBRESTRICT\fR | \fBCASCADE\fR }
+.fi
+
+
+One of \fBRESTRICT\fR or \fBCASCADE\fR     is required according to the standard, but PostgreSQL     assumes \fBRESTRICT\fR by default.    
+
+.SH İLGİLİ BELGELER
+\fBGRANT\fR [grant(7)]   
+
+.SH ÇEVİREN
+Nilgün Belma Bugüner <nilgun (at) belgeler·gen·tr>, Nisan 2005 
+ 
+    

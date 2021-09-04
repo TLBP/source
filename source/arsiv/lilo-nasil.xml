@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--DOCTYPE article SYSTEM "../docbook/dtd/docbookx.dtd"-->
+<!-- ********************************************************************
+     $Id: lilo-nasil.xml,v 1.2 2002/09/18 20:11:34 nilgun Exp $
+     ******************************************************************** -->
+
+<article id="archive-lilo-nasil">
+  <articleinfo>
+    <title>Lilo Mini NASIL</title>
+    <author>
+      <firstname>M. Vural ERKOC</firstname>
+      <affiliation>
+        <address><email>vural@compclup.ceng.metu.edu.tr</email></address>
+      </affiliation>
+    </author>
+    <pubdate>v1.1, 8 Aralık 1996</pubdate>
+  </articleinfo>
+<div>
+
+<pre>
+Bu dosya bazi tipik LILO kurulumlarini anlatmaktadir.
+LILO kullanim kilavuzuna ek olarak olarak hazirlanmistir.
+Her ne kadar kurulumunuz benimkine benzemese de, sanirim ornekler
+aciklayici.
+Umarim bu sizi sorunlardan kurtarir.
+
+
+Ornek 1:
+--------
+    Iki IDE ve bir SCSI hard diskim var. SCSI surucu BIOS'tan gozukmuyor.
+The Linux Yukleyici (LInux LOader), LILO, BIOS cagrilarini(calls) kullanir 
+ve sadece BIOS'un gordugu diskleri gorebilir.  Benim Aptal AMI BIOS'um 
+sadece "A:" veya "C:" 'den aciliyor. Kok dosya sistemim ise SCSI 
+diskimdeki bir bolumde.
+
+
+Cozum :
+-------    
+    Cekirdegi(kernel), harita dosyasini(map file) ve zincir yukleyicisini    
+(chain loader) ilk IDE diskinde saklayin. Dikkat edilirse cekirdegi
+kok bolumunde(partition) saklamaniz gerekli degil.
+    
+Benim ilk IDE diskimdeki ikinci bolum(partition) (/dev/hda2) /u2 dizini
+olarak bindirilmis(mounted). Benim kullandigim /etc/lilo.conf dosyasi 
+asagidadir.
+
+
+#   LILO'nun acilis(boot) kaydini Ana Acilis kaydi(Master Boot Record, MBR) 
+#   olarak ilk IDE diskine kurun.
+#
+boot = /dev/hda
+#  /sbin/lilo (kurucu) LILO acilis kaydini asagidaki dosyadan 
+#  MBR yerine kopyalar.
+install = /u2/etc/lilo/boot.b
+#
+#  Aciklayicili acilis menusu yazdim. LILO onu burada bulur.
+message = /u2/etc/lilo/message
+#  Kurucu asagidaki dosyayi yaratacaktir.
+#  Bu acilis-yukleyiciye(boot loader) cekirdek bloklarinin nerede 
+#  bulundugunu soyler.
+map = /u2/etc/lilo/map
+compact
+prompt
+#  10 saniye bekle, sonra 1.2.1 cekirdeginden ontanim olarak ac.
+timeout = 100
+#  Asagidakini yaparak cekirdek BIOS'un gorebilecegi yere saklanir.
+#      cp -p /usr/src/linux/arch/i386/boot/zImage /u2/z1.2.1
+image = /u2/z1.2.1
+	label = 1.2.1
+#  LILO cekirdege ilk SCSI bolumunu kok olarak bindirmesini soyler.
+#  BIOS'un bunu gormesine gerek yoktur.
+	root = /dev/sda1
+#  Bu bolumun /etc/rc.d/rc.S tarafindan kontrol edilecek ve 
+#  tekrar bindirilecektir.
+	read-only
+#  Ayni cekirdegin farkli bir bolumu de kok olarak bindirmeside 
+#  saglanabilir.  Benim /u2 uzerinde bir acil kurulumum var.
+image = /u2/z1.2.1
+	label = 1.2.1-hda2
+	root = /dev/hda2
+	read-only
+#  Eski Slackware cekirdeginide yeni olusturdugum cekirdegin calismaz 
+#  diye ortalikta biraktim.  Dogrusu bir kere buna ihtiyacim olmustu.
+image = /u2/z1.0.9
+	label = 1.0.9
+	root = /dev/sda1
+	read-only
+#  DR-DOS 6 bolumum.
+other = /dev/hda1
+	loader=/u2/etc/lilo/chain.b
+	label = dos
+	alias = m
+
+
+Ornek 2:
+--------
+Ofisimdeki sistemde 1GB IDE surucusu var. BIOS'um ilk IDE'min 
+sadece 504 MB'lik bolumunu gorebiliyor(MB=2^10, 10^6 degil.)
+Dolayisiyla 350 MB'lik /dev/hda1 bolumunde MS-DOS ve
+120 MB'lik /dev/hda2 bolumunde Linux kok var.
+
+MS-DOS kendini dogru birsekilde surucu yeniyken kuramamaktaydi.
+Novell DOS 7'de de ayni problem vardi. Sansim varmis ki, 
+"Options by IBM" surucu kutusunun icine "OnTrack" disketini
+koymayi unutmustu. Surucu "OnTrack Disk Manager" adli programlar
+gelmesi gerekiyordu. Eger sadece MSDOS'unuz varsa, sanirim 
+bu programi kullanmak zorundasiniz.
+
+Dolayisiyla bolum tablomu Linux'un fdisk'iyle olusturdum.
+MSDOS-6.2 kendini /dev/hda1'e kurmayi reddetti. 
+Asagidaki gibi bir mesaj cikti.
+
+   'Bu MS-DOS dagitimi yeni kurulumlar icindir.
+    Bilgisayarinizda MS-DOS var
+	 [bu yanlisti, surucu yeniydi]
+    dolayisiyla saticinizdan guncelleme dagitimini almaniz gerek.'
+
+Ne sacmalik! sonucta Linux'un fdisk'ini tekrar calistirdim ve
+1. bolumu tablodan sildim. Bu MS-DOS 6.2 icin tatminkar olmustu ve
+biraz once sildigim 1. bolumu tekrar yaratti ve kendini oraya
+kurdu.MS-DOS 6.2 surucudeki MBR'ye yazdi, fakat sistem acilmadi.
+
+Sans eseri, diskette Slackware cekirdegi vardi (Slackware kurulum
+programi tarafinda yapilmisti), dolayisiyla Linux'u actim ve LILO
+ile MS-DOS'un bozuk MBR'si uzerine yazdim. Bu calisti.
+Kullandigim /etc/lilo.conf dosyasi asagida:
+
+boot = /dev/hda
+map = /lilo-map
+delay = 100
+ramdisk = 0             # Slackware cekirdegindeki ramdisk'i kapatir.
+timeout = 100
+prompt
+disk = /dev/hda         # BIOS sadece ilk 500 MB'i gorur.
+   bios=0x80            # Ilk IDE'yi belirler.
+   sectors = 63         # bu sayilari surucunun kilavuzundan alin.
+   heads = 16
+   cylinders = 2100
+image = /vmlinuz
+  append = "hd=2100,16,63"  # Bu gereksiz olabilir.
+  root = /dev/hda2
+  label = linux
+  read-only
+  vga = extended
+other = /dev/hda1
+  label = msdos
+  table = /dev/hda
+  loader = /boot/chain.b
+
+## son
+
+Bu sistemleri kurduktan sonra, zImage, boot.b, map, chain b ve mesaj
+dosyalarinin bulundugu bolumun msdos dosya sistemini "stacker" veya 
+"doublespace" ile sikistirilmadigi surece kullanabildigini dogruladim.
+Dolayisiyla 500 MB'lik DOS /dev/hda1 bolumu olusturabilirdim.
+
+Ayrica "OnTrack" programininda surucunun hemen baslangicina degilde
+birkac duzine byte sonraya bolum tablosunu yazdigini ve boylece
+Linux IDE surucusunu kandirip, bu sorunun etrafindan dolasmanin mumkun
+oldugunu ogrendim. Fakat onceden derlenmis Slackware cekirdegiyle bu 
+imkansiz. Sonradan IBM "OnTrack" disketi yolladi. Bende OnTrack'in 
+teknik servisini aradim. Bana Linux ile olmayacagini cunku Linux'un 
+BIOS'u kullanmadigini soylediler. Bende disketlerini geri verdim.
+
+
+
+Ornek 3:
+----- --
+Sonra ofisimdeki sisteme Windows 95 kurdum. Benim guzel LILO MBR'mi 
+ucurdu, fakat Linux bolumlerime dokunmadi. Cekirdegin disketten
+yuklenmesi uzun surdugunden, cekirdegi IDE'den yuklememi saglayan
+duzgun calisan bir LILO ayariyla bir disket olusturdum.
+LILO disketimi asagidaki gibi olusturdum.
+  fdformat /dev/fd0H1440     #  yeni disketi formatlar.
+  mkfs /dev/fd0 1440         #  dosya sistemini minix yapar.
+  mkdir /3                   #  bindirecek yer yaratir.
+  mount /dev/fd0 /3
+  cp -p /boot/chain.b /3     #  zincir yukleyicisini kopyalar.
+  lilo -C /etc/lilo.flop     #  LILO'yu ve haritayi diskete kurar.
+  umount /3
+Uyari: LILO'nun haritasini duzgun yazabilmesi icin disketin KURUCUYU 
+CALISTIRDIGINIZDA BINDIRILMIS OLMASI GEREKIR.
+
+
+Bu dosya /etc/lilo.flop 'dur.  Son dosyayla hemen hemen aynidir.
+
+#  Cekirdekleri HD'den acmak icin disketi olusturur.
+boot = /dev/fd0
+map = /3/lilo-map
+delay = 100
+ramdisk = 0     # Slackware cekirdegindeki ramdisk'i kapatir.
+timeout = 100
+prompt
+disk = /dev/hda        # 1 GB IDE, BIOS sadece ilk 500 MB'tini gorur.
+   bios=0x80
+   sectors = 63
+   heads = 16
+   cylinders = 2100
+image = /vmlinuz
+  append = "hd=2100,16,63"
+  root = /dev/hda2
+  label = linux
+  read-only
+  vga = extended
+other = /dev/hda1
+  label = msdos
+  table = /dev/hda
+  loader = /3/chain.b
+
+## son
+
+Son olarak, ofisteki sistemimde MS-DOS 6.2'ye ihtiyacim oldu, 
+fakat ilk surucume dokunmak istemiyordum. Sisteme bir SCSI 
+denetleyicisi ve surucusu ekledim; surucude Linux'un mkdosfs 
+komutu ile msdos dosya sistemi olusturdum; dolayisiyla Windows 95
+surucuyu "D:" olarak goruyor. Tabii ki MSDOS D:'den acilmaz.
+Elinizde LILO oldugu zaman bu sorun degil. Ben de asagidakileri
+Ornek 2'deki lilo.conf'a ekledim.
+
+other = /dev/sda1
+  label = d6.2
+  table = /dev/sda
+  loader = /boot/any_d.b
+
+
+MS-DOS calisiyor ve kendini C:'de saniyor ve Windows 95'ide D:
+
+</pre></div></article>

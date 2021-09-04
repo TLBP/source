@@ -1,0 +1,93 @@
+.\" http://belgeler.org \N'45' 2006\N'45'11\N'45'26T10:18:35+02:00  
+.TH "CREATE DOMAIN" 7 "" "PostgreSQL" "SQL \N'45' Dil Deyimleri"
+.nh   
+.SH İSİM
+CREATE DOMAIN \N'45' yeni bir veri alanı tanımlar   
+.SH KULLANIM 
+.nf
+\fBCREATE DOMAIN\fR \fIisim\fR [\fBAS\fR] \fIveri_türü\fR
+\    [ \fBDEFAULT\fR \fIifade\fR ]
+\    [ \fIkısıt\fR [ ... ] ]
+
+burada \fIkısıt\fR:
+
+[ \fBCONSTRAINT\fR \fIkısıt_ismi\fR ]
+{ \fBNOT NULL\fR | \fBNULL\fR | \fBCHECK\fR (\fIifade\fR) }
+.fi
+    
+.SH AÇIKLAMA
+\fBCREATE DOMAIN\fR yeni bir veri alanı tanımlar.  Yeni veri alanını tanımlayan kullanıcı o veri alanının sahibi olur.   
+
+Eğer bir şema ismi belirtilmişse (\fBCREATE DOMAIN    myschema.mydomain ...\fR gibi) veri alanı bu şema içinde oluşturulur. Aksi takdirde geçerli olan şemada oluşturulur. Veri alanının ismi şemanın mevcut veri alanları ve veri türleri arasında eşsiz olmalıdır.   
+
+Veri alanları bakım kolaylığı bakımından tablolar arasında ortak alanları tek bir yerle soyutlamak için yararlıdır. Örneğin eposta adresi sütunu çeşitli tablolarda hepsi aynı özelliklerle kullanılabilir. Bir veri alanı tanımlayıp her tablonun kısıtlarını ayrı ayrı ayarlamaktan kurtulabilirsiniz.   
+
+.SH PARAMETRELER     
+.br
+.ns
+.TP 
+\fIisim\fR
+Oluşturulacak veri alanının ismi (şema nitelemeli olabilir).       
+
+.TP 
+\fIveri_türü\fR
+Veri alanının veri türü; dizi belirteçleri içerebilir.       
+
+.TP 
+\fBDEFAULT \fR\fIifade\fR
+Veri alanının kullanıldığı sütunlar için bir öntanımlı değer belirtir. Değer herhangi bir ifade olabilir (altsorgulara izin verilmez). Öntanımlı ifadenin veri türü, veri alanının veri türü ile aynı olmalıdır. Bir öntanımlı değer belirtilmezse, NULL öntanımlı olur.        
+
+Öntanımlı ifade, sütun için değer belirtilmeyen veri girme işlemlerinde kullanılacaktır. Bir sütun için bir öntanımlı değer zaten varsa, veri alanının öntanımlısı değil, bu öntanımlı kullanılır. Ancak, bir sütunun veri türünün öntanımlısı değil, veri alanının öntanımlısı kullanılır.       
+
+.TP 
+\fBCONSTRAINT \fIkısıt_ismi\fR\fR
+Bir kısıtın isteğe bağlı ismi. Belirtilmezse, sistem bir isim üretecektir.       
+
+.TP 
+\fBNOT NULL\fR
+Veri alanı değerinin NULL olamayacağını belirtir.       
+
+.TP 
+\fBNULL\fR
+Veri alanı değerinin NULL olabileceğini belirtir. Bu öntanımlıdır.        
+
+Bu sözcük standartdışı SQL veritabanları ile uyumluluk için vardır. Yeni uygulamalarda kullanılmasa daha iyi olur.       
+
+.TP 
+\fBCHECK \fR(\fIifade\fR)
+Doğruluk kısıtlarını ya da veri alanı değerlerinin sağlaması gereken sınamaları belirtmek için kullanılır. Her kısıt bir mantıksal sonuç üreten bir ifade olmalıdır. Sınanacak değeri belirtmek için isim olarak VALUE kullanılmalıdır.      
+
+Şimdilik, \fBCHECK\fR ifadeleri altsorgular içerememekte ve ifade içinde VALUE dışında değişken belirtilememektedir.       
+
+.PP  
+.SH ÖRNEKLER
+Bu örnekte us_postal_code veri alanı oluşturulmakta ve bu alan bir tablo tanımında kullanılmaktadır. Değerin geçerli bir US posta kodu olup olmadığı bir düzenli ifade ile sınanmaktadır.   
+
+
+.nf
+CREATE DOMAIN us_postal_code AS TEXT
+\    CHECK(
+\      VALUE ~ \N'39'^\\d{5}$\N'39'
+\    OR VALUE ~ \N'39'^\\d{5}\N'45'\\d{4}$\N'39'
+\    );
+
+\    CREATE TABLE us_snail_addy (
+\      address_id SERIAL NOT NULL PRIMARY KEY
+\    , street1 TEXT NOT NULL
+\    , street2 TEXT
+\    , street3 TEXT
+\    , city TEXT NOT NULL
+\    , postal us_postal_code NOT NULL
+\    );
+.fi   
+
+.SH UYUMLULUK
+\fBCREATE DOMAIN\fR SQL standardıyla uyumludur.   
+
+.SH İLGİLİ BELGELER
+\fBALTER DOMAIN\fR [alter_domain(7)], \fBDROP DOMAIN\fR [drop_domain(7)].  
+
+.SH ÇEVİREN
+Nilgün Belma Bugüner <nilgun (at) belgeler·gen·tr>, Nisan 2005 
+ 
+    

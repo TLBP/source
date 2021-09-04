@@ -1,0 +1,1449 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--DOCTYPE article SYSTEM "docbook/dtd/docbookx.dtd"-->
+<!-- ********************************************************************
+     $Id: proxy-fw.xml,v 1.1 2002/12/20 22:51:00 nilgun Exp $
+     ******************************************************************** -->
+<article id="proxy-fw" lang="tr">
+  <articleinfo>
+    <title>Internet'e Bağlanırken Gerekenler: Firewall ve Proxy</title>
+    <author><firstname>Deniz Akkuş</firstname></author>
+    <pubdate>Ocak 2003</pubdate>
+    <releaseinfo>v1.0</releaseinfo>
+    <abstract>
+      <para>
+Bir kaç saatlik bir çalışma ile ufak bir makina üzerine bir güvenlik
+duvarı kurabilirsiniz. Güvenlik duvarları salt dış saldırılara karşı
+sisteminizi korumakla kalmaz, performans arttırıcı ve izin politikası
+uygulayıcı amaçlar için de kullanılırlar.
+      </para>
+    </abstract>
+     <legalnotice><title>Yasal Uyarı</title><para>
+Bu belgenin, <emphasis>Internet'e Bağlanırken Gerekenler: Firewall ve Proxy</emphasis> 1.0 sürümünün <emphasis role="bold"> telif hakkı © 2003 <emphasis>Deniz Akkuş</emphasis></emphasis>'a aittir. &notice.gpl;
+    </para>
+      &notice.disc;
+    </legalnotice>
+  </articleinfo>
+  <sect1 id="proxy-fw_intro">
+    <title>Giriş</title>
+    <para>
+Her şirkette bir gün İnternete bağlantı ve bunun getireceği yararlar
+gündeme getirilir. Fakat Internet bağlantısı, Bilgi İşlem açısından
+bazı sorunları beraberinde getirmektedir.
+    </para>
+      <itemizedlist>
+        <listitem>
+Dışarıdan içeriye yapılacak saldırılar.
+        </listitem><listitem>
+İçeriden yetkisiz kişilerin dışarıya bilgi göndermesi.
+        </listitem><listitem>
+Internet'de "tehlikeli alanlarda" dolaşma sonucunda sisteme virüs bulaşması.
+        </listitem><listitem>
+Internet'de özellikle vakit kaybettirici bazı sitelere ulaşımın
+şirket içerisinde, çalışma saatlerinde yapılması.
+        </listitem><listitem>
+Yetkisiz kullanıcıların Internet'de gezinmesi.
+        </listitem>
+      </itemizedlist>
+    <para>
+Günün sonunda, %100 güvenlik ve kontrol yoktur. Fakat güvenlik ve
+kontrolü, kolaylıkla bertaraf edilebilir halden çıkarmak mümkündür.
+    </para>
+    <sect2>
+      <title>Güvenlik Duvarı (Firewall) Nedir?</title>
+      <para>
+Bütününe <glossterm>güvenlik duvarı</glossterm> dediğimiz servisler
+aslında <link linkend="proxy-fw_concepts">bir kaç alt kavramdan oluşmaktadır</link>:
+<xref linkend="proxy-fw_bastion"/>, <xref linkend="proxy-fw_nat"/>,
+<xref linkend="proxy-fw_packet-filter"/>, <xref linkend="proxy-fw_proxy"/>.
+Bütün güvenlik duvarları (ticari olanlar ve olmayanlar), bu
+uygulamaların hepsini veya bir kısmını uygularlar.
+      </para>
+    </sect2>
+  </sect1>
+  <sect1 id="proxy-fw_concepts">
+    <title>Güvenlik Duvarı Kavramları</title>
+    <sect2 id="proxy-fw_bastion">
+      <title>Tabya (Bastion Host)</title>
+      <para>
+İdealde, ağınızdaki güvenlik, ağ seviyesinde ve ağdaki her bir makinada
+uygulanır. Pratikte ise, bu ya yapılamamakta ya da ihtiyaç duyulan kimi
+protokollerin güvenlikten yoksun olduğu bilinse dahi kullanılmaktadır.
+Böyle durumlarda güvenlik duvarı, içeride birbirlerine güvenen, az
+korumalı makinaların olduğu bir ağla, dış dünya arasına yerleştirilir ve
+aradaki fiziksel bağlantı yalnızca güvenlik duvarı tarafından sağlanır.
+Dolayısıyla içerideki ağa girmek isteyen her kötü niyetli dış saldırı,
+önce özel olarak korumalı tasarlanmış güvenlik duvarı makinasını
+bertaraf etmek zorundadır. Bu makinaya "kale", "nöbetçi kale" anlamına gelen
+<wordasword>tabya</wordasword><footnote>
+<para>Tabya, sözlük anlamı olarak, "ayrı olarak yapılmış ve silahlarla
+güçlendirilmiş istihkam"dır. Güvenlik duvarının kurulacağı makina için
+bu terimin uygun olacağını düşündüm. Bu tabya şüphesiz, caydırıcı
+silahlarla teçhiz edilmiş olacak :-)</para></footnote> (bastion host)
+da denir. Tabyamız, fiziksel olarak iki farklı
+ağa bağlıdır: iç ağ (Intranet) ve dış ağ (Internet).
+Tabya iki özelliğe sahiptir:
+      </para>
+        <itemizedlist>
+          <listitem>
+Yüksek güvenliğe sahip olmalıdır -- yani bu makinaya izinsiz erişim
+son derece zor hale getirilmelidir.
+          </listitem><listitem>
+İki (bazen üç) fiziksel ağ bağlantısına sahip olmalı ve bu farklı
+ağlar arasındaki iletişimin nasıl yapılacağına dair karar
+verebilmelidir.
+          </listitem>
+        </itemizedlist>
+        <figure float="1">
+          <title>İç ağ ile dış ağ arasında güvenlik duvarı</title>
+          <inlinemediaobject>
+            <imageobject>
+              <imagedata align="center" fileref="proxyfw/bastion.jpg"/>
+            </imageobject>
+          </inlinemediaobject>
+        </figure>
+        <itemizedlist>
+          <listitem>
+Yüksek güvenliğe sahip olmalıdır -- yani bu makinaya izinsiz erişim
+son derece zor hale getirilmelidir.
+          </listitem><listitem>
+İki (bazen üç) fiziksel ağ bağlantısına sahip olmalı ve bu farklı
+ağlar arasındaki iletişimin nasıl yapılacağına dair karar
+verebilmelidir.
+          </listitem>
+        </itemizedlist>
+        <figure float="1">
+          <title>İç ağ ile dış ağ arasında güvenlik duvarı</title>
+          <inlinemediaobject>
+            <imageobject>
+              <imagedata align="center" fileref="proxyfw/bastion.jpg"/>
+            </imageobject>
+          </inlinemediaobject>
+        </figure>
+    </sect2>
+    <sect2 id="proxy-fw_nat">
+      <title>Ağ Adres Çevrimi (NAT), Maskeleme</title>
+      <para>
+Günümüzde iç ağların hemen hepsi tahsisli olmayan IP numaraları
+(<literal>10.0.0.0, 192.168.0.0</literal> vs.) kullanmaktadır. Bu IP
+numaraları Internet üzerindeki yönlendiriciler (router) tarafından
+bilinmez. Dolayısıyla bu ağlardan Internet'deki herhangi bir makinaya
+bir erişim olduğu zaman Internet'deki makina bu ağa nasıl geri
+döneceğini bilmez ve pratikte iletişim yapılamaz. Güvenlik duvarı ise,
+dinamik veya statik olarak Internet'de bilinen ve kendisine yönlendirme
+yapılabilen bir IP numarasına sahiptir. İç ağdaki makinalara erişim
+sağlayabilmek için güvenlik duvarı, kendisine iç ağdan gelen her
+paketin kaynak adresini kendi adresi olarak değiştirir. Kendisine
+Internet'den gelen paketlerin de hedef adresini iç ağdaki ilgili
+makinanın adresi olarak değiştirir ve bu yolla iç ağdaki makinaların
+Internet üzerindeki makinalarla haberleşmesini sağlar. Bu işleme IP
+<wordasword>IP Maskelemesi</wordasword> (Masquerade) veya <wordasword>Ağ
+Adres Çevrimi</wordasword> (NAT - Network Address Translation) denir.
+      </para><para>
+NAT yapıldığı zaman, oluşan trafiğin Internet'den görüldüğü hali,
+Internet'de bulunan tek bir makinanın (tabyamız) bazı Internet
+alışverişleri yaptığıdır. Internet'e, bu makinanın arkasındaki ağın
+büyüklüğü, bu ağdaki makinaların cinsi, sayısı, ağın yapısı vs. hakkında
+herhangi bir bilgi gitmez. Dolayısıyla NAT, yalnızca tahsissiz ağlardan
+Internet'e erişimi sağlamakla kalmaz, ağınızdaki makinalar hakkında
+bilgi edinilmesini (ve dolayısıyla size karşı yapılabilecek saldırıları)
+zorlaştırır.
+      </para>
+    </sect2>
+    <sect2 id="proxy-fw_packet-filter">
+      <title>Paket Filtreleme</title>
+      <para>
+Yukarıda bahsedilen önlemler (güvenlik duvarının tek fiziksel bağlantı
+olması, NAT uygulanması) ağınıza belli bir miktar güvenlik sağlar, fakat
+esas güvenlik, paket filtreleme yöntemlerinden gelir. Bu yöntemler,
+güvenlik duvarından geçen her IP paketine bakılması ve ancak belli
+şartlara uyarsa geçişine izin verilmesi şeklinde uygulanır.
+      </para><para>Örneğin:</para>
+        <itemizedlist>
+          <listitem>
+İç ağınızdan kimsenin Internet'de ICQ kullanmasını istemiyorsunuz.
+          </listitem><listitem>
+Dışarıdan içeriye hiç kimsenin telnet yapabilmesini istemiyorsunuz.
+          </listitem>
+        </itemizedlist>
+      <para>
+Bu hedefleri gerçekleştirmek için <glossterm>paket filtreleme</glossterm>
+yöntemleri kullanacaksınız. <glossterm>Paket filtreleme</glossterm>,
+güvenlik duvarının her fiziksel bağlantısı üzerinde ayrı ayrı ve yöne
+bağlı (dışarıya çıkışa izin ver, fakat içeriye girişe izin verme)
+olarak uygulanabilir.
+      </para><para>
+Paket filtrelemede özellikle yapmanız gereken minimum, dışarıdan gelip de
+kaynağını içerisi gibi gösteren (IP spoofing - IP aldatmacası) paketleri
+ve devam etmekte olan bir trafiğin parçası imiş gibi gelen paketleri
+(IP fragments) filtrelemek ve bunların geçişine izin vermemektir.
+Çoğu saldırı, bu şekilde başlar.
+      </para><para>
+Bu minimumu sağladıktan sonra, dışarıdan içeriye yapılmasına izin
+verdiğiniz erişimleri (telnet yapsınlar mı?, ping yapabilsinler mi?)
+ve içeriden dışarıya yapılmasına izin verdiğiniz erişimleri (kullanıcılarınız
+dışarıya telnet yapabilsin mi? Web'e erişsinler mi? ICQ yapabilsinler mi?)
+belirlemeniz ve güvenlik duvarı üzerindeki filtre protokollerinizi buna
+göre oluşturmanız gerekir.
+      </para>
+    </sect2>
+    <sect2>
+      <title>Dinamik (Stateful) Filtreleme</title>
+      <para>
+Eskiden filtreleme yöntemleri ağırlıklı olarak statikti -- yani genel
+olarak ağınıza ICQ paketlerinin girmesine izin verip vermeme kararı
+söz konusu idi. 2.4 Çekirdeği ve bizim aşağıda örneğini verdiğimiz
+<link linkend="iptables-usage"><command>iptables</command>
+uygulaması</link> ile birlikte <glossterm>dinamik filtreleme</glossterm>
+Linux üzerinde kullanılabilir hale geldi. Aradaki fark, paketin sırf
+protokolüne bakarak karar vermek yerine, güvenlik duvarının bir
+bağlantıyı hangi tarafın başlattığını takip etmesi ve çift yönlü
+paket geçişlerine buna göre karar vermesidir. Yani bir telnet
+bağlantısında her iki taraftan da paketler gelir ve gider. Fakat
+<glossterm>dinamik filtreleme</glossterm> ile, bir telnet bağlantısı iç
+ağınızdan başlatılmışsa izin verir, başlangıç istemi dış ağdan gelmişse
+reddedebilirsiniz. <glossterm>Dinamik filtreleme</glossterm>
+özelliği olmayan güvenlik duvarlarını kullanmanızı önermiyoruz. 2.4
+çekirdeği ve <command>iptables</command> uygulaması olan her Linux
+üzerinde <glossterm>dinamik filtreleme</glossterm> yapabilirsiniz.
+<command>iptables</command> kullanımı hakkında daha ayrıntılı bilgiyi
+<link linkend="iptables-usage">Iptables'ın Basit Kullanımı</link>
+belgesinde bulabilirsiniz.
+      </para>
+      <sect3>
+        <title>Bazı Internet Servislerinin İç Ağdan Verilmesi</title>
+        <para>
+Ağınızda Internet'den erişimi olması gereken web, posta gibi
+sunucular bulunabilir. Bu sunuculara erişimi iki yoldan vermeniz
+mümkündür:
+        </para>
+          <itemizedlist>
+            <listitem>
+Silahsızlandırılmış bölge uygulaması (DMZ - Demilitarized Zone)
+            </listitem><listitem>
+İç ağınızda bu servislere doğrudan filtreleme yaparak.
+            </listitem>
+          </itemizedlist>
+          <variablelist>
+            <varlistentry>
+              <term>Silahsızlandırılmış bölge (DMZ - DeMilitarized Zone)</term>
+              <listitem>
+                <para>
+DMZ, güvenlik duvarı tarafından daha az korunan, daha fazla
+erişime izin verilen bir bölgedir. Güvenlik duvarına üçüncü
+bir ağ çıkışı eklenmesi ve Internet'e servis verecek olan
+makinaların buraya konulması ile oluşturulur. Örneğin DMZ'deki
+makinalara NAT uygulanmayabilir, tahsisli IP numaralarına
+sahip olabilirler. Güvenlik duvarı, telnet, ssh gibi kimi
+protokollerin buraya erişimini filtreleyerek DMZ bölgesindeki
+makinalara güvenlik sağlar. Dikkat edilecek nokta, DMZ'de
+bulunan makinaların daha fazla erişime (ve dolayısıyla saldırıya)
+açık olmasıdır. Buradaki makinalar dikkatli kurulmalı,
+güvenliğe aykırı protokoller vs. burada yer almamalıdır.
+                </para><para>
+                  <figure float="1">
+                    <title>Silahsızlandırılmış bölge (DMZ)</title>
+                    <inlinemediaobject>
+                      <imageobject>
+                        <imagedata align="center" fileref="proxyfw/dmz.jpg"/>
+                      </imageobject>
+                    </inlinemediaobject>
+                  </figure>
+                </para>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>Doğrudan Filtreleme</term>
+              <listitem>
+                <para>
+DMZ oluşturmak için ek ekipman ve IP numarası gerekir. Güvenlik
+duvarında üçüncü bir ağ birimi, ayrı bir switch, daha fazla
+adette tahsisli IP numarası ve iç ağınızda başka herhangi bir
+görev görmeyecek olan sunucu makinalar gerekir. Eldeki imkanlar
+buna yetişmeyebilir. Böyle durumlarda, güvenlik duvarınızdaki
+filtreleme politikasını değiştirerek iç ağınızdaki kimi
+makinalara dışarıdan sınırlı erişim imkanı verebilirsiniz.
+Örneğin güvenlik duvarınız ağınızın genelinde dışarıdan gelen
+SMTP (posta) protokolünü filtrelerken, sadece posta sunucunuza
+dışarıdan SMTP protokolü erişimini verebilir. NAT ile
+birleştirileceğinden, bu dışarıdan bakıldığı zaman sanki güvenlik
+duvarınız posta sunuculuğu yapıyormuş izlenimini verir.
+                </para>
+              </listitem>
+            </varlistentry>
+          </variablelist>
+      </sect3>
+    </sect2>
+    <sect2 id="proxy-fw_proxy">
+      <title>Vekil (Proxy)</title>
+      <para>
+Proxy'nin kelime anlamı vekil'dir. Yukarıdaki yöntemlerin hepsi, belli
+kurallara bağlı olarak Internet'deki bir makina ile iç ağdaki bir makina
+arasında doğrudan alışverişe izin verir. Vekil uygulamaları ise, bu
+doğrudan alışverişin arasına girer. Dolayısıyla protokol bazlı herhangi
+bir saldırı, vekil sunucuya yönelik gerçekleşir, iç ağdaki makinayı
+etkilemez. Örneğin bir http (web) vekili, iç ağdan dışarıya giden bütün
+web isteklerini toplar. Bu istekleri kendisi yapar, gelen sonuçları iç
+ağa dağıtır. Örneğin eğer web protokolü yolu ile istemci makinanın bazı
+bilgilerinin alınması veya bir saldırı yapılması söz konusu olur ise,
+bundan etkilenen sadece web vekili makina olur, iç ağda web erişiminde
+bulunan her makina değil.
+      </para><para>
+Güvenlik amacı ile proxy kullanımı, <glossterm>uygulama temelli güvenlik
+duvarı</glossterm> (application level firewall) olarak adlandırılır.
+      </para>
+      <sect3>
+        <title>Vekillerin Başka Kullanımları</title>
+          <itemizedlist>
+            <listitem>
+<command>Güvenlik amaçlı</command> - yukarıda bahsedilmiştir.
+            </listitem><listitem>
+<command>İzin amaçlı</command> - İç ağınızdan bazı servislere
+kimin erişebileceğini belirlemekte, izin politikası uygulamakta
+kullanılırlar.
+            </listitem><listitem>
+<command>Performans amaçlı</command> - Pek çok istemci aynı
+istekte bulunuyorsa, bunların bir defaya indirgenmesini
+sağlayarak hem sunucu makinanın üzerindeki yükü, hem de
+kullanılan bağlantı yükünü hafifletirler.
+            </listitem>
+          </itemizedlist>
+        <para>
+Vekil sunucular, en fazla kullanılan örneği olan <xref
+linkend="proxy-fw_squid"/> üzerinde daha ayrıntılı olarak
+aşağıda anlatılmıştır.
+        </para>
+      </sect3>
+    </sect2>
+  </sect1>
+  <sect1 id="proxy-fw_choice">
+    <title>Güvenlik Duvarı - Satın Almak, Kendiniz Yapmak?</title>
+    <para>
+Neyi, nasıl güvenlik altına aldığınızı bilmeden, pahalı bir ticari
+güvenlik duvarı satın almak size güvenlik sağlamaz. Dünyanın en pahalı
+ve gelişkin güvenlik duvarı, eğer çeşitli protokolleri açmış, fiziksel
+bağlantının tekliği kavramına uymamış, her tür erişime izin vermiş
+iseniz, size bir fayda sağlamaz. Elinizdeki Cisco Router'unuzu paket
+filtrelemek için programlamaktan tutun, ticari ve pahalı bir güvenlik
+duvarı satın almaya kadar uygulayacağınız her tür yöntem, neyi, ne için
+yaptığınızı biliyorsanız faydalıdır. Güvenlik duvarları, sizin ağ
+altyapınız ve sizin erişim ihtiyaçlarınız ile alakalıdır. Dolayısıyla
+ticari bir güvenlik duvarı satın almak niyetinde olsanız dahi, güvenlik
+duvarlarının <link linkend="proxy-fw_concepts">ne yaptığını</link>
+öğrenmek ve erişim ihtiyaçlarınızı belirlemek zorundasınız.
+    </para><para>
+Güvenlik duvarınızı kendiniz, Linux temelli bir makina üzerinde
+oluşturabilirsiniz veya kendiniz oluşturmak istemezseniz Linux
+temelli hazır bir <link linkend="proxy-fw_astaro">güvenlik duvarını</link>
+uygulayabilirsiniz. Ticari olarak satılan güvenlik duvarlarının yapıp,
+doğru oluşturulmuş bir Linux sisteminin yapamadığı hiç bir şey yoktur.
+    </para>
+    <sect2>
+      <title>Satın Almak</title>
+      <subtitle>Linux Temelli Hazır Güvenlik Duvarları</subtitle>
+      <para>
+Her ne kadar genel bir dağıtım (örneğin Red Hat) ile başlayıp kendiniz
+güvenlik duvarını oluşturabilseniz dahi bazı sebeplerden dolayı bunu
+yapmak istemeyebilirsiniz:
+      </para>
+        <itemizedlist>
+          <listitem><para>
+Güvenlik duvarı olarak kullanacağınız makinayı doğru kurmanız
+gereklidir. Bunun üzerindeki gerekmeyen servisleri kaldırmanız,
+makinayı güvenli çalışabilecek şekilde kurmanız gereklidir.
+Bunları yapmakta kendinize güvenmiyorsanız, aşağıda bahsedilen
+hazır Linux güvenlik duvarlarından birini kurmak isteyebilirsiniz.
+          </para></listitem><listitem><para>
+Güvenlik duvarı bir kez kurulup ondan sonra hiç güncellenmeyecek
+bir sistem değildir. Ticari güvenlik duvarları da sürekli olarak
+yeni bulunan eksiklikleri kapatmak için güncellenirler. Genel bir
+dağıtım kullanarak bir güvenlik duvarı oluşturduktan sonra, sürekli
+olarak yeni çıkan güncellemeleri takip etmek zorundasınız. Eğer bu
+takibi yapmaya zaman ayıramayacaksanız, aşağıdaki hazır Linux
+güvenlik duvarlarından birini kullanın. Yalnızca bu paketlere gelen
+güncellemeleri takip eder ve genel bir dağıtıma yapılan
+güncellemelerin sizin açınızdan gerekli olup olmadığına
+karar vermek yükünden kurtulursunuz.
+          </para></listitem><listitem><para>
+Güvenlik duvarı üzerinde aşağıda bahsedilen yöntemleri doğru
+uygulamanız gereklidir. Eğer bunları doğru uygulayacak sistem
+bilgisine sahip değilseniz ve öğrenmek istemiyorsanız, hazır bir
+güvenlik duvarı sizin için en iyi yöntem olabilir.
+          </para></listitem><listitem><para>
+Güvenlik duvarını gün be gün yönetecek kişi ile güvenlik duvarını
+kuracak kişi aynı olmayabilir. Aşağıda bahsedilen Linux temelli
+güvenlik duvarları gayet profesyonel görüntülü, grafik arayüzlerine
+sahiptir. Bunları kullanmak ve yönetmek kendi oluşturacağınız bir
+makinayı kullanmak ve yönetmekten daha kolay olacaktır.
+          </para></listitem><listitem><para>
+Güvenlik duvarı için gereken bütün servisleri bir araya getirmek
+azımsanmayacak bir sistem entegrasyonudur. Bu işi yapmak yerine hazır,
+Linux temelli bir güvenlik duvarı kurmayı tercih edebilirsiniz.
+          </para></listitem>
+        </itemizedlist>
+      <para>
+Genel olarak, eğer Internet erişiminiz, kullanacağınız makina,
+uygulayacağınız protokoller Linux temelli hazır güvenlik duvarlarının
+birisi tarafından karşılanıyorsa, bunu kurmayı tercih edin. Eğer daha
+özel bazı istekleriniz varsa, kullandığınız donanım bu sistemler
+tarafından desteklenmiyorsa, o zaman aşağıda Red Hat dağıtımından yola
+çıkılarak <link linkend="proxy-fw_from-stratch">sıfırdan güvenlik
+duvarının nasıl oluşturulduğu</link> anlatılmıştır.
+      </para>
+        <variablelist>
+          <varlistentry id="proxy-fw_astaro">
+            <term><ulink url="http://www.astaro.com/">Astaro</ulink></term>
+            <listitem>
+              <para>
+Astaro gerçekten profesyonel bir güvenlik duvarı. Internet'den
+indirebilirsiniz. Ticari kuruluşların lisans alması isteniyor.
+Güvenlik duvarı üzerinde, Internet'den gelen postalar virüs
+kontrolünden geçiriliyor ve alınan lisans ağırlıklı bununla
+ilgili. Modem bağlantısı desteklemiyor -- fakat eğer sabit bir
+bağlantı ile Internet'e erişiyorsanız, bu sistemi kurun.
+Piyasadaki bütün ticari, kapalı güvenlik duvarları ile rahatlıkla
+yarışabilecek bir ürün. Lisanslandığı zaman otomatik olarak virüs
+dosyalarını ve kendisini güncelleyebiliyor. Sahiden güzel bir web
+tabanlı grafik arayüzü var.
+              </para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term><ulink url="http://www.smoothwall.org/">Smoothwall</ulink></term>
+            <listitem>
+              <para>
+Daha ziyade ev kullanıcıları için tasarlanmış, modem bağlantısı
+da destekleyen bir güvenlik duvarı. Sevenleri çok, fakat 2.2
+çekirdeği kullandığından dolayı dinamik filtreleme yapamıyor.
+Geliştiricileri pek geçimli değil ve son zamanlarda ürünlerini
+giderek daha fazla kapalı hale getirme çabası içerisindeler.
+Salt bu sebeplerden dolayı ben kullanmazdım.
+              </para>
+            </listitem>
+          </varlistentry>
+        </variablelist>
+    </sect2>
+    <sect2 id="proxy-fw_from-stratch">
+      <title>Kendiniz Yapmak</title>
+      <subtitle>
+Sıfırdan, Genel Bir Linux Dağıtımı (Red Hat) Kullanarak Güvenlik Duvarı
+Oluşturmak
+      </subtitle>
+      <sect3>
+        <title>Neden Kendi Güvenlik Duvarımızı Kurduk?</title>
+        <para>
+Bizim Firma A.Ş.'de henüz hızlı bir Internet bağlantısı
+bulunmamaktadır. Sabit hattın kurulması beklenirken Internet
+erişimini başlatmak istedik. Bunu yaparken elde olan Equinox
+çoklu modem kartını kullanmak ve karttaki modemlerden birisini
+Internet'e tahsis etmek istedik. Karttaki diğer modemler başka
+işler için kullanılacak. Bir modem ise gerektiği zaman çevir/bağlan
+yöntemi (dial-on-demand) ile Internet'e bağlantı sağlayacak.
+        </para><para>
+Bir modem ile sürekli olmayan bir bağlantı üzerinden ne kadar dış
+saldırı gelebileceği tartışılabilir. Fakat bu uygulamayı gelecek olan
+sürekli bağlantı için bir ön çalışma olarak kullandık. Üstelik, bir
+modemin bağlantısını paylaştırabilmek için NAT yapmamız, bu kadar düşük
+hızlı bir bağlantıda biraz daha iyi performans sağlamak için web vekili
+(squid) kullanmamız ve ICQ vs. gibi iş için gerekli olmayan erişimleri
+engellememiz gerekmekte idi. Bu da zaten genel bir güvenlik duvarı
+oluşturmakta kullanılan bütün kavramları devreye soktu.
+        </para><para>
+Özel bir modem kartı kullanmamız, bu karttaki başka modemler üzerinde
+farklı hizmetler vermek istememiz ve Internet bağlantımız modem üzerinden
+olduğu için <ulink url="http://www.astaro.com/">Astaro</ulink>'yu
+kullanamadık.
+        </para>
+      </sect3>
+      <sect3>
+        <title>Kullanılan Donanım</title>
+          <itemizedlist>
+            <listitem>
+Pentium III 800 Mhz CPU, on-board (Trident Generic) grafik kartı.
+            </listitem><listitem>128 MB RAM</listitem><listitem>
+              16 GB IDE Hard Disk
+            </listitem><listitem>
+Intel Pro Dual 100 Mbit Ethernet kartı (çift portlu, ileride biri
+sabit bağlantı için kullanılacak)
+            </listitem><listitem>
+Equinox SST 8 Çoklu Modem Kartı (8 modemin birisi Internet bağlantısı
+için kullanılıyor)
+            </listitem>
+          </itemizedlist>
+      </sect3>
+      <sect3>
+        <title>İşletim Sistemi ve Kurulum</title>
+        <para>
+Makina üzerine Redhat 7.2 kurduk. Custom server (özel sunucu)
+seçeneğini kullandık. Disk bölümünü Disk Druid ile elle yaptık,
+96 MB <filename>/boot</filename>, 1 GB takas alanı (ileride RAM'i
+arttırırsak ek iş çıkarmamak  için gereğinden 4 kat fazla), geri
+kalanı da <filename>/</filename> olarak bölümledik.
+<filename>/boot</filename> ve <filename>/</filename> üzerinde ext3
+günlüklü dosya sistemini kullandık.
+        </para><para>
+Makina üzerindeki iki ethernet kartının birini devre dışı bıraktık.
+İleride sabit bağlantı olduğu zaman bu kart üzerinden dışarıya
+bağlanacağız. İçeriye bağladığımız ethernet kartına elle 10.254.254.254
+IP numarasını verdik. Ağın genelinde bu IP numarası ağgeçidi (gateway)
+adresi olarak kullanılacak. DNS sunucu numarası 127.0.0.1 (makina
+üzerinde yerel bir DNS sunucusu çalıştırıyoruz, iç ağdaki DNS
+sunucusundan bağımsız).
+        </para><para>
+Güvenlik duvarını kendimiz kuracağımızdan dolayı "no firewall" seçeneğini
+seçtik. Kurulumda yaptığımız paket seçimleri:
+        </para>
+          <itemizedlist>
+<listitem>Classic X</listitem>
+<listitem>X Windows</listitem>
+<listitem>KDE</listitem>
+<listitem>Network Support - Ağ desteği</listitem>
+<listitem>Dialup Support - Çevirmeli ağ desteği</listitem>
+<listitem>DNS Server - Alan adı sistemi sunucusu</listitem>
+<listitem>Web Server - Web sunucusu</listitem>
+<listitem>Messaging/Web Tools - İletişim/Web araçları</listitem>
+<listitem>Router/Firewall - Yönlendirici/Güvenlik duvarı</listitem>
+<listitem>Authoring/Publishing - Yazarlık/Yayıncılık</listitem>
+<listitem>Emacs </listitem>
+<listitem>Utilities - Yardımcı uygulamalar</listitem>
+<listitem>Software Development Yazılım geliştirme</listitem>
+<listitem>Kernel Development - Çekirdek geliştirme</listitem>
+          </itemizedlist>
+        <para>
+Makinayı metin bazlı açma seçeneğini etkinleştirdik. Kurulum
+esnasında kurduğumuz paketler gerekenden bir hayli fazla. Bunların bir
+bölümünü daha sonra makinadan kaldırdık. Güvenlikli bir sistem kurmanın
+püf noktası makinada gerekmeyen hiç bir şeyin bulunmamasından geçmekte.
+Dolayısıyla daha sonra makinadan pek çok paketi kaldırdık.
+        </para>
+      </sect3>
+      <sect3>
+        <title>Servislerin Kapatılması</title>
+        <para>
+Red Hat kurulduktan sonra ilk işimiz gerekmeyen servisleri kapatmak
+oldu. Teker teker bütün servisleri gözden geçirip gerekip
+gerekmediğini düşündük.
+        </para>
+<screen>
+<prompt>#</prompt> <userinput>cd /etc/rc.d/rc3.d</userinput>
+<prompt>#</prompt> <userinput>ls *</userinput>
+<prompt>#</prompt> <userinput>mv S09isdn K09isdn</userinput>
+<prompt>#</prompt> <userinput>mv S28autofs K28autofs</userinput>
+<prompt>#</prompt> <userinput>mv S80sendmail K80sendmail</userinput>
+<prompt>#</prompt> <userinput>mv S13portmap K13portmap</userinput>
+<prompt>#</prompt> <userinput>mv S14nfslock K14nfslock</userinput>
+<prompt>#</prompt> <userinput>mv S60lpd K60lpd</userinput>
+<prompt>#</prompt> <userinput>mv S56rawdevices K56rawdevices</userinput>
+<prompt>#</prompt> <userinput>mv S25netfs K25netfs</userinput>
+<prompt>#</prompt> <userinput>mv S55sshd K55sshd</userinput>
+<prompt>#</prompt>
+</screen>
+        <para>
+Bundan sonra <filename>/etc/xinetd.d</filename> dizininde yer alan,
+<command>xinetd</command> vasıtası ile başlatılan servislere baktık
+(<command>telnet, ping</command> vs.). Bunların hepsinin kapalı
+olduğundan emin olduk.
+        </para>
+      </sect3>
+      <sect3>
+        <title>Gereksiz Paketlerin Kaldırılması</title>
+        <para>
+Sistemden kaldırılan paketler biraz sizin tercihinize bağlı. Biz
+bütün paketlere bakarak gerekmediğini düşündüğümüz herşeyi kaldırdık.
+Genel teamüle aykırı olarak geliştirme (development) ile ilgili
+paketleri ve istediğimiz zaman grafik arayüz kullanmak için
+kullanılan paketleri sistemde bıraktık. Bunun ne kadar doğru olduğu
+tartışılabilir, fakat güvenlik duvarı makinası üzerinde yapılacak
+işlemleri bizim açımızdan kolaylaştırmakta.
+        </para>
+      </sect3>
+      <sect3>
+        <title>Güncellemeleri Uyguladık</title>
+        <para>
+<ulink url="http://www.redhat.com/">Red Hat</ulink> web sitesinden
+sistemimizi ilgilendiren bütün güncellemeleri uyguladık. Genel
+prensip olarak, eğer sistemde kurulu ise ve güncellenmesi çıkmış ise,
+bunu indirip kurduk. Zaman zaman da bu güncellemeyi yapmaya devam
+edeceğiz. Bu makinanın güncellenmesi, iç ağda yer alan herhangi bir
+makinanın güncellenmesinden çok daha önemli. Saldırılar genelde
+bilinen ve yeni sürümlerde düzeltilmiş olan eksikleri kullanarak
+güncellenmemiş sistemlere yönelik oluyor.
+        </para>
+      </sect3>
+      <sect3>
+        <title>Modem Kartımızı Sisteme Tanıttık</title>
+        <para>
+Kullandığımız modem kartının sürücülerini Internet'ten indirmek
+zorundayız. <ulink url="http://www.equinox.com/">Equinox</ulink>
+web sitesinden <filename>eqnx-4.01-1.i386.rpm</filename> paketini
+indirdik ve kurduk. Bu paket <command>rpm -Uvh eqnx*</command>
+komutu ile sürücüsünü derliyor ve sistem açılırken gerekli olan
+ayarlarını <filename>/etc/rc.d/rc.local</filename> dosyasına
+yazdırıyor. Bu işlemden sonra Internet için kullanacağımız modem
+<filename>/dev/ttyQ1a1</filename> aygıtı olarak sistem tarafından
+görüldü. Eğer seri port üzerinden haricî modem kullansa idik,
+aygıtımız <filename>/dev/ttyS01</filename> olarak görülecekti ve
+bu işlemi yapmak zorunda olmayacaktık.
+        </para>
+      </sect3>
+      <sect3>
+        <title>PPP Ayarlarının Yapılması</title>
+        <variablelist>
+          <varlistentry>
+            <term>Bağlantının Sağlanması</term>
+            <listitem>
+              <para>
+Grafik arayüzleri (<command>kppp</command> vs.) normal masaüstü
+kullanımı için bu işlemi çok kolay hale getirmiş durumda, fakat
+bizim yaptığımız gibi sunucu şeklinde otomatik aranacak bir
+sistemde kendi bağlanma betiklerimizi hazırlamak zorundayız.
+Bu işlem biraz deneme yanılma gerektiriyor ve bir ISP'de çalışan
+betik bir diğerinde çalışmayabiliyor.
+              </para><para>
+Deneme yanılma yöntemi ile bulduğumuz, NetOne ve AttGlobal için
+çalışan arama betikleri (telefon yazan yere telefon numarasını,
+örneğin 08225551212, yazın):
+</para><para>call-netone</para>
+<screen>
+TIMEOUT         5
+ABORT           '\nBUSY\r'
+ABORT           '\nNO ANSWER\r'
+ABORT           '\nRINGING\r\n\r\nRINGING\r'
+''              \rAT
+'OK-+++\c-OK'   ATH0
+TIMEOUT         30
+OK              ATZ0
+OK              ATM0L0
+OK              ATDTtelefon
+'\r'            ''
+CONNECT         ''
+</screen>
+<para>call-attglobal</para>
+<screen>
+TIMEOUT         5
+ABORT           '\nBUSY\r'
+ABORT           '\nNO ANSWER\r'
+ABORT           '\nRINGING\r\n\r\nRINGING\r'
+''              \rAT
+'OK-+++\c-OK'   ATH0
+TIMEOUT         40
+OK              ATZ0
+OK              ATM0L0
+OK              ATDTtelefon
+CONNECT
+'\n'            ''
+''              ''
+</screen>
+<para>
+Bu betikleri <filename>/etc/ppp</filename> dizinine kaydedin:
+</para>
+<screen>
+<prompt>#</prompt> <userinput>cp call-netone /etc/ppp</userinput>
+<prompt>#</prompt> <userinput>cp call-attglobal /etc/ppp</userinput>
+</screen>
+<para>
+Başka ISP'ler için çalışan bağlanma betikleriniz varsa, <ulink
+url="mailto:deniz@arayan.com">lütfen bana gönderin.</ulink>.
+</para><para>
+Bu betiklerin dosya izinlerinin gerektiği kadar olduğundan
+emin olun:
+</para>
+<screen>
+<prompt>#</prompt> <userinput>chmod 600 /etc/ppp/call*</userinput>
+</screen>
+<para>
+ISP'deki parola ve kullanıcı isminizi <filename>chap-secrets</filename>
+ve <filename>pap-secrets</filename> dosyasına kaydedin.
+</para><para>
+<filename>chap-secrets</filename> dosyası:
+</para>
+<screen>
+# Secrets for authentication using CHAP
+# client        server  secret                  IP addresses
+kullanici-ismi  netone  parola
+</screen>
+<para>
+<filename>pap-secrets</filename> dosyası:
+</para>
+<screen>
+# Secrets for authentication using PAP
+# client        server  secret                  IP addresses
+kullanici-ismi netone       parola
+kullanici-ismi attglobal    parola
+</screen>
+<para>
+AttGlobal Chap desteklemiyor, dolayısıyla onu yalnızca
+<filename>pap-secrets</filename> dosyasına koyduk. Bu dosyalarda
+<literal>kullanici-ismi</literal> yazan yere ISP'deki kullanıcı
+isminizi (örneğin: mehmet), <literal>parola</literal>
+yazan yere parolanızı (örneğin: c2fj80d90) yazın. Bu dosyaları
+<filename>/etc/ppp</filename> dizinine kaydedin (orada boş
+dosyalar olduğundan soru sorabilir):
+</para>
+<screen>
+<prompt>#</prompt> <userinput>cp chap-secrets /etc/ppp</userinput>
+<prompt>#</prompt> <userinput>cp pap-secrets /etc/ppp</userinput>
+</screen>
+<para>
+Bu dosyaların dosya izinlerinin gerektiği kadar olduğundan emin olun:
+</para>
+<screen>
+<prompt>#</prompt> <userinput>chmod 600 /etc/ppp/*secrets</userinput>
+</screen>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>PPPD Seçeneklerinin Yapılandırılması</term>
+            <listitem>
+              <para>
+PPPD çok amaçlı bir servis. Bütün seçeneklerini ayrıntılı
+anlatmamıza imkan yok. Önemli bir nokta, eğer
+<filename>/etc/ppp/options.ttyXYZ</filename> diye bir dosya
+bulur ise, o aygıt için o dosyayı otomatik uygulayacağı.
+Bizim aygıtımız <filename>/dev/ttyQ1a1</filename> olduğu için,
+<filename>/etc/ppp/options.ttyQ1a1</filename> dosyası aşağıda:
+</para>
+<screen>
+#Bu seçenek bağlantı olduğu zaman aradaki ayar paketlerinin sayısını
+#belirliyor. Bazen öntanımlı 10 paket yetmeyebiliyor. 30 olarak kullandık.
+<userinput>lcp-max-configure 30</userinput>
+#Bağlantı başlayınca modemi kilitliyor
+<userinput>lock</userinput>
+#10 dakika bir iletişim olmadığı zaman bağlantıyı kapatıyor
+<userinput>idle 600</userinput>
+#Dışarıdaki bağlantı ppp'nin iki ucundaki dinamik IP adreslerini belirler
+<userinput>ipcp-accept-remote</userinput>
+<userinput>ipcp-accept-local</userinput>
+#Biz parola sormuyoruz, onlar bize soruyor
+<userinput>noauth</userinput>
+#Hangi kullanıcı olarak bağlandığımız. secrets dosyalarındaki parolayı
+#bulmak için kullanılıyor.
+<userinput>user kullanici-ismi</userinput>
+#Birden fazla hesap secrets dosyasında yer alıyor. Bunlardan hangisi
+#kullanılacak.
+<userinput>remotename attglobal</userinput>
+#Modem hızımız
+<userinput>57600 crtscts</userinput>
+#İlk başlatıldığı zaman ppp'nin iki ucundaki IP numaralarını belirlemek
+#zorundayız. Bağlantıdan sonra bunlar değişecek ve gerçek (ve o bağlantıya
+#has) IP numaraları olacak. Ama şimdi bir şeyler vermek zorundayız.
+<userinput>139.92.80.128:152.158.100.30</userinput>
+#Bağlantı betiğimiz.
+<userinput>connect '/usr/sbin/chat -v -f /etc/ppp/call-attglobal'</userinput>
+#Dial-on-demand, yani dışarıya biri bir paket gönderdiği zaman
+#bağlanacağız, hemen değil.
+<userinput>demand</userinput>
+#ppp bağlantısı bu makina için öntanımlı ağgeçidi olacak.
+<userinput>defaultroute</userinput>
+</screen>
+<para>
+Bu dosyayı birebir değil, sizin modem aygıtınızın ismi ile
+kaydedeceksiniz. Yani modeminiz <filename>/dev/ttyS01</filename> ise,
+</para>
+<screen>
+<prompt>#</prompt> <userinput>cp options.ttyQ1a1 /etc/ppp/options.ttyS01</userinput>
+</screen>
+<para>
+Bu dosyanın dosya izinlerinin gerektiği kadar olduğundan emin olun:
+</para>
+<screen>
+<prompt>#</prompt> <userinput>chmod 600 /etc/ppp/options*</userinput>
+</screen>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>PPP Servisinin Başlatılması</term>
+            <listitem>
+              <para>
+Bizim modemimiz ancak <filename>/etc/rc.d/rc.local</filename>
+dosyasında ilgili satırlar işlendikten sonra sistem tarafından
+görülebilir. Dolayısıyla biz <command>pppd</command> başlatma
+komutumuzu <filename>rc.local</filename>'e koyduk. Bu bütün
+sistem ayağa kalktıktan sonra en son işlendiği için sizin
+için de çalışacaktır. <filename>/etc/rc.d/rc.local</filename>
+dosyasına
+</para>
+<screen>/usr/sbin/pppd ttyQ1a1</screen>
+<para>
+ilave ettik. Sizin modeminiz <filename>/dev/ttyS01</filename> ise,
+<command>/usr/sbin/pppd ttyS01</command> yazacaksınız. Bundan
+sonra makinanız her yeniden başlatıldığında, "dial-on-demand"
+yntemi ile Internet'e bağlanmaya hazırdır. Henüz bu Internet
+bağlantısını başkalarına paylaştırmak konusunda bir bilgisi yok,
+fakat kendisi Internet'e otomatik olarak ihtiyaç gördükçe bağlanır,
+ve belli bir süre trafik olmazsa bağlantıyı kapatır.
+              </para>
+            </listitem>
+          </varlistentry>
+        </variablelist>
+      </sect3>
+      <sect3>
+        <title>Güvenlik Duvarını Oluşturma Yazılımı: Fwbuilder</title>
+        <para>
+Bundan sonra ilgili NAT ve filtreleme kurallarını oluşturmamız
+gerekiyor. Bu işlemi elle de yapabilirdik. Fakat Internet'ten
+indirebileceğiniz <command>fwbuilder</command> yazılımı bu işlemi
+bir hayli kolaylaştırıyor.
+        </para><variablelist>
+            <varlistentry>
+              <term>Ön Gereklilikler</term>
+              <listitem>
+                <para>
+<command>fwbuilder</command>'ı derleyebilmemiz için bize
+<filename>libxml2-devel, libxslt-devel, libsigc++</filename>
+ve <filename>libsigc++-devel</filename> paketleri gerekti.
+Bunları Redhat CD'sinden yükledik. Ayrıca, Internet'ten
+<ulink url="http://gtkmm.sourceforge.net/"><filename>Gtkmm</filename></ulink> paketini indirdik. Bu paketi
+</para>
+<screen>
+<prompt>#</prompt> <userinput>rpm -tb gtkmm-1.2.8.tar.gz</userinput>
+</screen><para>
+komutu ile derledik ve oluşan RPM'leri sisteme kurduk:
+</para><screen>
+<prompt>#</prompt> <userinput>rpm -Uvh /usr/src/redhat/RPMS/i386/gtkmm*</userinput>
+</screen>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>Paketlerin derlenmesi</term>
+              <listitem>
+                <para>
+<ulink url="http://www.fwbuilder.org/">Fwbuilder web sitesinden</ulink>
+<filename>fwbuilder-1.0.0-1rh72.src.rpm</filename> ve
+<filename>libfwbuilder-0.10.4-1rh72.src.rpm</filename>
+paketleri indirildi.
+                </para>
+<screen>
+<prompt>#</prompt> <userinput>rpm --rebuild libfwbuilder*</userinput>
+</screen>
+                <para>
+komutu ile <filename>libfwbuilder</filename> paketi derlendi,
+                </para>
+<screen>
+<prompt>#</prompt> <userinput>rpm -Uvh /usr/src/redhat/i386/libfwbuilder*</userinput>
+</screen>
+                <para>
+komutu ile sisteme kuruldu. Daha sonra
+                </para>
+<screen>
+<prompt>#</prompt> <userinput>rpm --rebuild fwbuilder*</userinput>
+</screen>
+                <para>
+komutu ile <filename>fwbuilder</filename> derlendi,
+                </para>
+<screen>
+<prompt>#</prompt> <userinput>rpm -Uvh /usr/src/redhat/RPMS/i386/fwbuilder*</userinput>
+</screen>
+                <para>
+komutu ile sisteme kuruldu.
+                </para>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>NAT ve Filtreleme Politikalarının Yazılması</term>
+              <listitem>
+                <para>
+<command>fwbuilder</command> komutu ile yazılım açıldı.
+<option>Iptables</option> seçeneği seçildi. Yerel ağ (intranet)
+ve güvenlik duvarı makinası (perde adında) tanımlandı.
+"Help me build firewall policy" seçeneğinin yardımı ile
+ilk temel kurallar oluşturuldu, üzerine aşağıdaki kurallar
+ilave edildi.
+                </para>
+<table>
+  <title>Ağ Birimlerine Ait Politikalar - ppp0</title>
+  <tgroup cols="6">
+    <colspec colwidth=".1"/>
+    <colspec colwidth=".09"/>
+    <colspec colwidth=".17"/>
+    <colspec colwidth=".15"/>
+    <colspec colwidth=".15"/>
+    <colspec colwidth=".34"/>
+    <thead>
+      <row>
+        <entry>Kaynak</entry><entry>Hedef</entry>
+        <entry>Servis</entry><entry>İşlem</entry>
+        <entry>Yön</entry><entry>Açıklama</entry>
+        </row>
+    </thead>
+    <tbody>
+      <row>
+        <entry>Herkes</entry><entry>Herkes</entry><entry>ip_fragments</entry>
+        <entry>Paketi yok et (deny)</entry><entry>içeri gelen (inbound)</entry>
+        <entry>
+Modem kartına gelen (içeriden veya dışarıdan) her tür
+IP paket parçacığı reddedildi.
+        </entry>
+      </row><row>
+        <entry>intranet, perde</entry><entry>Herkes</entry>
+        <entry>Bütün servisler</entry><entry>Paketi yok et (deny)</entry>
+        <entry>içeri gelen (inbound)</entry>
+        <entry>
+Modem kartına dışarıdan içeriye gelip de kaynağını
+iç ağ olarak gösteren bir paket bir ip taklidi
+(ip spoofing) saldırısı olabilir. Reddedildi.
+        </entry>
+      </row><row>
+        <entry>XIntranet, Xperde</entry><entry>Herkes</entry>
+        <entry>Bütün servisler</entry><entry>Paketi yok et (deny)</entry>
+        <entry>dışarı çıkan (outbound)</entry>
+        <entry>
+Modem kartına içeriden gelip de kaynağını dışarısı
+olarak gösteren bir paket olmaması gerekir, fakat
+başka bir sorunun işareti olabilir. Reddedildi.
+        </entry>
+      </row>
+    </tbody>
+  </tgroup>
+</table>
+<table>
+  <title>Ağ Birimlerine Ait Politikalar - lo0</title>
+  <tgroup cols="6">
+    <colspec colwidth=".08"/>
+    <colspec colwidth=".08"/>
+    <colspec colwidth=".08"/>
+    <colspec colwidth=".1"/>
+    <colspec colwidth=".16"/>
+    <colspec colwidth=".5"/>
+    <thead>
+      <row>
+        <entry>Kaynak</entry><entry>Hedef</entry><entry>Servis</entry>
+        <entry>İşlem</entry><entry>Yön</entry><entry>Açıklama</entry>
+      </row>
+    </thead>
+    <tbody>
+      <row>
+        <entry>Herkes</entry><entry>Perde</entry><entry>Hepsi</entry>
+        <entry>Kabul et</entry><entry>İçeri gelen (inbound)</entry>
+        <entry>
+Loopback, makinanın kendi içinde çalışması gerekli
+olan bir arabirim. Herşey buna açık.
+        </entry>
+      </row><row>
+        <entry>Perde</entry><entry>Herkes</entry><entry>Hepsi</entry>
+        <entry>Kabul et</entry><entry>Dışarı çıkan (outbound)</entry>
+        <entry>
+Loopback, makinanın kendi içinde çalışması gerekli
+olan bir arabirim. Herşey buna açık.
+        </entry>
+      </row>
+    </tbody>
+  </tgroup>
+</table>
+<table>
+  <title>NAT Politikaları</title>
+  <tgroup cols="7">
+    <colspec colwidth=".12"/>
+    <colspec colwidth=".1"/>
+    <colspec colwidth=".1"/>
+    <colspec colwidth=".11"/>
+    <colspec colwidth=".11"/>
+    <colspec colwidth=".11"/>
+    <colspec colwidth=".35"/>
+    <thead>
+      <row>
+        <entry>İlk Kaynak</entry><entry>İlk Hedef</entry>
+        <entry>İlk Servis</entry><entry>Çevrilen Kaynak</entry>
+        <entry>Çevrilen Hedef</entry><entry>Çevrilen Servis</entry>
+        <entry>Açıklama</entry>
+      </row>
+    </thead>
+    <tbody>
+      <row>
+        <entry>Intranet</entry><entry>Herşey</entry>
+        <entry>http</entry><entry>Değişmedi</entry>
+        <entry>Perde</entry><entry>squid</entry>
+        <entry>
+Bir web vekili (squid) kullanıyoruz. Dolayısıyla
+iç ağdan web (http) kullanarak dışarı çıkmak
+isteyen bütün paketleri güvenlik duvarı üzerinde
+squid portuna gönderiyoruz. Bunu kullanabilmek
+için güvenlik duvarı üzerinde squid vekil sunucusu
+çalıştıracağız.
+        </entry>
+      </row><row>
+        <entry>Intranet</entry><entry>Herşey</entry>
+        <entry>Herşey</entry><entry>Perde</entry>
+        <entry>Değişmedi</entry><entry>Değişmedi</entry>
+        <entry>
+Intranet'ten dışarıya çıkmak isteyen herşeyi sanki
+paket güvenlik duvarından kaynaklanmış gibi yeniden
+yazıyoruz.
+        </entry>
+      </row>
+    </tbody>
+  </tgroup>
+</table>
+<table>
+  <title>Genel Politikalar</title>
+  <tgroup cols="5">
+    <colspec colwidth=".09"/>
+    <colspec colwidth=".09"/>
+    <colspec colwidth=".22"/>
+    <colspec colwidth=".13"/>
+    <colspec colwidth=".47"/>
+    <thead>
+      <row>
+        <entry>Kaynak</entry><entry>Hedef</entry><entry>Servis</entry>
+        <entry>İşlem</entry><entry>Açıklama</entry>
+      </row>
+    </thead>
+    <tbody>
+      <row>
+        <entry>Herkes</entry><entry>Herkes</entry><entry>ip parçacıkları</entry>
+        <entry>Paketi yok et (deny)</entry>
+        <entry>Bütün olmayan IP paketlerini yok ediyoruz</entry>
+      </row><row>
+        <entry>Herkes</entry><entry>Intranet, perde</entry>
+        <entry>Faydalı ICMP</entry><entry>Kabul et</entry>
+        <entry>
+Bu icmp servisleri bazı servislerin doğru çalışması
+için faydalı.
+        </entry>
+      </row><row>
+        <entry>Perde</entry><entry>Intranet</entry>
+        <entry>Zaman aşımı</entry><entry>Kabul et</entry>
+        <entry>Traceroute için bu gerekiyor</entry>
+      </row><row>
+        <entry>Intranet</entry><entry>Perde</entry>
+        <entry>Herşey</entry><entry>Kabul et</entry>
+        <entry>İçeriden güvenlik duvarına erişim var</entry>
+      </row><row>
+        <entry>XIntranet</entry><entry>Perde</entry>
+        <entry>ssh, telnet, http</entry><entry>Paketi yok et (deny)</entry>
+        <entry>
+İçeriden gelmeyen ssh, telnet, http isteklerine
+cevap vermiyoruz. Zaten güvenlik duvarı üzerinde
+ssh ve telnet çalıştırmıyoruz ve aşağıdaki genel
+kural bunları da engellerdi. Fakat gene de emin
+olalım dedik.
+        </entry>
+      </row><row>
+        <entry>perde</entry><entry>Herşey</entry>
+        <entry>herşey</entry><entry>Kabul et</entry>
+        <entry>Güvenlik duvarı herkese erişebilir</entry>
+      </row><row>
+        <entry>Intranet</entry><entry>Herşey</entry>
+        <entry>http, https, dns_tcp, dns, ntp, traceroute,
+        bütün icmp, telnet, imap, imaps, pop3, smtp, smtps,
+        ssh, ftp, ftp data</entry><entry>Kabul et</entry>
+        <entry>İç ağdan bu servislerle dışarıya erişime izin var</entry>
+      </row><row>
+        <entry>Intranet</entry><entry>Herşey</entry>
+        <entry>Herşey</entry><entry>Reddet</entry>
+        <entry>Yukarıda kabul edilmeyen servisleri iç ağ
+        için hemen reddediyoruz (bekleme olmuyor)
+        </entry>
+      </row><row>
+        <entry>Herşey</entry><entry>Herşey</entry>
+        <entry>Herşey</entry><entry>Paketi yok et (deny)</entry>
+        <entry>Yukarıdaki kuralların dışında kalan bütün
+        durumları reddediyoruz.
+        </entry>
+      </row>
+    </tbody>
+  </tgroup>
+</table>
+                <para>
+<command>fwbuilder</command>, verilerini bir XML dosyası
+halinde saklıyor. <filename>/usr/local/firewall</filename>
+adında bir dizin oluşturduk ve burada <filename>perde.xml</filename>
+adında bir dosyada tanım dosyamızı tutuyoruz. Bizim
+kullandığımız tanım dosyasını <ulink url="../indirin/proxy-fw-files.tar.bz2">proxy-fw-files.tar.bz2</ulink> paketinde
+bulabilir ve bunu değiştirerek kendi kurallarınıza uygun hale
+getirebilirsiniz.
+Kural kümemizi oluşturduktan sonra derleme (compile) seçeneği
+ile kuralları derliyoruz. Derlenen kurallar
+<filename>/usr/local/firewall/Perde.fw</filename> adında
+bir dosyaya konuyor.
+                </para>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>NAT ve Filtrelemenin Devreye Alınması</term>
+              <listitem>
+                <para>
+Filtreleme kurallarımız <filename>/usr/local/firewall/Perde.fw</filename>
+dosyası altında oluştu. Şimdi bunu devreye almamız gerekli. Red Hat'in
+<filename>iptables</filename> betiğini <ulink url="../indirin/proxy-fw-files.tar.bz2">bu iş için değiştirerek</ulink> kullandık.
+Burada dikkat edilecek nokta, filtreleme işinin modem devreye alınıp
+<command>pppd</command> çalıştırıldıktan sonra yapılması gerektiği.
+Dolayısıyla Red Hat'in öntanımlı <command>iptables</command> çalıştırma
+sırası da değişmek zorunda. Bu betiği <filename>rc.local</filename>'dan
+çalıştıracağız.
+                </para><para>
+Önce bir hata olmaması için <filename>iptables</filename>
+betiğini normal yerinden sildik:
+                </para>
+<screen>
+<prompt>#</prompt> <userinput>rm -f /etc/rc.d/rc3.d/*iptables</userinput>
+</screen>
+                <para>
+<ulink url="../indirin/proxy-fw-files.tar.bz2">Değiştirilmiş <filename>iptables</filename> betiğini</ulink>
+<filename>/etc/rc.d/init.d</filename> altına kopyaladık. Dosya
+izinlerinin doğru olduğundan emin olduk:
+                </para>
+<screen>
+<prompt>#</prompt> <userinput>chmod 755 /etc/rc.d/init.d/iptables</userinput>
+</screen>
+                <para>
+<filename>/etc/rc.d/rc.local</filename> betiğinde,
+<command>pppd</command> satırından sonra:
+                  </para>
+
+<screen>
+<prompt>#</prompt> <userinput>/etc/rc.d/init.d/iptables start</userinput>
+</screen>
+                <para>
+satırını ekledik. Bundan sonra makina yeniden başlatıldığı
+zaman otomatik olarak NAT ve filtreleme başlayacak. Yerel
+ağdaki makinalara ağgeçidi adresi olarak güvenlik duvarımızın
+IP adresi olan 10.254.254.254'ü verip, iç ağdan herhangi bir
+şekilde Internet'e ulaşmak istediğimiz zaman güvenlik
+duvarımız Internet'e bağlanacak ve oluşturduğumuz kurallar
+dahilinde erişimi sağlayacak.
+                </para>
+              </listitem>
+            </varlistentry>
+          </variablelist>
+      </sect3>
+    </sect2>
+  </sect1>
+  <sect1 id="proxy-fw_squid">
+    <title>Web Vekili (Squid)</title>
+    <para>
+Eğer bir vekil kullanmayacak olsak, güvenlik duvarımız kullanmaya hazır
+idi. Fakat vekil sunucular, özellikle http için performans kazandırıcı
+bir unsurdur.
+    </para><para>
+Özellikle Web (Internet'te sörf) kullanımında, her bir sayfa, her bir
+tarayıcı istemi için tekrar tekrar ana sunucudan getirilmektedir.
+    </para><figure float="1">
+      <title>Vekilsiz Internet kullanımı</title>
+        <inlinemediaobject>
+          <imageobject>
+            <imagedata align="center" fileref="proxyfw/proxysiz.jpg"/>
+          </imageobject>
+        </inlinemediaobject>
+      </figure><para>
+Ağ üzerinde yüz istemcinin Hürriyet gazetesini okumak istemesi, aynı
+sayfanın tam 100 defa ağa getirilmesi demektir. Araya vekil konduğu
+zaman ise, ilgili sayfa yalnızca bir defa getirilir ve daha sonra
+isteyen bütün istemcilere vekilin kendi deposundan sunulur. Dolayısıyla
+Internet trafiği azaltıldığı gibi, ilk istemden sonraki bütün istemcilere
+yerel ağdan sunum yapıldığı için kullanıcılar sayfaya çok daha hızlı
+(yerel ağ hızlarında) erişirler. Ülkemizde Internet bağlantılarının
+pahalılığı ve yavaşlığı göze alınırsa, şirketlerin hiç bir izin
+mekanizması uygulamak niyetleri olmasa dahi, salt performans arttırmak
+için vekil uygulamaları tavsiye edilir.
+    </para><figure float="1">
+      <title>Vekille Internet kullanımı - Performans</title>
+        <inlinemediaobject>
+          <imageobject>
+            <imagedata align="center" fileref="proxyfw/proxyli.jpg"/>
+          </imageobject>
+        </inlinemediaobject>
+      </figure><para>
+Vekilde izin mekanizması uygulamak ve dolayısı ile çeşitli hizmetleri
+herkese yasaklamak, çeşitli kullanıcılara bazı hizmetleri yasaklamak
+gibi izinlendirme politikaları uygulamak mümkündür.
+    </para><figure float="1">
+      <title>Vekille Internet kullanımı - İzinlendirme</title>
+        <inlinemediaobject>
+          <imageobject>
+            <imagedata align="center" fileref="proxyfw/proxyizin.jpg"/>
+          </imageobject>
+        </inlinemediaobject>
+      </figure><para>
+Burada Linux üzerinde <ulink url="http://www.squid-cache.org/">squid</ulink>
+ve <ulink url="http://www.squidguard.org/">squidGuard</ulink> vasıtası ile:
+    </para>
+      <itemizedlist>
+<listitem>Performans kazandırıcı [depolama (caching)]</listitem>
+<listitem>Şeffaf (transparent) -- kullanmak için kullanıcı tarafında
+bir ayar gerektirmeyen</listitem>
+<listitem>Web sitesi bazında izin mekanizmalı</listitem>
+      </itemizedlist>
+    <para>
+bir web vekil uygulaması konu alınmıştır.
+    </para>
+    <sect2>
+      <title>Squid Kurulumu</title>
+      <para>
+Redhat 7.2 güncelleme paketi <filename>squid-2.4.STABLE1-6.i386.rpm</filename>
+indirilmiş ve
+</para>
+<screen>
+<prompt>#</prompt> <userinput>rpm -Uvh squid-2.4.STABLE1-6.i386.rpm</userinput>
+</screen>
+<para>
+komutu ile kurulmuştur. Sistem açılışında <command>squid</command>
+servisinin başlatılması için
+</para>
+<screen>
+<prompt>#</prompt> <userinput>mv /etc/rc.d/rc3.d/K25squid /etc/rc.d/rc3.d/S25squid</userinput>
+</screen>
+<para>
+komutu uygulanmıştır.
+      </para>
+    </sect2>
+    <sect2>
+      <title>Ayarlar</title>
+        <itemizedlist>
+          <listitem>
+Squid'in Internet web deposu (cache) için 1 GB yer ayrılmıştır.
+          </listitem><listitem>
+İzinlendirme <command>squidGuard</command> paketi ile yapılmaktadır.
+          </listitem><listitem>
+Yasaklanan siteler: Kimi sitelere erişim engellenmektedir. Bu
+siteler <command>squidGuard</command>'un yayınladığı Internet
+karalistesi kullanılarak belirlenmektedir.
+          </listitem>
+        </itemizedlist><para>
+<command>Ayar dosyası</command>
+      </para><para>
+<filename>/etc/squid/squid.conf</filename> dosyası bir hayli uzun
+olduğundan yalnızca değiştirilen ayarlar buraya alınmıştır. Dosyanın
+tamamını <ulink url="../indirin/proxy-fw-files.tar.bz2">proxy-fw-files.tar.bz2</ulink> paketinde bulabilirsiniz.
+      </para>
+<screen>
+#VEKIL
+#Öntanımlı portun yanısıra 8080 üzerinden de proxy servisi veriyoruz
+<userinput>http_port 3128 8080</userinput>
+
+#VEKIL
+#Başka squid'lerle bilgi paylaşmıyoruz
+<userinput>icp_port 0</userinput>
+
+#VEKIL
+#Yerel ağımızı burada tanımlıyoruz
+<userinput>acl intranet src 10.0.0.0/255.0.0.0</userinput>
+
+#VEKIL
+#erişim engellemesi squidGuard tarafından yapılacağı için
+#burada yer almıyor
+<userinput>http_access allow intranet</userinput>
+
+#VEKIL
+#Eger proxy yolu ile ftp yaparsak, anonymous isteklerde bu adresi
+#verecek
+<userinput>ftp_user Squid@bizimfirma.com.tr</userinput>
+
+#VEKIL
+#1 Gig'lik (1000) büyüklüğünde bir cache dizini kullanıyoruz.
+#Ayrıca diske bloksuz yazma yöntemini kullanıyoruz
+<userinput>cache_dir aufs /var/spool/squid 1000 16 256</userinput>
+
+#VEKIL
+#squidGuard kullanıyoruz
+<userinput>redirect_program /usr/local/squidGuard/bin/squidGuard</userinput>
+
+#VEKIL
+#20 adet squidGuard başlatıyoruz. Çok fazla sayıda olursa kaynak israfı
+#çok az sayıda olursa beklemeye yol açabilir.
+<userinput>redirect_children 20</userinput>
+
+
+#VEKIL
+#ICP sorgularına izin vermiyoruz
+<userinput>icp_access deny all</userinput>
+
+
+#VEKIL
+#Hata iletilerimizi Türkçe verelim
+<userinput>error_directory /usr/lib/squid/errors/Turkish</userinput>
+
+#VEKIL
+#Squid'i şeffaf (yani kullanıcıların herhangi bir ayar yapmasına gerek
+#kalmaksızın şeffaf olarak kullanmak için bu ayarlara ihtiyacımız var.
+<userinput>httpd_accel_host virtual</userinput>
+<userinput>httpd_accel_port 80</userinput>
+<userinput>httpd_accel_with_proxy on</userinput>
+<userinput>httpd_accel_uses_host_header on</userinput>
+<userinput>httpd_accel_single_host off</userinput>
+</screen>
+    </sect2>
+    <sect2>
+      <title>Squid Kurulumunda ikinci adım: SquidGuard</title>
+        <variablelist>
+          <varlistentry>
+            <term>Neden SquidGuard?</term>
+            <listitem>
+              <para>
+<ulink url="http://www.squidguard.org/">SquidGuard</ulink>, <command>squid</command> ile
+birlikte çalışan ve erişim izinlerini belirleyen bir yazılımdır.
+<command>squid</command>'in kendisi de erişim izinlerini
+belirleyebildiğine göre <command>SquidGuard</command>'a
+ihtiyaç olmadığı düşünülebilir. Fakat,
+<command>SquidGuard</command> kullanımının bazı avantajları
+vardır:
+              </para>
+                <itemizedlist>
+                  <listitem>
+                    <para>
+Erişim izinlerini <ulink url="../indirin/proxy-fw-files.tar.bz2"><filename>squid.conf</filename></ulink>'un
+içine yazmak yerine, diskte ayrı dosyalar halinde
+tutabilirsiniz. Dolayısıyla bir ek izin/kısıtlama
+ilave ederken yanlışlıkla <command>squid</command>
+ayarlarını bozma ihtimaliniz ortadan kalkar.
+                    </para></listitem><listitem><para>
+<command>SquidGuard</command>, Internet'te bir arama
+yazılımı yardımı ile çeşitli kriterlerde karalisteler
+hazırlamakta ve bunları düzenli olarak güncellemektedir.
+<command>SquidGuard</command> kullanmazsanız, buna
+alternatifiniz trafiğinizi kontrol etmek ve
+kullanıcıların gittiği siteleri gözden geçirip kendi
+karalistenizi oluşturmaktır. Bunun yerine
+<command>SquidGuard</command>'un karalistesini
+kullanabilirsiniz.
+                    </para>
+                  </listitem>
+                </itemizedlist>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>SquidGuard Kurulumu</term>
+            <listitem>
+              <para>
+<ulink url="http://www.squidguard.org/">SquidGuard</ulink> web
+sitesinden <filename>squidguard-1.2.0.tar.gz</filename> ve
+<filename>blacklists.tar.gz</filename> paketleri indirildi ve
+<filename>/usr/local/src</filename> dizinine kaydedildi.
+              </para>
+<screen>
+<prompt>#</prompt> <userinput>tar -xzvf squidguard-1.2.0.tar.gz</userinput>
+<prompt>#</prompt>
+</screen>
+              <para>
+komutu ile paket açıldı.
+              </para>
+<screen>
+<prompt>#</prompt> <userinput>cd /usr/local/src/squidGuard-1.2.0</userinput>
+<prompt>#</prompt>
+</screen>
+              <para>
+Paketin ayarları için <filename>configure.squidGuard</filename>
+betiği:
+              </para>
+<screen>
+./configure --prefix=/usr/local/squidGuard \
+            --with-db-lib=/usr/lib \
+            --with-db-inc=/usr/include/db2 \
+            --with-sg-config=/usr/local/squidGuard/configs/filter.conf \
+            --with-sg-logdir=/usr/local/squidGuard/logs \
+            --with-sg-dbhome=/usr/local/squidGuard/db
+</screen>
+              <para>
+aynı dizine kaydedildi:
+              </para>
+<screen>
+<prompt>#</prompt> <userinput>cp configure.squidGuard /usr/local/src/squidGuard-1.2.0</userinput>
+<prompt>#</prompt> <userinput>cd /usr/local/src/squidGuard-1.2.0</userinput>
+<prompt>#</prompt> <userinput>chmod 755 configure.squidGuard</userinput>
+<prompt>#</prompt> <userinput>./configure.squidGuard</userinput>
+<prompt>#</prompt> <userinput>make</userinput>
+<prompt>#</prompt> <userinput>make install</userinput>
+<prompt>#</prompt>
+</screen>
+              <para>
+komutları ile paket sisteme kuruldu.
+              </para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>Karalistenin Oluşturulması</term>
+            <listitem>
+              <para>
+İndirilmiş olan <filename>blacklists.tar.gz</filename> paketi
+<filename>/usr/local/squidGuard/db/blacklists</filename> altına
+açıldı. <filename><ulink url="../indirin/proxy-fw-files.tar.bz2">/usr/local/squidGuard/configs/filter.conf</ulink></filename>
+dosyasında erişim izinleri belirlendi. Esas olarak kara listedeki
+tüm adresler engellendi. Karaliste <command>SquidGuard</command>
+tarafından haftada 3 kez güncelleniyor. Biz de, zaman zaman bu
+güncellemeyi yapacağız.
+              </para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>Hata İletisi</term>
+            <listitem>
+              <para>
+<command>SquidGuard</command>'ın bir kötü tarafı kendi içerisinde
+bir hata iletisi oluşturmayıp, bir web sunucusuna gereksinim
+duyması. Sırf bu sebeple güvenlik duvarı üzerinde bir
+<command>apache</command> web sunucusu kurmak zorunda kaldık.
+Aslında bunun için içeride herhangi bir web sunucusu da
+kullanılabilir, fakat mümkün olduğunca güvenlik duvarını kendi
+başına çalışabilecek halde kurmak istedik.
+              </para>
+            </listitem>
+          </varlistentry>
+        </variablelist>
+      <para>
+<command>SquidGuard</command> paketinin içinden çıkan
+<filename>squidGuard.cgi</filename> betiğine Türkçe dilini ilave ettik
+ve dışarıdan bir siteye verdiği gif bağını kaldırıp yerel bir bağ haline
+getirdik. Betik öntanımlı olarak tarayıcıdaki dil seçeneğine göre dil
+seçimini yapmakta idi, fakat biz salt Türkçe olmasını istedik.
+Değiştirilmiş <ulink url="../indirin/proxy-fw-files.tar.bz2"><filename>squidGuard.cgi</filename>
+buradan temin edilebilir</ulink>. Bu betiği <filename>cgi-bin</filename>
+dizinine kaydettik:
+</para>
+<screen>
+<prompt>#</prompt> <userinput>cp squidGuard.cgi /var/www/cgi-bin</userinput>
+<prompt>#</prompt>
+</screen>
+      <para>
+Erişim izinlerinin doğru olduğundan emin olduk:
+      </para>
+<screen>
+<prompt>#</prompt> <userinput>cd /var/www/cgi-bin</userinput>
+<prompt>#</prompt> <userinput>chown nobody.nobody squidGuard.cgi</userinput>
+<prompt>#</prompt> <userinput>chmod 755 squidGuard.cgi</userinput>
+<prompt>#</prompt>
+</screen>
+      <para>
+Yasak işareti veren <ulink url="../indirin/proxy-fw-files.tar.bz2"><filename>forbidden.gif</filename></ulink> dosyasını
+ilgili dizine kaydettik:
+      </para>
+<screen>
+<prompt>#</prompt> <userinput>cp forbidden.gif /var/www/html</userinput>
+<prompt>#</prompt>
+</screen>
+      <para>
+En sonunda web sunucusunun sistem açıldığı zaman açılmasını sağladık:
+      </para>
+<screen>
+<prompt>#</prompt> <userinput>mv /etc/rc.d/rc3.d/*httpd /etc/rc.d/rc3.d/S15httpd</userinput>
+<prompt>#</prompt>
+</screen>
+    </sect2>
+  </sect1>
+  <sect1 id="proxy-fw_dns">
+    <title>DNS Sunucusu</title>
+    <para>
+Sistem kurulurken bir DNS sunucusu kurmuştuk. Bunun sistem açıldığı zaman
+başlatılmasını sağladık:
+</para><screen>
+<prompt>#</prompt> <userinput>mv /etc/rc.d/rc3.d/*named /etc/rc.d/rc3.d/S45named</userinput>
+<prompt>#</prompt>
+</screen>
+  </sect1>
+  <sect1 id="proxy-fw_restart">
+    <title>Sistemi Yeniden Başlattık</title>
+    <para>
+İlgili servisleri kapatıp açmak ve sistemi yeniden başlatmamak mümkün,
+ama en kolayı güvenlik duvarını yeniden başlatmak. İç ağınızda ağgeçidi
+adreslerini 10.254.254.254 olarak değiştirdiğiniz zaman Internet
+erişiminiz ve güvenlik duvarınız hazırdır.
+    </para>
+  </sect1>
+  <sect1 id="proxy-fw_end">
+    <title>Sonuç</title>
+    <para>
+Bir kaç saatlik bir çalışma ile ufak bir makina üzerine bir güvenlik
+duvarı kurabilirsiniz. Güvenlik duvarları salt dış saldırılara karşı
+sisteminizi korumakla kalmaz, performans arttırıcı ve izin politikası
+uygulayıcı amaçlar için de kullanılırlar.
+    </para>
+  </sect1>
+</article>

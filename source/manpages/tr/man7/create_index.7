@@ -1,0 +1,114 @@
+.\" http://belgeler.org \N'45' 2006\N'45'11\N'45'26T10:18:35+02:00  
+.TH "CREATE INDEX" 7 "" "PostgreSQL" "SQL \N'45' Dil Deyimleri"
+.nh   
+.SH İSİM
+CREATE INDEX \N'45' yeni bir indeks tanımlar   
+.SH KULLANIM 
+.nf
+\fBCREATE\fR [ \fBUNIQUE\fR ] \fBINDEX\fR \fIisim\fR \fBON\fR \fItablo\fR [ \fBUSING\fR \fIyöntem\fR ]
+\    ( { \fIsütun\fR | ( \fIifade\fR ) } [ \fIişleç_sınıfı\fR ] [, ...] )
+\    [ \fBTABLESPACE\fR \fItablo_alanı\fR ]
+\    [ \fBWHERE\fR \fIdayanak\fR ]
+.fi
+    
+.SH AÇIKLAMA
+\fBCREATE INDEX\fR belirtilen bir tablo üzerinden bir indeks oluşturur. İndekslerin birincil kullanım amacı veritabanı başarımını arttırmaktır (ancak, uygunsuz kullanımı başarımın düşmesiyle sonuçlanır).   
+
+İndeks için anahtar alanları sütun isimleri olarak ya da parantez içinde yazılmış ifadeler olarak belirtilir. İndeksleme yöntemi çoksütunlu indeksleri destekliyorsa, çok sayıda alan belirtilebilir.   
+
+Bir indeks alanı tablonun satırındaki bir veya daha fazla sütun değerinden hesaplanan bir ifade olabilir. Bu özellik, bazı temel veri dönüşümlerini temel alan veriye daha hızlı erişim sağlamak için kullanılabilir. Örneğin, upper(col)\N'39'a göre hesaplanan bir indeks, \fBWHERE upper(col) = \N'39'JIM\N'39'\fR gibi bir deyimin belirtilebilmesini mümkün kılar.   
+
+PostgreSQL B\N'45'tree, R\N'45'tree, hash ve GiST indeksleme yöntemlerini içerir. B\N'45'tree indeksleme yöntemi bir Lehman\N'45'Yao yüksek bilinirlikli B\N'45'tree gerçeklenimidir. R\N'45'tree indeksleme yöntemi, Gutman\N'39'in dördül ayırma algoritması kullanılarark gerçeklenir. Hash indeksleme yöntemi ise Litwin\N'39'in bir gerçeklenimidir. Kullanıcılar da kendi indeksleme yöntemini tanımlayabilir ama bu oldukça karmaşıktır.   
+
+\fBWHERE\fR deyiminin varlığında, bir kısmî indeks oluşturulur. Bir kısmî indeks, bir tablonun kalanına göre indeksleme bakımından daha kullanışlı olan bir bölümündeki girdileri içeren bir indekstir. Örneğin, hem toptan hem de perakende siparişleri içeren bir tablomuz olsun, perakende siparişlerin tabloda daha az bulunmasına karşın en sık kullanılanların bunlar olduğunu varsayalım. Sadece bu kayıtlarla ilgili bir indeks oluşturarak başarımı önemli ölçüde arttırabilirsiniz. Başka bir olası kısmî indeks uygulaması, tablonun bir alt kümesindekilerin eşsizliğini sağlamak için \fBWHERE\fR ile \fBUNIQUE\fR\N'39'in birlikte kullanımıdır.   
+
+\fBWHERE\fR ile kullanılan ifade sadece indekslenen tablonun sütunlarına başvurabilir ama sadece indekslenen değil, bütün sütunlar kullanılabilir. Şimdilik, \fBWHERE\fR deyimi içinde altsorgular ve ortak değer işlevleri de kullanılamamaktadır. Aynı kısıtlamalar ifadelerdeki indeks alanları için de geçerlidir.   
+
+Bir indeks tanımında kullanılan bütün işlevler ve işleçler \fBIMMUTABLE\fR imli olmalıdır, yani sonuçlar bunların argümanlarına bağımlı olmalı ve argümanları asla yorumlanabilir olmamalıdır (başka bir tablonun içeriği ya da şimdiki zaman kullanılamaz). Bu sınırlama indeksin davranışının iyi tanımlanmış olmasını sağlar. Bir kullanıcı tanımlı işlevi bir indeks ifadesinde ya da \fBWHERE\fR deyiminde kullanmak istiyorssanız, işlevi tanımlarken \fBIMMUTABLE\fR imli olmasını sağlamayı unutmayın.   
+
+.SH PARAMETRELER     
+.br
+.ns
+.TP 
+\fBUNIQUE\fR
+İndeks oluşturulurken ve her veri eklenişinde, tabloda birbirinin aynı değerler bulunmaması için sistemin sınama yapmasını sağlar. Girdilerin yinelenmesine sebep olacak bir veri girme veya güncelleme işleminin yapılmaya çalışılması bir hata üretecektir.       
+
+.TP 
+\fIisim\fR
+Oluşturulacak indeksin ismi; burada şema nitelemeli isimler kullanılamaz. İndeks daima tabloyu içeren şemada oluşturulur.       
+
+.TP 
+\fItablo\fR
+İndekslencek tablonun ismi (şema nitelemeli olabilir).       
+
+.TP 
+\fIyöntem\fR
+İndeks için kullanılacak yöntemin ismi. Değer olarak, btree, hash, rtree ve gist verilebilir. btree öntanımlı yöntemdir.       
+
+.TP 
+\fIsütun\fR
+Tablo sütunun ismi.       
+
+.TP 
+\fIifade\fR
+Tablonun bir ya da daha fazla sütünu ile ilintili bir ifade. İfade yukarıdaki sözdiziminde gösterildiği gibi parantez içinde yazılmalıdır. Ancak, ifade bir işlev çağrısı biçimindeyse parantez içine alınmayabilir.       
+
+.TP 
+\fIişleç_sınıfı\fR
+Bir işleç sınıfının ismi. Ayrıntılar için aşağıya bakınız.       
+
+.TP 
+\fItablo_alanı\fR
+İndeksin oluşturulacağı tablo alanı. Belirtilmezse, default_tablespace yapılandırma değişkeninin değeri; bu değişkene bir değer atanmamışsa veritabanının öntanımlı tablo alanı kullanılır.       
+
+.TP 
+\fIdayanak\fR
+Bir kısmî indeks için kısıt ifadesi.       
+
+.PP  
+.SH EK BİLGİ
+İndekslerin hangi durumlarda yararlı olduğu, hangi durumlarda kullanılmayacağı, ne zaman kullanıldığı gibi bilgileri
+.br
+http://www.postgresql.org/docs/8.0/static/indexes.html adresinde bulabilirsiniz.   
+
+Şimdilik, çok sütunlu indekslerde sadece B\N'45'tree ve GiST indeksleme yöntemleri desteklenmektedir. Öntanımlı olarak en fazla 32 alan belirtilebilir. (Bu sınır PostgreSQL kurulum için yapılandırılırken değiştirilebilir.) B\N'45'tree şimdilik sadece eşsiz indeksleri desteklemektedir.   
+
+Bir işleç sınıfı bir indeksin her sütunu için belirtilebilir. İşleç sınıfı indeks tarafından sütunlar için kullanılacak işleçleri belirler. Örneğin, dört baytlık tamsayılar üzerindeki bir B\N'45'tree indeksi int4_ops sınıfını kullanırdı; bu işleç sınıfı dört baytlık tamsayıların karşılaştırma işlevlerini içerir. Uygulamada, sütun türüne göre öntanımlı olan işleç sınıfı genellikle yeterli olur. İşleç sınıflarına sahip olmanın ana esprisi, birden fazla anlamlı sıralaması olabilen bazı veri türlerinin olmasıdır. Örneğin, bir karmaşık sayı veri türü için sıralamayı hem gerçel kısmı hem de mutlak değeri için yapmak isteyebiliriz. Bunu veri türü için iki işleç sınıfı tanımlayarak ve indeksi oluştururken bu sınıflardan birini belirterek yapabilirdik. İşleç sınıfları hakkında daha fazla bilgi edinmek için
+.br
+http://www.postgresql.org/docs/8.0/static/indexes\N'45'opclass.html ve
+.br
+http://www.postgresql.org/uygulamalar/pgsql/xindex.html adreslerine bakınız.   
+
+Bir indeksi kaldırmak için \fBDROP INDEX\fR [drop_index(7)] kullanılır.   
+
+İndeksler öntanımlı olarak \fBIS NULL\fR deyimleri için kullanılmazlar. Böyle durumlarda indeksleri kullanmanın en iyi yolu, \fBIS NULL\fR dayatmasını kullanan bir kısmî indeks oluşturmaktır.   
+
+.SH ÖRNEKLER
+films tablosunun title sütunu üzerinde bir B\N'45'tree indeksi oluşturmak için:   
+
+
+.RS 4
+.nf
+CREATE UNIQUE INDEX title_idx ON films (title);
+.fi
+.RE   
+
+films tablosunun code sütunu üzerinde bir indeks oluşturup, bu indeksin indexspace tablo alanında kalması için:   
+
+
+.RS 4
+.nf
+CREATE INDEX code_idx ON films(code) TABLESPACE indexspace;
+.fi
+.RE   
+
+.SH UYUMLULUK
+\fBCREATE INDEX\fR bir  PostgreSQL oluşumudur.  SQL standardında indeksler için bir bahis yoktur.   
+
+.SH İLGİLİ BELGELER
+\fBALTER INDEX\fR [alter_index(7)], \fBDROP INDEX\fR [drop_index(7)].   
+
+.SH ÇEVİREN
+Nilgün Belma Bugüner <nilgun (at) belgeler·gen·tr>, Nisan 2005 
+ 
+    

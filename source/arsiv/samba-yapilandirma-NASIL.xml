@@ -1,0 +1,1721 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--DOCTYPE article SYSTEM "../../docbook/dtd/docbookx.dtd"-->
+<!-- ********************************************************************
+     $Id: samba-yapilandirma-NASIL.xml,v 1.5 2002/09/30 18:21:14 nilgun Exp $
+     ******************************************************************** -->
+
+<article id="samba-sunucusu-nasil" lang="tr">
+<?dbhtml dir="../howto"?>
+  <articleinfo>
+
+    <!-- Use "HOWTO", "mini HOWTO", "FAQ" in title, if appropriate -->
+    <title>Samba Sunucu Yapılandırması NASIL</title>
+
+    <author>
+       <firstname>İsmail</firstname>
+       <surname>YENİGÜL</surname>
+       <affiliation>
+         <address>
+          <email>yenigul@rt.net.tr</email>
+         </address>
+       </affiliation>
+     </author>
+     <pubdate>11  Nisan 2000</pubdate>
+     <pubdate> </pubdate>
+
+     <!-- Most recent revision goes at the top; list in descending order -->
+     <revhistory>
+       <revision>
+          <revnumber>0.1</revnumber>
+          <date>11  Nisan 2000</date>
+          <authorinitials>İsmail Yenigül <email>yenigul@rt.net.tr</email></authorinitials>
+       </revision>
+    </revhistory>
+    <abstract>
+      <para>
+        Samba, Linux ve Unix işletim sistemleri ile Windows NT ve Windows 9X işletim
+        sistemleri arasındaki iletişimi sağlayan bir ağ sunucusu uygulamasıdır.
+      </para>
+      <para>
+        Bu belgede, Samba'nın Linux altında kurulması, çeşitli amaçlara yönelik
+        yapılandırılması ve çalıştırılması ile ilgili bilgiler bulacaksınız.
+      </para>
+    </abstract>
+
+  </articleinfo>
+<!-- Content follows...include introduction, license information, feedback -->
+  <sect1 id="samba-sunucusu-nasil_samba-nedir">
+    <title>Samba Nedir?</title>
+    <para>
+      Samba Linux ve Unix işletim sistemleri ile Windows NT ve WIndows 9X işletim
+      sistemleri arasındaki iletişimi sağlayan bir uygulamadır. Ne mi
+      yapabilirsiniz?
+      <itemizedlist>
+        <listitem>
+          <para>
+            Windows 9X ve NT'ler için alan denetleyicisi(NT PDC - Primary Domain
+            Controller)
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Linux kullanıcılarının Windows üzerinden kendi dosyalarına erişimi
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Linux makinaya bağlı yazıcıya Microsoft ağlarından erişim
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Linux makinadan Windows dizinlerine erişim
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Windows makinaya bağlı yazıcıya Linux ağlarından erişim
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            WINS sunucu
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Alan (İng.: domain) tarayıcı (İng.:Master Browser)
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Yerel Alan Denetleyicisi (İng.: local master)
+          </para>
+        </listitem>
+      </itemizedlist>
+    </para>
+    <para>
+      Sambada iki tane artalan uygulaması çalışır.
+      <variablelist>
+        <varlistentry>
+          <term>smbd</term>
+          <listitem>
+            <para>
+              Ağ üzerinden yazıcı paylaşımı kullanıcıları için alan
+              denetleyicisi (PDC) olarak görev yapar.
+            </para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>nmbd</term>
+          <listitem>
+            <para>
+              WINS görevi yapar.
+            </para>
+          </listitem>
+        </varlistentry>
+      </variablelist>
+    </para>
+    <para>
+      <literal>Samba</literal>'nın en son versiyonunu
+      <ulink url="ftp://ftp.ulak.net.tr/pub/samba/"
+      >ftp://ftp.ulak.net.tr/pub/samba</ulink> adresinden temin edebilirsiniz.
+      Bu belgenin yazıldığı sıradaki son sürümü 2.0.6 dır.
+    </para>
+    <para>
+      Kurulum ve yapılandırma RedHat dosya sistemine göre anlatılacaktır.
+    </para>
+  </sect1>
+  <sect1 id="samba-sunucusu-nasil_kurulum">
+    <title>Samba Paketinin Kurulması</title>
+    <para>
+      Samba paketinin kurulu olup olmadığını<screen># rpm -q samba</screen>
+      yazdığınızda<screen>samba-2.0.6</screen>yanıtını alıyorsanız, samba
+      kurulu demektir. Samba kurulu değilse<screen>package samba is not
+      installed</screen> diye bir yanıt alırsınız. Kurmak için root kullanıcısı
+      olarak konsolda aşağıdaki işlemleri yapınız:
+<screen>
+# rpm -ihv samba-common-2.0.5a-12.i386.rpm
+# rpm -ihv samba-2.0.5a-12.i386.rpm
+# rpm -ihv samba-client-2.0.5a-12.i386.rpm
+</screen>
+    </para>
+  </sect1>
+  <sect1 id="samba-sunucusu-nasil_yapilandirma">
+    <title>Samba Yapılandırması</title>
+    <para>
+      Samba'nın çok fazla parametresi vardır ve yapacağı göreve göre değişik
+      yapılandırmaları vardır. Bu bölümde ilk başta samba'nın yapılandırma
+      dosyası olan <literal>smb.conf</literal>'daki parametrelerin ne manaya
+      geldiği anlatılacak. Daha sonra istemcilerin NT veya Windows 9x olmasına
+      göre farklı yapılandırmalar anlatılacaktır.
+    </para>
+    <sect2>
+      <title><literal>/etc/smb.conf</literal> dosyası</title>
+      <para>
+        Dosya 3 ana bölümden oluşur: [global] [homes] ve [printers] bölümleri.
+      </para>
+      <para>
+        Bu bölümlerde öntanımlı değerleri değiştirmek veya etkin hale getirmek
+        için satır başlarındaki <literal>#</literal> ve
+        <literal>;</literal> işaretlerini kaldırmanız gerekir.
+      </para>
+      <para>
+        İlk önce dosya içinde geçen bazı parametrelerin karşılıklarını verelim:
+      </para>
+      <sect3>
+        <title>Parametreler</title>
+        <para>
+          <emphasis role="bold">PDC</emphasis> - Primary Domain Controller
+          (Birincil Alan Denetleyicisi)
+        </para>
+        <sect4>
+          <title>Değişken Tanımları</title>
+          <para>
+            <variablelist>
+              <varlistentry>
+                <term>%a</term>
+                <listitem>
+                  <para>
+                    İstemcinin işletim sistemi (WinNT, Win9X,...)
+                  </para>
+                </listitem>
+              </varlistentry>
+              <varlistentry>
+                <term>%I</term>
+                <listitem>
+                  <para>
+                    İstemcinin IP adresi (160.75.2.20)
+                  </para>
+                </listitem>
+              </varlistentry>
+              <varlistentry>
+                <term>%m</term>
+                <listitem>
+                  <para>
+                    İstemcinin NetBIOS ismi
+                  </para>
+                </listitem>
+              </varlistentry>
+              <varlistentry>
+                <term>%M</term>
+                <listitem>
+                  <para>
+                    İstemci DNS ismi
+                  </para>
+                </listitem>
+              </varlistentry>
+            </variablelist>
+          </para>
+        </sect4>
+        <sect4>
+          <title>Kullanıcı Parametreleri</title>
+          <para>
+            <variablelist>
+              <varlistentry>
+                <term>%g</term>
+                <listitem>
+                  <para>
+                    Kullanıcının birincil grubu
+                  </para>
+                </listitem>
+              </varlistentry>
+              <varlistentry>
+                <term>%u</term>
+                <listitem>
+                  <para>
+                    Linux kullanıcı ismi (username)
+                  </para>
+                </listitem>
+              </varlistentry>
+              <varlistentry>
+                <term>%H</term>
+                <listitem>
+                  <para>
+                    Kullanıcının  Ev (Home) dizini
+                  </para>
+                </listitem>
+              </varlistentry>
+            </variablelist>
+          </para>
+        </sect4>
+        <sect4>
+          <title>Sunucu Parametreleri</title>
+          <para>
+            <variablelist>
+              <varlistentry>
+                <term>%h</term>
+                <listitem>
+                  <para>
+                    Samba sunucunun DNS ismi
+                  </para>
+                </listitem>
+              </varlistentry>
+              <varlistentry>
+                <term>%L</term>
+                <listitem>
+                  <para>
+                    Samba sunucunun NETBIOS ismi
+                  </para>
+                </listitem>
+              </varlistentry>
+              <varlistentry>
+                <term>%v</term>
+                <listitem>
+                  <para>
+                    Samba sürümü
+                  </para>
+                </listitem>
+              </varlistentry>
+              <varlistentry>
+                <term>%T</term>
+                <listitem>
+                  <para>
+                    Sistemin o andaki tarih ve saati
+                  </para>
+                </listitem>
+              </varlistentry>
+            </variablelist>
+          </para>
+        </sect4>
+      </sect3>
+      <sect3>
+        <title>[global] bölümü</title>
+        <para>
+          Bu kısım genel yapılandırmanın yapıldığı kısımdır. Bu kısımda:
+          <variablelist>
+            <varlistentry>
+              <term>Workgroup=</term>
+              <listitem>
+                <para>
+                  Bu ifade ile samba'nın hangi çalışma grubu (workgroup) veya
+                  NT alanı (domain) ile bağlantı kuracağı belirlenir.
+                </para>
+                <para>
+                  Örnek: <literal>Workgroup = TE</literal>
+                </para>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>Server string=</term>
+              <listitem>
+                <para>
+                  Bu ifade ile Samba sunucusunun  windows ağında hangi isim
+                  ile gözükeceği belirtilir. Windows'taki Makina Tanımı (Computer
+                  Description) ile aynı görevi yapar.
+                </para>
+                <para>
+                  Örnek: <literal>server string = LINUX SAMBA server %v</literal>
+                </para>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>hosts allow=</term>
+              <listitem>
+                <para>
+                  Bu ifade ile Samba sunucuya erişim izni verilecek istemcilerin
+                  IP adresleri veya alan isimleri belirtilir.
+                </para>
+                <para>
+                  Örnek: <literal>hosts allow = 160.75. 127.0.0.1 193.140.2.
+                  ftp.itu.edu.tr</literal>
+                </para>
+                <para>
+                  Örnekteki ifade ile <literal>160.75.</literal> ve
+                  <literal>193.140.2.</literal> ile başlayan tüm
+                  IP'lere, <literal>ftp.itu.edu.tr</literal> ve Samba sunucusunun
+                  kendisine erişim izni verilmiştir.
+                </para>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>hosts deny=</term>
+              <listitem>
+                <para>
+                  Bu ifade ile Samba sunucusuna erişim izni verilmeyen IP
+                  adresleri ve istemci isimlerini belirtilir.
+                </para>
+                <para>
+                  Örnek: <literal>hosts deny = 160.75.2.1</literal>
+                </para>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>printcap name=</term>
+              <listitem>
+                <para>
+                  Bu ifade ile yazıcı ile ilgili yapılandırma dosyasının yeri
+                  belirtilir.
+                </para>
+                <para>
+                  Örnek: <literal>printcap name = /etc/printcap</literal>
+                </para>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>guest account=</term>
+              <listitem>
+                <para>
+                  Sunucunuzda kullanıcı ismi olmayanlarında sisteme misafir
+                  olarak girmesine izin verir.
+                </para>
+                <para>
+                  Örnek: <literal>guest account = pcguest</literal>
+                </para>
+                <para>
+                  Buradaki <literal>pcguest</literal>'i
+                  <literal>/etc/passwd</literal> dosyasına eklemeniz gerekir.
+                  Aksi takdirde misafir hesap olarak <literal>nobody</literal>
+                  kullanılacaktır.
+                </para>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>log file=</term>
+              <listitem>
+                <para>
+                  Samba sunucuya bağlantı yapıldığında yapılan işlemlerin
+                  kayıtlarının tutulduğu dosyalardır. Burada iki türlü kayıt
+                  tutulur: istemci makina adına göre (%m), kullanıcı isimlerine
+                  göre (%u)
+                </para>
+                <para>
+                  Örnek-1: <literal>log file = /var/log/samba/log.%m</literal>
+                  (istemci makinaya göre)<sbr/>
+                  Örnek-2: <literal>log file = /var/log/samba/log.%u</literal>
+                  (kullanıcı adına göre)
+                </para>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>max log size=</term>
+              <listitem>
+                <para>
+                  Kilobyte olarak maksimum dosya boyutunu belirler.
+                </para>
+                <para>
+                  Örnek: <literal>max log size = 50</literal>
+                </para>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>Security=</term>
+              <listitem>
+                <para>
+                  Samba'daki en önemli kısımdır. Parola ve kullanıcı adı
+                  doğrulamasının nasıl yapılacağı belirlenir. 4 çeşittir:
+                  user, server, domain, share.
+                  <variablelist>
+                    <varlistentry>
+                      <term>user</term>
+                      <listitem>
+                        <para>
+                          Eğer <literal>security=user</literal> olarak seçilirse
+                          kullanıcı ve parola doğrulaması için
+                          <literal>/etc/smbpasswd</literal> dosyası kullanılır.
+                          Bu dosyadaki kullanıcı adı ve parolası doğruysa sisteme
+                          giriş izni verilir.
+                        </para>
+                      </listitem>
+                    </varlistentry>
+                    <varlistentry>
+                      <term>server</term>
+                      <listitem>
+                        <para>
+                          Bu seçenekte ise parola ve kullanıcı adı doğrulaması
+                          bir NT PDC veya başka bir Samba PDC sunucusundaki
+                          kullanıcı adı ve parolasına göre yapılır.
+                        </para>
+                      </listitem>
+                    </varlistentry>
+                    <varlistentry>
+                      <term>domain</term>
+                      <listitem>
+                        <para>
+                          Bu seçenekte de parola ve kullanıcı adı doğrulaması
+                          bir NT PDC veya başka bir Samba PDC sunucusundaki
+                          kullanıcı adı ve parolasına göre yapılır. Fakat
+                          <literal>server</literal> seçeneğinden farkı;
+                          <literal>server</literal> seçeneginde kullanıcı
+                          sistemden çıkana kadar NT PDC veya diğer Samba PDC
+                          sunucusu arasındaki bağlantı devam eder. Bu da
+                          sunucunun boşu boşuna kullanılması demektir. Ama
+                          <literal>domain</literal> seçeneğinde sadece kullanıcı
+                          adı ve parolası doğrulanana kadar parolaların
+                          tutuldugu sunucu ile Samba sunucusu arasında bağlantı
+                          kurulur. Parola doğrulandıktan sonra ilişki kesilir.
+                        </para>
+                      </listitem>
+                    </varlistentry>
+                    <varlistentry>
+                      <term>share</term>
+                      <listitem>
+                        <para>
+                          Bu seçenekte samba sunucusu üzerindeki her bir paylaşım
+                          için parola sorgulaması gerekir.
+                        </para>
+                      </listitem>
+                    </varlistentry>
+                  </variablelist>
+                </para>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>Password server=</term>
+              <listitem>
+                <para>
+                  Bu ifade sadece <literal>security</literal> ifadesinde sağ yan
+                  <literal>server</literal> veya <literal>domain</literal>
+                  olduğu zaman kullanılır. Şifrelerin ve kullanıcı
+                  parolalarının hangi sunucuda tutulacağı belirtilir.
+                  Sunucunun NETBIOS ismi yazılır.
+                </para>
+                <para>
+                  Örnek: <literal>password server = NTSRV14</literal>
+                </para>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>encrypt passwords=</term>
+              <listitem>
+                <para>
+                  NT, Servis Pack 3 ve sonrası, Windows 98 parolaları
+                  şifreleyerek gönderir. Mutlaka bu seçenek "yes" olmalıdır.
+                  Bu ifadede <literal>yes</literal> demezseniz, Samba salt metin
+                  olarak parola gönderir. Fakat bu parolaları Windows NT kabul
+                  etmez. Salt metin parola göndermek için NT ve Windows'ların
+                  <literal>registry</literal>'leri ile oynamanız gerekir. Bu da
+                  güvenlik açısından iyi değildir.
+                </para>
+                <para>
+                  Örnek: <literal>encrypt passwords = yes</literal>
+                </para>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>smb passwd file=</term>
+              <listitem>
+                <para>
+                  Bu ifade <literal>security</literal> ifadesinde sağ taraf
+                  <literal>user</literal> olarak seçildigi zaman kullanılır,
+                  Parolaların ve kullanıcı adlarının hangi dosyada tutulacağı
+                  belirtilir.
+                </para>
+                <para>
+                  Örnek: <literal>smb passwd file = /etc/smbpasswd</literal><footnote><para>
+                    <orderedlist>
+                      <listitem>
+                        <para>
+                          <literal>/etc/smbpasswd</literal> dosyasına
+                          samba kullanıcısı eklemek için <literal>security =
+                          user</literal> seçilmiş olmalıdır ve bu işlem için
+                          <screen>sambadduser linux_kullanıcı_adı:samba_kullanıcı_adı</screen>
+                          komutu kullanılır.
+                        </para>
+                        <para>
+                          Örnek: <literal>smbadduser yenigul:yenigul</literal>
+                        </para>
+                        <para>
+                          (Kullanıcı adları aynı olmak zorunda değildir!!)
+                        </para>
+                      </listitem>
+                      <listitem>
+                        <para>
+                          Tüm kullanıcıları <literal>smbpasswd</literal> dosyasına
+                          eklemek için
+                          <screen># cat /etc/passwd | mksmbpasswd.sh >> /etc/smbpaswd</screen>
+                          komutu kullanılır.
+                        </para>
+                        <para>
+                          Eğer NIS (Network Infomation Service) kullanıyorsanız
+                          <screen># ypcat passwd fakat |mksmbpasswd.sh >> /etc/smbpaswd</screen>
+                          komutu kullanılır.
+                        </para>
+                      </listitem>
+                      <listitem>
+                        <para>
+                          Kullanıcılara parola vermek için
+                          <screen># smbpasswd kullanıcı_adı</screen>
+                          komutu kullanılır.
+                        </para>
+                      </listitem>
+                      <listitem>
+                        <para>
+                           <literal>/etc/passwd</literal> dosyasındaki kullanıcıyı
+                           <literal>smbpasswd</literal> dosyasına aynı isimde eklemek
+                           için<screen># smpasswd -a kullanıcı_adı</screen>komutu
+                           kullanılır.
+                         </para>
+                       </listitem>
+                     </orderedlist>
+                   </para></footnote>
+                 </para>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>username map=</term>
+              <listitem>
+                <para>
+                  Bu ifadede ise Samba sunucusunda olmayıp NT'de bulunan
+                  kullanıcıların Samba sunucusunda hangi kullanıcı adına göre
+                  işlem yapacağının belirtildiği dosyanın yeri belirtilir.
+                </para>
+                <para>
+                  Örnek: <literal>username map = /etc/smbusers</literal><footnote>
+<para><literal>/etc/smbusers</literal> dosyasının içeriğine örnek:
+<screen>
+# Unix_name = SMB_name1 SMB_name2 ...
+
+root = administrator admin
+
+nobody = guest pcguest smbguest
+</screen></para><para>Burada NT'deki <literal>administrator</literal> ve <literal>admin</literal>
+kullanıcılarının Linux' taki <literal>root</literal> kullanıcısının haklarına
+sahip olduğu belirtilmiştir.</para></footnote>
+                </para>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term><anchor id="samba-sunucusu-nasil_include"/>include=</term>
+              <listitem>
+                <para>
+                  Bu ifade ile istemci makinalar için farklı farklı yapılandırma
+                  dosyaları oluşturabilirsiniz. (sadece istemci adına göre
+                  olabilir, yani %u olmaz.)
+                </para>
+                <para>
+                  Örnek-1: <literal>include = /usr/local/samba/lib/smb.conf.%m</literal>
+                </para>
+                <para>
+                  Örnek-2: <literal>include = /usr/local/samba/lib/smb.conf.hidiv</literal><sbr/>
+                  Bu örnekte <literal>hidiv</literal> makinası için özel bir
+                  yapılandırma dosyası açılmış oldu. Artık <literal>hidiv</literal>
+                  makinası için sadece bu dosyadaki yapılandırmalar geçerli olacaktır.
+                </para>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>socket options=</term>
+              <listitem>
+                <para>
+                  Burada Samba'nın hangi soket seçenegini kullanacağı belirtilir.
+                </para>
+                <para>
+                  Örnek: <literal>socket options = TCP_NODELAY</literal>
+                </para>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>interfaces=</term>
+              <listitem>
+                <para>
+                  Samba sunucunun birden fazla alt ağ için geçerli olmasnı sağlar.
+                </para>
+                <para>
+                  Örnek-1: <literal>interfaces= 192.168.1.5/24 192.168.2.3 /24</literal>
+                </para>
+                <para>
+                  Örnek-2: <literal>interfaces = 192.168.1.5/255.255.255.0 192.168.2.3/255.255.255.0</literal>
+                </para>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>netbios name=</term>
+              <listitem>
+                <para>
+                  Samba sunucunun NT NETBIOS ismi
+                </para>
+                <para>
+                  Örnek: <literal>netbios name = apache</literal>
+                </para>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>local master=</term>
+              <listitem>
+                <para>
+                </para>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>netbios name=</term>
+              <listitem>
+                <para>
+                  Bu ifade ile Samba sunucunun yerel ağda yetkili sunucu olup
+                  olmayacağı belirtilir.
+                </para>
+                <para>
+                  Örnek: <literal>local master = yes</literal>
+                </para>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>os level=</term>
+              <listitem>
+                <para>
+                  Samba sunucu ile Windows ağındaki diğer makinalar ağda yetkili
+                  olmak için yarışa girer. Bu ifade ile samba sunucunun yarışa
+                  katılıp katılmayacağı, katılacak ise yarıştaki konumunu belirtilir.
+                  En fazla 255<footnote>
+<para>Bazı sistemler için <literal>os level</literal> aşağıdaki gibidir:
+<screen>
+Windows NT Server 4.0 = 33
+Windows NT Server 3.51 =32
+Windows NT Workstation 4.0 =17
+Windows NT Workstation 3.51 =16
+Windows 98 =2
+Windows 95 =1
+Windows 3.1 =1
+</screen></para><para>
+                    Bu durumda samba sunucuyu PDC (Primary Domain Controller)
+                    olarak kullanacaksanız <literal>os level</literal> en az 34
+                    olmalı, yarışa hiç girmesini istemiyorsanız 0 olmalıdır.
+                    Burada önemli bir husus ise eğer ağınızda daha önceden bir
+                    NT PDC varsa ve hala kullanmak istiyorsanız samba sunucunun
+                    <literal>os level</literal>'i NT PDC den küçük olmalıdır.
+                    Aksi takdirde NT PDC'de sorunlara yol açar. Yani ağda bir
+                    PDC NT sunucu varsa samba'yı <literal>os level = 34</literal>
+                    ile kullanamazsınız.</para></footnote> olabilir.
+                </para>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>domain master=</term>
+              <listitem>
+                <para>
+                  Bu ifade ile samba sunucunun tüm alt ağlar için yetkili sunucu
+                  olup olmayacağı belirlenir. Daha öncede belirtiğim gibi ağda
+                  bu işi yapan bir NT PDC varsa bu seçeneği "no" olarak belirtin.
+                </para>
+                <para>
+                  Örnek: <literal>domain master = yes</literal>
+                </para>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>domain logons=</term>
+              <listitem>
+                <para>
+                  Bu ifade ile Windows'lar için samba'nın alan ismi kapsamındaki
+                  ağda kimlik kanıtlama sunucusu olup olmaması belirlenir.
+                </para>
+                <para>
+                  Örnek: <literal>domain logons = yes</literal>
+                </para>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>preferred master=</term>
+              <listitem>
+                <para>
+                  Bu ifade ile samba sunucunun yetkili sunucu olmak için katıldığı
+                  yarışta biraz daha öncelikli olması sağlanır.
+                </para>
+                <para>
+                  Örnek: <literal>preferred master = yes</literal>
+                </para>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>netbios aliases=</term>
+              <listitem>
+                <para>
+                  Diyelim ki iş yerinizde 4 farklı bölüm var ve bu bölümler için
+                  4 ayrı NT sunucu var. Bu 4 NT sunucunun yaptığı işi bir tek
+                  samba sunucu ile yapabilirsiniz. Bunun için <literal>netbios
+                  aliases</literal> seçeneği kullanılır.
+                </para>
+                <para>
+                  Örnegin yönetim, muhasebe, satış, satınalma diye 4 ayrı çalışma
+                  grubu ve bunlara ait sırayla server1, server2, server3, server4
+                  diye 4 tane NT sunucu olsun:
+                </para>
+                <para>
+                  <literal>netbios aliases = server1 server2 server3 server4</literal>
+                </para>
+                <para>
+                  Yukarıda incelediğimiz <link linkend="samba-sunucusu-nasil_include"
+                  ><literal>include</literal></link> seçeneği ile
+                  buradaki her sunucu için bir yapılandırma dosyası
+                  kullanabilirsiniz. (Dosyaları kendiniz oluşturmalısınız.)
+                </para>
+                <para>
+                  <literal>include = /etc/smb.conf.%L</literal>
+                </para>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>logon script=</term>
+              <listitem>
+                <para>
+                  Bu ifade ile eğer samba sunucu PDC olarak ayarlanmışsa
+                  kullanıcılar sisteme ilk girdiğinde bazı betiklerin çalışması
+                  sağlanır.
+                </para>
+                <para>
+                  Örnek: <literal>logon script= %U.bat</literal>
+                </para>
+                <para>
+                  ile betiğin her kullanıcı için çalısması sağlanır.
+                  <literal>%U</literal> yerine <literal>%m</literal> kullanılarak
+                  betiğin her istemci makina için çalışması sağlanabilir. Yalnız
+                  betiğin bir dos dosya düzenleyici ile yazılması ve
+                  <literal>netlogon</literal> diye bir paylaşımın açılması
+                  lazımdır. <link linkend="samba-sunucusu-nasil_netlogon"
+                  >Netlogon</link>'dan aşağıda bahsedilecektir.
+                </para>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>logon path=</term>
+              <listitem>
+                <para>
+                  Bu ifade ile kullanıcıları Profile'larını Linux üzerinde
+                  tutabilirsiniz.
+                </para>
+                <para>
+                  Örnek: <literal>logon path = \\%L\Profiles\%U</literal>
+                </para>
+                <para>
+                  Burada <literal>%L</literal> samba sunucunun NETBIOS ismi,
+                  <literal>%U</literal> kullanıcı adını ifade etmektedir.
+                  Bu ifadenin iş görmesi için <link linkend="samba-sunucusu-nasil_homes"
+                  ><literal>[homes]</literal></link> bölümünde anlatılacak olan
+                  <link linkend="samba-sunucusu-nasil_profiles"><literal>Profiles</literal
+                  ></link> paylaşımı oluşturulmalıdır.
+                </para>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>wins support=</term>
+              <listitem>
+                <para>
+                  Bu ifade ile samba sunucunun WINS olarak çalışp çalışmayacağı
+                  belirtilir.
+                </para>
+                <para>
+                  Örnek: <literal>Wins support = no</literal>
+                </para>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>wins server=</term>
+              <listitem>
+                <para>
+                  Bu ifade ile ağdaki NT WINS sunucunun IP adresi belirlenir.
+                </para>
+                <para>
+                  Örnek: <literal>wins server = 160.75.2.4</literal>
+                </para>
+                <warning>
+                  <para>
+                  Yukarıda belirtilen <literal>wins support</literal> ve <literal>wins server</literal>
+                  ifadelerinin ikisi aynı anda kullanlamaz ve Samba sunucu ikincil wins ve
+                  yedekleyen alan sunucu olarak kullanılamaz. (şimdilik!!)
+                  </para>
+                </warning>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>default case=</term>
+              <listitem>
+                <para>
+                  Bu ifade ile öntanımlı olarak büyük mü küçük mü harf
+                  kullanilacağı belirlenir. Öntanımlı olarak küçük harf
+                  kullanılır.
+                </para>
+                <para>
+                  Örnek: <literal>default case = lower</literal>
+                </para>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>case sensitive=</term>
+              <listitem>
+                <para>
+                  Bu ifade ile parola ve kullanıcı adı doğrulaması yapılırken
+                  Büyük küçük harf ayrımı yapılıp yapılmayacağı belirlenir.
+                </para>
+                <para>
+                  Örnek: <literal>case sensitive = no</literal>
+                </para>
+              </listitem>
+            </varlistentry>
+          </variablelist>
+        </para>
+      </sect3>
+      <sect3 id="samba-sunucusu-nasil_homes">
+        <title>[homes] bölümü</title>
+        <para>
+          Bu bölümde samba sunucu üzerinde disk ve yazıcı paylaşımları
+          yapılır.
+        </para>
+        <para>
+          <variablelist>
+            <varlistentry>
+              <term>admin users=</term>
+              <listitem>
+                <para>
+                  Bu ifade ile belirtilen kullanıcılara paylaştırılan dizinler
+                  üzerinde root yetkisi verilir.
+                </para>
+                <para>
+                  Örnek: <literal>admin users = yenigul balman</literal>
+                </para>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>comment=</term>
+              <listitem>
+                <para>
+                  Bu ifade ile paylaşım hakkında bilgi verilir.
+                </para>
+                <para>
+                  Örnek: <literal>comment = Ev Dizinleri</literal>
+                </para>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>browseable=</term>
+              <listitem>
+                <para>
+                  Bu ifade ile paylaşıma izin verilenler dışındakilerin paylaşımı
+                  görmesine izin verilip verilmeyeceği belirlenir.
+                </para>
+                <para>
+                  Örnek: <literal>browseable = no</literal>
+                </para>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>create mode=</term>
+              <listitem>
+                <para>
+                  Bu ifade ile dosyaların hangi kipte açılacağı belirlenir.
+                </para>
+                <para>
+                  Örnek: <literal>create mode = 0755</literal>
+                </para>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>invalid users=</term>
+              <listitem>
+                <para>
+                  Paylaşıma erişim izni verilmeyecek kullanıcılar belirtilir.
+                </para>
+                <para>
+                  Örnek: <literal>invalid users = alfa ayka</literal>
+                </para>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>max connection=</term>
+              <listitem>
+                <para>
+                  Belirtilen paylaşıma aynı anda bağlı olabilecek kullanıcı
+                  sayısı belirtilir.
+                </para>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>read list=</term>
+              <listitem>
+                <para>
+                  Okuma izni verilen gruplar ve kullanıcılar belirtilir.
+                </para>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>write list=</term>
+              <listitem>
+                <para>
+                  Yazma izni verilen kullanıcılar veya gruplar belirtilir.
+                </para>
+                <para>
+                  Örnek: <literal>write list = yenigul agayev @admin</literal>
+                </para>
+                <para>
+                  Burada yenigul ve agayev kullanıcıları ile admin grubuna izin verilmiştir.
+                </para>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>valid users=</term>
+              <listitem>
+                <para>
+                  Paylaşım için izin verilen kullanıcılar veya gruplar belirtilir.
+                </para>
+                <para>
+                  Örnek: <literal>valid users = yenigul balman balaban subasi @linux</literal>
+               </para>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>writable=</term>
+              <listitem>
+                <para>
+                  Bu ifade ile izin verilenlere yazma izni verilip verilmeyeceği belirlenir.
+                </para>
+                <para>
+                  Örnek: <literal>writable = yes</literal>
+                </para>
+              </listitem>
+            </varlistentry>
+          </variablelist>
+        </para>
+      </sect3>
+      <sect3 id="samba-sunucusu-nasil_pub">
+        <title>[pub] bölümü</title>
+        <para>
+          Örnek:
+<screen>
+[pub]
+comment = TEMP dizini
+path = /tmp
+writable = yes
+browsable = yes
+public =yes
+guest ok =yes
+</screen>
+        </para>
+        <para>
+          <variablelist>
+            <varlistentry>
+              <term>path=</term>
+              <listitem>
+                <para>
+                  Bu ifade ile dizinin tam adresi verilir.
+                </para>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>public=</term>
+              <listitem>
+                <para>
+                   Herkes tarafından kullanıma açılıp açılmayacağı belirlenir.
+                 </para>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>guest ok=</term>
+              <listitem>
+                <para>
+                   Misafir kullanıcılara erişim verilip verilmeyeceği belirlenir.
+                </para>
+              </listitem>
+            </varlistentry>
+          </variablelist>
+        </para>
+      </sect3>
+      <sect3 id="samba-sunucusu-nasil_netlogon">
+        <title>[netlogon] bölümü</title>
+        <para>
+          <literal>[global]</literal> bölümünde:<screen>logon scripts = %m</screen>
+          veya <screen>logon scripts = %U</screen>ifadesini belirtmişseniz bir
+          tane <literal>[netlogon]</literal> bölümünüz olmalıdır. Örneğin,
+<screen>
+comment = Network Logon Service
+path = /home/netlogon
+guest ok = yes
+writable = no
+share modes = no
+</screen> ifadeleri ile paylaşımı belirledikten sonra <literal>/home</literal>
+          dizini altında <literal>netlogon</literal> dizinini açmalısınız. Bu
+          dizin altına ismi <literal>logon.bat</literal> olan bir dosya
+          yerleştirebilir ve bu dosyaya açılışta çalışmasını istediğiniz komutları
+          yazabilirsiniz. Örneğin,
+<screen>
+net use z: \\samba_sunucu\homes
+net use t: \\samba_sunucu\tmp
+</screen> ifadeleri ile samba sunucu üzerindeki <literal>/homes</literal> dizini
+          Z:, <literal>/tmp</literal> dizini T: olarak paylaştırılabilir.
+        </para>
+      </sect3>
+      <sect3 id="samba-sunucusu-nasil_profiles">
+        <title>[Profiles] bölümü</title>
+        <para>
+          Örnek:
+<screen>
+[Profiles]
+comment =User Profiles
+path = /home/profiles
+browseable = no
+guest ok = yes
+</screen>
+        </para>
+      </sect3>
+      <sect3 id="samba-sunucusu-nasil_printers">
+        <title>[Printers] bölümü</title>
+        <para>
+          Örnek:
+<screen>
+[Printers ]
+comment = All Printers
+path = /tmp/
+browseable = no
+guest ok = no
+writable = no
+printable = yes
+</screen>
+        </para>
+        <para>
+          <variablelist>
+            <varlistentry>
+              <term>printable=</term>
+              <listitem>
+                <para>
+                  Sağ taraf "yes" olduğunda buraya çıktı gönderilebilir demektir.
+                </para>
+              </listitem>
+            </varlistentry>
+          </variablelist>
+        </para>
+        <para>
+          Linux üzerinden yazıcı kullanacaksanız X altında çalışan
+          <literal>printtool</literal> uygulaması ile yazıcıyı tanıtabilirsiniz.
+        </para>
+      </sect3>
+    </sect2>
+    <sect2 id="samba-sunucusu-nasil_as-pdc">
+      <title>Samba'nın PDC Sunucu Olarak Windows Alanı için Yapılandırılması</title>
+      <para>
+        Burada samba'nın windows 9X alanı için PDC olarak yapılandırılması
+        anlatılacaktır. Bu yapılandırma sonucunda windows 9X ler için parola ve
+        kullanıcı doğrulaması Samba sunucuda yapılır . Aşağıda örnek bir
+        yapılandırma dosyası verilmiştir. Bu örnekte "apache" samba sunucusunu
+        çalıştığı makinanın adı, "TE" ise çalışma grubunun adıdır.
+      </para>
+      <para>
+        <literal>/etc/smb.conf</literal> dosyası
+<screen>
+#NetBIOS adı makina adı ile ayni ise kullanmaya gerek yok.
+netbios name = apache
+workgroup = TE
+security = user
+domain logons = yes
+encrypt passwords = yes
+os level = 65
+domain master = yes
+preferred master = yes
+local master = yes
+wins support = yes
+logon script = login.bat
+logon path = \\apache\profile\%U
+
+[homes]
+browseable = no
+writable = yes
+comment = kullanıcıların ev dizini
+
+[netlogon]
+path = /home/samba/netlogon
+writable = no
+guest ok = no
+comment = PDC netlogon paylaşımı
+
+[profile]
+path = /home/samba/profile
+writeable = yes
+
+#genel paylaşım
+[public]
+path = /usr/public
+browseable = yes
+public = yes
+comment = genel paylaşım
+
+[Printers ]
+comment = All Printers
+path = /tmp/
+browseable = no
+guest ok = no
+writable = no
+printable = yes
+</screen>
+      </para>
+      <para>
+        Yukarıdaki kısım Linux samba sunucu ile ilgili kısımdır bir de bu işin
+        windoz yönü var. Aşağıdaki gibi:
+        <orderedlist>
+          <listitem>
+            <para>
+              Ana menüden sırayla
+              Start(Başlat) -> Setting(Ayarlar) - > password(parola)
+              seçtiğinizde aşağıdakine benzer bir pencere açılacak:
+            </para>
+            <para>
+              <mediaobject>
+                <imageobject>
+                  <imagedata fileref="samba/Image1.gif" format="GIF"/>
+                </imageobject>
+             </mediaobject>
+            </para>
+            <para>
+              Bu pencerede <literal>User Profile</literal> sekmesine tıklayın ve
+              yukarda seçili olan radyo düğmelerini seçin. Eğer kullanıcı
+              hesabınız daha önceden windows'da varsa ve windows parolanız samba
+              parolanızdan farklıysa, parolanızı samba sunucudaki parola ile
+              aynı olması için <literal>Change password</literal> (Parola
+              Değiştir) sekmesinden değiştiriniz.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Ana menüden sırayla
+              Start(Başlat) -> Setting(Ayarlar) - > Control Panel (Denetim Masası)
+              -> Network (Ağ) seçtiğinizde aşağıdakine benzer bir pencere açılacak:
+            </para>
+            <para>
+              <mediaobject>
+                <imageobject>
+                  <imagedata fileref="samba/Image2.gif" format="GIF"/>
+                </imageobject>
+             </mediaobject>
+            </para>
+            <para>
+              TCP/IP protokolleri yüklü değilse yüklenmeli ve DNS WINS GATEWAY
+              (ağgeçidi) IP adresi sisteminize göre ayarlanmalı (Artık burası
+              size kalmış !!). Eğer WINS olarak samba sunucuyu belirtmişseniz
+              samba sunucunun IP adresi yazılmalıdır.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Yine <literal>Network</literal> (Ağ) penceresinde
+              <literal>Identification</literal> (Tanımla) sekmesine tıklayın.
+            </para>
+            <para>
+              <mediaobject>
+                <imageobject>
+                  <imagedata fileref="samba/Image3.gif" format="GIF"/>
+                </imageobject>
+             </mediaobject>
+            </para>
+            <para>
+              Bigisayar adını (Computer name) ve çalışma grubunu (Workgroup)
+              belirtiniz.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              <literal>Network</literal> (Ağ) penceresinde
+              <literal>Configuration</literal> (Yapılandırma) sekmesine dönüp
+              listeden <literal>Client for Microsoft Networks</literal>
+              (Microsoft Ağları için İstemci) satırına tıklayın. Açılan
+              pencerede:
+            </para>
+            <para>
+              <mediaobject>
+                <imageobject>
+                  <imagedata fileref="samba/Image4.gif" format="GIF"/>
+                </imageobject>
+             </mediaobject>
+            </para>
+            <para>
+              <literal>Logon to Windows NT DOMAIN</literal> kısmındaki onay
+              kutusunu işaretleyin ve alt kısımdaki boşluğa alanınızı veya
+              <literal>smb.conf</literal> dosyasındaki <literal>Workgroup=</literal>
+              ifadesinde belirttiğiniz değeri yazınız.
+            </para>
+          </listitem>
+        </orderedlist>
+      </para>
+      <para>
+        Windows'unuzu yeniden başlattığınızda daha önce çıkan Kullanıcı ve
+        parola alanlarına ek olarak bir de etki alanı (domain name) belirecektir.
+      </para>
+      <para>
+        Bu şekilde sadece Linux samba sunucuda olan kullanıcılara ağı etkin
+        kullanım izni verilir.
+      </para>
+      <para>
+        Kullanıcı adı ve parolası samba sunucuda doğrulanan kullanıcılar, ağ komşuları
+        (Network Neighborhood) kısmında samba sunucudaki dosyalarını ve izin verilen
+        paylaşımları kullanabilir.
+      </para>
+    </sect2>
+    <sect2>
+      <title>Samba'nın NT Sunucu Olduğu Ağda Normal PDC Olmaksızın Yapılandırılması</title>
+      <para>
+        Burada belirtilmesi gereken önemli husus eğer bir samba sunucu varsa, bu
+        demek degildir ki, samba sunucu mutlaka PDC olmalıdır. Samba sunucu
+        adaki diger windowslar gibi normal bir bilgisayar olabilir. Windowslar
+        yukarıda görüldüğü gibi bir NT alanından ağa giriş yapmaları gerekmez.
+        Kullanıcılar daha önce olduğu gibi "etki alanı" olmaksızın sisteme girip
+        samba sunucuya erişebilir ama, windowslara yine samba sunucudaki kullanıcı
+        adı ve parolasıyla girmek şartayla, ağ komşularından samba sunucuya erişebilir.
+        Bu sayede samba sunucu kapalı bile olsa kullanıcılar sisteme girip diğer
+        windowslarla normal paylaşımını yapabilir. Samba ile işi olmayan kişiler
+        için sambada kullanıcı açmaya gerek kalmaz.
+      </para>
+      <para>
+        Bunun için yukarıda saydığımız samba'yı sunucu yapan ifadeleri
+        değiştirmemiz gerekir.
+      </para>
+      <para>
+        Bu sayede sisteminizde NT sunucu olsa bile siz sambayı NT sunucu ile
+        çakışma olmadan kullanabilirsiniz. Bu durumda samba sunucu ağdaki normal
+        bir makinadan farksız hale gelecektir.
+      </para>
+      <para>
+        İşte bu iş için gerekli yapılandırma dosyası:
+<screen>
+netbios name = apache
+workgroup = TE
+security = user
+domain logons =no
+encrypt passwords = yes
+os level = 0
+domain master = no
+preferred master = no
+local master = no
+wins support =no
+
+[homes]
+browseable = no
+writable = yes
+comment = kullanicilarin home dizini
+
+#genel paylasim
+[public]
+path = /usr/public
+browseable = yes
+public = yes
+comment = genel paylasim
+
+[Printers ]
+comment = All Printers
+path = /tmp/
+browseable = no
+guest ok = no
+writable = no
+printable = yes
+</screen>ve windowslarda aşağıdaki pencerede <literal>Logon to Windows NT
+        DOMAIN</literal> seçeneğinin onay kutucuğu seçilmemiş hale getirilir.
+      </para>
+      <para>
+        <mediaobject>
+          <imageobject>
+            <imagedata fileref="samba/Image3.gif" format="GIF"/>
+          </imageobject>
+        </mediaobject>
+      </para>
+    </sect2>
+    <sect2>
+      <title>Samba'nın Windows NT'ler için PDC Olarak Yapılandırılması</title>
+      <para>
+        Windows NT'ler için samba sunucunun PDC (Primary Domain Controller -
+        Birincil Alan Denetleyicisi) olması için yukarıdaki <xref
+        linkend="samba-sunucusu-nasil_as-pdc"/> bölümündeki yapılandırma
+        dosyası uygulanır. Fakat NT'ler için ek olarak Linux samba sunucusu
+        kısmında birkaç bir şey yapmak lazım.
+      </para>
+      <para>
+        Samba sunucunun NT'ler için PDC olması için her NT makinası için samba
+        sunucunun <literal>/etc/passwd</literal> dosyasında güvenilir hesap
+        (trusted account) açılması lazımdır. Şu şekilde yapılır:
+      </para>
+      <para>
+        Her NT'nin isminin sonunda <literal>$</literal> işareti eklenerek
+        birer kullanıcı adı oluşturulur. Örneğin ismi <literal>wishmaster</literal>
+        olan bir NT için <literal>wishmaster$</literal> kullanıcısı açılır. Bu
+        kullanıcının ev dizininin /home dizini olmasına gerek yoktur. Örneğin
+        <literal>/etc/passwd</literal> dosyasındaki <literal>wishmaster</literal>
+        adlı NT makinası için açılan hesap
+        <screen>wishmaster$:*:1001:500:guvenilir hesap: /dev/null:/dev/null</screen>
+        şeklinde olabilir. Ama ismin sonunda <literal>$</literal> olması
+        <emphasis role="bold">şart</emphasis>.
+      </para>
+      <para>
+        Daha sonra konsolda root olarak aşağıdaki komutu çalıştırın.
+<screen>
+# smbpasswd -a -m wishmaster
+
+Added user wishmaster$
+
+Password changed for user wishmaster$
+
+#
+</screen>Bu işlem tüm NT ler için ayrı ayrı yapılır.(Dikkat edilirse
+        <literal>smbpasswd</literal> komutu kullanılırken NT istemci için açılan
+        hesabın sonundaki <literal>$</literal> kullanılmadı.)
+      </para>
+      <para>
+        Bu işin NT tarafı ise:
+        <orderedlist>
+          <listitem>
+            <para>
+              Ana menüden sırayla Start -> Setting - > Control Panel -> Network
+              seçin. Aşağıda görüldügü gibi <literal>Domain</literal> alanına
+              kendi alan isminizi yazın. (Bu işi yaparken ağda herhangi bir yerle
+              etkin bağlantınız varsa bunu ekranınızdaki <literal>Network
+              Neighborhood</literal> simgesine sağ tıklayıp
+              <literal>Disconnect Network Drive</literal>'a tıklayıp tüm
+              bağlantılarınızı kesiniz.)
+            </para>
+            <para>
+              <mediaobject>
+                <imageobject>
+                  <imagedata fileref="samba/Image5.gif" format="GIF"/>
+                </imageobject>
+              </mediaobject>
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Start -> Setting - >Control Panel -> Network seçilerek açılan
+              penceredeki Protocols sekmesinden Windows 9X'lerde olduğu gibi
+              TCP/IP protokolü yoksa eklenir. Gerekli ayarlamalar yapılır
+              (DNS WINS IP GATEWAY).
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Start -> Setting - >Control Panel -> Network seçilerek açılan
+              penceredeki Services sekmesinden Workstation yoksa eklenir.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Tüm bunları yaptıkdan sonra Binding sekmesi seçilir.
+            </para>
+            <para>
+              <mediaobject>
+                <imageobject>
+                  <imagedata fileref="samba/Image6.gif" format="GIF"/>
+                </imageobject>
+              </mediaobject>
+            </para>
+          </listitem>
+        </orderedlist>
+      </para>
+      <para>
+        Sistemi yeniden başlattığınızda samba sunucudaki kullanıcı ve parola
+        ile NT'lere kullanıcı olarak giriş yapabilirsiniz.
+      </para>
+    </sect2>
+    <sect2>
+      <title>Samba'nın Kimlik Kanıtlamasını NT Sunucudan Yapması için Yapılandırılması</title>
+      <para>
+        Buradaki yapılandırmada ağda WINS ve PDC işini yapan bir NT sunucu olması
+        durumuna göre samba yapılandırılması anlatılacaktır. Kullanıcı parolaları
+        ve kullanıcı adları <literal>password server=</literal> ifadesi ile
+        belirtilen NT sunucuda tutulacak. Parola doğrulaması NT sunucu üzerinden
+        gerçekleşecek ve betik ile istemcilere kullanıcının samba üzerindeki ev
+        dizininin bağlanması (tabii bu kullanıcıların samba sunucu üzerinde de hesabı
+        olması lazım) sağlanacaktır.
+      </para>
+      <para>
+        <literal>/etc/smb.conf</literal> dosyası:
+<screen>
+[global]
+netbios name = apache
+workgroup = TE
+security = domain
+domain logons = no
+password server = NTSRV1  BDCSRV
+os level = 0
+domain master = no
+preferred master = no
+local master = no
+wins support = no
+time server = no
+
+[homes]
+browsable =no
+writable =yes
+
+
+[sistem]
+path = /usr/sistem
+browseable = no
+writeable = yes
+valid users = yenigul ,  @sistem
+comment =  sistem dizini dosya paylasimi
+</screen>
+      </para>
+      <para>
+        Bunları <literal>/etc/smbpaswd</literal> dosyasına yazdıktan sonra NT
+        sunucuda <literal>Server Manager for Domain</literal> kullanılarak
+        samba sunucunun NetBIOS ismi NT alanına eklenir.
+      </para>
+      <para>
+        Samba sunucuyu NT alanına eklemek için tüm artalan uygulamaları
+        <screen>/etc/rc.d/initd/smb stop </screen>komutuyla durdurulur ve
+        <screen>smbpaswd -j DOMAIN_ADI -r NT_PDC_ADI</screen> komutu verilir.
+      </para>
+      <para>
+        Örnegin bizim domain TE ve NT sunucu adı NTSRV1 idi.
+        <screen># smbpasswd -j TE -r NTSRV1</screen> komutu ile samba sunucu
+        NT alanına eklenir.
+      </para>
+      <para>
+        Bu komut sonucunda <literal>/etc</literal> altında <literal>TE.APACHE:mac</literal>
+        adlı bir dosya oluşur. Bu dosyanın güvenliği önemlidir (APACHE samba
+        sunucusunun adıdır). Bunun için
+        <screen># chmod 600 /etc/TE.APACHE.mac</screen>komutunu uygulamakta fayda
+        var.
+      </para>
+      <para>
+        NT sunucu üzerindeki <literal>C:\WINNT\system32\Repl\Import\Scripts</literal>
+        dizininde oluşturacağınız <literal>logon.bat</literal> isimli betik ile
+        kullanıcının samba üzerindeki ev dizini <literal>My Computer</literal>
+        (Bilgisayarım) altında Z:'ye kadar herhangi bir isimde bağlanabilir.
+      </para>
+      <para>
+        Bunun için <literal>logon.bat</literal> dosyasının içine
+        <orderedlist>
+          <listitem>
+            <para>
+              Tüm istemciler NT ise<screen>subst z: \\apache\%username%</screen>
+              yazarak kullanıcıların <literal>apache</literal> isimli samba
+              sunucudaki ev dizinlerinin istemci makinada Z: sürücüsü olarak
+              gözükmesi sağlanır. <literal>Subst</literal> komutu windows'ta
+              yoktur. <literal>%username</literal> ifadesi ile bu kısım her
+              giriş yapan kullanıcının adı olur. Örneğin <literal>yenigul</literal>
+              kullanıcısı login olunca bu ifade<screen>subst z: \\apache\yenigul</screen>
+              yerine geçer.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Tüm istemciler windows ise ya da hem NT hem de windows varsa
+              <screen>net z: \\apache\homes</screen> ile ev dizinleri istemci
+              makinada Z: sürücüsü olarak oluşur.
+            </para>
+          </listitem>
+        </orderedlist>
+      </para>
+    </sect2>
+  </sect1>
+
+  <sect1 id="samba-sunucusu-nasil_daemon">
+    <title>Samba'nın Artalanda Çalıştırılması</title>
+    <para>
+      Tüm bu işleri yaptıktan sonra sıra samba'nın çalıştırılmasında:
+      <screen># /etc/rc.d/initd/smb start</screen> komutu ile
+      <literal>smbd</literal> ve <literal>nmbd</literal> etkin hale gelecektir.
+    </para>
+    <para>
+      Samba'yı durdurmak için<screen># /etc/rc.d/initd/smb stop</screen>
+    </para>
+    <para>
+      <literal>smb.conf</literal> dosyasında değişiklip yaptıktan sonra
+      değişiklik <screen># /etc/rc.d/initd/smb restart</screen>komutu ile
+      etkin hale gelir.
+    </para>
+    <para>
+      Her açılışta samba'nın çalışması için root olarak<screen># setup</screen>
+      komutunu verin, daha sonra <literal>system services</literal> kısmından
+      <literal>smb</literal>'yi boşluk tuşuyla işaretleyin. Böylece samba
+      makinanın her açılında çalışacaktır.
+    </para>
+  </sect1>
+
+  <sect1 id="samba-sunucusu-nasil_commands">
+    <title>Samba Komutları</title>
+    <para>
+      <variablelist>
+        <varlistentry>
+          <term>testparm</term>
+          <listitem>
+            <para>
+               <literal>smb.conf</literal> dosyasındaki hataları (yanlış yazım,
+               iki zıt durumun kullanılması gibi) bulmaya yarar. Çalıştırmak
+               için konsolda<screen># testparm</screen>komutunu vermeniz
+               yeterlidir.
+            </para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>smbclient</term>
+          <listitem>
+            <para>
+              Linux'tan istemcilere erişmeye yarayan ftp benzeri bir komuttur.
+              Örnek: <screen>smbclient \\beyaz\d -U ozgur</screen>Bu komut ile
+              <literal>ozgur</literal> kullanıcısının <literal>beyaz</literal>
+              adlı istemcinin <literal>d</literal> sürücüsüne erişmesi
+              için kullanılır. Parola sorulur, doğruysa kullanıcının d'ye
+              erişimi sağlanır.
+            </para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>smbstatus</term>
+          <listitem>
+            <para>
+              Samba sunucuya bağlı kullanıcıları gösterir.
+            </para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>smbprint</term>
+          <listitem>
+            <para>
+              Linux üzerinden yazıcıdan çıktı almak için kullanılan komut.
+            </para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>smbmount</term>
+          <listitem>
+            <para>
+              İstemcilerin paylaşımlarını bağlamak için kullanılır.Örnek:
+              <screen>smbmount "\\beyaz\tmp" -c 'mount /mnt -u 123 -g 456'</screen>
+              Örnekte <literal>beyaz</literal> istemcisinin <literal>tmp</literal>
+              dizini kullanıcı kimliği 123, grup kimliği 456 olan kullanıcı
+              tarafından <literal>/tmp</literal> altına bağlanır.
+            </para>
+          </listitem>
+        </varlistentry>
+      </variablelist>
+    </para>
+  </sect1>
+
+  <sect1 id="samba-sunucusu-nasil_tools">
+    <title>Yardımcı Paketler ve Swat</title>
+    <para>
+      Windows'ta olduğu gibi Linux için de "Ağ komşuları" tarzı uygulamalar var.
+      Bu uygulamalar sayesinde Linux üzerinden windows'lardaki paylaşımlara
+      erişebilirsiniz.
+    </para>
+    <para>
+      <orderedlist>
+        <listitem>
+          <para>
+            KOMBA <ulink url="http://zeus.fh-brandenburg.de/~schwanz/komba.html"
+            >http://zeus.fh-brandenburg.de/~schwanz/komba.html</ulink>
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            LinNeighborhood <ulink url="http://www.bnro.de/~schmidjo/"
+            >http://www.bnro.de/~schmidjo/</ulink>
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Xsmbrowser <ulink url="http://www.public.iastate.edu/~chadspen/homepage.html"
+            >http://www.public.iastate.edu/~chadspen/homepage.html</ulink>
+         </para>
+        </listitem>
+      </orderedlist>
+    </para>
+    <para>
+      Yukarıda anlatılan yapılandırmaları <literal>SWAT</literal> uygulamasını
+      kullanarak web üzerinden yapabilirsiniz. <literal>/etc/services</literal>
+      kısmında <literal>swat 901 /tcp</literal> öntanımlı olarak vardır.
+      <literal>/etc/inetd.conf</literal> dosyasının içindeki
+      <screen>#swat stream tcp nowait.400 root /usr/sbin/swat swat</screen>
+      ifadesinin başındaki <literal>#</literal> işaretini kaldırın ve
+      <screen>/etc/rc.d/initd/inet restart</screen>komutuyla değişikliii etkin
+      hale getirin daha sonra ağdaki herhangi bir bilgisayarda veya samba
+      sunucuda <literal>netscape</literal> açarak
+      <literal>http://sambasunucu_adresi:901</literal> yazarak samba sunucunun
+      üzerinde 901. porttan çalışan <literal>swat</literal> uygulamasına erişip
+      web üzerinden görsel şekilde <literal>smb.conf</literal> dosyasında
+      değişiklik yapabilirsiniz. Daha fazla bilgi için man sayfalarına bakınız.
+    </para>
+    <para>
+      İyi çalışmalar.
+    </para>
+  </sect1>
+
+  <appendix id="samba-sunucusu-nasil_biblio">
+    <title>Kaynaklar</title>
+    <para>
+      <orderedlist>
+        <listitem>
+          <para>
+            Using Samba <ulink url="http://www.ora.com/catalog/samba/"
+            >http://www.ora.com/catalog/samba</ulink>
+          </para>
+          <para>
+            Mükemmel bir kaynak, web üzerinden ücretsiz olarak okuyabilirsiniz,
+            bu belgedeki resimler bu siteden alınmıştır.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Samba paketi ile gelen belgeler<ulink url="http://samba.bilkent.edu.tr"
+            >http://samba.bilkent.edu.tr</ulink>
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            SMB-HOWTO
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            SMB-NASIL - Kayıp belgeler - http://www.linux.org.tr/documents/tr-ldp/smb/smb-nasil.lat5
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Samba kurulumu ve kullanımı (Mustafa Başer)
+            <ulink url="http://www.linux.org.tr/belgeler/samba.html"
+            >http://www.linux.org.tr/belgeler/samba.html</ulink>
+         </para>
+        </listitem>
+      </orderedlist>
+    </para>
+  </appendix>
+
+  <appendix id="samba-sunucusu-nasil_thanks">
+    <title>Teşekkür</title>
+    <para>
+      Ömer UYAR'a SAMBA konusundaki, Hasan SUBAŞI'na NT konusundaki
+      yardımlardan dolayı teşekkür ederim.
+    </para>
+  </appendix>
+
+  <appendix id="samba-sunucusu-nasil_copyright">
+    <title>Telif Hakkı ve Lisans</title>
+    <!-- The LDP recommends, but doesn't require, the GFDL -->
+    <para>
+     Bu belgenin, <emphasis>Samba Sunucu Yapılandırması NASIL</emphasis>,<sbr/>
+     0.1 sürümünün telif hakkı © 2000  <emphasis>İsmail Yenigül</emphasis>'e
+     aittir. Bu belgeyi, Free Software Foundation tarafından yayınlanmış
+     bulunan GNU Özgür Belgeleme Lisansının 1.1 ya da daha sonraki sürümünün
+     koşullarına bağlı kalarak kopyalayabilir, dağıtabilir ve/veya
+     değiştirebilirsiniz. Bu Lisansın bir kopyasını
+     <ulink url="http://www.gnu.org/copyleft/fdl.html">
+     http://www.gnu.org/copyleft/fdl.html</ulink> adresinde bulabilirsiniz.
+    </para>
+
+    <para>
+     Linux, Linus Torvalds adına kayıtlı bir ticarî isimdir.
+    </para>
+  </appendix>
+
+  <appendix id="samba-sunucusu-nasil_disclaimer">
+    <title>Feragatname</title>
+
+    <para>
+      Bu belgedeki bilgilerin kullanımından doğacak sorumluluklar,
+      ve olası zararlardan belge yazarı sorumlu tutulamaz.
+      Bu belgedeki bilgileri uygulama sorumluluğu uygulayan aittir.
+    </para>
+
+    <para>
+      Tüm telif hakları aksi özellikle belirtilmediği sürece sahibine
+      aittir. Belge içinde geçen herhangi bir terim bir ticarî isim
+      yada kuruma itibar kazandırma olarak algılanmamalıdır. Bir ürün
+      ya da markanın kullanılmış olması ona onay verildiği anlamında
+      görülmemelidir.
+    </para>
+  </appendix>
+
+
+
+
+
+
+
+
+
+
+</article>
+

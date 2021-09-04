@@ -1,0 +1,671 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--DOCTYPE article SYSTEM "docbook/dtd/docbookx.dtd"-->
+<!-- ********************************************************************
+     $Id: rbl-nasil.xml,v 1.1 2002/12/20 22:51:00 nilgun Exp $
+     ******************************************************************** -->
+<article id="karaliste-nasil" lang="tr">
+  <articleinfo>
+    <title>IP Karalistesi NASIL</title>
+    <subtitle>Bir RBL Denemesi</subtitle>
+    <author><firstname>Deniz Akkuş</firstname></author>
+    <pubdate>Ocak 2005</pubdate>
+    <!-- Most recent revision goes at the top; list in descending order -->
+     <revhistory>
+       <revision>
+          <revnumber>2.0</revnumber>
+          <date>26 Ocak 2005</date>
+          <authorinitials>
+            DA &lt;<ulink url="mailto:deniz@arayan.com"/>>
+          </authorinitials>
+          <revremark>
+          Belge elden geçirilerek düzenlendi.
+          </revremark>
+       </revision>
+       <revision>
+          <revnumber>1.0</revnumber>
+          <date>8 Ocak 2005</date>
+          <authorinitials>
+            DA &lt;<ulink url="mailto:deniz@arayan.com"/>>
+          </authorinitials>
+          <revremark>
+            İlk sürüm.
+          </revremark>
+       </revision>
+     </revhistory>
+    <releaseinfo>v2.0</releaseinfo>
+    <abstract>
+      <para>
+Bu belge, kendi yerelinizde bir karaliste oluşturma yöntemlerini açıklar.
+Karaliste yazılımının kurulması (<emphasis>rbldnsd</emphasis>), normal DNS ile
+bütünleştirilmesi (<emphasis>bind9</emphasis>), Internet'te mevcut olan çeşitli
+karalistelerin sizin yerelinizde, sizin kullanımınız için yansılanması, kendi
+oluşturduğunuz bir karalistenin sizin yerelinizde kullanıma açılması ve
+otomatik karaliste oluşumlarına örnek olarak benim yerel ağıma izinsiz
+portlardan ulaşmaya çalışan Türk dinamik IP kullanıcılarının karalistesinin
+hazırlanmasını ele alır. Eğer herhangi bir sebepten dolayı bu karalisteyi elde
+etmek ister iseniz, güncel sürümünü
+</para><para>
+<screen>$ <userinput>rsync -az --delete rsync.belgeler.org::rblzzz/rbl.zzz.gz ./rbl/</userinput>
+</screen></para><para>
+komutu ile alabilirsiniz.
+      </para>
+      <para>Karaliste kullanıp kullanmamanın doğru olup olmadığı, sansüre girip
+girmediği bu yazının kapsamı dışındadır. Bu yazıyı okumak sizi karaliste
+kullanmaya zorlamaz. </para>
+    </abstract>
+     <legalnotice><title>Yasal Uyarı</title><para>
+Bu belgenin, <emphasis>IP Karalistesi NASIL</emphasis> 1.0 ve 2.0 sürümünün
+<emphasis role="bold"> telif hakkı © 2005 <emphasis>Deniz Akkuş</emphasis></emphasis>'a aittir.&notice.gpl;</para>
+      &notice.disc;
+    </legalnotice>
+  </articleinfo>
+  <sect1 id="karaliste-nasil_giris">
+    <title>Giriş</title>
+    <sect2><title>Karalisteler nerede kullanılıyor? Nasıl oluşturuluyor?</title>
+    <para>
+Internet üzerinde çeşitli karalisteler gönüllüler ve ticari kurumlar
+tarafından, spam engelleme ve diğer çeşitli güvenlik amaçları ile
+oluşturulmuştur. Oldukça kapsamlı bir karaliste sayfasını <ulink
+url="http://moensted.dk/spam"/> adresinden bulabilirsiniz.
+</para><para>
+Bu karalisteler, spam engellemek ve hatta almayı reddetmek için
+<emphasis>Postfix</emphasis> gibi posta sunucu yazılımlarında veya
+<emphasis>spamassassin</emphasis> gibi spam filtreleme yazılımlarında
+kullanılabilirler.
+</para><para>
+Her karalistenin oluşturulma felsefesi farklıdır.  Örneğin <ulink
+url="http://countries.nerd.dk"/> listesi, bir IP numarasının hangi ülkeden
+geldiğini gösterir. Kimi karalisteler Internet üzerinde spam yaptığı tespit
+edilmiş IP numaralarını, kimileri ise çeşitli güvenlik açıkları barındırdığı tespit
+edilmiş IP numaralarını toplar. Hangi karalistenin sizin için faydalı olduğunun ve
+sağladıkları verinin sizin işinize yarayıp yaramadığının tespiti size
+aittir.
+</para>
+      </sect2>
+      <sect2><title>Neden Internet üzerindeki karalisteler yerine kendi
+karaliste yansımı çalıştırayım?</title>
+<para>
+Kullanım sıklığınıza bağlı olarak yerel ağınızda karaliste yansıları
+bulundurmak faydalı olabilir. Çok posta trafiği olan bir ağınız var ise ve bu
+ağı spamden korumak için yoğun bir karaliste kullanımınız var ise, karaliste
+kontrolleri için her seferinde ağdan dışarı sorgu yapmak yerine kendi karaliste
+yansınızı tutabilirsiniz.
+</para><para>
+Her karalistenin yansısını alamayabilirsiniz. Yerelinizde yansısını
+tutmak istediğiniz karalistenin yansı dağıtımı yapıp yapmadığını kontrol
+etmelisiniz. Bizim örnek olarak kullandığımız <ulink
+url="http://countries.nerd.dk"/> ve <ulink
+url="http://www.sorbs.net/"/> listeleri, bütün verilerini
+<emphasis>rsync</emphasis> üzerinden dağıtıyorlar.
+      </para>
+      <para>
+Kendi karaliste yazılımınızı çalıştırmanızın bir faydası da, eğer
+ister iseniz, sadece kendinize özel bir karaliste oluşturup kullanma imkanınızın
+olmasıdır. Buna girişmeden önce, ciddi bir karaliste oluşturmanın ve güncel
+tutulmasının ağır bir iş olduğunu aklınızdan çıkarmayın.
+</para>
+      </sect2>
+      <sect2><title>Dağıttığınız karaliste nedir, kullanılabilir mi?</title>
+      <para>
+Dağıttığım karaliste, kendi ağıma, kullanıma açık olmayan portlardan
+girmeye çalışan Türk kökenli ve dinamik IP'ye sahip IP'lerin listesidir.
+Kullanılıp kullanılmayacağı <emphasis>tamamen</emphasis> size kalmış. Liste
+otomatik olarak güncellenmektedir.
+</para><para>Bu listedeki veri kümesini, bu şekilde oluşturmamın sebebi, dinamik
+IP bloklarından gelip olmadık portlardan benim ağımı ziyaret etmeye çalışan
+makinaların büyük ihtimal ile ya virüslü ya da kötü niyetli olduğunu
+düşünmemden kaynaklanıyor. Her iki ihtimalde de, bu makinaların spam yollama
+ihtimali başkalarına göre daha yüksek. Ayrıca, bu yazı için bir örneğe ihtiyacım
+vardı.
+</para><para>
+Karalisteyi:
+</para>
+<screen>
+$ <userinput>rsync -az --delete rsync.belgeler.org::rblzzz/rbl.zzz.gz ./rbl/</userinput>
+</screen>
+<para>
+komutu ile alabilirsiniz.
+</para>
+</sect2>
+</sect1>
+<sect1 id="karaliste-nasil_yansi"><title>Karaliste yansısının kurulması ve çalıştırılması</title>
+<sect2><title>Karaliste yazılımının kurulması</title>
+<para>
+Teorik olarak favori DNS yazılımınızı karaliste amaçları için
+kullanabilirsiniz. Pratikte, çok uzun alan dosyalarından oluşan karalisteleri
+yüklemek DNS yazılımınızı yoracaktır. Dolayısıyla en uygun çözüm, karaliste
+kullanımı için hazırlanmış özel ve hafif bir DNS yazılımı olan
+<emphasis>rbldnsd</emphasis> yazılımını kullanmaktır. Tabii aynı makinada iki
+DNS sunucusu birden çalıştığı zaman port çakışması olacaktır. Bunu engellemek
+için rbldnsd yazılımını başka bir port üzerinden çalıştıracağız.
+</para><para>
+Eğer Debian kullanıyor iseniz,
+</para>
+<screen>
+$<userinput>apt-get install rbldnsd</userinput>
+</screen>
+<para>
+komutu ile <emphasis>rbldnsd</emphasis> yazılımını kurabilirsiniz. Bu kurulum bir Debian
+makinası üzerinde yapıldığından dolayı çeşitli ayar dosyalarının yerleri başka
+bir dağıtımda farklı olabilir. Red Hat RPM ve tar.gz paketleri <ulink
+url="http://www.corpit.ru/mjt/rbldnsd.html"/> adresinden alınabilir.
+</para><para>
+<filename>/etc/default/rbldnsd</filename>  dosyası içerisinde
+<literal>RBLDNSD</literal> tanımını aşağıdaki şekilde değiştirelim:
+</para>
+<screen>
+RBLDNSD="- -r/var/lib/rbldns -b127.0.0.1/530 \
+-l requestlog -s statlog  \
+"
+</screen>
+<para>
+Bu tanım, <emphasis>rbldns</emphasis> yazılımının 127.0.0.1 adresine
+bağlanacağını (yani makina dışından sorgulanamayacağını), 530 no'lu port
+üzerinde çalışacağını, dosyalarını <filename>/var/lib/rbldns</filename>
+dizininde tutacağını, istekleri ve istatistikleri günlük dosyasına kaydedeceğini
+belirtir.
+</para><para>
+Henüz elimizde bir karaliste dosyası olmadığından dolayı şu aşamada
+<emphasis>rbldnsd</emphasis>'yi çalıştırmak manasız. Bir kaç adet karaliste
+yansısı elde ettikten sonra yazılımı çalıştıracağız.
+</para>
+</sect2>
+<sect2><title>Yansıları indirmek</title>
+<para>
+Yansılayacağımız ilk liste, Türk IP bloklarının listesi. Herhangi bir IP
+adresinin Türkiye'de olup olmadığını, şu şekilde sorgulayabilirsiniz:
+</para>
+<para>
+Sorgulanacak IP no'su: 127.0.0.1
+</para>
+<screen>$ <userinput>dig +short 1.0.0.127.tr.countries.nerd.dk</userinput>
+</screen>
+<para>
+IP numarasının sorgu için tersten yazıldığına dikkat edin.
+</para>
+<para>
+Bu listeyi <ulink url="http://countries.nerd.dk"/> adresinden ilgili bağları takip ederek, veya
+</para>
+<screen>
+# <userinput>cd /var/lib/rbldns</userinput>
+# <userinput>rsync rsync://nubian.blitzed.org/countries/tr.countries.nerd.dk.rbldnsd .</userinput>
+</screen>
+      <para>komutu ile alabilirsiniz.</para><para>
+İkinci listemiz de, <ulink url="http://www.sorbs.net">SORBS</ulink>
+tarafından oluşturulmuş olan dinamik IP kullanıcıları listesi. Herhangi bir IP
+adresinin, ISS'lerin telefonla veya ADSL/Kablo ile bağlanan ev kullanıcılarına
+ait olup olmadığını gösteren bu listeyi şu şekilde sorgulayabilirsiniz:
+</para><para>
+Sorgulanacak IP no'su: 127.0.0.2
+</para>
+<screen>
+$ <userinput>dig +short 2.0.0.127.dul.dnsbl.sorbs.net</userinput>
+127.0.0.10
+</screen>
+<para>
+IP numarasının sorgu için tersten yazıldığına dikkat edin.
+</para>
+<para>
+Bu listeyi de, <ulink url="http://www.sorbs.net">SORBS</ulink>'daki
+linkleri takip ederek veya
+</para>
+<screen>
+# <userinput>cd /var/lib/rbldns</userinput>
+# <userinput>rsync rsync://rsync.bliab.com/sorbs/dul.dnsbl.sorbs.net .</userinput>
+</screen>
+<para>
+komutu ile alabilirsiniz.
+</para>
+<para>
+Güncel olmayan bir karaliste, hiç karaliste kullanmamaktan çok daha kötüdür. Dolayısıyla bu karalisteleri yansılama işlemini bir defaya mahsus olarak yapmanın bir manası yok. Cron kullanarak karalistelerin düzenli aralıklarla güncellenmesini sağlamalıyız.
+</para>
+<para>
+Günde bir defa güncelleme işlemini yapan cron satırı:
+</para>
+<screen>
+$ <userinput>crontab -l</userinput>
+37 1 * * * cd /var/lib/rbldns; \
+rsync rsync://nubian.blitzed.org/countries/tr.countries.nerd.dk.rbldnsd .
+¬ 2>&amp;1 /dev/null;\
+rsync rsync://rsync.bliab.com/sorbs/dul.dnsbl.sorbs.net . 2>&amp;1 /dev/null
+</screen>
+<para>
+<emphasis>rbldnsd</emphasis> dosyaların güncellendiğini otomatik olarak farkedip yeniden yüklediği için onu yeniden başlatmaya gerek yok.
+</para>
+</sect2>
+<sect2><title>Karaliste yazılımını başlatmak</title>
+<para>
+<filename>/etc/default/rbldnsd</filename>  dosyası içerisinde
+<literal>RBLDNSD</literal> tanımını aşağıdaki şekilde değiştirelim:
+</para>
+<screen>
+RBLDNSD="- -r/var/lib/rbldns -b127.0.0.1/530 \
+-l requestlog -s statlog -f \
+tr.countries.nerd.dk:ip4set:tr.countries.nerd.dk.rbldnsd \
+dul.dnsbl.sorbs.net:ip4set:dul.dnsbl.sorbs.net \
+"
+</screen>
+<para>
+Eklediğimiz satırlar, <literal>tr.countries.nerd.dk</literal> ve <literal>dul.dnsbl.sorbs.net</literal> alanlarının IP numarası olarak ilgili dosyalarda tanımlandığını belirtiyor.
+</para>
+<para>
+Şimdi <emphasis>rbldnsd</emphasis>'yi başlatalım:
+</para>
+<screen># <userinput>/etc/init.d/rbldnsd start</userinput>
+Starting rbldnsd: rbldnsd
+rbldnsd: listening on 127.0.0.1/530
+rbldnsd: ip4set:tr.countries.nerd.dk.rbldnsd: 20050126 233703:
+¬ e32/24/16/8=2061/3910/46/0
+rbldnsd: file dul.dnsbl.sorbs.net(3): compatibility mode: specify all NS
+¬ records in ONE line
+rbldnsd: ip4set:dul.dnsbl.sorbs.net: 20050126 233733:
+¬ e32/24/16/8=704801/271341/1628/0
+rbldnsd: zones reloaded, time 0.36e/0.22u sec, mem arena=408 free=60
+¬ mmap=7628 Kb
+rbldnsd: rbldnsd version 0.994 (18 Dec 2004) started (1 socket(s), 2 zone(s))
+</screen>
+<para>
+Karalisteyi sorgulayalım. Bu sorguların, daha önce Internet'ten yaptığımız sorgulara nazaran çok daha hızlı olduğunu farkedeceksiniz.
+</para>
+<screen>
+$ <userinput>dig +short @127.0.0.1 -p 530 2.0.0.127.dul.dnsbl.sorbs.net</userinput>
+127.0.0.10
+$ <userinput>dig +short @127.0.0.1 -p 530 1.0.0.127.tr.countries.nerd.dk</userinput>
+</screen>
+</sect2>
+<sect2><title>Normal DNS'e karalisteyi entegre etmek</title>
+<para>
+Az önce kullandığımız sorgularda, <literal>dig</literal> komutuna hangi sunucu (127.0.0.1) ve hangi port (530) kullanması gerektiğini belirttik. Şu anda bu tanım yapılmaksızın yapılacak olan sorgular gene Internet'e yönlenir. Bu karalisteleri posta yazılımınızda veya spamassassin içerisinde kullanıyorsanız, bunlar halen daha Internet'ten çözümleniyor. Bunu değiştirmenin yolu, DNS sunucunuzda bu alanları yerel karaliste yansısından sorgulamasını belirtmektir.
+</para>
+<para>
+Örneklerin hazırlandığı sistemde Debian üzerinde Bind9 çalıştırılmaktadır. Kendi dağıtım ve DNS yazılımınıza göre yapılacak ayarlar bir nebze farklı olabilir.
+</para>
+<para>
+<filename>/etc/bind/named.conf</filename> dosyası içerisinde iki yeni alan tanımı yapalım:
+</para>
+<screen>
+zone "tr.countries.nerd.dk" IN {
+        type forward;
+        forward first;
+        forwarders {
+        127.0.0.1 port 530;
+        };
+};
+
+zone "dul.dnsbl.sorbs.net" IN {
+        type forward;
+        forward first;
+        forwarders {
+        127.0.0.1 port 530;
+        };
+};
+</screen>
+<para>
+Özellikle <literal>forward first;</literal> komutuna dikkat edin. Eğer DNS sunucusu bir şekilde <emphasis>rbldnsd</emphasis> ile iletişim kuramaz ise, eskiden yaptığı gibi Internet üzerinden çözümlemeye gidecektir.
+</para>
+<para>
+DNS'i yeniden başlatın:
+</para>
+<screen>
+# <userinput>/etc/init.d/bind9 restart</userinput>
+Stopping domain name service: named.
+Starting domain name service: named.
+</screen>
+<para>
+Şu anda <literal>tr.countries.nerd.dk</literal> ve <literal>dul.dnsbl.sorbs.net</literal> alanlarına sistemden gelen herhangi bir sorgu, <emphasis>rbldnsd</emphasis>'ye yönlenecektir. Eğer bu sorguları posta sunucunuzda veya spamassassin içerisinde kullanıyor idiyseniz, bu sorguların hızlandığını göreceksiniz.
+</para>
+</sect2>
+<sect2><title>Yapmak istedikleriniz bitmiş olabilir</title>
+<para>
+Eğer sisteminizde yaptığınız çeşitli karaliste sorgularını hızlandırmak amacında iseniz, buraya kadar uyguladıklarımızla bunu gerçekleştirebilirsiniz. Sıklıkla kullandığınız karalistelerin yansısını elde edip, kendi sisteminizde <emphasis>rbldnsd</emphasis> içerisinde çalıştıracaksınız.
+</para>
+<para>
+Bu yazının geri kalan kısmı, benim hazırladığım bir karalisteyi örnek olarak kullanarak, kendinize ait bir karalisteyi nasıl sisteminize entegre edeceğinizi konu almaktadır.
+</para>
+</sect2>
+</sect1>
+<sect1 id="karaliste-nasil_kullanim"><title>Kendi karalistenizi kullanmak</title>
+<sect2><title>Karaliste dosyasının oluşumu</title>
+<para>
+Internet'te olan herhangi bir alan adı ile karışmaması için karalistemizi <literal>rbl.zzz</literal> alanı olarak tanımlayacağız. Herhangi bir metin düzenleyici içerisinde <filename>/var/lib/rbldns/rbl.zzz</filename> dosyasını oluşturalım.
+</para>
+<para>
+Bütün DNS listeleri bir <literal>SOA</literal> "Start of Authority" - otorite başlangıcı - satırı ile başlar.
+</para>
+<para>
+<filename>/var/lib/rbldns/rbl.zzz</filename> ilk satır:
+</para>
+<screen>
+$SOA 172800 bizimfirma.com.tr. root.bizimfirma.com.tr. 0 7200 7200 604800 3600
+</screen>
+<para>
+Dikkatinizi, <literal>bizimfirma.com.tr. root.bizimfirma.com.tr.</literal> ibaresine çekmek istiyorum. Alan adının Internet'te bulunan herhangi bir şeyle çakışmaması için <literal>rbl.zzz</literal> kullandık. Ama burada kendi gerçek alan adımızı ve ulaşılabilir bir posta adresimizi kullanıyoruz. Bundan sonra gelen tanım ise <literal>0</literal>. Bu da önemli. Bu, dosyanın seri numarası ve DNS'in, alan dosyasında değişiklik olduğunu farketmesinin yöntemi. <literal>rbldns</literal>'e özgü bir kolaylık ile, bu tanım 0 ise, dosyanın değişme tarihini seri numarası olarak alıyor.
+</para>
+<para>
+Bundan sonra karalisteye alacağımız numaraları tanımlayacağız. Biçem,
+</para>
+<literallayout indent="0">
+    <varname>karalisteli no </varname>: <varname>kısa cevap</varname> : <varname>açıklama</varname>
+</literallayout>
+<para>şeklinde olacak.
+</para>
+<para>
+<filename>/var/lib/rbldns/rbl.zzz</filename> örnek:
+</para>
+<screen>
+$SOA 172800 bizimfirma.com.tr. root.bizimfirma.com.tr. 0 7200 7200 604800 3600
+195.174.102.72 :127.0.0.2: Izinsiz erisim yapan TR dinamik IP -- 2005-01-08
+</screen>
+</sect2>
+<sect2><title>Karaliste dosyasını rbldns'e entegre etmek</title>
+<para>
+<filename>/etc/default/rbldnsd</filename>  dosyası içerisinde
+<literal>RBLDNSD</literal> tanımını aşağıdaki şekilde değiştirelim:
+</para>
+<screen>
+RBLDNSD="- -r/var/lib/rbldns -b127.0.0.1/530 \
+-l requestlog -s statlog -f \
+tr.countries.nerd.dk:ip4set:tr.countries.nerd.dk.rbldnsd \
+dul.dnsbl.sorbs.net:ip4set:dul.dnsbl.sorbs.net \
+rbl.zzz:ip4set:rbl.zzz \
+"
+</screen>
+<para>
+<emphasis>rbldnsd</emphasis>'yi başlatalım:
+</para>
+<screen>
+# <userinput>/etc/init.d/rbldnsd restart</userinput>
+Restarting rbldnsd: rbldnsd
+rbldnsd: listening on 127.0.0.1/530
+rbldnsd: ip4set:tr.countries.nerd.dk.rbldnsd: 20050126 233703:
+¬ e32/24/16/8=2061/3910/46/0
+rbldnsd: file dul.dnsbl.sorbs.net(3): compatibility mode: specify all NS
+¬ records in ONE line
+rbldnsd: ip4set:dul.dnsbl.sorbs.net: 20050126 233733:
+¬ e32/24/16/8=704801/271341/1628/0
+rbldnsd: ip4set:rbl.zzz: 20050129 061909: e32/24/16/8=4763/0/0/0
+rbldnsd: zones reloaded, time 0.36e/0.22u sec, mem arena=408 free=60 mmap=7628 Kb
+rbldnsd: rbldnsd version 0.994 (18 Dec 2004) started (1 socket(s), 3 zone(s))
+</screen>
+<para>
+Şimdi <emphasis>rbldns</emphasis>'i sorgulayalım:
+</para>
+<screen>
+$ <userinput>dig +short @127.0.0.1 -p 530 72.102.174.195.rbl.zzz</userinput>
+127.0.0.2
+$ <userinput>dig +short -t txt @127.0.0.1 -p 530 72.102.174.195.rbl.zzz</userinput>
+"Izinsiz erisim yapan TR dinamik IP -- 2005-01-08"
+</screen>
+</sect2>
+<sect2><title>DNS içinden erişim</title>
+<para>
+<filename>/etc/bind/named.conf</filename> dosyası içerisinde yeni bir alan tanımı yapalım:
+</para>
+<screen>
+zone "rbl.zzz" IN {
+        type forward;
+        forward only;
+        forwarders {
+        127.0.0.1 port 530;
+        };
+};
+</screen>
+<para>
+Özellikle <literal>forward only;</literal> komutuna dikkat edin. Eğer DNS sunucusu bir şekilde <emphasis>rbldnsd</emphasis> ile iletişim kuramaz ise, Internet üzerinden çözümlemeye gitmeyecek. Bu alan yalnızca bize mahsus olduğundan dolayı bu şekilde çalışıyor.
+</para>
+<para>
+DNS'i yeniden başlatın:
+</para>
+<screen># <userinput>/etc/init.d/bind9 restart</userinput>
+Stopping domain name service: named.
+Starting domain name service: named.
+</screen>
+<para>Artık bu alan için rutin DNS sorgusu yapabiliriz:
+</para>
+<screen>
+$ <userinput>dig +short 72.102.174.195.rbl.zzz</userinput>
+127.0.0.2
+$ <userinput>dig +short -t txt 72.102.174.195.rbl.zzz</userinput>
+"Izinsiz erisim yapan TR dinamik IP -- 2005-01-08"
+</screen>
+</sect2>
+   <sect2><title>Posta Sunucusunda Karalistenin Kullanılması</title>
+    <para>
+Bu örnek <literal>postfix</literal> posta sunucusunu ele almaktadır. Kendi posta sunucunuz için farklı ayarlar olacaktır.
+</para><para>
+Postfix 1.x sürümlerinde kendi karalistemizi kullanmak istersek;
+<filename>main.cf</filename> içerisinde,
+</para>
+<screen>
+maps_rbl_domains = rbl.zzz
+smtpd_client_restrictions = reject_maps_rbl
+</screen>
+<para>
+değişikliğini yapın.
+    </para><para>
+Postfix 2.x sürümlerinde ise biçim biraz farklı, yine <filename>main.cf</filename>  içerisinde,
+    </para>
+<screen>
+smtpd_client_restrictions = reject_rbl_client rbl.zzz
+</screen>
+    <para>
+<literal>maps_rbl_domains</literal> ve <literal>smtpd_client_restrictions</literal> değerleri için bunların bir ekleme olduğunu unutmayın. Başka değerlerin yerine değil, ek olarak koyun. Daha fazla bilgi için <ulink url="http://jimsun.linxnet.com/misc/postfix-anti-UCE.txt">Postfix Anti-UCE Cheat-Sheet</ulink> adresine bakabilirsiniz.
+</para><para>
+Bu değişiklik ile birlikte, <literal>postfix</literal> posta sunucusu <literal>rbl.zzz</literal> karalistesinde bulunan IP numaralarından posta almayı reddedecektir.
+</para>
+</sect2>
+<sect2><title>SpamAssassin'e kendi karalistenizi tanımlamak</title>
+<para>
+Karalisteyi, posta sunucusunda kullanıp karalisteden gelen postaları reddetmek yerine, <literal>spamassassin</literal> içerisinde, karalisteden gelen postalara not vermek şeklinde kullanmayı tercih edebilirsiniz.
+</para>
+<para>
+Bunu yapmak için, <literal>spamassassin</literal> için kendi kuralımızı yazacağız.
+<filename>/etc/mail/spamassassin/local.cf</filename> içerisine şunları
+ekliyoruz:
+    </para>
+<screen>
+header RCVD_IN_RBL_ZZZ  eval:check_rbl('rbl-notfirsthop', 'zzz.',
+'127.0.0.2')
+describe RCVD_IN_RBL_ZZZ        RBL_ZZZ: Yerel karaliste
+tflags RCVD_IN_RBL_ZZZ  net
+score RCVD_IN_RBL_ZZZ 10
+</screen>
+<para>
+Bu ayarlarla, <literal>spamassassin</literal> içinde, RCVD_IN_RBL_ZZZ adında kendi kuralımızı tanımlıyor ve bu kurala uyan durumlarda <literal>spamassassin</literal>'in 10 puan vermesini sağlıyoruz.
+</para>
+</sect2>
+<sect2><title>Yapmak istedikleriniz bitmiş olabilir</title>
+<para>
+Eğer karalistenizin içeriğini nasıl oluşturacağınızı biliyor iseniz, buraya kadar işlediklerimizle bu karalisteyi sisteminizle nasıl bütünleştireceğinizi gördük. Bundan sonra, karalistelerin otomatik olarak nasıl oluşturulabileceğine bir örnek teşkil etmesi amacı ile <filename>rbl.zzz</filename> dosyasının içerisini nasıl dolduracağımızı ele alacağız.
+</para>
+</sect2>
+
+</sect1>
+<sect1 id="karaliste-nasil_olustur"><title>Karaliste oluşturmak</title>
+<para>
+Karalisteler herhangi bir şekilde oluşturulabilir. Sonuçta, karaliste, sizin iletişim kurmak istemediğiniz bir IP numaraları listesinden ibarettir. Tabii gereksiz yere iletişim kurmayı reddetmek sizin zararınızadır, dolayısıyla karalistelerinizi sizin için uygun bir veri kümesini içerecek şekilde hazırlamalısınız.
+</para>
+ <para>
+Bu karaliste için kullanılacak veri kümesinini, ağa gereksiz portlardan ulaşmaya
+çalışıp erişimi engellenen, Türk dinamik IP bloklarından gelen IP adreslerinden
+oluşturmayı düşünüyorum. Tabii ki, böyle bir veri kümesi oluşturmak istememin
+bazı sebepleri var:
+  </para><orderedlist>
+  <listitem><para>
+Kolayca elde edebiliyorum, bir yerden başlamak lazım. Dolayısıyla karalisteye
+girmeye aday veri kümesini, ağa hizmet verilmeyen portlardan (örneğin Netbios
+portları) girmeye çalışan IP'lerden oluşturuyorum.
+  </para></listitem><listitem><para>
+Bir kullanıcı statik IP'li olabilir. Fakat eğer Netbios v.b. portundan iletişim
+kurmaya çalışıyor ise ya bilgisayarında virüs vardır ve spam yollamaya (kendi
+farkında olmaksızın) başlama ihtimali yüksektir ya da kötü niyetlidir.
+  </para></listitem><listitem><para>
+Bir kullanıcı tamamen dinamik IP'li olabilir. O zaman bir daha bağlandığı zaman
+o IP tamamen başka bir kullanıcıya verilecektir. Fakat ne ilk, ne de sonraki
+kullanıcının bu kadar dinamik bir düzende posta sunucusu çalıştırıp posta kabul
+etmesi mümkün değildir. Eğer posta sunucusu çalıştırmak istiyorlar ise, o zaman
+statik IP başvurusu yapmışlardır (ücretsiz). Eğer (çok uzak ihtimal), dinamik
+DNS metodları ile dinamik bloklar üzerinden bir posta sunucusu çalıştırıyorlar
+ise, çok daha az zahmet ile TTNET'e başvurup bir statik IP tahsis
+ettirebilirler. Dolayısıyla tamamen dinamik IP'lerden kaynaklanan posta, spam
+olacaktır.
+  </para></listitem></orderedlist>
+  <sect2><title>Veri Kümesinin Oluşturulması</title>
+  <para>
+Bu örnek, birebir sizin için uygulanabilir olmayacaktır. Daha ziyade fikir vermesi amacı ile hazırlanmıştır. Donanım Zyxel ADSL router'dan oluşmaktadır. İlk önce bu donanımın günlüklerinin Linux makinası üzerinde tutulması için gereken ayarları yapacağız.
+  </para>
+  <para>
+Ağa gereksiz portlardan erişmeye çalışıp erişimi engellenen IP adreslerini
+toplayacağım için güvenlik duvarı olarak kullandığım makinanın bana günlük
+kayıtlarını göndermesini sağlamalıyım. Günlük kayıtlarını Linux makinama
+<literal>local1</literal> tanımı ile göndertiyorum. Bu durumda Linux makinamdaki
+<filename>/etc/syslog.conf</filename> dosyasına,
+  </para>
+<screen>
+local1.*                        -/var/log/firewall.log
+</screen>
+  <para>
+yazarak günlük kayıtlarının ayrı bir dosyada birikmesini sağlıyorum. Ayrıca, bu
+kayıtların bir de <filename>/var/log/messages</filename> dosyasına eklenmesini
+engellemek için,
+  </para>
+<screen>
+*.=info;*.=notice;*.=warn;  -/var/log/messages
+</screen>
+  <para>
+olan tanımı,
+  </para>
+<screen>
+*.=info;*.=notice;*.=warn;local1.none  -/var/log/messages
+</screen>
+  <para>
+haline getiriyorum.
+  </para><para>
+Tabii bir de günlük dosyalarının sonsuz büyümesini engellemekte fayda var.
+<filename>/etc/logrotate.d</filename> dizinine <filename>firewall</filename>
+adında bir dosya koyarak <filename>firewall.log</filename>'un ne şekilde
+tutulacağını belirliyorum:
+  </para>
+<screen>
+/var/log/firewall.log {
+        weekly
+        missingok
+        rotate 52
+        compress
+        delaycompress
+        notifempty
+        create 640 root adm
+}
+</screen>
+<para>
+Bu, haftada bir yeni bir günlük dosyası açıp 52 haftalık günlükleri diskte
+tutacaktır. Bu şekilde ham veri kümemizi firewall.log dosyalarından toplayabileceğiz.
+  </para>
+  </sect2><sect2><title>Veri Kümesinin İşlenmesi</title>
+  <para>
+<filename>firewall.log</filename> dosyasından örnek satır:
+  </para>
+<screen>
+Jan  8 01:53:53 192.168.1.1 RAS: src="81.213.17.202:4747"
+dst="XXX.XXX.XX.XXX:445"
+msg="Firewall default policy: TCP (W to W/PRESTIGE)"  note="ACCESS BLOCK"
+devID="EF63AF"
+cat="Access Control"
+</screen>
+<para>Yapacağım işlem, bu satırlardan IP adreslerini çıkartarak bu adreslerin Türk kökenli ve dinamik olduğunu kontrol etmek ve daha önce karalisteye alınmamış ise karalisteye almak.
+  </para>
+  <para>
+<filename>/var/lib/rbldns/karaliste_ekle</filename> diye bir betik oluşturalım:
+</para>
+<screen>
+#!/bin/bash
+
+grep "ACCESS BLOCK" /var/log/firewall.log.0 | \
+awk '{ if ($6 ~ /^src.*/ ) { \
+  srcip=$6; gsub(/src\=\"/,"",srcip); \
+  gsub(/\:.*/,"",srcip); \
+  gsub(/\"/,"",srcip); \
+  split(srcip,A,/\./); \
+  printf( \
+          "%s\t%s.%s.%s.%s.tr.countries.nerd.dk\
+          \t%s.%s.%s.%s.dul.dnsbl.sorbs.net\
+          \t%s.%s.%s.%s.rbl.zzz\n",\
+          srcip, \
+          A[4], A[3], A[2], A[1], \
+          A[4], A[3], A[2], A[1], \
+          A[4], A[3], A[2], A[1]) }  }'   \
+   | sort | uniq > /tmp/tmp.rbl
+
+tarih=`date +%F`
+
+while read srcip tr_test dul_test rbl_test
+do
+rbl_result=`dig +short $rbl_test`
+if [[ $rbl_result != '127.0.0.2' ]] ; then
+   tr_result=`dig +short $tr_test`
+   if [[ -n $tr_result ]] ; then
+      dul_result=`dig -p 530 $dul_test`
+      if [[ -n $dul_result ]] ; then
+         printf "%s :127.0.0.2: Izinsiz erisim yapan TR dinamik IP -- %s\n" \
+                $srcip $tarih >> /var/lib/rbldns/rbl.zzz
+      fi
+   fi
+fi
+done &lt; /tmp/tmp.rbl
+rm -f /tmp/tmp.rbl
+</screen>
+<para>
+Bu betik, yukarıda örneğini verdiğim günlük kaydından IP adresini alıyor. Yukarıdaki örneğe uygular isek, <literal>srcip</literal> değişkeni 81.213.17.202 olacak. Daha sonra, IP kontrolünü yapabilmek için bu adresi A dizisine alıyor ve ters çevirerek <filename>/tmp/tmp.rbl</filename> dosyasına şu satırı ekliyor:
+</para>
+<screen>
+81.213.17.202 202.17.213.81.tr.countries.nerd.dk
+¬ 202.17.213.81.dul.dnsbl.sorbs.net 202.17.213.81.rbl.zzz
+</screen>
+<para>
+Daha sonra, betik, <filename>/tmp/tmp.rbl</filename> dosyasını işleyerek bu karalisteleri kontrol ediyor ve eğer Türk kökenli ise, dinamik IP ise ve mevcut karalistede yok ise, karaliste dosyasına ekliyor.
+</para>
+<para>
+Her hafta <filename>firewall.log</filename> döndürülürken karalisteye ekleme
+yapılması makul olur.
+<filename>/etc/logrotate.d/firewall</filename> dosyasını aşağıdaki şekilde
+değiştirelim:
+    </para>
+<screen>
+/var/log/firewall.log {
+        weekly
+        missingok
+        rotate 52
+        compress
+        delaycompress
+        notifempty
+        create 640 root adm
+        sharedscripts
+        postrotate
+                /var/lib/rbldns/karaliste_ekle
+        endscript
+}
+</screen>
+    </sect2>
+
+<sect2><title>Internet'ten rbl.zzz Dosyasının Temini</title>
+<para>
+Eğer bu şekilde oluşturulan karalistenin sizin için faydalı olacağını düşünürseniz,
+</para>
+<screen>
+$ <userinput>rsync -az --delete rsync.belgeler.org::rblzzz/rbl.zzz.gz .</userinput>
+</screen>
+<para>
+komutu ile alabilirsiniz.
+</para></sect2>
+
+    </sect1><sect1 id="karaliste-nasil_sonuc"><title>Sonuç</title>
+    <para>
+Çeşitli karalisteleri yerelinizde nasıl şeffaf olarak yansılayarak hız kazanabileceğinizi gösterdik. Kendi oluşturacağınız bir karalisteyi nasıl tanımlayacağınızı ve bu karalisteyi Postfix ve SpamAssassin içerisinde nasıl kullanabileceğinizi işledik. Güvenlik duvarı günlüklerinden faydalanarak otomatik bir karalistenin nasıl oluşturulabileceğini örnekledik.
+    </para>
+    </sect1>
+</article>
+
+
+
+
+

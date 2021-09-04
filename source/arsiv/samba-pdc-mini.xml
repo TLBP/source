@@ -1,0 +1,324 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--DOCTYPE article SYSTEM "../../docbook/dtd/docbookx.dtd"-->
+<!-- ********************************************************************
+     $Id: samba-pdc-mini.xml,v 1.1 2002/10/03 19:38:23 nilgun Exp $
+     ******************************************************************** -->
+
+<article id="samba-pdc-mini" lang="tr">
+<?dbhtml dir="../howto"?>
+  <articleinfo>
+
+    <title>PDC olarak SAMBA mini-NASIL</title>
+    <author>
+      <firstname>Erkan Kaplan</firstname>
+      <affiliation>
+        <address>
+          <email>Selamsana@uni.de</email>
+        </address>
+      </affiliation>
+    </author>
+    <pubdate>26 Eylül 2002</pubdate>
+
+     <!-- Most recent revision goes at the top; list in descending order -->
+     <revhistory>
+       <revision>
+          <revnumber>1.0</revnumber>
+          <date>26 Eylül 2002</date>
+          <authorinitials>erkaN</authorinitials>
+          <revremark>
+             İlk sürüm
+          </revremark>
+       </revision>
+     </revhistory>
+
+     <!-- Provide a good abstract; a couple of sentences is sufficient -->
+     <abstract>
+        <para>
+          Bütün Windows PC'leri yönetsin diye Samba kurup, Samba'yı PDC olarak
+          çalıştırmaya karar verdik. Yaptım, sonra da bu reçeteyi yazdım.
+        </para>
+     </abstract>
+
+  </articleinfo>
+<!-- Content follows...include introduction, license information, feedback -->
+  <sect1 id="samba-pdc-mini_giris">
+    <title>Giriş</title>
+    <para>
+      Türk Seyahat acentası olan bir arkadaş ufak bir hesap yapmış ve kendi ufak
+      firmasina, 3 XP, 2 W2000 ve bir sunucu yazılımı için vereceği para 5000 Euro
+      çıkmış.
+    </para><para>
+      Masrafları nasıl asgariye indiririz derken, bu kadar para vermemek için en
+      sonunda Linux-Sunucu kurup, bütün Windows PC'leri yönetsin diye Samba kurup,
+      Sambayı PDC olarak çalıştırmaya karar verdik.
+    </para><para>
+      Madem Türk firması, hadi olmuşken Linux-Sunucu da "Made in Turkey" olsun dedik
+      ve her şeyi GL 1.1 altında kurmaya karar verdik. (Hikaye Almanya'da geçiyor)
+    </para><para>
+      Belki birilerinin işine yarar diye yaptığımız işlemleri ufak ufak not almayı
+      ve listeye göndermeye karar verdim. Belki birilerinin daha işine yarar.
+    </para><para>
+      Şimdi yapacağımız işlem GL 1.1 altında Samba kurup, ağdaki Windows PC'leri
+      yönetmesini saglamak...
+    </para><para>
+      Yalnız unutmamak lazım. Microsoft her Samba sürümünde gene eski huyundan
+      vazgeçmeyecek ve vazgeçmiyecegini de belirtmek isterim. Mesela Samba 2.2.0
+      çıktığında windows PC'ler ne güzel samba ile birlikte dans (çalışmak)
+      ediyorlardı. Ne zaman Service Pack 1 için windowslar güncellendi, windows
+      gene dans etmeyi bıraktı. Samba programını yazanlar hemen Samba 2.2.1
+      çıkarttılar ve Win PC'ler gene sistemde beraber dans etmeye başladılar.
+    </para><para>
+      Aradan biraz zaman geçti ve Service Pack 2 çıktı. Gene güncelleme
+      yapıldıktan sonra windows PC'ler kendi başlarına ayrı bir şekilde boy
+      göstermeye başladılar.
+    </para><para>
+      Hemen arkasından Samba 2.2.2 çıktı... Yani böyle uzun bir yılan hikayesi.
+    </para>
+  </sect1>
+  <sect1 id="samba-pdc-mini_kur">
+    <title>Samba Kuruyoruz</title>
+    <para>
+      Neyse, GL 1.1 ile gelen Samba sürümü işimizi görmez diyerekten aşağıdaki
+      adresten Samba'nın şu anki en son sürümlerini indirdim. Zaten Samba ana web
+      sayfasında da en son sürüm de bu:
+    </para><para>
+      <ulink url="ftp://ftp.join.uni-muenster.de/pub/linux/distributions/redhat/linux/rawhide/i386/RedHat/RPMS/samba-2.2.3a-1.i386.rpm"
+      >ftp://ftp.join.uni-muenster.de/pub/linux/distributions/redhat/linux/rawhide/i386/RedHat/RPMS/samba-2.2.3a-1.i386.rpm</ulink>
+    </para><para>
+      <ulink url="ftp://ftp.join.uni-muenster.de/pub/linux/distributions/redhat/linux/rawhide/i386/RedHat/RPMS/samba-client-2.2.3a-1.i386.rpm"
+      >ftp://ftp.join.uni-muenster.de/pub/linux/distributions/redhat/linux/rawhide/i386/RedHat/RPMS/samba-client-2.2.3a-1.i386.rpm</ulink>
+    </para><para>
+      <ulink url="ftp://ftp.join.uni-muenster.de/pub/linux/distributions/redhat/linux/rawhide/i386/RedHat/RPMS/samba-common-2.2.3a-1.i386.rpm"
+      >ftp://ftp.join.uni-muenster.de/pub/linux/distributions/redhat/linux/rawhide/i386/RedHat/RPMS/samba-common-2.2.3a-1.i386.rpm</ulink>
+    </para><para>
+      Eğer ayarlarınızı SWAT ile yapmak istiyorsanız:
+      <ulink url="ftp://ftp.join.uni-muenster.de/pub/linux/distributions/redhat/linux/rawhide/i386/RedHat/RPMS/samba-swat-2.2.3a-1.i386.rpm"
+      >ftp://ftp.join.uni-muenster.de/pub/linux/distributions/redhat/linux/rawhide/i386/RedHat/RPMS/samba-swat-2.2.3a-1.i386.rpm</ulink>
+    </para><para>
+      İlk önce GL 1.1 ile gelen Samba`nın eski sürümünü sistemden uzaklaştırıyoruz:
+</para><para><screen>
+# rpm -e `rpm -qa | grep samba`
+</screen></para><para>Daha sonra indirdiğimiz 4 RPM paketini sisteme kolayca
+      kuruyoruz:
+</para><para><screen>
+# rpm -Uhv samba*
+</screen></para><para>NOT: Biz swat`ı kurmadık. Ama Swat ile de ayarlamak isteyen
+      olursa kurabilir.
+    </para><para>
+      Deneme amaçlı olarak Samba'yı çalıştıralım
+</para><para><screen>
+# /etc/init.d/smb start
+SMB servisleri başlatılıyor: [ TAMAM ]
+NMB servisleri başlatılıyor: [ TAMAM ]
+</screen></para><para>
+      Demek ki, Samba herhangi bir sorun olmadan ÖNTANIMLI ayarlarla çalışır
+      vaziyette, ama bu bizim işimizi görmüyor tabii ki.
+    </para><para>
+      Samba'yı durduruyoruz.
+</para><para><screen>
+# /etc/init.d/smb stop
+</screen>
+    </para>
+  </sect1>
+  <sect1 id="samba-pdc-mini_ayar">
+    <title>Samba'nın Yapılandırılması</title>
+    <para>
+      Şimdi işe başlamadan önce ayarlar için gerekli dosya ve grupları oluşturuyoruz:
+      (root olarak)
+</para><para><screen>
+# mkdir /export/samba
+# mkdir /export/samba/profiles
+# mkdir /export/samba/netlogon
+# mkdir /export/samba/netlogon/srcipts
+# groupadd samba-users
+# chgrp -R samba-users /export/samba
+</screen></para><para>
+      NOT: <literal>/export/samba/netlogon/scripts</literal> dizini altına
+      kullanıcı betikleri kopyalanabilir.
+    </para><para>
+      Domain içindeki sistemdeki her makinede <literal>Machines</literal> adında
+      hesaplar olduğu için, hemen bir grup daha oluşturuyoruz.
+</para><para><screen>
+# groupadd machines
+</screen></para><para>
+      Daha sonra root'da ayar dosyamızın içinde Domain-Admin olarak geçtigi icin,
+      ilk önce root için Samba parolasını belirleyelim:
+</para><para><screen>
+# smbpasswd -a
+New SMB password:
+Retype new SMB password:
+#
+</screen></para><para>
+      NOT: Bu parolayı unutmuyorsunuz. Çünkü Domain olarak bağlanmak için ayarlarınızı
+      yaparken Username = root ve Password olarak da buraya verdiğiniz parolayı
+      yazıyorsunuz.
+    </para><para>
+      Şimdi hemen Samba kullanımı için bir kullanıcı oluşturalım ve Domain için
+      gerekli haklarını verelim (root olarak)
+</para><para><screen>
+# useradd -c "Samba Kullanıcısı erkaN" -g samba-users -m erkaN
+(herhangi bir çıktı vermez)
+# mkdir /export/samba/profiles/erkaN
+# chown erkaN.samba-users /export/samba/profiles/erkaN
+</screen>
+    </para>
+    <sect2>
+      <title>Yapılandırma Dosyası</title>
+      <para>
+        Sırada <literal>smb.conf</literal> dosyası var. Bunun için aşağıdaki yapılandırma
+        dosyasını kullanabilir veya kendinize göre değiştirebilirsiniz:
+</para><para><literallayout>
+# Dosya-adı: /etc/samba/smb.conf
+# PDC (Birincil Alan Denetleyici) olarak Samba-2.2.3a ayarlari
+</literallayout></para><para>
+<screen>
+[global]
+netbios name = linux-server
+#domain adı OFFICE
+workgroup = OFFICE
+server string =Samba Server Version %v
+interfaces = eth0
+wins support = yes
+encrypt passwords = yes
+os level = 64
+preferred master = yes
+local master = yes
+domain logons = yes
+logon path = \\%L\profiles\%U\%a
+logon home = \\%L\%U
+logon drive = H:
+logon script = scripts\%U.bat
+domain admin group = root
+
+#Aşagıdaki tek bir satır
+add user script = /usr/sbin/useradd -d /dev/null -g machines -c 'Machine Account' -s /bin/false -M %u
+
+# Parola eşzamanlaması
+# WinPC`leden birisi parola değiştirmek isterse
+password chat = *ew\sUNIX\spassword:* %n\n
+ *etype* %n\n
+ *all\sauthentication\stokens\supdated\ssuccessfully*
+unix password sync = true
+passwd program = /usr/bin/passwd %u
+
+# Büyük/küçük harf ayrımı yapılmamalı
+mangle case = yes
+case sensitive = no
+default case = lower
+preserve case = yes
+short preserver case = yes
+
+# Socket Seçenekleri
+socket options = TCP_NODELAY
+
+[netlogon]
+path = /export/samba/netlogon
+writeable = no
+write list = root
+
+[profiles]
+path = /export/samba/profiles
+writeable = yes
+create mask = 0600
+directory mask = 0700
+
+[homes]
+comment = Heimverzeichnis fuer %U
+browseable = no
+writeable = yes
+create mode = 0750
+</screen></para><para>
+      Sunucu kısmında yapacaklarımız bu kadar. Samba'yı çalıştırıp bütün
+      işlemlerimizi XP ve W2000 olan PC'lerde devam ediyoruz.
+</para><para><screen>
+# /etc/init.d/smb start
+</screen></para><para>
+      Bundan sonra yapacağımız iş, Windows Kullanıcılarının sisteme giriş yaparken
+      DOMAIN üzerinden giriş yapmalarını sağlamak. Artık bunu da herkes bilir
+      sanırım:-))
+    </para><para>
+      Domain için ayarlarınızı yaparken
+    </para><para>
+      Domain olarak "office"
+    </para><para>
+      Username olarak "root"
+    </para><para>
+      Password olarak da bu root için verilmiş olan parola (yukarıda verdiğimiz parola)
+    </para><para>
+      Hepsi bu kadar. Windows'da yapılan bu ayarlardan sonra Windows tekrardan
+      başlatılmalıdır. Yeniden başladıktan sonra erkaN kullanıcısı domaine hiçbir sorun
+      olmadan giriş yapabilir. Domaini bulması biraz uzun sürebilir acele etmeyin.
+    </para><para>
+      Ufak bir sorun, o da XP'de çıktı. W2000 olan PC'lerde herhangi bir sorun olmadan
+      erkaN kullanıcısı giriş yapabilmesine rağmen, XP olan PC'ye bir türlü domainden
+      giriş yapamadı. Internette biraz araştırmadan sonra bir ipucu okudum. O da şöyle:
+    </para><para>
+      XP olan PC'de "regedt32" komutunu verip registery'yi açtım.
+</para><para><screen>
+HKEY_LOCAL_MACHINE\SYSTEM\CurrentControl-Set\Services\Netlogon\Parameter
+</screen></para><para>
+      altında <literal>requiresignorseal</literal> diye bir seçenek var. Bunun "1" olan
+      değerini "0" olarak degiştirdikten sonra artık XP'de nazlanmayı bırakıp, kuzu
+      kuzu Linux altında çalışan Samba'nın kontrolu altına girdi.
+    </para>
+  </sect2>
+  </sect1>
+  <sect1 id="samba-pdc-mini_sonuc">
+    <title>Sonuç</title>
+    <para>
+      Yaptıklarımın hepsi aklımda kaldığı ve not aldığım kadarı ile bu kadar. Bu olayı
+      gerçekleştirirken, Frank Dach`ın PC Magazin dergisindeki bir yazısı ve
+      <ulink url="http://bioserve.latrobe.edu.au/samba/ntdomfaq.html"
+      >http://bioserve.latrobe.edu.au/samba/ntdomfaq.html</ulink> adresindeki küçük
+      NASILı temel aldım.
+    </para><para>
+      NOT: Samba'nın eski sürümlerinde XP'de Domain olarak giriş yapabilmek için
+      destek yok. Bunun için her ne olursa olsun, Samba'nın her zaman en yeni
+      sürümünü kullanmak daha avantajlı.
+    </para><para>
+      Saygılar
+   </para><para>erkaN
+   </para>
+  </sect1>
+  <sect1 id="samba-pdc-mini_yasal">
+    <title>Yasal Açıklamalar</title>
+    <sect2>
+      <title>Telif Hakkı ve Lisans</title>
+
+    <!-- The LDP recommends, but doesn't require, the GFDL -->
+    <para>
+      Bu belgenin, <emphasis>PDC olarak SAMBA mini-NASIL</emphasis>
+      1.0 sürümünün <emphasis role="bold">
+      telif hakkı © 2002 <emphasis>Erkan Kaplan</emphasis></emphasis>'a
+      aittir. Bu belgeyi, Free Software Foundation tarafından yayınlanmış
+      bulunan GNU Özgür Belgeleme Lisansının 1.1 ya da daha sonraki sürümünün
+      koşullarına bağlı kalarak kopyalayabilir, dağıtabilir ve/veya
+      değiştirebilirsiniz. Bu Lisansın bir kopyasını
+      <ulink url="http://www.gnu.org/copyleft/fdl.html">
+      http://www.gnu.org/copyleft/fdl.html</ulink> adresinde bulabilirsiniz.
+    </para>
+
+    <para>
+      Linux, Linus Torvalds adına kayıtlı bir ticarî isimdir.
+    </para>
+  </sect2>
+
+  <sect2>
+    <title>Feragatname</title>
+
+    <para>
+      Bu belgedeki bilgilerin kullanımından doğacak sorumluluklar,
+      ve olası zararlardan belge yazarı sorumlu tutulamaz.
+      Bu belgedeki bilgileri uygulama sorumluluğu uygulayan aittir.
+    </para>
+
+    <para>
+      Tüm telif hakları aksi özellikle belirtilmediği sürece sahibine
+      aittir. Belge içinde geçen herhangi bir terim bir ticarî isim
+      yada kuruma itibar kazandırma olarak algılanmamalıdır. Bir ürün
+      ya da markanın kullanılmış olması ona onay verildiği anlamında
+      görülmemelidir.
+    </para>
+  </sect2>
+  </sect1>
+</article>

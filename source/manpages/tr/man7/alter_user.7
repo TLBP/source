@@ -1,0 +1,136 @@
+.\" http://belgeler.org \N'45' 2006\N'45'11\N'45'26T10:18:34+02:00  
+.TH "ALTER USER" 7 "" "PostgreSQL" "SQL \N'45' Dil Deyimleri"
+.nh   
+.SH İSİM
+ALTER USER \N'45' bir veritabanı kullanıcı hesabını değiştirir   
+.SH KULLANIM 
+.nf
+\fBALTER USER\fR \fIisim\fR [ [ \fBWITH\fR ] \fIseçenek\fR [ ... ] ]
+
+burada \fIseçenek\fR şöyle olabilir:
+
+\    \fBCREATEDB\fR | \fBNOCREATEDB\fR
+\    | \fBCREATEUSER\fR | \fBNOCREATEUSER\fR
+\    | [ \fBENCRYPTED\fR | \fBUNENCRYPTED\fR ] \fBPASSWORD\fR \N'39'\fIparola\fR\N'39'
+\    | \fBVALID UNTIL\fR \N'39'\fImutlak_zaman\fR\N'39'
+
+\fBALTER USER\fR \fIisim\fR \fBRENAME TO\fR \fIyeni_isim\fR
+
+\fBALTER USER\fR \fIisim\fR \fBSET\fR \fIparametre\fR { \fBTO\fR | \fB=\fR } { \fIdeğer\fR | \fBDEFAULT\fR }
+\fBALTER USER\fR \fIisim\fR \fBRESET\fR \fIparametre\fR
+.fi
+    
+.SH AÇIKLAMA
+\fBALTER USER\fR bir PostgreSQL kullanıcı hesabının özniteliklerini değiştirir. Değiştirilmeyen öznitelikler önceki değerlerini korurlar.   
+
+İlk biçim kullanıcının izinlerini ve kimlik kanıtlama ayarlarını değiştirir. (Ayrıntılar için aşağıya bakınız.) Veritabanı ayrıcalıklı kullanıcıları herhangi bir kullanıcının bu ayarlarının hepsini değiştirebilir. Sıradan kullanıcılar ise sadece parolalarını değiştirebilirler.   
+
+İkinci biçim kullanıcının ismini değiştirir. Sadece veritabanı ayrıcalıklı kullanıcısı bir kullanıcının ismini değiştirebilir. Oturum açmış kullanıcının ismi değiştirilemez. (Bunu yapmak gerekliyse, farklı bir kullanıcı olarak bağlanın.) Çünkü \fBMD5\fR şifreli parolalarda kullanıcı ismi tuz olarak kullanılır, bir kullanıcının isminin değiştirilmesi onun \fBMD5\fR parolasını temizler.   
+
+Üçüncü ve dördüncü biçimler belirtilen yapılandırma değişkeni için kullanıcının oturum öntanımlısını değiştirir.  postgresql.conf dosyasında ya da \fBpostmaster\fR komut satırında ne belirtilmiş olursa olsun, kullanıcının yeni bir oturumu sonraki her başlatışında, belirtilen değer oturum öntanımlısı haline gelir. Sıradan kullanıcılar kendi oturum öntanımlılarını değiştirebilirler. Ayrıcalıklı kullanıcılar ise herkesinkini değiştirebilir. Belli değerler bu yolla belirtilemezler ya da sadece ayrıcalıklı kullanıcı tarafından belirtilebilirler.   
+
+.SH PARAMETRELER     
+.br
+.ns
+.TP 
+\fIisim\fR
+Öznitelikleri değiştirilecek kullanıcının ismi.       
+
+.TP 
+\fBCREATEDB\fR, \fBNOCREATEDB\fR
+Bu deyimler bir kullanıcının veritabanı oluşturup oluşturamayacağını belirtmek için kullanılır. Eğer \fBCREATEDB\fR belirtilmişse kullanıcı kendi veritabanlarını oluşturabilir. \fBNOCREATEDB\fR belirtilmişs kullanıcı bunu yapamaz. (Eğer kullanıcı aynı zamanda ayrıcalıklı kullanıcı ise aslında bunun bir etkisi yoktur.)       
+
+.TP 
+\fBCREATEUSER\fR, \fBNOCREATEUSER\fR
+Bu deyimler bir kullanıcının yeni bir kullanıcı oluşturup oluşturamayacağını belirtmek için kullanılır. \fBCREATEUSER\fR ayrıca, tüm erişim kısıtlamalarını kaldırarak kullanıcıyı ayrıcalıklı kullanıcı haline getitir.       
+
+.TP 
+\fIparola\fR
+Bu hesap için kullanılacak yeni parola.       
+
+.TP 
+\fBENCRYPTED\fR, \fBUNENCRYPTED\fR
+Bu sözcükler pg_shadow içinde parolanın şifreli saklanıp saklanmayacağını denetler. (Bu seçimle ilgili daha ayrıntılı bilgiyi \fBCREATE USER\fR [create_user(7)] kılavuz sayfasında bulabilirsiniz.)       
+
+.TP 
+\fImutlak_zaman\fR
+Bu kullanıcının parolasının son kullanım tarihi (ve isteğe bağlı olarak zamanı). Parolanın son kullanım tarihinin olmayacağını belirtmek için \N'39'infinity\N'39' kullanın.       
+
+.TP 
+\fIyeni_isim\fR
+Kullanıcının yeni ismi.       
+
+.TP 
+\fIparametre\fR, \fIdeğer\fR
+Belirtilen yapılandırma parametresinin belirtilen değeri kullanıcının oturum önanımlısı yapılır. Eğer \fIdeğer\fR olarak \fBDEFAULT\fR veya eşdeğeri olan \fBRESET\fR kullanılmışsa, kullanıcıya özel değer silinir, böylece kullanıcı yeni oturumda sistem çapında geçerli olan öntanımlıyı miras alacaktır. \fBRESET ALL\fR tüm kullanıcıya özel ayarları temizleyecektir.        
+
+Yapılandırma parametreleri ve onların değerleri hakkında daha fazla bilgi edinmek için \fBSET\fR [set(7)] kılavuz sayfasına ve
+.br
+http://www.postgresql.org/docs/8.0/static/runtime\N'45'config.html adresine bakınız.       
+
+.PP  
+.SH EK BİLGİ
+Yeni bir kullanıcı eklemek için \fBCREATE USER\fR [create_user(7)], bir kullanıcıyı silmek için ise \fBDROP USER\fR [drop_user(7)] kullanın.   
+
+\fBALTER USER\fR bir kullanıcının grup üyeliğini değiştiremez. Bunu yapmak için \fBALTER GROUP\fR [alter_group(7)] kullanın.   
+
+\fBVALID UNTIL\fR deyimi kullanıcı hesabı için değil, sadece parola için son kullanım tarihi tanımlar. oturum açarken parolalı kimlik kanıtlama yöntemi kullanılmıyorsa, bu tarih anlamsızdır.   
+
+Ayrıca, oturum öntanımlısını bir kullanıcıya değil, belli bir veritabanına bağlamak da mümkündür; bkz. \fBALTER DATABASE\fR [alter_database(7)]. Bir çelişki durumunda kullanıcıya özel ayarlar, veritabanına özel ayarların yerine geçer.   
+
+.SH ÖRNEKLER
+Bir kullanıcının parolasını değiştirmek için:   
+
+
+.RS 4
+.nf
+ALTER USER davide WITH PASSWORD \N'39'hu8jmn3\N'39';
+.fi
+.RE   
+
+Kullanıcı parolasının son kullanım tarihini değiştirmek için:   
+
+
+.RS 4
+.nf
+ALTER USER manuel VALID UNTIL \N'39'Jan 31 2030\N'39';
+.fi
+.RE   
+
+Bir parolanın son kullanım zamanını, 4 Mayıs 2005 öğleyin, zaman dilimini UTC\N'39'nin üç saat ilerisi olarak belirtmek için:   
+
+
+.RS 4
+.nf
+ALTER USER chris VALID UNTIL \N'39'May 4 12:00:00 2005 +3\N'39';
+.fi
+.RE   
+
+Bir parolayı sonsuza kadar geçerli yapmak için:   
+
+
+.RS 4
+.nf
+ALTER USER fred VALID UNTIL \N'39'infinity\N'39';
+.fi
+.RE   
+
+Bir kullanıcıya diğer kullanıcıları ve yeni veritabanlarını oluşturma yetkisi vermek için:   
+
+
+.RS 4
+.nf
+ALTER USER miriam CREATEUSER CREATEDB;
+.fi
+.RE   
+
+.SH UYUMLULUK
+\fBALTER USER\fR bir PostgreSQL oluşumudur. SQL standardı kullanıcı tanımlarını gerçeklenime bırakmıştır.   
+
+.SH İLGİLİ BELGELER
+\fBCREATE USER\fR [create_user(7)], \fBDROP USER\fR [drop_user(7)], \fBSET\fR [set(7)].  
+
+.SH ÇEVİREN
+Nilgün Belma Bugüner <nilgun (at) belgeler·gen·tr>, Nisan 2005 
+ 
+    

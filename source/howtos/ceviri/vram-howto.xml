@@ -1,0 +1,300 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--DOCTYPE article SYSTEM "../docbook/dtd/docbookx.dtd"-->
+<!-- ********************************************************************
+     $Id: vram-howto.xml,v 1.2 2002/10/17 23:07:50 nilgun Exp $
+     ******************************************************************** -->
+
+<article id="vram-howto" lang="tr">
+  <articleinfo>
+    <!-- Use "HOWTO", "mini HOWTO", "FAQ" in title, if appropriate -->
+    <title>VRAM Depo Aygıtı NASIL</title>
+    <authorgroup>
+      <author>
+        <firstname>Michal Schulz</firstname>
+        <affiliation>
+            <address><email>michal.schulz@tu-clausthal.de</email></address>
+        </affiliation>
+      </author><author role="translator">
+        <firstname>Arman Aksoy</firstname>
+        <affiliation>
+            <address><email>armish@linux-sevenler.de</email></address>
+        </affiliation>
+      </author><author role="translator">
+        <firstname>Erkan Kaplan</firstname>
+        <affiliation>
+            <address><email>Selamsana@uni.de</email></address>
+        </affiliation>
+      </author>
+    </authorgroup>
+     <pubdate>20 Eylül 2002</pubdate>
+     <revhistory>
+       <revision>
+          <revnumber>1.0</revnumber>
+          <date>20 Eylül 2002</date>
+          <authorinitials>
+            Çeviri: Arman Aksoy,
+           Özgün Belge: Michal Schulz
+          </authorinitials>
+          <revremark>
+İlk sürüm - Belgenin özgün sürümü <ulink url="http://hedera.linuxnews.pl/_news/2002/09/03/_long/1445.html"/> adresinde bulunabilir.
+          </revremark>
+       </revision>
+     </revhistory>
+    <legalnotice><title>Yasal Uyarı</title><para>
+Bu belge çevirisinin, <emphasis>VRAM Depo Aygıtı NASIL</emphasis>, 1.0 sürümünün <emphasis role="bold">telif hakkı © 2002 <emphasis>Arman Aksoy</emphasis> ve <emphasis>Erkan Kaplan</emphasis></emphasis>'a ve özgün belgenin <emphasis role="bold">telif hakkı © 2002 <emphasis>Michal Schulz</emphasis></emphasis>'a aittir. &notice.gpl;</para>
+      &notice.disc;
+    </legalnotice>
+     <abstract>
+        <para>
+          GFX kartınızdaki belleği farklı bir yoldan nasıl kullanabilirsiniz?
+        </para>
+     </abstract>
+  </articleinfo>
+
+  <sect1 id="vram-mini-howto_intro">
+    <title>Giriş</title>
+    <para>
+      Neden grafik kartınızın bu kadar çok belleğe sahip olduğunu
+      düşündüğünüz olur mu?
+    </para>
+    <para>
+      Yeterince RAM'a veya çok yavaş takas alanına sahip olduğunuzu mu
+      düşünüyorsunuz?
+    </para>
+    <para>
+      Hızlı ram-disklere veya disksiz bir makinaya mı ihtiyacınız var?
+    </para>
+    <para>
+      Bunu yapabilirsiniz. Gidin ve şu ucuz 32MB grafik kartlarından alın,
+      işin zevkini çıkarın.
+    </para>
+  </sect1>
+  <sect1 id="vram-mini-howto_req">
+    <title>Gerekenler</title>
+    <para>
+      VRAM'ı bir depo aygıtı olarak kullanmanız için gerekenler:
+    </para><itemizedlist>
+      <listitem>
+        XFree86
+      </listitem>
+      <listitem>
+        Modül olarak derlenmiş MTD (özellikle slram)
+      </listitem>
+      <listitem>
+        Kullanmayacağımız kadar fazla belleğe sahip bir GfX kartı
+      </listitem>
+    </itemizedlist>
+  </sect1>
+  <sect1 id="vram-mini-howto_prep">
+    <title>Hazırlanma</title>
+    <para>
+      Bu belleği kullanmak için öncelikle GfX kartımızın PCI adres boşluğu ile
+      nerede olduğunu bulmamız gerekir. Bunu birçok yoldan yapabilirsiniz. Benim
+      ilk yaptığım ise Gfx kartının ve kaynaklarının genel bir kontrolü oldu:
+      </para><orderedlist>
+        <listitem>
+          <para>
+            <literal>lspci</literal> komutunu vererek (veya daha ayrıntılı olan
+            <literal>lspci -vvv</literal>)
+  "VGA compatible controller" a benzer bir yazı bulunan bölümü bulun.
+   Ekrana gelecek olan çıktıda en azından Gfx kartınız ve kaynaklarıyla
+   ilgili bir girdi bulunacaktır. Benimkisi şöyleydi:
+</para><screen>
+01:00.0 VGA compatible controller: nVidia Corporation Vanta [NV6] (rev15)
+¬ (prog-if 00 [VGA])
+    Flags: bus master, 66Mhz, medium devsel, latency 248, IRQ 10
+    Memory at d6000000 (32-bit, non-prefetchable) [size=16M]
+    Memory at d4000000 (32-bit, prefetchable) [size=32M]
+    Expansion ROM at &lt;unassigned> [disabled] [size=64K]
+    Capabilities: [60] Power Management version 1
+    Capabilities: [44] AGP version 2.0
+</screen><para>
+            Şu an iki adres olasılığı var. Belirtmeliyim ki bu değerler sadece
+            benim <literal>nvidia</literal> kartım için geçerli ve sizinkiler
+            bundan farklı olabilir.
+            <literal>Memory at</literal>'le başlayan ilk satırda <literal>MMIO</literal>
+            adres boşluğu ile ilgili bilgiler var.
+            Diğeri ise gfx ram. Bu bilgi yeterli değil. O zaman bazı ayrıntılar
+            için XFree86'a başvurmamız gerekecek.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            XFree86 bazı bilgilerin kayıtlarını tutar.
+            Bu kayıt dosyalarını <literal>/var/log</literal> dizininde
+            <literal>XFree86.log </literal> (veya benzeri bir isme sahip) dosyada
+            bulabilirsiniz.
+            Bu dosya içinde yapacağımız küçük bir arama ile bize gereken
+            GFX ram ile ilgili (buradaki ismiyle <literal>linear framebuffer</literal>)
+            bilgilerini edinebiliriz:
+</para><screen>
+$ cat /var/log/XFree86.0.log | grep framebuffer
+(**) NV(0): Depth 24, (--) framebuffer bpp 32
+(--) NV(0): Linear framebuffer at 0xD4000000
+</screen><para>
+            Gördüğünüz gibi, benim GFX RAM'im <literal>0xd4000000</literal>
+            fiziksel adresinde başlıyor. Artık kartımızın ne kadar belleğe
+            sahip olduğunu ve nerede başladığını biliyoruz, hadi başlayalım artık!
+          </para>
+        </listitem>
+      </orderedlist>
+  </sect1>
+  <sect1 id="vram-mini-howto_mtd">
+    <title>MTD Ayarları</title>
+    <para>
+      <literal>MTD</literal>, Memory Technology Devices'ın kısaltmasıdır.
+      (Ayrıntılı bilgi için <ulink url="http://www.linux-mtd.infradead.org/"/> adresine göz atın).
+      MTD bizim Flash bellekleri, DoC aygıtlarını vb. kullanmamızı sağlar.
+      Şimdi ise, bunu biraz farklı bir yoldan kullanacağız (basit bir mantıkla).
+    </para>
+    <para>
+      MTD'nin sürücülerinden biri PCI BUS'ın doğrudan erişim sağlaması için
+      Ram aygıtlarının adreslerini tutar. Okuyacağımız gibi:
+    </para><blockquote><para>
+Many PC chipsets are incapable of correctly caching system memory above 64M or 512M. A driver exists which allows you to use this memory with the linux-mtd system.
+    </para></blockquote><para>
+      Yani;
+    </para>
+    <para>
+      Bazı PC cipsetleri, 64M veya 512M üzerindeki sistem belleklerini doğru bir
+      şekilde önbellek olarak kullanamazlar. Bu belleklerin <literal>linux-mtd</literal>
+      sistemi ile kullanılmasını sağlayan bir sürücü bulunur.
+    </para>
+    <para>
+      Biraz farklı bir açıklama fakat şu an için en uygunu bu sanırım.
+      Kullanmak istediğimiz ek bir belleğimiz var. Bu belleğin çekirdek tarafından
+      kullanılmasını sağlayamayız ( Sağlansa bile bunun için daha farklı
+      bir yöntem gerekir ve büyük ihtimalle iyi bir sonuç elde edilmez).
+      Biz ise, bu belleği bir blok veya karakter aygıtı olarak kullanacağız.
+      Bunu sağlayan sürücü <literal>slram</literal> olarak adlandırılır. Bunun
+      yanında bize <literal>mtdcore</literal>, <literal>mtdblock</literal>(eğer
+      blok aygıtı erişimi gerekiyorsa) ve/veya <literal>mtdchar</literal> (eğer
+      karakter aygıtı erişimi gerekiyorsa) lazım.
+    </para>
+  </sect1>
+  <sect1 id="vram-mini-howto_calc">
+    <title>Birkaç Hesaplama</title>
+    <para>
+      XFree86, nerede görüntülenebilir bir grafik yaratacağını bilmek için,
+      PCI bilgilerini kullanır. Bu da demek ki, eğer video belleğini azaltırsak
+      ve XFree86'ya video kartın daha az bir belleğe sahip olduğunu söylersek,
+      geriye kalan belleğe X11 tarafından dokunulmayacak veya kullanılmayacakır.
+      Bu kalan belleği bizim kullanmamız daha sonra mümkün olacaktır.
+    </para>
+    <para>
+      X11'in ihtiyaç duyduğu bellek miktarı, kullanılan video çözünürlüklerine
+      bağlıdır. En kolay hesaplama yolu ise genişliği, yükseklik ve de ardından
+      makinanin XFree86 tarafından en yüksek modda her pixel için kullandığı byte
+      miktarı ile çarpmaktır. Daha sonra bunun üzerine kullanılmak üzere (mesela
+      XAA uzantısı tarafından) bir miktar eklenebilir. Bu arada, çoğu GFX kartının
+      24bpp modlarında her pixel için 4 byte kullandığını belirteyim. Eğer konsolda
+      framebuffer kullanıyorsanız, çözünürlüğünü de hesaba katmalısınız.
+    </para>
+    <para>
+      XFree86'ya 4MB bellek vermeye karar verdiğimizi varsayalım.
+      (onaltılık olarak 4MB <literal>0x00400000</literal>'dır). Eğer video
+      framebuffer <literal>0xd4000000</literal>'dan başlıyorsa,
+      bizim kullanabileceğimiz bellek de (<literal>0xd4000000 + 0x00400000</literal>)
+      <literal>0xd4400000</literal> adresinden başlıyor demektir. Şu an bildiklerimiz
+      ise, aygıtımızın konumu ve bellek miktarı.
+    </para>
+  </sect1>
+  <sect1 id="vram-mini-howto_xf86config">
+    <title>XF86Config Dosyasında Yapılacaklar</title>
+    <para>
+      XFree86'ya ne kadar bellek kullanacağını belirtebilmek için, XFree86 ile
+      biraz oynanamız gerekir. Yoksa X11 bellek miktarını kendi saptayacak ve
+      hepsini kendisi için kullanacaktır. Böyle birşey olmasını istemiyoruz elbette.
+      Device (Aygıt) bölümünde şu satırı ekleyin:
+    </para>
+    <para>
+      <screen>VideoRam 4096</screen>
+    </para>
+    <para>
+      Bu satır, XFree86'nin kullanacağı bellek sınırını belirtir ki burada bu değer
+      4MB'dır. Bu ayarın kullanılması için XFree86'yı yeniden başlatmalısınız.
+    </para>
+    <warning>
+      <para>
+        Bu yöntem nVidia sürücüleri ile çalışmaz, çünkü bu sürücü
+        <literal>VideoRam</literal> seçeneğini önemsemez. Fakat XFree86'nın
+        <literal>nv</literal> sürücüsü ile rahatlıkla çalışabilir.
+      </para>
+    </warning>
+  </sect1>
+  <sect1 id="vram-mini-howto_dev">
+    <title>MTD Aygıtının Oluşumu</title>
+    <para>
+      Herşey hazırlandı. Artık başlayabiliriz: (root olarak)
+</para><screen>
+# modprobe slram map=VRAM,0xd4400000,+0x00c00000
+</screen><para>
+      <emphasis role="bold">Komut Açıklaması:</emphasis> Burada VRAM aygıtını
+      oluşturmak için yeni bir modül yüklüyoruz. <literal>0xd4400000</literal>
+      belleğin fiziksel başlangıç adresi, <literal>+0x00c00000</literal> ise
+      bellek miktarıdır.
+    </para>
+    <para>
+      Benim grafik kartım 16Mb belleğe sahip. X11 için 4Mb ayırdım.
+      Gerisi ( 12MB = 0x00c00000 ) ise MTD aygıtı için. Bakalım neler yapmışız:
+</para><screen>
+# cat /proc/mtd
+dev:  size  erasesize name
+mtd0: 00b00000 00010000 "VRAM"
+</screen><para>
+      Hurraa..:-)) <literal>mtd0</literal> aygıtımız yüklendi ve kullanıma hazır.
+      Peki bunu nasıl kullanacağız? Çok kolay.<sbr/>
+      Öncelikle <literal>/dev/mtd0</literal> ve <literal>/dev/mtdblock0</literal>
+      aygıtlarının sistemde bulunup bulunmadığını kontrol edelim (devfs'li
+      sistemlerde konum farklı olabilir).  Eğer yoklarsa oluşturulmaları gerekir.
+      Eğer karakter aygıtı lazım ise yapmanız gereken:
+<screen>
+# mknod /dev/mtd0 c 90 0
+</screen>
+    </para>
+    <para>
+      Ve <literal>mtdchar</literal> modülünün yüklenmiş olduğundan emin olun
+      (veya çekirdeğin gerektiği zamanda yükleyeceğinden).
+    </para>
+    <para>
+      Blok aygıtı için yapmanız gereken:
+</para><screen>
+# mknod /dev/mtdblock0 b 31 0
+</screen><para>
+      Ve erişim için <literal>mtdlock</literal> modülüne ihtiyaç vardır.
+    </para>
+    <para>
+      Aygıt hazırlandı. Bu kadar. Hala sağ kalan var mı :) O zaman devam...
+    </para>
+  </sect1>
+  <sect1 id="vram-mini-howto_what">
+    <title>Peki Bununla Ne Yapabilirim?</title>
+    <para>
+      Pek çok şey. Bu konu hakkında düşünürken bunu kullanmak için 2 yol buldum.
+      Birincisi bu aygıtın üzerinde bir dosya sistemi yaratmak:
+</para><screen>
+# mkfs.ext2 /dev/mtdblock0
+</screen><para>
+      Ve bunu bir yerlere bağlamak:
+</para><screen>
+# mount -t ext2 /dev/mtdblock0 /mount/edilecek/konum
+</screen><para>
+      2. yol ise bunun üzerine bir takas alanı oluşturmak:
+</para><screen>
+$ mkswap /dev/mtdblock0
+Setting up swapspace version 1, size = 12582912 bytes
+$ swapon /dev/mtdblock0
+</screen><para>
+      Daha sonra farklı olasılıklar oluştu. Örneğin bunu X11 terminallerinde,
+      ağ band genişliğini sınırlamak için kullanabilirsiniz. Açılış sırasında
+      terminal çekirdeği ve sıkıştırılmış dosya sistemini yükler.
+      Dosya Sistemi <literal>mtdblock</literal> aygıtı üzerine yerleştirelebilir
+      ve çekirdek buradan açılış yapabilir. Sadece konsol kullanan sunucu
+      sistemlerinde yeni nesil 32MB GfX kartlardaki bellek çok güzel bir takas
+      alanı olarak kullanılabilir (disklerdeki takastan daha hızlı bir şekilde).
+    </para>
+    <para>
+      Yeni görüşlere her zaman için açığız :)
+    </para>
+  </sect1>
+</article>

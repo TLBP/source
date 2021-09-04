@@ -1,0 +1,2048 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ********************************************************************
+     $Id: part3.xml,v 1.12 2002/12/20 23:23:58 nilgun Exp $
+     ********************************************************************-->
+<part id="bashref_shell.features">
+  <title>Temel Kabuk Özellikleri</title>
+  <titleabbrev>Kabuk bloklarının kurgulanması.</titleabbrev>
+  <indexterm scope="bashref_concept.index"><primary>Bourne kabuğu</primary></indexterm>
+  <partintro>
+    <para>
+Bash, <literal><command>B</command>ourne-<command>A</command>gain
+<command>SH</command>ell</literal> sözcüklerinden oluşturulmuş bir
+kısaltmadır. Bourne kabuğu, ilk olarak Stephen Bourne tarafından yazılmış
+olan geleneksel Unix kabuğudur. Bourne kabuğunun içerdiği tüm yerleşik komutlar
+Bash'de de bulunmaktadır. Değerleme ve ayrımlama kuralları `standart' Unix
+kabuğu için posix belirtiminden alınmıştır.
+    </para><para>
+Bu kısımda, kabuk bloklarının kurgulanmasına kısaca değinilmiştir:
+komutlar, denetim yapıları, kabuk işlevleri, kabuk parametreleri,
+kabuk açılımları, isimli dosyalarla doğrudan çalışılabilmeyi sağlayan
+yönlendirmeler ve kabuk komutlarının çalıştırılması.
+    </para>
+  </partintro>
+
+<chapter id="bashref_shell.syntax" label="1">
+  <title>Kabukta Sözdizimi</title>
+  <titleabbrev>Girdilerinizin kabuktaki anlamları.</titleabbrev>
+  <para/><para>
+Kabuk bir girdiyi okuduktan sonra bir dizi işlem yürütür. Eğer
+girdi bir açıklama başlangıcı içeriyorsa, kabuk açıklama
+sembolünü (<literal>#</literal>) ve satırın kalanını yoksayar.
+Aksi takdirde kabuk, girdiyi okur ve onu sözcüklere
+ve işleçlere ayırır, ayrımlama kurallarını kullanarak sözcükleri ve
+karakterleri anlamlandırır.
+  </para><para>
+Bundan sonra bu dizgecikleri komutlar ve bağlı yapılar olarak
+çözümler, özel anlamları olan sözcükleri ve karakterleri
+kaldırır, kalanları yorumlar, gerekiyorsa girdi ya da çıktıyı
+yönlendirir, belirtilen komutları çalıştırır, komutların çıkış
+durumu oluşturmasını bekler ve bu çıkış durumunu denetim veya işlem
+yapılabilmesi için çıktılar.
+  </para>
+  <sect1 id="bashref_shell.operation">
+    <title>Kabuk İşlemleri</title>
+    <titleabbrev>Kabuğun temel işlemleri.</titleabbrev>
+    <para>
+Aşağıdaki kısa açıklamada bir komutun okunması ve çalıştırılması
+sırasındaki kabuk işlemleri anlatılmıştır. Temel olarak,
+kabuk şunları yapar:
+    </para><para>
+      <orderedlist>
+        <listitem>
+Girdiyi <link linkend="bashref_shell.scripts">bir dosyadan</link> veya
+<link linkend="bashref_invoking.bash"><option>-c</option> çağrı
+seçeneğinin</link> bir argümanı olarak sağlanan bir dizgeden  ya da
+kullanıcının uçbiriminden okur.
+        </listitem><listitem>
+<xref linkend="bashref_shell.quoting"/> bölümünde açıklandığı
+gibi ayrımlama kurallarına uygun olarak girdiyi sözcüklere ve
+işleçlere ayırır. Bu dizgecikler metakarakterlerle ayrılır.
+<link linkend="bashref_aliases">Takma ad yorumlaması</link> da bu
+adımda uygulanır.
+        </listitem><listitem>
+Dizgecikleri basit ve birleşik <link linkend="bashref_shell.commands">komutlar</link> olarak çözümler.
+        </listitem><listitem>
+Yorumlanan dizgecikleri <link linkend="bashref_shell.expansions-fname">dosya listelerine</link>, komutlara ve argümanlara ayırarak çeşitli
+<link linkend="bashref_shell.expansions">kabuk açılımlarını</link>
+uygular.
+        </listitem><listitem>
+Varsa gerekli <link linkend="bashref_shell.redirections">yönlendirmeleri</link> uyguladıktan sonra yönlendirme işleçleri ile
+terimlerini argüman listesinden kaldırır.
+        </listitem><listitem>
+Komutu <link linkend="bashref_shell.exec">çalıştırır</link>.
+        </listitem><listitem>
+İsteğe bağlı olarak komutun işini bitirmesini ve <link
+linkend="bashref_shell.exec-exit.status">çıkış durumu</link> üretmesini bekler.
+        </listitem>
+      </orderedlist>
+    </para>
+  </sect1>
+  <sect1 id="bashref_shell.quoting">
+    <title>Ayrımlama</title>
+    <titleabbrev>Karakterlerden özel anlamlandırmanın kaldırılması</titleabbrev>
+<indexterm scope="bashref_concept.index"><primary>ayrımlama</primary></indexterm>
+    <para>
+Ayrımlama işlemi kabukta, sözcükler ve karakterlerden özel anlamlandırmanın
+kaldırılması anlamında kullanılmıştır. Ayrımlama özel karakterlerin özel
+davranışlarını ortadan kaldırarak, onların anahtar sözcükler olarak
+tanımlanmasını ya da parametreler olarak algılanmasını engellemek için
+kullanılır.
+    </para><para>
+Kabuk <link linkend="bashref_definitions-metacharacter">metakarakterlerinin</link>
+herbirinin kabuğa özel anlamı vardır ve bunlar sadece kendileri
+olarak ele alınacaksa tırnak içine alınmalıdır. Komut geçmişine ilişkin
+özellikler kullanılacaksa <link linkend="bashref_rl.interaction-history">geçmiş yorumlama</link> karakteri olan <literal>!</literal> işaretinin geçmiş yorumlaması yapılacak şeklinde algılanmasını engellemek için bu karakter tırnak içine alınmalıdır. Geçmiş yorumlaması ile ilgili daha ayrıntılı bilgi edinmek için <xref linkend="bashref_bash.history.facilities"/> bölümüne bakınız.
+    </para><para>
+Üç tane ayrımlama mekanizması vardır: <emphasis>önceleme karakteri</emphasis>,
+<emphasis>tek tırnak</emphasis> ve <emphasis>çift tırnak</emphasis>.
+    </para>
+    <sect2>
+      <title>Önceleme karakteri</title>
+      <titleabbrev>
+Tek bir karakterden özel anlamlandırma nasıl kaldırılır.
+      </titleabbrev>
+      <para>
+Tırnak içine alınmamış bir tersbölü işareti <literal>\</literal>
+Bash önceleme karakteri adını alır. Kendisinden sonra
+gelen bir karakterin ya da sayısal bir karakter sabitinin değeri
+<literal>satırsonu</literal> karakteri hariç korunur.
+Eğer bir satırın sonunda tek başına ve tırnak içine alınmamış bir
+<literal>\</literal> karakterini izleyen bir <literal>satırsonu</literal>
+karakteri varsa yani, satırın sonunda bir <literal>\satırsonu</literal>
+çifti varsa, bu satır ve altındaki satır tek bir satır olarak yorumlanır
+(Bu durumda bu çift girdiden kaldırılır yani yoksayılır).
+      </para>
+    </sect2>
+    <sect2>
+      <title>Tek Tırnak</title>
+      <titleabbrev>
+Bir karakter dizisinin tamamının yorumlanması nasıl engellenir.
+      </titleabbrev>
+      <para>
+Tek tırnak (<literal>'</literal>) içine alınmış karakterlerin
+değeri korunur. Ancak tek tırnak karakteri, önceleme karakteri ile
+öncelenmiş olsa bile, tek tırnak karakterleri arasında bulunamaz.
+      </para>
+    </sect2>
+    <sect2>
+      <title>Çift Tırnak</title>
+      <titleabbrev>
+Bir karakter dizisinin çoğunluğunun yorumlanması nasıl bastırılır.
+      </titleabbrev>
+      <para>
+Çift tırnak (<literal>"</literal>) içine alınmış karakterlerin
+<literal>$</literal>, <literal>`</literal>, <literal>\</literal>
+ve geçmiş yorumlaması etkinse <command>!</command> karakterleri hariç değerleri korunur. Çift tırnak içine alınmış
+<literal>$</literal> ve <literal>`</literal> karakterleri özel
+anlamlarını korurlar (<xref linkend="bashref_shell.expansions"/>
+bölümüne bakınız). <literal>\</literal> karakteri ise
+<literal>$</literal>, <literal>`</literal>, <literal>"</literal>,
+<literal>\</literal> veya <literal>satırsonu</literal> karakterlerini
+öncelemek için kullanılmışsa özel anlamını korur. Çift tırnak içindeki önceleme karakterlerinden bu karakterleri öncelemekte kullanılanları kaldırılır. Özel anlamı olmayan karakterleri öncelemekte kullanılan önceleme karakteri değişmeden kalır. Bir çift tırnak, önceleme karakteri ile öncelenerek çift tırnaklar arasında kullanılabilir. Geçmiş yorumlaması etkinse, çift tırnaklar içinde bir <command>!</command> varsa ve önceleme karakteri ile öncelenmiş değilse geçmiş yorumlaması uygulanır.
+      </para><para>
+Özel karakterler olan <literal>*</literal> ve <literal>@</literal>
+çift tırnaklar arasında özel anlama sahiptir (<xref
+linkend="bashref_shell.expansions-param"/> bölümüne bakınız).
+      </para>
+    </sect2>
+    <sect2 id="bashref_shell.ansi-c.quoting">
+      <title>ANSI-C Ayrımlaması</title>
+      <titleabbrev>Tırnak içine alınmış ANSI-C dizgeler nasıl yorumlanır.</titleabbrev>
+<indexterm scope="bashref_concept.index">
+<primary>ayrımlama</primary><secondary>ANSI</secondary></indexterm>
+      <para>
+<literal>$'dizge'</literal> biçimindeki sözcükler özel olarak ele alınır. Sözcük, içindeki ANSI C standardında belirtilen tersbölü
+öncelemeli karakterler yorumlanarak dizgeye dönüştürülür. Varsa tersbölü
+öncelemeli karakterler aşağıdaki gibi yorumlanır:
+      </para><para><glosslist><glossentry>
+        <glossterm><literal>\a</literal></glossterm>
+        <glossdef><para>uyarı (zil)</para></glossdef>
+      </glossentry><glossentry>
+        <glossterm><literal>\b</literal></glossterm>
+        <glossdef><para>gerisilme</para></glossdef>
+      </glossentry><glossentry>
+        <glossterm><literal>\e</literal></glossterm>
+        <glossdef><para>önceleme karakteri (ANSI C değil)</para></glossdef>
+      </glossentry><glossentry>
+        <glossterm><literal>\f</literal></glossterm>
+        <glossdef><para>sayfa ileri</para></glossdef>
+      </glossentry><glossentry>
+        <glossterm><literal>\n</literal></glossterm>
+        <glossdef><para>satırsonu</para></glossdef>
+      </glossentry><glossentry>
+        <glossterm><literal>\r</literal></glossterm>
+        <glossdef><para>satırbaşı</para></glossdef>
+      </glossentry><glossentry>
+        <glossterm><literal>\t</literal></glossterm>
+        <glossdef><para>yatay sekme</para></glossdef>
+      </glossentry><glossentry>
+        <glossterm><literal>\v</literal></glossterm>
+        <glossdef><para>düşey sekme</para></glossdef>
+      </glossentry><glossentry>
+        <glossterm><literal>\\</literal></glossterm>
+        <glossdef><para>tersbölü</para></glossdef>
+      </glossentry><glossentry>
+        <glossterm><literal>\'</literal></glossterm>
+        <glossdef><para>tek tırnak</para></glossdef>
+      </glossentry><glossentry>
+        <glossterm><literal>\nnn</literal></glossterm>
+        <glossdef><para>
+Sekizlik tabanda <literal>nnn</literal> (3 rakamlı bir sayı)
+olarak değeri verilen sekiz bitlik karakter
+        </para></glossdef>
+      </glossentry><glossentry>
+        <glossterm><literal>\xHH</literal></glossterm>
+        <glossdef><para>
+Onaltılık tabanda <literal>HH</literal> (iki onaltılık rakam)
+olarak değeri verilen sekiz bitlik karakter
+        </para></glossdef>
+      </glossentry><glossentry>
+        <glossterm><literal>\c</literal><varname>x</varname></glossterm>
+        <glossdef><para>
+Bir <keycombo><keycap>Ctrl</keycap><keycap><varname>x</varname></keycap></keycombo> karakteri
+        </para></glossdef>
+      </glossentry></glosslist></para><para>
+Sonuç, dolar işareti yokmuşçasına tek tırnaklar içine alınır.
+      </para>
+    </sect2>
+    <sect2 id="bashref_shell.quoting-translations">
+      <title>Yerele Özel Çeviri</title>
+      <titleabbrev>Dizgeler diğer dillere nasıl çevrilir.</titleabbrev>
+<indexterm scope="bashref_param-var.index">
+<primary><literal>LC_MESSAGES</literal></primary></indexterm>
+<indexterm scope="bashref_param-var.index">
+<primary><literal>TEXTDOMAIN</literal></primary></indexterm>
+<indexterm scope="bashref_param-var.index">
+<primary><literal>TEXTDOMAINDIR</literal></primary></indexterm>
+<indexterm scope="bashref_concept.index">
+<primary>uluslararasılaştırma</primary></indexterm>
+<indexterm scope="bashref_concept.index">
+<primary>yerelleştirme</primary></indexterm>
+<indexterm scope="bashref_concept.index">
+<primary>anadil</primary></indexterm>
+<indexterm scope="bashref_concept.index">
+<primary>çeviriler</primary><secondary>anadil</secondary></indexterm>
+      <para>
+<literal>$</literal> işareti ile öncelenmiş çift tırnaklı bir dizge (<literal>$"dizge"</literal>) yerel dile çevrilir. Eğer yerel ayarları <literal>C</literal> ya da <literal>POSIX</literal> ise <literal>$</literal> işareti yoksayılır. Yerel dile çevrilen dizgeden çift tırnaklar kaldırılmaz.
+      </para><para>
+Bazı sistemler <literal>LC_MESSAGES</literal> ortam değişkeni ile belirtilen yerelin ileti kataloglarını kullanırken bazıları da <literal>TEXTDOMAIN</literal> ortam değişkenindeki, genellikle <filename>.mo</filename> sonekli dosya ismi ile belirtilen ileti kataloğunu kullanır. <literal>TEXTDOMAIN</literal> değişkeni kullanıldığında, dosyanın bulunduğu yerin <literal>TEXTDOMAINDIR</literal> ortam değişkeni ile belirtilmesi gerekir. Bazıları da bu her iki değişkeni birlikte kullanabilir: <replaceable>TEXTDOMAINDIR/LC_MESSAGES</replaceable><filename>/LC_MESSAGES/</filename><replaceable>TEXTDOMAIN</replaceable><filename>.mo</filename>.
+      </para>
+    </sect2>
+  </sect1>
+  <sect1 id="bashref_shell.comments">
+    <title>Betiklerde Açıklamalar</title>
+    <titleabbrev>Açıklamaların belirtilmesi.</titleabbrev>
+<indexterm scope="bashref_concept.index">
+<primary>kabuk</primary><secondary>açıklamalar</secondary></indexterm>
+<indexterm scope="bashref_concept.index">
+<primary>açıklamalar</primary><secondary>kabuk</secondary></indexterm>
+    <para>
+<link linkend="bashref_bash.builtins-shopt">shopt</link> yerleşik komutunun
+etkin olduğu etkileşimli veya etkileşimsiz tüm kabuklarda
+<literal>#</literal> karakteri ile başlayan bir sözcük ve satır sonuna
+kadar devamındaki tüm karakterler yoksayılır. <option>interactive_comments</option>
+seçeneği etkinleştirilmemiş bir etkileşimli kabukta açıklamalara izin
+verilmez. Bu seçenek etkileşimli kabuklarda öntanımlı olarak etkindir.
+Bir kabuğu etkileşimli hale getirmek için ne yapılması gerektiği <xref
+linkend="bashref_interactive.shells"/> bölümünde anlatılmıştır.
+    </para>
+  </sect1>
+</chapter>
+
+<chapter id="bashref_shell.commands" label="2">
+  <title>Kabuk Komutları</title>
+  <titleabbrev>Kullanabildiğiniz komutların türleri</titleabbrev>
+<indexterm scope="bashref_concept.index">
+<primary>komutlar</primary><secondary>kabuk</secondary></indexterm>
+<indexterm scope="bashref_concept.index">
+<primary>kabuk</primary><secondary>komutlar</secondary></indexterm>
+  <para>
+<command>echo a b c</command> gibi basit bir kabuk komutu,
+komutun kendisi ile kendisinden sonra gelen ve boşluklarla
+ayrılmış argümanlardan oluşur.
+  </para><para>
+Basit komutların çeşitli yollarla birarada kullanılmasıyla daha karmaşık
+kabuk komutları elde edilebilir: bir boruhattı ile birinci basit komutun
+çıktısı ikinci basit komuta girdi olarak aktarılabilir, bir döngü, bir
+koşullu ifade ya da başka gruplamalar altında birarada kullanılabilir.
+  </para>
+  <sect1 id="bashref_shell.commands-simple">
+    <title>Basit Komutlar</title>
+    <titleabbrev>En çok kullanılan kabuk komutu türü.</titleabbrev>
+<indexterm scope="bashref_concept.index">
+<primary>komutlar</primary><secondary>basit</secondary></indexterm>
+    <para>
+Bir basit komut en çok rastlanan komut çeşitidir. Boşluklarla
+ayrılmış sözcüklerden oluşur ve kabuk <link
+linkend="bashref_definitions-cont.op">denetim işleçleri</link>nden
+biri ile sonlanır. İlk sözcük genelde çalıştırılması istenen komuttur,
+kalanlar ise bu komutun argümanlarıdır.
+    </para><para>
+Bir basit komutun <link linkend="bashref_definitions-retstat">dönüş
+durumu</link>, POSIX 1003.1 <function>waitpid</function> işlevi ile
+sağlanan bir <link linkend="bashref_shell.exec-exit.status">çıkış durumu</link>
+ya da komut bir <literal>n</literal> sinyali ile sonlandırılmışsa
+<literal>128+n</literal>'dir.
+    </para>
+  </sect1>
+  <sect1 id="bashref_shell.commands-pipelines">
+    <title>Boruhatları</title>
+    <titleabbrev>Çeşitli komutların girdileri ile çıktılarının bağlanması.</titleabbrev>
+<indexterm scope="bashref_reserved.words"><primary>!</primary></indexterm>
+<indexterm scope="bashref_reserved.words"><primary>time</primary></indexterm>
+<indexterm scope="bashref_concept.index"><primary>boruhattı</primary></indexterm>
+<indexterm scope="bashref_concept.index">
+<primary>komut</primary><secondary>zamanlama</secondary></indexterm>
+<indexterm scope="bashref_concept.index">
+<primary>komutlar</primary><secondary>boruhatları</secondary></indexterm>
+    <para>
+Bir <emphasis>boruhattı</emphasis>, <literal>|</literal> karakteri ile
+ayrılmış basit komutlar dizisidir.
+    </para><para>Bir boruhattının sözdizimi:</para><para>
+<literallayout indent="0">    [<command>time</command> [-p]] [!] <replaceable>komut1</replaceable> [| <replaceable>komut2 ...</replaceable>]
+</literallayout>
+    </para><para>
+Bir boruhattındaki her komut bir kanal ile sonrakine bağlıdır.
+Böylece her komut bir önceki komutun çıktısını okur.
+    </para><para>
+<literal>time</literal> anahtar sözcüğü, boruhattındaki iş sonuçlandıkça
+istatistiklerin basılmasını sağlar. İstatistikler geçen zaman, kullanıcı
+ve komutun çalıştırılması sırasında kullanılan sistem zamanından oluşur.
+<literal>-p</literal> seçeneği POSIX çıktı biçemini değiştirmekte
+kullanılır. <link linkend="bashref-TIMEFORMAT"><literal>TIMEFORMAT</literal></link>
+değişkeninde belirtilen biçemleme dizgesi ile zamanlama bilgilerinin gösterim biçimi ayarlanabilir. Bu biçemler hakkında bilgi <xref linkend="bashref_bash.vars"/> bölümünde
+bulunabilir. <literal>time</literal> anahtar sözcüğü ile kabuk yerleşikleri,
+kabuk işlevleri ve boruhatlarının zamanlama bilgileri alınabilir.
+Harici bir <literal>time</literal> komutu ile bu işlem bu kadar kolay olamıyor.
+    </para><para>
+Bir boruhattı eşzamanlamasız (<xref linkend="bashref_shell.commands-lists"/>
+bölümüne bakınız) çalıştırılmadığında kabuk, boruhattındaki tüm komutların
+işlerini bitirmesini bekleyecektir.
+    </para><para>
+Bir boruhattındaki her komut kendi altkabuğunda (<xref
+linkend="bashref_shell.exec-cmd.env"/> bölümüne bakınız) çalıştırılır.
+Bir boruhattının çıkış durumu <command>pipefail</command> seçeneği etkin olmadıkça son komutun çıkış durumudur (<xref linkend="bashref_set.builtin"/> bölümüne bakınız). <command>pipefail</command> etkinse, borutattının dönüş durumu sıfırdan farklı bir değerle çıkan son (en sağdaki) komutun değeridir, değilse ve tüm komutlar başarı ile sonlanmışsa dönüş durumu sıfırdır. Bir boruhattı anahtar sözcüklerden biri olan <literal>!</literal> karakteri ile
+başlıyorsa, çıkış durumu, açıklanan çıkış durumunun mantıksal tersidir. Kabuk bir değer döndürmeden önce boruhattındaki tüm komutlar sonlanıncaya kadar bekler.
+    </para>
+  </sect1>
+  <sect1 id="bashref_shell.commands-lists">
+    <title>Komut Listeleri</title>
+    <titleabbrev>Komutların sırayla çalıştırılması.</titleabbrev>
+<indexterm scope="bashref_concept.index">
+<primary>komutlar</primary><secondary>listeler</secondary></indexterm>
+    <para>
+Bir <emphasis>liste</emphasis>; <literal>;</literal>,
+<literal>&amp;</literal>, <literal>&amp;&amp;</literal>,
+veya <literal>||</literal> karakteri ile ayrılmış ve isteğe bağlı olarak
+<literal>;</literal>, <literal>&amp;</literal>, veya
+<literal>newline</literal> karakterlerinden biri ile sonlandırılmış
+bir ya da daha fazla sayıdaki boruhattından oluşur.
+    </para><para>
+Bu listelerin işleçleri, <literal>&amp;&amp;</literal> ile
+<literal>||</literal> aynı öncelikte ve kendi aralarında aynı
+öncelikte olan <literal>;</literal> ile <literal>&amp;</literal>
+işleçlerinden daha önceliklidir.
+    </para><para>
+Komutları ayırmak için kullanılan satırsonu karakterleri <emphasis>bir liste içinde</emphasis> iki nokta üstüste karakterlerinin eşdeğerleri kabul edilir.
+    </para><para>
+Bir komut <literal>&amp;</literal> denetim işleci ile sonlandırılmışsa,
+kabuk komutu eşzamanlamaksızın bir altkabukta çalıştırır. Bu <emphasis>artalanda
+çalışma</emphasis> olarak bilinir. Kabuk, komutun işini bitirmesini
+beklemez ve 0 (doğru) çıkış durumu ile döner. <link
+linkend="bashref_job.control">İş denetimi</link> etkin değilse ve
+herhangi bir dolaylı yönlendirmenin bulunmaması halinde eşzamanlamasız
+komutun girdisi <filename>/dev/null</filename>'daki girdi olur.
+    </para><para>
+<literal>;</literal> ile ayrılmış komutlar sırayla çalıştırılır ve kabuk
+her komutun sonlanmasını bekler. Dönüş durumu son komutun çıkış durumudur.
+    </para><para>
+<literal>&amp;&amp;</literal> ve <literal>||</literal> denetim
+işleçleri sırasıyla VE ve VEYA listeleri oluşturur. VE listesinin sözdizimi:
+    </para><para>
+<literallayout indent="0">    <replaceable>komut1</replaceable> &amp;&amp; <replaceable>komut2</replaceable>
+</literallayout>
+    </para><para>
+<replaceable>komut2</replaceable> sadece ve sadece
+<replaceable>komut1</replaceable> sıfır çıkış durumu ile dönmüşse çalıştırılır.
+    </para><para>VEYA listesinin sözdizimi</para><para>
+<literallayout indent="0">    <replaceable>komut1</replaceable> || <replaceable>komut2</replaceable>
+</literallayout>
+    </para><para>
+<replaceable>komut2</replaceable> sadece ve sadece
+<replaceable>komut1</replaceable> sıfırdan farklı bir çıkış durumu
+ile dönmüşse çalıştırılır.
+    </para><para>
+VE ve VEYA listelerinin çıkış durumu daima son komutun çıkış durumudur.
+    </para>
+  </sect1>
+  <sect1 id="bashref_shell.commands-compound">
+    <title>Birleşik Komutlar</title><para>
+<indexterm scope="bashref_concept.index">
+<primary>komutlar</primary><secondary>birleşik</secondary></indexterm>
+Birleşik komutlar kabuk programlama oluşumlarıdır. Her oluşum bir anahtar sözcükle veya denetim işleci başlar ve sonlandırıcı bir anahar sözcük veya işleç ile sonlanır. Bir birleşik komut ile ilişkili bir yönlendirme (bkz, <xref linkend="bashref_shell.redirections"/>) aksi belirtilmedikçe birleşik komut içindeki tüm komutlara uygulanır.
+    </para><para>
+Bash komutları gruplamak ve onları tek bir birim olarak çalıştırmak için döngüleri, koşullu komutları ve gruplama mekanizmalarını sağlar.
+    </para>
+    <sect2 id="bashref_shell.commands-looping" chunkthis="1">
+      <title>Döngüler</title>
+      <titleabbrev>Yinelenen eylemler için kabuk komutları.</titleabbrev>
+<indexterm scope="bashref_concept.index">
+<primary>komutlar</primary><secondary>döngüler</secondary>
+</indexterm>
+    <para>
+Bash aşağıdaki döngüleri destekler.
+    </para><para>
+      <note><para>
+Komutların sözdizimi içinde herhangi bir yerde <literal>;</literal>
+karakterine rastlanırsa bu karakter bir ya da daha fazla sayıda
+satırsonu karakteri ile değiştirilir.</para></note>
+    </para>
+    <sect3 id="bashref_looping.until">
+      <title><literal>until</literal></title>
+<indexterm scope="bashref_reserved.words"><primary>until</primary></indexterm>
+<indexterm scope="bashref_reserved.words"><primary>do</primary></indexterm>
+<indexterm scope="bashref_reserved.words"><primary>done</primary></indexterm>
+      <para>
+<command>until</command> deyiminin sözdizimi:
+      </para><para>
+<synopsis><command>until</command> <replaceable>sınama-komutları</replaceable>; <command>do</command> <replaceable>artbileşen-komutlar</replaceable>; <command>done</command>
+</synopsis>
+      </para><para>
+<replaceable>artbileşen-komutlar</replaceable>,
+<replaceable>sınama komutları</replaceable>nın çıkış durumları sıfırdan
+farklı olduğu sürece çalıştırılır. Deyimin çıkış durumu ise ya
+<replaceable>artbileşen-komutlar</replaceable> içindeki son çalıştırılan
+komutun çıkış durumudur ya da hiç komut çalıştırılmamışsa sıfırdır.
+      </para>
+    </sect3>
+    <sect3 id="bashref_looping.while">
+      <title><literal>while</literal></title>
+<indexterm scope="bashref_reserved.words"><primary>while</primary></indexterm>
+<indexterm scope="bashref_reserved.words"><primary>do</primary></indexterm>
+<indexterm scope="bashref_reserved.words"><primary>done</primary></indexterm>
+      <para>
+<command>while</command> deyiminin söz dizimi:
+      </para><para>
+<synopsis><command>while</command> <replaceable>sınama-komutları</replaceable>; <command>do</command> <replaceable>artbileşen-komutlar</replaceable>; <command>done</command>
+</synopsis>
+      </para><para>
+<replaceable>artbileşen-komutlar</replaceable>,
+<replaceable>sınama komutları</replaceable>nın çıkış durumları sıfır
+olduğu sürece çalıştırılır. Deyimin çıkış durumu ise ya
+<replaceable>artbileşen-komutlar</replaceable> içindeki son çalıştırılan
+komutun çıkış durumudur ya da hiç komut çalıştırılmamışsa sıfırdır.
+      </para>
+    </sect3>
+    <sect3 id="bashref_looping.for">
+      <title><literal>for</literal></title>
+<indexterm scope="bashref_reserved.words"><primary>for</primary></indexterm>
+<indexterm scope="bashref_reserved.words"><primary>do</primary></indexterm>
+<indexterm scope="bashref_reserved.words"><primary>done</primary></indexterm>
+      <para>
+<command>for</command> deyiminin sözdizimi:
+      </para><para>
+<synopsis><command>for</command> <replaceable>isim</replaceable> [<command>in</command> <replaceable>sözcük ...</replaceable>]; <command>do</command> <replaceable>komutlar</replaceable>; <command>done</command>
+</synopsis>
+      </para><para>
+Sözcükler yorumlanır ve sonuçlanan listenin isim ile bağlantılı
+her üyesi için komutlar  çalıştırılır. Deyimin
+<command>in</command> <replaceable>sözcük</replaceable>
+parçası yoksa, <command>in</command> <literal>"$@"</literal>
+belirtilmiş gibi kümeyi oluşturan her parametre için komutlar
+birer kere çalıştırılır (<xref linkend="bashref_shell.parameters-special"/>
+bölümüne bakınız). Deyimin dönüş durumu çalıştırılan son komutun çıkış
+durumudur. Sözcüklerin yorumlanmasından bir üye elde edilememişse
+bir komut çalıştırılmaz ve sıfır çıkış durumu oluşur.
+      </para><para>
+<command>for</command> deyimi için aşağıdaki sözdizimi de desteklenmektedir:
+      </para><para>
+<synopsis><command>for</command> (( <replaceable>ifade1</replaceable> ; <replaceable>ifade2</replaceable> ; <replaceable>ifade3</replaceable> )) ; <command>do</command> <replaceable>komutlar</replaceable> ; <command>done</command>
+</synopsis>
+      </para><para>
+Önce, <replaceable>ifade1</replaceable> aritmetik ifadesi
+aşağıda açıklanan kurallara bağlı olarak değerlendirilir
+(<xref linkend="bashref_shell.arithmetic"/> bölümüne bakınız).
+<replaceable>ifade2</replaceable> artimetik ifadesinin değeri
+sıfır oluncaya kadar tekrar tekrar değerlendirilir.
+<replaceable>ifade2</replaceable> aritmetik ifadesinin sıfırdan
+farklı olduğu durumlarda komutlar çalıştırılır ve
+<replaceable>ifade3</replaceable> aritmetik ifadesi değerlendirilir.
+Verilmeyen ifade için 1 varmış gibi işlem yapılır. Dönüş değeri
+listedeki son çalıştırılan komutun çıkış durumudur. Geçersiz
+bir ifadenin varlığı halinde ise çıkış durumu yanlış olacaktır.
+      </para><para>
+<link linkend="bashref_bourne.shell.builtins-break"><command>break</command></link> ve <link linkend="bashref_bourne.shell.builtins-continue"><command>continue</command></link> deyimleri döngü denetiminde kullanılabilir.
+      </para>
+    </sect3>
+  </sect2>
+  <sect2 id="bashref_shell.commands-conditionals" chunkthis="1">
+    <title>Koşullu Çalıştırma</title>
+    <titleabbrev>Koşullu olarak çalıştırılan kabuk komutları.</titleabbrev>
+    <sect3 id="bashref_conditionals.if">
+      <title><literal>if</literal></title>
+<indexterm scope="bashref_reserved.words"><primary>if</primary></indexterm>
+<indexterm scope="bashref_reserved.words"><primary>then</primary></indexterm>
+<indexterm scope="bashref_reserved.words"><primary>elif</primary></indexterm>
+<indexterm scope="bashref_reserved.words"><primary>else</primary></indexterm>
+<indexterm scope="bashref_reserved.words"><primary>fi</primary></indexterm>
+<indexterm scope="bashref_concept.index">
+<primary>komutlar</primary><secondary>koşullu</secondary></indexterm>
+      <para>
+<command>if</command> deyiminin sözdizimi:
+      </para><para>
+<synopsis><command>if</command> <replaceable>sınama-komutları</replaceable>; <command>then</command>
+  <replaceable>artbileşen-komutlar</replaceable>;
+[<command>elif</command> <replaceable>diğer-sınama-komutları</replaceable>; <command>then</command>
+  <replaceable>diğer-altbileşenler</replaceable>;]
+[<command>else</command>
+  <replaceable>karşı-altbileşenler</replaceable>;]
+<command>fi</command>
+</synopsis>
+      </para><para>
+<replaceable>sınama-komutları</replaceable> listesi yorumlandığında
+dönüş durumu sıfırsa, <replaceable>artbileşen-komutlar</replaceable>
+çalıştırılır; sıfırdan farklı ise <command>elif</command>'lerin
+<replaceable>diğer-sınama-komutları</replaceable> listesi yorumlanır
+ve bunların dönüş durumuna göre ya <replaceable>diğer-altbileşenler</replaceable>
+ya da <replaceable>karşı-altbileşenler</replaceable> çalıştırılır.
+Deyimin tamamının dönüş durumu çalıştırılmış olan son komutun çıkış
+durumudur. Bir komut çalıştırılmamışsa ve hiçbir koşul doğru sonuç
+vermemişse sıfır döner.
+      </para>
+    </sect3>
+    <sect3 id="bashref_conditionals.case">
+      <title><literal>case</literal></title>
+<indexterm scope="bashref_reserved.words"><primary>case</primary></indexterm>
+<indexterm scope="bashref_reserved.words"><primary>esac</primary></indexterm>
+<indexterm scope="bashref_reserved.words"><primary>in</primary></indexterm>
+      <para>
+<command>case</command> deyiminin sözdizimi:
+      </para><para>
+<synopsis><command>case</command> <replaceable>sözcük</replaceable> <command>in</command> [ [(] <replaceable>kalıp</replaceable> [| <replaceable>kalıp</replaceable>]...) <replaceable>komutlar</replaceable> ;;]... <command>esac</command>
+</synopsis>
+      </para><para>
+<command>case</command> deyimi <replaceable>sözcük</replaceable> ile
+eşleşen ilk <replaceable>kalıp</replaceable>'a karşı düşen
+<replaceable>komutlar</replaceable>'ı çalıştırır.
+Kabuk seçeneği <command>nocasematch</command> etkinse eşleşme alfabetik karakterlerin büyüklüklerine bakılmaksızın uygulanır (bkz, <xref linkend="bashref_bash.builtins-shopt"/>).
+Çok sayıda kalıp kullanılmışsa kalıpları ayırmak için <literal>|</literal> işleci,
+kalıp listesini sonlandırmak için ise <literal>)</literal> işleci
+kullanılır. Her <command>case</command> deyimi bir
+<literal>;;</literal> işleci ile sonlandırılmalıdır.
+<replaceable>sözcük</replaceable> bir <replaceable>kalıp</replaceable> ile
+eşleştirmeye çalışılmadan önce, ayrımlama uygulanır ve yaklaşık (~),
+parametre, komut ve aritmetik yorumlamalarına tabi tutulur.
+      </para><para>
+Herbiri <literal>;;</literal> işleci ile sonlandırılmış çok sayıda
+<command>case</command> deyimi ardarda kullanılabilir. Ancak bunların
+içinden sadece ilk <replaceable>sözcük</replaceable>-<replaceable>kalıp</replaceable>
+eşleşmesine bağlı <replaceable>komutlar</replaceable> çalıştırılır.
+      </para><para>
+Aşağıdaki örnek betikte <command>case</command> deyimi hayvanların
+bazı özellikleri için kullanılmıştır:
+      </para><para>
+<screen>
+echo -n "Bir hayvan ismi yazınız: "
+read HAYVAN
+echo -n "$HAYVAN "
+case $HAYVAN in
+  at | kedi | maymun) echo -n "dört bacaklıdır" ;;
+   kanarya | kanguru) echo -n "iki bacaklıdır" ;;
+                   *) echo -n "için bir veri yok" ;;
+esac
+</screen>
+      </para><para>
+Hiçbir <replaceable>kalıp</replaceable> eşleşmezse dönüş durumu sıfırdır.
+Aksi takdirde son çalıştırılan komutun çıkış durumu döndürülür.
+      </para>
+    </sect3>
+    <sect3 id="bashref_conditionals.select">
+      <title><literal>select</literal></title>
+<indexterm scope="bashref_reserved.words"><primary>select</primary></indexterm>
+      <para>
+The <command>select</command> menü üretiminde kolaylık sağlar.
+<command>for</command> deyimine benzer bir sözdizimi vardır:
+      </para><para>
+<synopsis><command>select</command> <replaceable>isim</replaceable> [<command>in</command> <replaceable>sözcük ...</replaceable>]; <command>do</command> <replaceable>komutlar</replaceable>; <command>done</command>
+</synopsis>
+      </para><para>
+<replaceable>sözcük ...</replaceable> listesi yorumlanarak öğe
+listesi üretilir. Öğe listesindeki her öğe başına bir numara eklenerek
+standart hataya çıktılanır. Eğer <command>in</command>
+<replaceable>sözcük ...</replaceable> çifti verilmezse,
+<command>in</command> <literal>"$@"</literal> verilmiş gibi
+konuma bağlı parametreler basılır ve standart girdide <literal>PS3</literal>
+istemi ile girdi beklenir. Listede belirtilen numaralardan biri girdi
+olarak verilirse, o konuma bağlı sözcük ile <replaceable>isim</replaceable>
+eşleştirilir. Girdi satırı boş verilirse, <literal>EOF</literal>
+verilinceye kadar komut istemi tekrarlanır. Listede belirtilenler dışında
+verilen her değer için <replaceable>isim</replaceable> null ile eşleştirilir.
+Okunan satır <literal>REPLY</literal> değişkeninde tutulur.
+      </para><para>
+Her seçimden sonra bir <command>break</command> komutu ile
+<command>select</command> sonlandırılıncaya kadar seçime bağlı
+olarak <replaceable>komutlar</replaceable> çalıştırılır.
+      </para><para>
+Aşağıdaki betik örneğinde, bulunulan dizin içindeki dosyalar listelenir
+ve kullanıcıdan birini seçmesi istenir. Seçilen dosyanın  ismi ve
+parantez içinde verdiğiniz girdi gösterilir:
+      </para><para>
+<screen>
+select fname in *;
+do
+  echo $fname \($REPLY\) seçtiniz.
+  break;
+done
+</screen>
+      </para>
+    </sect3>
+    <sect3 id="bashref_conditionals.2par">
+      <title><literal>((&hellip;))</literal></title>
+<indexterm scope="bashref_reserved.words"><primary>((</primary></indexterm>
+<indexterm scope="bashref_reserved.words"><primary>))</primary></indexterm>
+      <para>
+<literallayout indent="0">    (( <replaceable>ifade</replaceable> ))
+</literallayout>
+      </para><para>
+Verilen aritmetik ifade <xref linkend="bashref_shell.arithmetic"/>
+bölümünde açıklandığı gibi yorumlanır. Eğer ifadenin değeri
+sıfırdan farklı ise dönüş durumu sıfırdır; aksi takdirde 1 dir.
+Bu gösterim,
+      </para><para>
+<literallayout indent="0">    <command>let </command>"<replaceable>ifade</replaceable>"
+</literallayout>
+      </para><para>
+ile eşdeğerdedir.
+      </para>
+    </sect3>
+    <sect3 id="bashref_conditionals.2bracket">
+      <title><literal>[[&hellip;]]</literal></title>
+<indexterm scope="bashref_reserved.words"><primary>[[</primary></indexterm>
+<indexterm scope="bashref_reserved.words"><primary>]]</primary></indexterm>
+      <para>
+<literallayout indent="0">
+    [[ <replaceable>ifade</replaceable> ]]
+</literallayout>
+      </para><para>
+Koşullu <replaceable>ifade</replaceable>nin yorumuna bağlı olarak
+0 ya da 1 ile döner. İfadeler <xref linkend="bashref_conditionals"/>
+bölümünde açıklanan önceliklere göre yorumlanır. <literal>[[</literal>
+ile <literal>]]</literal> arasındaki sözcüklere sözcük ve
+dosyaismi yorumlaması uygulanmaz, sadece yaklaşık (~), parametre ve
+değişken yorumlamalarıyla aritmetik, komut ve süreç yorumlamaları ve
+ayrımlama uygulanır.
+      </para><para>
+<command>-f</command> gibi mantıksal işleçler öncelikliler arasında sayılabilmeleri için tırnak içine alınmamış olmalıdırlar.
+      </para><para>
+<literal>==</literal> ve <literal>!=</literal> işleçleri kullanıldığında,
+işlecin sağındaki dizge bir kalıp olarak ele alınır ve
+<xref linkend="bashref_shell.expansions-fname.pm"/> bölümünde
+açıklanan kurallara göre eşleştirme yapılır.
+Kabuk seçeneği <command>nocasematch</command> etkinse eşleşme alfabetik karakterlerin büyüklüklerine bakılmaksızın uygulanır (bkz, <xref linkend="bashref_bash.builtins-shopt"/>).
+Dizge kalıpla eşleşirse (`==') 0, eşleşmezse (`!=') 1 ile döner. Kalıbın bir bölümünün özellikle dizge olarak yorumlanması isteniyorsa o bölüm tırnak içine alınabilir.
+      </para><para>
+<command>==</command> ve <command>!=</command> işleçleriyle aynı öncelik sırasına sahip bir iki terimli daha vardır: <command>=~</command> işleci. Kullanıldığında, işlecin sağındaki dizge bir gelişkin düzenli ifade olarak ele alınır ve buna uygun eşleştirilir (<literal>regex</literal>3'teki gibi). Dizge kalıpla eşleşirse dönüş değeri 0, aksi takdirde 1'dir. Eğer düzenli ifade sözdizimsel olarak hatalıysa koşullu ifade 2 değeri ile döner. Kabuk seçeneği <command>nocasematch</command> etkinse eşleşme alfabetik karakterlerin büyüklüklerine bakılmaksızın uygulanır (bkz, <xref linkend="bashref_bash.builtins-shopt"/>). Düzenli ifade içindeki parantezli altifadelerle eşleşen altdizgeler dizi değişkeni <command>BASH_REMATCH</command>'de saklanır. <command>BASH_REMATCH</command>'in 0 indisli elemanı düzenli ifadenin tamamı ile eşleşen dizgeyi içerer. <command>BASH_REMATCH</command>'in <varname>n</varname> indisli elemanı ise düzenli ifadenin <varname>n</varname>'inci parantezli altifadesi ile eşleşen dizgeyi içerir.
+        </para><para>
+İfadeler aşağıdaki işleç öncelik sırasına göre yorumlanır:
+      </para><para>
+<literallayout indent="0">
+    ( <replaceable>ifade</replaceable> )
+</literallayout>
+      </para><para>
+<replaceable>ifade</replaceable>'nin değeri ile döner.
+Önceliği arttırmak için kullanılır.
+      </para><para>
+<literallayout indent="0">
+    ! <replaceable>ifade</replaceable>
+</literallayout>
+      </para><para>
+ifadenin değeri yanlışsa doğru döner.
+      </para><para>
+<literallayout indent="0">
+    <replaceable>ifade1</replaceable> &amp;&amp; <replaceable>ifade2</replaceable>
+</literallayout>
+      </para><para>
+<replaceable>ifade1</replaceable> ve
+<replaceable>ifade2</replaceable>, her ikisi de doğru ise
+sonuç doğrudur.
+      </para><para>
+<literallayout indent="0">
+    <replaceable>ifade1</replaceable> || <replaceable>ifade2</replaceable>
+</literallayout>
+      </para><para>
+<replaceable>ifade1</replaceable> ya da
+<replaceable>ifade2</replaceable>, her ikisinden biri doğru ise
+sonuç doğrudur.
+      </para><para>
+<literal>&amp;&amp;</literal> ve <literal>||</literal> işleçleri
+ile sonucu elde etmek için <replaceable>ifade1</replaceable> ifadesinin
+değeri yeterliyse <replaceable>ifade2</replaceable> yorumlanmaz.
+      </para>
+    </sect3>
+  </sect2>
+  <sect2 id="bashref_shell.commands-grouping" chunkthis="1">
+    <title>Komutların Gruplanması</title>
+    <titleabbrev>Komutları gruplama yolları.</titleabbrev>
+<indexterm scope="bashref_concept.index">
+<primary>komutlar</primary><secondary>gruplama</secondary></indexterm>
+    <para>
+Bash komutları gruplayarak tek bir birim gibi çalıştırmayı sağlayan
+iki yöntem içerir. Gruplanan komutlara sadece komut listesi içindeki
+yönlendirmeler uygulanabilir. Örneğin liste içindeki tüm komutların
+çıktısı tek bir veri akışına yönlendirilebilir.
+    </para>
+    <sect3 id="bashref_grouping.w.parentheses">
+      <title><literal>()</literal> ile gruplama</title>
+<indexterm scope="bashref_reserved.words"><primary>( </primary></indexterm>
+<indexterm scope="bashref_reserved.words"><primary> )</primary></indexterm>
+       <para>
+<literallayout indent="0">
+    ( <replaceable>liste</replaceable> )
+</literallayout>
+      </para><para>
+Parantez içinde gruplama bir altkabuk ortamının oluşturulması ile sonuçlanır (bkz, <xref linkend="bashref_shell.exec-cmd.env"/>) ve
+<replaceable>liste</replaceable> içindeki her komut bu altkabukta
+çalıştırılır. Değişken atamaları da sadece bu altkabuk için geçerli olur.
+      </para>
+    </sect3>
+    <sect3 id="bashref_grouping.w.braces">
+      <title><literal>{}</literal> ile gruplama</title>
+<indexterm scope="bashref_reserved.words"><primary>{</primary></indexterm>
+<indexterm scope="bashref_reserved.words"><primary>}</primary></indexterm>
+      <para>
+<literallayout indent="0">    { <replaceable>liste</replaceable>; }
+</literallayout>
+      </para><para>
+Bu tür gruplamada ise bir altkabuk oluşturulmaz, listedeki komutlar
+doğrudan kabukta çalıştırılır. <replaceable>liste</replaceable> bir
+; veya bir satırsonu karakteri ile sonlandırılmalıdır.
+      </para>
+    </sect3><para>
+Altkabuk oluşturmaya ek olarak iki gruplama arasında tarihsel sebeplere
+bağlı olarak küçük bir fark daha vardır. Kaşlı ayraçlar <emphasis>anahtar
+sözcük</emphasis>tür, dolayısıyla <replaceable>liste</replaceable>'den
+birer <emphasis>boşluk</emphasis> ile ayrılmalıdır. Parantezler ise
+işleçtir ve <replaceable>liste</replaceable>'den boşluklarla ayrılmamış
+bile olsalar kabuk tarafından ayrı olarak ele alınırlar.
+    </para><para>
+Her iki gruplama için de dönüş durumu <replaceable>liste</replaceable>'nin
+çıkış durumudur.
+    </para></sect2>
+  </sect1>
+</chapter>
+
+<chapter id="bashref_shell.functions" label="3">
+  <title>Kabuk İşlevleri</title>
+  <titleabbrev>Komutların isme göre gruplanması.</titleabbrev>
+<indexterm scope="bashref_reserved.words"><primary>function</primary></indexterm>
+<indexterm scope="bashref_concept.index">
+<primary>işlevler</primary><secondary>kabuk</secondary></indexterm>
+<indexterm scope="bashref_concept.index">
+<primary>kabuk</primary><secondary>işlevler</secondary></indexterm>
+  <para>
+Kabuk işlevleri, komutları isimli bir grup altında toplayıp gerektiğinde
+basit bir komut olarak grubu ismiyle çağırarak içindeki komutların
+çalıştırılmasını sağlar. Kabuk işlevleri için bir altkabuk ya da yeni
+bir süreç oluşturulmaz, içindeki komutlar doğrudan mevcut kabukta
+yorumlanır.
+  </para><para>
+İşlevler için aşağıdaki sözdizimi uygulanır:
+  </para><para>
+<literallayout indent="0">
+    [ <literal>function</literal> ] <replaceable>isim</replaceable> () <replaceable>birleşik-komut</replaceable> [ <replaceable>yönlendirmeler</replaceable> ]
+</literallayout>
+  </para><para>
+Bu, <replaceable>isim</replaceable> isminde bir kabuk işlevi oluşturur.
+<literal>function</literal> anahtar sözcüğü isteğe bağlıdır. <literal>function</literal> kullanılmışsa parantezler isteğe bağlıdır. <replaceable>birleşik-komut</replaceable> işlevin gövdesini oluşturur (bkz, <xref linkend="bashref_shell.commands-compound"/>). Bu komut normal olarak <literal>{</literal> ile <literal>}</literal>
+arasındaki bir <replaceable>komut-listesi</replaceable>nden oluşur, fakat evvelce açıklanan birleşik komutlardan biri olabilir. <replaceable>isim</replaceable> bir komut ismi olarak verildiğinde <replaceable>birleşik-komut</replaceable> çalıştırılır. İşlev çalıştırılırken işlevle ilişkilendirilmiş <link linkend="bashref_shell.redirections">yönlendirmeler de uygulanır</link>.
+  </para><para>
+Bir işlev tanımı <command>unset</command> yerleşiğinin <option>-f</option> seçeneğinde kullanılarak silinebilir (bkz, <xref linkend="bashref_bourne.shell.builtins-unset"/>).
+  </para><para>
+İşlev tanımının dönüş durumu bir sözdizimi hatası veya aynı isimde bir işlev olmadıkça sıfırdır. İşlev çalıştırıldığında, işlevin dönüş durumu gövdesindeki komutlardan sonuncusunun dönüş durumu olur.
+  </para><para>
+Tarihsel sebeplerle, kaşlı ayraçlar anahtar sözcük olduklarından dolayı
+kaşlı ayraç olarak işlenebilmeleri için diğer sözcüklerden
+boşluklarla ya da satırsonu karakterleri ile ayrılmaları gerekir. Ayrıca, kaşlı ayraç kullanımında,
+<replaceable>komut-listesi</replaceable> bir noktalı virgül, bir <command>&amp;</command> ya da bir
+satırsonu karakteri ile sonlandırılmalıdır.
+  </para><para>
+Bir işlev çalıştırılırken, argümanları <xref
+linkend="bashref_shell.parameters-positional"/> olarak işlenir.
+Özel parametre olan <literal>#</literal> kullanılarak konumsal
+parametrenin konumu değiştirilebilir. Ancak, 0. konumsal parametre
+değiştirilemez. İşlevin çalıştırılması sırasında işlevin ismi
+<literal>FUNCNAME</literal> değişkeninin ilk elemanında tutulur.
+<command>declare</command> yerleşiği kullanılarak işlevin <command>trace</command> özelliği belirtilmedikçe veya <command>set</command> yerleşiği ile <command>-o functrace</command> seçeneği etkinleştirilmedikçe <command>DEBUG</command> ve <command>RETURN</command> tuzaklarının miras alınması dışında komut çalıştırma ortamının tüm diğer yönleri bir işlev ile çağrıcısı arasında aynıdır. Ayrıca <xref linkend="bashref_bourne.shell.builtins-trap"/>'ne de bakınız.
+  </para><para>
+Eğer komut listesinde <literal>return</literal> yerleşik komutu varsa,
+işlev tamamlandıktan sonra icra işlev çağrısından sonraki komuta geçerek
+devam eder. <command>RETURN</command> tuzağı ile ilişkilendirilmiş bir komut icra kaldığı yerden devam etmeden önce çalıştırılır. İşlev tamamlandığında, konumsal parametrelerin ve
+<literal>#</literal> özel parametresinin değerleri işlev çağrısından
+önceki değerlerine döndürülür. <literal>return</literal> ile birlikte
+bir sayı verilmişse, bu işlevin dönüş durumudur; verilmemişse
+<literal>return</literal> komutundan önceki son çalıştırılan komutun
+çıkış durumu işlevin dönüş durumudur.
+  </para><para>
+İşleve özel değişkenler <literal>local</literal> yerleşiği ile
+belirtilebilir. Bu değişkenler sadece işlev ve onun komut listesindeki
+komutlar için geçerlidir.
+  </para><para>
+İşlev isimleri ve tanımları <link linkend="bashref_bash.builtins-declare"><command>declare</command></link> veya <link linkend="bashref_bash.builtins-typeset"><command>typeset</command></link> yerleşik komutlarının <option>-f</option> seçeneği ile listelenebilir. <command>declare</command> veya <command>typeset</command> komutunun <option>-F</option> seçeneği sadece işlev isimlerini listeleyecektir (eğer <command>extdebug</command> kabuk seçeneği etkinse isteğe bağlı olarak kaynak dosyası ismi ve satır numarasını da). Bu yolla işlevler, <link linkend="bashref_bourne.shell.builtins-export"><command>export</command></link> yerleşiğine <option>-f</option> seçeneği belirtilerek altkabuklara otomatik olarak ihraç edilebilir.
+Aynı isimli kabuk işlevleri ve değişkenleri kabuğun çocuklarına çok sayıda eşdeğer isimli girdinin ortam içinde aktarılmasına sebep olacağına dikkat ediniz. Bunun sorunlara yol açabileceği durumları dikkate alınız.
+   </para><para>
+İşlevler bir diğerinin içinden çağrılabilir. Bu şekilde iç içe
+çağrılara bir sınırlama getirilmemiştir.
+  </para>
+</chapter>
+
+<chapter id="bashref_shell.parameters" label="4">
+  <title>Kabuk Parametreleri</title>
+  <titleabbrev>Özel kabuk değişkenleri.</titleabbrev>
+<indexterm scope="bashref_concept.index"><primary>parametreler</primary></indexterm>
+<indexterm scope="bashref_concept.index"><primary>kabuk</primary><secondary>değişken</secondary></indexterm>
+<indexterm scope="bashref_concept.index"><primary>değişken</primary><secondary>kabuk</secondary></indexterm>
+  <para>
+Bir <emphasis>parametre</emphasis> değerlerin saklandığı bir öğedir.
+Bir <literal>isim</literal>, bir sayı ya da aşağıda listelenmiş özel
+karakterlerden biri olabilir. Bir <emphasis>değişken</emphasis> bir <literal>isim</literal> ile
+donatılmış bir parametredir. Bir değişkenin bir <emphasis>değeri</emphasis>
+vardır, isteğe bağlı olarak öznitelikleri de olabilir. Öznitelikler,
+<link linkend="bashref_bash.builtins-declare"><command>declare</command></link>
+yerleşik komutu kullanılarak atanabilir.
+  </para><para>
+Bir parametre bir değer atanarak belirtilir. Boş dizge geçerli bir değerdir.
+Bir değişken belirtildikten sonra sadece
+<link linkend="bashref_bourne.shell.builtins-unset"><command>unset</command></link>
+yerleşik komutu ile kaldırılabilir.
+  </para><para>
+Bir değişkenin belirtilmesi aşağıdaki sözdizimi ile yapılabilir:
+  </para><para>
+<literallayout indent="0">
+    <replaceable>isim</replaceable>=[<replaceable>değer</replaceable>]
+</literallayout>
+  </para><para>
+Eğer <replaceable>değer</replaceable> verilmezse, değişkene değer olarak
+boş dizge verilmiş kabul edilir. Tüm <replaceable>değer</replaceable>lere
+yaklaşık (~), parametre ve değişken yorumlamaları ile komut,
+aritmetik yorumlamaları ve ayrımlama (ayrıntılar aşağıda) uygulanır.
+Bir değişken tamsayılardan oluşmuş özelliklere sahipse,
+<literal>$((...))</literal> yorumlaması kullanılmamış bile olsa
+değer bir aritmetik ifade olarak değerlendirilir (bkz, <xref linkend="bashref_shell.expansions-arith"/>). <literal>"$@"</literal> kullanımı dışında (aşağıda açıklanmıştır),
+sözcük çözümlemesi uygulanmaz. Dosya ismi çözümlemesi uygulanmaz.
+Atama deyimleri <command>alias</command>, <command>declare</command>,
+<command>typeset</command>, <command>export</command>,
+<command>readonly</command> ve <command>local</command> yerleşik
+komutlarının argümanları olarak verilebilir.
+    </para><para>
+Atama deyiminin bir kabuk değişkenine veya <link linkend="bashref_arrays">dizi</link> indisine bir değer atadığı bağlamda <command>+=</command> işleci sona ya da değişkenin önceki değerine ekleme yapmakta kullanılabilir. <command>+=</command> işlecinin bir değişkene uygulandığı durumda değişkenin tamsayı özniteliği etkinse <replaceable>değer</replaceable> bir aritmetik ifade olarak değerlendirilir ve değişkenin o anki değerine eklenir. <command>+=</command> işlecinin bir <link linkend="bashref_arrays">dizi</link> değişkenine birleşik atama kullanılarak uygulandığı durumda ise değişkenin değeri değiştirilmez (<command>=</command> kullanılmış gibi) ve yeni değer dizinin en büyük indisinden bir büyük indiste başlayan diziye eklenir. Dizge değerli bir değişkene uygulandığında, <replaceable>değer</replaceable> yorumlandıktan sonra değişkenin değerinin ardına eklenir.
+  </para>
+  <sect1 id="bashref_shell.parameters-positional">
+    <title>Konumsal Parametreler</title>
+<indexterm scope="bashref_concept.index">
+<primary>parametreler</primary><secondary>konumsal</secondary></indexterm>
+    <titleabbrev>Kabuğun komut satırı argümanları.</titleabbrev>
+    <para>
+Bir <emphasis>konumsal parametre</emphasis> tek hane olarak
+<constant>0</constant> dışında bir ya da daha fazla haneli bir sayı ile
+belirlenen bir parametredir. Konumsal parametreler, kabuk argümanlarından
+çağrı sırasında ya da özel olarak <command>set</command> yerleşik
+komutu kullanılarak oluşturulur. <literal>N.</literal> konumsal
+parametreye <literal>${N}</literal> olarak ya da eğer <literal>N</literal>
+tek haneli bir sayı ise <literal>$N</literal> olarak erişilebilir.
+Konumsal parametreler  <link
+linkend="bashref_set.builtin"><command>set</command></link> yerleşik
+komutu ile atanabilir ve <link
+linkend="bashref_bourne.shell.builtins-shift"><command>shift</command></link> yerleşik komutu ile
+kaldırılabilir. Konumsal parametreler, bir <link
+linkend="bashref_shell.functions">kabuk işlevinin</link> çalıştırılması
+sırasında geçici olarak değiştirilebilir.
+    </para><para>
+Birden fazla rakamdan oluşan konumsal parametrelerin
+çağrılması sırasında sayı kaşlı ayraçlar içine alınmalıdır.
+    </para>
+  </sect1>
+  <sect1 id="bashref_shell.parameters-special">
+    <title>Özel Parametreler</title>
+    <titleabbrev>Özel anlamları olan parametreler.</titleabbrev>
+<indexterm scope="bashref_concept.index">
+<primary>parametreler</primary><secondary>özel</secondary></indexterm>
+    <para>
+Kabuğun bazı özel parametreleri vardır, bu parametreler atanamaz
+sadece gerektiğinde kullanılabilir:
+    </para><para>
+      <variablelist>
+<indexterm scope="bashref_param-var.index"><primary><literal>*</literal></primary></indexterm>
+        <varlistentry>
+          <term id="bashref-asterisk"><literal>*</literal></term>
+          <listitem><para>
+Birden başlayan konumsal parametreler olarak yorumlanır.
+Çift tırnak içine alınarak kullanıldığında, her parametresi
+<literal>IFS</literal> değişkeninin ilk karakterinin ayraç
+olduğu tek sözcüklük bir dizgedir. Yani <literal>"$*"</literal>
+sözcüğü <literal>"$1c$2c..."</literal> sözcüğüne eşdeğerdir.
+Buradaki <literal>c</literal> karakteri <literal>IFS</literal>
+değişkeninin değerinin ilk karakteridir. Eğer <literal>IFS</literal>
+değişkeni belirlenmemişse boş bir dizgedir. Bu durumda
+parametreler bir ayraç karakteri olmaksızın yanyana dizilir.
+          </para></listitem>
+        </varlistentry>
+<indexterm scope="bashref_param-var.index"><primary><literal>@</literal></primary></indexterm>
+        <varlistentry>
+          <term id="bashref-commercial-at"><literal>@</literal></term>
+          <listitem><para>
+Birden başlayan konumsal parametreler olarak yorumlanır.
+Çift tırnak içine alınarak kullanıldığında, her parametresi
+ayrı bir sözcük olarak yorumlanır. Yani <literal>"$@"</literal>
+sözcüğü <literal>"$1" "$2" ...</literal> sözcüklerine eşdeğerdir.
+Eğer çift tırnak yorumlaması bir sözcük içinde vuku bulursa ilk parametrenin yorumu özgün sözcüğün başlangıç parçasıyle ve son parametrenin yorumu da özgün sözcüğün son parçasıyla bağlıdır.
+Konumsal parametrelerin bulunmaması halinde <literal>"$@"</literal>
+ve <literal>$@</literal> hiçlik olarak yorumlanır, yani parametreler
+silinmiş gibi olur.
+          </para></listitem>
+        </varlistentry>
+<indexterm scope="bashref_param-var.index"><primary><literal>#</literal></primary></indexterm>
+        <varlistentry>
+        <term><literal>#</literal></term><listitem><para>
+Konumsal parametrelerin numaraları onluk sayılar olarak yorumlanır.
+          </para></listitem>
+        </varlistentry>
+<indexterm scope="bashref_param-var.index"><primary><literal>?</literal></primary></indexterm>
+        <varlistentry>
+        <term><literal>?</literal></term><listitem><para>
+En son çalıştırılan önalandaki boruhattının çıkış durumudur.
+          </para></listitem>
+        </varlistentry>
+<indexterm scope="bashref_param-var.index"><primary><literal>-</literal> (bir tire)</primary></indexterm>
+        <varlistentry>
+        <term><literal>-</literal></term>
+          <listitem><para>
+(Kabuğun kendisi tarafından (örneğin <option>-i</option>
+seçeneği olarak) ya da <command>set</command> yerleşik komutu
+ile çağrı sırasında belirtilmiş komut satırı seçenekleri olarak
+yorumlanır.
+          </para></listitem>
+        </varlistentry>
+<indexterm scope="bashref_param-var.index"><primary><literal>$</literal></primary></indexterm>
+        <varlistentry>
+          <term><literal>$</literal></term><listitem><para>
+Kabuğun süreç kimliğidir (PID). Bir <literal>()</literal>
+altkabuğunun varlığı halinde süreç kimliği olarak altkabuğun
+değil ana kabuğun süreç kimliği döner.
+          </para></listitem>
+        </varlistentry>
+<indexterm scope="bashref_param-var.index"><primary><literal>!</literal></primary></indexterm>
+        <varlistentry>
+          <term><literal>!</literal></term><listitem><para>
+Artalanda (eşzamanlamasız) en son çalıştırılan komutun süreç kimliğidir.
+          </para></listitem>
+        </varlistentry>
+<indexterm scope="bashref_param-var.index"><primary><literal>0</literal></primary></indexterm>
+        <varlistentry>
+          <term><literal>0</literal></term><listitem><para>
+Kabuğun ya da kabuk betiğinin ismidir. Bu kabuğun ilklendirilmesi
+sırasında belirlenir. Bash bir komut dosyası çalıştırıyorsa,
+<literal>$0</literal> bu dosyanın ismidir (<xref
+linkend="bashref_shell.scripts"/> bölümüne bakınız).
+          </para><para>
+Bash <option>-c</option> seçeneği ile başlatılmışsa
+(<xref linkend="bashref_invoking.bash"/> bölümüne bakınız),
+<literal>$0</literal> varsa seçenekle verilen argümandır;
+yoksa Bash'ı çağıran dosyanın ismidir.
+          </para></listitem>
+        </varlistentry>
+<indexterm scope="bashref_param-var.index"><primary>_ (bir altçizgi)</primary></indexterm>
+        <varlistentry>
+          <term><literal>_</literal></term><listitem><para>
+Kabuk ilk başlatıldığında, kabuğu çağırmakta kullanılan mutlak dosya ismi ya da
+argüman listesinde belirtilmiş olarak çalıştırılan kabuk
+betiğinin ismidir. Müteakip olarak, yorumlama sonrası, önceki
+komuta son argüman olarak yorumlanır. Ayrıca, çalıştırılan
+her komutu çağırmakta kullanılacak tam dosyayolunu tutar ve ilgili komutun ayarladığı
+ortam değişkenine yerleştirilir. Örneğin, eposta denetlenirken,
+bu parametre eposta dosyasının ismini tutar.
+          </para></listitem>
+        </varlistentry>
+      </variablelist>
+    </para>
+  </sect1>
+</chapter>
+
+<chapter id="bashref_shell.expansions" label="5">
+  <title>Kabuk Yorumları</title>
+  <titleabbrev>Bash değişkenleri ve çeşitli yorumlanabilir şeyleri nasıl yorumlar.</titleabbrev>
+<indexterm scope="bashref_concept.index"><primary>yorumlama</primary></indexterm>
+  <para>
+Yorumlama, komut satırı <literal>dizgecik</literal>lere ayrıldıktan sonra uygulanır:
+  </para><para>
+    <itemizedlist>
+<listitem>kaşlı ayraçların yorumlanması</listitem>
+<listitem>yaklaşık (~) yorumlaması</listitem>
+<listitem>parametre ve değişkenlerin yorumlanması</listitem>
+<listitem>komut ikamesi</listitem>
+<listitem>aritmetik yorumlama</listitem>
+<listitem>sözcüklere ayırma</listitem>
+<listitem>dosyaisminin yorumlanması</listitem>
+    </itemizedlist>
+  </para><para>
+Yorumlama işlemi yukarıda verilen sırada uygulanır.
+  </para><para>
+Destekleniyorsa bazı sistemlerde, bir ek yorumlama daha vardır:
+<emphasis>süreç ikamesi</emphasis>. Bu; parametre, değişken,
+ve aritmetik yorumlama ile komut ikamesi olarak aynı zamanda uygulanır.
+  </para><para>
+Sadece, kaşlı ayraçların yorumlanması, sözcüklere ayırma ve
+dosyaisminin yorumlanmasında yorumlanan sözcük sayısı değişebilir.
+Diğer yorumlamalarda her sözcük tek sözcük olarak yorumlanır.
+Burada sadece <literal>"$@"</literal> ve <literal>"${isim[@]}"</literal>
+yorumlaması ayrıcalıklıdır
+(<xref linkend="bashref_shell.parameters-special"/> ve <xref
+linkend="bashref_arrays"/> bölümlerine bakınız).
+  </para><para>
+Tüm yorumlamalardan sonra <literal>tırnakların kaldırılması</literal>
+uygulanır (<xref linkend="bashref_shell.expansions-unquoting"/>
+bölümüne bakınız).
+  </para>
+  <sect1 id="bashref_shell.expansions-brace">
+    <title>Kaşlı Ayraçların Yorumlanması</title>
+    <titleabbrev>Kaşlı ayraçların içindeki ifadelerin yorumlanması.</titleabbrev>
+<indexterm scope="bashref_concept.index"><primary>kaşlı ayraçların yorumlanması</primary></indexterm>
+<indexterm scope="bashref_concept.index"><primary>yorumlama</primary><secondary>kaşlı ayraçlar</secondary></indexterm>
+    <para>
+Kaşlı ayraç yorumlaması, keyfi dizgeler üretmek amacıyla kullanılan
+bir mekanizma sağlar. Bu mekanizma <xref
+linkend="bashref_shell.expansions-fname"/>na benzer,  ancak üretilen
+dizgeler mevcut dosya isimleri olmak zorunda değildir. Kaşlı ayraç
+yorumlamasına esas alınacak kalıplar, isteğe bağlı bir <emphasis>öndizge</emphasis> ile
+başlar, kaşlı ayraçlar içine alınmış virgül ayraçlı dizgelerden veya bir dizilim ifadesinden sonra
+gelen yine isteğe bağlı bir <emphasis>sondizge</emphasis> ile biter.
+Yorumlama daima soldan sağa doğru yapılır.
+    </para><para>
+Kaşlı ayraç yorumlaması iç içe olabilir. Dizgelerin yorumlanması
+soldan sağa yapılması dışında bir sıraya bağlı değildir. Örneğin:
+    </para><para>
+<screen>
+<prompt>bash$</prompt> <command>echo a{d,c,b}e</command>
+ade ace abe
+</screen>
+    </para><para>
+Bir dizilim ifadesi
+    </para><para>
+<literallayout indent="0">
+      {<varname>x</varname>..<varname>y</varname>}
+</literallayout>
+    </para><para>
+biçimindedir, burada <varname>x</varname> ve <varname>y</varname> ya tamsayılardır ya da tek karakterlik dizgelerdir. Tamsayı olarak verildiklerinde, ifade <varname>x</varname> ve <varname>y</varname> (dahil) arasındaki sayılara genişletilir. Karakter olarak verildiklerinde ise ifade <varname>x</varname> ve <varname>y</varname> (dahil) arasındaki alfabetik sırada harflere genişletilir. <varname>x</varname> ve <varname>y</varname> değerlerinin aynı türde olması gerektiğine dikkat ediniz.
+    </para><para>
+Kaşlı ayraç yorumlaması diğer bütün yorumlamalardan önce yapılır ve
+diğer yorumlamalara özel karakterlerin hepsi korunur. Yorumlama tamamen
+metinseldir.  Bash yorumlanan kalıba ya da parantezler içindeki metne
+herhangi bir sözdizimsel yorumlama uygulamaz. Parametre yorumlaması ile
+karışmaması için <literal>${</literal> dizgesi kaşlı ayraç
+yorumlamasında işlenmez.
+    </para><para>
+Kurallara uygun oluşturulmuş bir kaşlı ayraç yorumlamasında, kaşlı
+ayraçlar tırnaklar arasında olmamalı ve en azından bir tırnaksız
+virgül veya geçerli bir dizilim ifadesi bulunmalıdır.
+Aksi takdirde yorumlama uygulanmaz, verilen kalıp
+değişmeden kalır.
+    </para><para>
+Bir <command>{</command> veya <command>,</command> bir kaşlı ayraç ifadesinin parçası olarak yorumlanmamaları için bir tersbölü karakteri ile öncelenebilir. Parametre yorumlaması ile çelişmekten kaçınmak için <command>${</command> dizgesi kaşlı ayraç yorumlaması için seçilebilir varsayılmaz.
+    </para><para>
+Bu yapı genellikle yukarıdaki örnektekinden daha uzun ve
+aynı öneke sahip çok sayıda dizge olduğunda benzer şeyleri
+defalarca yazmamak için bir kısayol olarak kullanılır:
+    </para><para>
+<screen><command>mkdir /usr/local/src/bash/{old,new,dist,bugs}</command>
+</screen></para><para>veya</para><para>
+<screen><command>chown root /usr/{ucb/{ex,edit},lib/{ex?.?*,how_ex}}</command>
+</screen>
+    </para>
+  </sect1>
+  <sect1 id="bashref_shell.expansions-tilde">
+    <title>Yaklaşık (~) Yorumlaması</title>
+    <titleabbrev>~ karakterinin yorumlanması.</titleabbrev>
+<indexterm scope="bashref_concept.index"><primary>yaklaşık (~) yorumlaması</primary></indexterm>
+<indexterm scope="bashref_concept.index"><primary>yorumlama</primary><secondary>yaklaşık (~)</secondary></indexterm>
+    <para>
+Bir sözcük bir tırnaksız yaklaşık (~) karakteri ile başlıyorsa ve
+tırnaksız ilk / karakterine kadar olan tüm karakterler (veya
+tırnaksız bir / yoksa tüm karakterler) bir <emphasis>yaklaşık-öneki</emphasis>
+kabul edilir. Yaklaşık-öneki içindeki karakterlerin hiçbiri tırnaklı
+değilse, yaklaşık-öneki içindeki karakterlerin olası bir kullanıcı
+ismi oluşturduğu varsayılır. Eğer bu kullanıcı ismi boşsa yaklaşık
+işareti <literal>HOME</literal> kabuk değişkeninin değeri ile değiştirilir.
+Eğer <literal>HOME</literal> değişkeni belirlenmemişse, yerine kabuğu
+çalıştıran kullanıcının ev dizini kullanılır. Aksi takdirde yaklaşık-öneki,
+belirtilen kullanıcının ev dizini ile değiştirilir.
+    </para><para>
+Yaklaşık-öneki <literal>~+</literal> ise, yaklaşık-öneki
+<literal>PWD</literal> kabuk değişkeninin değeri ile değiştirilir.
+Yaklaşık-öneki <literal>~-</literal> ise,
+varsa <literal>OLDPWD</literal> kabuk değişkeninin değeri kullanılır.
+    </para><para>
+Yaklaşık-önekinden sonra istemlik olarak bir <literal>+</literal> veya
+<literal>-</literal> işareti konmuş bir sayı geliyorsa, yaklaşık-öneki,
+<link linkend="bashref_directory-builtins-dirs"><command>dirs</command></link>
+yerleşiğine bu işaret ve sayı verilerek çağrıldığı durumda dönen dizin
+yığınındaki ilgili eleman ile değiştirilir. Eğer yaklaşık-öneki ile birlikte
+verilen sayı bir <literal>+</literal> veya <literal>-</literal> işareti
+içermiyorsa <literal>+</literal> işareti verilmiş kabul edilir.
+    </para><para>
+Kullanıcı ismi geçersizse ya da yaklaşık yorumlaması başarısız olursa
+sözcük değişmeden kalır.
+    </para><para>
+Her değişken ataması bir <literal>:</literal> veya ilk <literal>=</literal> işaretinden önce yaklaşık işaretinin gelebileceği varsayımıyla kontrol edilir. Bu gibi durumlarda, yaklaşık yorumlaması ayrıca uygulanır. Sonuç olarak, <literal>PATH</literal>, <literal>MAILPATH</literal> ve
+<literal>CDPATH</literal> değişkenlerine atamalarda yaklaşık işaretli dosya isimleri kullanılabilir ve kabuk değer olarak yorumlanan değeri atar.
+    </para><para>
+Aşağıda tırnaksız yaklaşık-öneklerinin nasıl yorumlandığı gösterilmiştir.
+    </para><para><variablelist><varlistentry>
+      <term><literal>~</literal></term>
+      <listitem><para><literal>$HOME</literal> değişkeninin değeri</para></listitem>
+    </varlistentry><varlistentry>
+      <term><literal>~/foo</literal></term>
+      <listitem><para><literal>$HOME/foo</literal></para></listitem>
+    </varlistentry><varlistentry>
+      <term><literal>~fred/foo</literal></term>
+      <listitem><para>
+<literal>fred</literal> isimli kullanıcının ev dizininin <filename>foo</filename> alt dizini
+      </para></listitem>
+    </varlistentry><varlistentry>
+      <term><literal>~+/foo</literal></term>
+      <listitem><para><literal>$PWD/foo</literal></para></listitem>
+    </varlistentry><varlistentry>
+      <term><literal>~-/foo</literal></term>
+      <listitem><para>
+<literal>${OLDPWD-'~-'}/foo</literal>
+      </para></listitem>
+    </varlistentry><varlistentry>
+      <term><literal>~N</literal></term>
+      <listitem><para>
+<command>dirs</command> <literal>+N</literal> komutundan elde edilen dizge
+      </para></listitem>
+    </varlistentry><varlistentry>
+      <term><literal>~+N</literal></term>
+      <listitem><para>
+<command>dirs</command> <literal>+N</literal> komutundan elde edilen dizge
+      </para></listitem>
+    </varlistentry><varlistentry>
+      <term><literal>~-N</literal></term>
+      <listitem><para>
+<command>dirs</command> <literal>-N</literal> komutundan elde edilen dizge
+      </para></listitem>
+    </varlistentry></variablelist></para>
+  </sect1>
+  <sect1 id="bashref_shell.expansions-param">
+    <title>Kabuk Parametrelerinin Yorumlaması</title>
+    <titleabbrev>Bash değişkenleri değerleriyle nasıl yorumlar.</titleabbrev>
+<indexterm scope="bashref_concept.index"><primary>yorumlama</primary> <secondary>parametre</secondary></indexterm>
+<indexterm scope="bashref_concept.index"><primary>parametre</primary> <secondary>yorumlama</secondary></indexterm>
+    <para>
+Parametre ve <link linkend="bashref_shell.expansions-arith">aritmetik yorumlamaları</link> ile <link linkend="bashref_shell.expansions-cmd.subs">komut ikameleri</link>ni <literal>$</literal> karakteri başlatır. Yorumlanacak sembol ya da  parametre ismi isteğe bağlı olarak, ismin parçası olarak yorumlanacak karakterlerden oluşan değişkeni korumak üzere kaşlı ayraçlar içine alınabilir.
+    </para><para>
+Kaşlı ayraçlar kullanıldığında, parantezi kapatan ilk <literal>}</literal> bir tırnaklı dizge içinde ya da tersbölü öncelemeli olmamalı ve bir gömülü <link linkend="bashref_shell.expansions-arith">aritmetik yorumlama</link>, <link linkend="bashref_shell.expansions-param">parametre yorumlaması</link> veya <link linkend="bashref_shell.expansions-cmd.subs">komut ikamesi</link> içinde olmamalıdır.
+    </para><para>
+Parametre yorumlaması uygulanacak temel kalıp <literal>${</literal><replaceable>parametre</replaceable><literal>}</literal> şeklindedir. <replaceable>parametre</replaceable> yerine değeri kullanılır. <replaceable>parametre</replaceable>, tek haneden geniş bir sayı içeren bir konumsal parametre ise ya da <replaceable>parametre</replaceable>den sonraki karakter, parametre isminin bir parçası olarak yorumlanmayacaksa  kaşlı ayraçlar zorunludur.
+    </para><para>
+<replaceable>parametre</replaceable>'nin ilk karakteri bir ünlem ise, bir seviyelik dolaylı değişken yönlendirmesi yapılır. Bash, değişken ismi olarak <replaceable>parametre</replaceable>'nin kalanından şekillendirilen değişkenin değerini kullanır; bu değişken sonradan yorumlanır ve değeri, yorumlamanın geri kalanında <replaceable>parametre</replaceable>'nin değeri  olarak kullanılır. Bu işlem <emphasis>dolaylı yorumlama</emphasis> olarak bilinir. Bunun istisnası aşağıda açıklanan <literal>${!</literal><replaceable>önek</replaceable><literal>*}</literal> ve <literal>${!</literal><replaceable>isim</replaceable><literal>[@]}</literal> yorumlamasıdır. Ünlem işareti sol kaşlı ayraçtan hemen sonra gelmelidir ki dolaylılıktan bahsedilebilsin.
+    </para><para>
+Aşağıdaki durumların herbiri için <replaceable>sözcük</replaceable>, <link linkend="bashref_shell.expansions-arith">aritmetik yorumlama</link>, <link linkend="bashref_shell.expansions-tilde">yaklaşık yorumlaması</link> ve <link linkend="bashref_shell.expansions-cmd.subs">komut ikamesi</link>ne  konu olur.
+    </para><para>
+Altdizge yorumlaması uygulanamadığında, Bash bir parametrenin boş olması ya da atanmamış olması durumlarının varlığına bakar; bu durumda  iki noktanın olmaması bir parametrenin sadece atanmamış olmasına bakılması ile sonuçlanır. İki noktanın olması durumunda işleç her iki durumun mevcudiyeti yanında değerin boş olmamasına da bakar;  iki nokta olmadığında işleç sadece mevcudiyete bakar.
+   </para><para><glosslist><glossentry>
+   <glossterm><command>${</command><replaceable>parametre</replaceable><command>:-</command><replaceable>sözcük</replaceable><command>}</command></glossterm>
+   <glossdef><para>
+<replaceable>parametre</replaceable> atanmamışsa ya da boşsa, <replaceable>sözcük</replaceable> açılımı kullanılır. Aksi takdirde, <replaceable>parametre</replaceable> değeri kullanılır.
+   </para></glossdef></glossentry><glossentry>
+   <glossterm><command>${</command><replaceable>parametre</replaceable><command>:=</command><replaceable>sözcük</replaceable><command>}</command></glossterm>
+   <glossdef><para>
+<replaceable>parametre</replaceable> atanmamışsa ya da boşsa, önce <replaceable>parametre</replaceable> ye <replaceable>sözcük</replaceable> açılımı atanır sonra da <replaceable>parametre</replaceable> nin değeri kullanılır. Konumsal parametreler ve özel parametreler bu yolla atanamayabilir.
+   </para></glossdef></glossentry><glossentry>
+   <glossterm><command>${</command><replaceable>parametre</replaceable><command>:?</command><replaceable>sözcük</replaceable><command>}</command></glossterm>
+   <glossdef><para>
+<replaceable>parametre</replaceable> atanmamışsa ya da boşsa, <replaceable>sözcük</replaceable> açılımı (ya da <replaceable>sözcük</replaceable> verilmemişse olmadığını belirten bir ileti) standart hataya yazılır ve kabuk, etkileşimsizse çıkar. Aksi takdirde, <replaceable>parametre</replaceable> değeri kullanılır.
+   </para></glossdef></glossentry><glossentry>
+   <glossterm><command>${</command><replaceable>parametre</replaceable><command>:+</command><replaceable>sözcük</replaceable><command>}</command></glossterm>
+   <glossdef><para>
+<replaceable>parametre</replaceable> atanmamışsa ya da boşsa, hiçbir şey kullanılmaz, aksi takdirde yerine <replaceable>sözcük</replaceable> açılımı kullanılır.
+   </para></glossdef></glossentry><glossentry>
+   <glossterm><command>${</command><replaceable>parametre</replaceable><command>:</command><replaceable>konum</replaceable><command>}</command></glossterm>
+   <glossterm><command>${</command><replaceable>parametre</replaceable><command>:</command><replaceable>konum</replaceable><command>:</command><replaceable>uzunluk</replaceable><command>}</command></glossterm>
+   <glossdef><para>
+<replaceable>parametre</replaceable> içerisinde <replaceable>konum</replaceable> dan başlayan <replaceable>uzunluk</replaceable> karakterlik altdizge açılır. <replaceable>uzunluk</replaceable> verilmemişse, <replaceable>konum</replaceable> dan başlayan ve sona kadar giden altdizge açılır. <replaceable>konum</replaceable> ve <replaceable>uzunluk</replaceable> aritmetik ifadelerdir (<xref linkend="bashref_shell.arithmetic"/> bölümüne bakınız). Bu <emphasis>Altdizge Açılımı</emphasis> olarak bilinir.
+          </para><para>
+<replaceable>uzunluk</replaceable> sıfır ya da pozitif bir sayıya karşılık olmalıdır. <replaceable>konum</replaceable> negatif bir sayıya karşılıksa değeri, <replaceable>parametre</replaceable> değerinin sonundan itibaren sayılır. <replaceable>parametre</replaceable> <literal>@</literal> ise, sonuç, <replaceable>konum</replaceable> dan başlayan <replaceable>uzunluk</replaceable> konumsal parametredir. <replaceable>parametre</replaceable> <literal>@</literal> veya <literal>*</literal> ile indislenmiş bir dizi ismi ise, sonuç, <command>${</command><replaceable>parametre</replaceable><command>[</command><replaceable>konum</replaceable><command>]}</command> ile başlayan <replaceable>uzunluk</replaceable> üyeli bir dizidir.
+Bir negatif <replaceable>konum</replaceable> belirtilen dizinin en büyük indisinden bir büyük indise göre ele alınır. <command>:-</command> yorumlaması ile karışmaması için bir negatif <replaceable>konum</replaceable> <command>:</command> karakterinden en az bir boşluk ile ayrılmalıdır.Altdizge indislemesi konumsal parametreler kullanılmadıkça sıfırdan başlar, konumsal parametrelerin varlığı halinde ise birden başlar.
+   </para></glossdef></glossentry><glossentry>
+   <glossterm><command>${!</command><replaceable>önek</replaceable><command>*}</command></glossterm>
+   <glossterm><command>${!</command><replaceable>önek</replaceable><command>@}</command></glossterm>
+   <glossdef><para>
+<replaceable>önek</replaceable> ile başlayan isimler,  <literal>IFS</literal> özel değişkeninin ilk karakteri ile ayrılan değişken isimleri olarak yorumlanır.
+   </para></glossdef></glossentry><glossentry>
+ <glossterm><command>${!</command><replaceable>isim</replaceable><command>[*]}</command></glossterm>
+ <glossterm><command>${!</command><replaceable>isim</replaceable><command>[@]}</command></glossterm>
+   <glossdef><para>
+<replaceable>isim</replaceable> bir dizi değişkeni ise dizi indislerinin bir listesi <replaceable>isim</replaceable>'e atanır. <replaceable>isim</replaceable> bir dizi değilse, <replaceable>isim</replaceable> tanımlıysa 0'a değilse null'a genişletilir. <command>@</command> kullanılmışsa ve yorumlama çift tırnaklar içinde görünüyorsa her indis ayrı bir sözcüğe genişletilir.
+   </para></glossdef></glossentry><glossentry>
+   <glossterm><command>${#</command><replaceable>parametre</replaceable><command>}</command></glossterm>
+   <glossdef><para>
+<replaceable>parametre</replaceable> nin açılım değerindeki karakter sayısını verir. <replaceable>parametre</replaceable> <literal>*</literal> veya <literal>@</literal> ise değer, konumsal parametrelerin sayısıdır. <replaceable>parametre</replaceable>, <literal>@</literal> veya <literal>*</literal> ile indislenmiş bir dizi ismi ise, değer, dizideki üye sayısıdır.
+   </para></glossdef></glossentry><glossentry>
+   <glossterm><command>${</command><replaceable>parametre</replaceable><command>#</command><replaceable>sözcük</replaceable><command>}</command></glossterm>
+   <glossterm><command>${</command><replaceable>parametre</replaceable><command>##</command><replaceable>sözcük</replaceable><command>}</command></glossterm>
+   <glossdef><para>
+<replaceable>sözcük</replaceable> <link linkend="bashref_shell.expansions-fname">dosyaismi açılımı</link>ndaki gibi bir kalıp üretecek şekilde yorumlanır. Eğer kalıp, <replaceable>parametre</replaceable> nin yorum değerinin başlangıcı ile eşleşirse, yorumlama sonucu olarak, <replaceable>parametre</replaceable>'nin  yorum sonucundan en kısa eşleşme kalıbı (<literal>#</literal> durumu) veya en uzun eşleşme kalıbı (<literal>##</literal> durumu) silinerek  kalan değer atanır. Eğer <replaceable>parametre</replaceable> <literal>@</literal> ya da <literal>*</literal> ise kalıp silme işlemi sıra ile konumsal parametrelerin her birine uygulanır ve yorumlama değeri sonuçlanan liste olur. Eğer <replaceable>parametre</replaceable>, <literal>@</literal> ya da <literal>*</literal> ile indislenmiş bir dizi değişkeni ise, kalıp silme işlemi sıra ile dizi üyelerinin her birine uygulanır ve yorumlama değeri sonuçlanan liste olur.
+   </para></glossdef></glossentry><glossentry>
+   <glossterm><command>${</command><replaceable>parametre</replaceable><command>%</command><replaceable>sözcük</replaceable><command>}</command></glossterm>
+   <glossterm><command>${</command><replaceable>parametre</replaceable><command>%%</command><replaceable>sözcük</replaceable><command>}</command></glossterm>
+   <glossdef><para>
+<replaceable>sözcük</replaceable> dosyaismi yorumlamasındaki gibi bir kalıp üretecek şekilde yorumlanır. Eğer kalıp, <replaceable>parametre</replaceable> nin yorum değerinin son bölümü ile eşleşirse, yorumlama sonucu, silinen en kısa eşleşme kalıplı (<literal>#</literal> durumu) ya da en uzun eşleşme kalıplı (<literal>##</literal> durumu) <replaceable>parametre</replaceable> nin yorum değeridir. Eğer <replaceable>parametre</replaceable> <literal>@</literal> ya da <literal>*</literal> ise kalıp silme işlemi sıra ile konumsal parametrelerin her birine uygulanır ve yorumlama değeri sonuçlanan liste olur. Eğer <replaceable>parametre</replaceable>, <literal>@</literal> ya da <literal>*</literal> ile indislenmiş bir dizi değişkeni ise, kalıp silme işlemi sıra ile dizi üyelerinin her birine uygulanır ve yorumlama değeri sonuçlanan liste olur.
+   </para></glossdef></glossentry><glossentry>
+   <glossterm><command>${</command><replaceable>parametre</replaceable><command>/</command><replaceable>kalıp</replaceable><command>/</command><replaceable>dizge</replaceable><command>}</command></glossterm>
+<glossdef><para>
+<replaceable>kalıp</replaceable> dosyaismi yorumlamasındaki gibi bir kalıp üretmek üzere yorumlanır. <replaceable>parametre</replaceable> yorumlanır ve onun değerine karşılık olan en uzun <replaceable>kalıp</replaceable> eşleşmesi <replaceable>dizge</replaceable> ile değiştirilir. Eğer <replaceable>kalıp</replaceable> bir <literal>/</literal> imi ile başlıyorsa tüm <replaceable>kalıp</replaceable> eşleşmeleri <replaceable>dizge</replaceable> ile değiştirilir. Normalde sadece ilk eşleşme değiştirilir. Eğer <replaceable>kalıp</replaceable>, <literal>#</literal> ile başlıyorsa <replaceable>parametre</replaceable>nin yorumlanan değerinin başlangıcında eşleştirilmelidir.  Eğer <replaceable>kalıp</replaceable>, <literal>%</literal> ile başlıyorsa <replaceable>parametre</replaceable>nin yorumlanan değerinin sonunda eşleştirilmelidir.  Eğer <replaceable>dizge</replaceable> boşsa<replaceable>kalıp</replaceable> eşleşmeleri silinir ve kalıp'tan sonraki <literal>/</literal> işareti atlanabilir. Eğer <replaceable>parametre</replaceable>, <literal>@</literal> veya <literal>*</literal> ise ikame işlemi sıra ile her konumsal parametreye uygulanır ve sonuç bir liste olur. Eğer <replaceable>parametre</replaceable>, <literal>@</literal> veya <literal>*</literal> ile indislenmiş bir dizi değişkeni ise ikame işlemi sırayla dizinin her üyesine uygulanır ve sonuç bir liste olur.
+   </para></glossdef></glossentry></glosslist></para>
+  </sect1>
+  <sect1 id="bashref_shell.expansions-cmd.subs">
+    <title>Komut İkamesi</title>
+    <titleabbrev>Bir komutun başka bir komutun argümanı olarak kullanılması.</titleabbrev>
+<indexterm scope="bashref_concept.index"><primary>komut</primary><secondary>ikame</secondary></indexterm>
+<indexterm scope="bashref_concept.index"><primary>ikame</primary><secondary>komut</secondary></indexterm>
+    <para>
+Komut ikamesi ile bir komutun çıktısının komutun kendisi ile değiştirilmesi sağlanır. Komut ikamesi aşağıdaki dizilimlerle karşılaşıldığında uygulanır:
+    </para><para>
+<literallayout indent="0">    $(<replaceable>komut</replaceable>)
+</literallayout>
+        </para><para>or</para><para>
+<literallayout indent="0">    <replaceable>komut</replaceable>`
+</literallayout>
+    </para><para>
+Bash bu dizilimlerin sonundaki satırsonu karakterini silip, içindeki <replaceable>komut</replaceable>'u önce standart çıktıda çalıştırır ve komutun çıktısını onu argüman olarak kullanan komutun standart girdisine yerletirir. Gömülü satırsonları silinmez, ancak sözcük ayrımlaması sırasında silinmiş olabilirler. <literal>$(</literal><command>cat </command><replaceable>file</replaceable><literal>)</literal> komut ikamesi daha hızlı olan eşdeğeri, <literal>$(&lt; </literal><replaceable>file</replaceable><literal>)</literal> ile değiştirilebilir. Örneğin <literal>echo `cat dosya'</literal> komutunu kabukta çalıştırırsanız <filename>dosya</filename>'nın içeriği standart çıktıya dökümlenir.
+    </para><para>
+Eski tarz olan sola yatık tektırnaklı biçem kullanıldığında tersbölü işareti <literal>$</literal>, <literal>`</literal> veya <literal>\</literal> karakterlerini öncelemek dışında anlamını korur. Bir tersbölü ile öncelenmemiş ilk sola yatık tek tırnak komut ikamesini sonlandırır.  <literal>$(</literal><replaceable>komut</replaceable><literal>)</literal> biçemi kullanıldığında parantezler arasındaki herşey komut olarak ele alınır ve hiçbir şey özel olarak anlamlandırılmaz.
+    </para><para>
+İç içe komut ikameleri kullanılabilir. Sola yatık tektırnaklı iç içeliklerde içteki tırnaklar tersbölü ile öncelenmelidir.
+    </para><para>
+Yorumlanan alandaki karakterler çift tırnaklar arasına alınmışsa sözcük ayrımlaması ve dosyaismi yorumlaması uygulanmaz.
+    </para>
+  </sect1>
+  <sect1 id="bashref_shell.expansions-arith">
+    <title>Aritmetik Yorumlama</title>
+    <titleabbrev>Kabuk yorumlarında aritmetik işlemler nasıl yapılır.</titleabbrev>
+<indexterm scope="bashref_concept.index"><primary>aritmetik</primary> <secondary>yorumlama</secondary></indexterm>
+<indexterm scope="bashref_concept.index"><primary>yorumlama</primary> <secondary>aritmetik</secondary></indexterm>
+    <para>
+Aritmetik yorumlama, aritmetik ifadelerin sonuçlarının kullanılmasını sağlar. Aritmetik yorumlamaya konu sözdizimi aşağıdaki gibidir:
+    </para><para>
+<literallayout indent="0">    $(( <replaceable>ifade</replaceable> ))
+</literallayout>
+    </para><para>
+<replaceable>ifade</replaceable> çift tırnaklar içine alınmış gibi yorumlanır, ancak parantezleriçinde yer alan bir çift tırnak özel bir şekilde ele alınmaz. <replaceable>ifade</replaceable> içindeki tüm dizgeciklere <link linkend="bashref_shell.expansions-param">parametre yorumlaması</link> ve <link linkend="bashref_shell.expansions-cmd.subs">komut ikamesi</link> ile <link linkend="bashref_shell.expansions-splitting">sözcüklere ayırma</link> uygulanır. Aritmetik yorumları iç içe olabilir.
+    </para><para>
+İfadenin değerlendirilmesi <xref linkend="bashref_shell.arithmetic"/> bölümünde listelenen kurallar çerçevesinde yapılır. İfade geçersizse, Bash standart çıktıya başarısızlık ile ilgili bir ileti gönderir ve ikame gerçekleşmez.
+    </para>
+  </sect1>
+  <sect1 id="bashref_shell.expansions-process">
+    <title>Süreç İkamesi</title>
+    <titleabbrev>Bir komutun çıktısının başka bir komutun girdisi olması.</titleabbrev>
+<indexterm scope="bashref_concept.index"><primary>süreç</primary><secondary>ikame</secondary></indexterm>
+<indexterm scope="bashref_concept.index"><primary>ikame</primary><secondary>süreç</secondary></indexterm>
+    <para>
+Süreç ikamesi, isimli veri hatları (FIFO'lar) ya da açık dosyaları isimlendirme yöntemi olan <filename>/dev/fd</filename> yönteminin desteklendiği sistemlerde kullanılır. Yoruma konu olacak sözdizimi aşağıdaki gibidir:
+    </para><para>
+<literallayout indent="0">    &lt;(<replaceable>liste</replaceable>)
+</literallayout>
+        </para><para>veya</para><para>
+<literallayout indent="0">    >(<replaceable>liste</replaceable>)
+</literallayout>
+    </para><para>
+<replaceable>liste</replaceable> içindeki süreçler girdi ya da çıktıları bir FIFO ya da  <filename>/dev/fd</filename> içindeki bir dosyaya bağlanarak çalıştırılır. Çalıştırılan komuta, bu dosyanın ismi, açılım sonucunda argüman olarak aktarılır. <literal>>(</literal><replaceable>liste</replaceable><literal>)</literal> biçemi kullanıldığında, <replaceable>liste</replaceable> için girdi, ilgili dosyaya yazıldığı zaman verilir. <literal>&lt;(</literal><replaceable>liste</replaceable><literal>)</literal> biçemi kullanıldığında ise, <replaceable>liste</replaceable> nin çıktısı, ilgili dosya okunarak elde edilir. <literal>&lt;</literal> veya <literal>></literal> işareti ile parantez arasında boşluk bırakılmamalıdır. Boşluk bırakılırsa yapı, bir süreç ikamesi değil bir yönlendirme olarak yorumlanacaktır.
+    </para><para>
+Mümkün olduğunca süreç ikamesi; <link linkend="bashref_shell.expansions-arith">aritmetik yorumlama</link>, <link linkend="bashref_shell.expansions-param">parametre ve değişken yorumlaması</link> ve <link linkend="bashref_shell.expansions-arith">aritmetik yorumlama</link> ile aynı anda uygulanır.
+    </para>
+  </sect1>
+  <sect1 id="bashref_shell.expansions-splitting">
+    <title>Sözcüklere Ayırma</title>
+    <titleabbrev>Yorumlamaların sonuçları nasıl ayrı argümanlar haline getirilir.</titleabbrev>
+<indexterm scope="bashref_concept.index"><primary>sözcüklere ayırma</primary></indexterm>
+    <para>
+Kabuk, sözcüklere ayırmak için çift tırnaklar arasında olmayan <link linkend="bashref_shell.expansions-param">parametre yorumlaması</link> ve <link linkend="bashref_shell.expansions-arith">aritmetik yorumlamaları</link> ile <link linkend="bashref_shell.expansions-cmd.subs">komut ikameleri</link>nin sonuçlarını tarar.
+    </para><para>
+Kabuk <literal>$IFS</literal> değişkenindeki her karakteri bir ayraç olarak ele alır ve diğer yorumlamaların sonuçlarını sözcüklere ayırmak için bu karakterleri kullanır. <literal>IFS</literal> değişkeni atanmamışsa, onun değeri yerine öntanımlı olarak <literal>&lt;space>&lt;tab>&lt;newline></literal> dizgesi kullanılır. <literal>IFS</literal> değişkeni bu öntanımlı değer dışında bir değerle atanmışsa, sözcüğün başındaki ve sonundaki <literal>boşluk</literal> ve <literal>sekme</literal> karakterleri bu boşluk karakterlerinden biri <literal>IFS</literal> değeri içinde olduğu sürece yoksayılır. <literal>IFS</literal> boşluk karakterlerinden biri ile birlikte verilen <literal>IFS</literal> boşluk karakteri olmayan herhangi bir karakter bir alanı ayırmakta kullanılabilir. <literal>IFS</literal> boşluk karakterlerinden oluşan bir dizi de bir ayraç olarak kullanılabilir. <literal>IFS</literal> değişkeni boş olarak atanmışsa sözcüklere ayırma işlemi yapılmaz.
+    </para><para>
+Apaçık boş argümanlar ("" veya '') değişmeden kalır. Değer üretmeyen parametre yorumlamalarının sonucu olan tırnaksız boş argümanlar kaldırılır. Değeri olamayan bir parametrenin yorumunun sonucundaki çift tırnaklı bir boş argüman değişmeden kalır.
+    </para><para>
+Yorumlama yapılamamışsa sözcük ayrımlama da uygulanmaz.
+    </para>
+  </sect1>
+  <sect1 id="bashref_shell.expansions-fname">
+    <title>Dosyaismi Yorumlaması</title>
+    <titleabbrev>Kalıplarla eşleşen dosya isimlerini belirtmenin kestirme yolu.</titleabbrev>
+<indexterm scope="bashref_concept.index"><primary>dosyaismi</primary> <secondary>yorumlama</secondary></indexterm>
+<indexterm scope="bashref_concept.index"><primary>dosyayolu</primary> <secondary>yorumlama</secondary></indexterm>
+<indexterm scope="bashref_concept.index"><primary>yorumlama</primary> <secondary>dosyaismi</secondary></indexterm>
+<indexterm scope="bashref_concept.index"><primary>yorumlama</primary> <secondary>dosyayolu</secondary></indexterm>
+    <para>
+Sözcük ayrımlaması yapıldıktan sonra <option>-f</option> seçeneği verilmedikçe (<xref linkend="bashref_set.builtin"/> bölümüne bakınız.), Bash her sözcükte <literal>*</literal>, <literal>?</literal> ve <literal>[</literal> karakterlerini arar. Bunlardan biri varsa, sözcük bir <emphasis>kalıp</emphasis> olarak ele alınır ve sözcük, kalıp ile eşleşen dosya isimlerinin alfabetik sıralı bir listesi ile değiştirilir. Bir eşleşme bulunamamışsa ve <option>nullglob</option> kabuk seçeneği iptal edilmişse, sözcük değişmeden kalır. <option>nullglob</option> seçeneği etkin ise ve bir eşleşme bulunamamışsa sözcük silinir.
+<option>failglob</option> kabuk seçeneği etkin ise ve bir eşleşme bulunamamışsa bir hata iletisi basılır ve komut çalıştırılmaz.
+<option>nocaseglob</option> kabuk seçeneği etkin ise eşleşme alfabetik karakterlerin harf büyüklüklerine bakılmaksızın uygulanır.
+    </para><para>
+Bir kalıp dosya ismi üretimi için kullanılmışsa ve <option>dotglob</option> kabuk seçeneği etkin değilse, bir dosya isminin başındaki <literal>.</literal> karakteri veya hemen ardından gelen bir / doğrudan eşleştirilmelidir. Bir dosya ismi eşleşmesinde / karakteri daima doğrudan eşleşmiş olmalıdır. Diğer durumlarda <literal>.</literal> karakterine bir özellik atfedilmez.
+    </para><para>
+<option>nocaseglob</option>, <option>nullglob</option>, <option>failglob</option> ve <option>dotglob</option> seçeneklerinin açıklamaları için <link linkend="bashref_bash.builtins-shopt"><command>shopt</command> yerleşik komutunun açıklamalarına bakınız</link>.
+    </para><para>
+<literal>GLOBIGNORE</literal> kabuk değişkeni bir kalıpla eşleşen dosya isimleri kümesini sınırlamakta kullanılabilir. <literal>GLOBIGNORE</literal> ile bir kalıp atanmışsa, dosya isimleri kümesi içindeki dosya isimlerinden biri aynı zamanda bu kalıpla da eşleşiyorsa o dosya ismi listeden çıkarılır. <literal>GLOBIGNORE</literal> atandığında ve null olmadığında <filename>.</filename> ve <filename>..</filename> dosya isimleri daima yoksayılır. Bununla birlikte <literal>GLOBIGNORE</literal> değişkenine null olmayan bir değerin atanması, <option>dotglob</option> kabuk seçeneğini etkinleştirilmesi gibi bir etkiye de sahiptir, bu bakımdan <filename>.</filename> ile başlayan tüm dosya isimleri eşlenecektir. <filename>.</filename> ile başlayan dosya isimlerinim yoksayılmasını sağlayan eski davranışa dönmek için <literal>GLOBIGNORE</literal> değişkenine atanan kalıplardan birini <filename>.*</filename> yapın. <literal>GLOBIGNORE</literal> değişkeni kaldırıldığında, <option>dotglob</option> seçeneği de etkin olmaktan çıkarılır.
+    </para>
+    <sect2 id="bashref_shell.expansions-fname.pm">
+      <title>Kalıp Eşleme</title>
+      <titleabbrev>Kabuk kalıpları nasıl eşler.</titleabbrev>
+<indexterm scope="bashref_concept.index"><primary>kalıp eşleme</primary></indexterm>
+<indexterm scope="bashref_concept.index"><primary>eşleme</primary><secondary>kalıp</secondary></indexterm>
+      <para>
+Aşağıda anlamları açıklanan özel kalıp karakterleri dışındaki tüm kalıp karakterleri kendisi ile eşleşir.  Bir kalıp içinde boş karakter (`\0') bulunmamalıdır. Bir karakterin öncesine bir tersbölü gelmişse eşleşme sırasında önceleyen yoksayılır. Özel kalıp karakterlerinin normal karakterler olarak davranması istenirse tırnak içine alınmalıdırlar.
+      </para><para>
+Özel kalıp karakterlerinin anlamları:
+      </para><para><variablelist><varlistentry>
+      <term>*</term>
+      <listitem><para>
+Boş dizge dahil herhangi bir dizge eşleşir.
+      </para></listitem></varlistentry><varlistentry>
+      <term>?</term>
+      <listitem><para>Herhangi bir tek karakter eşleşir.</para></listitem>
+      </varlistentry><varlistentry>
+      <term>[...]</term>
+      <listitem><para>
+Parantez içindeki karakterlerden herhangi biri eşleşir. Aralarında bir tire işareti ile belirtilen bir karakter çiftinin oluşturduğu <emphasis>aralık ifadesi</emphasis>ndeki aralığa düşen karakterlerin herbiri eşleşir. Bu aralık, yerele özgü karakter kodlamasına uyan bir aralıktaki karakterlerden oluşur. İlk <literal>[</literal> parantezinden hemen sonra bir <literal>!</literal> veya <literal>^</literal> karakteri geliyorsa bu karakterden sonraki karakterlerin dışında kalan karakterler eşleşir. <literal>-</literal> karakteri sadece enbaşta ya da en sonda ise kendisi ile eşleşir. <literal>]</literal> karakteri ise ilk karakter olursa kendisi ile eşleşebilir. Aralık ifadesindeki karakterlerin sırası <literal>LC_COLLATE</literal> kabuk değişkenindeki yerele göre oluşturulur.
+            </para><para>
+Örneğin, öntanımlı C yerelinde, <literal>[a-dv-z]</literal> ifadesi <literal>[abcdvwxyz]</literal> ifadesine eşgeğerdir. Birçok yerel, karakterleri sözlük sıralamasında sıralar ve bu yerellerde <literal>[abcdvwxyz]</literal> ifadesi yerine örneğin <literal>[aBbCcDdvVwWxXyYz]</literal> ifadesi eşdeğer olabilir. Türkçe için bu ifade <literal>[abcçdvyz]</literal> ile eşdeğerdir.
+            </para><para>
+<literal>[</literal> ile <literal>]</literal> arasında karakter sınıfları <literal>[:</literal><replaceable>sınıf</replaceable><literal>:]</literal> sözdizimi ile belirtilir. Buradaki <replaceable>sınıf</replaceable> POSIX standardında tanımlanan aşağıdaki sınıflardan biri olabilir:
+            </para><para>
+<literallayout indent="0">
+  alnum   alpha   ascii   blank   cntrl   digit   graph   lower
+  print   punct   space   upper   word    xdigit
+</literallayout>
+            </para><para>
+Eşleşme karakter sınıfındaki herhangi bir karakter için oluşur. <command>word</command> karakter sınıfı harflerle, rakamlarla ve <command>_</command> karakteri ile eşleşir.
+            </para><para>
+<literal>[</literal> ile <literal>]</literal> arasında bir eşdeğer sınıf <literal>[=<emphasis>c</emphasis>=]</literal> sözdizimi ile belirtilebilir. Buradaki eşleşme yerele göre <replaceable>c</replaceable> karakteri ile aynı karşılaştırma ağırlığındaki karakterlere uygulanır.
+            </para><para>
+<literal>[</literal> ile <literal>]</literal> arasında <literal>[.</literal><replaceable>sembol</replaceable><literal>.]</literal> sözdizimi ile <replaceable>sembol</replaceable> karşılaştırma sembolü eşleştirilebilir.
+      </para></listitem></varlistentry></variablelist>
+      </para><para>
+<option>extglob</option> kabuk seçeneği <command>shopt</command> yerleşiğini kullanarak etkinleştirilirse bazı ek kalıp eşleşme işleçleri kullanılabilir. Aşağıdaki açıklamalarda geçen <replaceable>kalıp-listesi</replaceable>, <literal>|</literal> karakteri ayraç olarak kullanılmış bir ya da daha fazla kalıptan oluşmuş bir listeyi ifade etmektedir. Birleşik kalıplar aşağıdaki alt kalıplardan biri ya da bir kaçı ile oluşturulabilir:
+      </para><para><glosslist><glossentry>
+      <glossterm><command>?(</command><replaceable>kalıp-listesi</replaceable><command>)</command></glossterm>
+      <glossdef><para>
+Belirtilen kalıpların sıfır ya da biri eşlenir.
+      </para></glossdef></glossentry><glossentry>
+      <glossterm><command>*(</command><replaceable>kalıp-listesi</replaceable><command>)</command></glossterm>
+      <glossdef><para>
+Belirtilen kalıpların sıfır ya da daha fazlası eşlenir.
+      </para></glossdef></glossentry><glossentry>
+      <glossterm><command>+(</command><replaceable>kalıp-listesi</replaceable><command>)</command></glossterm>
+      <glossdef><para>
+Belirtilen kalıpların bir ya da daha fazlası eşlenir.
+      </para></glossdef></glossentry><glossentry>
+      <glossterm><command>@(</command><replaceable>kalıp-listesi</replaceable><command>)</command></glossterm>
+      <glossdef><para>
+Belirtilen kalıpların biri eşlenir.
+      </para></glossdef></glossentry><glossentry>
+      <glossterm><command>!(</command><replaceable>kalıp-listesi</replaceable><command>)</command></glossterm>
+      <glossdef><para>
+Belirtilen kalıpların biri dışındaki herşey eşlenir.
+      </para></glossdef></glossentry></glosslist></para>
+    </sect2>
+  </sect1>
+  <sect1 id="bashref_shell.expansions-unquoting">
+    <title>Tırnak kaldırma</title>
+    <titleabbrev>Sözcüklerdeki tırnaklar nasıl ve ne zaman kaldırılır.</titleabbrev>
+    <para>
+Yorumlamalar uygulandıktan sonra, yukarıdaki yorumlamaların sonucu olmayan ve tırnak içine alınmamış tüm <literal>\</literal>, <literal>'</literal> ve <literal>"</literal> karakterleri kaldırılır.
+    </para>
+  </sect1>
+</chapter>
+
+<chapter id="bashref_shell.redirections" label="6">
+  <title>Yönlendirmeler</title>
+  <titleabbrev>Girdi ve çıktıların denetlenmesi.</titleabbrev>
+  <indexterm scope="bashref_concept.index"><primary>yönlendirme</primary></indexterm>
+  <para>
+Bir komut çalıştırılmadan önce, kabuk tarafından yorumlanacak özel bir
+yazım şekli kullanılarak girdisi ve çıktısı yönlendirilebilir.
+Yönlendirme, kabuğun çalıştırma ortamında kullanılmak üzere dosyaların
+açılması ve kapatılması için de kullanılabilir. Aşağıdaki yönlendirme
+işleçleri basit bir komutun öncesinde veya sonrasında ya da içinde
+kullanılabilir. Yönlendirmeler yazıldıkları sırada yani soldan sağa
+yorumlanır.
+  </para><para>
+Aşağıdaki açıklamalarda, dosya tanıtıcı numara verilmemişse ve yönlendirme
+işlecinin ilk karakteri <literal>&lt;</literal> ise yönlendirme
+standart girdiden (dosya tanım numarası 0), işleç <literal>></literal>
+ise standart çıktıya yapılır (dosya tanım numarası 1).
+  </para><para>
+Aşağıdaki açıklamalarda yönlendirme işlecinin bir sözcükten sonra geldiği
+durumlarda, aksi belirtilmedikçe, sözcüğe <link
+linkend="bashref_shell.expansions-brace">kaşlı ayraç yorumlaması</link>,
+<link linkend="bashref_shell.expansions-tilde">yaklaşık yorumlaması</link>,
+<link linkend="bashref_shell.expansions-param">parametre yorumlaması</link>,
+<link linkend="bashref_shell.expansions-cmd.subs">komut ikamesi</link>,
+<link linkend="bashref_shell.expansions-arith">aritmetik yorumlama</link>,
+<link linkend="bashref_shell.expansions-unquoting">tırnak kaldırma</link>,
+<link linkend="bashref_shell.expansions-splitting">sözcüklere ayırma</link> ve
+<link linkend="bashref_shell.expansions-fname">dosyaismi yorumlaması</link>
+uygulanır. Sözcüğün yorumlama sonucu bir sözcükten fazlası ile sonuçlanırsa,
+Bash bir hata üretir.
+  </para><para>
+Yönlendirmelerin sırası önemlidir. Örneğin,
+  </para><para>
+<screen><command>ls > </command><emphasis>dizin.liste</emphasis> <command>2>&amp;1</command>
+</screen>
+  </para><para>
+komutunda standart girdi (dosya tanıtıcı 1) ve standart hata (dosya
+tanıtıcı 2) birlikte <replaceable>dizin.liste</replaceable> dosyasına
+yönlendirilirken,
+  </para><para>
+<screen><command>ls 2>&amp;1 > </command><emphasis>dizin.liste</emphasis>
+</screen>
+  </para><para>
+komutunda standart çıktı <replaceable>dizin.liste</replaceable> dosyasına
+yönlendirilir, çünkü standart hata, <replaceable>dizin.liste</replaceable>
+dosyasına yönlendirilmeden önce standart çıktıya kopyalanmıştır.
+  </para><para>
+Bash aşağıda açıklandığı gibi çeşitli dosya isimlerini yönlendirmelerin
+içinde özel olarak ele alır:
+  </para><para>
+    <glosslist>
+      <glossentry>
+        <glossterm><command>/dev/fd/</command><replaceable>fd</replaceable></glossterm>
+        <glossdef><para>
+<replaceable>fd</replaceable> bir tamsayı ise dosya tanıtıcı
+<replaceable>fd</replaceable> kopyalanır.
+        </para></glossdef>
+      </glossentry><glossentry>
+        <glossterm><command>/dev/stdin</command></glossterm>
+        <glossdef><para>
+Dosya tanıtıcı 0 kopyalanır. (Standart girdi)
+        </para></glossdef>
+      </glossentry><glossentry>
+        <glossterm><command>/dev/stdout</command></glossterm>
+        <glossdef><para>
+Dosya tanıtıcı 1 kopyalanır. (Standart çıktı)
+        </para></glossdef>
+      </glossentry><glossentry>
+        <glossterm><command>/dev/stderr</command></glossterm>
+        <glossdef><para>
+Dosya tanıtıcı 2 kopyalanır. (Standart hata)
+        </para></glossdef>
+      </glossentry><glossentry>
+        <glossterm><command>/dev/tcp/</command><replaceable>konak/port</replaceable></glossterm>
+        <glossdef><para>
+<replaceable>konak</replaceable> geçerli bir konak ismi ya da
+Internet adresi ise ve <replaceable>port</replaceable> bir tamsayı
+port numarası ya da servis ismi ise Bash, ilgili sokete bir TCP
+bağlantısı açmaya çalışır.
+        </para></glossdef>
+      </glossentry><glossentry>
+        <glossterm><command>/dev/udp/</command><replaceable>konak/port</replaceable></glossterm>
+        <glossdef><para>
+<replaceable>konak</replaceable> geçerli bir konak ismi ya da
+Internet adresi ise ve <replaceable>port</replaceable> bir tamsayı
+port numarası ya da servis ismi ise Bash, ilgili sokete bir UDP
+bağlantısı açmaya çalışır.
+        </para></glossdef>
+      </glossentry>
+    </glosslist>
+  </para><para>
+Bir dosyanın açılması veya oluşturulması sırasında bir hata oluşursa,
+yönlendirme gerçekleşmez.
+  </para><para>
+9'dan büyük dosya tanıtıcıları kullanılarak yapılan yönlendirmelerde dosya tanıtıcıların kabuğun dahili olarak kullandıkları ile çakışabileceği dikkate alınmalıdır.
+  </para>
+  <sect1 id="bashref_shell.redirections-input">
+    <title>Girdi Yönlendirmesi</title>
+    <para>
+Girdi yönlendirmesinde, verilen <replaceable>sözcük</replaceable>'ün
+yorumlanması ile elde edilen isme  sahip dosya, verilmişse dosya tanıtıcı
+<replaceable>n</replaceable> üstünde,  aksi takdirde standart girdide (dosya
+tanıtıcı 0) açılır.
+    </para><para>
+Girdi yönlendirmesi olarak değerlendirilecek sözdizimi:
+    </para><para>
+<literallayout indent="0">
+    [<emphasis>n</emphasis>]&lt;<emphasis>sözcük</emphasis>
+</literallayout>
+    </para>
+  </sect1>
+  <sect1 id="bashref_shell.redirections-output">
+    <title>Çıktı Yönlendirmesi</title>
+    <para>
+Çıktı yönlendirmesinde,  verilmişse dosya tanıtıcı <replaceable>n</replaceable>,
+aksi takdirde standart çıktı (dosya tanıtıcı 1), verilen
+<replaceable>sözcük</replaceable>'ün yorumlanması ile elde edilen isme
+sahip dosyaya yazılır. Dosya yoksa oluşturulur, varsa önce dosyanın
+içeriği silinir.
+    </para><para>
+Çıktı yönlendirmesi olarak değerlendirilecek sözdizimi:
+    </para><para>
+<literallayout indent="0">
+    [<emphasis>n</emphasis>]>[|]<emphasis>sözcük</emphasis>
+</literallayout>
+    </para><para>
+Yönlendirme işleci <literal>></literal> ise, <literal>noclobber</literal>
+seçeneği <command>set</command> yerleşiği ile etkinleştirilmişse ve
+<replaceable>sözcük</replaceable>'ün yorumlanması ile elde edilen isme
+sahip dosya varsa ve bir normal dosya ise yönlendirme gerçekleşmez.
+Yönlendirme işleci <literal>></literal> ya da <literal>>|</literal>
+ise ve <literal>noclobber</literal> seçeneği etkin değilse dosya
+varsa bile yönlendirme yapılmaya çalışılır.
+    </para>
+  </sect1>
+  <sect1 id="bashref_shell.redirections-add.output">
+    <title>Yönlendirilmiş Çıktının Eklenmesi</title>
+    <para>
+Yönlendirilmiş çıktının eklenmesi işleminde,  verilmişse dosya tanıtıcı
+<replaceable>n</replaceable>, aksi takdirde standart çıktı (dosya tanıtıcı 1),
+verilen <replaceable>sözcük</replaceable>'ün yorumlanması ise elde
+edilen isme sahip dosyaya eklenir. Dosya yoksa oluşturulur.
+    </para><para>
+Çıktının eklenmesi olarak değerlendirilecek sözdizimi:
+    </para><para>
+<literallayout indent="0">
+    [<emphasis>n</emphasis>]>><emphasis>sözcük</emphasis>
+</literallayout>
+    </para>
+  </sect1>
+  <sect1 id="bashref_shell.redirections-stdout">
+    <title>Standart Çıktı ve Standart Hatanın Yönlendirmesi</title>
+    <para>
+Bash, hem standart çıktı (dosya tanıtıcı 1) hem de standart hatayı
+(dosya tanıtıcı 2), <replaceable>sözcük</replaceable>'ün yorumlanması
+ile elde edilen isme sahip dosyaya yönlendirebilir.
+    </para><para>
+Standart çıktı ve standart hatanın yönlendirilmesine konu iki
+sözdizimi vardır:
+    </para><para>
+<literallayout indent="0">
+    &amp;><emphasis>sözcük</emphasis>
+</literallayout>
+        </para><para>ve</para><para>
+<literallayout indent="0">
+    >&amp;<emphasis>sözcük</emphasis>
+</literallayout>
+    </para><para>
+Bu iki biçemden birincisinin kullanılması önerilir. Her ikisi de
+aşağıdakine eşdeğerdir:
+    </para><para>
+<literallayout indent="0">
+    ><emphasis>sözcük</emphasis> 2>&amp;1
+</literallayout>
+    </para>
+  </sect1>
+  <sect1 id="bashref_shell.redirections-docs">
+    <title>Uzun Metinlerin Yönlendirilmesi</title>
+    <para>
+Bu tür yönlendirmede kabuk, sadece <replaceable>sözcük</replaceable>'ün
+bulunduğu satıra gelene kadar olan tüm satırları okur.
+    </para><para>
+Uzun Metinlerin Yönlendirilmesine konu sözdizimi:
+    </para><para>
+<literallayout indent="0">
+    &lt;&lt;[-]<emphasis>sözcük</emphasis>
+        <emphasis>Çok satırlı metin</emphasis>
+    <emphasis>sonlandırıcı</emphasis>
+</literallayout>
+    </para><para>
+<replaceable>sözcük</replaceable> üzerinde parametre, komut, aritmetik
+ve dosyaismi yorumlamaları uygulanmaz.
+    </para><para>
+<replaceable>sözcük</replaceable>
+tırnak içine alınmışsa, <replaceable>sonlandırıcı</replaceable>,
+<replaceable>sözcük</replaceable>'ün tırnaklar kaldırılmış halidir ve
+<replaceable>Çok satırlı metin</replaceable> üzerinde herhangi bir
+yorumlama işlemi uygulanmaz.
+    </para><para>
+<replaceable>sözcük</replaceable> tırnak içine alınmamışsa,
+<replaceable>Çok satırlı metin</replaceable> üzerinde parametre,
+komut ve aritmetik yorumlar uygulanır, yani metin içindeki
+<literal>\</literal>, <literal>$</literal> ve <literal>`</literal>
+karakterleri <literal>\</literal> ile öncelenmiş olmalıdır, ayrıca
+<literal>\satırsonu</literal> çiftleri de yoksayılır (yani bu satırlardan
+sonraki satırlar satırın devamı olarak ele alınır).
+    </para><para>
+Yönlendirme işleci <literal>&lt;&lt;-</literal> ise,
+<replaceable>Çok satırlı metin</replaceable> ve
+<replaceable>sonlandırıcı</replaceable> içindeki sekme karakterleri
+ayrılır, böylece kabuk betikleri içindeki kullanımlarda metnin
+olduğu gibi ele alınması mümkün olur.
+    </para>
+  </sect1>
+  <sect1 id="bashref_shell.redirections-strs">
+    <title>Dizgelerin Yönlendirilmesi</title>
+    <para>
+Metin yönlendirmenin bir başka biçimi:
+    </para><para>
+<literallayout indent="0">
+    &lt;&lt;&lt; <emphasis>sözcük</emphasis>
+</literallayout>
+    </para><para>
+<varname>sözcük</varname> yorumlanır ve standart girdideki komuta arzedilir.
+    </para>
+  </sect1>
+  <sect1 id="bashref_shell.redirections-fd">
+    <title>Dosya Tanıtıcılarının Kopyalanması</title>
+    <para>
+Yönlendirme işleci
+    </para><para>
+<literallayout indent="0">
+    [<emphasis>n</emphasis>]&lt;&amp;<emphasis>sözcük</emphasis>
+</literallayout>
+    </para><para>
+girdi dosya tanıtıcılarını kopyalamakta kullanılır.
+<replaceable>n</replaceable> ile belirtilen dosya tanıtıcı,
+<replaceable>sözcük</replaceable>'ün yorumlanması ile elde
+edilen sayı numaralı dosya tanıtıcıya kopyalanır.
+<replaceable>sözcük</replaceable> ile belirtilen sayı bir dosya
+tanıtıcısına karşılık değilse yönlendirme hatası oluşur.
+<replaceable>sözcük</replaceable>, <literal>-</literal> olarak
+yorumlanmışsa, <replaceable>n</replaceable> dosya tanıtıcısı kapatılır.
+<replaceable>n</replaceable> verilmezse standart girdi (dosya tanıtıcısı 0)
+kullanılır.
+    </para><para>Yönlendirme işleci</para><para>
+<literallayout indent="0">
+    [<emphasis>n</emphasis>]>&amp;<emphasis>sözcük</emphasis>
+</literallayout>
+    </para><para>
+çıktı dosya tanıtıcılarını kopyalamak anlamında kullanılır.
+<replaceable>n</replaceable> verilmezse standart çıktı (dosya tanıtıcısı 1)
+kullanılır. <replaceable>sözcük</replaceable> ile belirtilen sayı
+bir dosya tanıtıcısına karşılık değilse yönlendirme hatası oluşur.
+Özel bir durum olarak, <replaceable>n</replaceable> verilmezse ve
+<replaceable>sözcük</replaceable> bir sayı değilse standart çıktı
+ve standart hata önceden açıklandığı gibi yönlendirilir.
+    </para>
+  </sect1>
+  <sect1 id="bashref_shell.redirections-mvfd">
+    <title>Dosya Tanıtıcıların Taşınması</title>
+    <para>
+Yönlendirme işleci
+    </para><para>
+<literallayout indent="0">
+    [<varname>n</varname>]&lt;&amp;<varname>rakam</varname>-
+</literallayout>
+    </para><para>
+dosya tanıtıcı <varname>rakam</varname>'ı dosya tanıtıcı<varname>n</varname>'e,
+<varname>n</varname> belirtilmemişse standart girdiye (dosya tanıtıcı 0) taşır.
+<varname>rakam</varname> <varname>n</varname>'e kopyalandıktan sonra kapatılır.
+    </para><para>
+Benzer şekilde, yönlendirme işleci
+    </para><para>
+<literallayout indent="0">
+    [<varname>n</varname>]&gt;&amp;<varname>rakam</varname>-
+</literallayout>
+    </para><para>
+dosya tanıtıcı <varname>rakam</varname>'ı dosya tanıtıcı<varname>n</varname>'e,
+<varname>n</varname> belirtilmemişse standart çıktıya (dosya tanıtıcı 1) taşır.
+    </para>
+  </sect1>
+  <sect1 id="bashref_shell.redirections-openfd">
+    <title>Dosya Tanıtıcılarının Okuma ve Yazma Amacıyla Açılması</title>
+    <para>
+Yönlendirme işleci
+    </para><para>
+<literallayout indent="0">
+    [<emphasis>n</emphasis>]&lt;><emphasis>sözcük</emphasis>
+</literallayout>
+    </para><para>
+<replaceable>sözcük</replaceable>'ün yorumlanması ile elde edilen isme
+sahip dosyanın hem okuma hem de yazma amacıyla <replaceable>n</replaceable>
+dosya tanıtıcısı üstünde açılmasını sağlar. Eğer dosya yoksa oluşturulur.
+    </para>
+  </sect1>
+</chapter>
+
+<chapter id="bashref_shell.exec" label="7">
+  <title>Komutların Çalıştırılması</title>
+  <titleabbrev>Bir komutu çalıştırmak istediğinizde neler olur.</titleabbrev>
+  <sect1 id="bashref_shell.exec-simple">
+    <title>Basit Komut Yorumlaması</title>
+    <titleabbrev>Bash basit komutları çalıştırmadan önce ne yapar.</titleabbrev>
+<indexterm scope="bashref_concept.index">
+<primary>komut</primary><secondary>yorumlaması</secondary></indexterm>
+<indexterm scope="bashref_concept.index">
+<primary>yorumlama</primary><secondary>komut</secondary></indexterm>
+    <para>
+Bir basit komut çalıştırıldığı zaman, kabuk aşağıdaki yorumları,
+atamaları ve yorumlamaları soldan sağa uygular.
+    </para><para>
+      <orderedlist>
+        <listitem><para>
+Çözümleyicinin yönlendirme ve değişken atamaları (bunlar komut
+isminden öncedir) olarak işaretlediği sözcükler daha sonra
+işlenmek üzere saklanır.
+        </para></listitem><listitem><para>
+Yönlendirme ve değişken ataması olmayan sözcükler yorumlanır
+(<xref linkend="bashref_shell.expansions"/> bölümüne bakınız).
+Yorumlamadan sonra kalan sözcükler varsa, ilk sözcük komut ismi
+olarak, kalanlar ise argümanlar olarak ele alınır.
+        </para></listitem><listitem><para>
+Yönlendirmeler, <xref linkend="bashref_shell.redirections"/>
+bölümünde açıklandığı şekilde uygulanır.
+        </para></listitem><listitem><para>
+Değişken atamalarındaki <literal>=</literal> işaretlerinden
+sonra gelen metine <link
+linkend="bashref_shell.expansions-tilde">yaklaşık yorumlaması</link>,
+<link linkend="bashref_shell.expansions-param">parametre yorumlaması</link>,
+<link linkend="bashref_shell.expansions-cmd.subs">komut ikamesi</link>,
+<link linkend="bashref_shell.expansions-arith">aritmetik yorumlama</link> ve
+<link linkend="bashref_shell.expansions-unquoting">tırnak kaldırma</link>
+uygulandıktan sonra sonuç değişkene atanır.
+        </para></listitem>
+      </orderedlist>
+    </para><para>
+Sonuçlanan bir komut ismi yoksa, değişken atamaları, kullanılan kabukta
+ortam değişkeni olarak yorumlanır. Aksi takdirde değişkenler
+sadece çalıştırılan komutun ortamına eklenir ve kabuk ortamına etkisi
+olmaz. Bir değişkenin salt-okunur değerine atama yapılmaya
+çalışılırsa bir hata oluşur ve komut sıfırdan farklı bir çıkış durumu
+ile sonlanır.
+    </para><para>
+Sonuçlanan bir komut ismi yoksa, yönlendirmeler uygulanır, fakat
+kullanılan kabuk ortamı etkilenmez. Bir yönlendirme hatası oluşur ve
+komut sıfırdan farklı bir çıkış durumu ile sonlanır.
+    </para><para>
+Yorumlamadan sonra bir dosya ismi kalırsa, sonraki bölümde anlatıldığı
+gibi çalıştırma gerçekleştirilir, aksi takdirde komut işlemsiz sonlanır.
+Yorumlamanın sonucu bir komut ikamesi ise komutun çıkış durumu
+son çalıştırılan komutun çıkış durumudur. Komut ikamesi yoksa,
+komut sıfır çıkış durumu ile tamamlanır.
+    </para>
+  </sect1>
+  <sect1 id="bashref_shell.exec-search">
+    <title>Komutun Bulunması ve Çalıştırılması</title>
+    <titleabbrev>Bash komutları nasıl bulup çalıştırır.</titleabbrev>
+<indexterm scope="bashref_concept.index"><primary>komut</primary><secondary>arama</secondary></indexterm>
+<indexterm scope="bashref_concept.index"><primary>komut</primary><secondary>çalıştırma</secondary></indexterm>
+<indexterm scope="bashref_concept.index"><primary>arama</primary><secondary>komut</secondary></indexterm>
+<indexterm scope="bashref_concept.index"><primary>çalıştırma</primary><secondary>komut</secondary></indexterm>
+    <para>
+Bir komut, sözcüklere ayrıldıktan sonra, sonuçlananlar bir basit komut
+ve bir istemlik argüman listesi ise aşağıdaki eylemler oluşur:
+    </para><para>
+      <orderedlist>
+        <listitem><para>
+Komutun isminde / işaretleri yoksa kabuk komutun yerini bulmaya çalışır.
+Bu isimde bir kabuk işlevi varsa, <xref
+linkend="bashref_shell.functions"/> bölümünde açıklandığı gibi işlev
+çağrılır.
+        </para></listitem><listitem><para>
+İsim bir işlev ismi değilse, kabuk bu kez de onu kabuk yerleşikleri
+arasında arar, varsa yerleşik komut çalıştırılır.
+        </para></listitem><listitem><para>
+İsim bir işlev ya da yerleşik komut değilse ve / işaretleri de
+içermiyorsa, Bash bu isimde bir dosya içeren dizini bulmak üzere
+<literal>$PATH</literal> ile verilmiş her dizine bakar. Bash,
+çoklu <literal>PATH</literal> aramaları yapmamak için çalıştırılabilir
+dosyaların tam dosya yollarını bir tabloda tutar (<xref
+linkend="bashref_bourne.shell.builtins-hash"/> bölümüne bakınız).
+<literal>$PATH</literal> dizinlerinde arama işlemi, dosya, arama
+tablosunda yoksa uygulanır. Arama başarısız olursa, kabuk bir hata
+iletisi gösterir ve 127 çıkış durumu ile döner.
+        </para></listitem><listitem><para>
+Arama başarılı ise veya komut ismi bir ya da daha fazla / içeriyorsa,
+kabuk bu uygulamayı ayrı bir çalıştırma ortamında çalıştırır.
+Verilen isme argüman numarası olarak 0 ve varsa komutun
+argümanlarına 1 den başlayan argüman numaraları atanır.
+        </para></listitem><listitem><para>
+Bu çalıştırma işlemi, dosyanın çalıştırılabilir ve bir dizin olmaması
+sebebiyle gerçekleşmezse, dosya bir kabuk betiği olarak kabul edilir
+ve <xref linkend="bashref_shell.scripts"/> bölümünde açıklandığı gibi
+çalıştırılır.
+        </para></listitem><listitem><para>
+Komut eşzamanlamasız olarak başlatılamazsa, kabuk komutun işini
+bitirmesini bekler ve bittiğinde komutun çıkış durumu ile döner.
+        </para></listitem>
+      </orderedlist>
+    </para>
+  </sect1>
+  <sect1 id="bashref_shell.exec-cmd.env">
+    <title>Komut Çalıştırma Ortamı</title>
+    <titleabbrev>Kabuk yerleşiği olmayan komutların çalıştırıldığı ortam.</titleabbrev>
+    <indexterm scope="bashref_concept.index">
+      <primary>çalıştırma ortamı</primary>
+    </indexterm>
+    <para>
+Kabuğun aşağıdaki özelliklere sağlayan bir <emphasis>çalıştırma ortamı</emphasis>
+vardır:
+    </para><para>
+      <itemizedlist>
+        <listitem><para>
+<link linkend="bashref_bourne.shell.builtins-exec"><command>exec</command></link>
+yerleşiğine yapılan yönlendirmelerle değiştirilmiş olarak, çağrı
+sırasında kabuktan alınan dosyaları açar.
+        </para></listitem><listitem><para>
+Çalışma dizini,
+<link linkend="bashref_bourne.shell.builtins-cd"><command>cd</command></link>,
+<link linkend="bashref_directory-builtins-pushd"><command>pushd</command></link>
+veya
+<link linkend="bashref_directory-builtins-popd"><command>popd</command></link>
+yerleşikleri tarafından geçilen
+ya da çağrı sırasında kabuktan alınan dizine ayarlanır.
+        </para></listitem><listitem><para>
+Dosya oluşturma kipi maskesi, ya
+<link linkend="bashref_bourne.shell.builtins-umask"><command>umask</command></link>
+ile belirlenen ya da kabuğun kendini başlatan kabuktan aldığı değere
+ayaranır.
+        </para></listitem><listitem><para>
+Sinyal kapanları
+<link linkend="bashref_bourne.shell.builtins-trap"><command>trap</command></link>
+tarafından belirlenir.
+        </para></listitem><listitem><para>
+Kabuk parametreleri, değişken atamalarına göre veya
+<command>set</command> ile ya da kabuğun kendini başlatan kabuktan
+aldığı parametrelere göre ayarlanır.
+        </para></listitem><listitem><para>
+Kabuk işlevlerini çalıştırma sırasında veya kabuğun kendini başlatan
+kabuktan aldıkları ile tanımlar.
+        </para></listitem><listitem><para>
+Seçenekleri çağrı sırasında (ya öntanımlı olarak ya da komut satırı
+argümanları olarak) veya
+<link linkend="bashref_set.builtin"><command>set</command></link>
+yerleşiği ile belirler.
+        </para></listitem><listitem><para>
+Seçenekleri
+<link linkend="bashref_bash.builtins-shopt"><command>shopt</command></link>
+yerleşiği ile etkinleştirir.
+        </para></listitem><listitem><para>
+Kabuk takma adlarını
+<link linkend="bashref_bash.builtins-alias"><command>alias</command></link>
+yerleşiğini kullanarak tanımlar (<xref linkend="bashref_aliases"/> bölümüne
+bakınız).
+        </para></listitem><listitem><para>
+çeşitli süreç kimlikleri, bunların artalan işleri dahil
+(<xref linkend="bashref_shell.commands-lists"/> bölümüne bakınız),
+<literal>$$</literal> değeri ve <literal>$PPID</literal> değeri
+        </para></listitem>
+      </itemizedlist>
+    </para><para>
+Bir kabuk işlevi ya da kabuk yerleşiği olmayan bir basit komut
+çalıştırıldığında, aşağıdaki özellikleri sağlayan ayrı bir
+çalıştırma ortamında çağrılır. Aksi belirtilmedikçe, değerler
+kabuktan alınır.
+    </para><para>
+      <itemizedlist>
+        <listitem><para>
+kabukların açık dosyaları artı komuta yönlendirilmiş
+eklemeler ve değişiklikler
+        </para></listitem><listitem><para>
+çalışma dizini
+        </para></listitem><listitem><para>
+dosya oluşturma kipi maskesi
+        </para></listitem><listitem><para>
+ihraç edilmek üzere işaretli kabuk değişkenleri ve işlevler,
+komut için ihraç edilmiş değişkenler ile ortamda
+atanmış değişkenler (<xref linkend="bashref_shell.exec-env"/>
+bölümüne bakınız)
+        </para></listitem><listitem><para>
+kabuk tarafından yakalanan sinyaller, kabuğun kendini çalıştıran kabuktan
+alınan değerlere sıfırlanır ve kabuk tarafından yoksayılan
+sinyaller yoksayılır.
+        </para></listitem>
+      </itemizedlist>
+    </para><para>
+Bu ayrı ortamda çağrılan bir komut kabuğun çalıştırma ortamını
+etkileyemez.
+    </para><para>
+Komut ikamesi, parantezlerle gruplanmış komutlar ve eşzamansız komutlar
+mevcut kabuk ortamının bir kopyası olan bir alt-kabuk ortamında başlatılır,
+fakat kabuk tarafından yakalanan sinyaller kabuğun başlangıç esnasında kendini
+başlatan kabuktan aldığı değerlere atanır.
+Bir boruhattının parçası olarak çağrılan yerleşik komutlar
+ayrıca bir altkabuk ortamında çalıştırılır. Altkabuk ortamında yapılan
+değişiklikler kabuğun çalıştırma ortamını etkileyemez.
+    </para><para>
+Bir komuttan sonra bir <literal>&amp;</literal> geliyorsa ve iş
+denetimi etkin değilse, komut için öntanımlı standart girdi
+<filename>/dev/null</filename>, yani boş dosyadır. Aksi takdirde,
+çağrılan komut, çağrı kabuğunun yönlendirmelerle değiştirilen dosya
+tanıtıcılarını miras alır.
+    </para>
+  </sect1>
+  <sect1 id="bashref_shell.exec-env">
+    <title>Ortam</title>
+    <titleabbrev>Bir komuta verilen ortam.</titleabbrev>
+    <indexterm scope="bashref_concept.index"><primary>ortam</primary></indexterm>
+    <para>
+Bir komut çağrıldığında, ona <emphasis>ortam</emphasis> adı verilen
+bir dizgeler dizisi verilir. Bu, <literal>isim=değer</literal> şeklindeki
+isim-değer çiftlerinden oluşan bir listedir.
+    </para><para>
+Bash, ortamı değiştirmek için çeşitli yollar sağlar. Çağrı durumunda,
+kabuk kendi ortamını tarar ve bulduğu her isim için çocuk süreçlere
+aktarılmak üzere otomatik olarak işaretleyerek bir parametre
+oluşturur. Çalıştırılan komutlar ortamı miras alır.
+<link linkend="bashref_bourne.shell.builtins-export"><command>export</command></link> ve
+<link linkend="bashref_bash.builtins-declare"><command>declare</command></link> <option>-x</option> komutları, parametrelerin ve işlevlerin ortama eklenmesini ve ortamdan
+silinmesini sağlar. Ortamdaki bir parametrenin değeri değişirse,
+yeni değer eskisiyle yer değiştirerek ortamın parçası haline gelir.
+Çalıştırılan komut tarafından miras alınan ortam kabuğun başlangıç
+ortamından oluşur. Bu ortam, kabukta değiştirilebilen değerler,
+eksi <command>export</command> <option>-n</option> ve
+<link linkend="bashref_bourne.shell.builtins-unset"><command>unset</command></link>
+komutları tarafından kaldırılan çiftler,
+artı <command>export</command> ve <command>declare</command>
+<option>-x</option> komutları üzerinden eklemelerden oluşur.
+    </para><para>
+Bir basit komut veya işlevin ortamı, <xref linkend="bashref_shell.parameters"/>
+bölümünde açıklandığı gibi parametre atamaları ile öncelenerek geçici
+olarak büyütülebilir. Bu atama deyimleri sadece komut tarafından görülen
+ortamı etkiler.
+    </para><para>
+<option>-k</option> seçeneği etkinse (<xref linkend="bashref_set.builtin"/>
+bölümüne bakınız), tüm parametre atamaları komut ismini öncelemek
+yerine doğrudan komut ortamına yerleştirilir.
+    </para><para>
+Bash bir harici komutu çağırırsa, <literal>$_</literal> değişkeni
+komutun tam dosyayolunu içerir ve ortam içindeki komuta aktarılır.
+    </para>
+  </sect1>
+  <sect1 id="bashref_shell.exec-exit.status">
+    <title>Çıkış Durumu</title>
+    <titleabbrev>Komutlardan dönen durum ve Bash'ın bunu nasıl yorumladığı.</titleabbrev>
+<indexterm scope="bashref_concept.index"><primary>çıkış durumu</primary></indexterm>
+    <para id="bashref-exit.status">
+Kabuğun amaçlarına uygun olarak, sıfır çıkış durumu ile çıkan bir
+komut başarılıdır. Sıfırdan farklı bir çıkış durumu ise başarısızlık
+göstergesidir. Böylece sayılardan oluşan hem başarı durumunu hem de
+başarısızlık nedenlerinin ifade edilebildiği bir yapı sağlanır.
+Bir komut, numarası N olan bir ölümcül sinyal ile sonlandırılırsa,
+Bash, çıkış durumu olarak 128+N değerini kullanır.
+    </para><para>
+Bir komut bulunamamışsa, bir çocuk süreç oluşturulur ve bu süreç
+127 çıkış durumu ile döner. Bir komut bulunmuş ancak çalıştırılabilir
+değilse, 126 dönüş durumu döner.
+    </para><para>
+Yönlendirme ya da yorumlama sırasında bir hatadan dolayı komutun
+çalıştırılması başarısız olursa, sıfırdan büyük bir çıkış durumu döner.
+    </para><para>
+Çıkış durumu, <xref linkend="bashref_shell.commands-conditionals"/> deyimleri
+ve <xref linkend="bashref_shell.commands-lists"/> tarafından kullanılır.
+    </para><para>
+Bash yerleşiklerinin de başarı durumunda sıfır ve başarısızlık durumunda
+sıfırdan farklı bir çıkış durumu ile dönerek, çıkış durumlarnın
+koşul ve liste yapılarında kullanılabilmesi sağlanmıştır. Tüm yerleşikler
+yanlış kullanım halinde 2 çıkış durumu ile döner.
+    </para>
+  </sect1>
+  <sect1 id="bashref_shell.exec-signals">
+    <title>Sinyaller</title>
+    <titleabbrev>
+      Bash veya bir komut çalışırken bir sinyal aldığında neler olur.
+    </titleabbrev>
+<indexterm scope="bashref_concept.index"><primary>sinyal</primary><secondary>alındığında ne olur</secondary></indexterm>
+<indexterm scope="bashref_concept.index"><primary>sinyal</primary><secondary>kapanı</secondary></indexterm>
+    <para>
+Bash etkileşimli ise, bir <link linkend="bashref_bourne.shell.builtins-trap">sinyal kapanının</link> yokluğunda, <literal>SIGTERM</literal>
+sinyalini yoksayarken <literal>SIGINT</literal> sinyalini yakalar ve
+elde eder (yani <command>wait</command> yerleşiğine kesme uygulanabilir).
+<literal>SIGTERM</literal> sinyalinin yoksayılması
+<command>kill 0</command> komutu ile bir etkileşimli kabuğun
+öldürülememesi demektir. Bash bir <literal>SIGINT</literal> sinyali
+aldığında, çalışan döngülerden çıkılır. Tüm durumlarda, <literal>SIGQUIT</literal>
+sinyalini yoksayar. Eğer <link linkend="bashref_job.control">iş denetimi</link> etkinse, Bash <literal>SIGTTIN</literal>,
+<literal>SIGTTOU</literal> ve <literal>SIGTSTP</literal> sinyallerini yoksayar.
+    </para><para>
+Bash tarafından başlatılan yerleşik olmayan komutlar, komutun başlatıldığı kabuğu başlatan
+kabuktan miras alınan değerleri kullanabilen sinyal yakalayıcılara sahiptir.
+İş denetimi etkin değilse, eşzamansız komutlar bu miras alınan sinyal yakalayıcılara ek olarak <literal>SIGINT</literal> ve <literal>SIGQUIT</literal> sinyallerini de yoksayar. Komut ikamesinin sonucu olarak çalıştırılan komutlar klavyeden verilen <literal>SIGTTIN</literal>, <literal>SIGTTOU</literal> ve <literal>SIGTSTP</literal> iş denetim sinyallerini yoksayar.
+    </para><para>
+Kabuk öntanımlı olarak bir <literal>SIGHUP</literal> sinyali aldığında
+çıkar. Çıkmadan önce, bir etkileşimli kabuk altında çalışan ya da durmuş
+tüm işlere <literal>SIGHUP</literal> sinyali gönderir. Durmuş işler
+aldıkları <literal>SIGHUP</literal> sinyalini uygulayabilmek için önce
+bir <literal>SIGCONT</literal> sinyali gönderir. Kabuk bir işe tekrardan
+bir <literal>SIGHUP</literal> sinyali göndermemek için ya
+<link linkend="bashref_job.control.builtins-disown"
+><command>disown</command></link> yerleşiğini kullanarak onları iş
+tablosundan kaldırır ya da <command>disown</command>
+<literal>-h</literal> komutunu kullanarak <literal>SIGHUP</literal>
+sinyalini bir daha almamasını sağlar.
+    </para><para>
+Eğer <option>huponexit</option> kabuk seçeneği
+<link linkend="bashref_job.control.builtins-disown"><command>shopt</command></link> yerleşiği ile etkinleştirilmişse ve
+bir etkileşimli giriş kabuğu çıkarsa, Bash bütün işlere bir
+<literal>SIGHUP</literal> sinyali gönderir.
+    </para><para>
+Bash bir komutun sona ermesini beklerken bir sinyal kapanının çalıştırılması için
+bir sinyal alırsa, komut işini tamamlayana kadar <link
+linkend="bashref_bourne.shell.builtins-trap">sinyal kapanı</link> çalıştırılmaz.
+Bash <command>wait</command> yerleşiği üzerinden bir eşzamansız
+komut için beklerken bir sinyal kapanının çalıştırılması için bir sinyal alırsa,
+<command>wait</command> yerleşiği 128 den büyük bir çıkış durumu ile
+döner ve ardından sinyal kapanı çalıştırılır.
+    </para>
+  </sect1>
+</chapter>
+
+<chapter id="bashref_shell.scripts" label="8">
+  <title>Kabuk Betikleri</title>
+  <titleabbrev>Kabuk komutlarından oluşan dosyaların çalıştırılması.</titleabbrev>
+<indexterm scope="bashref_concept.index"><primary>kabuk</primary><secondary>betik</secondary></indexterm>
+  <para>
+Bir kabuk betiği kabuk komutlarını içeren bir metin dosyasıdır.
+Bash çağrılırken böyle bir dosya seçenek olmayan ilk argüman olarak
+verilmişse ve seçenekler arasında <option>-c</option> ve
+<option>-s</option> seçenekleri yoksa (<xref linkend="bashref_invoking.bash"/>
+bölümüne bakın), Bash dosyadan okuduğu komutları çalıştırır ve çıkar.
+Bu tür bir işlemde kullanılan kabuk etkileşimsiz kabuktur. Kabuk dosyayı
+önce çalıştırıldığı dizinin içinde arar, bulamazsa <literal>$PATH</literal>
+içindeki dizinlere bakar.
+  </para><para>
+Bash bir kabuk betiğini çalıştırırken, özel parametre <constant>0</constant>'ı
+kabuğun ismine değil dosya ismine atar ve diğer konumsal parametreler de
+varsa argümanlara atanır. Olmayan argümanların konumsal parametreleri
+kaldırılır.
+  </para><para>
+Bir kabuk betiği, <command>chmod</command> komutu ile çalıştırma biti
+1 yapılarak çalıştırılabilir yapılabilir. Bash betiğin içindeki komutları
+<literal>$PATH</literal> dizinlerinde arar ve bulduğunda bir altkabuk
+oluşturup onu orada çalıştırır. Başka bir deyişle, <literal>dosyaismi</literal>
+bir çalıştırılabilir kabuk betiği ise
+  </para><para>
+<literallayout indent="0">
+    dosyaismi <emphasis>argumanlar</emphasis>
+</literallayout>
+      </para><para>ile</para><para>
+<literallayout indent="0">
+    bash dosyaismi <emphasis>argumanlar</emphasis>
+</literallayout>
+  </para><para>
+komutları birbirine eşdeğerdir. Bu altkabuk kendi kendini ilklendirir,
+yani etkisi, betiği yorumlayan ve komutlarının yerlerini bilen bir
+kabuktan onun çocuğu olarak yeni bir kabuk çağırmaya benzer.
+(<command>hash</command> yerleşiği için <xref
+linkend="bashref_bourne.shell.builtins"/> bölümüne bakınız.)
+  </para><para>
+Unix'in çoğu sürümleri bunu işletim sisteminin komut çalıştırma
+mekanizmasının bir parçası yapar. Eğer bir betiğin ilk satırı
+<literal>#!</literal> çifti ile başlarsa, satırın kalanı
+dosya içindeki programın yorumlayıcısıdır. Burada Bash,
+<command>awk</command>, <command>perl</command> ya da
+betik dosyasının yazıldığı dile ait bir yorumlayıcı belirtebilirsiniz.
+  </para><para>
+Yorumlayıcı için yorumlayıcı satırında yorumlayıcı isminden sonra,
+ya da betiği çağırırken betik isminden hemen sonra tek bir seçenek
+belirtilebilir, bu son durumda betiğe verilebilecek diğer argümanlar
+da ondan sonra verilir. Bash bu eylemi işletim sisteminden birşey
+beklemeden yerine getirir.
+  </para><para>
+<note><para>Unix'in bazı eski sürümlerinde yorumlayıcı ismi ve tek
+seçeneği için toplam 32 karakterlik bir sınırlama vardır.</para></note>
+  </para><para>
+Bash betikleri çoğunlukla <literal>#! /bin/bash</literal> satırı ile
+başlar (Bash'ın <filename>/bin</filename> içinde bulunduğu varsayımıyla).
+Bu satır, betik başka bir kabuk altında çalıştırılsa bile betiğin
+Bash tarafından yorumlanmasını sağlar.
+  </para>
+</chapter>
+</part>

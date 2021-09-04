@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--DOCTYPE article SYSTEM "../../docbook/dtd/docbookx.dtd"-->
+<!-- ********************************************************************
+     $Id: linux-gprs-NASIL.xml,v 1.2 2002/10/03 19:39:25 nilgun Exp $
+     ******************************************************************** -->
+
+<article id="linux-gprs-nasil" lang="tr">
+
+  <articleinfo>
+
+    <title>Linux ve GPRS</title>
+    <author>
+      <firstname>Fatih YILMAZ (aka experience @irc.ada.net.tr #linux, ICQ# 154525)</firstname>
+      <affiliation>
+        <address>
+          <email>experience@email.com</email>
+        </address>
+      </affiliation>
+    </author>
+    <pubdate>23 Eylül 2002</pubdate>
+     <!-- Most recent revision goes at the top; list in descending order -->
+     <revhistory>
+       <revision>
+          <revnumber>0.1</revnumber>
+          <date>23 Eylül 2002</date>
+          <authorinitials>experience</authorinitials>
+          <revremark>İlk sürüm</revremark>
+       </revision>
+     </revhistory>
+     <abstract>
+        <para>
+          Bu belge, Linux işletim sisteminde GPRS (General Packet Radio Service)
+          teknolojisini kullanarak Internet'e bağlanmayı anlatır.
+        </para>
+     </abstract>
+      <legalnotice><para>
+Bu belgenin, <emphasis>Linux ve GPRS</emphasis> 0.1 sürümünün <emphasis role="bold"> telif hakkı © 2002 <emphasis>Fatih Yılmaz</emphasis></emphasis>'a aittir. &notice.gfdl.orig;</para>
+      &notice.disc;
+      </legalnotice>
+  </articleinfo>
+<!-- Content follows...include introduction, license information, feedback -->
+  <sect1 id="linux-gprs-nasil_giris">
+    <title>Giriş</title>
+    <para>
+      İtiraf etmeliyim ki beni 3 gün uğraştırmasına rağmen bu iş çok kolay.
+      Bu fikre varmamı 3. günün sonunda telefonu kapatıp açarak denemem sağladı.
+      Evet Linux'de GPRS hakikaten kolay.
+    </para><para>
+      Ama önce size kendi sistemimden bahsedeyim. Sistemimde 2.4.18 çekirdeğiyle
+      çalışan Slackware Linux 8.1 mevcut. pppd sürümü 2.4.1.
+    </para><para>
+      GPRS'li telefon olarak Motorola Timeport 260 kullanıyorum. Ve bağlantıyı
+      sağlamak için de RS232 kablosu gerekiyor. Eğer PC'nizde (veya laptop)
+      IR (Infrared) mevcut ise bu kabloya ihtiyacınız yok. Ama bilgisayarımda
+      IR mevcut olmadığı için ben RS232 kablosu ile bağlantıyı anlatacağım.
+      Ama kızılötesi ile de bağlantının pek farklı olmadığını biliyorum.
+    </para>
+  </sect1>
+  <sect1 id="linux-gprs-nasil_nedir">
+    <title>GPRS Nedir?</title>
+    <para>
+      GPRS, bir çok şebekenin kullanıcılarının veri uygulamalarına erişim
+      sağlayabilmek için kullanmak durumunda olduğu verimli bir teknolojidir.
+      GPRS, son kullanıcının mobil veri iletişimini, 'devamlı sanal bağlantı'
+      durumunu ekonomik hale getirerek ve veri alımını ve gönderimini
+      bugünkünden çok daha yüksek hızda mümkün kılarak önemli ölçüde geliştirir.
+      GPRS, sadece bugünkü GSM teknolojisinin sunmakta olduğu veri
+      hizmetlerine eşlik etmekle kalmaz, yarının 3. nesil hücresel ağları
+      için planlanmakta olan veri iletişim yetilerini de şebekelere sağlar.
+      GPRS, mobil iletişim teknolojisinde halen kullanılan devre anahtarlamalı
+      (circuit-switched) yani kullanıcıya tahsis edilen bir tek hat üzerinden
+      sürekli bağlantı yerine paket anahtarlamalı (packet switched), aynı
+      hattı birden çok kullanıcının paylaştığı bir teknolojidir.
+    </para><para>
+      GPRS teknolojisi, kullanıcıya yüksek erişim hızının yanı sıra, bağlantı
+      süresine göre değil gerçekleştirilen veri alışverişi miktarı özerinden
+      tarifelendirilen ucuz iletişim olanağı sağlamakta ve böylelikle "sürekli
+      bağlantıda, sürekli gerçek zamanda" (always connected/always online)
+      anlayışını sunmaktadır.
+    </para><para>
+      GPRS teknolojisini kullanabilmek için mobil şebeke ve servis sağlayıcı
+      altyapısına GPRS donanım ve yazılımları entegre etmek ve GPRS uyumlu
+      mobil telefonlar gereklidir.
+    </para><para>
+      Teorik olarak GPRS teknolojisi 171.2 kilobit/saniye
+      (bkz. <ulink url="http://www.gsmworld.com/technology/gprs/intro.shtml"
+      >http://www.gsmworld.com/technology/gprs/intro.shtml</ulink>) hızda hizmet
+      verebilir.Ama gerek GSM operatörlerinin alt yapısı gerekse doğal
+      koşullar bunu     pek mümkün kılmaz. GPRS şu anda 56 K hızında bağlantı
+      sunabilmektedir. Eminim ki zamanla bu da artacaktır.
+    </para>
+  </sect1>
+  <sect1 id="linux-gprs-nasil_ppp">
+    <title>PPP Ayarları</title>
+    <para>
+      Bu kadar önbilgi yeterli sanırım. Şimdi Linux'unuzun PPP
+      (Point-to-Point Protocol) kullanabiliyor olduğundan emin olun.
+      Bunu anlamak için açılısta çekirdek mesajlarına bakabilirsiniz.
+      Eğer çok hızlı geçiyorsa şunu deneyin.
+      </para><screen>$ dmesg | grep PPP</screen><para>sonra;</para>
+<screen>
+PPP generic driver version 2.4.1
+PPP BSD Compression module registered
+PPP Deflate Compression module registered
+PPP BSD Compression module registered
+PPP Deflate Compression module registered
+</screen><para>
+      gibi bir sonuç alıyorsanız TAMAM demektir. Ya da;
+</para><screen>$ /sbin/lsmod</screen><para>
+      komutunu verin. Çünkü PPP çekirdeğinize modül olarak eklenmiş olabilir.
+</para><screen>
+Module                  Size  Used by    Tainted: P
+ppp_async               6144   1 (autoclean)
+ppp_generic            14428   3 (autoclean) [ppp_async]
+slhc                    4272   0 (autoclean) [ppp_generic]
+</screen><para>
+      gibi bir cevap almanız güzel bir şeydir :)
+    </para><para>
+      Eğer gelen sonuçlarda hiçbir şey yok ise çekirdeğinize PPP desteğini
+      eklemeniz gerekir. Ama neredeyse tüm Linux dağıtımları PPP'yi destekler
+      halde gelir.
+    </para>
+  </sect1>
+  <sect1 id="linux-gprs-nasil_betikler">
+    <title>Betiklerin Ayarlanması</title>
+    <para>
+      Öncelikle telefonunuzu açın ve RS232 kablosunu hem telefona hem PC'nize takın.
+      (COM1 veya COM2)
+    </para><para>
+      Bağlanırken kullanacağınız betikleri hazır olarak <ulink
+      url="http://gate.polarhome.com/~experience/gprs/gprs.tr.ppp.tar.gz"/>
+      adresinden temin edebilirsiniz.
+    </para><para>
+      Şimdi o dosyayı indirin. Benim favorim <literal>wget</literal>;
+</para><screen>
+$ wget http://gate.polarhome.com/~experience/gprs/gprs.tr.ppp.tar.gz
+</screen><para>
+      sonra:
+</para><screen>
+$ su
+
+# mv gprs.tr.ppp.tar.gz /etc
+# cd /etc
+</screen><para>
+      Aşağıdaki isteğe bağlı bir komut. Önceki PPP ayarlarınızı tamamen silmek için.
+</para><screen># rm -rf ppp/</screen><para>
+      Yani bir üst satırdaki komut şart değil.
+      Güzel gözükmesi için devam edin;
+</para><screen># tar -zxvf gprs.tr.ppp.tar.gz</screen><para>
+      Şimdi betikler <literal>/etc/ppp</literal> altında yerleşti. Bunları isterseniz
+      kontrol edin. Türkiye'de genelde GPRS bağlantıları için parola ve kullanıcı adı
+      gerekmiyor ama operatörünüz öyle bir şeyden söz ederse bunu kendiniz
+      <literal>/etc/ppp</literal> altında PAP dosyalarında belirtmelisiniz.
+    </para><para>
+      Şimdi <literal>/etc/resolv.conf</literal> dosyasını düzenleyin.
+      (favori düzenleyicim: pico)
+    </para><para>
+      Ona şu satırları ekleyin;
+</para><screen>
+nameserver 212.156.4.4
+nameserver 212.156.4.20
+</screen><para>
+      Bilgi: TTNET DNS adreslerini yazıyoruz, çünkü onlar daha hızlı. Ama siz
+      isterseniz kendi operatörünüzün DNS'lerini de yazabilirsiniz.
+      (Örnek: Turkcell 212.252.119.3 ve 212.252.119.4)
+    </para><para>
+      Şimdi bağlanmaya hazırsınız. Bağlanma komutunu verin (root olmaya dikkat)
+</para><screen># pppd call gprs-moto</screen><para>
+    </para><para>
+      Artık bağlantınız var! <literal>ifconfig ppp0</literal> veya
+      <literal>route -n</literal> komutlarıyla test edebilirsiniz.
+    </para><para>
+      Başka bir konsol açıp (ALT+F2) devam edin...
+    </para>
+  </sect1>
+  <sect1 id="linux-gprs-nasil_sonuc">
+    <title>Sonuç</title>
+    <para>
+      Bir sorun oldugunda e-posta atmaktan çekinmeyin.
+      <email>experience@email.com</email>
+    </para><para>
+      <command>SON NOT</command>
+    </para><para>
+      Yukarıdaki paketin içindekiler tümden bana ait değildir. Kaynakçada
+      adresini verdim. Sonra benim başıma gelip de vay efendim
+      bu çalıntı filan vs. deyip beni çıldırtmayın. Baştan söylüyoruz...!
+    </para>
+  </sect1>
+  <sect1 id="linux-gprs-nasil_kaynak">
+    <title>Kaynakça</title>
+    <itemizedlist>
+      <listitem>
+        <ulink url="http://www.motorola.com.tr/gprsnedir.asp"/>
+      </listitem>
+      <listitem>
+        <ulink url="http://www.gsmworld.com/technology/gprs/index.shtml"/>
+      </listitem>
+      <listitem>
+        <ulink url="http://dvtl.pisem.net/gprs_moto.html"/>
+      </listitem>
+    </itemizedlist>
+  </sect1>
+</article>
+

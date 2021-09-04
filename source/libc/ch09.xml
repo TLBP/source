@@ -1,0 +1,495 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ********************************************************************
+     $Id: ch09.xml,v 1.2 2002/12/20 22:29:48 nilgun Exp $
+******************************************************************** -->
+<part id="glibc-Searching-and-Sorting">
+  <title>Arama ve Sıralama</title>
+  <titleabbrev>Genel arama ve sıralama işlevleri.</titleabbrev>
+  <partintro><para>
+Bu kısımda keyfi nesne dizilerinde arama ve sıralama için kullanılan işlevlere yer verilmiştir. Bu işlevlere dizi üyelerinin sayısı ve dizideki nesnelerin boyutları ile birlikte uygun bir karşılaştırma işlevi argüman olarak verilir.
+  </para></partintro>
+  <chapter id="glibc-Comparison-Functions">
+    <title>Karşılaştırma İşlevinin Tanımlanması</title>
+    <titleabbrev>İki nesnenin nasıl karşılaştırılacağı. Arama ve sıralama oluşumları
+    genel amaçlı olduğundan sıralamanın nasıl olacağını belirtmelisiniz.</titleabbrev>
+    <para>
+      <indexterm scope="glibc-cp"><primary>karşılaştırma işlevleri</primary></indexterm>
+Sıralı dizi kütüphanesi işlevlerinin kullanılması sırasında dizi elemanlarının nasıl karşılaştırılacağını belirtmelisiniz.
+    </para><para>
+Bunu yapmak için, dizideki iki elemanı karşılaştıracak bir karşılaştırma işlevi sağlamalısınız. Kütüphane bu işlevi çağırırken karşılaştırılacak dizi elemanlarını işleve argüman olarak belirtecektir. Karşılaştıma işleviniz <command>strcmp</command> (<xref linkend="glibc-String-Array-Comparison"/>) işlevinin yaptığı gibi bir değer döndürmelidir: İlk argüman ikincisinden küçükse negatif, büyükse pozitif değer döner.
+    </para><para>
+Aşağıdaki örnekte, <command>double</command> türünden sayılardan oluşan bir dizi ile çalışan bir karşılaştırma işlevi vardır:
+    </para><para>
+<screen>
+int
+compare_doubles (const void *a, const void *b)
+{
+  const double *da = (const double *) a;
+  const double *db = (const double *) b;
+
+  return (*da > *db) - (*da &lt; *db);
+}
+</screen></para><para>
+Karşılaştırma işlevlerinin veri türü olan isim <filename>stdlib.h</filename> başlık dosyasında tanımlanmıştır. Bu veri türü bir GNU oluşumudur.
+    </para><para>
+      <indexterm scope="glibc-tp"><primary>comparison_fn_t</primary></indexterm>
+<literallayout>
+int <command>comparison_fn_t</command> (const void *, const void *);
+</literallayout>
+    </para>
+  </chapter>
+
+  <chapter id="glibc-Array-Search-Function">
+    <title>Dizi Arama İşlevleri</title>
+    <titleabbrev><command>bsearch</command> işlevi.</titleabbrev>
+    <para>
+      <indexterm scope="glibc-cp"><primary>diziler</primary><secondary>arama işlevleri</secondary></indexterm>
+      <indexterm scope="glibc-cp"><primary>diziler</primary><secondary>ikilik arama işlevleri</secondary></indexterm>
+      <indexterm scope="glibc-cp"><primary>arama işlevleri</primary><secondary>dizilerde</secondary></indexterm>
+Genel olarak bir dizi içindeki belli bir elemanın aranması, hemen hemen tüm elemenlara bakılmasını gerektirir. GNU C kütüphanesi düzgün doğrusal arama yapan işlevleri içerir. Aşağıdaki iki işlevin prototipleri <filename>search.h</filename> başlık dosyasında bulunabilir.
+   </para><para id="glibc-lfind">
+<indexterm scope="glibc-fn"><primary>lfind</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>void *<command>lfind</command></funcdef>
+<paramdef>(const void      <varname>anahtar</varname>,
+ void           *<varname>başlangıç</varname>,
+ size_t         *<varname>üye-sayısı</varname>,
+ size_t          <varname>boyut</varname>,
+ comparison_fn_t <varname>karş-işlevi</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+Bu işlev, <varname>başlangıç</varname>'tan itibaren <varname>boyut</varname> baytlık <command>*</command><varname>üye-sayısı</varname> elemanlı bir dizide <varname>anahtar</varname> tarafından gösterilen bir eşleşmeyi içeren elemanı arar. <varname>karş-işlevi</varname> ile gösterilen işlev iki elemanın karşılaştırılması için kullanılır.
+      </para><para>
+Dönen değer, <varname>başlangıç</varname>’ta başlayan dizide bulunmuşsa eşleşen eleman için bir gösterici ile döner, eşleşen eleman yoksa <command>NULL</command> döner.
+      </para><para>
+Bu işlevin ortalama çalışma süresi <command>*</command><varname>üye-sayısı</varname>/2 dir. Bu işlev, genellikle sadece, arama yapmadan önce bazı elemanların diziye eklenmesi veya diziden silinmesinin  dizinin sıralanması açısından pek kullanışlı olmayabileceği durumda kullanılmalıdır.
+</para></funcdescr></funcsynopsis></para><para id="glibc-lsearch">
+<indexterm scope="glibc-fn"><primary>lsearch</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>void * <command>lsearch</command></funcdef>
+<paramdef>(const void      <varname>anahtar</varname>,
+ void           *<varname>başlangıç</varname>,
+ size_t         *<varname>üye-sayısı</varname>,
+ size_t          <varname>boyut</varname>,
+ comparison_fn_t <varname>karş-işlevi</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+Bu işlev <command>lfind</command> işlevine benzer. Verilen dizide bir elemanı arar ve bulduğunda bu elemanla döner. Farklı olarak, bir eşleşme bulunamazsa, <varname>anahtar</varname> ile gösterilen nesneyi (<varname>boyut</varname> baytlık olarak) dizinin sonuna ekler ve bu eklemeyi belirtmek için <command>*</command><varname>üye-sayısı</varname> değerini bir arttırır.
+      </para><para>
+İşlevi çağıran açısından bunun anlamı, dizinin elemanı içerdiğinden emin olamıyorsanız, <varname>başlangıç</varname>’ta başlayan dizi için ayrılan bellekte en azından <varname>boyut</varname> baytlık kullanılmamış alanın bulunmasının gerekliliğidir. <command>lsearch</command> işlevi çağrılırken daima bellekte yeterli yerin bulunması gerektiğinden, dizinin  aranan elemanı içerdiğinden eminseniz <command>lfind</command> işlevini kullanmak daha iyidir.
+</para></funcdescr></funcsynopsis>
+    </para><para>
+Anahtarla eşleşen bir elemanı sıralanmış bir dizide aramak için <command>bsearch</command> işlevini kullanın. Bu işlevin prototipi <filename>stdlib.h</filename> başlık dosyasındadır. <indexterm scope="glibc-pg"><primary>stdlib.h</primary></indexterm>
+   </para><para id="glibc-bsearch">
+<indexterm scope="glibc-fn"><primary>bsearch</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>void *<command>bsearch</command></funcdef>
+<paramdef>(const void      <varname>anahtar</varname>,
+ const void     *<varname>dizi</varname>,
+ size_t          <varname>üye-sayısı</varname>,
+ size_t          <varname>boyut</varname>,
+ comparison_fn_t <varname>karş-işlevi</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+Bu işlev, <varname>boyut</varname> baytlık <varname>üye-sayısı</varname> eleman içeren önceden sıralanmış <varname>dizi</varname> dizisinde <varname>anahtar</varname>'a eşdeğerde bir nesneyi arar.
+      </para><para>
+<varname>karş-işlevi</varname>, karşılaştırma yapmak için kullanılır. Bu işlev iki argümanla çağrılabilmeli ve birinci argümanın ikinci argümandan küçük, büyük ya da ona eşit olması durumlarına bağlı olarak sırasıyla sıfırdan küçük, büyük bir değerle ya da sıfır ile dönmelidir. <varname>dizi</varname> dizisinin elamanları bu karşılaştırma işlevi ile ilgili olarak artan sırada sıralanmış olmalıdır.
+      </para><para>
+Eşleşme bulunmuşsa dönen değer eşleşen dizi elemanına bir göstericidir, aksi takdirde boş gösterici döner. Dizi birden fazla eşleşme içeriyorsa, dönen değerin hangi eleman olacağı belirlenmemiştir.
+      </para><para>
+İşlev ikilik arama (binary search) algoritması kullanarak gerçeklendiğinden işlevin ismi bu algortimanın isminden türetilmiştir.
+      </para></funcdescr></funcsynopsis>
+    </para>
+  </chapter>
+
+  <chapter id="glibc-Array-Sort-Function">
+    <title>Dizi Sıralama İşlevi</title>
+    <titleabbrev><command>qsort</command> işlevi.</titleabbrev>
+    <para>
+<indexterm scope="glibc-cp"><primary>diziler</primary><secondary>sıralama işlevi</secondary></indexterm>
+<indexterm scope="glibc-cp"><primary>hızlı sıralama işlevleri</primary><secondary>dizilerde</secondary></indexterm>
+<indexterm scope="glibc-cp"><primary>sıralama işlevleri</primary><secondary>dizilerde</secondary></indexterm>
+Vereceğiniz bir karşılaştırma işlevi kullanılarak bir diziyi sıralamak isterseniz, <command>qsort</command> işlevi bu iş için biçilmiş kaftandır. Bu işlevin prototipi <filename>stdlib.h</filename> başlık dosyasındadır. <indexterm scope="glibc-pg"><primary>stdlib.h</primary></indexterm>
+    </para><para id="glibc-qsort">
+<indexterm scope="glibc-fn"><primary>qsort</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>void <command>qsort</command></funcdef>
+<paramdef>(void           *<varname>dizi</varname>,
+ size_t          <varname>üye-sayısı</varname>,
+ size_t          <varname>boyut</varname>,
+ comparison_fn_t <varname>karş-işlevi</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+Bu işlev, <varname>boyut</varname> baytlık <varname>üye-sayısı</varname> eleman içeren <varname>dizi</varname> dizisini sıralar.
+      </para><para>
+<varname>karş-işlevi</varname>, karşılaştırma yapmak için kullanılır. Bu işlev iki argümanla çağrılabilmeli ve birinci argümanın ikinci argümandan küçük, büyük ya da ona eşit olması durumlarına bağlı olarak sırasıyla sıfırdan küçük, büyük bir değerle ya da sıfır ile dönmelidir.
+      </para><para>
+<indexterm scope="glibc-cp"><primary>kararlı sıralama</primary></indexterm> <warning><para>İki nesnenin karşılaştırması eşitlikle sonuçlanıyorsa, sıralama sonrası hangisinin önce olacağı kestirilemez. Bu durumda sıralamanın kararsız olduğundan söz edilebilir. Bu sadece karşılaştırma elemanların belli bir bölümünde yapıldığında bir fark oluşturur. İki elemanın aynı sıralama anahtarı olması başka bakımlardan bir fark oluşturabilir.
+      </para><para>
+Kararlı sıralama istiyorsanız, karşılaştırma işlevini yazarken bu sonucun elde edilmesini sağlayabilirsiniz. İki eleman arasında başka kriterlere göre ayrım yapılabiliyorsa buna göre ek bir karşılaştırma yaparsınız ya da adreslerini karşılaştırırsınız. Ancak bu işlemler sıralama algoritmasının verimini düşüreceğinden çok gerekli olmadıkça yapmamanız önerilir.</para></warning>
+      </para><para>
+Aşağıda <command>double</command> türünden sayılardan oluşan bir dizi ile çalışan bir sıralama örneği vardır. Kullanılan karşılaştırma işlevi <xref linkend="glibc-Comparison-Functions"/> bölümündeki örnekte tanımlanmıştı:
+   </para><para>
+<screen>
+{
+  double *dizi;
+  int boyut;
+  …
+  qsort (dizi, boyut, sizeof (double), compare_doubles);
+}
+</screen></para><para>
+İşlev çabuk sıralama (quick sort) algoritması kullanarak gerçeklendiğinden işlevin ismi bu algortimanın isminden türetilmiştir.
+      </para><para>
+Bu kütüphanedeki <command>qsort</command> gerçeklemesi sadece dizinin kapladığı bellek bölgesi ile sınırlı kalmayabilir ve diziyi saklamak için
+ fazladan bellek kullanabilir.
+      </para></funcdescr></funcsynopsis>
+    </para>
+  </chapter>
+
+  <chapter id="glibc-Search-Sort-Example">
+    <title>Arama ve Sıralama Örneği</title>
+    <titleabbrev>Örnek yazılım.</titleabbrev>
+    <para>
+Bu örnekte, bir yapılar dizisi ile <command>qsort</command> ve <command>bsearch</command> işlevlerinin kullanımı gösterilmiştir. Dizideki nesneler <command>name</command> alanlarına göre  <command>strcmp</command> işlevi kullanılarak sıralanmakta ve nesnelere isimleri ile bakılmaktadır.
+   </para><para>
+<screen>
+#include &lt;stdlib.h>
+#include &lt;stdio.h>
+#include &lt;string.h>
+
+/* Sıralanacak gösteri karakterlerine bir dizi tanımlayalım. */
+
+struct critter
+{
+  const char *name;
+  const char *species;
+};
+
+struct critter muppets[] =
+{
+  {"Kermit", "frog"},
+  {"Piggy", "pig"},
+  {"Gonzo", "whatever"},
+  {"Fozzie", "bear"},
+  {"Sam", "eagle"},
+  {"Robin", "frog"},
+  {"Animal", "animal"},
+  {"Camilla", "chicken"},
+  {"Sweetums", "monster"},
+  {"Dr. Strangepork", "pig"},
+  {"Link Hogthrob", "pig"},
+  {"Zoot", "human"},
+  {"Dr. Bunsen Honeydew", "human"},
+  {"Beaker", "human"},
+  {"Swedish Chef", "human"}
+};
+
+int count = sizeof (muppets) / sizeof (struct critter);
+
+
+/* Sıralama ve arama için kullanılacak karşılaştırma işlevi. */
+
+int
+critter_cmp (const struct critter *c1, const struct critter *c2)
+{
+  return strcmp (c1->name, c2->name);
+}
+
+
+/* Bir karakter hakkında bilgi basalım. */
+
+void
+print_critter (const struct critter *c)
+{
+  printf ("%s, the %s\n", c->name, c->species);
+}
+
+/* Sıralanmış dizi üzerinde arama yapalım. */
+
+void
+find_critter (const char *name)
+{
+  struct critter target, *result;
+  target.name = name;
+  result = bsearch (&amp;target, muppets, count, sizeof (struct critter),
+                    critter_cmp);
+  if (result)
+    print_critter (result);
+  else
+    printf ("Couldn't find %s.\n", name);
+}
+
+/* Main işlevi. */
+
+int
+main (void)
+{
+  int i;
+
+  for (i = 0; i &lt; count; i++)
+    print_critter (&amp;muppets[i]);
+  printf ("\n");
+
+  qsort (muppets, count, sizeof (struct critter), critter_cmp);
+
+  for (i = 0; i &lt; count; i++)
+    print_critter (&amp;muppets[i]);
+  printf ("\n");
+
+  find_critter ("Kermit");
+  find_critter ("Gonzo");
+  find_critter ("Janice");
+
+  return 0;
+}
+</screen></para><para>
+      Yazılımın çıktısı:
+    </para><para><screen>
+Kermit, the frog
+Piggy, the pig
+Gonzo, the whatever
+Fozzie, the bear
+Sam, the eagle
+Robin, the frog
+Animal, the animal
+Camilla, the chicken
+Sweetums, the monster
+Dr. Strangepork, the pig
+Link Hogthrob, the pig
+Zoot, the human
+Dr. Bunsen Honeydew, the human
+Beaker, the human
+Swedish Chef, the human
+
+Animal, the animal
+Beaker, the human
+Camilla, the chicken
+Dr. Bunsen Honeydew, the human
+Dr. Strangepork, the pig
+Fozzie, the bear
+Gonzo, the whatever
+Kermit, the frog
+Link Hogthrob, the pig
+Piggy, the pig
+Robin, the frog
+Sam, the eagle
+Swedish Chef, the human
+Sweetums, the monster
+Zoot, the human
+
+Kermit, the frog
+Gonzo, the whatever
+Couldn't find Janice.
+</screen>
+    </para>
+  </chapter>
+  <chapter id="glibc-Hash-Search-Function">
+    <title>İsim-Değer Çiftleri ile Arama İşlevi</title>
+<!--hash table: isim-değer çiftleri tablosu.
+aslında bir dizidir ve dizi elemanlarına indisleri ile değil isimleri ile
+erişmeyi mümkün kılar.-->
+    <titleabbrev><command>hsearch</command> işlevi.</titleabbrev>
+    <para>
+Bu kısma gelinceye kadar sıralı ve sırasız dizilerde arama yapılmasından bahsedildi. Bilgileri aramadan önce düzenlemek için başka yöntemler de vardır. Bilgi girme, silme ve arama maliyetleri farklıdır. Olası bir gerçekleme de isim-değer çiftleri tablosu (hashing table) kullanmaktır. Bu kısımda bahsedilecek işlevler <filename>search.h</filename> başlık dosyasında bildirilmiştir.
+    </para><para id="glibc-hcreate">
+<indexterm scope="glibc-fn"><primary>hcreate</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>int <command>hcreate</command></funcdef>
+<paramdef>(size_t <emphasis>sayı</emphasis>)</paramdef>
+</funcprototype><funcdescr><para>
+<command>hcreate</command> işlevi en az <varname>sayı</varname> eleman içeren bir isim-değer çifti tablosu oluşturur. Bu tabloyu daha sonra genişletmek mümkün olmadığından eleman sayısı akıllıca seçilmelidir. Bu işlevi gerçeklemekte kullanılan yöntem tablodaki eleman sayısının kullanılması olası en büyük eleman sayısından daha büyük olarak belirlenmesini gerektirir. %80’den fazlası dolu olan isim-değer çifti tabloları çalışmak için yetersiz olur. Yöntem tarafından garanti edilen sabit erişim süresine bir kaç çakışma mevcut olduğunda ulaşılabilir. Bu konuda daha fazla bilgi isterseniz Knuth'un &quot;The Art of Computer Programming, Part 3: Searching and Sorting&quot; adlı eserine bakınız.
+   </para><para>
+Bu işlevin en zayıf tarafı bir yazılım için en çok bir tablonun olabilmesidir. Tablo yazılımcının denetimi dışında yerel bellek bölgesinde oluşturulur. GNU C kütüphanesi, bu arayüze benzeyen ve çok sayıda tablonun tutulmasını mümkün kılan evresel (reentrant) bir arayüz ile çalışan ek işlevlere de sahiptir.
+   </para><para>
+Bir yazılım içinde birden fazla isim-değer çifti tablosu kullanımı, biçimsel tablonun  bir <command>hdestroy</command> çağrısı ile kaldırılmasından sonra mümkün olur.
+   </para><para>
+Tablo başarıyla oluşturulmuşsa işlev sıfırdan farklı bir değerle döner. Aksi takdirde ya zaten kullanılan bir tablo vardır ya da yazılım yetersiz bellekle çalışıyordur ki, bu durumda işlev sıfır değeriyle döner.
+</para></funcdescr></funcsynopsis></para><para id="glibc-hdestroy">
+<indexterm scope="glibc-fn"><primary>hdestroy</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>void <command>hdestroy</command></funcdef>
+<paramdef>(void)</paramdef>
+</funcprototype><funcdescr><para>
+<command>hdestroy</command> işlevi daha önceki bir <command>hcreate</command> çağrısı ile ayrılan özkaynakları serbest bırakmak için kullanılabilir. Bu işlev
+çağrıldıktan sonra tekrar bir <command>hcreate</command> çağrısı yapabilmek ve farklı boyutta bir tablo oluşturmak mümkün olur.
+   </para><para>
+<important><para><command>hdestroy</command> çağrısı sırasında tablo içindeki elemanlar bu işlev tarafından serbest bırakılmaz. Bu, dizgeleri serbest bırakacak yazılım kodunun sorumluluğudur. Tabloda mevcut tüm elemanlarla tek tek uğraşacak bir işlev olmadığından bellekteki elemanların tümünün serbest bırakılması mümkün değildir. Tablo ve tablo içindeki tüm elemanların serbest bırakılması önemliyse, yazılımcı tablo elemanlarının bir listesini tutmalı ve <command>hdestroy</command> çağrısından önce bu listeyi kullanarak tüm elemanların verilerini serbest bırakmalıdır. Bu çok tatsız bir mekanizmadır ve isim-değer çifti tablolarının bu türünün yazılım tarafından bir kere oluşturulup, yazılım sonlandırılıncaya kadar kullanılacağını gösterir.</para></important>
+   </para></funcdescr></funcsynopsis></para><para>
+Arama işleminin yapılacağı isim-değer çiftleri aşağıdaki veri türü ile oluşturulur:
+      </para><para id="glibc-struct-ENTRY">
+<indexterm scope="glibc-tp"><primary sortas="ENTRY">struct ENTRY</primary></indexterm>
+<funcsynopsis><funcprototype role="veri türü">
+<funcdef>struct <command>ENTRY</command></funcdef>
+<paramdef></paramdef>
+</funcprototype><funcdescr><para>
+Bu yapının her iki elemanı da boş karakter sonlandırmalı dizge göstericisidir. Bu durum <command>hsearch</command> işlevlerinin işlevselliğinin sınırlarını belirler. Sadece
+boş karakter ile sonlandırılabilen verilerle çalışılabilir, genel ikilik verilerle çalışabilmek mümkün değildir.
+      </para><para><glosslist><glossentry>
+        <glossterm><literal>char *<command>key</command></literal></glossterm>
+        <glossdef><para>
+Tablo içindeki elemanı ifade eden ya da arama anahtarı olarak kullanılacak olan boş karakter sonlandırmalı dizgenin göstericisidir (çiftin isim parçası).
+        </para></glossdef></glossentry><glossentry>
+          <glossterm><literal>char *<command>data</command></literal></glossterm>
+        <glossdef><para>
+Çiftin değer parçasını oluşturan boş karakter sonlandırmalı dizgenin göstericisidir.
+İşlevler sadece bir mevcut girdiyi aramak için kullanılırsa, bu eleman kullanılmadığından tanımsız kalabilir.
+        </para></glossdef></glossentry></glosslist>
+</para></funcdescr></funcsynopsis></para><para id="glibc-hsearch">
+<indexterm scope="glibc-fn"><primary>hsearch</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>ENTRY *<command>hsearch</command></funcdef>
+<paramdef>(ENTRY  <emphasis>girdi</emphasis>,
+ ACTION <emphasis>eylem</emphasis>)</paramdef>
+</funcprototype><funcdescr><para>
+Bir isim değer çifti tablosunda arama yapmak için <command>hcreate</command> işleviyle oluşturulan tabloda arama yapmak için <command>hsearch</command> işlevi kullanılmalıdır. Bu işlev ya (<varname>eylem</varname> değeri olarak <command>FIND</command> verilmişse) bir elemanı aramakta ya da tabloya yeni bir isim elemanı girmekte kullanılır. Girdiler değiştirilemez.
+   </para><para>
+Yapının isim elemanını oluşturan <command>key</command> elemanı <command>ENTRY</command> türünde bir nesnenin göstericisidir. Bir tablo üzerindeki
+bir girdiyi konumlamak için yapının <command>key</command> elemanı kullanılır.
+   </para><para>
+<command>key</command> ile eşleşen bir girdinin varlığı durumunda <varname>eylem</varname> yoksayılır. Bulunan girdi döner. Bir eşleşme bulunamazsa
+ve <varname>eylem</varname> değeri <command>FIND</command> ise işlev boş gösterici ile döner. Bir eşleşme bulunamazsa
+ve <varname>eylem</varname> değeri <command>ENTER</command> ise <varname>girdi</varname> ile ilklendirilerek tabloya yeni bir girdi eklenir ve işlev eklenen girdinin göstericisi ile döner.
+      </para></funcdescr></funcsynopsis></para><para>
+Şimdiye dek bahsedilen işlevler geneldir ve yazılımda bir defada en çok bir isim-değer çifti tablosunun varolabildiği durumda kullanılabilirler. Bunun tersi durumlarda bir GNU oluşumu olarak aşağıdaki işlevler kullanılabilir. Bu işlevler <command>struct
+hsearch_data</command> türünde nesnelerden oluşan bir isim-değer çifti tablosu ile çalışır. Bu veri türü şeffaf değildir, yani üyeleri doğrudan değişirilemez.
+   </para><para id="glibc-hcreate_r">
+<indexterm scope="glibc-fn"><primary>hcreate_r</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>int <command>hcreate_r</command></funcdef>
+<paramdef>(size_t               <emphasis>sayı</emphasis>,
+ struct hsearch_data *<emphasis>tablo</emphasis>)</paramdef>
+</funcprototype><funcdescr><para>
+<command>hcreate_r</command> işlevi en az <varname>sayı</varname> eleman içeren <varname>tablo</varname> isimli isim-değer çiftleri tablosunu ilklendirir. Bu işlev, yazılımcı tarafından denetlenebilir bir tablo oluşturmak dışında <command>hcreate</command> işlevi gibidir.
+   </para><para>
+Bu işlev bir defada birden fazla isim-değer çiftleri tablosu oluşturulabilmesini mümkün kılar. <command>struct hsearch_data</command> nesnesi için gereken bellek özdevimli ayrılabilir ancak bu işlevi çağırmadan önce sıfırla doldurularak ilklendirilmelidir.
+   </para><para>
+İşlem başarılıysa işlev sıfırdan farklı bir değerle döner. Sıfır değeri dönmüşse ya birşeyler yanlış gitmiştir ya da yazılım yetersiz bellekle çalışıyordur.
+</para></funcdescr></funcsynopsis></para><para id="glibc-hdestroy_r">
+<indexterm scope="glibc-fn"><primary>hdestroy_r</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>void <command>hdestroy_r</command></funcdef>
+<paramdef>(struct hsearch_data *<varname>tablo</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+<command>hdestroy_r</command> işlevi <command>hcreate_r</command> işlevi ile
+oluşturulan <varname>tablo</varname> tablosu tarafından kullanılan tüm kaynakları serbest bırakır. Tablonun içindeki elemanların serbest bırakılması bakımından <command>hdestroy</command> gibidir.
+</para></funcdescr></funcsynopsis></para><para id="glibc-hsearch_r">
+<indexterm scope="glibc-fn"><primary>hsearch_r</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>int <command>hsearch_r</command></funcdef>
+<paramdef>(ENTRY                <emphasis>girdi</emphasis>,
+ ACTION               <emphasis>eylem</emphasis>,
+ ENTRY              **<emphasis>dönüşdeğeri</emphasis>,
+ struct hsearch_data *<emphasis>tablo</emphasis>)</paramdef>
+</funcprototype><funcdescr><para>
+<command>hsearch_r</command> işlevi <command>hsearch</command> işlevine eşdeğerdir. İlk iki argüman aynıdır. Ancak tek bir genel tablo yerine <command>hcreate_r</command> işlevi ile ilklendirilen ve <varname>tablo</varname> ile
+gösterilen bir tablo ile çalışır.
+   </para><para>
+<command>hcreate</command> işlevinden diğer bir farkı da tabloda bulunan değeri
+işlevin dönüş değeri olarak değil, <varname>dönüşdeğeri</varname> parametresi tarafından gösterilen bir gösterici değişkeni içinde döndürmesidir. İşlevin geri dönüş değeri
+işlev başarılı ise sıfırdan farklı, değilse sıfırdır. <varname>errno</varname> genel
+değişkeni başarısızlığın sebebini gösterir:   </para><para><variablelist><varlistentry><term><literal>ENOMEM</literal></term>
+<listitem><para>
+Tablo doludur, <command>hsearch_r</command> işlevi <varname>eylem</varname> değeri olarak <command>ENTER</command> belirtilerek, bilinmeyen bir <varname>girdi</varname> ile çağrılmıştır.      </para></listitem></varlistentry><varlistentry><term><literal>ESRCH</literal></term>
+<listitem><para>
+<varname>eylem</varname> parametresi olarak <command>FIND</command> belirtilmiş ve tabloda belirtilen <varname>girdi</varname> bulunamamıştır.
+      </para></listitem></varlistentry></variablelist>
+    </para></funcdescr></funcsynopsis></para>
+  </chapter>
+
+  <chapter id="glibc-Tree-Search-Function">
+    <title>Ağaç Arama İşlevi</title>
+    <titleabbrev><command>tsearch</command> işlevi.</titleabbrev><para>
+Verimli bir arama yapmak için verileri düzenlemenin bir yolu da ağaçları kullanmaktır. <command>tsearch</command> işlev ailesi büyük boyutlardaki verileri eleman sayısının logaritmasından daha kısa bir sürede bulmayı garantileyen  hoş bir arayüz sağlar.
+GNU C kütüphanesinin gerçeklemesi bu sınırı, basit ikilik ağaç gerçeklemelerinin veri girdilerinin sebep olduğu sorunlarda bile aşılmamasını garanti eder.
+   </para><para>
+Bu bölümde açıklanan işlevlerin tümü System V ve X/Open belitimlerinde açıklanmıştır ve
+dolayısıyla taşınabilirdir.
+   </para><para>
+<command>hsearch</command> işlevlerinin aksine <command>tsearch</command> işlevleri sadece boş karakter sonlandırmalı dizgelerle değil her türlü veri ile kullanılabilir.
+   </para><para>
+<command>tsearch</command> işlevleri ayrıca veri yapılarının ilklendirilmesini gerektiren işlevleri içermemek gibi bir ayrıcalığa sahiptir. <command>NULL</command>
+ile ilklendirilmiş <command>void *</command> türünde bir gösterici geçerli bir ağaçtır ve genişletilebilir ya da aranabilirdir. Bu işlevlerin prototipleri <filename>search.h</filename> başlık dosyasındadır.
+    </para><para id="glibc-tsearch">
+<indexterm scope="glibc-fn"><primary>tsearch</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>void *<command>tsearch</command></funcdef>
+<paramdef>(const void      <emphasis>anahtar</emphasis>,
+ void          **<emphasis>kök</emphasis>,
+ comparison_fn_t <emphasis>karş-işlevi</emphasis>)</paramdef>
+</funcprototype><funcdescr><para>
+<command>tsearch</command> işlevi <literal>*<emphasis>kök</emphasis></literal> ile gösterilen ağaç içinde <varname>anahtar</varname> ile eşleşen elemanı arar. <varname>karş-işlevi</varname> ile belirtilen işlev iki elemanın karşılaştırılmasında kullanılır. <varname>karş-işlevi</varname> parametresiyle belirtilen işlevlerin özellikleri için <xref linkend="glibc-Comparison-Functions"/> bölümüne bakınız.
+   </para><para>
+Ağaç içinde <varname>anahtar</varname> ile eşleşen bir girdi bulunamazsa değer ağaca eklenir. <command>tsearch</command> işlevi <varname>anahtar</varname> ile gösterilen nesnenin bir kopyasını oluşturmaz (boyutu bilinmediğinden). Bunun yerine ağacın yapısı içinde olduğunu belirtmek için ona bir başvuru ekler.
+   </para><para>
+Ağacın kök düğümünü kimi zaman değiştirmek gerekebileceğinden ağaç, göstericisinin göstericisi olarak belirtilmiştir. Bu nedenle çağrıdan sonra <varname>kök</varname> tarafından gösterilen değişkenin aynı değerde olmayacağı varsayılmalıdır. Bu da <command>tsearch</command> işlevinin aynı ağaç için peşpeşe çağrılamayacağı anlamına gelir. Ancak işlevi peşpeşe farklı ağaçlarla çağırmak bir sorun oluşturmaz.
+   </para><para>
+Dönen değer ağaçta eşleşen elemanın göstericisidir. Yeni bir eleman oluşturulmuşsa dönen değer yeni oluşturulan elemanın göstericisidir. Bir girdi oluşturulmuş ama bellek yetmemişse boş gösterici döner.
+</para></funcdescr></funcsynopsis></para><para id="glibc-tfind">
+<indexterm scope="glibc-fn"><primary>tfind</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>void *<command>tfind</command></funcdef>
+<paramdef>(const void      <emphasis>anahtar</emphasis>,
+ void *const    *<emphasis>kök</emphasis>,
+ comparison_fn_t <emphasis>karş-işlevi</emphasis>)</paramdef>
+</funcprototype><funcdescr><para>
+<command>tfind</command> işlevi <command>tsearch</command> işlevine benzer. <varname>anahtar</varname> ile eşleşen elemana bir gösterici ile döner. Eşleşen bir
+eleman bulunamazsa yeni bir eleman girmez ve boş gösterici ile döner (<varname>kök</varname> parametresinin bir sabit göstericiyi gösterdiğine dikkat edin).
+      </para></funcdescr></funcsynopsis>
+    </para><para>
+<command>tsearch</command> işlevlerinin bir özelliği de <command>hsearch</command> işlevlerinin aksine elemanların silinebilmesidir.
+   </para><para id="glibc-tdelete">
+<indexterm scope="glibc-fn"><primary>tdelete</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>void *<command>tdelete</command></funcdef>
+<paramdef>(const void      <emphasis>anahtar</emphasis>,
+ void          **<emphasis>kök</emphasis>,
+ comparison_fn_t <emphasis>karş-işlevi</emphasis>)</paramdef>
+</funcprototype><funcdescr><para>
+<varname>anahtar</varname> ile eşleşen belli bir elemanı ağaçtan kaldırmak için <command>tdelete</command> işlevi kullanılabilir. Eleman silindikten sonra silinen düğümün ata düğümüne bir gösterici döner. Ağaçta silinecek bir eleman bulunamazsa işlev boş gösterici ile döner. İşlev ağacın kökünü silerse dönen değer <command>NULL</command> olmayan anlamsız bir değer olabilir.
+</para></funcdescr></funcsynopsis></para><para id="glibc-tdestroy">
+<indexterm scope="glibc-fn"><primary>tdestroy</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>void <command>tdestroy</command></funcdef>
+<paramdef>(void       *<emphasis>kök</emphasis>,
+ __free_fn_t <emphasis>serb-işl</emphasis>)</paramdef>
+</funcprototype><funcdescr><para>
+Arama ağacını tamamen silmek isterseniz <command>tdestroy</command> işlevini kullanabilirsiniz. <command>tsearch</command> işlevi tarafından oluşturulan ve <varname>kök</varname> ile kökü belirtilen bir ağaca ayrılan tüm kaynakları serbest bırakır.
+   </para><para>
+Ağacın her düğümü için  <varname>serb-işl</varname> işlevi çağrılır. Veri göstericisi argüman olarak işleve aktarılır. Böyle bir işlem gerekli değilse <varname>serb-işl</varname> hiçbir şey yapmayan bir işlevi göstermelidir. İşlev ne olursa olsun çağrılır.
+   </para><para>
+Bu işlev bir GNU oluşumudur. System V veya X/Open belirtimlerinde yoktur.
+      </para></funcdescr></funcsynopsis>
+    </para><para>
+Ağaç veri yapısını oluşturan ve yokeden işlevlere ek olarak, ağacın her elemanına uygulanan bir işlev daha vardır. İşlev aşağıdaki türde olmalıdır:
+   </para><para>
+<literallayout>
+void <command>__action_fn_t</command> (const void *<emphasis>düğüm</emphasis>, VISIT <emphasis>değer</emphasis>, int <emphasis>seviye</emphasis>);
+</literallayout></para><para>
+<varname>düğüm</varname>, düğümün veri değeridir (<command>tsearch</command> işlevine verilen <varname>key</varname> argümanı). <varname>seviye</varname> düğümün
+ağaçtaki derinliğine karşı düşen sayısal bir değerdir. Kök düğümün derinliği 0’dır,
+sonraki düğüm 1, sonraki 2 diye gider. <literal>VISIT</literal> bir sıralı sayı sabit türüdür (enumeration type).
+   </para><para id="glibc-VISIT">
+<indexterm scope="glibc-tp"><primary>VISIT</primary></indexterm>
+<funcsynopsis><funcprototype role="veri türü">
+<funcdef><command>VISIT</command></funcdef>
+<paramdef></paramdef>
+</funcprototype><funcdescr><para>
+<command>VISIT</command> değeri düğümün ağaçtaki durumunu ve işlevin nasıl çağrıldığını belirtir. Düğümün durumu ya sonuncu ya da dahili düğümdür. Her sonuncu düğüm için işlev yalnız ve yalnız bir kere çağrılır. Her dahili düğüm için ise üç kere çağrılır: İlk çocuk işlenmeden önce, ilk çocuk işlendikten sonra ve her iki çocuk işlendikten sonra. Böylece ağacın enine üç yöntemini kullanmak (hatta hepsini birlikte) mümkün olur.   </para><para><variablelist><varlistentry><term><literal>preorder</literal></term>
+<listitem><para>
+Düğüm, bir dahili düğümdür ve işlev ilk çocuk düğüm işlenmeden önce çağrılır.      </para></listitem></varlistentry><varlistentry><term><literal>postorder</literal></term>
+<listitem><para>
+Düğüm, bir dahili düğümdür ve işlev ilk çocuk düğüm işlendikten sonra çağrılır.      </para></listitem></varlistentry><varlistentry><term><literal>endorder</literal></term>
+<listitem><para>
+Düğüm, bir dahili düğümdür ve işlev her iki çocuk düğüm işlendikten sonra çağrılır.      </para></listitem></varlistentry><varlistentry><term><literal>leaf</literal></term>
+<listitem><para>
+Düğüm sonuncudur.
+      </para></listitem></varlistentry></variablelist>
+</para></funcdescr></funcsynopsis></para><para id="glibc-twalk">
+<indexterm scope="glibc-fn"><primary>twalk</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>void <command>twalk</command></funcdef>
+<paramdef>(const void   *<emphasis>kök</emphasis>,
+ __action_fn_t <emphasis>eylem</emphasis>)</paramdef>
+</funcprototype><funcdescr><para>
+<varname>kök</varname> ile gösterilen ağacın her düğümü için <varname>eylem</varname> parametresi ile belirtilen işlevi çağırır. Sonuncu düğümler için işlev <varname>değer</varname> argümanında <command>leaf</command> belirtilerek sadece bir kere çağrılır. İç düğümler için işlev <varname>değer</varname> argümanında ilgili değer belirtilerek üç kere çağrılır. <varname>eylem</varname> işlevinin <varname>seviye</varname> argümanı ağacın kökünden çocuklara inildikçe artan değerler alır. Kökün seviyesi 0’dır.
+   </para><para>
+<command>twalk</command> işlevinin <varname>eylem</varname> parametresi için kullanılan işlevler ağaç verisini değiştirmemelidir çünkü aynı ağaç üzerinde aynı anda birden fazla evrede <command>twalk</command> çalıştırılabilir. Ayrıca aynı anda paralel olarak <command>tfind</command> de çağrılabilir. Ağaçta değişiklik yapan işlevler kullanılmamalıdır, aksi takdirde bir davranış tanımlanmamıştır.
+   </para></funcdescr></funcsynopsis></para>
+ </chapter>
+</part>

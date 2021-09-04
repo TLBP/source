@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--DOCTYPE article SYSTEM "../../docbook/dtd/docbookx.dtd"-->
+<!-- ********************************************************************
+     $Id: fax-printer.xml,v 1.4 2002/09/30 18:21:13 nilgun Exp $
+     ******************************************************************** -->
+<article id="fax-printer" lang="tr">
+  <articleinfo>
+    <title>Faks Yazıcı NASIL</title>
+    <author>
+       <firstname>Nilgün Belma</firstname>
+       <surname>Bugüner</surname>
+       <affiliation>
+         <address>
+          <email>nilgun@belgeler·gen·tr</email>
+         </address>
+       </affiliation>
+     </author>
+
+     <pubdate>Temmuz 2005</pubdate>
+     <pubdate> </pubdate>
+     <revhistory>
+       <revision>
+          <revnumber>1.0</revnumber>
+          <date>Temmuz 2005</date>
+          <authorinitials>NBB</authorinitials>
+          <revremark>İlk sürüm.</revremark>
+       </revision>
+    </revhistory>
+    <abstract>
+      <para>
+Bu belgede efax kullanılarak kelime işlemci uygulamalarından bir faksın bir yazıcıya gönderilir gibi gönderilebilmesi için, kullandığım Debian üzerinde hangi işlemleri yaptığımı anlattım. Yapılandırma kişisel faks kullanımına yöneliktir.
+      </para><para>
+Ağ kullanıcıları bu belgede anlatılanları yaptıktan sonra CUPS'un yeteneklerinden yararlanabilir. Bunun için <link linkend="linux_windows_printing">bir belge</link> var zaten.
+      </para><para>
+Diğer dağıtımların kullanıcıları, kuracakları paketleri kurulum bölümünde verilen bağları izleyerek veya dağıtımlarının paket yöneticisinde bulabilirler. Yapılandırma bölümünde anlattıklarımın dağıtımdan dağıtıma çok farklılık göstereceğini sanmıyorum.
+      </para>
+    </abstract>
+    <legalnotice><title>Yasal Açıklamalar</title>
+      <para>
+Bu belgenin, <emphasis>Faks Yazıcı NASIL</emphasis> 1.0 sürümünün <emphasis role="bold"> telif hakkı © 2005 <emphasis>Nilgün Belma Bugüner</emphasis></emphasis>'e aittir.
+    &notice.gpl;</para>
+      &notice.disc;
+    </legalnotice>
+  </articleinfo>
+
+  <sect1 id="fax-printer-kurulum"><title>Kurulum</title>
+  <para>
+Öncelikle sistemimizde bazı paketlerin kurulu olmasına ihtiyacımız var. Bunlar, bir faks sunucusu olarak <ulink url="http://www.cce.com/efax/download/">efax</ulink>, yazıcı sunucusu olarak <ulink url="http://www.cups.org/">CUPS</ulink>, faks alışverişini yönetmek için <ulink url="http://efax-gtk.sourceforge.net/">efax-gtk</ulink>. Bu paketler sisteminizde kurulu değilse kurun:
+  </para><para>
+<screen># <userinput>apt-get install cupsys efax efax-gtk</userinput>
+</screen>
+  </para><para>
+Temel olarak gerekli paketler bunlar, bağımlı paketler ve önerilenleri de kurmanızda yarar var. Benim sistemimde CUPS, Debian Sarge 3.1 kurulumu sırasında kurulmuştu. (Debian stable depolarını kullanıyorum.) Sistemimde kurulu ve adında "cups" geçen paketler şunlar: cupsys, cups-pdf, cupsomatic-ppd, cupsys-bsd, cupsys-client, cupsys-driver-gimpprint, cupsys-driver-gimpprint-data, cupsys-pt. Tabii bunların bağımlı olduğu paketler de vardır, Bunları kurarken bağımlı paketleri zaten <userinput>apt-get</userinput> kuracaktır. Bu bakımdan endişelenmek yersiz.
+  </para><para>
+Kurulması gereken bir paket daha var ama onu Debian'ın paket depolarında göremedim. Kaynak paketini indirmek zorunda kaldım. Küçük bir paket, içinde birkaç betik var o kadar. Paketi <ulink url="http://vigna.dsi.unimi.it/fax4CUPS/fax4CUPS-1.25.tar.gz"/> bağından indirin ve sisteminizde uygun bir yerde paketi açın.
+  </para><para>
+<screen>
+$ <userinput>tar xfvz fax4CUPS-1.25.tar.gz</userinput>
+$ <userinput>cd fax4CUPS-1.25</userinput>
+$ <userinput>su -</userinput>
+Password: <emphasis>root parolanızı girin</emphasis>
+# <userinput>cp efax /usr/lib/cups/backend/</userinput>
+# <userinput>cp efax.ppd /usr/share/cups/model/</userinput>
+</screen>
+  </para><para>
+Böylece gerekli paketlerin kurulumları bitmiş oldu.
+  </para>
+</sect1>
+<sect1 id="fax-printer-yapilandirma"><title>Yapılandırma</title>
+  <para>
+Artık kurduğumuz paketleri yapılandırmaya başlayabiliriz. <filename>/etc/printcap</filename> dosyasına şu satırları ekleyin:
+  </para><para>
+<screen>
+fax:\
+     :lp=/dev/null:\
+     :sd=/var/spool/fax:\
+     :if=/usr/bin/faxlpr:
+</screen>
+  </para><para>
+<userinput>fax</userinput> komutuna bir sabit bağ oluşturun (sembolik bağ değil):
+  </para><para>
+<screen># <userinput>ln /usr/bin/fax /usr/bin/faxlpr</userinput>
+</screen>
+  </para><para>
+Modeminizin bağlı bulunduğu seri port için (benimki COM1'de) tüm kullanıcılara erişim izni verip, aygıta <filename>/dev/modem</filename> sembolik bağını oluşturalım:
+  </para><para>
+<screen># <userinput>chmod 666 /dev/ttyS0</userinput>
+# <userinput>ln -s /dev/ttyS0 /dev/modem</userinput>
+</screen>
+  </para><para>
+<filename>/usr/bin/fax</filename> betiğindeki bazı değerleri özelleştirmemiz lazım:
+  </para><para>
+<screen>
+FAX=fax
+EFAX=efax
+EFIX=efix
+DEV=modem
+FROM="+90 <emphasis>üç_haneli_alankodu yedi_haneli_abone_nr</emphasis>"
+NAME="<emphasis>adınız ve soyadınızı yazın</emphasis>"
+PAGE=a4
+PRTYPE=ps
+PRCMD="lpr"
+VIEWCMD="xloadimage stdin"
+GS=kghostview
+DIALPREFIX="T"
+DIALSUFFIX=""
+LOCK='-x /var/lock/LCK..$DEV'
+CONFIGFILES="/etc/efax.rc ${HOME:-~}/.efaxrc ./.efaxrc"
+TSTAMP='date +%d%b%H%M%S
+LOOKUP='eval sed -n -e "/^fax($1):/{" -e "s/^[^:]*://p" -eq -e"}" $f'
+DIRFILES="${HOME:-.}/.faxdir"
+TELCVT='sed -e s/+90/1/ -e s/+/00/'     # Turkey
+PAGE_letter="8.465x11in"
+PAGE_legal="8.465x14in"
+PAGE_a4="21x29.7cm"
+RES=204x196
+PRINT='$EFIX -ve -p$PAGEDIM -r300 -s0.98 -d0,0.125 -o$PRTYPE $f'
+VIEW='$EFIX -ve -p$PAGEDIM -r300 -opgm $f'
+INIT="-iZ -i&amp;FE0&amp;D2S7=120 -i&amp;C0"
+RESET="-kZ"
+SPKR="-iM1L0"
+RXINIT=""
+TXINIT=""
+DATECMD='date +%c'
+HDR='$DATE     $FROM      $NAME     s. %d/%d'
+BUSYRETRIES="30 60 120 300 60 600 60 60 1200 60 60"
+NICE="nice -n -10"
+RM="/bin/rm -f"
+LS="/bin/ls"
+VERB="ewin"
+VERBLOG="chewmainrxtf
+CONSOLE=/dev/console
+FAXDIR=/var/spool/fax
+LOGDIR=/var/log/fax
+ANSFNAME="%d%b%H%M%S"
+UMASK=022
+FAXMGR=<emphasis>faks geldiğinde eposta ile uyarılacak kullanıcı adı</emphasis>
+SENDMAIL=/usr/sbin/sendmail
+NOTIFY='faxmail "$REMID" "$f" $FILES | $SENDMAIL $FAXMGR'
+# <emphasis>telefon kaç defa çaldıktan sonra yanıt verilecek:</emphasis>
+ANSRINGS=4
+DATAOPT="-j&amp;C1 -j+FCLASS=0 -jS7=30"
+DCMD="exec /sbin/getty -h $DEV %d vt100"
+FONE=/usr/bin/fone
+VCMD="exec $FONE %d"
+OWNER=root.tty
+MODE=666
+NOLOG='[145]'
+# ****************************************************************
+# --- End of user configuration section ---
+# ****************************************************************
+</screen>
+  </para><para>
+Dosyada bu değerler açıklama satırlarının aralarına serpiştirilmiş durumda; sizin dosyanızda bu değerleri bulup bunlarla karşılaştırın. Bunlar benim ayarlarım; bazı özel değerlerin yerine ne yazılacağını belirttim. Bu değerlerin bazılarını /etc/efax.rc dosyasına da yazmak gerekiyor. Değişken adları aynı. Bunları bulup onları da özelleştirin.
+  </para><para>
+Yine aynı dosyada kodların bulunduğu bölümde bazı düzeltmeler var. 619. satırı iptal edip altına doğrusunu yazın:
+  </para><para>
+<screen>
+#     cfile=`tail -1 lock`
+      cfile=`/usr/bin/tail -1 lock`
+</screen>
+  </para><para>
+Yapılandırma kılavuzunda başka düzeltmeler de önerilmişti ama onlar zaten öyleydi. Ben sadece bu satırı düzelttim (efax-0.9). [Aslında gerekli değil, zaten bu dizin normal arama yollarında var.]
+  </para><para>
+<filename>/var/spool/fax</filename> diye bir dizin yoksa oluşturun ve erişim izinlerini düzenleyin:
+  </para><para>
+<screen># <userinput>mkdir /var/spool/fax</userinput>
+# <userinput>chmod 777 /var/spool/fax</userinput>
+</screen>
+  </para><para>
+<filename>/var/lock</filename> dizininin erişim izinlerini düzenleyin:
+  </para><para>
+<screen># <userinput>chmod 1777 /var/lock</userinput>
+</screen>
+  </para><para>
+efax-gtk uygulamasının bir Ayarlar diyaloğu var ama <filename>/etc/efax-gtkrc</filename> dosyasında orada bulunmayan bazı ayarlar var. Bunları bu dosyada yaparsanız, bazı sürprizlerle karşılaşmazsınız. Ben yine dosyadaki açıklamaları ve iptal edilmiş değişkenleri atlayıp sadece geçerli değişkenleri alacağım; benim ayarlarım şöyle:
+  </para><para>
+<screen>
+NAME: <emphasis>adınızı ve soyadınızı yazın</emphasis>
+NUMBER: +90 <emphasis>üç_haneli_alankodu yedi_haneli_abone_nr</emphasis>
+DEVICE: modem
+LOCK: /var/lock
+PAGE: a4
+RES: fine
+RINGS: 4
+DIALMODE: tone
+INIT: Z &amp;FE&amp;D2S7=120 &amp;C0 M1L0
+RESET: Z
+PRINT_CMD: lpr
+PRINT_SHRINK: 98
+PRINT_POPUP: Yes
+PS_VIEWER: kghostview
+SOCK_SERVER: Yes
+SOCK_POPUP: Yes
+SOCK_SERVER_PORT: 9900
+SOCK_CLIENT_ADDRESS: localhost
+FAX_RECEIVED_POPUP: Yes
+FAX_RECEIVED_EXEC: No
+</screen>
+Artık yeni yazıcımızı CUPS'a tanıtmaya hazırız. CUPS'u yeniden başlatın:
+  </para><para>
+<screen>
+# <userinput>/etc/init.d/cupsys restart</userinput>
+</screen>
+  </para><para>
+Tarayıcınızın adres alanına  <ulink url="http://127.0.0.1:631/"/> yazın (ya da bağa sağ tıklayıp yeni bir tarayıcıda sayfayı açın). Printers -> Add Printer seçimini yapın. Parola istenecek kullanıcı adı olarak root, parola olarak root parolasını verin ve adım adım şu değerleri girin:
+</para><literallayout>
+    Name: <command>FAKS</command>
+    Location: <command>localhost</command>
+    Description: <command>Faks Yazıcı</command>
+      &lt;Continue>
+    Device: <command>AppSocket/HP JetDirect</command>
+      &lt;Continue>
+    Device URI: <command>socket://localhost:9900</command>
+      &lt;Continue>
+    Make: <command>efax</command>
+      &lt;Continue>
+    Model: <command>efax</command>
+      &lt;Continue>
+    Printer <command>FAKS</command> has been added successfully.
+</literallayout>
+<para>
+Böylece faks gönderirken yazdığımız metni tıpkı bir yazıcıya yazdırır gibi yazdırabileceğiz. Ancak işimiz bitmedi. Faks yazıcımızın kuyruğuna gönderilen işleri diğerleriyle karışmadan doğru alıcısına göndermek lazım. Bunun için efax-gtk uygulamasını kullanacağız. Masaüstü menünüzden efax-gtk'yı bulup çalıştırın. Menüsünden File -> Settings seçin, Açılan pencerede
+<filename>/etc/efax-gtkrc</filename> dosyasında yazdıklarınızı görüyor olmalısınız. Tamam düğmesine tıklayıp Ayarlar penceresini kapatın. "Fax to Send" bölümünde "Fax entry method" olarak "Socket" düğmesini seçili hale getirin ve aşağıdaki "Standby" düğmesine tıklayıp uygulamanın gelecek faksları almak üzere modemi dinlemeye başlamasını sağlayın ve uygulamayı küçültüp panele yollayın.
+  </para><para>
+Şimdi bir OpenOffice.org writer açıp yaptıklarınızı sınayabilirsiniz. Örneğin üstteki paragrafı OOo'ya kopyalayın ve menüden Dosya -> Yazdır seçin. Açılan pencereden Yazıcı adı olarak FAKS'ı seçin. İsterseniz, Seçenekler ve Özellikler düğmelerinden diğer ayarlara bakın. Tamam'a tıkladığınızda, efax-gtk, kuyruğa bir iş geldiğini bildiren bir pencere açacak ve sizden alıcının abone numarasını girmenizi isteyecektir. Send'e tıkladığınızda faksınız gönderilmeye başlayacaktır.
+  </para><para>
+Kişisel faksınız hayırlı olsun.
+  </para>
+</sect1>
+</article>

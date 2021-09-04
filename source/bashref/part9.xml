@@ -1,0 +1,495 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ********************************************************************
+     $Id: part9.xml,v 1.12 2002/12/20 23:23:58 nilgun Exp $
+     ********************************************************************-->
+  <part id="bashref_bash.history">
+    <title>Geçmişin Etkileşimli Kullanımı</title>
+    <titleabbrev>Geçmiş yorumlama kuralları.</titleabbrev>
+    <partintro>
+      <para>
+Bu oylumda GNU Geçmiş Kitaplığının etkileşimli olarak nasıl kullanılacağı
+anlatılmış, bir kullanıcı kılavuzu olarak ele alınmıştır.
+GNU Geçmiş Kitaplığının diğer uygulamalarla kullanımı konuları
+için GNU Readline Kitaplığı Kılavuzuna bakınız.
+      </para>
+    </partintro>
+    <chapter id="bashref_bash.history.facilities" label="1">
+      <title>Bash'in Geçmişsel Yetenekleri</title>
+      <titleabbrev>Bash komut geçmişinizde neler yapabilirsiniz.</titleabbrev>
+<indexterm scope="bashref_concept.index">
+<primary>komut</primary><secondary>geçmişi</secondary></indexterm>
+<indexterm scope="bashref_concept.index">
+<primary>geçmiş</primary><secondary>listesi</secondary></indexterm>
+      <para>
+<link linkend="bashref_set.builtin"><command>set</command></link>
+yerleşiğini <option>-o history</option> seçeneği ile çalıştırıp
+geçmişi etkinleştirdiğinizde, kabuk önceden kullandığınız komutların
+bir listesi olan <emphasis>komut geçmişi</emphasis>ne erişim sağlar.
+<literal>HISTSIZE</literal> kabuk değişkeninin değeri geçmiş
+listesindeki kayıtların sayısı olarak kullanılır. Daima son
+<literal>$HISTSIZE</literal> komut (öntanımlı 500) saklanır. Kabuk
+her komutu, <literal>HISTIGNORE</literal> ve <literal>HISTCONTROL</literal>
+kabuk değişkenlerinin değerlerine bağlı olarak geçmiş yorumlaması
+uyguladıktan sonra, parametre ve değişken yorumlamalarını uygulamadan
+önce geçmiş listesine alır.
+      </para><para>
+<indexterm scope="bashref_shopt.index"><primary>histappend</primary></indexterm>
+Kabuk başlatıldığında <literal>HISTFILE</literal> değişkeninde ismi
+kayıtlı olan dosyadan (öntanımlı değeri <filename>~/.bash_history</filename>)
+geçmişi ilklendirir. Bu dosyanın satır sayısı <literal>HISTFILESIZE</literal>
+değişkenindeki değerden fazla ise, dosya boyutu fazlalıklar atılarak
+ayarlanır. Bir etkileşimli kabuk çıkarken geçmiş listesindeki son
+<literal>$HISTSIZE</literal> komutu  <literal>$HISTFILE</literal> isimli dosyaya kopyalar. <link linkend="bashref_shopt-histappend"><option>histappend</option> kabuk seçeneği</link> etkinse geçmiş listesindeki komutlar dosyaya eklenir, değilse dosyanın üzerine yazılır.
+<literal>HISTFILE</literal> atanmamışsa veya geçmiş dosyası yazılabilir
+değilse geçmiş kaydedilmez. Geçmiş kaydedildikten sonra, geçmiş
+dosyası <literal>$HISTFILESIZE</literal> satırdan fazla satır
+içeriyorsa fazla satırlar dosyadan kaldırılır. <literal>$HISTFILESIZE</literal>
+atanmamışsa fazla satırlar kaldırılmaz.
+      </para><para>
+<command>HISTTIMEFORMAT</command> atanmışsa her geçmiş girdisi ile ilgili zaman damgası bilgisi geçmiş dosyasına yazılır.
+      </para><para>
+<link linkend="bashref_bash.history.builtins-fc"><command>fc</command> yerleşik komutu</link> ile geçmiş listesi,
+listelenebilir, düzenlenebilir ve listenin bir bölümü yeniden
+çalıştırılabilir. <link linkend="bashref_bash.history.builtins-history"><command>history</command> yerleşik komutu</link> ile geçmiş
+listesini görebilir, değiştirebilir ve geçmiş dosyasını
+değiştirebilirsiniz. Komut satırı düzenlemesi yaparken, geçmiş
+listesine erişim sağlayan her düzenleme kipinde arama komutları
+kullanılabilir (<xref linkend="bashref_rl.commands-history"/>
+bölümüne bakınız).
+      </para><para>
+Kabuk, geçmiş listesinde kayıtlı komutların üzerinde denetime izin
+verir. <literal>HISTCONTROL</literal> ve <literal>HISTIGNORE</literal>
+değişkenleri kabuğun, girilen komutların belli bir bölümünün
+kaydedilmesini sağlamakta kullanılabilir. <link linkend="bashref_shopt-cmdhist"><option>cmdhist</option></link>
+kabuk seçeneği etkinse, bir çok satırlı komut, sözdizimsel
+doğruluğun korunmasını sağlayacak yerlerine <literal>;</literal>
+işaretleri yerleştirilerek bütün satırları tek geçmiş girdisi
+olarak kaydedilmeye çalışılır. <link linkend="bashref_shopt-lithist"><option>lithist</option></link> kabul seçeneği etkinse, bir çok satırlı komut, <literal>;</literal> işaretleri yerine kendi içindeki satırsonu karakterleri ile kaydedilir. Bu seçenekleri etkinleştirmek için <link linkend="bashref_bash.builtins-shopt"><command>shopt</command> yerleşik komutu</link> kullanılır.
+      </para>
+    </chapter>
+
+    <chapter id="bashref_bash.history.builtins" label="2">
+      <title>Bash Geçmiş Yerleşikleri</title>
+      <titleabbrev>
+        Bash'in komut geçmişinde değişiklik yapmak için yerleşik kabuk komutları.
+      </titleabbrev>
+<indexterm scope="bashref_concept.index">
+<primary>geçmiş</primary><secondary>yerleşik komutları</secondary></indexterm>
+<indexterm scope="bashref_concept.index">
+<primary>yerleşik komutlar</primary><secondary>geçmiş</secondary></indexterm>
+      <para>
+Geçmiş listesinde ve geçmiş dosyasında değişiklik yapmak için
+kullanılabilecek iki yerleşik komut vardır.
+      </para>
+      <sect1 id="bashref_bash.history.builtins-fc">
+        <title>Fc Yerleşiği</title>
+        <indexterm scope="bashref_commands.index"><primary>fc</primary></indexterm>
+        <para>
+<synopsis><command>fc</command> [<command>-e </command><emphasis>düzenleyici-ismi</emphasis>] [<command>-nlr</command>] [<emphasis>ilk</emphasis>] [<emphasis>son</emphasis>]
+<command>fc -s</command> [<emphasis>eski</emphasis>=<emphasis>yeni</emphasis>] [<emphasis>komut</emphasis>]
+</synopsis>
+        </para><para>
+Komutun ismi düzeltme komutu anlamına gelen <command>F</command>ix
+<command>C</command>ommand sözcüklerinin baş harflerinden türetilmiştir.
+İlk sözdiziminde, geçmiş listesinin <replaceable>ilk</replaceable>
+ve <replaceable>son</replaceable> kayıtları arasındaki komutlar
+seçilebilir. <replaceable>ilk</replaceable> ve <replaceable>son</replaceable>
+birer dizge olarak belirtilebileceği gibi birer sayı da olabilir.
+Dizgelerle komutların kendileri, numaralarla ise kaydın listedeki
+sıra numarası belirtilir. Değer negatif bir sayı ise sayma son komuttan
+eskiye doğrudur. <replaceable>son</replaceable> verilmezse,
+<replaceable>ilk</replaceable>'e eşitlenir. <replaceable>ilk</replaceable>
+verilmezse, listelemek için -16 kabul edilir ve düzenlemek için
+sondan bir önceki komut seçilir. <option>-l</option> seçeneği
+verilmişse, komutlar standart çıktıya listelenir. <option>-n</option>
+seçeneği de verilirse, listleme sırasında satır numaraları gösterilmez.
+<option>-r</option> seçeneği ile birlikte, listelemenin ters sıralamayla
+yapılmasını sağlar. <option>-l</option> seçeneği verilmezse,
+seçilen aralıktaki komutlar <replaceable>düzenleyici-ismi</replaceable>
+ile verilen metin düzenleyicide gösterilir.
+<replaceable>düzenleyici-ismi</replaceable> verilmemişse,
+<literal>${FCEDIT:-${EDITOR:-vi}}</literal> değişken yorumlaması
+kullanılır. Bu yorumlama sonucunda önce etkin bir <literal>FCEDIT</literal>
+değişkeninin varlığına bakılır, yoksa <literal>EDITOR</literal>
+değişkenine bakılır, o da yoksa <command>vi</command>
+çalıştırılır. Düzenleme bittiğinde düzenlenen komutlar standart
+çıktıya yansıtılır ve çalıştırılır.
+        </para><para>
+İkinci sözdiziminde, <replaceable>komut</replaceable>'un içinde
+<replaceable>eski</replaceable>'lerin yerine
+<replaceable>yeni</replaceable>'ler yerleştirilerek
+<replaceable>komut</replaceable> tekrar çalıştırılır.
+        </para><para>
+<command>fc</command> komutu yerine kullanılabilecek en faydalı
+<link linkend="bashref_aliases">takma ad</link>
+<literal>r='fc -s'</literal> olurdu. Örneğin sadece
+<literal>r</literal> yazarak son komutu tekrar çalıştırabilirsiniz,
+ya da <literal>r cc</literal> yazarak <command>cc</command> ile
+başlayan son komutu tekrar çalıştırabilirsiniz.
+        </para>
+      </sect1>
+      <sect1 id="bashref_bash.history.builtins-history">
+        <title>History Yerleşiği</title>
+        <indexterm scope="bashref_commands.index"><primary>history</primary></indexterm>
+        <para>
+<synopsis><command>history</command> [<command>-n</command>]
+<command>history</command> [<command>-c</command>]
+<command>history -d</command> <emphasis>konum</emphasis>
+<command>history</command> [<command>-anrw</command>] [<emphasis>dosyaismi</emphasis>]
+<command>history -ps</command> <emphasis>argüman</emphasis>
+</synopsis>
+        </para><para>
+Seçeneksiz kullanıldığında geçmiş listesini satır numaraları ile
+gösterir. Değişiklik yapılmış satırlarda numaralardan önce bir
+<literal>*</literal> vardır. <replaceable>argüman</replaceable>
+olarak bir sayı verildiğinde, son <replaceable>argüman</replaceable> sayıda
+komut listelenir. <command>HISTTIMEFORMAT</command> kabuk değişkeni tanımlanmış ve null değilse gösterilen her geçmiş girdisi ile ilişkili zaman damgasını gösterecek <function>strftime</function>  için biçim dizgesi olarak kullanılır. Biçimli zaman damgası ile geçmiş satırı arasına birşey basılmaz.
+        </para><para>
+Seçeneklerin anlamları:
+        </para><variablelist>
+            <varlistentry>
+              <term><option>-c</option></term>
+              <listitem><para>
+Geçmiş listesini temizler. Geçmiş listesini toptan değiştirmek
+için bu seçenek diğer seçeneklerle birlikte kullanılabilir.
+              </para></listitem>
+            </varlistentry><varlistentry>
+              <term><option>-d <emphasis>konum</emphasis></option></term>
+              <listitem><para>
+Satır numarası <replaceable>konum</replaceable> olan geçmiş
+girdisini siler. <replaceable>konum</replaceable>
+silinecek satırın geçmiş listesinde gösterilen numarası
+olmalıdır.
+              </para></listitem>
+            </varlistentry><varlistentry>
+              <term><option>-a</option></term>
+              <listitem><para>
+Bash oturumunun başlangıcından itibaren girilen geçmiş
+satırları geçmiş dosyasına eklenir.
+              </para></listitem>
+            </varlistentry><varlistentry>
+              <term><option>-n</option></term>
+              <listitem><para>
+Geçmiş dosyasından henüz okunmamış olan geçmiş satırları,
+Bash oturumunun başlangıcından beri oluşan geçmiş listesine
+eklenir.
+              </para></listitem>
+            </varlistentry><varlistentry>
+              <term><option>-r</option></term>
+              <listitem><para>
+Geçmiş dosyası okunur ve içeriği geçmiş listesine eklenir.
+              </para></listitem>
+            </varlistentry><varlistentry>
+              <term><option>-w</option></term>
+              <listitem><para>
+Geçmiş listesini geçmiş dosyasına yazar.
+              </para></listitem>
+            </varlistentry><varlistentry>
+              <term><option>-p</option></term>
+              <listitem><para>
+<replaceable>argümanlar</replaceable> üzerinde geçmiş
+yorumlaması uygular ve sonuçları standart çıktıda gösterir.
+Sonuçlar geçmiş listesinde saklanmaz.
+              </para></listitem>
+            </varlistentry><varlistentry>
+              <term><option>-s</option></term>
+              <listitem><para>
+<replaceable>argümanlar</replaceable> geçmiş listesinin sonuna
+tek girdi olarak eklenir.
+              </para></listitem>
+            </varlistentry>
+          </variablelist><para>
+<literal>-w</literal>, <literal>-r</literal>,
+<literal>-a</literal> veya <literal>-n</literal> seçenekleri ile
+verilen <replaceable>dosyaismi</replaceable>, geçmiş dosyası
+olarak kullanılır. <replaceable>dosyaismi</replaceable> verilmezse,
+<literal>HISTFILE</literal> değişkenindeki değer kullanılır.
+        </para>
+      </sect1>
+    </chapter>
+
+    <chapter id="bashref_bash.hist.exp" label="3">
+      <title>Geçmiş Yorumlaması</title>
+      <titleabbrev>Komut Geçmişi bir kullanıcı gibi kullanıldığında neler olur.</titleabbrev>
+<indexterm scope="bashref_concept.index">
+<primary>yorumlama</primary><secondary>geçmiş</secondary></indexterm>
+<indexterm scope="bashref_concept.index">
+<primary>geçmiş</primary><secondary>yorumlaması</secondary></indexterm>
+      <para>
+Geçmiş kütüphanesi, <command>csh</command> tarafından kullanılana
+benzer bir geçmiş yorumlaması özelliğine sahiptir. Bu kısımda geçmiş
+bilgilerinin yönetiminde kullanılan sözdizimi açıklanacaktır.
+      </para><para>
+Geçmiş yorumlaması geçmiş listesindeki girdilerin standart girdiye
+aktarılmasıyla, komutların tekrarlanabilmesini, önceki komutların
+girdi satırına alınıp değiştirilerek tekrar kullanımını veya önceki
+komutlarda yapılan hataların düzeltilmesini kolaylaştırır.
+      </para><para>
+Geçmiş yorumlaması iki bölümde ele alınabilir. İlki, yorumlama
+sırasında geçmiş listesindeki hangi satırın kullanılacağının saptanması,
+ikincisi de alıntılamak için satırın bazı parçalarının seçilmesidir.
+Geçmişten seçilen satıra <emphasis>eylem</emphasis> ve satırdan
+seçilen parçalara da <emphasis>sözcükler</emphasis> denir. Seçilen
+sözcükleri yönetmek için çeşitli <emphasis>değiştiriciler</emphasis>
+bulunur. Bash'in bazı sözcükleri tırnak içine alarak tek
+sözcük haline getirmesine benzer bir yolla satır sözcüklere ayrılır.
+Geçmiş yorumlaması, <emphasis>geçmiş yorumlama karakteri</emphasis>
+adı verilen bir karakterinin varlığı ile anlaşılır. Bu karakter
+öntanımlı olarak<literal>!</literal>'dir. Geçmiş yorumlama karakteri
+sadece <literal>\</literal> ve <literal>'</literal> karakterleri
+ile öncelenebilir.
+      </para><para>
+<link linkend="bashref_bash.builtins-shopt"><command>shopt</command></link> yerleşiği ile etkinleştirilen kabuk seçeneklerinden bazıları geçmiş yorumlamasının davranışlarını değiştirmekte kullanılabilir. <link linkend="bashref_shopt-histverify"><option>histverify</option></link> kabuk seçeneği etkinleştirildiğinde, Readline kullanılıyorsa geçmiş yorumlaması doğrudan kabuk çözümleyicisine aktarılmaz. Yorumlanan satır, değişiklik yapılabilsin diye önce Readline düzenleme tamponuna yüklenir. <link linkend="bashref_shopt-histreedit"><option>histreedit</option></link> kabuk seçeneği etkinleştirildiğinde, Readline kullanılıyorsa başarısız olmuş bir geçmiş yorumlaması düzeltilebilmesi için Readline düzenleme tamponuna tekrar yüklenir. <link linkend="bashref_bash.history.builtins-history"><command>history</command></link> yerleşik komutunun <option>-p</option> seçeneği, uygulanmadan önce geçmiş yorumlamasının ne yapacağını görmek için, <option>-s</option> seçeneği de komutların çalıştırılmaksızın geçmiş listesinin sonuna eklenmesinde kullanılabilir, böylece ilerde bu komutların geçmiş listesinden yeniden çağrılması mümkün olabilir. Bu, Readline ile bağlantılı olarak oldukça kullanışlıdır.
+      </para><para>
+<link linkend="bashref-histchars"><literal>histchars</literal></link>
+kabuk değişkeni ile kabuk, çeşitli karakterlerin geçmiş yorumlama
+mekanizması tarafından kullanılmasına izin verir.
+      </para>
+      <sect1 id="bashref_bash.hist.exp-events">
+        <title>Eylem Belirticiler</title>
+        <titleabbrev>Kullanılacak geçmiş satırı nasıl belirtilir.</titleabbrev>
+<indexterm scope="bashref_concept.index">
+<primary>eylem</primary><secondary>belirticiler</secondary></indexterm>
+<indexterm scope="bashref_concept.index">
+<primary>geçmiş</primary><secondary>eylemleri</secondary></indexterm>
+        <para>
+Bir eylem belirtici, geçmiş listesindeki bir komut satırı
+girdisine bir göstergedir.
+        </para><glosslist>
+            <glossentry>
+              <glossterm><literal>!</literal></glossterm>
+              <glossdef><para>
+Kendinden sonra boşluk, sekme, satırsonu, <literal>=</literal>
+veya <literal>(</literal> karakteri gelmedikçe bir geçmiş
+yorumlamasını başlatır (<command>shopt</command> yerleşiği kullanılarak <literal>extglob</literal> kabuk seçeneği etkinleştirildiğinde).
+              </para></glossdef>
+            </glossentry><glossentry>
+              <glossterm><literal>!n</literal></glossterm>
+              <glossdef><para>
+Geçmiş listesindeki <replaceable>n.</replaceable> satıra
+karşılıktır.
+              </para></glossdef>
+            </glossentry><glossentry>
+              <glossterm><literal>!-n</literal></glossterm>
+              <glossdef><para>
+Geçmiş listesindeki geriye doğru <replaceable>n.</replaceable>
+satıra karşılıktır.
+              </para></glossdef>
+            </glossentry><glossentry>
+              <glossterm><literal>!!</literal></glossterm>
+              <glossdef><para>
+Bir önceki komuta karşılıktır. <literal>!-1</literal>'e
+eşdeğerdir.
+              </para></glossdef>
+            </glossentry><glossentry>
+              <glossterm><literal>!<emphasis>dizge</emphasis></literal></glossterm>
+              <glossdef><para>
+<replaceable>dizge</replaceable> ile başlayan son komuta
+karşılıktır.
+              </para></glossdef>
+            </glossentry><glossentry>
+              <glossterm><literal>!?<emphasis>dizge</emphasis>[?]</literal></glossterm>
+              <glossdef><para>
+İçinde <replaceable>dizge</replaceable> geçen son komuta
+karşılıktır. <replaceable>dizge</replaceable>'den hemen sonra bir
+satırsonu geliyorsa <literal>?</literal> verilmeyebilir.
+              </para></glossdef>
+            </glossentry><glossentry>
+              <glossterm><literal>^<emphasis>dizge1</emphasis>^<emphasis>dizge2</emphasis>^</literal></glossterm>
+              <glossdef><para>
+Hızlı Yorumlama. <replaceable>dizge1</replaceable> ile
+<replaceable>dizge2</replaceable> yerdeğiştirilerek
+bir önceki komut tekrarlanır.
+<literal>!!:s/<emphasis>dizge1</emphasis>/<emphasis>dizge2</emphasis>/</literal>
+ile eşdeğerdir.
+              </para></glossdef>
+            </glossentry><glossentry>
+              <glossterm><literal>!#</literal></glossterm>
+              <glossdef><para>
+O ana kadar yazılan komut satırının tümüne karşılıktır.
+Örneğin, <literal>type !#</literal> yazıp deneyin.
+              </para></glossdef>
+            </glossentry>
+          </glosslist>
+      </sect1>
+      <sect1 id="bashref_bash.hist.exp-words">
+        <title>Sözcük Belirticiler</title>
+        <titleabbrev>Yararlı sözcükler nasıl belirtilir.</titleabbrev>
+<indexterm scope="bashref_concept.index">
+<primary>sözcük</primary><secondary>belirticiler</secondary></indexterm>
+        <para>
+Sözcük belirteçleri, eylemden istenen sözcükleri seçmek için
+kullanılır. Bir <literal>:</literal> karakteri eylem belirtimini
+sözcük belirticiden ayırır. Sözcük belirtici bir <literal>^</literal>,
+<literal>$</literal>, <literal>*</literal>, <literal>-</literal>,
+veya  <literal>%</literal> karakteri ile başlıyorsa
+<literal>:</literal> verilmeyebilir. Sözcükler satırın başından
+itibaren numaralanır ve ilk sözcüğün numarası 0 (sıfır)dır.
+Sözcükler satıra birer boşlukla ayrılarak girilir.
+        </para><para>Örneğin,</para>
+          <glosslist>
+            <glossentry>
+              <glossterm><literal>!!</literal></glossterm>
+              <glossdef><para>
+önceki komutu belirtir.
+              </para></glossdef>
+            </glossentry><glossentry>
+              <glossterm><literal>!!:$</literal></glossterm>
+              <glossdef><para>
+Önceki komutun son argümanına karşılıktır. Kısaltması olarak
+<literal>!$</literal> da yazılabilir.
+              </para></glossdef>
+            </glossentry><glossentry>
+              <glossterm><literal>!fi:2</literal></glossterm>
+              <glossdef><para>
+<literal>fi</literal> harfleriyle başlayan son komutun
+ikinci argümanını belirtir.
+              </para></glossdef>
+            </glossentry>
+          </glosslist>
+        <para>Bunlar sözcük belirticidir:</para>
+          <glosslist>
+            <glossentry>
+              <glossterm><literal>0 (sıfır)</literal></glossterm>
+              <glossdef><para>
+0. sözcük. Çoğu durumda bu komut sözcüğüdür.
+              </para></glossdef>
+            </glossentry><glossentry>
+              <glossterm><literal>n</literal></glossterm>
+              <glossdef><para>
+<replaceable>n.</replaceable> sözcük
+              </para></glossdef>
+            </glossentry><glossentry>
+              <glossterm><literal>^</literal></glossterm>
+              <glossdef><para>
+İlk argüman; yani 1. sözcük.
+              </para></glossdef>
+            </glossentry><glossentry>
+              <glossterm><literal>$</literal></glossterm>
+              <glossdef><para>Son argüman.</para></glossdef>
+            </glossentry><glossentry>
+              <glossterm><literal>%</literal></glossterm>
+              <glossdef><para>
+En son <replaceable>?dizge?</replaceable> aramasındaki sözcük.
+              </para></glossdef>
+            </glossentry><glossentry>
+              <glossterm><literal>x-y</literal></glossterm>
+              <glossdef><para>
+Sözcük aralığı; <replaceable>-y</replaceable>,
+<literal>0</literal><replaceable>-y</replaceable> ile aynıdır.
+              </para></glossdef>
+            </glossentry><glossentry>
+              <glossterm><literal>*</literal></glossterm>
+              <glossdef><para>
+0. hariç, sözcükleri tümü. <literal>1-$</literal> ile
+eşdeğerdir. Eylem sadece bir sözcük içerse bile
+<literal>*</literal> hata vermez, sadece boş dizge döner.
+              </para></glossdef>
+            </glossentry><glossentry>
+              <glossterm><literal>x*</literal></glossterm>
+              <glossdef><para><literal>x-$</literal> için kısaltma.</para></glossdef>
+            </glossentry><glossentry>
+              <glossterm><literal>x-</literal></glossterm>
+              <glossdef><para>
+<literal>x-$</literal>ın <literal>x*</literal>'a
+benzer kısaltmasıdır, ancak son sözcük atlanır.
+              </para></glossdef>
+            </glossentry>
+          </glosslist><para>
+Bir sözcük belirtici, bir eylem belirtimi olmaksızın verilirse
+önceki komut eylem olarak kullanılır. Örneğin,
+<literal>type</literal> komutunu girdikten sonra yeni satır olarak
+<literal>!! !!</literal> yazın. İlki eylem, ikincisi sözcük belirtir.
+        </para>
+      </sect1>
+      <sect1 id="bashref_bash.hist.exp-modifiers">
+        <title>Değiştiriciler</title>
+        <titleabbrev>Yorumlama sonuçlarının değiştirilmesi.</titleabbrev>
+        <para>
+İsteğe bağlı olarak sözcük belirticiden sonra, herbiri bir
+<literal>:</literal> ile öncelenerek aşağıdaki değiştiricilerden
+bir veya birkaçını ekleyebilirsiniz.
+        </para><glosslist>
+            <glossentry>
+              <glossterm><literal>h</literal></glossterm>
+              <glossdef><para>
+Bir dosya yolundan son dizini kaldırır. Örneğin,
+<literal>cd /home/nilgun/belgeler</literal> komutundan
+sonra <literal>cd !$:h</literal> yazarsanız
+<literal>/home/nilgun</literal> dizinine geçilir.
+              </para></glossdef>
+            </glossentry><glossentry>
+              <glossterm><literal>t</literal></glossterm>
+              <glossdef><para>
+Bir dosya yolundan geriye son dizin kalacak şekilde
+baştakileri kaldırır. Yukardaki örneğe devamla
+<literal>cd !$:t</literal> yazarsanız
+<literal>cd nilgun</literal>'e karşılık olur ki,
+"böyle bir dosya ya da dizin yok" iletisi alınabilir.
+              </para></glossdef>
+            </glossentry><glossentry>
+              <glossterm><literal>r</literal></glossterm>
+              <glossdef><para>
+<replaceable>.sonek</replaceable> şeklindeki bir soneki
+kaldırır, sadece esas dosya ismi (basename) kalır.
+              </para></glossdef>
+            </glossentry><glossentry>
+              <glossterm><literal>e</literal></glossterm>
+              <glossdef><para>
+sonek hariç herşeyi kaldırır.
+              </para></glossdef>
+            </glossentry><glossentry>
+              <glossterm><literal>p</literal></glossterm>
+              <glossdef><para>
+Son komutu basar ama çalıştırmaz. Örnek: <literal>!:p</literal>
+              </para></glossdef>
+            </glossentry><glossentry>
+              <glossterm><literal>q</literal></glossterm>
+              <glossdef><para>
+Yerini aldığı sözcükleri, gerekirse önceleyerek, tırnak içine alır,
+              </para></glossdef>
+            </glossentry><glossentry>
+              <glossterm><literal>x</literal></glossterm>
+              <glossdef><para>
+<literal>q</literal> gibidir ancak sözcüklerin
+arasındaki boşlukları, sekmeleri ve satırsonlarını
+koruyarak sözcükleri tek tek tırnak içine alır.
+              </para></glossdef>
+            </glossentry><glossentry>
+              <glossterm><literal>s/<emphasis>eski</emphasis>/<emphasis>yeni</emphasis>/</literal></glossterm>
+              <glossdef><para>
+Eylem satırındaki ilk <replaceable>eski</replaceable>'nin
+yerine <replaceable>yeni</replaceable>'yi koyar (ikame).
+<literal>/</literal> yerine herhangi bir ayraç kullanılabilir.
+<replaceable>eski</replaceable> ile <replaceable>yeni</replaceable>
+arasındaki ayraç bir tek tersbölü ile tırnaklanabilir.
+<replaceable>yeni</replaceable> içinde <literal>&amp;</literal>
+varsa <replaceable>eski</replaceable> ile değiştirilir. Bir
+tek tersbölü <literal>&amp;</literal> karakterini önceleyecektir.
+Girdi satırındaki son karakter olduğunda son ayraç isteğe
+bağlıdır.
+              </para></glossdef>
+            </glossentry><glossentry>
+              <glossterm><literal>&amp;</literal></glossterm>
+              <glossdef><para>
+Önceki ikameyi tekrarlar.
+              </para></glossdef>
+            </glossentry><glossentry>
+              <glossterm><literal>g</literal></glossterm>
+              <glossterm><literal>a</literal></glossterm>
+              <glossdef><para>
+Değişikliklerin eylem satırının tümü özerinde uygulanmasını
+sağlar. <literal>s</literal> ile birleşik olarak
+<literal>gs/<emphasis>eski</emphasis>/<emphasis>yeni</emphasis>/</literal>'deki
+gibi veya <literal>&amp;</literal> ile birleşik kullanılır.
+              </para></glossdef>
+            </glossentry><glossentry>
+              <glossterm><literal>G</literal></glossterm>
+              <glossdef><para>
+Olaydaki her sözcüğe izleyen <command>s</command> değiştiricisini bir kere uygular.
+              </para></glossdef>
+            </glossentry>
+          </glosslist>
+      </sect1>
+    </chapter>
+  </part>

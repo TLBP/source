@@ -1,0 +1,515 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--DOCTYPE article SYSTEM "../../docbook/dtd/docbookx.dtd"-->
+<!-- ********************************************************************
+     $Id: apache-kurulumu-NASIL.xml,v 1.4 2002/09/30 18:21:13 nilgun Exp $
+     ******************************************************************** -->
+
+<article id="apache-kurulumu-nasil" lang="tr">
+<?dbhtml dir="../howto"?>
+  <articleinfo>
+
+    <!-- Use "HOWTO", "mini HOWTO", "FAQ" in title, if appropriate -->
+    <title>Apache Kurulumu NASIL</title>
+    <subtitle>[Ssl - Php4 (MySQL - OpenLDAP - OpenSSL - GD - Imap - MM - Curl) - Gzip]</subtitle>
+
+    <author>
+       <firstname>Doruk</firstname>
+       <surname>Fişek</surname>
+       <affiliation>
+         <address>
+          <email>dfisek@fisek.com.tr</email>
+         </address>
+       </affiliation>
+     </author>
+     <pubdate>5 Ocak 2002</pubdate>
+     <pubdate> </pubdate>
+
+     <!-- Most recent revision goes at the top; list in descending order -->
+     <revhistory>
+       <revision>
+          <revnumber>1.2.1</revnumber>
+          <date>5 Ocak 2002</date>
+          <authorinitials>Doruk Fişek <email>dfisek@fisek.com.tr</email></authorinitials>
+       </revision>
+    </revhistory>
+    <abstract>
+      <para>
+        Bu doküman, APACHE web sunucusunun PHP - SSL - Gzip destekli olarak statik
+        derlenmesini anlatmaktadır. Linux dağıtımları ile hazır gelen derlenmiş
+        Apache sunucuları da, kullanım alanınıza ve şeklinize göre kolaylıkla
+        işinizi görebilir. Çeşitli Linux dağıtımları için farklı kurulum biçimleri
+        olabilir ancak programlar kaynak kodlarından derlendiği için dokümanın
+        anlattığı yöntemin tüm Linux dağıtımlarında çalışması gerekir. Dokümanda
+        kurulan programların tüm seçenekleri ayrıntıları ile anlatılmamış, sadece
+        belirli seçeneklerle direk kurulum anlatılmıştır.
+      </para>
+    </abstract>
+
+  </articleinfo>
+<!-- Content follows...include introduction, license information, feedback -->
+  <sect1 id="apache-kurulumu-nasil_intro">
+    <title>Giriş</title>
+    <para>
+      Bugün internette web sunucuların %60'ını <emphasis role="bold">Apache</emphasis> oluşturmaktadır. Sağlamlık,
+      güvenilirlik ve yüksek performansın yanı sıra Apache'nin bu yaygınlığının
+      en önemli nedenleri de çok esnek olmasıdır. Gereksinimlere göre Apache'ye
+      birçok modül eklenerek web üzerinde hemen her uygulama gerçekleştirilebilir.
+    </para>
+    <para>
+      Çok çeşitli sayıdaki Apache modülleri arasından mod_php4, mod_ssl,
+      mod_gzip modüllerinin eklenmesi ile Apache'nin kurulumu anlatılmaktadır.
+      Gelecek sürümlerde dokümana başka Apache modüllerinin de (frontpage
+      uzantıları, mod_dav, mod_bandwidth, vb) eklenmesi düşünülmektedir.
+    </para>
+    <para>
+      SSL (<emphasis role="bold">S</emphasis>ecure
+      <emphasis role="bold">S</emphasis>ocket
+      <emphasis role="bold">L</emphasis>ayer - Güvenli Soket Katmanı), internet
+      üzerinde şifrelendirilmiş veri alışverişi için kullanılan bir protokoldür.
+      Şifreli veri alışverişi özellikle e-ticaret uygulamalarında "olmazsa olmaz"
+      bir konuma sahiptir.
+    </para>
+    <para>
+      PHP (<emphasis role="bold">P</emphasis>HP:
+      <emphasis role="bold">H</emphasis>ypertext
+      <emphasis role="bold">P</emphasis>reprocessor - PHP: Hiper Metin Önişlemcisi),
+      web sunucu üzerinde işlenip HTML içine gömülen bir betik dilidir. Özellikle
+      web üzerinde veritabanı uygulamaları geliştirilmesinde kullanılması
+      yaygındır. Hemen her tür veritabanı sunucusuna (MySQL, Interbase, Sybase,
+      Oracle, ...) erişim için kullanılabilmektedir. Apache-Php-MySQL üçlüsü
+      internette çok yaygın kullanılan bir standart haline gelmektedir. Birçok
+      farklı program ile kullanılabilen PHP, bu dokümanda MySQL, OpenLDAP, GD,
+      Imap, MM ve Curl destekli olarak derlenecektir. Farklı programların desteği
+      verileceği zaman da kurulum mantığı aynıdır.
+    </para>
+    <para>
+      Mod_gzip, IETF (<emphasis role="bold">I</emphasis>nternet
+      <emphasis role="bold">E</emphasis>ngineering
+      <emphasis role="bold">T</emphasis>ask
+      <emphasis role="bold">F</emphasis>orce - Internet Mühendisliği Görev Gücü)
+      içerik kodlama standartlarına göre web sayfalarının gzip ile web sunucunuz
+      tarafından sıkıştırılarak kullanıcının browser'ına gönderilmesini
+      sağlamaktadır. 1999'dan beri piyasaya çıkan tüm browser'lar gzip
+      desteklemektedir, herhangi bir ek program yüklenmesine gerek yoktur.
+      Mod_gzip, özellikle yazı ve makaleler gibi çok sıkıştırılabilen dosyaları
+      kullanıcının hem çok daha hızlı çekebilmesini, hem de çok daha az bant
+      genişliği harcamasını sağlamaktadır.
+    </para>
+    <para>
+      Kurulum <literal>/usr/local</literal> dizinine yapılmaktadır. İlgili
+      programların seçenekleri değiştirilerek başka bir dizine de kurulum
+      yapılabilir.
+    </para>
+    <sect2>
+      <title>Neler gerekiyor?</title>
+      <para>
+        Kuruluma başlamadan önce aşağıdaki programların elinizde bulunması
+        gerekir.
+        <itemizedlist>
+          <listitem>
+            <para>
+              Apache - <ulink url="http://httpd.apache.org"
+              >http://httpd.apache.org</ulink>
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              OpenSSL - <ulink url="http://www.openssl.org/"
+              >http://www.openssl.org</ulink>
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              PHP - <ulink url="http://www.php.net/">http://www.php.net</ulink>
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Mod_ssl - <ulink url="http://www.modssl.org/"
+              >http://www.modssl.org</ulink>
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Mod_gzip - <ulink
+              url="http://www.remotecommunications.com/apache/mod_gzip/"
+              >http://www.remotecommunications.com/apache/mod_gzip</ulink>
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              MySQL - <ulink url="http://mysql.com/">http://mysql.com</ulink>
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              OpenLDAP - <ulink url="http://www.openldap.org/"
+              >http://www.openldap.org</ulink>
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              GD - <ulink url="http://www.boutell.com/gd/"
+              >http://www.boutell.com/gd</ulink>
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Imap - <ulink url="http://www.washington.edu/imap/"
+              >http://www.washington.edu/imap</ulink>
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              MM - <ulink url="http://www.engelschall.com/sw/mm/"
+              >http://www.engelschall.com/sw/mm</ulink>
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Curl - <ulink url="http://curl.haxx.se/">http://curl.haxx.se</ulink>
+            </para>
+          </listitem>
+        </itemizedlist>
+      </para>
+    </sect2>
+    <sect2>
+      <title>Bu Belgenin Yeni Sürümleri</title>
+      <para>
+        Apache Kurulumu belgesinin yeni sürümleri düzenli olarak
+        <email>linux@linux.org.tr</email> e-posta listesinde duyurulacak ve Türkiye
+        Linux Kullanıcıları Derneği'nin web sitesine (<ulink
+        url="http://www.linux.org.tr">www.linux.org.tr</ulink>) gönderilecektir.
+      </para>
+      <para>
+        Belgenin en son sürümü HTML olarak <ulink
+        url="http://linux.fisek.com.tr/dfisek/apache-kurulum.php"
+        >http://linux.fisek.com.tr/dfisek/apache-kurulum.php</ulink> adresinden
+        alınabilir.
+      </para>
+    </sect2>
+    <sect2>
+      <title>Kopyalama hakkı engel-le-ne-mez! (<emphasis>slogan tonunda söylenecek</emphasis>)</title>
+      <para>
+        Bu belge <ulink url="http://www.gnu.org/licenses/fdl.html">GNU Serbest
+        Belge Lisansı</ulink>'na (GFDL) sahiptir.
+      </para>
+    </sect2>
+    <sect2>
+      <title>Görüşler, sorular, ...</title>
+      <para>
+        Belgeyle ile ilgili her türlü görüşleriniz ve sorularınız için benimle
+        <email>dfisek@fisek.com.tr</email> adresinden bağlantı kurabilirsiniz.
+        Belgeda bir hata bulduğunuzda bunu bana haber verirseniz, belgenin bir
+        sonraki sürümünde bunu düzeltebilirim. Belgeyle ilgili her türlü mesaj,
+        sekiz gözle beklenmektedir 8-)
+      </para>
+    </sect2>
+  </sect1>
+  <sect1 id="apache-kurulumu-nasil_php4-ssl">
+    <title>Mod_php4 ve Mod_ssl modülleri için gerekli paketlerin kurulumu</title>
+    <para>
+      Kurulumların tamamı <literal>/usr/local</literal> dizinine yapılacağından
+      dolayı, öncelikle o dizine geçilmelidir.<screen>cd /usr/local</screen>
+    </para>
+    <sect2>
+      <title>OpenSSL kurulumu</title>
+      <para>
+<screen>
+tar -zxf /root/openssl-0.9.6c.tar.gz
+cd openssl-0.9.6c.tar.gz
+./config
+make
+make install
+cd ..
+rm -rf openssl-0.9.6c
+</screen>
+      </para>
+    </sect2>
+    <sect2>
+      <title>OpenLDAP kurulumu</title>
+      <para>
+<screen>
+tar -zxf /root/openldap-2.0.19.tar.gz
+cd openldap-2.0.19
+./configure
+make depend
+make
+make install
+cd ..
+rm -rf openldap-2.0.19
+</screen>
+      </para>
+    </sect2>
+    <sect2>
+      <title>MySQL kurulumu</title>
+      <para>
+<screen>
+tar -zxf /root/mysql-3.23.47.tar.gz
+cd mysql-3.23.47
+./configure --prefix=/usr/local/mysql --with-charset=latin5
+make
+make install
+cp /usr/local/mysql/share/mysql/mysql.server /usr/local/mysql/bin
+/usr/local/mysql/bin/mysql_install_db
+groupadd mysql
+useradd -g mysql mysql
+chown -R root /usr/local/mysql
+chown -R mysql /usr/local/mysql/var
+chgrp -R mysql /usr/local/mysql
+/usr/local/mysql/bin/mysql.server start
+cd ..
+rm -rf mysql-3.23.47
+</screen>
+        <itemizedlist>
+          <listitem>
+            <para>
+              MySQL için root şifresini ayarlamayı unutmayınız!
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              MySQL'e PHP aracılığı ile bağlanabilmek için MySQL sunucusunun
+              çalışıyor olması gerekir. Kurulan bilgisayarda her açılışta
+              MySQL'in çalışmasını istiyorsanız,
+              <literal>/usr/local/mysql/bin/mysql.server</literal> dosyasını
+              Linux dağıtımınızdaki ilgili yere yerleştiriniz.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              MySQL yönetimi için, PHP ile yazılan web tabanlı bir yönetim
+              programı olan <ulink url="http://phpmyadmin.sourceforge.net"
+              >phpMyAdmin</ulink> kullanılabilir.
+            </para>
+          </listitem>
+        </itemizedlist>
+      </para>
+    </sect2>
+    <sect2>
+      <title>GD kurulumu</title>
+      <para>
+<screen>
+tar -zxf /root/gd-1.8.4.tar.gz
+cd gd-1.8.4
+make
+make install
+cd ..
+rm -rf gd-1.8.4
+</screen>
+      </para>
+    </sect2>
+    <sect2>
+      <title>Imap kurulumu</title>
+      <para>
+<screen>
+tar -zxf /root/imap.tar.Z
+mv imap-surumnumarasi imap
+cd imap
+make slx
+cd ..
+</screen>
+      </para>
+    </sect2>
+    <sect2>
+      <title>MM kurulumu</title>
+      <para>
+<screen>
+tar -zxf /root/mm-1.1.3.tar.gz
+cd mm-1.1.3
+./configure --prefix=/usr/local
+make
+make install
+cd ..
+rm -rf mm-1.1.3
+</screen>
+      </para>
+    </sect2>
+    <sect2>
+      <title>Curl kurulumu</title>
+      <para>
+<screen>
+tar -zxf /root/curl-7.9.2.tar.gz
+cd curl-7.9.2
+./configure --with-ssl
+make
+make install
+cd ..
+rm -rf curl-7.9.2
+</screen>
+      </para>
+    </sect2>
+  </sect1>
+  <sect1 id="apache-kurulumu-nasil_modul">
+    <title>Apache'ye gerekli modüllerin eklenmesi</title>
+    <para>
+      Apache'ye <literal>mod_php4, mod_ssl</literal> ve <literal>mod_gzip</literal>
+      modüllerinin eklenebilmesi için, Apache'nin kaynak kodu
+      <literal>Apache</literal> dizinine yerleştirilir.
+<screen>
+ln -s apache_1.3.22 apache
+cd apache
+./configure
+cd ..
+</screen>
+    </para>
+    <sect2>
+      <title>Mod_ssl</title>
+      <para>
+<screen>
+tar -zxf /root/mod_ssl-2.8.5-1.3.22.tar.gz
+cd mod_ssl-2.8.5-1.3.22
+./configure --with-apache=/usr/local/apache --with-mm=/usr/local
+cd ..
+</screen>
+      </para>
+    </sect2>
+    <sect2>
+      <title>Mod_php4</title>
+      <para>
+<screen>
+tar -zxf /root/php-4.1.1.tar.gz
+cd php-4.1.1
+./configure --with-apache=/usr/local/apache --with-mysql=/usr/local/mysql --enable-ftp --enable-safe-mode --enable-trans-sid --with-ldap=/usr/local --with-gd=/usr/local --with-openssl=/usr/local/ssl --with-curl=/usr/local --with-imap=/usr/local/imap --with-mm=/usr/local --enable-inline-optimization --with-zlib
+make install
+cd ..
+</screen>
+      </para>
+    </sect2>
+    <sect2>
+      <title>Mod_gzip</title>
+      <para>
+<screen>
+cp /root/mod_gzip.c.gz ./
+gzip -d mod_gzip.c.gz
+</screen>
+      </para>
+    </sect2>
+  </sect1>
+  <sect1 id="apache-kurulumu-nasil_kurulum">
+    <title>Apache kurulumu</title>
+    <para>
+<screen>
+cd apache
+./configure --prefix=/usr/local/apache --enable-module=ssl --add-module=/usr/local/mod_gzip.c --activate-module=src/modules/php4/libphp4.a
+make
+</screen>
+    </para>
+    <para>
+      Apache'nin bu aşamada istediğimiz özelliklerle derlenmesi işlemi
+      tamamlanmıştır. SSL ile şifrelendirilmiş veri alışverişinde önemli bir
+      yeri de sayısal (dijital) sertifikalar tutar. Eğer daha önceden bir
+      sertifika otoritesinden aldığınız bir sertifikanız yoksa, bir tane
+      kendiniz aşağıdaki komut ile yapabilirsiniz. Ancak elbette kendi
+      imzaladığınız bu sertifika, yaygın kullanılan web istemcileri tarafından
+      otomatik olarak tanınmayacaktır.<screen>make certificate</screen>
+    </para>
+    <para>
+      Son olarak tüm derlenmiş dosyalar ilgili dizinlere dağıtılır.
+      <screen>make install</screen>
+    </para>
+    <para>
+      Programların kaynak kodlarına ihtiyacımız kalmadığından onları artık
+      silebiliriz.
+<screen>
+rm -rf src
+cd ..
+rm -rf mod_ssl-2.8.5-1.3.22
+rm -rf php-4.1.1
+rm -rf imap
+rm mod_gzip.c
+</screen>
+    </para>
+    <sect2>
+      <title>Apache'de php4 ayarların yapılması</title>
+      <para>
+        Şimdi Apache'nin ayar dosyalarında <literal>php4</literal> ile ilgili
+        ayarları yapalım.
+<screen>
+cd apache
+cd conf
+nano -w httpd.conf
+</screen>
+      </para>
+      <para>
+        Apache'nin tüm ayarlarının yapıldığı <literal>httpd.conf</literal>
+        dosyasında aşağıdaki iki satırı bularak önlerinde bulunan
+        <literal>#</literal> işaretlerini kaldırmamız gerekmektedir.
+<screen>
+AddType application/x-httpd-php .php
+AddType application/x-httpd-php-source .phps
+</screen>
+      </para>
+      <para>
+        Buna ek olarak eğer <literal>php3</literal> dosyalarınızın da
+        <literal>php4</literal> olarak çalıştırılmasını isterseniz, şöyle bir
+        satır ekleyebilirsiniz.
+        <screen>AddType application/x-httpd-php .php3</screen>
+      </para>
+      <para>
+        <literal>Php4</literal> ile <literal>php3</literal> arasında fazla bir
+        uyumsuzluk bulunmamaktadır (bilinen uyumsuzlukların tam listesi,
+        <ulink url="http://www.php.net/version4/incompatibilities.php"
+        >http://www.php.net/version4/incompatibilities.php</ulink> sayfasından
+        alınabilir. Ama problem yaşarsanız, Apache'ye hem <literal>php4</literal>
+        hem de <literal>php3</literal>'ü modül olarak aynı anda ekleyebilir ve
+        kullanabilirsiniz.
+      </para>
+    </sect2>
+    <sect2>
+      <title>Apache'de gzip ayarlarının yapılması</title>
+      <para>
+        <literal>httpd.conf</literal> dosyasına aşağıdaki satırları ekleyerek
+        <literal>mod_gzip</literal>'i aktif hale getirebilir ve ayarlarını
+        dilediğiniz yapabilirsiniz. aşağıda örnek ayarları bulabilirsiniz.
+<screen>
+mod_gzip_on Yes
+mod_gzip_minimum_file_size 10
+mod_gzip_maximum_file_size 500000
+mod_gzip_maximum_inmem_size 100000
+mod_gzip_keep_workfiles No
+mod_gzip_temp_dir /tmp
+mod_gzip_item_include file \.htm$
+mod_gzip_item_include file \.php$
+mod_gzip_item_include file \.pl$
+mod_gzip_item_include mime ^text/.*
+mod_gzip_item_include mime ^application/x-httpd-php
+mod_gzip_item_include mime ^httpd/unix-directory$
+mod_gzip_item_include handler ^perl-script$
+mod_gzip_item_include handler ^server-status$
+mod_gzip_item_include handler ^server-info$
+mod_gzip_item_exclude file \.css$
+mod_gzip_item_exclude file \.js$
+mod_gzip_item_exclude mime ^image/.*
+mod_gzip_item_exclude mime ^zip/.*
+
+LogFormat "%h %l %u %t \"%V %r\" %>s %b mod_gzip: %{mod_gzip_result}n In:%{mod_gzip_input_size}n Out:%{mod_gzip_output_size}n:%{mod_gzip_compression_ratio}npct." common_with_mod_gzip_info2
+CustomLog /var/log/apache/mod_gzip common_with_mod_gzip_info2
+</screen>
+      </para>
+    </sect2>
+    <sect2>
+      <title>Apache'nin başlatılması</title>
+      <para>
+        Artık Apache'mizi başlatabiliriz.
+<screen>
+cd ../bin
+./apachectl startssl
+</screen>
+      </para>
+      <para>
+        Burada sayısal sertifikanın yapımı sırasında size sorulan şifreyi girmeniz
+        gerekmektedir.
+      </para>
+    </sect2>
+  </sect1>
+  <sect1 id="apache-kurulumu-nasil_sonuc">
+    <title>Sunucuya Bağlanma</title>
+    <para>
+      Artık Apache sunucumuz hem <literal>http://sunucunuz</literal> (normal
+      bağlantı), hem de <literal>https://sunucunuz</literal> (şifrelendirilmiş
+      bağlantı) adreslerinde hizmet vermeye başlamıştır. Herhangi bir web
+      istemcisi ile bağlanabilirsiniz.
+    </para>
+  </sect1>
+</article>

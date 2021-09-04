@@ -1,0 +1,297 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--DOCTYPE article SYSTEM "../../docbook/dtd/docbookx.dtd"-->
+<!-- ********************************************************************
+     $Id: gcc-baslangic.xml,v 1.4 2002/09/30 18:21:13 nilgun Exp $
+     ******************************************************************** -->
+<article id="gcc-baslangic" lang="tr">
+  <articleinfo>
+    <title>GNU C Derleyicisi Kullanımı</title>
+    <authorgroup><author>
+       <firstname>M. Ali</firstname>
+       <surname>Vardar</surname>
+       <affiliation>
+         <address>
+          <email>&ali.vardar;</email>
+         </address>
+       </affiliation>
+     </author><author>
+       <firstname>Barış</firstname>
+       <surname>Şimşek</surname>
+       <affiliation>
+         <address>
+          <email>&baris.simsek;</email>
+         </address>
+       </affiliation>
+     </author></authorgroup>
+
+     <pubdate>2005</pubdate>
+     <revhistory>
+       <revision>
+          <revnumber>1.1</revnumber>
+          <date>Temmuz 2005</date>
+          <authorinitials>NBB</authorinitials>
+          <revremark>
+Özgün sürümü <ulink url="http://www.acikkod.org"/> adresinde bulunan ve Barış Şimşek tarafından yazılmış "Kod Geliştirme-1: Program Kütüphaneleri" isimli makale belgeye eklendi.
+          </revremark>
+       </revision><revision>
+          <revnumber>1.0</revnumber>
+          <date>2003</date>
+          <authorinitials>MAV</authorinitials>
+          <revremark>Belgenin özgün sürümü <ulink url="http://www.linuxprogramlama.com"/> adresinde bulunabilir.</revremark>
+       </revision>
+    </revhistory>
+    <abstract>
+      <para>
+Bu belgede sadece GNU C Derleyicisinin kullanımı, o da başlangıç seviyesinde ele alınmıştır.
+      </para><para>
+      </para>
+    </abstract>
+    <legalnotice><title>Yasal Açıklamalar</title>
+      <para>
+Bu belgenin, <emphasis>GNU C Derleyicisi Kullanımı</emphasis> 1.1 sürümünün <emphasis role="bold"> telif hakkı © 2005 <emphasis>M. Ali Vardar</emphasis> ile <emphasis>Barış Şimşek</emphasis></emphasis>'e aittir.
+    &notice.gfdl.orig;</para>
+      &notice.disc;
+    </legalnotice>
+  </articleinfo>
+
+  <sect1 id="gcc-baslangic-basit"><title>Basit GCC Kullanımı</title>
+  <para>
+GCC ismi "GNU Compiler Collection" sözcüklerinin baş harflerinden oluşmuştur. Gerçek ismini GNU C Compiler kelimelerinden almaktadır. Bu değişikliğin sebebi GCC paketinin eskiden sadece C derleyicisinden oluşmakta olduğudur. Diğer diller daha sonradan GCC ailesine eklenmiştir. Bu konuda bilgi için  <ulink url="http://en.wikipedia.org/wiki/GNU_Compiler_Collection"/> adresine bir ziyaret  yapılabilir.
+<ulink url="http://gcc.gnu.org/"/> adresinden GCC paketinin son sürümlerini takip edebilirsiniz.
+  </para><para>
+Kullandığınız GCC sürümünü öğrenmek için;
+  </para><para><screen># <userinput>gcc -v</userinput></screen></para><para>
+komutunu kullanabilirsiniz. Benim sistemimde dönen sonuç:
+  </para><para>
+<screen># <userinput>gcc -v</userinput>
+Reading specs from /usr/lib/gcc-lib/i386-slackware-linux/3.2.2/specs
+Configured with: ../gcc-3.2.2/configure --prefix=/usr --enable-shared
+--enable-threads=posix --enable-__cxa_atexit --disable-checking --with-gnu-ld
+--verbose --target=i386-slackware-linux --host=i386-slackware-linux
+Thread model: posix
+gcc version 3.2.2</screen>
+  </para><para>
+Derleyicinin uygulamaları doğru bir şekilde derlemesi için bir takım parametrelerin doğru olarak verilmesi gerekmektedir. En basit şekli ile uygulamamızı yazalım ve ilk derleme işlemimize geçelim.
+  </para><para>
+<screen>#include &lt;stdio.h>
+int main()
+{
+  printf("Örnek uygulama");
+}
+</screen>
+  </para><para>
+Yukarıdaki en basit uygulamamızdan başlamış olduk. Şimdi bu uygulamamızı derlemeye geçelim. Uygulamayı herhangi bir metin düzenleyici ile yazdıktan sonra <filename>ilk.c</filename> olarak kaydededelim ve konsolda komut istemine aşağıdaki satırları yazalım.
+  </para><para>
+<screen># <userinput>gcc ilk.c</userinput></screen>
+  </para><para>
+Bu satırdan sonra uygulamada hata yok ise veya bir uyarı mesajı vermezse hemen komut istemine düşülür. Ancak kaynak kodun olduğu dizine bakıldığı zaman <filename>a.out</filename> isimli bir dosyanın oluştuğu görülecektir. Uygulamamızı bir isim vermeden derledik. Bu gibi durumlarda <userinput>gcc</userinput> öntanımlı olarak <filename>a.out</filename> dosya adını kullanacaktır. Şimdide uygulamamızı kendi ismiyle derleyelim. Bu amaçla <option>-o</option> seçeneği kullanılır. <option>-o</option> seçeneği parametre olarak çıkış dosya adınını alır:
+  </para><para>
+<screen># <userinput>gcc ilk.c -o ilk</userinput></screen>
+  </para><para>
+Komut satırından sonra ilgili dizin içerisinde artık <filename>ilk</filename> isimli bir çalıştırılabilir dosya oluşacaktır. Bu aşamadan sonra artık basit bir uygulamanın derlenmesi işlemi anlaşılmış oldu. Peki ya uygulama içerisinde dışarıdan bir takım kitaplıklar eklenmek istenirse nasıl
+derlenmelidir? Bu aşamada örnek basit uygulamamız üzerinde bir iki ufak değişiklik yapalım;
+  </para><para>
+<screen>#include &lt;ncurses.h>
+int main()
+{
+  initscr();
+  getch();
+  endwin();
+  printf("bitti\n");
+}
+</screen>
+  </para><para>
+GNU C kütüphanesinde <userinput>getch()</userinput> işlevi yoktur. Ancak ncurses kütüphanesi kullanılması durumunda bu komut mevcuttur. Dikkat edilecek olursa <filename>stdio.h</filename> uygulamaya eklenmedi. Ön bilgi olarak, <filename>ncurses.h</filename> kullanılması durumunda <filename>stdio.h</filename> kullanılmasına gerek yoktur. Bu uygulamayı aynı şekilde aşağıdaki ilk öğrendiğimiz standart derleme yöntemi ile derleyelim.
+  </para><para>
+<screen># <userinput>gcc ilk.c -o ilk</userinput>
+/tmp/cc4k34cd.o(.text+0x11): `main' işlevinde:
+: `initscr'ye tanımsız başvuru
+/tmp/cc4k34cd.o(.text+0x1a): main' işlevinde:
+: `stdscr'ye tanımsız başvuru
+/tmp/cc4k34cd.o(.text+0x1f): main' işlevinde:
+: `wgetch'ye tanımsız başvuru
+/tmp/cc4k34cd.o(.text+0x27): main' işlevinde:
+: `endwin'ye tanımsız başvuru
+collect2: ld çıkış durumu 1 ile döndü
+</screen>
+  </para><para>
+<userinput>gcc</userinput> bize bir çok tanımlanmamış nesne olduğunu bildiriyor. Aslında bunlar yazdığımız kodla ilgili hatalar değil, ilintileyici (<userinput>ld</userinput>) bazı kütüphaneleri bulamamış. Bu işlevlerin <userinput>ncurses</userinput> kütüphanesinde bulunduğunu biliyoruz. Bizim yapmamız gereken <userinput>ncurses</userinput> kütüphanesini <userinput>gcc</userinput>'ye tanıtmak, yani ilgili seçeneği (<option>-l</option>) komut satırına eklemek olacaktır.
+  </para><para>
+<screen># <userinput>gcc ilk.c -o ilk -lncurses</userinput></screen>
+  </para><para>
+Bu komuttan sonra, uygulama hata vermeden derleme işlemini gerçekleştirecektir. Önemli hatırlatma: uygulamaya eklenecek olan kütüphaneler eğer sistemde standart olan yerlerde ise bu kullanım yeterlidir. Ama bu standart yerler nerelerdir? Bu tanım dağıtımlara göre farklılıklar gösterebilir ancak tüm kütüphanelere ait başlık dosyaları genel olarak <filename>/usr/include</filename> içindedir. Eğer bu başlık dosyaları farklı bir yerde ise, bulundukları yerin belirtilmesi için farklı bir seçenek (<option>-I</option>) kullanılmalıdır:
+  </para><para>
+<screen># <userinput>gcc ilk.c -o ilk -I/usr/local/include -lncurses</userinput></screen>
+  </para><para>
+Bu satır da aynı şekilde uygulamamızı sorunsuz olarak derleyecektir. Burada uygulamamız içine eklenen başlık dosyalarını araması için standart dizin dışında <filename>/usr/local/include</filename> dizininide eklemiş olduk. Bu aşamadan itibaren <userinput>ncurses</userinput> kütüphanesini uygulamamız içerisine ekleyebiliyoruz ve istediğimiz <userinput>ncurses</userinput> komutlarını kullanabiliriz.
+Bunun yanında <userinput>mysql</userinput> kütüphanesini de uygulamaya katmak istersek uygulamamızı aşağıdaki şekle sokabiliriz:
+  </para><para>
+<screen>#include &lt;ncurses.h>
+#include &lt;mysql.h>
+int main()
+{
+  initscr();
+  getch();
+  endwin();
+  printf("bitti\n");
+}
+</screen>
+  </para><para>
+En son derleme satırımız ile derleyelim. Aynı zamanda <option>-lmysql</option> ile mysql kütüphanesini kullanacağımızı belirtelim:
+  </para><para>
+<screen>
+# <userinput>gcc ilk.c -o ilk -I/usr/local/include -lncurses -lmysql</userinput>
+ilk.c:2:19: mysql.h: Böyle bir dosya ya da dizin yok
+</screen>
+  </para><para>
+Neden <filename>mysql.h</filename> dosyasını bulamadı? Halbuki <option>-I/usr/local/include</option> yazdık. Sistemde ufak bir arama yapalım bakalım doğru mu yazdık?
+  </para><para>
+<screen># <userinput>locate mysql.h</userinput>
+/usr/share/apps/quanta/doc/php/ref.mysql.html
+/usr/include/mysql/mysql.h
+</screen>
+  </para><para>
+İşte aradığımız satır. <filename>mysql.h</filename> dosyası <filename>/usr/include/mysql</filename> dizini içerisinde bulunmaktaymış, öyleyse derleme seçeneklerinde bir değişiklik yapalım:
+  </para><para>
+<screen># <userinput>gcc ilk.c -o ilk -I/usr/local/include -I/usr/include/mysql -lncurses -lmysql</userinput>
+</screen>
+  </para><para>
+Ve sonuç başarılı olacaktır. Bu şekilde istendiği kadar kütüphaneyi uygulamamız içerisine ekleyebiliriz. Eğer aranan kütüphanenin nesne dosyaları farklı bir dizin içerisinde ise <option>-L</option> seçeneği ile bu kütüphanenin yolunu tanımlamalıyız. Örnek olarak;
+  </para><para>
+<screen>
+# <userinput>gcc ilk.c -o ilk -I/usr/local/include -I/usr/include/mysql -L/usr/local/lib</userinput>
+¬ <userinput>-lncurses -lmysql</userinput>
+</screen>
+  </para><para>
+Aynı şekilde matematik kütüphanesini uygulamamızda kullanacaksak <option>-lm</option> eklemeliyiz. Şifreleme algoritması kullanacaksak <option>-lcrypt</option>, postgresql için <option>-lpq</option>, POSIX evreleri kullanımı için <option>-lpthread</option>, glib kütüphanesini kullanmak için <option>-lglib</option>, vga kütüphanesini kullanmak için <option>-lvga</option> seçeneklerini örnek
+olarak verebiliriz. Bu kullanım örnekleri sisteminize kurduğunuz kütüphanelerin miktarına göre değişebilir.
+  </para><para>
+Şimdi de <userinput>gcc</userinput> ile kullanabileceğimiz diğer seçeneklere gelelim. <option>-m</option> seçeneği işlemci seçimli derleme işlemini gerçekleştirmek için kullanılır.
+386 komut seti için <option>-m386</option>, 486 komut seti için <option>-m486</option>, pentium komut seti için <option>-mpentium</option> parametresi verilmelidir. Örnek olarak;
+  </para><para>
+<screen>
+# <userinput>gcc ilk.c -o ilk -I/usr/local/include -I/usr/include/mysql -lncurses -lmysql</userinput>
+¬ <userinput>-mpentium</userinput>
+</screen>
+  </para><para>
+komutu sonrası uygulama pentium işlemci için derlenmiş olacaktır. 486 seçimli derleme işleminden sonra özellikle büyük uygulamalarda kodda bir miktar büyüme olabilir, ancak bu hız ile ters orantılı olarak artmaktadır.
+  </para><para>
+Diğer önemli bir kullanım şekli uygulamanın kullandığı kütüphaneleri doğrudan uygulama içerisine eklemektir (<option>-static</option> seçeneği). Bu şekilde uygulamanın çalıştırılabilir dosyası içerisine kütüphaneler de eklenecektir. Bu işlemi örnek uygulamamız içerisinde deneyelim;
+  </para><para>
+<screen>
+# <userinput>gcc ilk.c -o ilk -I/usr/local/include -I/usr/include/mysql -lncurses -lmysql</userinput>
+¬ <userinput>-mpentium -static</userinput>
+</screen>
+  </para><para>
+Her iki farklı derleme şeklinden sonra uygulamanın büyüklüğüne dikkat ediniz, büyüklüğünde epey bir fark olduğu görülecektir.
+  </para><para>
+Uygulama içerisinde verilen hata iletileri haricinde bir takım uyarı iletileri de bulunmaktadır. Örneğin, bir değişkenin tanımlanmış olmasına rağmen kullanılmaması; uygulama içerisinde bir değişken tanımlayalım. Derleme seçeneklerine de <option>-Wall</option> seçeneğini ekleyelim ve derleyelim.
+  </para><para>
+<screen>
+# <userinput>gcc ilk.c -o ilk -I/usr/local/include -I/usr/include/mysql -lcurses -Wall</userinput>
+ilk.c: `main' işlevinde:
+ilk.c:5: uyarı: değişken `a' kullanılmamış
+ilk.c:10: uyarı: denetim void olmayan işlevin sonunu aşıyor
+</screen>
+    </para><para>
+Böylece karşımıza uyarılar çıkmaya başlayacaktır. Uygulama içerisinde eniyileme yapılmasına önem verilmesi durumunda bu gibi gereksiz değişkenler temizlenmelidir. <option>-w</option> seçeneği ile tüm uyarıların ekrana çıkmasına engel olunur.
+    </para><para>
+<userinput>gcc</userinput> aynı zamanda kendi içerisinde yazılmış olan kodlar üzerinde de eniyileme yapmaktadır. Bu amaçla <option>-O</option> seçeneği kullanılmaktadır. Örnek uygulamamızı aşağıdaki şekilde derleyelim:
+  </para><para>
+<screen>
+# <userinput>gcc ilk.c -o ilk -I/usr/include -I/usr/include/mysql -lcurses -O1</userinput>
+</screen>
+  </para><para>
+Bu seçenek <option>-O0</option>, <option>-O1</option>, <option>-O2</option>, <option>-O3</option>, <option>-Os</option> değerlerini alabilir. <option>-O0</option> hiç eniyileme yaptırmazken, <option>-O3</option> en yüksek eniyileme ile uygulama kodunu düzenler. <option>-Os</option> ise <option>-O2</option> eniyilemelerine ek olarak kod boyunu kısaltacak eniyilemeleri yapar.
+  </para>
+</sect1>
+<sect1 id="gcc-baslangic-libs"><title>Kütüphaneler ve GCC</title>
+  <para>
+Yazılım kütüphaneleri, daha sonra yeni geliştirilecek yazılımlara dahil edilmek üzere saklanan derlenmiş hazır kod ve veri dosyalarıdır. Kütüphane dosyaları, modüler yazılım geliştirmeye olanak sağlarlar
+  </para>
+  <sect2><title>Statik Kütüphaneler</title>
+    <para>
+Statik kütüphaneler, yeniden derlenmeye ihtiyaç duymaksızın yazılıma derleme aşamasında yani çalıştırılmadan önce eklenir. <filename>lib</filename> dizinlerindeki “<filename>.a</filename>” uzantılı dosyalar statik kütüphanelerdir. Derleme zamanını azaltmak için yakın geçmişe kadar statik kütüphaneler kullanılıyordu. Ancak günümüzün hızlı bilgisayarları için derleme zamanı sorun olmaktan çıktı. Bu nedenle statik kütüphaneler artık tercih edilmemektedir. Ancak yine de kütüphane kodlarını açmak istemeyenler için kullanışlıdır.
+    </para><para>
+Statik kütüphane oluşturmak için <command>ar</command>(1) komutu kullanılır.
+    </para><para>
+<screen># <userinput>ar rc libtest.a test.o util.o</userinput></screen>
+    </para><para>
+Bu komut <filename>libtest.a</filename> kütüphanesini oluşturur, <filename>test.o</filename> ve <filename>util.o</filename> nesne dosyalarını bu kütüphaneye ekler. <option>c</option> seçeneği ile eğer kütüphane yoksa oluşturulması belirtilmiş olunur. Eğer varsa nesne dosylarını bu kütüphaneye ekler. <option>r</option> seçeneği ile eski nesne dosyalarının yenileri ile değiştirilmesi talep edilir.
+    </para><para>
+Yeni oluşturulan veya değiştirilen bir kütüphane dosyasını yeniden indekslemek gerekir. Bu işlem derleme sırasında derleyicinin sembolleri denetlemesini hızlandırmak içindir. İndeks oluşturmak için <command>ranlib</command>(1) kullanılır.
+    </para><para>
+<screen># <userinput>ranlib libtest.a</userinput></screen>
+    </para><para>
+Derlenecek bir yazılıma daha önce oluşturduğumuz bir kütüphaneyi dahil etmek için <userinput>gcc</userinput>‘ye <option>–l</option> seçeneği ile kütüphane ismi parametre olarak verilmelidir. Bu işlem için tercih edilmese de doğrudan <userinput>ld</userinput>(1) kullanılabilir.
+    </para><para>
+<screen># <userinput>gcc prog.o –L/home/simsek/libtest –ltest</userinput></screen>
+    </para><para>
+<option>-l</option> ile kütüphane ismini verirken dosya isminin başındaki <filename>lib</filename>'in kaldırıldığına dikkat edilmeli. <option>–L</option> seçeneği ile <userinput>gcc</userinput>'ye kütüphaneleri ararken hangi dizinleri kullanacağı bildirilir.
+    </para><para>
+Aşağıda bir kütüphane oluşturma ve kullanma senaryosu mevcut:
+    </para><para>
+<screen># <userinput>cat main.c</userinput>
+
+#include &lt;stdio.h>
+
+/* işlevler external bildirilmeli */
+extern void test();
+extern void util();
+
+int main() {
+  printf("main içinde\n");
+  /* Kütüphane içinden işlev çağıralım */
+  test();
+  util();
+  return 0;
+}
+
+# <userinput>cat test.c</userinput>
+
+int test() {
+  printf("Test içerisinde\n");
+  return 0;
+}
+
+# <userinput>cat util.c</userinput>
+
+int util() {
+  printf("Util içerisinde\n");
+  return 0;
+}
+
+# <userinput>gcc -c test.c</userinput>
+# <userinput>gcc –c util.c</userinput>
+# <userinput>ar rc libtest.a test.o util.o</userinput>
+# <userinput>ranlib libtest.a</userinput>
+# <userinput>gcc -c main.c</userinput>
+# <userinput>gcc main.o -L /home/simsek -ltest -o testprog</userinput>
+</screen>
+    </para><para>
+Son satırda kütüphane işlevlerini kullanan yazılım derlenip <userinput>testprog</userinput> isimli çalışabilir dosya derleyici tarafından oluşturuldu. <userinput>testprog</userinput> çalıştırıldığında aşağıdaki çıktıyı verecektir:
+    </para><para>
+<screen># <userinput>./testprog</userinput>
+main içinde
+Test içerisinde
+Util içerisinde
+</screen>
+    </para>
+  </sect2>
+  <sect2><title>Paylaşımlı (Shared) Kütüphaneler</title>
+    <para>
+Paylaşımlı kütüphaneler, yazılım çalıştırıldığında sürece dahil edilirler. Yazılımın içerisine gerçekten kod eklenmez. Paylaşımlı kütüphaneden bir işlev cağrılan yerlere, kütüphaneye bir referans verilir. Kütüphaneyi kullanan bütün yazılımlar bu şekilde aynı işlev kütüphanesini ortak kullanırlar.
+    </para><para>
+Paylaşımlı her kütüphane “so ismi” (soname) denilen bir özel isme sahiptir. “so ismi” kütüphanenin gerçek dosya ismine sembolik bağdır. Ayrıca derleyicinin bir kütüphaneyi talep ettiğinde kullandığı bir de ilintileyici ismi vardır. Bu, sürüm numarası olmayan bir so ismi olarak düşünülebilir.
+    </para><para>
+<screen>simsek@mail:/usr/lib$ <userinput>ls libz*</userinput>
+libz.a libz.so.1@ libz.so.1.2.1.1*
+</screen>
+    </para><para>
+Listede görülen <filename>libz.a</filename> statik kütüphaneye aittir. <filename>libz.so.1</filename> ise <filename>libz.so.1.2.1.1</filename> paylaşımlı kütüphanesine sembolik bağ olarak kütüphanenin so ismidir. Bu kütüphane için ilintileyici ismi <filename>libz.so</filename>'dur.
+    </para><para>
+Yazılımlar içerisinde kütüphanelerin so isimleri tutulur. Bu sayede kütüphanede bir değişiklik yapıldığında yeni kütüphane kullanıma alınmış olunur.
+    </para>
+  </sect2>
+</sect1>
+</article>

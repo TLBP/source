@@ -1,0 +1,2563 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ********************************************************************
+     $Id: ch16.xml,v 1.2 2002/12/20 22:29:48 nilgun Exp $
+******************************************************************** -->
+<part id="glibc-Sockets">
+  <title>Soketler</title><!-- IPC: InterProcess Communications -->
+  <titleabbrev>Ağ destekli, biraz daha gelişmiş bir IPC mekanizması.</titleabbrev>
+  <partintro><para>
+Bu kısımda soketleri kullanarak süreçlerarası iletişim (IPC- InterProcess Communication) için GNU oluşumlarından bahsedilmiştir.
+  </para><para>
+<indexterm scope="glibc-cp"><primary>soketler</primary></indexterm>
+<indexterm scope="glibc-cp"><primary>soketler</primary><secondary>süreçlerarası iletişim</secondary></indexterm>
+Bir <wordasword>soket</wordasword> genelleştirilmiş süreçlerarası iletişim kanalıdır. Boru (pipe) gibi soket de bir dosya tanımlayıcı olarak temsil edilir. Borulardan farklı olarak soketler birbiriyle ilişkisi olmayan süreçler arasındaki iletişimi ve hatta ağ üzerindeki farklı makineler üzerinde çalışan süreçler arası iletişimi de destekler. Soketlerin birincil kullanım alanları farklı makinelerle iletişimdir; <command>telnet</command>, <command>rlogin</command>, <command>ftp</command>, <command>talk</command> ve diğer bildik ağ yazılımları soketleri kullanır.
+  </para><para>
+Bütün işletim sistemleri soketleri desteklememektedir. GNU kütüphanesinde, işletim sisteminden bağımsız olarak <filename>sys/socket.h</filename> başlık dosyası ve beraberinde soket işlevleri daima bulunur, fakat eğer sistem soketleri desteklemiyorsa bu işlevler daima başarısız olur.
+  </para><para>
+<dicterm><english>broadcast messages</english><turkish>yayın iletileri</turkish></dicterm>
+<dicterm><english>header file</english><turkish>başlık dosyası</turkish></dicterm>
+<note><title>Eksik</title><para>Yayın iletileri veya Internet arayüzünün ayarlanması ile ilgili oluşumlar henüz belgelenmemiştir. IPv6 ile ilgili bazı yeni işlevler ve evresel (reentrant) işlevler de henüz belgelenmemiştir.</para></note>
+  </para></partintro>
+  <chapter id="glibc-Socket-Concepts">
+    <title>Soket Kavramları</title>
+    <titleabbrev>Bilmeniz gereken basit kavramlar.</titleabbrev>
+    <para>
+<indexterm scope="glibc-cp"><primary>soketler</primary><secondary>iletişim tarzı</secondary></indexterm>
+<indexterm scope="glibc-cp"><primary>iletişim tarzı</primary><secondary>soketler</secondary></indexterm>
+Bir soket oluşturduğunuzda, kullanmak istediğiniz iletişim tarzını ve bunu uygulayacak protokol türünü de belirtmeniz gerekir. Bir soketin <wordasword>iletişim tarzı</wordasword>, soket üzerinde veri gönderimi ve alımının kullanıcı-seviyesindeki anlamını tanımlar. İletişim tarzının seçimi aşağıdaki sorulara cevap olur:
+   </para><para>
+     <variablelist><varlistentry>
+     <term>Veri iletimi birimleri nelerdir?
+<indexterm scope="glibc-cp"><primary>paket</primary></indexterm>
+<indexterm scope="glibc-cp"><primary>bayt akımları</primary></indexterm>
+<indexterm scope="glibc-cp"><primary>akımlar</primary><secondary>soketler</secondary></indexterm>
+<indexterm scope="glibc-cp"><primary>soketler</primary><secondary>akımlar</secondary></indexterm>
+     </term><listitem><para>
+Bazı iletişim tarzları veriye büyük bir yapısı olmayan bir dizi bayt olarak bakar; diğerleri ise bu baytları gruplayarak birer kayıt olarak ele alır (bu bağlamda <wordasword>paket</wordasword> olarak bilinirler).
+     </para></listitem></varlistentry><varlistentry>
+     <term>Normal bir işlem sırasında veri kaybı olur mu?
+<indexterm scope="glibc-cp"><primary>soketler</primary><secondary>veri kaybı</secondary></indexterm>
+<indexterm scope="glibc-cp"><primary>veri kaybı</primary><secondary>soketler üzerinde</secondary></indexterm>
+     </term><listitem><para>
+Bazı iletişim tarzları gönderilen her verinin ulaştığını garanti eder (sistem veya ağ göçmediği takdirde); diğer tarzlar ara sıra gerçekleşen veri kaybını normal karşılayıp, bazı paketleri mükerrer veya yanlış sırada gönderebilirler.
+     </para><para>
+Güvenilmez bir iletişim tarzını kullanan bir yazılım tasarımı genellikle kayıp veya yanlış sırada gönderilen paketleri tespit edecek, gerektiğinde veriyi tekrar gönderecek tedbirler içerir.
+     </para></listitem></varlistentry><varlistentry>
+     <term>İletişim sadece tek eşle mi gerçekleştirilir?
+     </term><listitem><para>
+Bazı iletişim tarzları telefon konuşmasına benzer-- karşı soket ile bir <wordasword>bağlantı</wordasword> kurarsınız ve veri alışverişini gerçekleştirirsiniz. Diğer tarzlar ise mektuba benzer--gönderilecek her ileti için adres belirtmek gerekir.
+     </para></listitem></varlistentry></variablelist></para><para>
+<dicterm><english>namespace</english><turkish>isim alanı</turkish></dicterm>
+<dicterm><english>domain</english><turkish>etki alanı</turkish></dicterm>
+<dicterm><english>protocol</english><turkish>protokol</turkish></dicterm>
+<indexterm scope="glibc-cp"><primary>soketler</primary><secondary>isim alanları</secondary></indexterm>
+<indexterm scope="glibc-cp"><primary>soketler</primary><secondary>etki alanları</secondary></indexterm>
+<indexterm scope="glibc-cp"><primary>soket isim alanı</primary></indexterm>
+<indexterm scope="glibc-cp"><primary>soket etki alanı</primary></indexterm>
+Ayrıca, soketi isimlendirmek için bir <wordasword>isim alanı</wordasword> seçilmelidir. Soket adı ("adresi") sadece belirli bir isim alanı içerisinde anlamlıdır. Aslında, soket ismi için kullanılacak veri türü bile isim alanına bağlı olabilir. İsim alanları "Etki Alanı" (domain) olarak da adlandırılır, ancak kavram karmaşası yaratmamak için bu kullanımdan kaçınıyoruz. Her isim alanının <command>PF_</command> ile başlayan sembolik bir ismi vardır. Buna ilişkin <command>AF_</command> ile başlayan sembolik isim bu isim alanının adres biçimini gösterir.
+   </para><para>
+<indexterm scope="glibc-cp"><primary>ağ protokolü</primary></indexterm>
+<indexterm scope="glibc-cp"><primary>protokoller</primary><secondary>soketler</secondary></indexterm>
+<indexterm scope="glibc-cp"><primary>soketler</primary><secondary>protokoller</secondary></indexterm>
+<indexterm scope="glibc-cp"><primary>soket protokolü</primary></indexterm>
+<indexterm scope="glibc-cp"><primary>protokol ailesi</primary></indexterm>
+Son olarak i sağlayacak protokolün seçilmesi gerekir. <wordasword>Protokol</wordasword> veri gönderim ve alımında hangi alt seviye mekanizmanın kullanılacağını belirler. Her protokol belirli bir isim alanı ve iletişim tarzı için geçerlidir; bir isim alanı zaman zaman <wordasword>protokol ailesi</wordasword>  olarak adlandırıldığı için, isim alanının sembolik ismi <command>PF_</command>  (Protocol Family) ile başlar.
+   </para><para>
+Protokol kuralları iki yazılım, belki de iki ayrı bilgisayar arasında geçen veriye uygulanır; bu kuralların birçoğu işletim sistemi tarafından halledilir ve sizin hakkında bilgi sahibi olmanız gerekmez. Protokoller ile ilgili sizin bilmeniz gerekenler:
+   </para><para>
+     <itemizedlist><listitem>
+İki soket arasında iletişimin gerçekleşmesi için, soketler <emphasis>aynı</emphasis> protokolü kullanmalıdır.
+     </listitem><listitem>
+Her protokol belirli bir tarz ve isim alanının bir birleşimi olarak anlam kazanır ve uygun olmayan bileşimlerle kullanılamaz. Örneğin TCP protokolü sadece bayt akımı tarzında iletişim ile İnternet isim alanına uyar.
+     </listitem><listitem>
+Her tarz ve isim alanı bileşimi için bir <wordasword>öntanımlı protokol</wordasword> vardır, protokol numarasına 0 verilerek istenebilir. Normalde yapmanız gereken de budur--öntanımlı olanı kullanın.
+     </listitem></itemizedlist>
+    </para><para>
+Bu kısımdaki açıklamaların başından sonuna çeşitli yerlerde değişken/parametre boyutunu göstermek gerekmektedir. Ve işte burada sorun başlar. İlk uygulamalarda bu değişkenlerin değişken türü basitçe <command>int</command> idi. Zamanımızda bir çok makinede <command>int</command> 32 bit genişliğindedir ve <emphasis>fiilen</emphasis> 32 bitlik bir değişken standardı yaratmıştır. Bu tür değişkenlerin referansları, çekirdeğe aktarıldığı için önemlidir.
+   </para><para>
+Ardından Posixçiler, "bütün büyüklük değerleri <command>size_t</command> türündedir" sözleriyle arayüzü birleştirmiştir. 64 bitlik makinelerde <command>size_t</command> 64 bit genişliğindedir, böylece değişkenlere göstericiler ortadan kalkmıştır.
+   </para><para>
+Unix98 belirtimi <command>socklen_t</command> türü ile bir çözüm üretmiştir. Bu tür, POSIX'in <command>size_t</command> olarak değiştirdiği tüm hallerde kullanılır. Bu türün tek gereksinimi işaretsiz en az 32 bittir. Bu nedenle 32 bitlik değişkenlere aktarılacak göstericiler, 64 bitlik değerler kullanan uygulamalarla kolayca aktarılabilir.
+   </para></chapter>
+  <chapter id="glibc-Communication-Styles">
+    <title>İletişim Tarzları</title>
+    <titleabbrev>Akım iletişimi, datagramlar ve diğer tarzlar.</titleabbrev>
+    <para>
+GNU kütüphanesi her biri farklı özellikte, çeşitli türlerde soketleri destekler. Bu bölüm desteklenen soket türlerini anlatmaktadır. Burada listelenen sembolik sabitler <filename>sys/socket.h</filename> içerisinde tanımlanmıştır.
+<indexterm scope="glibc-pg"><primary>sys/socket.h</primary></indexterm>
+    </para><para id="glibc-SOCK_STREAM">
+<indexterm scope="glibc-vr"><primary>SOCK_STREAM</primary></indexterm>
+<funcsynopsis><funcprototype role="makro">
+<funcdef>int <command>SOCK_STREAM</command></funcdef>
+<paramdef></paramdef>
+</funcprototype><funcdescr><para>
+<command>SOCK_STREAM</command> tarzı bir <link linkend="glibc-Pipes-and-FIFOs"> boru</link> gibidir. Belirli bir karşı soket bağlantısıyla çalışır ve veriyi bir bayt akımı halinde güvenle iletir.
+      </para><para>
+Bu tarz ayrıntılı olarak <xref linkend="glibc-Connections"/> konu başlığı altında açıklanmıştır.
+</para></funcdescr></funcsynopsis></para><para id="glibc-SOCK_DGRAM">
+<indexterm scope="glibc-vr"><primary>SOCK_DGRAM</primary></indexterm>
+<funcsynopsis><funcprototype role="makro">
+<funcdef>int <command>SOCK_DGRAM</command></funcdef>
+<paramdef></paramdef>
+</funcprototype><funcdescr><para>
+<command>SOCK_DGRAM</command> tarzı, tek tek adreslenen paketlerin güvensiz bir şekilde iletiminde kullanılır. Bu, <command>SOCK_STREAM</command> tarzının tam karşıtıdır.
+   </para><para>
+Sokete bu türde her veri yazımında, veri bir paket haline gelir. <command>SOCK_DGRAM</command> soketlerinin bağlantıları olmadığı için her paketle birlikte alıcı adresinin belirtilmesi gerekir.
+   </para><para>
+Sistemin sizin veri iletimi ile ilgili isteklerinizde verdiği tek garanti gönderilen her paketin teslimi için elinden gelenin en iyisini deneyeceğidir. Dördüncü ve beşinci pakette başarısızlığa uğradıktan sonra altıncı pakette başarıya ulaşabilir, yedinci paket altıncıdan önce ulaşabilir ve altıncı paketten sonra ikinci defa ulaştırılabilir.
+   </para><para>
+<command>SOCK_DGRAM</command>'ın tipik kullanım şekli, makul bir süre içerisinde karşı taraftan yanıt gelmemesi halinde paketin tekrar gönderilmesinin kabul edilebildiği durumlardır.
+   </para><para>
+<xref linkend="glibc-Datagrams"/>, konu başlığı altında datagram soketlerinin kullanımı hakkında ayrıntılı bilgi bulunmaktadır.
+</para></funcdescr></funcsynopsis></para><para id="glibc-SOCK_RAW">
+<indexterm scope="glibc-vr"><primary>SOCK_RAW</primary></indexterm>
+<funcsynopsis><funcprototype role="makro">
+<funcdef>int <command>SOCK_RAW</command></funcdef>
+<paramdef></paramdef>
+</funcprototype><funcdescr><para>
+Bu arz alt-seviye ağ protokolleri ve arayüzlerine erişimi desteklemektedir. Sıradan kullanıcı yazılımları genellikle bu tarzı kullanma ihtiyacı duymazlar.
+      </para></funcdescr></funcsynopsis>
+    </para>
+  </chapter>
+
+  <chapter id="glibc-Socket-Addresses">
+    <title>Soket Adresleri</title>
+    <titleabbrev>Soket isimleri ("adresleri") nasıl çalışır.</titleabbrev>
+    <para>
+<indexterm scope="glibc-cp"><primary>soket adresi</primary></indexterm>
+<indexterm scope="glibc-cp"><primary>soket ismi</primary></indexterm>
+<indexterm scope="glibc-cp"><primary>soketler</primary><secondary>adresler</secondary></indexterm>
+<indexterm scope="glibc-cp"><primary>soketler</primary><secondary>adresler</secondary><tertiary>bağlanması</tertiary></indexterm>
+Soket ismi genelde <wordasword>adres</wordasword> olarak kullanılır. Soket adresleriyle ilgili işlev ve sembollerin isimlendirmesinde tutarsızlıklar vardır, bazen "isim" terimi bazen "adres" terimi kullanılmıştır. Soket konusu içinde bu terimleri eşanlamlı kabul edebilirsiniz.
+   </para><para>
+<command>socket</command> işlevi ile yeni oluşturulan bir soketin adresi yoktur. Diğer süreçlerin onunla iletişim kurması için adres vermeniz gereklidir. Biz buna <wordasword>adresin sokete bağlanması</wordasword> diyoruz ve bunu yapmak için <command>bind</command> işlevini kullanıyoruz.
+   </para><para>
+Diğer süreçlerin soketi bulup iletişime başlayabilmesi için soket adresine ihtiyaç duyulacaktır. Siz diğer soketleri kullanacaksanız onlara bir adres belirtebilirsiniz, fakat bu genelde anlamsızdır; soketten ilk veri gönderiminde veya onunla bir bağlantı başlattığınızda, siz belirtmediyseniz sistem otomatik olarak bir adres atayacaktır.
+   </para><para>
+Bazen istemcinin adres belirtmesi gerekir çünkü sunucu adrese göre ayrım yapmaktadır; örneğin, <command>rsh</command> ve <command>rlogin</command> protokolleri istemcinin soket adresine bakar ve sadece geçiş parolasının <link linkend="glibc-Ports"><literal>IPPORT_RESERVED</literal></link> değerinden daha küçük olup olmadığını kontrol eder.
+   </para><para>
+Soket adresleriyle ilgili ayrıntılar kullandığınız isim alanına bağlı olarak değişir. Bu konu hakkında daha ayrıntılı bilgi <xref linkend="glibc-Local-Namespace"/> veya <xref linkend="glibc-Internet-Namespace"/> konu başlıkları altında bulunabilir.
+   </para><para>
+Soket adresini belirtmek ve sınamak için <command>bind</command> and <command>getsockname</command> işlevleri isim alanına bakılmaksızın kullanılabilir. Bu işlevler adresi kabul etmek için sahte bir veri türü olan <command>struct sockaddr *</command> türünü  kullanırlar. Pratikte adres sizin kullandığınız biçime uygun başka bir veri türündeki yapıda bulunur, fakat <command>bind</command> işlevine aktarırken adresi <command>struct sockaddr *</command> biçimine çevirmelisiniz.
+   </para>
+    <sect1 id="glibc-Address-Formats">
+      <title>Adres Biçimleri</title>
+      <titleabbrev><literal>struct <command>sockaddr</command></literal> hakkında.</titleabbrev>
+      <para>
+<command>bind</command> ve <command>getsockname</command> işlevleri soket adresine gösterici olarak genel bir veri türü olan <command>struct sockaddr *</command> türünü kullanırlar. Bu veri türünün bir adresi yorumlamak veya oluşturmak için kullanılması verimli değildir; bunun için soketin isim alanı ile uyumlu bir veri türünün kullanılması gerekir.
+    </para><para>
+Bu nedenle genel kullanımda, uygun isim alanına özgü bir adres oluşturulur, ardından da <command>bind</command> veya <command>getsockname</command> çağrılarak <command>struct sockaddr *</command> türünde bir göstericiye dönüştürülür.
+    </para><para>
+<command>struct sockaddr</command> veri türünden alabileceğiniz bir bilgi parçası da <wordasword>adres biçim tasarımcısı</wordasword>dır. Bu, adresin tamamını anlamak için hangi veri türünü kullanacağınızı belirtir.
+    </para><para>
+<indexterm scope="glibc-pg"><primary>sys/socket.h</primary></indexterm>
+Bu bölümdeki semboller <filename>sys/socket.h</filename> başlık dosyasında tanımlanmıştır.
+    </para><para id="glibc-sockaddr">
+<indexterm scope="glibc-tp"><primary sortas="sockaddr">struct sockaddr</primary></indexterm>
+<funcsynopsis><funcprototype role="veri türü">
+<funcdef>struct <command>sockaddr</command></funcdef>
+<paramdef></paramdef>
+</funcprototype><funcdescr><para>
+<command>struct sockaddr</command> türü aşağıdaki üyelere sahiptir:
+    </para><para>
+      <glosslist><glossentry><glossterm>
+        <literal>short int <command>sa_family</command></literal>
+      </glossterm><glossdef><para>
+Bu, adresin adres biçim kodudur. Takip eden verinin biçimini tanımlar.
+      </para></glossdef></glossentry><glossentry><glossterm>
+         <literal>char <command>sa_data</command>[14]</literal>
+      </glossterm><glossdef><para>
+Biçime bağımlı olan asıl soket adresi verisidir. Uzunluğu da biçime bağlıdır ve 14 den de büyük olabilir. <command>sa_data</command>'nın 14 olan uzunluğu temelde isteğe bağlıdır.
+      </para></glossdef></glossentry></glosslist>
+    </para></funcdescr></funcsynopsis></para><para>
+Her adres biçimi <command>AF_</command> ile başlayan bir sembolik isme sahiptir. Her biri ilgili isim alanını tasarlayan bir <command>PF_</command>sembolü ile eşleşir. Aşağıda adres biçim isimlerinin listesi görülmektedir:
+    </para><para>
+      <glosslist><glossentry><glossterm id="glibc-AF_LOCAL">
+<command>AF_LOCAL</command>
+<indexterm scope="glibc-vr"><primary>AF_LOCAL</primary></indexterm>
+      </glossterm><glossdef><para>
+Bu, yerel isim alanıyla giden adres biçimini tasarlar (PF_LOCAL isim alanının adıdır).  Bu adres biçimi hakkında <xref linkend="glibc-Local-Namespace-Details"/> bölümünde daha ayrıntılı  bilgi bulabilirsiniz.
+      </para></glossdef></glossentry><glossentry><glossterm id="glibc-AF_UNIX">
+<command>AF_UNIX</command>
+<indexterm scope="glibc-vr"><primary>AF_UNIX</primary></indexterm>
+      </glossterm><glossdef><para>
+Bu <command>AF_LOCAL</command> ile eşanlamlıdır. Gerçi <command>AF_LOCAL</command> POSIX.1g tarafından önerilmişse de, <command>AF_UNIX</command> sistemler arasında daha taşınabilirdir. <command>AF_UNIX</command>, BSD kaynaklı geleneksel ismidir, hatta birçok POSIX sistemleri de onu desteklemektedir. Bu aynı zamanda Unix98 belirtimi için de seçilen isimdir. (Aynı şey <command>PF_UNIX</command> ve dolayısıyla <command>PF_LOCAL</command> için de geçerlidir.)
+      </para></glossdef></glossentry><glossentry><glossterm id="glibc-AF_FILE">
+<command>AF_FILE</command>
+<indexterm scope="glibc-vr"><primary>AF_FILE</primary></indexterm>
+      </glossterm><glossdef><para>
+Bu da uyumluluk için konulmuştur ve <command>AF_LOCAL</command> ile aynıdır
+(Keza <command>PF_FILE</command> da <command>PF_LOCAL</command> ile aynıdır).
+      </para></glossdef></glossentry><glossentry><glossterm id="glibc-AF_INET">
+<command>AF_INET</command>
+<indexterm scope="glibc-vr"><primary>AF_INET</primary></indexterm>
+      </glossterm><glossdef><para>
+Bu İnternet isim alanıyla giden adres biçimini tasarlar (<command>PF_INET</command> isim alanının adıdır). Bkz. <xref linkend="glibc-Internet-Address-Formats"/>.
+     </para></glossdef></glossentry><glossentry><glossterm id="glibc-AF_INET6">
+<command>AF_INET6</command>
+<indexterm scope="glibc-vr"><primary>AF_INET6</primary></indexterm>
+      </glossterm><glossdef><para>
+Bu, <command>AF_INET</command> ile benzerdir, fakat IPv6 protokolüyle ilgilidir (<command>PF_INET6</command> IPv6'ya ilişkin isim alanının adıdır).
+     </para></glossdef></glossentry><glossentry><glossterm id="glibc-AF_UNSPEC">
+<command>AF_UNSPEC</command>
+<indexterm scope="glibc-vr"><primary>AF_UNSPEC</primary></indexterm>
+      </glossterm><glossdef><para>
+Bu belirli bir adres biçimi tasarlamaz. Kullanımı çok nadirdir, örneğin "bağlı" bir datagram soketinin varsayılan hedef adresini silmek için kullanılır. Bkz. <xref linkend="glibc-Sending-Datagrams"/>.
+       </para><para>
+İlişkin isim alanı tasarlayıcı sembolü <command>PF_UNSPEC</command> tamamlayıcı olarak bulunmaktadır, fakat bir yazılım içinde kullanmanın bir anlamı yoktur.
+      </para></glossdef></glossentry></glosslist>
+    </para><para>
+<filename>sys/socket.h</filename> birçok farklı ağ türü için <command>AF_</command> ile başlayan sembolleri tanımlar, birçoğu veya tamamı aslında gerçekleştirilmemiştir. Bunlar düzgün çalışmaya başladığı zaman ve nasıl kullanıldığı hakkında bilgi edindiğimizde bunları da belgelendireceğiz.
+    </para></sect1>
+    <sect1 id="glibc-Setting-Address">
+      <title>Adreslerin Atanması</title>
+      <titleabbrev>Bir adresin bir sokete bağlanması.</titleabbrev>
+      <para>
+<indexterm scope="glibc-pg"><primary>sys/socket.h</primary></indexterm>
+Bir sokete adres atamak için <command>bind</command> işlevi kullanılır.   <command>bind</command> işlevinin prototipi <filename>sys/socket.h</filename> başlık dosyasındadır. Örnek kullanımlar için <xref linkend="glibc-Local-Socket-Example"/> veya <xref linkend="glibc-Inet-Example"/>'ne bakınız.
+    </para><para id="glibc-bind">
+<indexterm scope="glibc-fn"><primary>bind</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>int <command>bind</command></funcdef>
+<paramdef>(int              <varname>soket</varname>,
+ struct sockaddr *<varname>adres</varname>,
+ socklen_t        <varname>uzunluk</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+<command>bind</command> işlevi <varname>soket</varname> soketine bir adres atar. <varname>adres</varname> ve <varname>uzunluk</varname> argümanları adresi belirtir; adresin ayrıntılı biçimi isim alanına bağlıdır. Adresin ilk kısmı daima, isim alanını belirten ve adresin o isim alanı biçiminde olduğunu söyleyen, biçim tasarlayıcısıdır.
+    </para><para>
+Hata olduğunda <command>-1</command> olmadığında <command>0</command> değeri döndürür. Aşağıdaki <command>errno</command> hata durumları bu işlev için tanımlanmıştır:
+    </para><para>
+      <variablelist><varlistentry><term><literal>EBADF</literal></term>
+      <listitem><para>
+<varname>soket</varname> argümanı geçerli bir dosya tanımlayıcı değil.
+      </para></listitem>
+      </varlistentry><varlistentry><term><literal>ENOTSOCK</literal></term>
+      <listitem><para>
+<varname>socket</varname> tanımlayıcı bir soket değil.
+      </para></listitem>
+      </varlistentry><varlistentry><term><literal>EADDRNOTAVAIL</literal></term>
+      <listitem><para>
+Belirtilen adres bu makinede bulunmamaktadır.
+      </para></listitem>
+      </varlistentry><varlistentry><term><literal>EADDRINUSE</literal></term>
+      <listitem><para>
+Başka bir soket zaten belirtilen adresi kullanmaktadır.
+      </para></listitem>
+      </varlistentry><varlistentry><term><literal>EINVAL</literal></term>
+      <listitem><para>
+<varname>soket</varname> soketi zaten bir adrese sahiptir.
+      </para></listitem>
+      </varlistentry><varlistentry><term><literal>EACCES</literal></term>
+      <listitem><para>
+İstenilen adrese erişim için izniniz yok. (İnternet etki alanı içinde, sadece süper kullanıcı 0 ile <command>IPPORT_RESERVED - 1</command> aralığında port numarası tanımlayabilir; bkz.<xref linkend="glibc-Ports"/>.
+      </para></listitem></varlistentry></variablelist>
+    </para><para>
+Soketin özel isim alanına bağlı olarak ek koşullar mümkün olabilir.
+    </para></funcdescr></funcsynopsis></para></sect1>
+    <sect1 id="glibc-Reading-Address">
+    <title>Adresin Okunması</title>
+    <titleabbrev>Bir soket adresinin okunması.</titleabbrev>
+    <para>
+<indexterm scope="glibc-pg"><primary>sys/socket.h</primary></indexterm>
+<command>getsockname</command> işlevi bir İnternet soketinin adresini almak için kullanılır. Bu işlevin prototipi <filename>sys/socket.h</filename> başlık dosyasındadır.
+    </para><para id="glibc-getsockname">
+<indexterm scope="glibc-fn"><primary>getsockname</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>int <command>getsockname</command></funcdef>
+<paramdef>(int              <varname>soket</varname>,
+ struct sockaddr *<varname>adres</varname>,
+ socklen_t       *<varname>uzunluk-gstr</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+<command>getsockname</command> işlevi <varname>soket</varname> soketinin <varname>adres</varname> ve <varname>uzunluk-gstr</varname> argümanlarıyla belirlenen adresi ile ilgili bilgiyi döndürür. <varname>uzunluk-gstr</varname> argümanının bir gösterici olması nedeniyle <varname>adres</varname> boyutu kadar yer ayrılacak şekilde ilklendirilmelidir, böylece değer döndürüldüğünde adres verisinin gerçek boyutunu içerecektir.
+      </para><para>
+Adres verisinin biçimi soket isim alanına bağlıdır. Belirtilen bir isim alanının bilgi uzunluğu genelde sabittir, böylece normalde ne kadar alan gerektiğini tam olarak bilirsiniz. Genel uygulama soketin isim alanı için uygun bir veri türü kullanarak değer için yer ayırmak, ardından adresi <command>getsockname</command>'e aktarmak için <command>struct sockaddr *</command> türüne dönüştürmektir.
+      </para><para>
+Hata olduğunda <command>-1</command> olmadığında <command>0</command> değeri döndürür. Aşağıdaki <command>errno</command> hata durumları bu işlev için tanımlanmıştır:
+      </para><para>
+        <variablelist><varlistentry><term><literal>EBADF</literal></term>
+        <listitem><para>
+<varname>soket</varname> argümanı geçerli bir dosya tanımlayıcı değil.
+        </para></listitem>
+        </varlistentry><varlistentry><term><literal>ENOTSOCK</literal></term>
+        <listitem><para>
+<varname>socket</varname> tanımlayıcı bir soket değil.
+        </para></listitem>
+        </varlistentry><varlistentry><term><literal>ENOBUFS</literal></term>
+        <listitem><para>
+Bu işlem için yeterli dahili tampon yok.
+        </para></listitem></varlistentry></variablelist>
+      </para><para>
+Dosya isim alanındaki bir soketin adresini okuyamazsınız. Bu sistemin geri kalanı için de geçerlidir, bir dosya tanımlayıcıdan dosyanın ismini bulmak mümkün değildir.
+      </para></funcdescr></funcsynopsis>
+    </para></sect1>
+  </chapter>
+  <chapter id="glibc-Interface-Naming">
+    <title>Arayüz İsimlendirmesi</title>
+    <titleabbrev>Bazı ağ arayüzlerinin tanımlanması.</titleabbrev>
+    <para>
+Her ağ arayüzünün bir ismi vardır. Bu isim genellikle arayüz türüyle ilişkili birkaç harften oluşur, buna ek olarak eğer aynı türde birden fazla arayüz varsa sonuna bir numara eklenir. Örneğin <command>lo</command> (geridönüş arayüzü - loopback interface) ve <command>eth0</command> (birinci Ethernet arabirimi).
+   </para><para>
+Her ne kadar bunun gibi isimler insanlar için uygun olsa da bir yazılımın arayüz bilgisine her ihtiyaç olduğunda bu kullanım hantal kalabilir. Bu gibi durumlarda arayüze küçük pozitif tamsayı bir değer olan <wordasword>indis</wordasword> ile erişilir.
+   </para><para>
+Sözü edilen işlevler, sabitler ve veri türleri <filename>net/if.h</filename> başlık dosyasında bildirilmiştir.
+    </para><para id="glibc-IFNAMSIZ">
+<indexterm scope="glibc-vr"><primary>IFNAMSIZ</primary></indexterm>
+<funcsynopsis><funcprototype role="sabit">
+<funcdef>size_t <command>IFNAMSIZ</command></funcdef>
+<paramdef></paramdef>
+</funcprototype><funcdescr><para>
+Bu sabit, arayüz ismini ve sonlandırıcı boş karakteri tutmak için gerekli azami tampon boyutunu belirtir.
+</para></funcdescr></funcsynopsis></para><para id="glibc-if_nametoindex">
+<indexterm scope="glibc-fn"><primary>if_nametoindex</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>unsigned int <command>if_nametoindex</command></funcdef>
+<paramdef>(const char *<varname>arayüz_ismi</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+Bu işlev belirli bir isme karşılık gelen arayüz indisini verir. Belirtilen isimde bir arayüz yoksa 0 döndürür.
+</para></funcdescr></funcsynopsis></para><para id="glibc-if_indextoname">
+<indexterm scope="glibc-fn"><primary>if_indextoname</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>char *<command>if_indextoname</command></funcdef>
+<paramdef>(unsigned int <varname>arayüz_indisi</varname>,
+ char        *<varname>arayüz_ismi</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+Bu işlev bir arayüz indisini karşılık gelen arayüz ismine eşler. Döndürülen isim <varname>arayüz_ismi</varname> ile gösterilen tampona yerleştirilir (<varname>arayüz_ismi</varname> en az <command>IFNAMSIZ</command> bayt uzunluğunda olmalıdır). İndis geçersizse işlevin dönüş değeri bir boş göstericidir, aksi takdirde <varname>arayüz_ismi</varname> 'dir.
+</para></funcdescr></funcsynopsis></para><para id="glibc-struct-if_nameindex">
+<indexterm scope="glibc-tp"><primary sortas="if_nameindex">struct if_nameindex</primary></indexterm>
+<funcsynopsis><funcprototype role="veri türü">
+<funcdef>struct <command>if_nameindex</command></funcdef>
+<paramdef></paramdef>
+</funcprototype><funcdescr><para>
+Bu veri türü bir arayüz ile ilgili bilgiyi tutmak için kullanılır. Aşağıdaki üyelere sahiptir:
+      </para><para>
+        <glosslist><glossentry><glossterm>
+          <literal>unsigned int <command>if_index</command></literal>
+        </glossterm><glossdef><para>Arayüz indisidir.
+        </para></glossdef></glossentry><glossentry><glossterm>
+          <literal>char *<command>if_name</command></literal>
+        </glossterm><glossdef><para>Boş karakter sonlandırmalı arayüz ismidir.
+        </para></glossdef></glossentry></glosslist>
+</para></funcdescr></funcsynopsis></para><para id="glibc-if_nameindex">
+<indexterm scope="glibc-fn"><primary>if_nameindex</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>struct if_nameindex *<command>if_nameindex</command></funcdef>
+<paramdef>(void)</paramdef>
+</funcprototype><funcdescr><para>
+Bu işlev her biri mevcut arayüzlerin <command>if_nameindex</command> yapılarından oluşan bir dizi döndürür. Listenin sonu 0 arayüzü ve bir boş isim göstericisi içeren bir yapı ile belirtilmiştir.
+      </para><para>
+Döndürülen yapı kullanımdan sonra <command>if_freenameindex</command> ile serbest bırakılmalıdır.
+</para></funcdescr></funcsynopsis></para><para id="glibc-if_freenameindex">
+<indexterm scope="glibc-fn"><primary>if_freenameindex</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>void <command>if_freenameindex</command></funcdef>
+<paramdef>(struct if_nameindex *<varname>gstr</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+Bu işlev evvelce yapılmış bir <command>if_nameindex</command> çağrısından dönen yapıyı serbest bırakır.
+    </para></funcdescr></funcsynopsis></para>
+  </chapter>
+  <chapter id="glibc-Local-Namespace">
+    <title>Yerel İsim Alanı</title>
+    <titleabbrev>Yerel isim alanı ile ilgili ayrıntılar.</titleabbrev>
+    <para>
+<indexterm scope="glibc-cp"><primary>soketler</primary><secondary>yerel isim alanı</secondary></indexterm>
+Bu bölüm sembolik ismi (soket oluşturulurken ihtiyaç duyulur) <command>PF_LOCAL</command> olan yerel isim alanı ile ilgili ayrıntıları açıklar. Yerel isim alanı "Unix etki alanı soketleri" olarak da bilinir. Diğer bir ismi de dosya isim alanıdır, çünkü soket adresleri genelde dosya isimleri olarak gerçeklenmiştir.
+    </para>
+    <sect1 id="glibc-Local-Namespace-Concepts">
+      <title>Yerel İsim Alanı Kavramları</title>
+      <titleabbrev>Anlamak için gereken herşey.</titleabbrev>
+      <para>
+Yerel isim alanında soket adresleri dosya isimleridir. Soket adresi olarak istediğiniz herhangi bir dosya ismini verebilirsiniz, fakat onu içeren dizine yazma hakkı vermeniz gereklidir. Bu dosyalar zaten genellikle <command>/tmp</command> dizini içine konulur.
+    </para><para>
+Yerel isim alanının tuhaf bir özelliği de ismin sadece bağlantı açılırken kullanılmasıdır; bir kere adres açıldıktan sonra anlamı yoktur ve bulunmasa da olur.
+    </para><para>
+Diğer bir tuhaflık ise böyle bir sokete, diğer makine soketin ismini içeren dosya sistemini paylaşsa da bağlanılamamasıdır. Soketi dizin listesinde görebilirsiniz ancak bağlanamazsınız. Bazı yazılımlar bunun
+avantajını kullanırlar, örneğin istemciye kendi süreç kimliğini (PID) sorar ve farklı istemcileri ayırt etmek için süreç kimliğini kullanır. Fakat, biz size tasarladığınız protokollerde bu yöntemi kullanmanızı tavsiye etmeyiz, belki bir gün aynı dosya sistemini kullanan diğer makinelerden de bağlantılara izin verilebilir. Bunun yerine, her yeni istemciye onu belirleyici bir numara gönderebilirsiniz.
+    </para><para>
+Yerel isim alanındaki soketi kapattıktan sonra, dosya ismini silmeniz gerekir. <command>unlink</command> veya <command>remove</command>'u bunun için kullanınız. Bilgi için <xref linkend="glibc-Deleting-Files"/> bölümüne bakınız.
+    </para><para>
+Yerel isim alanı herhangi bir iletişim tarzı için sadece bir protokolü destekler; bunun protokol numarası <command>0</command>'dır.
+    </para></sect1>
+    <sect1 id="glibc-Local-Namespace-Details">
+      <title>Yerel İsim Alanı ile İlgili Ayrıntılar</title>
+      <titleabbrev> Adres biçimi, sembolik isimler, vs.</titleabbrev>
+      <para>
+<indexterm scope="glibc-pg"><primary>sys/socket.h</primary></indexterm>
+ Yerel isim alanında bir soket oluşturmak için, <command>socket</command> veya <command>socketpair</command> işlevinin <varname>isimalanı</varname> argümanında <command>PF_LOCAL</command> sabitini kullanın. Bu sabit <filename>sys/socket.h</filename> dosyası içerisinde tanımlıdır.
+    </para><para id="glibc-PF_LOCAL">
+<indexterm scope="glibc-vr"><primary>PF_LOCAL</primary></indexterm>
+<funcsynopsis><funcprototype role="makro">
+<funcdef>int <command>PF_LOCAL</command></funcdef>
+<paramdef></paramdef>
+</funcprototype><funcdescr><para>
+Bu içerisindeki soket adresleri yerel adlar olan yerel isim alanını ve onula ilgili protokol ailesini gösterir. <command>PF_Local</command> ise Posix.1g tarafından kullanılan makrodur.
+</para></funcdescr></funcsynopsis></para><para id="glibc-PF_UNIX">
+<indexterm scope="glibc-vr"><primary>PF_UNIX</primary></indexterm>
+<funcsynopsis><funcprototype role="makro">
+<funcdef>int <command>PF_UNIX</command></funcdef>
+<paramdef></paramdef>
+</funcprototype><funcdescr><para>
+<command>PF_LOCAL</command> ile aynıdır ve uyumluluk için konmuştur.
+</para></funcdescr></funcsynopsis></para><para id="glibc-PF_FILE">
+<indexterm scope="glibc-vr"><primary>PF_FILE</primary></indexterm>
+<funcsynopsis><funcprototype role="makro">
+<funcdef>int <command>PF_FILE</command></funcdef>
+<paramdef></paramdef>
+</funcprototype><funcdescr><para>
+<command>PF_LOCAL</command> ile aynıdır ve uyumluluk için konmuştur.
+      </para></funcdescr></funcsynopsis>
+    </para><para>
+Yerel isim alanları içindeki soket isimlerini tanımlayan yapı <filename>sys/un.h</filename> başlık dosyası içinde tanımlıdır:
+<indexterm scope="glibc-pg"><primary>sys/un.h</primary></indexterm>
+    </para><para id="glibc-struct-sockaddr_un">
+<indexterm scope="glibc-tp"><primary sortas="sockaddr_un">struct sockaddr_un</primary></indexterm>
+<funcsynopsis><funcprototype role="veri türü">
+<funcdef>struct <command>sockaddr_un</command></funcdef>
+<paramdef></paramdef>
+</funcprototype><funcdescr><para>
+Bu yapı yerel isim alanının soket adreslerini tanımlamak için kullanılır. Aşağıdaki üyelere sahiptir:
+      </para><para>
+        <glosslist><glossentry><glossterm>
+        <literal>short int <command>sun_family</command></literal>
+        </glossterm><glossdef><para>
+Bu <link linkend="glibc-Socket-Addresses">soket adresinin</link> adres ailesini veya biçimini belirtir. Yerel isim alanını belirtmek için AF_LOCAL değerini saklamalısınız.
+       </para></glossdef></glossentry><glossentry><glossterm>
+        <literal>char <command>sun_path</command>[108]</literal>
+        </glossterm><glossdef><para>
+Bu kullanılacak dosyanın ismidir.
+        </para><para>
+<note><title>Bitmedi!</title><para>108 neden sihirli bir numaradır? RMS bu sıfır uzunluğundaki dizinin oluşturulması ve aşağıdaki örnekteki gibi dosya isminin uzunluğuna göre uygun miktarda saklama alanı ayrılması için <command>alloca</command> işlevinin kullanılmasını önermektedir.</para></note>
+        </para></glossdef></glossentry></glosslist>
+      </para></funcdescr></funcsynopsis>
+    </para><para>
+Yerel isim alanındaki bir soket adresi için <varname>uzunluk</varname> parametresini, dosya isminin dizge uzunluğu (dizgeye ayrılan alan değil) ve <command>sun_family</command> bileşeninin toplamı olarak hesaplamalısınız. Bu <command>SUN_LEN</command> makrosu kullanılarak yapılabilir:
+    </para><para id="glibc-SUN_LEN">
+<indexterm scope="glibc-fn"><primary>SUN_LEN</primary></indexterm>
+<funcsynopsis><funcprototype role="makro">
+<funcdef>int <command>SUN_LEN</command></funcdef>
+<paramdef>(struct sockaddr_un *<varname>gösterici</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+Bu makro yerel isim alanındaki soket adresinin uzunluğunu hesaplar.
+      </para></funcdescr></funcsynopsis>
+    </para></sect1>
+    <sect1 id="glibc-Local-Socket-Example">
+      <title>Soketlerde Yerel İsim Alanı Örneği</title>
+      <titleabbrev>Soket oluşturma örneği.</titleabbrev>
+      <para>
+Buradaki örnekte yerel isim alanında bir soketin nasıl oluşturulduğu ve isimlendirildiği gösterilmiştir.
+    </para><para>
+<screen>
+#include &lt;stddef.h>
+#include &lt;stdio.h>
+#include &lt;errno.h>
+#include &lt;stdlib.h>
+#include &lt;string.h>
+#include &lt;sys/socket.h>
+#include &lt;sys/un.h>
+
+int
+make_named_socket (const char *dosyaismi)
+{
+  struct sockaddr_un isim;
+  int soket;
+  size_t boyut;
+
+  /* Soketi oluşturalım. */
+  soket = socket (PF_LOCAL, SOCK_DGRAM, 0);
+  if (soket &lt; 0)
+    {
+      perror ("socket");
+      exit (EXIT_FAILURE);
+    }
+
+  /* Sokete bir isim verelim. */
+  isim.sun_family = AF_LOCAL;
+  strncpy (isim.sun_path, dosyaismi, sizeof (isim.sun_path));
+  isim.sun_path[sizeof (isim.sun_path) - 1] = '\0';
+
+  /* Adresin büyüklüğü,
+     dosya isminin başlangıç konumu
+     artı uzunluğu
+     artı bir boş karakterdir.
+     Bir seçenek olarak bunu kullanabilirsiniz:
+      boyut = SUN_LEN (&amp;isim);
+  */
+  boyut = (offsetof (struct sockaddr_un, sun_path)
+          + strlen (isim.sun_path) + 1);
+
+  if (bind (soket, (struct sockaddr *) &amp;isim, boyut) &lt; 0)
+    {
+      perror ("bind");
+      exit (EXIT_FAILURE);
+    }
+
+  return soket;
+}
+</screen></para></sect1></chapter>
+  <chapter id="glibc-Internet-Namespace">
+    <title>İnternet İsim Alanı</title>
+    <titleabbrev>İnternet isim alanı ile ilgili ayrıntılar.</titleabbrev>
+    <para>
+<indexterm scope="glibc-cp"><primary>İnternet namespace, for sockets</primary></indexterm>
+Bu bölümde protokollerle ilgili ayrıntılar ve İnternet isim alanında kullanılan soket isimlendirme eğilimlerini açıklanmıştır.
+   </para><para>
+Başlangıçta İnternet isim alanı sadece IP sürüm 4'ü (IPv4) kullanırdı. İnternetteki konak sayısının artmasıyla, daha büyük bir adres alanına sahip yeni bir protokol gerekti; IP sürüm 6 (IPv6). IPv6 128 bitlik adresleri ortaya koydu (IPv4 32 bitliktir) ve diğer özellikleriyle de sonunda IPv4'ün yerine geçecektir.
+   </para><para>
+IPv4 İnternet isim alanında soket oluştururken <command>socket</command> veya <command>socketpair</command> işlevinde argüman olarak <command>PF_INET</command> sembolik ismini kullanın. IPv6 adresleri için <command>PF_INET6</command> makrosu gerekir. Bu makrolar <filename>sys/socket.h</filename> başlık dosyasında tanımlanmıştır.
+<indexterm scope="glibc-pg"><primary>sys/socket.h</primary></indexterm>
+    </para><para id="glibc-PF_INET">
+<indexterm scope="glibc-vr"><primary>PF_INET</primary></indexterm>
+<funcsynopsis><funcprototype role="makro">
+<funcdef>int <command>PF_INET</command></funcdef>
+<paramdef></paramdef>
+</funcprototype><funcdescr><para>
+IPv4 İnternet isim alanını ve onunla ilişkili protokol ailesini belirtir.
+</para></funcdescr></funcsynopsis></para><para id="glibc-PF_INET6">
+<indexterm scope="glibc-vr"><primary>PF_INET6</primary></indexterm>
+<funcsynopsis><funcprototype role="makro">
+<funcdef>int <command>PF_INET6</command></funcdef>
+<paramdef></paramdef>
+</funcprototype><funcdescr><para>
+IPv6 İnternet isim alanını ve onunla ilişkili protokol ailesini belirtir.
+      </para></funcdescr></funcsynopsis>
+    </para><para>
+Bir İnternet isim alanı soket adresi aşağıdaki bileşenleri içerir:
+   </para><para>
+     <itemizedlist><listitem><para>
+Bağlanmak istediğiniz makinenin adresi. İnternet adresi çeşitli yollarla belirtilebilir; bunlar <xref linkend="glibc-Internet-Address-Formats"/>,  <xref linkend="glibc-Host-Addresses"/> ve <xref linkend="glibc-Host-Names"/> konularında açıklanmıştır.
+     </para></listitem><listitem><para>
+Bağlanılacak makinenin port numarası. Bkz.  <xref linkend="glibc-Ports"/>.
+     </para></listitem></itemizedlist>
+   </para><para>
+Adres ve port numarasının <wordasword>ağ bayt sırası</wordasword> denilen meşru biçimde gösterildiğinden emin olmalısınız. Bilgi için <xref linkend="glibc-Byte-Order"/> bölümüne bakınız.
+   </para>
+    <sect1 id="glibc-Internet-Address-Formats">
+      <title>İnternet Soket Adreslerinin Biçimleri</title>
+      <titleabbrev>İnternet isim alanında soket adresleri nasıl belirtilir.</titleabbrev>
+      <para>
+İnternet isim alanında, hem IPv4 (<command>AF_INET</command>) hem de IPv6 (<command>AF_INET6</command>) protokolleri için, bir soket adresi bir konak adresiyle onun bir portunun adresinden oluşur. Ek olarak, seçtiğiniz protokol de adresin bir parçası olur, çünkü yerel port numaraları sadece belli bir protokol içinde anlam kazanır.
+    </para><para>
+İnternet isim alanında soket adreslerinin gösteriminde kullanılan veri türleri <filename>netinet/in.h</filename> başlık dosyasında tanımlıdır.
+<indexterm scope="glibc-pg"><primary>netinet/in.h</primary></indexterm>
+    </para><para id="glibc-struct-sockaddr_in">
+<indexterm scope="glibc-tp"><primary sortas="sockaddr_in">struct sockaddr_in</primary></indexterm>
+<funcsynopsis><funcprototype role="veri türü">
+<funcdef>struct <command>sockaddr_in</command></funcdef>
+<paramdef></paramdef>
+</funcprototype><funcdescr><para>
+İnternet isim alanındaki soket adreslerinin gösteriminde kullanılan veri türüdür. Aşağıdaki üyelere sahiptir:
+      </para><para>
+        <glosslist><glossentry><glossterm>
+        <literal>sa_family_t <command>sin_family</command></literal>
+        </glossterm><glossdef><para>
+Soket adresinin adres ailesini veya biçimini tanımlar. <command>AF_INET</command> değerini bu üye içinde saklamanız gerekir. Bkz. <xref linkend="glibc-Socket-Addresses"/>.
+        </para></glossdef></glossentry><glossentry><glossterm>
+        <literal>struct in_addr <command>sin_addr</command></literal>
+        </glossterm><glossdef><para>
+Konak makinenin İnternet adresidir. Bir değerin nasıl alınacağı veya  buraya kaydedeceği <xref linkend="glibc-Host-Addresses"/> ve <xref linkend="glibc-Host-Names"/> bölümlerinde anlatılmıştır.
+        </para></glossdef></glossentry><glossentry><glossterm>
+        <literal>unsigned short int <command>sin_port</command></literal>
+        </glossterm><glossdef><para>
+Port numarasıdır.  Bkz. <xref linkend="glibc-Ports"/>.
+        </para></glossdef></glossentry></glosslist>
+      </para></funcdescr></funcsynopsis>
+    </para><para>
+<command>bind </command> veya <command>getsockname </command> işlevlerini çağırdığınızda, eğer IPv4 İnternet isim alanı soket adreslerini kullanıyorsanız <varname>uzunluk </varname> parametresi olarak <command>sizeof (struct sockaddr_in) </command> değerini belirtmelisiniz.
+    </para><para id="glibc-struct-sockaddr_in6">
+<indexterm scope="glibc-tp"><primary sortas="sockaddr_in6">struct sockaddr_in6</primary></indexterm>
+<funcsynopsis><funcprototype role="veri türü">
+<funcdef>struct <command>sockaddr_in6</command></funcdef>
+<paramdef></paramdef>
+</funcprototype><funcdescr><para>
+Bu veri türü IPv6 isim alanındaki soket adreslerinin gösteriminde kullanılır. Aşağıdaki üyelere sahiptir:
+      </para><para>
+        <glosslist><glossentry><glossterm>
+        <literal>sa_family_t <command>sin6_family</command></literal>
+        </glossterm><glossdef><para>
+Soket adresinin adres ailesini veya biçimini tanımlar. <command>AF_INET6</command> değerini bu üye içinde saklamanız gerekir. Bkz. <xref linkend="glibc-Socket-Addresses"/>.
+        </para></glossdef></glossentry><glossentry><glossterm>
+        <literal>struct in6_addr <command>sin6_addr</command></literal>
+        </glossterm><glossdef><para>
+Konak makinenin IPv6  adresidir. Bir değerin nasıl alınacağı veya  buraya kaydedeceği <xref linkend="glibc-Host-Addresses"/> ve <xref linkend="glibc-Host-Names"/> bölümlerinde anlatılmıştır.
+        </para></glossdef></glossentry><glossentry><glossterm>
+        <literal>uint32_t <command>sin6_flowinfo</command></literal>
+        </glossterm><glossdef><para>
+Bu alan henüz gerçeklenmemiştir.
+        </para></glossdef></glossentry><glossentry><glossterm>
+        <literal>uint16_t <command>sin6_port</command></literal>
+        </glossterm><glossdef><para>
+Port numarasıdır.  Bkz. <xref linkend="glibc-Ports"/>.
+        </para></glossdef></glossentry></glosslist>
+      </para></funcdescr></funcsynopsis>
+    </para></sect1>
+    <sect1 id="glibc-Host-Addresses">
+      <title>Konak Adresleri</title>
+      <titleabbrev>İnternet konaklarının konak adresleriyle ile ilgili herşey.</titleabbrev>
+      <para>
+İnternetteki her bilgisayarın, o bilgisayarı internetteki diğer bilgisayarlardan ayıran ve tanımlayan numaralardan oluşan bir veya daha fazla <wordasword>internet adresi</wordasword> vardır. Kullanıcılar genellikle IPv4 numaralı konak adreslerini, <command>128.52.46.32</command> gibi noktalarla ayrılmış dört numaralı bir dizi olarak yazarlar. IPv6 numaralı konak adreslerini ise <command>5f03:1200:836f:c100::1</command> gibi iki nokta üst üste ile ayrılmış en fazla sekiz bölümden oluşan onaltılık numaralarla yazarlar.
+  </para><para>
+Her bilgisayarın ayrıca, noktalarla ayrılmış kelimelerden oluşan <command>mescaline.gnu.org</command> gibi bir veya birden fazla <wordasword>konak ismi</wordasword> vardır.
+    </para><para>
+Kullanıcıların konak adreslerini belirtmelerine olanak sağlayan yazılımlar genellikle hem numaralı adresi hem de konak ismini kabul eder. Bir bağlantı açmak için yazılım numaralı bir adrese ihtiyaç duyar ve bu nedenle konak ismini karşılık gelen numaralı adrese çevirmek zorundadır.
+    </para>
+    <sect2 id="glibc-Abstract-Host-Addresses">
+      <title>Kısaca Konak Adresleri</title>
+      <titleabbrev>Bir konak numarası nelerden oluşur.</titleabbrev>
+      <para>
+<indexterm scope="glibc-cp"><primary>konak adresleri</primary><secondary>internet</secondary></indexterm>
+<indexterm scope="glibc-cp"><primary>İnternet</primary><secondary>konak adresleri</secondary></indexterm>
+<indexterm scope="glibc-cp"><primary>ağ numarası</primary></indexterm>
+<indexterm scope="glibc-cp"><primary>yerel ağ adresi</primary></indexterm>
+IPv4 İnternet konak adresi dört baytlık veri tutan bir numaradır. Tarihsel olarak bakıldığında bunlar iki kısma ayrılır, bir <wordasword>ağ numarası</wordasword> ve o ağ içerisindeki bir <wordasword>yerel ağ adresi</wordasword>. 1990'ların ortasında ortaya çıkan sınıfsız adresler bu yaklaşımı değiştirdi. Bazı işlevler içlerinde eski tanımları aradıkları için, biz öncelikle sınıf tabanlı ağları, sonra da sınıfsız adresleri anlatacağız. IPv6 sadece sınıfsız adresleri kullanır, bu nedenle aşağıdaki paragraflar IPv6 adreslerine uygulanmaz.
+     </para><para>
+Sınıf tabanlı IPv4 ağ numaraları ilk bir, iki veya üç bayttan oluşur; geriye kalan baytlar yerel adreslerdir.
+     </para><para>
+IPv4 ağ numaraları Ağ Bilgi Merkezi (NIC - Network Information Center) denilen merkeze kayıtlıdır ve A, B, C adında üç sınıfa bölünmüşlerdir. Yerel ağdaki makinelerin yerel ağ adres numaraları o bu merkezce değil, ağın yöneticisi tarafından kaydedilir.
+     </para><para>
+A sınıfı ağların 0 ile 127 arasında değişen tek baytlık bir ağ numarası vardır. Az sayıda A sınıfı ağ vardır, fakat herbiri devasa boyutlarda konak sayısına sahiptir. Orta ölçekli B sınıfı ağların ilk baytı 128'den 191'e kadar olan iki baytlık ağ numaraları vardır. C sınıfı ağlar en küçükleridir; ilk baytı 192 ile 255 arasında olan üç baytlık ağ numaraları vardır. Bu nedenle İnternet adresinin ilk bir, iki veya üç baytı ağı belirtir. İnternet adresinin kalan baytları da o ağ içerisindeki adresini belirtir.
+     </para><para>
+A sınıfı ağdaki 0 bütün ağlara yayın için ayrılmıştır. Ek olarak, her ağdaki 0 numaralı konak adresi ağ içerisindeki bütün konaklara yayın için ayrılmıştır. Bu kullanımlar günümüzde kullanılmamaktadır fakat uyumluluk nedeniyle 0 numaralı ağı ve 0 numaralı konak numarasını kullanmamalısınız.
+     </para><para>
+A sınıfı ağdaki 127 geridönüş (loopback) arabirimi için ayrılmıştır; 127.0.0.1 adresini konak makine için kullanabilirsiniz.
+     </para><para>
+Bir makine birden fazla ağın üyesi olabileceği için birden fazla ağ konak adresine sahip olabilir. Fakat, bir adres hiç bir zaman birden fazla makineyi belirtemez.
+     </para><para>
+<indexterm scope="glibc-cp"><primary>standart noktalı gösterim</primary><secondary>internet adresleri için</secondary></indexterm>
+<indexterm scope="glibc-cp"><primary>İnternet adresleri</primary><secondary>standart noktalı gösterim</secondary></indexterm>
+İnternet adresleri için standart noktalı gösterimde dört numaralama biçimi vardır:
+     </para><para>
+     <variablelist><varlistentry><term>
+<varname>a</varname>.<varname>b</varname>.<varname>c</varname>.<varname>d</varname>
+     </term><listitem><para>
+Bu adresin dört baytlık kısmının tamamını tanımlar ve genelde kullanılan gösterim şeklidir.
+     </para></listitem></varlistentry><varlistentry><term>
+<varname>a</varname>.<varname>b</varname>.<varname>c</varname>
+     </term><listitem><para>
+Adresin son kısmı, <varname>c</varname>, 2 baytlık bir büyüklük olarak yorumlanır. Bu <varname>a</varname>.<varname>b</varname> ağ adres numaralı B sınıfı bir ağdaki konak adreslerinin belirtilmesi için kullanışlıdır.
+     </para></listitem></varlistentry><varlistentry><term>
+<varname>a</varname>.<varname>b</varname>
+     </term><listitem><para>
+Adresin son kısmı, <varname>b</varname>, 3 baytlık bir büyüklük olarak yorumlanır. Bu <varname>a</varname> ağ adres numaralı A sınıfı bir ağdaki konak adreslerinin belirtilmesi için kullanışlıdır.
+     </para></listitem></varlistentry><varlistentry><term>
+<varname>a</varname>
+     </term><listitem><para>
+Eğer sadece tek parça verilirse, bu doğrudan konak adres numarasına karşılıktır.
+     </para></listitem></varlistentry></variablelist></para><para>
+Adresin her kısmında, tabanı tanımlamak için alışıldık C kabulleri uygulanır. Diğer bir deyişle, sayının, başında <command>0x</command> veya <command>0X</command> varsa onaltılık tabanda, <command>0</command> varsa sekizlik tabanda; diğer durumlarda onluk tabanda olduğu kabul edilir.
+     </para>
+    </sect2>
+    <sect2><title>Sınıfsız Adresler</title><para>
+IPv4 adreslerini (ve IPv6 adreslerini) şimdi sınıfsız olarak düşünürsek; A, B ve C sınıfları arasındaki farkları görmezden gelebiliriz. Bir IPv4 konak adresi 32 bitlik adres ve 32 bitlik maskeden oluşmaktadır. Maske ağ kısmı için birler ve konak kısmı için sıfırlar içerir. Ağ kısmı soldan itibaren birlerle, kalanı da konağı gösteren sıfırlardan oluşur. Sonuç olarak, ağ maskesi (netmask) sadece bir bitleriyle belirtilebilir. A, B ve C sınıfları bu kuralın sadece özel durumlarıdır. Örneğin, A sınıfı adreslerinin ağ maskesi <command>255.0.0.0</command>'dır veya 8 uzunluğunda önekleri vardır.
+     </para><para>
+Sınıfsız IPv4 ağ adresleri, noktalı gösterimin sonuna bir bölü ayracıyla eklenmiş önek uzunluğu biçiminde yazılır. Örneğin 10 numaralı A sınıfı ağı <command>10.0.0.0/8</command> olarak yazılır.
+     </para></sect2>
+    <sect2><title>IPv6 Adresleri</title><para>
+IPv6 adresleri 128 bitlik veri içerir (IPv4 32 bit içerir). Bir konak adresi genelde iki nokta üst üste (:) ile ayrılmış sekiz adet 16 bitlik onaltılık sayı olarak yazılır. Ardarda gelen sıfırları kısaltmak için iki adet iki nokta üst üste (:) yan yana konulur. Örneğin, IPv6 geridönüş adresi <command>0:0:0:0:0:0:0:1</command>, sadece <command>::1</command> şeklinde yazılabilir.
+     </para></sect2>
+    <sect2 id="glibc-Host-Address-Data-Type">
+      <title>Konak Adresinin Veri Türü</title>
+      <titleabbrev>Bir konak numarasının veri türü.</titleabbrev>
+      <para>
+IPv4 İnternet konak adresleri bazı yaklaşımlarda (<command>uint32_t</command> türünde) tamsayı değerler  olarak gösterilir. Diğer yaklaşımlarda tamsayı <command>struct in_addr</command> türünde bir yapı içerisine paketlenir. Kullanımın tutarlı olması daha iyi olurdu ancak tamsayı değerini yapıdan çıkarmak veya yapı içerisine sokmak zordur.
+     </para><para>
+IPv4 İnternet konak adresleri için <command>uint32_t</command> veya <command>struct in_addr</command> kullanmak yerine <command>unsigned long int</command> kullanan eski kodlar bulabilirsiniz. Eskiden <command>unsigned long int</command> 32 bitlik numaraydı fakat 64 bitlik makinelerle birlikte bu değişti. <command>unsigned long int</command> türünün 32 bit olmadığı makinelerde bu veri türü kodun çalışmamasına neden olabilir. <command>uint32_t</command> türü Unix98 tarafından tanımlanmış ve 32 bit olması garanti edilmiştir.
+     </para><para>
+IPv6 İnternet konak adresleri 128 bittir ve <command>struct in6_addr</command> yapısı içerisinde paketlenmişlerdir.
+     </para><para>
+Aşağıdaki İnternet adreslerinin temel tanımları <filename>netinet/in.h</filename> başlık dosyasında tanımlanmıştır:
+<indexterm scope="glibc-pg"><primary>netinet/in.h</primary></indexterm>
+      </para><para id="glibc-struct-in_addr">
+<indexterm scope="glibc-tp"><primary sortas="in_addr">struct in_addr</primary></indexterm>
+<funcsynopsis><funcprototype role="veri türü">
+<funcdef>struct <command>in_addr</command></funcdef>
+<paramdef></paramdef>
+</funcprototype><funcdescr><para>
+Bu veri türü, IPv4 İnternet konak adresini tutmak için kullanılmaktadır. Konak adres numarasını <command>uint32_t</command> olarak kaydeden <command>s_addr</command> adında sadece bir alana sahiptir.
+</para></funcdescr></funcsynopsis></para><para id="glibc-INADDR_LOOPBACK">
+<indexterm scope="glibc-vr"><primary>INADDR_LOOPBACK</primary></indexterm>
+<funcsynopsis><funcprototype role="makro">
+<funcdef>uint32_t <command>INADDR_LOOPBACK</command></funcdef>
+<paramdef></paramdef>
+</funcprototype><funcdescr><para>
+Makinenin gerçek adresini bulmak yerine bu sabiti "makinenin adresi" olarak kullanabilirsiniz. Bu genellikle <command>localhost</command> olarak çağrılır ve IPv4 İnternet adresi <command>127.0.0.1</command>'dir. Bu özel sabit kendi makinenizin adresini bulma çilesinden sizi kurtarır. Ayrıca, özellikle, makinenin kendisiyle konuşması durumunda herhangi bir ağ trafiğinden kaçınmak için sistem <command>INADDR_LOOPBACK</command>'i kullanır.
+</para></funcdescr></funcsynopsis></para><para id="glibc-INADDR_ANY">
+<indexterm scope="glibc-vr"><primary>INADDR_ANY</primary></indexterm>
+<funcsynopsis><funcprototype role="makro">
+<funcdef>uint32_t <command>INADDR_ANY</command></funcdef>
+<paramdef></paramdef>
+</funcprototype><funcdescr><para>
+Bu sabiti adres verilmesi sırasında "gelen herhangi bir adres" yerine kullanabilirsiniz. Bkz. <xref linkend="glibc-Setting-Address"/>. Bu, İnternet bağlantılarını kabul etmek istediğinizde <command>struct sockaddr_in</command> yapısının  <command>sin_addr</command> üyesine vereceğiniz adres olarak kullanışlıdır.
+</para></funcdescr></funcsynopsis></para><para id="glibc-INADDR_BROADCAST">
+<indexterm scope="glibc-vr"><primary>INADDR_BROADCAST</primary></indexterm>
+<funcsynopsis><funcprototype role="makro">
+<funcdef>uint32_t <command>INADDR_BROADCAST</command></funcdef>
+<paramdef></paramdef>
+</funcprototype><funcdescr><para>
+Bu sabit bir yayın iletisi göndermek için kullanacağınız adrestir.
+</para></funcdescr></funcsynopsis></para><para id="glibc-INADDR_NONE">
+<indexterm scope="glibc-vr"><primary>INADDR_NONE</primary></indexterm>
+<funcsynopsis><funcprototype role="makro">
+<funcdef>uint32_t <command>INADDR_NONE</command></funcdef>
+<paramdef></paramdef>
+</funcprototype><funcdescr><para>
+Bu sabit bazı işlevler tarafından hata olarak döndürülür.
+</para></funcdescr></funcsynopsis></para><para id="glibc-struct-in6_addr">
+<indexterm scope="glibc-tp"><primary sortas="in6_addr">struct in6_addr</primary></indexterm>
+<funcsynopsis><funcprototype role="veri türü">
+<funcdef>struct <command>in6_addr</command></funcdef>
+<paramdef></paramdef>
+</funcprototype><funcdescr><para>
+Bu veri türü bir IPv6 adresi tutmak için kullanılır. Çeşitli yollarla (bir birleşik yapı üzerinden) erişilebilir 128 bitlik veri tutar.
+</para></funcdescr></funcsynopsis></para><para id="glibc-struct-in6addr_loopback">
+<indexterm scope="glibc-vr"><primary>in6addr_loopback</primary></indexterm>
+<funcsynopsis><funcprototype role="sabit">
+<funcdef>struct in6_addr <command>in6addr_loopback</command></funcdef>
+<paramdef></paramdef>
+</funcprototype><funcdescr><para>
+Bu sabit IPv6 <command>::1</command> geridönüş adresidir. Bunun ne anlama geldiğini öğrenmek için yukarıya bakınız. <command>IN6ADDR_LOOPBACK_INIT</command> makrosu kendi değişkenlerinize bu değeri verebilmeniz için sağlanmıştır.
+</para></funcdescr></funcsynopsis></para><para id="glibc-struct-in6addr_any">
+<indexterm scope="glibc-vr"><primary>in6addr_any</primary></indexterm>
+<funcsynopsis><funcprototype role="sabit">
+<funcdef>struct in6_addr<command>in6addr_any</command></funcdef>
+<paramdef></paramdef>
+</funcprototype><funcdescr><para>
+Bu sabit IPv6 <command>::</command> belirtilmemiş adresidir. Bunun ne anlama geldiğini öğrenmek için yukarıya bakınız. <command>IN6ADDR_ANY_INIT</command> makrosu kendi değişkenlerinize bu değeri verebilmeniz için sağlanmıştır.
+        </para></funcdescr></funcsynopsis>
+      </para>
+    </sect2><sect2 id="glibc-Host-Address-Functions">
+      <title>Konak Adresi İşlevleri</title>
+      <titleabbrev>Konak adresi üzerinde çalışan işlevler.</titleabbrev>
+      <para>
+<indexterm scope="glibc-pg"><primary>arpa/inet.h</primary></indexterm>
+İnternet adreslerini işlemek için kullanılan bu ek işlevler <filename>arpa/inet.h</filename> başlık dosyasında tanımlıdır. Bunlar İnternet adreslerini ağ bayt sırasında, ağ numaraları ve ağ içi yerel adres numaralarını da konak bayt sırasında göstermektedir. Ağ ve konak bayt sırası ile ilgili açıklamayı <xref linkend="glibc-Byte-Order"/> bölümünde bulabilirsiniz.
+      </para><para id="glibc-inet_aton">
+<indexterm scope="glibc-fn"><primary>inet_aton</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>int <command>inet_aton</command></funcdef>
+<paramdef>(const char     *<varname>isim</varname>,
+ struct in_addr *<varname>adres</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+Bu işlev <varname>isim</varname> IPv4 İnternet konak adresini standart noktalı gösterimden ikilik veriye dönüştürür ve <varname>adres</varname>'in gösterdiği <command>struct in_addr</command> içinde saklar. Eğer adres geçerli ise <command>inet_aton</command> sıfırdan farklı bir değer, aksi takdirde sıfır döndürür.
+</para></funcdescr></funcsynopsis></para><para id="glibc-inet_addr">
+<indexterm scope="glibc-fn"><primary>inet_addr</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>uint32_t <command>inet_addr</command></funcdef>
+<paramdef>(const char *<varname>isim</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+Bu işlev <varname>isim</varname> isimli IPv4 İnternet konak adresini standart noktalı gösterim şeklinden ikilik veriye dönüştürür. Eğer girdi geçerli değilse, <command>inet_addr</command> işlevi <command>INADDR_NONE</command> döndürür. Bu yukarıda anlatıldığı gibi <command>inet_aton</command> için atıl bir arayüzdür. Atıl olmasının nedeni <command>INADDR_NONE</command> adresinin (255.255.255.255) geçerli bir adres olmasıdır ve <command>inet_aton</command> işlevinin hata döndürmek için daha temiz bir yol sunmasıdır.
+</para></funcdescr></funcsynopsis></para><para id="glibc-inet_network">
+<indexterm scope="glibc-fn"><primary>inet_network</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>uint32_t <command>inet_network</command></funcdef>
+<paramdef>(const char *<varname>isim</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+Bu işlev, standart noktalı gösterim şeklinde verilen <varname>isim</varname> adresinden ağ numarasını elde eder. Döndürülen adres konak bayt sırasındadır. Eğer girdi geçerli değilse, <command>inet_network</command> işlevi <command>-1</command> değerini döndürür.
+     </para><para>
+İşlev sadece geleneksel IPv4 A, B ve C sınıfı ağ türleri ile çalışır. Sınıfsız adreslerle çalışmaz ve bu şekilde kullanılmamalıdır.
+</para></funcdescr></funcsynopsis></para><para id="glibc-inet_ntoa">
+<indexterm scope="glibc-fn"><primary>inet_ntoa</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>char *<command>inet_ntoa</command></funcdef>
+<paramdef>(struct in_addr <varname>adres</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+Bu işlev <varname>adres</varname> IPv4 İnternet konak adresini standart noktalı gösterim şeklinde bir dizgeye dönüştürür. Dönüş değeri durağan olarak ayrılmış tampona bir göstericidir. İşlevin sonraki çağrılarında aynı tampon üzerine yazılacağından, yazılan değer kaydedileceğinden değerin kopyalanması gerekir.
+     </para><para>
+Çok evreli (multi-threaded) yazılımlarda her evrenin kendi durağan olarak ayrılmış tamponu vardır. Fakat hala <command>inet_ntoa</command>'nın sonraki çağrılarında aynı evre son çağrıdaki sonucun üzerine yazar.
+</para></funcdescr></funcsynopsis></para><para>
+<command>inet_ntoa</command> yerine yeni bir işlev olan <command>inet_ntop</command> kullanılmalıdır, çünkü bu hem IPv4 hem de IPv6 adreslerini desteklemektedir.
+    </para><para id="glibc-inet_makeaddr">
+<indexterm scope="glibc-fn"><primary>inet_makeaddr</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>struct in_addr <command>inet_makeaddr</command></funcdef>
+<paramdef>(uint32_t <varname>ağ</varname>,
+ uint32_t <varname>yerel</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+Bu işlev <varname>ağ</varname> ağ numarası ile ağ içindeki <varname>yerel</varname>  yerel adres numarası değerlerini birleştirerek bir IPv4 İnternet konak adresi yapar.
+</para></funcdescr></funcsynopsis></para><para id="glibc-inet_lnaof">
+<indexterm scope="glibc-fn"><primary>inet_lnaof</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>uint32_t <command>inet_lnaof</command></funcdef>
+<paramdef>(struct in_addr <varname>adres</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+Bu işlev <varname>adres</varname> İnternet konak adresinin ağ içindeki yerel adres kısmını döndür.
+     </para><para>
+İşlev sadece geleneksel IPv4 A, B ve C sınıfı ağ türleri ile çalışır. Sınıfsız adreslerle çalışmaz ve bu şekilde kullanılmamalıdır.
+</para></funcdescr></funcsynopsis></para><para id="glibc-inet_netof">
+<indexterm scope="glibc-fn"><primary>inet_netof</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>uint32_t <command>inet_netof</command></funcdef>
+<paramdef>(struct in_addr <varname>adres</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+Bu işlev <varname>adres</varname> İnternet konak adresinin ağ numarası kısmını döndürür.
+     </para><para>
+İşlev sadece geleneksel IPv4 A, B ve C sınıfı ağ türleri ile çalışır. Sınıfsız adreslerle çalışmaz ve bu şekilde kullanılmamalıdır.
+</para></funcdescr></funcsynopsis></para><para id="glibc-inet_pton">
+<indexterm scope="glibc-fn"><primary>inet_pton</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>int <command>inet_pton</command></funcdef>
+<paramdef>(int         <varname>biçim</varname>,
+ const char *<varname>adres</varname>,
+ void       *<varname>tampon</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+Bu işlev bir İnternet adresini metin gösteriminden ağ biçimine (ikilik) dönüştürür. <varname>biçim</varname> dönüştürüleceği adres türünü belirtmek üzere <command>AF_INET</command> veya <command>AF_INET6</command> olmalıdır. <varname>adres</varname> girilen dizgeye bir göstericidir ve <varname>tampon</varname> sonuç için kullanılan tampona göstericidir. Tamponun yeterli büyüklükte olmasını işlevi çağıran sağlamalıdır.
+</para></funcdescr></funcsynopsis></para><para id="glibc-inet_ntop">
+<indexterm scope="glibc-fn"><primary>inet_ntop</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>const char *<command>inet_ntop</command></funcdef>
+<paramdef>(int         <varname>biçim</varname>,
+ const void *<varname>adres</varname>,
+ char       *<varname>tampon</varname>,
+ size_t      <varname>uzunluk</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+Bu işlev bir İnternet adresini ağ biçiminden (ikilik), metin gösterimine dönüştürür. <varname>biçim</varname> dönüştürülecek adres türünü belirtmek üzere <command>AF_INET</command> veya <command>AF_INET6</command> olmalıdır. <varname>adres</varname> çevrilecek adrese bir göstericidir. <varname>tampon</varname> sonuç için kullanılan tampona göstericidir ve <varname>uzunluk</varname> bu tamponun uzunluğudur. İşlevden dönecek değer tamponun adresi olacaktır.
+        </para></funcdescr></funcsynopsis>
+      </para>
+    </sect2><sect2 id="glibc-Host-Names">
+      <title>Konak İsimleri</title>
+      <titleabbrev>Konak isimlerinin konak numaralarına dönüştürülmesi.</titleabbrev>
+      <para>
+<indexterm scope="glibc-cp"><primary>konak veritabanı</primary></indexterm>
+<indexterm scope="glibc-cp"><primary>konak isimlerini adreslere dönüştürme</primary></indexterm>
+<indexterm scope="glibc-cp"><primary>konak adreslerini konak isimlerine dönüştürme</primary></indexterm>
+İnternet adresleri için standart noktalı gösterime ek olarak bir konağa ulaşmak için sembolik isim de kullanılabilir. Sembolik ismin yararı akılda kalmasının kolay oluşudur. Örneğin, İnternet adresi <command>158.121.106.19</command> olan bir makine <command>alpha.gnu.org</command> şeklinde de bilinir; ve <command>gnu.org</command> etki alanındaki diğer makineler ona sadece <command>alpha</command> ile erişebilir.
+     </para><para>
+<indexterm scope="glibc-pg"><primary sortas="etc/hosts">/etc/hosts</primary></indexterm>
+<indexterm scope="glibc-pg"><primary>netdb.h</primary></indexterm>
+Arka planda, sistem, konak isimlerini konak numaralarına eşleyerek bunların kayıtlarını tutabileceği bir veritabanı kullanır. Bu veritabanı genellikle <filename>/etc/hosts</filename> dosyası veya bir isim sunucusunun sunduğu eşdeğeridir. Veritabanına erişim için kullanılan işlev ve sembol tanımları <filename>netdb.h</filename> içerisindedir. <filename>netdb.h</filename> dosya olarak içerilirse, BSD'nin özellikleri de tümüyle gelir.
+     </para><para id="glibc-hostent">
+<indexterm scope="glibc-tp"><primary sortas="hostent">struct hostent</primary></indexterm>
+<funcsynopsis><funcprototype role="veri türü">
+<funcdef>struct <command>hostent</command></funcdef>
+<paramdef></paramdef>
+</funcprototype><funcdescr><para>
+Bu veri türü konak veritabanındaki bir girdinin gösterimi için kullanılmıştır. Aşağıdaki üyelere sahiptir:
+     </para><para>
+       <glosslist><glossentry><glossterm>
+         <literal>char *<command>h_name</command></literal></glossterm>
+       <glossdef><para> Bu konağın "resmi" adıdır.
+       </para></glossdef></glossentry><glossentry><glossterm>
+         <literal>char **<command>h_aliases</command></literal></glossterm>
+       <glossdef><para>
+Bunlar konağın diğer adlarıdır, boş karakter sonlandırmalı dizgeler dizisi olarak gösterilmişlerdir.
+        </para></glossdef></glossentry><glossentry><glossterm>
+          <literal>int <command>h_addrtype</command></literal></glossterm>
+        <glossdef><para>
+Bu konak adres tiürüdür; pratikte, değeri her zaman <command>AF_INET</command> veya IPv6 konakları için kullanıldıklarında <command>AF_INET6</command>'dır. Prensipte diğer türde adresler veritabanında İnternet adresleri olarak gösterilebilirler; eğer bu yapılırsa, bu alanda <command>AF_INET</command> veya <command>AF_INET6</command>'dan farklı bir değer görebilirsiniz. Bkz. <xref linkend="glibc-Socket-Addresses"/>.
+        </para></glossdef></glossentry><glossentry><glossterm>
+          <literal>int <command>h_length</command></literal></glossterm>
+        <glossdef><para>Bu her adresin bayt olarak uzunluğudur.
+        </para></glossdef></glossentry><glossentry><glossterm>
+          <literal>char **<command>h_addr_list</command></literal></glossterm>
+        <glossdef><para>
+Bu konak adres dizgeleri dizisidir. (Hatırlatma: bir konak birden fazla ağa bağlı olabilir ve her biri için farklı adrese sahip olabilir.) Dizi bir boş gösterici ile sonlandırılır.
+        </para></glossdef></glossentry><glossentry><glossterm>
+          <literal>char *<command>h_addr</command></literal></glossterm>
+        <glossdef><para>
+Bu <command>h_addr_list[0]</command> ile aynıdır; diğer bir deyişle, ilk konak adresidir.
+        </para></glossdef></glossentry></glosslist>
+      </para></funcdescr></funcsynopsis>
+    </para><para>
+Konak veritabanı düşünülüğünde, her adres sadece <command>h_length</command> bayt uzunluğunda bir bellek bloğundan ibarettir. Fakat diğer yaklaşımlarda IPv4 adreslerin bir <command>struct in_addr</command> veya bir <command>uint32_t</command> şekline dönüştürülebileceği şeklinde bir iç varsayım vardır. <command>struct hostent</command> yapısındaki konak adresleri her zaman ağ bayt sırasında verilmiştir; bilgi için <xref linkend="glibc-Byte-Order"/> bölümüne bakınız.
+    </para><para>
+Konak veritabanında arama yaparak belirli bir konak hakkında bilgi almak için <command>gethostbyname</command>, <command>gethostbyname2</command> veya <command>gethostbyaddr</command> işlevlerini kullanabilirsiniz. Bilgi durağan olarak ayrılmış bir yapı içinde döndürülür; çağrılar arasında kaydetmek için bilgiyi kopyalamanız gerekir. Ayrıca, <command>getaddrinfo</command> ve <command>getnameinfo</command> işlevlerini de bu bilgiye ulaşmak için kullanabilirsiniz.
+    </para><para id="glibc-gethostbyname">
+<indexterm scope="glibc-fn"><primary>gethostbyname</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>struct hostent *<command>gethostbyname</command></funcdef>
+<paramdef>(const char *<varname>isim</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+<command>gethostbyname</command> işlevi <varname>isim</varname> ile isimlendirilmiş konak hakkında bilgi döndürür. Eğer bulamazsa, bir boş gösterici döndürür.
+</para></funcdescr></funcsynopsis></para><para id="glibc-gethostbyname2">
+<indexterm scope="glibc-fn"><primary>gethostbyname2</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>struct hostent *<command>gethostbyname2</command></funcdef>
+<paramdef>(const char *<varname>isim</varname>,
+ int         <varname>biçim</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+<command>gethostbyname2</command> işlevi <command>gethostbyname</command> gibidir, fakat çağırıcıya sonuç için istediği adres ailesini (örneğin <command>AF_INET</command> veya <command>AF_INET6</command>) belirtme imkanı sunar.
+</para></funcdescr></funcsynopsis></para><para id="glibc-gethostbyaddr">
+<indexterm scope="glibc-fn"><primary>gethostbyaddr</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>struct hostent *<command>gethostbyaddr</command></funcdef>
+<paramdef>(const char *<varname>adres</varname>,
+ size_t      <varname>uzunluk</varname>,
+ int         <varname>biçim</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+<command>gethostbyaddr</command> işlevi <varname>adres</varname> İnternet adresine sahip konak hakkında bilgi döndürür. <varname>adres</varname> parametresi aslında bir karaktere gösterici değildir - bu IPv4 veya IPv6 adresine gösterici olabilir. <varname>uzunluk</varname> argümanı <varname>adres</varname> adresinin (bayt cinsinden) boyutudur. <varname>biçim</varname> adres biçimini belirtir; bir IPv4 İnternet adresi için, <command>AF_INET</command> değerini belirtiniz; bir IPv6 İnternet adresi için, <command>AF_INET6</command> kullanınız.
+      </para><para>
+Eğer bulamazsa, <command>gethostbyaddr</command> boş gösterici döndürür.
+      </para></funcdescr></funcsynopsis>
+    </para><para>
+<indexterm scope="glibc-vr"><primary>h_errno</primary></indexterm>
+Eğer <command>gethostbyname</command> veya <command>gethostbyaddr</command> ile isim sorgulama yapılamazsa, sebebini <command>h_errno</command> değişkeninin değerine bakarak bulabilirsiniz. (Bu işlevler için <command>errno</command> değerini değiştirmek daha temiz bir çözüm olurdu, ancak <command>h_errno</command> kullanımı diğer sistemlerle de uyumludur.)
+    </para><para>
+Burada <command>h_errno</command> için karşılaşabileceğiniz hata kodlarını görüyoruz:
+    </para><para>
+     <variablelist><varlistentry><term id="glibc-HOST_NOT_FOUND">
+     <command>HOST_NOT_FOUND</command>
+<indexterm scope="glibc-vr"><primary>HOST_NOT_FOUND</primary></indexterm></term>
+     <listitem><para>Veritabanında böyle bir konak yok.
+     </para></listitem></varlistentry><varlistentry>
+     <term id="glibc-TRY_AGAIN"><command>TRY_AGAIN</command>
+<indexterm scope="glibc-vr"><primary>TRY_AGAIN</primary></indexterm></term>
+     <listitem><para>Bu durum isim sunucusu ile bağlantı kurulamadığında gerçekleşir. Eğer tekrar denerseniz, başarabilirsiniz.
+     </para></listitem></varlistentry><varlistentry>
+     <term id="glibc-NO_RECOVERY"><command>NO_RECOVERY</command>
+<indexterm scope="glibc-vr"><primary>NO_RECOVERY</primary></indexterm></term>
+     <listitem><para>Geri dönülemez bir hata oluştu.
+     </para></listitem></varlistentry><varlistentry>
+     <term id="glibc-NO_ADDRESS"><command>NO_ADDRESS</command>
+     <indexterm scope="glibc-vr"><primary>NO_ADDRESS</primary></indexterm></term>
+     <listitem><para>Konak veritabanı isim için bir girdi içeriyor, fakat buna ilişkin bir İnternet adresi yok.
+     </para></listitem></varlistentry></variablelist>
+    </para><para>
+Yukarıdaki arama işlevlerinin ortak özellikleri: hiçbiri evresel (reentrant) işlevler değildir ve çok evreli uygulamalarda kullanılamazlar. Bu nedenle GNU C kütüphanesi bu bağlamda bir grup yeni işlev sunmaktadır.
+    </para><para id="glibc-gethostbyname_r">
+<indexterm scope="glibc-fn"><primary>gethostbyname_r</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>int <command>gethostbyname_r</command></funcdef>
+<paramdef>(const char *restrict      <varname>isim</varname>,
+ struct hostent *restrict  <varname>sonuç_tamponu</varname>,
+ char *restrict            <varname>tampon</varname>,
+ size_t                    <varname>tampon_uzunluğu</varname>,
+ struct hostent **restrict <varname>sonuç</varname>,
+ int *restrict             <varname>hatanum</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+<command>gethostbyname_r</command> işlevi <varname>isim</varname> adındaki konak hakında bilgi döndürür. Çağrı sırasında işleve <varname>sonuç_tamponu</varname> parametresi ile <command>struct hostent</command> türünde bir nesneye gösterici aktarılmalıdır. Ek olarak işlev fazladan bir tampon alanına ihtiyaç duyabildiğinden çağrı sırasında işleve tampona bir gösterici <varname>tampon</varname> ile ve tamponun uzunluğu da <varname>tampon_uzunluğu</varname> ile aktarılmalıdır.
+     </para><para>
+Sonucun tutulduğu tampona gösterici, başarılı bir işlev çağrısından sonra döndürülen <literal>*</literal><varname>sonuç</varname> içinde bulunmaktadır. Eğer bir hata oluşur veya girdi bulunamazsa <literal>*</literal><varname>sonuç</varname> göstericisi bir boş göstericidir. Başarı sıfır dönüş değeri ile belirtilir. Eğer işlev çalışmazsa dönüş değeri bir hata numarasıdır. <command>gethostbyname</command> için tanımlanan hatalara ek olarak bu <command>ERANGE</command>de olabilir. Bu durumda çağrı daha büyük bir tampon ile tekrarlanmalıdır. İlave hata bilgisi global değişken <command>h_errno</command>'da değil <varname>hatanum</varname> ile gösterilen nesnede saklanır.
+     </para><para>Burada küçük bir örnek görüyoruz:</para><para>
+<screen>
+struct hostent *
+gethostname (char *host)
+{
+  struct hostent hostbuf, *hp;
+  size_t hstbuflen;
+  char *tmphstbuf;
+  int res;
+  int herr;
+
+  hstbuflen = 1024;
+  /* Tamponu ayıralım, ama daha sonra bellek kaçağına
+     neden olmamak için serbest bırakmayı unutmayalım.  */
+  tmphstbuf = malloc (hstbuflen);
+
+  while ((res = gethostbyname_r (host, &amp;hostbuf, tmphstbuf, hstbuflen,
+                                &amp;hp, &amp;herr)) == ERANGE)
+    {
+      /* Tamponu büyütelim.  */
+      hstbuflen *= 2;
+      tmphstbuf = realloc (tmphstbuf, hstbuflen);
+    }
+  /*  Hata var mı, bakalım.  */
+  if (res || hp == NULL)
+    return NULL;
+  return hp;
+}
+</screen>
+</para></funcdescr></funcsynopsis></para><para id="glibc-gethostbyname2_r">
+<indexterm scope="glibc-fn"><primary>gethostbyname2_r</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>int <command>gethostbyname2_r</command></funcdef>
+<paramdef>(const char               *<varname>isim</varname>,
+ int                       <varname>biçim</varname>,
+ struct hostent *restrict  <varname>sonuç_tamponu</varname>,
+ char *restrict            <varname>tampon</varname>,
+ size_t                    <varname>tampon_uzunluğu</varname>,
+ struct hostent **restrict <varname>sonuç</varname>,
+ int *restrict             <varname>hatanum</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+<command>gethostbyname2_r</command> işlevi  <command>gethostbyname_r</command> gibidir, fakat çağrı sırasında sonuç için istenen adres <varname>biçim</varname>ini (örneğin <command>AF_INET</command> veya <command>AF_INET6</command>) belirtme imkanı sunar.
+</para></funcdescr></funcsynopsis></para><para id="glibc-gethostbyaddr_r">
+<indexterm scope="glibc-fn"><primary>gethostbyaddr_r</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>int <command>gethostbyaddr_r</command></funcdef>
+<paramdef>(const char               *<varname>adres</varname>,
+ size_t                    <varname>uzunluk</varname>,
+ int                       <varname>biçim</varname>,
+ struct hostent *restrict  <varname>sonuç_tamponu</varname>,
+ char *restrict            <varname>tampon</varname>,
+ size_t                    <varname>tampon_uzunluğu</varname>,
+ struct hostent **restrict <varname>sonuç</varname>,
+ int *restrict             <varname>hatanum</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+<command>gethostbyaddr_r</command> işlevi <varname>adres</varname> İnternet adresine sahip konak hakkında bilgi döndürür. <varname>adres</varname> parametresi aslında bir karaktere gösterici değildir - bu IPv4 veya IPv6 adresine gösterici olabilir. <varname>uzunluk</varname> argümanı <varname>adres</varname> adresinin (bayt cinsinden) boyutudur. <varname>biçim</varname> adres biçimini belirtir; bir IPv4 İnternet adresi için, bir <command>AF_INET</command> değeri belirtiniz; bir IPv6 İnternet adresi için, <command>AF_INET6</command> kullanınız.
+     </para><para>
+<command>gethostbyname_r</command> işlevine benzer olarak, çağırıcı, sonuç için gerekli tampon bölgeyi ve iç kullanım için gerekli belleği ayarlamak zorundadır. Başarı halinde işlev sıfır döndürür. Aksi takdirde değer bir hata numarasıdır ve burada <command>ERANGE</command> çağırıcının-sunduğu tamponun yeterli olmadığını belirten özel bir anlama sahiptir.
+      </para></funcdescr></funcsynopsis>
+    </para><para>
+<command>sethostent</command>, <command>gethostent</command> ve <command>endhostent</command> kullanarak bütün konak veritabanını bir girdi için tarayabilirsiniz. Bu işlevleri kullanırken dikkatli olunuz, çünkü bunlar evresel (reentrant) işlevler değildirler.
+    </para><para id="glibc-sethostent">
+<indexterm scope="glibc-fn"><primary>sethostent</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>void <command>sethostent</command></funcdef>
+<paramdef>(int <varname>açıkkal</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+Bu işlev konak veritabanını tarama yapmak için açar. Bu işlev çağrısının ardından girdileri okumak için <command>gethostent</command> çağırabilirsiniz.
+    </para><para>
+Eğer <varname>açıkkal</varname> argümanı sıfır değise, bu bir bayrağı kaldırarak <command>gethostbyname</command> veya <command>gethostbyaddr</command> işlevlerine yapılan çağrılarda veritabanının kapanmamasını sağlar (normalde olması gerektiği gibi). Bu yaklaşım işlevlerin sık çağırılması durumunda veritabanının her çağrıda tekrardan açılmasından kurtararak verimi artırır.
+</para></funcdescr></funcsynopsis></para><para id="glibc-gethostent">
+<indexterm scope="glibc-fn"><primary>gethostent</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>struct hostent *<command>gethostent</command></funcdef>
+<paramdef>(void)</paramdef>
+</funcprototype><funcdescr><para>
+Bu işlev konak veritabanındaki sıradaki girdiyi döndürür. Eğer başka girdi yoksa boş gösterici döndürür.
+</para></funcdescr></funcsynopsis></para><para id="glibc-endhostent">
+<indexterm scope="glibc-fn"><primary>endhostent</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>void <command>endhostent</command></funcdef>
+<paramdef>(void)</paramdef>
+</funcprototype><funcdescr><para>
+Bu işlev konak veritabanını kapatır.
+      </para></funcdescr></funcsynopsis>
+    </para></sect2>
+  </sect1><sect1 id="glibc-Ports">
+      <title>İnternet Portları</title>
+      <titleabbrev>İnternet port numaraları.</titleabbrev>
+      <para>
+<indexterm scope="glibc-cp"><primary>port number</primary></indexterm>
+İnternet isim alanındaki bir soket adresi bir makinenin İnternet adresi ve makine üzerindeki soketleri birbirinden ayıran (belirtilen protokole göre) <wordasword>port numarası</wordasword>ndan oluşur. Port numaraları 0 ile 65,535 arasında değer alır.
+    </para><para>
+<command>IPPORT_RESERVED</command> değerinin altındaki port numaraları <command>finger</command> ve <command>telnet</command> gibi standart sunucular için ayrılmıştır. Bunların kayıtlarını tutan bir veritabanı vardır ve bir servis ismini bir port numarasına eşleştirmek için <command>getservbyname</command> işlevini kullanabilirsiniz. Bilgi için <xref linkend="glibc-Services-Database"/> bölümüne bakınız.
+    </para><para>
+Eğer veritabanında tanımlanmış standart sunucular dışında bir sunucu yazarsanız onun için bir port numarası seçmeniz gerekir. Bunun için <command>IPPORT_USERRESERVED</command> değerinden büyük bir numara kullanın; bu numaralar sunucular için ayrılmıştır ancak sistem tarafından özdevinimli olarak üretilmemiştir. Diğer kullanıcılar tarafından çalıştırılan sunucularla karışıklıktan kaçınmak sizin sorumluluğunuzdadır.
+    </para><para>
+Bir soketi adres belirtmeden kullanırsanız, sistem onun için bir port numarası üretir. Bu numara <command>IPPORT_RESERVED</command> ve <command>IPPORT_USERRESERVED</command> arasındadır.
+    </para><para>
+Aslında internette iki farklı soketin bir port numarasını kullanması, her ikisi de aynı soket adresiyle (konak adresi artı port numarası) e çalışmadığı sürece olasıdır. Port numarasını üst düzey protokollerin bunu gerektirmesi gibi özel durumlar haricinde tekrar kullanmamalısınız. Normalde sistem bunu yapmanıza izin vermez; <command>bind</command> normalde farklı port numaraları vermenizde ısrar eder. Port numarasını tekrar kullanmak için, <command>SO_REUSEADDR</command> <link linkend="glibc-Socket-Level-Options">soket seçeneğini</link> etkinleştirmeniz gerekir.
+    </para><para>
+<indexterm scope="glibc-pg"><primary>netinet/in.h</primary></indexterm>
+Bu makrolar <filename>netinet/in.h</filename> başlık dosyasında tanımlıdır.
+    </para><para id="glibc-IPPORT_RESERVED">
+<indexterm scope="glibc-vr"><primary>IPPORT_RESERVED</primary></indexterm>
+<funcsynopsis><funcprototype role="makro">
+<funcdef>int <command>IPPORT_RESERVED</command></funcdef>
+<paramdef></paramdef>
+</funcprototype><funcdescr><para>
+<command>IPPORT_RESERVED</command> değerinden düşük port numaraları süper kullanıcının kullanımı için ayrılmıştır.
+</para></funcdescr></funcsynopsis></para><para id="glibc-IPPORT_USERRESERVED">
+<indexterm scope="glibc-vr"><primary>IPPORT_USERRESERVED</primary></indexterm>
+<funcsynopsis><funcprototype role="makro">
+<funcdef>int <command>IPPORT_USERRESERVED</command></funcdef>
+<paramdef></paramdef>
+</funcprototype><funcdescr><para>
+<command>IPPORT_USERRESERVED</command> değerinden büyük ya da eşit port numaraları doğrudan kullanıma ayrılmıştır; bunlar özdevinimli ayrılmazlar.
+      </para></funcdescr></funcsynopsis>
+    </para></sect1>
+    <sect1 id="glibc-Services-Database">
+      <title>Servis Veritabanı</title>
+      <titleabbrev>Portların sembolik isimleri olabilir.</titleabbrev>
+      <para>
+<indexterm scope="glibc-cp"><primary>servis veritabanı</primary></indexterm>
+<indexterm scope="glibc-cp"><primary>servis isminin port numarasına çevrilmesi</primary></indexterm>
+<indexterm scope="glibc-cp"><primary>port numarasının servis ismine çevrilmesi</primary></indexterm>
+<indexterm scope="glibc-pg"><primary sortas="etc/services">/etc/services</primary></indexterm>
+Bilinen servislerin kayıtlarını tutan veritabanı genellikle <filename>/etc/services</filename> dosyası veya bir isim sunucusundaki eşdeğeridir. Sizler bu araçları, ki <filename>netdb.h</filename> içinde tanımlıdır, servis veritabanına erişim için kullanabilirsiniz.
+<indexterm scope="glibc-pg"><primary>netdb.h</primary></indexterm>
+    </para><para id="glibc-struct-servent">
+<indexterm scope="glibc-tp"><primary sortas="servent">struct servent</primary></indexterm>
+<funcsynopsis><funcprototype role="veri türü">
+<funcdef>struct <command>servent</command></funcdef>
+<paramdef></paramdef>
+</funcprototype><funcdescr><para>
+Bu veri türü servis veritabanındaki girdilerle ilgili bilgiyi tutar. Aşağıdaki üyelere sahiptir:
+      </para><para>
+        <glosslist><glossentry><glossterm>
+        <literal>char *<command>s_name</command></literal>
+        </glossterm><glossdef><para> Bu servisin "resmi" adıdır.
+        </para></glossdef></glossentry><glossentry><glossterm>
+        <literal>char **<command>s_aliases</command></literal>
+        </glossterm><glossdef><para>
+Bunlar servisin diğer adlarıdır ve dizgelerden oluşan bir dizi olarak gösterilir. Bir boş gösterici diziyi sonlandırır.
+        </para></glossdef></glossentry><glossentry><glossterm>
+        <literal>int <command>s_port</command></literal>
+        </glossterm><glossdef><para>
+Bu servisin port numarasıdır. Port numaraları ağ bayt sırasında verilmiştir; bilgi için <xref linkend="glibc-Byte-Order"/> bölümüne bakınız.
+        </para></glossdef></glossentry><glossentry><glossterm>
+        <literal>char *<command>s_proto</command></literal>
+        </glossterm><glossdef><para>
+Bu servisle beraber kullanılan protokolün adıdır. Bkz. <xref linkend="glibc-Protocols-Database"/>.
+        </para></glossdef></glossentry></glosslist>
+      </para></funcdescr></funcsynopsis>
+    </para><para>
+Belirli bir servis hakkında bilgi almak için, <command>getservbyname</command> veya <command>getservbyport</command> işlevlerini kullanınız. Bilgi durağan olarak ayrılmış bir yapı içinde döndürülür; çağrılar sırasında, kaydetme ihtiyacı duyarsanız bilgiyi kopyalamanız gerekir.
+    </para><para id="glibc-getservbyname">
+<indexterm scope="glibc-fn"><primary>getservbyname</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>struct servent *<command>getservbyname</command></funcdef>
+<paramdef>(const char *<varname>isim</varname>,
+ const char *<varname>protokol</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+<command>getservbyname</command> işlevi <varname>isim</varname> ile isimlendirilmiş <varname>protokol</varname> protokolünü kullanan servis hakkında bilgi döndürür. Eğer böyle bir servis bulamazsa boş gösterici döndürür.
+      </para><para>
+Bu işlev sunucular için olduğu kadar istemciler için de kullanışlıdır; sunucular hangi portu <link linkend="glibc-Listening">dinlemeleri</link> gerektiğini bu işlevle belirlerler.
+</para></funcdescr></funcsynopsis></para><para id="glibc-getservbyport">
+<indexterm scope="glibc-fn"><primary>getservbyport</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>struct servent *<command>getservbyport</command></funcdef>
+<paramdef>(int         <varname>port</varname>,
+ const char *<varname>protokol</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+<command>getservbyport</command> işlevi <varname>port</varname> portunda <varname>protokol</varname> protokolünü kullanan servis hakkında bilgi döndürür. Eğer böyle bir servis bulamazsa boş gösterici döndürür.
+      </para></funcdescr></funcsynopsis>
+    </para><para>
+<command>setservent</command>, <command>getservent</command> ve <command>endservent</command> işlevlerini kullanarak da servis veritabanını tarayabilirsiniz. Bu işlevleri kullanırken dikkat ediniz çünkü bunlar evresel (reentrant) işlevler değildirler.
+    </para><para id="glibc-setservent">
+<indexterm scope="glibc-fn"><primary>setservent</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>void <command>setservent</command></funcdef>
+<paramdef>(int <varname>açıkkal</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+Bu işlev servis veritabanını taramaya başlamak için açar.
+    </para><para>
+Eğer <varname>açıkkal</varname> argümanı sıfır değise, bu bir bayrağı kaldırarak <command>getservbyname</command> veya <command>getservbyport</command> işlevlerine yapılan çağrılarda veritabanının kapanmamasını sağlar (normalde olması gerektiği gibi). Bu yaklaşım işlevlerin sık çağırılması durumunda veritabanının her çağrıda tekrardan açılmasından kurtararak verimi artırır.
+</para></funcdescr></funcsynopsis></para><para id="glibc-getservent">
+<indexterm scope="glibc-fn"><primary>getservent</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>struct servent *<command>getservent</command></funcdef>
+<paramdef>(void)</paramdef>
+</funcprototype><funcdescr><para>
+Bu işlev servis veritabanındaki bir sonraki girdiyi geri döndürür. Eğer başka girdi yoksa boş gösterici döndürür.
+</para></funcdescr></funcsynopsis></para><para id="glibc-endservent">
+<indexterm scope="glibc-fn"><primary>endservent</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>void <command>endservent</command></funcdef>
+<paramdef>(void)</paramdef>
+</funcprototype><funcdescr><para>
+Bu işlev servis veritabanını kapatır.
+      </para></funcdescr></funcsynopsis>
+    </para></sect1>
+    <sect1 id="glibc-Byte-Order">
+      <title>Bayt Sırası Dönüşümü</title>
+      <titleabbrev>Bazı konaklar farklı bayt sıralama kabulleri kullanabilir; konak adresleri ve port numaralarıyla ilgili kabullere uyulmalıdır.</titleabbrev>
+      <para>
+<indexterm scope="glibc-cp"><primary>soketler</primary><secondary>bayt sırası dönüşümü</secondary></indexterm>
+<indexterm scope="glibc-cp"><primary>bayt sırası</primary><secondary>dönüşüm</secondary></indexterm>
+<indexterm scope="glibc-cp"><primary>bayt sırası</primary><secondary>anlamlı bayt başta (big-endian)</secondary></indexterm>
+<indexterm scope="glibc-cp"><primary>bayt sırası</primary><secondary>anlamlı bayt sonda (little-endian)</secondary></indexterm>
+<indexterm scope="glibc-cp"><primary>big-endian</primary></indexterm>
+<indexterm scope="glibc-cp"><primary>little-endian</primary></indexterm>
+<indexterm scope="glibc-cp"><primary>bayt sırası</primary><secondary>ağ bayt sırası</secondary></indexterm>
+<indexterm scope="glibc-cp"><primary>bayt sırası</primary><secondary>konak bayt sırası</secondary></indexterm>
+Bir kelime (word) içindeki bayt sırası dönüşümü için farklı bilgisayarlar farklı yaklaşımlar kullanır. Bazı bilgisayarlar bir kelimenin en anlamlı baytını başa (bu "big-endian" sıralama olarak adlandırılır) ve diğerleri de sona ("little-endian" sıralama) koyar.
+    </para><para>
+<indexterm scope="glibc-cp"><primary>ağ bayt sırası</primary></indexterm>
+İnternet protokolleri ağ üzerinde aktarılan veri için genlde geçerli bir bayt sırası yaklaşımı belirlediklerinden dolayı farklı bayt sıralama yöntemleri kullanan makineler haberleşebilir. Bu <wordasword>ağ bayt sırası</wordasword> olarak bilinir.
+    </para><para>
+Bir İnternet soket bağlantısı kurulacağında <command>sockaddr_in</command> yapısının üyeleri olan <command>sin_port</command> ve <command>sin_addr</command> verisinin ağ bayt sırasında gösterildiğinden emin olunması gerekir. Eğer soketten gönderilen iletilerde bir tamsayı veriyi kodluyorsanız, bunu da ağ bayt sırasına göre kodlamalısınız. Eğer bunu yapmıyorsanız, yazılımınız çalışırken veya diğer makinelerle konuşurken çökebilir.
+    </para><para>
+Eğer port numarası ve konak adresini almak için <command>getservbyname</command>, <command>gethostbyname</command> veya <command>inet_addr</command> kullanıyorsanız, değerler zaten ağ bayt sırasındadır ve bunları doğrudan <command>sockaddr_in</command> yapısına kopyalayabilirsiniz.
+    </para><para>
+Aksi takdirde, değerleri kendiniz dönüştürmek zorunda kalırsınız. <command>sin_port</command> üyesine atanacak değerleri dönüştürmek için <command>htons</command> ve <command>ntohs</command> kullanınız. <command>sin_addr</command> üyesine atanacak IPv4 adreslerini dönüştürmek için de <command>htonl</command> ve <command>ntohl</command> kullanınız. (<command>struct in_addr</command> ile <command>uint32_t</command> veri türlerinin bir diğerine eşdeğer olduğunu hatırlayalım.) Bu işlevler <filename>netinet/in.h</filename> başlık dosyası içinde tanımlıdır.
+<indexterm scope="glibc-pg"><primary>netinet/in.h</primary></indexterm>
+    </para><para id="glibc-htons">
+<indexterm scope="glibc-fn"><primary>htons</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>uint16_t <command>htons</command></funcdef>
+<paramdef>(uint16_t <varname>short_konak</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+Bu işlev <command>uint16_t</command> türündeki <varname>short_konak</varname> tamsayısını konak bayt sırasından ağ bayt sırasına dönüştürür.
+</para></funcdescr></funcsynopsis></para><para id="glibc-ntohs">
+<indexterm scope="glibc-fn"><primary>ntohs</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>uint16_t <command>ntohs</command></funcdef>
+<paramdef>uint16_t <varname>short_ağ</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+Bu işlev <command>uint16_t</command> türündeki <varname>short_ağ</varname> tamsayısını ağ bayt sırasından konak bayt sırasına dönüştürür.
+</para></funcdescr></funcsynopsis></para><para id="glibc-htonl">
+<indexterm scope="glibc-fn"><primary>htonl</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>uint32_t <command>htonl</command></funcdef>
+<paramdef>(uint32_t <varname>long_konak</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+Bu işlev <command>uint32_t</command> türündeki <varname>long_konak</varname> tamsayısını konak bayt sırasından ağ bayt sırasına dönüştürür.
+      </para><para>
+Bu IPv4 İnternet adresleri için kullanılır.
+</para></funcdescr></funcsynopsis></para><para id="glibc-ntohl">
+<indexterm scope="glibc-fn"><primary>ntohl</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>uint32_t <command>ntohl</command></funcdef>
+<paramdef>(uint32_t <varname>long_ağ</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+Bu işlev <command>uint32_t</command> türündeki <varname>long_ağ</varname> tamsayısını ağ bayt sırasından konak bayt sırasına dönüştürür.
+    </para><para>
+Bu IPv4 İnternet adresleri için kullanılır.
+      </para></funcdescr></funcsynopsis>
+    </para></sect1>
+    <sect1 id="glibc-Protocols-Database">
+      <title>Protokol Veritabanı</title>
+      <titleabbrev>İsimleriyle protokoller.</titleabbrev>
+      <para>
+<indexterm scope="glibc-cp"><primary>protokol veritabanı</primary></indexterm>
+Soketlerle kullanılan iletişim protokolleri verinin nasıl değiş/tokuş edildiği konusundaki alt seviye ayrıntılarla ilgilidir. Örneğin, protokol veri aktarımındaki ve ileti yönlendirme komutlarındaki hataları bulmak için sağlama toplamı (checksum) uygular. Normal kullanıcı yazılımlarının bu ayrıntılarla ilgilenmeleri gerekmez.
+    </para><para>
+<indexterm scope="glibc-cp"><primary>TCP (İnternet protokolü)</primary></indexterm>
+İnternet isim alanındaki öntanımlı iletişim protokolü iletişim tarzına bağlıdır. Akım (stream) iletişimi için öntanımlı iletişim tarzı TCP'dir (Transmission Control Protocol - Denetimli Aktarım Protokolü). Datagram iletişimi için öntanımlı iletişim tarzı UDP'dir (User Datagram Protocol - Kullanıcı Datagram Protokolü). Güvenilir datagram iletişimi için için öntanımlı iletişim tarzı RDP'dir (Reliable Datagram Protocol - Güvenilir Datagram Protokolü). Sizin hemen hemen her zaman öntanımlı iletişim tarzını kullanmanız gerekir.
+    </para><para>
+<indexterm scope="glibc-pg"><primary sortas="etc/protocols">/etc/protocols</primary></indexterm>
+İnternet protokolleri genelde numara yerine isimle belirtilirler. Bir konak tarafından bilinen ağ protokolleri bir veritabanında saklanmaktadır. Bu genellikle ya <filename>/etc/protocols</filename> dosyasından veya bir isim sunucusunun sunduğu eşdeğerinden elde edilir. Protokol numarası ile ilişkili bir protokol ismini veritabanında aramak için <command>getprotobyname</command> işlevini kullanabilirsiniz.
+    </para><para>
+<indexterm scope="glibc-pg"><primary>netdb.h</primary></indexterm>
+Burada protokol veritabanına erişim için gerekli araçların ayrıntılı açıklamasını bulabilirsiniz. Bunlar<filename>netdb.h</filename> başlık dosyası içerisinde tanımlıdır.
+    </para><para id="glibc-protoent">
+<indexterm scope="glibc-tp"><primary sortas="protoent">struct protoent</primary></indexterm>
+<funcsynopsis><funcprototype role="veri türü">
+<funcdef>struct <command>protoent</command></funcdef>
+<paramdef></paramdef>
+</funcprototype><funcdescr><para>
+Bu veri türü ağ protokolleri veritabanındaki girdileri göstermek için kullanılır. Aşağıdaki üyelere sahiptir:
+      </para><para>
+        <glosslist><glossentry><glossterm>
+        <literal>char *<command>p_name</command></literal></glossterm>
+        <glossdef><para> Bu protokolün resmi adıdır.
+        </para></glossdef></glossentry><glossentry><glossterm>
+        <literal>char **<command>p_aliases</command></literal></glossterm>
+        <glossdef><para>Bunlar protokolün diğer adlarıdır, bir dizgeler dizisi olarak belirtilmişlerdir. Dizinin son elemanı bir boş göstericidir.
+        </para></glossdef></glossentry><glossentry><glossterm>
+        <literal>int <command>p_proto</command></literal></glossterm>
+        <glossdef><para>Bu protokol numarasıdır (konak bayt sırasında); bu üyeyi <link linkend="glibc-socket"><command>socket</command></link> işlevinin <varname>protokol</varname> argümanında kullanın.
+        </para></glossdef></glossentry></glosslist>
+      </para></funcdescr></funcsynopsis></para><para>
+Belirli bir protokolü protokol veritabanında aramak için <command>getprotobyname</command> ve <command>getprotobynumber</command> işlevlerini kullanabilirsiniz. Bilgi durağan olarak ayrılmış bir yapı içinde döner; eğer çağrılar arasında bilgiyi kullanmak isterseniz kopyalamalısınız.
+    </para><para id="glibc-getprotobyname">
+<indexterm scope="glibc-fn"><primary>getprotobyname</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>struct protoent *<command>getprotobyname</command></funcdef>
+<paramdef>(const char *<varname>isim</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+<command>getprotobyname</command> işlevi <varname>isim</varname> isimli ağ protokolü hakkında bilgi döndürür. Eğer böyle bir protokol yoksa, boş gösterici döndürür.
+</para></funcdescr></funcsynopsis></para><para id="glibc-getprotobynumber">
+<indexterm scope="glibc-fn"><primary>getprotobynumber</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>struct protoent *<command>getprotobynumber</command></funcdef>
+<paramdef>(int <varname>protocol</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+<command>getprotobynumber</command> işlevi <varname>protocol</varname> numaralı ağ protokolü hakkında bilgi döndürür. Eğer böyle bir protokol yoksa, boş gösterici döndürür.
+</para></funcdescr></funcsynopsis></para><para>
+<command>setprotoent</command>, <command>getprotoent</command> ve <command>endprotoent</command> işlevlerini kullanarak bütün protokol veritabanını bir protokol için tarayabilirsiniz. Bu işlevler evresel (reentrant) işlevler olmadığı için kullanırken dikkatli olunuz.
+    </para><para id="glibc-setprotoent">
+<indexterm scope="glibc-fn"><primary>setprotoent</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>void <command>setprotoent</command></funcdef>
+<paramdef>(int <varname>açıkkal</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+Bu işlev protokol veritabanını taramaya başlamak için açar.
+      </para><para>
+Eğer <varname>açıkkal</varname> argümanı sıfır değise, bu bir bayrağı kaldırarak <command>getprotobyname</command> veya <command>getprotobynumber</command> işlevlerine yapılan çağrılarda veritabanının kapanmamasını sağlar (normalde olması gerektiği gibi). Bu yaklaşım işlevlerin sık çağırılması durumunda veritabanının her çağrıda tekrardan açılmasından kurtararak verimi artırır.
+</para></funcdescr></funcsynopsis></para><para id="glibc-getprotoent">
+<indexterm scope="glibc-fn"><primary>getprotoent</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>struct protoent *<command>getprotoent</command></funcdef>
+<paramdef>(void)</paramdef>
+</funcprototype><funcdescr><para>
+Bu işlev protokol veritabanında sıradaki girdiyi döndürür. Başka girdi yoksa boş gösterici döndürür.
+</para></funcdescr></funcsynopsis></para><para id="glibc-endprotoent">
+<indexterm scope="glibc-fn"><primary>endprotoent</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>void <command>endprotoent</command></funcdef>
+<paramdef>(void)</paramdef>
+</funcprototype><funcdescr><para>
+Bu işlev protokol veritabanını kapatır.
+      </para></funcdescr></funcsynopsis>
+    </para></sect1>
+    <sect1 id="glibc-Inet-Example">
+      <title>İnternet Soketi Örneği</title>
+      <titleabbrev>Olay budur.</titleabbrev>
+      <para>
+Burada İnternet isim alanında bir soketin nasıl oluşturulacağını ve isimlendirileceğini gösteren bir örnek görüyoruz. Yeni oluşturulan soket yazılımın çalıştığı makinede bulunur. Makinenin İnternet adresini bulup kullanmak yerine, bu örnekte konak adres, yerine <command>INADDR_ANY</command> kullanılmıştır; sistem bunu makinenin gerçek adresi ile değiştirir.
+    </para><para>
+<screen>
+#include &lt;stdio.h>
+#include &lt;stdlib.h>
+#include &lt;sys/socket.h>
+#include &lt;netinet/in.h>
+
+int
+make_socket (uint16_t port)
+{
+  int sock;
+  struct sockaddr_in name;
+
+  /* Soketi oluşturalım. */
+  sock = socket (PF_INET, SOCK_STREAM, 0);
+  if (sock &lt; 0)
+    {
+      perror ("socket");
+      exit (EXIT_FAILURE);
+    }
+
+  /* Sokete bir isim verelim. */
+  name.sin_family = AF_INET;
+  name.sin_port = htons (port);
+  name.sin_addr.s_addr = htonl (INADDR_ANY);
+  if (bind (sock, (struct sockaddr *) &amp;name, sizeof (name)) &lt; 0)
+    {
+      perror ("bind");
+      exit (EXIT_FAILURE);
+    }
+
+  return sock;
+}
+</screen></para><para>
+Burada konak ismi ve port numarası verildiğinde <command>sockaddr_in</command> yapısını nasıl dolduracağınızı gösteren bir örnek görüyoruz:
+    </para><para>
+<screen>
+#include &lt;stdio.h>
+#include &lt;stdlib.h>
+#include &lt;sys/socket.h>
+#include &lt;netinet/in.h>
+#include &lt;netdb.h>
+
+void
+init_sockaddr (struct sockaddr_in *isim,
+                const char *konakismi,
+                uint16_t port)
+{
+  struct hostent *konakbilgisi;
+
+  isim->sin_family = AF_INET;
+  isim->sin_port = htons (port);
+  konakbilgisi = gethostbyname (konakismi);
+  if (konakbilgisi == NULL)
+    {
+      fprintf (stderr, "%s diye bir konak yok.\n", konakismi);
+      exit (EXIT_FAILURE);
+    }
+  isim->sin_addr = *(struct in_addr *) konakbilgisi->h_addr;
+}
+</screen></para></sect1></chapter>
+  <chapter id="glibc-Misc-Namespaces">
+    <title>Diğer İsim Alanları</title>
+    <titleabbrev>Diğer isim alanlarının tamamı burada belgelendirilmemiştir..</titleabbrev>
+    <para>
+<indexterm scope="glibc-vr"><primary>PF_NS</primary></indexterm>
+<indexterm scope="glibc-vr"><primary>PF_ISO</primary></indexterm>
+<indexterm scope="glibc-vr"><primary>PF_CCITT</primary></indexterm>
+<indexterm scope="glibc-vr"><primary>PF_IMPLINK</primary></indexterm>
+<indexterm scope="glibc-vr"><primary>PF_ROUTE</primary></indexterm>
+Diğer bazı isim alanları ve ilişkili protokol aileleri de desteklenmektedir fakat henüz belgelendirilmemiştir, çünkü sık kullanılmamaktadır. <command>PF_NS</command> Xerox Ağ Yazılımı (Xerox Network Software) protokollerini belirtir. <command>PF_ISO</command> Open Systems Interconnect'i belirtir. <command>PF_CCITT</command>, CCITT protokollerini belirtir. <filename>socket.h</filename> bu sembolleri ve henüz gerçeklenmemiş diğerlerinin isimlendirme protokollerini tanımlar.
+   </para><para>
+<command>PF_IMPLINK</command> konaklar ve İnternet İleti İşlemcileri arası iletişim için kullanılır. Bunun ve sıklıkla kullanılan yerel ağ yönlendirme protokolü  <command>PF_ROUTE</command> hakkında bilgi için GNU Hurd Kılavuzuna bakınız (Bir gün olacak İnşallah...).
+   </para></chapter>
+
+<chapter id="glibc-Open-Close-Sockets">
+  <title>Soketlerin Açılması ve Kapatılması</title>
+  <titleabbrev>Soketlerin oluşturulması ve yokedilmesi.</titleabbrev>
+  <para>
+Bu bölüm soket açma ve kapatma için kullanılan asıl kütüphane işlevlerini anlatır. Aynı işlevler tüm isim alanları ve bağlantı tarzları için çalışır.
+   </para>
+  <sect1 id="glibc-Creating-a-Socket">
+    <title>Bir Soketin Oluşturulması</title>
+    <titleabbrev>Bir soket nasıl açılır.</titleabbrev>
+    <para>
+<indexterm scope="glibc-cp"><primary>soketler</primary><secondary>oluşturulması</secondary></indexterm>
+<indexterm scope="glibc-cp"><primary>soketler</primary><secondary>açılması</secondary></indexterm>
+Soket oluşturmanın en ilkel yöntemi <filename>sys/socket.h</filename> içerisinde tanımlı <command>socket</command> işlevini kullanmaktır.
+<indexterm scope="glibc-pg"><primary>sys/socket.h</primary></indexterm>
+    </para><para id="glibc-socket">
+<indexterm scope="glibc-fn"><primary>socket</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>int <command>socket</command></funcdef>
+<paramdef>(int <varname>isimalanı</varname>,
+ int <varname>tarz</varname>,
+ int <varname>protokol</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+Bı işlev bir soket oluşturur. <varname>tarz</varname> iletişim tarzını belirler, ki bu  <xref linkend="glibc-Communication-Styles"/> bölümünde listelenen soket tarzlarından biri olmalıdır. <varname>isimalanı</varname> argümanı isim alanını belirtir; <command>PF_LOCAL</command> (Bkz. <xref linkend="glibc-Local-Namespace"/>) veya <command>PF_INET</command> (Bkz. <xref linkend="glibc-Internet-Namespace"/>) olmak zorundadır. <varname>protokol</varname> belirli bir protokolü gösterir (Bkz. <xref linkend="glibc-Socket-Concepts"/>); <varname>protokol</varname> için sıfır genellikle doğru değerdir.
+      </para><para>
+<command>socket</command> işlevinin dönüş değeri yeni soket için bir dosya tanımlayıcıdır. Hata halinde <command>-1</command> değeri döner. Aşağıdaki <command>errno</command> hata durumları bu işlev için tanımlanmıştır:
+      </para><para>
+       <variablelist><varlistentry><term><literal>EPROTONOSUPPORT</literal></term>
+       <listitem><para><varname>protokol</varname> veya <varname>tarz</varname> belirtilen <varname>isimalanı</varname> tarafından desteklenmiyor.
+       </para></listitem>
+       </varlistentry><varlistentry><term><literal>EMFILE</literal></term>
+       <listitem><para>Süreç zaten çok sayıda açık dosya tanımlayıcısına sahip.
+       </para></listitem>
+       </varlistentry><varlistentry><term><literal>ENFILE</literal></term>
+       <listitem><para>Sistem zaten çok sayıda açık dosya tanımlayıcısına sahip.
+       </para></listitem>
+       </varlistentry><varlistentry><term><literal>EACCES</literal></term>
+       <listitem><para>Süreç belirtilen <varname>tarz</varname> ya da <varname>protokol</varname> ile soket açma yetkisine sahip değil.
+       </para></listitem>
+       </varlistentry><varlistentry><term><literal>ENOBUFS</literal></term>
+       <listitem><para>Sistem dahili tampon alanını tüketti.
+       </para></listitem></varlistentry></variablelist>
+      </para><para>
+<command>socket</command> işlevinin döndürdüğü dosya tanımlayıcı hem okuma hem de yazma işlemlerini desteklemektedir. Fakat, borular gibi, soketler de dosya içi konumlama işlemlerini desteklememektedir.
+      </para></funcdescr></funcsynopsis>
+    </para><para>
+<command>socket</command> işlevinin kullanımına ilişkin örnekler için <xref linkend="glibc-Local-Socket-Example"/> ya da <xref linkend="glibc-Inet-Example"/> bölümüne bakınız.
+    </para>
+  </sect1><sect1 id="glibc-Closing-a-Socket">
+    <title>Bir Soketin Kapatılması</title>
+    <titleabbrev>Bir soket nasıl kapatılır.</titleabbrev>
+    <para>
+<indexterm scope="glibc-cp"><primary>soketler</primary><secondary>kapatılması</secondary></indexterm>
+<indexterm scope="glibc-cp"><primary>soketler</primary><secondary>aktarımın durdurulması</secondary></indexterm>
+Soketin kullanımı sona erdiğinde, basitçe onun dosya tanımlayıcısını <command>close</command> ile kapatabilirsiniz; bkz. <xref linkend="glibc-Opening-and-Closing-Files"/>. Bağlantı üzerinde hala aktarılmayı bekleyen veri varsa, normalde <command>close</command> aktarımın tamamlanmasına çalışır. Bu davranışı <command>SO_LINGER</command> soket seçeneğini bir zamanaşımı değeri belirtmek için kullanarak kontrol edebilirsiniz; bkz. <xref linkend="glibc-Socket-Options"/>.
+    </para><para>
+<indexterm scope="glibc-pg"><primary>sys/socket.h</primary></indexterm>
+Ayrıca, sadece aktarım veya alımı durdurmak isterseniz, <filename>sys/socket.h</filename> içerisinde tanımlı <command>shutdown</command> işlevini çağırabilirsiniz.
+    </para><para id="glibc-shutdown">
+<indexterm scope="glibc-fn"><primary>shutdown</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>int <command>shutdown</command></funcdef>
+<paramdef>(int <varname>soket</varname>,
+ int <varname>nasıl</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+<command>shutdown</command> işlevi <varname>soket</varname> soketinin bağlantısını kapatır. <varname>nasıl</varname> argümanı nasıl bir eylem yapılacağını belirler:
+      </para><para>
+       <variablelist><varlistentry><term><literal>0</literal></term>
+       <listitem><para>Bu soketin veri alımını durdur. Eğer veri hala geliyorsa, reddedilir.
+       </para></listitem>
+       </varlistentry><varlistentry><term><literal>1</literal></term>
+       <listitem><para>Bu soketten veri gönderimini durdur. Aktarım için bekleyen veri iptal edilir. Gönderilmiş veri için ulaştı bilgisi beklenmez, eğer veri kaybolduysa tekrar gönderilmez.
+       </para></listitem>
+       </varlistentry><varlistentry><term><literal>2</literal></term>
+       <listitem><para>Hem alımı hem de gönderimi durdur.
+       </para></listitem></varlistentry></variablelist>
+      </para><para>
+Başarı halinde dönüş değeri <command>0</command>, başarısızlıkta <command>-1</command>'dir. Aşağıdaki <command>errno</command> hata durumları bu işlev için tanımlanmıştır:
+      </para><para>
+       <variablelist><varlistentry><term><command>EBADF</command></term>
+       <listitem><para><varname>soket</varname> geçerli bir dosya tanımlayıcı değil.
+       </para></listitem>
+       </varlistentry><varlistentry><term><command>ENOTSOCK</command></term>
+       <listitem><para><varname>soket</varname> bir soket değil.
+       </para></listitem>
+       </varlistentry><varlistentry><term><command>ENOTCONN</command></term>
+       <listitem><para><varname>soket</varname>  bağlı değil.
+       </para></listitem></varlistentry></variablelist>
+      </para></funcdescr></funcsynopsis>
+    </para>
+  </sect1><sect1 id="glibc-Socket-Pairs">
+    <title>Soket Çiftleri</title>
+    <titleabbrev>Borular gibi oluşturulurlar.</titleabbrev>
+    <para>
+<indexterm scope="glibc-cp"><primary>soketler</primary><secondary>soket çiftleri</secondary></indexterm>
+<indexterm scope="glibc-cp"><primary>soket çiftleri</primary><secondary>oluşturulması</secondary></indexterm>
+<indexterm scope="glibc-cp"><primary>soket çiftleri</primary><secondary>açılması</secondary></indexterm>
+<indexterm scope="glibc-pg"><primary>sys/socket.h</primary></indexterm>
+Bir <wordasword>soket çifti</wordasword> bir çift bağlı (ancak isimsiz) soketten oluşur. Bu yapı boruya çok benzer ve çoğunlukla da böyle kullanılırlar. Soket çifti <filename>sys/socket.h</filename> başlık dosyası içerisinde tanımlı <command>socketpair</command> işleviyle oluşturulur. Soket çifti bir boruya çok benzer; ana fark soket çifti çift yönlü oluduğu halde; borunun bir sadece-girdi ve bir sadece-çıktı ucu olmasıdır (Bkz. <xref linkend="glibc-Pipes-and-FIFOs"/>).
+    </para><para id="glibc-socketpair">
+<indexterm scope="glibc-fn"><primary>socketpair</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>int <command>socketpair</command></funcdef>
+<paramdef>(int <varname>isimalanı</varname>,
+ int <varname>tarz</varname>,
+ int <varname>protokol</varname>,
+ int <varname>dosya_tanımlayıcı</varname>[2])</paramdef>
+</funcprototype><funcdescr><para>
+Bu işlev <varname>dosya_tanımlayıcı</varname><literal>[0]</literal> ve <varname>dosya_tanımlayıcı</varname><literal>[1]</literal> içine dosya tanımlayıcılarını yerleştirerek bir soket çifti oluşturur. Soket çifti aynı anda iki yönlü (full-duplex) iletişim yapılabilen bir iletişim kanalıdır, böylece hem okuma hem yazma her iki ucundan da gerçekleşebilmektedir.
+    </para><para>
+<varname>isimalanı</varname>, <varname>tarz</varname> ve <varname>protokol</varname> argümanları <command>socket</command> işlevindeki gibi kullanılmaktadır. <varname>tarz</varname> <xref linkend="glibc-Communication-Styles"/> bölümünde listelenen iletişim tarzalarından biri olmalıdır. <varname>isimalanı</varname> argümanı isim alanını belirler ve <link linkend="glibc-Local-Namespace"><command>AF_LOCAL</command></link> olmalıdır; <varname>protokol</varname> iletişim protokolünü belirler, fakat tek anlamlı değer sıfırdır.
+    </para><para>
+Eğer <varname>tarz</varname> bağlantısız bir iletişim tarzını belirtiyorsa, elde ettiğiniz iki soket bağlı değildir, fakat her ikisi de birbirini öntanımlı hedef adres olarak bilir, böylece birbirlerine paket gönderebilirler.
+    </para><para>
+<command>socketpair</command> işlevi başarı durumunda <command>0</command>, başarısızlıkta <command>-1</command> döndürür. Aşağıdaki <command>errno</command> hata durumları bu işlev için tanımlanmıştır:
+      </para><para>
+       <variablelist><varlistentry><term><literal>EMFILE</literal></term>
+       <listitem><para>Süreç çok fazla açık dosya tanımlayıcısına sahip.
+       </para></listitem>
+       </varlistentry><varlistentry><term><literal>EAFNOSUPPORT</literal></term>
+       <listitem><para>Belirtilen isim alanı desteklenmiyor.
+       </para></listitem>
+       </varlistentry><varlistentry><term><literal>EPROTONOSUPPORT</literal></term>
+       <listitem><para>Belirtilen protokol desteklenmiyor.
+       </para></listitem>
+       </varlistentry><varlistentry><term><literal>EOPNOTSUPP</literal></term>
+       <listitem><para>Belirtilen protokol soket çifti oluşturmayı desteklemiyor.
+       </para></listitem></varlistentry></variablelist>
+      </para></funcdescr></funcsynopsis>
+    </para>
+  </sect1>
+</chapter>
+
+<chapter id="glibc-Connections">
+  <title>Soketlerin Bağlantılarla Kullanılması</title>
+  <titleabbrev>Bağlantı durumunda soketler üzerindeki işlemler.</titleabbrev>
+  <para>
+<indexterm scope="glibc-cp"><primary>bağlantı</primary></indexterm>
+<indexterm scope="glibc-cp"><primary>istemci</primary></indexterm>
+<indexterm scope="glibc-cp"><primary>sunucu</primary></indexterm>
+En sık kullanılan iletişim tarzları belirli bir sokete bağlantı yapımını ve onunla veri değişimini içerir. Bağlantı yapılması bakışımsızdır; bir taraf (<wordasword>istemci</wordasword>) bağlantı isteğinde bulunurken diğer taraf (<wordasword>sunucu</wordasword>) soket oluşturur ve bağlantı isteği için bekler.
+  </para>
+  <sect1 id="glibc-Connecting">
+    <title>Bir Bağlantının Oluşturulması</title>
+    <titleabbrev>İstemci yazılım ne yapmalı.</titleabbrev>
+    <para>
+<indexterm scope="glibc-cp"><primary>soketler</primary><secondary>bağlanması</secondary></indexterm>
+<indexterm scope="glibc-cp"><primary>soketler</primary><secondary>bir bağlantının başlatılması</secondary></indexterm>
+<indexterm scope="glibc-cp"><primary>soketler</primary><secondary>istemci tarafı</secondary></indexterm>
+<indexterm scope="glibc-cp"><primary>bağlantının başlatılması</primary></indexterm>
+Bir bağlantının kurulmasında, sunucu bağlantı için beklerken istemci bağlanır ve sunucu kabul eder. Burada bizim tartıştığımız şey istemci yazılımın <filename>sys/socket.h</filename> içinde tanımlı <command>connect</command> işleviyle ne yapması gerektiğidir.
+    </para><para id="glibc-connect">
+<indexterm scope="glibc-fn"><primary>connect</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>int <command>connect</command></funcdef>
+<paramdef>(int              <varname>soket</varname>,
+ struct sockaddr *<varname>adres</varname>,
+ socklen_t        <varname>uzunluk</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+<command>connect</command> işlevi <varname>soket</varname> dosya tanımlayıcısına sahip soketten <varname>adres</varname> ve <varname>uzunluk</varname> argümanları ile adresi belirtilen sokete bir bağlantı başlatır. (Bu soket tipik olarak başka makinededir ve bir sunucu olarak kurulmuş olması gerekir.) Bu argümanların nasıl yorumlandıkları konusunda bilgi için <xref linkend="glibc-Socket-Addresses"/> bölümüne bakınız.
+      </para><para>
+Normalde, <command>connect</command> sunucu isteğe yanıt verene kadar bekler. <command>connect</command> işlevinin yanıt beklemeden hemen dönmesini sağlamak için <varname>soket</varname> soketinde <link linkend="glibc-File-Status-Flags">bloklanmayan kipi</link> seçebilirsiniz.
+      </para><para>
+<command>connect</command> işlevi başarı durumunda <command>0</command>, başarısızlıkta <command>-1</command> döndürür. Aşağıdaki <command>errno</command> hata durumları bu işlev için tanımlanmıştır:
+      </para><para>
+       <variablelist><varlistentry><term><literal>EBADF</literal></term>
+       <listitem><para><varname>soket</varname> soketi geçerli bir dosya tanımlayıcı değil.
+       </para></listitem>
+       </varlistentry><varlistentry><term><literal>ENOTSOCK</literal></term>
+       <listitem><para><varname>soket</varname> dosya tanımlayıcısı bir soket değil.
+       </para></listitem>
+       </varlistentry><varlistentry><term><literal>EADDRNOTAVAIL</literal></term>
+       <listitem><para> Belirtilen adres uzaktaki makinede yok.
+       </para></listitem>
+       </varlistentry><varlistentry><term><literal>EAFNOSUPPORT</literal></term>
+       <listitem><para><varname>adres</varname>'in isim alanı bu soket tarafından desteklenmiyor.
+       </para></listitem>
+       </varlistentry><varlistentry><term><literal>EISCONN</literal></term>
+       <listitem><para><varname>soket</varname> soketi zaten bağlı.
+       </para></listitem>
+       </varlistentry><varlistentry><term><literal>ETIMEDOUT</literal></term>
+       <listitem><para>Bağlantı girişimi zaman aşımına uğradı.
+       </para></listitem>
+       </varlistentry><varlistentry><term><literal>ECONNREFUSED</literal></term>
+       <listitem><para>Sunucu bağlantı isteğini açıkça reddetti.
+       </para></listitem>
+       </varlistentry><varlistentry><term><literal>ENETUNREACH</literal></term>
+       <listitem><para><varname>adres</varname> ile belirtilen ağa bu konak erişemez.
+       </para></listitem>
+       </varlistentry><varlistentry><term><literal>EADDRINUSE</literal></term>
+       <listitem><para><varname>adres</varname> ile belirtilen soket adresi zaten kullanımda.
+       </para></listitem>
+       </varlistentry><varlistentry><term><literal>EINPROGRESS</literal></term>
+       <listitem><para><varname>soket</varname>soketi baskılanamayan kipte olduğundan bağlantı hemen kurulamıyor. <command>select</command> ile bağlantının tam olarak ne zaman kurulabileceğini tespit edebilirsiniz; Bkz. <xref linkend="glibc-Waiting-for-I-O"/>. Bağlantı tam kurulamadan aynı sokete tekrar bir <command>connect</command> çağrısı yapılırsa, çağrı <command>EALREADY</command> hatası ile sonlanır.
+       </para></listitem>
+       </varlistentry><varlistentry><term><literal>EALREADY</literal></term>
+       <listitem><para><varname>soket</varname> soketi baskılanamayan kipte ve askıdaki  bağlantısı devam ediyor (üstteki <command>EINPROGRESS</command>'a bakınız).
+       </para></listitem></varlistentry></variablelist>
+      </para><para>
+Bu işlev çok evreli yazılımlar için iptal noktası olarak tanımlanmıştır, bu nedenle ayrılan özkaynakların (bellek, dosya tanımlayıcısı, semafor veya her hangi başka bir kaynak) evre iptal edilse dahi serbest bırakılmasının sağlanması şarttır.
+      </para></funcdescr></funcsynopsis>
+    </para>
+  </sect1><sect1 id="glibc-Listening">
+    <title>Bağlantıların Dinlenmesi</title>
+    <titleabbrev>Sunucu yazılım istekleri nasıl bekler.</titleabbrev>
+    <para>
+<indexterm scope="glibc-cp"><primary>soketler</primary><secondary>dinleme</secondary></indexterm>
+<indexterm scope="glibc-cp"><primary>soketler</primary><secondary>sunucu tarafı</secondary></indexterm>
+Şimdi sunucu sürecin soket üzerinden bağlantıları kabul etmek için ne yapması gerektiğini inceleyelim. Öncelikle sokete gelen bağlantı isteklerini alabilmesi için <command>isten</command> işlevini kullanması gerekli, ardında da gelen her bağlantıyı kabul etmek için <command>accept</command> işlevini çağırmalıdır(Bkz. <xref linkend="glibc-Accepting-Connections"/>). Sunucu soketi üzerinde bağlantı isteği olduğunda, <command>select</command> işlevi soketin bağlantı kabul etmek için ne zaman hazır olacağını bildirir (Bkz. <xref linkend="glibc-Waiting-for-I-O"/>).
+    </para><para>
+<command>listen</command> işlevi bağlantısız iletişim tarzı kullanılan soketler için kullanılamaz.
+    </para><para>
+Bir bağlantı isteği gelene kadar çalışmaya başlamayan ağ sunucusu bile yazabilirsiniz. Bkz. <xref linkend="glibc-Inetd-Servers"/>.
+    </para><para>
+Internet isim alanında, port erişimini kontrol için özel bir koruma mekanizması yoktur, herhangi bir makinedeki bir süreç sunucunuza bağlanabilir. Sunucunuza erişimi kısıtlamak istiyorsanız ya sunucunuzun bağlantı isteğinde bulunan adresi incelemesini sağlayın ya da başka bir uzlaşma veya kimlik doğrulama protokolü uygulayın.
+    </para><para>
+Yerel isim alanında ise, bildiğimiz dosya koruma bitleri sokete bağlanmak için kimin erişim hakkı var kontrol eder.
+    </para><para id="glibc-listen">
+<indexterm scope="glibc-fn"><primary>listen</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>int <command>listen</command></funcdef>
+<paramdef>(int          <varname>soket</varname>,
+ unsigned int <varname>n</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+<command>listen</command> işlevi bağlantıları kabul edecek <varname>soket</varname> soketini etkinleştirir, böylece sunucu soketi olur.
+      </para><para>
+<varname>n</varname> argümanı bekleyen bağlantılar için kuyruk uzunluğunu belirler. Kuyruk dolunca, bağlanmak için teşebbüs eden yeni istemciler, sunucu kuyrukta bekleyen bir bağlantı için <command>accept</command> işlevini çağırana kadar <command>ECONNREFUSED</command> hatası ile sonlanırlar.
+      </para><para>
+<command>listen</command> işlevi başarı durumunda <command>0</command>, başarısızlıkta <command>-1</command> döndürür. Aşağıdaki <command>errno</command> hata durumları bu işlev için tanımlanmıştır:
+      </para><para>
+       <variablelist><varlistentry><term><literal>EBADF</literal></term>
+       <listitem><para><varname>soket</varname> soketi geçerli bir dosya tanımlayıcı değil.
+       </para></listitem>
+       </varlistentry><varlistentry><term><literal>ENOTSOCK</literal></term>
+       <listitem><para><varname>soket</varname> dosya tanımlayıcısı bir soket değil.
+       </para></listitem>
+       </varlistentry><varlistentry><term><literal>EOPNOTSUPP</literal></term>
+       <listitem><para><varname>soket</varname> soketi bu işlemi desteklemiyor.
+       </para></listitem></varlistentry></variablelist>
+      </para></funcdescr></funcsynopsis>
+    </para>
+  </sect1><sect1 id="glibc-Accepting-Connections">
+    <title>Bağlantıların Kabul Edilmesi</title>
+    <titleabbrev>Sunucu istek geldiğinde ne yapar.</titleabbrev>
+    <para>
+<indexterm scope="glibc-cp"><primary>soketler</primary><secondary>bağlantıların kabul edilmesi</secondary></indexterm>
+<indexterm scope="glibc-cp"><primary>bağlantıların kabul edilmesi</primary></indexterm>
+Bir sunucu bağlantı isteği aldığında, bağlantıyı isteği kabul ederek tamamlayabilir. Bunun için <command>accept</command> işlevi kullanılır.
+    </para><para>
+Sunucu olarak kurulmuş olan bir soket çok sayıda istemciden gelen bağlantı isteklerini kabul edebilir. Sunucunun dinlediği soket bağlantının bir parçası olmaz; bunun yerine, <command>accept</command> bağlantıyla ilgil olarak yeni bir soket oluşturur. <command>accept</command> bu yeni soketin dosya tanımlayıcısını döndürür. Sunucu soketi diğer bağlantı isteklerini dinlemek için kalır.
+    </para><para>
+Sunucu soketindeki bekleyen bağlantı isteği sayısı sınırlıdır. İstemcilerden gelen bağlantı istekleri sunucunun karşılık verebileceğinden hızlı gelirse, kuyruk dolabilir ve ilave istekler <command>ECONNREFUSED</command> hatası ile reddedilebilir. Azami kuyruk uzunluğunu <command>listen</command> işlevinin bir argümanı olarak belirtebilirsiniz; yine de sistem kuyruk uzunluğu için kendi iç sınırını baskın kılabilir.
+    </para><para id="glibc-accept">
+<indexterm scope="glibc-fn"><primary>accept</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>int <command>accept</command></funcdef>
+<paramdef>(int              <varname>soket</varname>,
+ struct sockaddr *<varname>adres</varname>,
+ socklen_t       *<varname>uzunluk_gstr</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+Bu işlev <varname>soket</varname> sunucu soketindeki bir bağlantı isteğini kabul etmek için kullanılır.
+    </para><para>
+<command>accept</command> işlevi, <varname>soket</varname> soketi için baskılanamayan kip seçilmediği sürece, süren bir bağlantı yoksa bekler. (baskılanamayan soketlerde de <command>select</command> işlevini kullanarak süren bağlantıların bitmesini beklemek mümkündür.) <xref linkend="glibc-File-Status-Flags"/>, baskılanamayan kip hakkında bilgi içerir.
+    </para><para>
+<varname>adres</varname> ve <varname>uzunluk_gstr</varname> argümanları bağlantıyı başlatan istemci soketinin ismi hakkında bilgi döndürür. Bilginin biçimi hakkında bilgi edinmek için <xref linkend="glibc-Socket-Addresses"/> bölümüne bakınız.
+    </para><para>
+Bağlantının kabul edilmesi ile bağlantı <varname>soket</varname> soketinden yapılmaz. Bunun yerine, bağlantı yapılacak yeni bir soket oluşturulur. <command>accept</command> işlevinin normal dönüş değeri yeni soketin dosya tanımlayıcısıdır.
+    </para><para>
+<command>accept</command> işlevinin ardından,  <varname>soket</varname> soketi bağlantısız ve açık olarak kalır ve kapatılıncaya kadar dinlemeye devam eder.  <varname>soket</varname> ile accept işlevini tekrar çağırarak başka bağlantılar kabul edebilirsiniz.
+    </para><para>
+Hata oluşursa accept <command>-1</command> döndürür. Aşağıdaki <command>errno</command> hata durumları bu işlev için tanımlanmıştır:
+      </para><para>
+       <variablelist><varlistentry><term><literal>EBADF</literal></term>
+       <listitem><para><varname>soket</varname> soketi geçerli bir dosya tanımlayıcı değil.
+       </para></listitem>
+       </varlistentry><varlistentry><term><literal>ENOTSOCK</literal></term>
+       <listitem><para><varname>soket</varname> dosya tanımlayıcısı bir soket değil.
+       </para></listitem>
+       </varlistentry><varlistentry><term><literal>EOPNOTSUPP</literal></term>
+       <listitem><para><varname>soket</varname> dosya tanımlayıcısı bu işlemi desteklemiyor.
+       </para></listitem>
+       </varlistentry><varlistentry><term><literal>EWOULDBLOCK</literal></term>
+       <listitem><para><varname>soket</varname> soketi baskılanamayan kipte ve bekleyen  bir bağlantı yok.
+       </para></listitem></varlistentry></variablelist>
+      </para><para>
+Bu işlev çok evreli yazılımlar için iptal noktası olarak tanımlanmıştır, bu nedenle ayrılan özkaynakların (bellek, dosya tanımlayıcısı, semafor veya her hangi başka bir kaynak) evre iptal edilse dahi serbest bırakılmasının sağlanması şarttır.
+      </para><para>
+<command>accept</command> işlevi bağlantısız iletişim tarzlarını kullanan soketler için kullanılamaz.
+      </para></funcdescr></funcsynopsis>
+    </para>
+  </sect1><sect1 id="glibc-Who-is-Connected">
+    <title>Bana Kim Bağlı?</title>
+    <titleabbrev>Bağlantının diğer ucunun adresinin alınması.</titleabbrev>
+    <para id="glibc-getpeername">
+<indexterm scope="glibc-fn"><primary>getpeername</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>int <command>getpeername</command></funcdef>
+<paramdef>(int              <varname>soket</varname>,
+ struct sockaddr *<varname>adres</varname>,
+ socklen_t       *<varname>uzunluk_gstr</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+<command>getpeername</command> işlevi <varname>soket</varname>'in bağlı olduğu soket adresini döndürür; adresi <varname>adres</varname> ve <varname>uzunluk_gstr</varname> ile belirtilen bellek alanında saklar. Adresin uzunluğunu <literal>*</literal><varname>uzunluk_gstr</varname> içinde saklar.
+    </para><para>
+Adresin biçimi hakkında bilgi edinmek için <xref linkend="glibc-Socket-Addresses"/> bölümüne bakınız. Bazı işletim sistemlerinde, <command>getpeername</command> sadece İnternet etki alanında çalışır.
+    </para><para>
+<command>getpeername</command> işlevi başarı durumunda <command>0</command>, başarısızlıkta <command>-1</command> döndürür. Aşağıdaki <command>errno</command> hata durumları bu işlev için tanımlanmıştır:
+      </para><para>
+       <variablelist><varlistentry><term><literal>EBADF</literal></term>
+       <listitem><para><varname>soket</varname> soketi geçerli bir dosya tanımlayıcı değil.
+       </para></listitem>
+       </varlistentry><varlistentry><term><literal>ENOTSOCK</literal></term>
+       <listitem><para><varname>soket</varname> dosya tanımlayıcısı bir soket değil.
+       </para></listitem>
+       </varlistentry><varlistentry><term><literal>ENOTCONN</literal></term>
+       <listitem><para><varname>soket</varname> soketi bağlı değil.
+       </para></listitem>
+       </varlistentry><varlistentry><term><literal>ENOBUFS</literal></term>
+       <listitem><para>Dahili tamponlar yeterli değil.
+       </para></listitem></varlistentry></variablelist>
+      </para></funcdescr></funcsynopsis>
+    </para>
+  </sect1><sect1 id="glibc-Transferring-Data">
+    <title>Veri Aktarımı</title>
+    <titleabbrev>Veri nasıl gönderilip alınır.</titleabbrev>
+    <para>
+<indexterm scope="glibc-cp"><primary>soketler</primary><secondary>okuma</secondary></indexterm>
+<indexterm scope="glibc-cp"><primary>soketler</primary><secondary>yazma</secondary></indexterm>
+Soket bir kez karşıya bağlandığında, veri aktarımı için sıradan <wordasword>okuma</wordasword> ve <wordasword>yazma</wordasword> işlemleri (<xref  linkend="glibc-I-O-Primitives"/>) yapabilirsiniz. Bir soket iki yönlü haberleşme kanalıdır, böylece okuma ve yazma işlemleri her iki uçta da gerçekleştirilebilir.
+    </para><para>
+Soket işlemlerine özgü bazı G/Ç kipleri de vardır. Bu kipleri belirtmek için, <command>recv</command> ve <command>send</command> işlevlerini daha genel olan <command>read</command> ve <command>write</command> işlevleri yerine kullanmanız gerekir. <command>recv</command> ve <command>send</command>işlevleri, özel G/Ç kiplerini kontrol etmek için çeşitli bayrakları belirtebileceğiniz, ek bir argüman alırlar. Örneğin, <command>MSG_OOB</command> bayrağını belirterek sırasız veri okuyup yazabilirsiniz, <command>MSG_PEEK</command> bayrağını girdiyi gözetlemek için,  <command>MSG_DONTROUTE</command> bayrağını yönlendirme bilgisinin çıktıda içerilmesini kontrol için kullanabilirsiniz.
+    </para>
+    <sect2 id="glibc-Sending-Data">
+      <title>Veri Gönderimi</title>
+      <titleabbrev>Verinin <command>send</command> ile gönderilmesi.</titleabbrev>
+      <para>
+<indexterm scope="glibc-pg"><primary>sys/socket.h</primary></indexterm>
+<command>send</command> işlevi <filename>sys/socket.h</filename> başlık dosyası içinde tanımlıdır. Eğer <varname>bayraklar</varname> argümanınız sıfır ise, <command>send</command> yerine <command>write</command> kullanabilirsiniz; bkz. <xref linkend="glibc-I-O-Primitives"/>. Eğer soket bağlıyken bağlantısı koptuysa, <command>send</command> veya <command>write</command>'ın her hangi bir kullanımı için <link linkend="glibc-Miscellaneous-Signals"><command>SIGPIPE</command></link> sinyalini alırsınız.
+     </para><para id="glibc-send">
+<indexterm scope="glibc-fn"><primary>send</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>int <command>send</command></funcdef>
+<paramdef>(int    <varname>soket</varname>,
+ void  *<varname>tampon</varname>,
+ size_t <varname>boyut</varname>,
+ int    <varname>bayraklar</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+<command>send</command> işlevi <link linkend="glibc-write"><command>write</command></link> gibidir, ancak fazladan <varname>bayraklar</varname> argümanına sahiptir. Olası bayrak değerleri <xref linkend="glibc-Socket-Data-Options"/> bölümünde anlatılmıştır.
+     </para><para>
+Bu işlev aktarılan bayt miktarı ile veya hata durumunda <command>-1</command> ile döner. Soket baskılanamayan kipteyse <command>send</command> (<command>write</command> gibi) verinin henüz bir kısmını gönderdikten sonra dönebilir. Baskılanamayan kip hakkında daha fazla bilgi için <xref linkend="glibc-File-Status-Flags"/> bölümüne bakınız.
+     </para><para>
+Unutmayalım ki, başarılı bir dönüş değeri her ne kadar verinin hatasız bir şekilde gönderildiğini belirtse de, hatasız bir şekilde alındığını belirtmez.
+     </para><para>
+Aşağıdaki <command>errno</command> hata durumları bu işlev için tanımlanmıştır:
+      </para><para>
+        <variablelist><varlistentry><term><literal>EBADF</literal></term>
+        <listitem><para><varname>soket</varname> soketi geçerli bir dosya tanımlayıcı değil.
+        </para></listitem>
+        </varlistentry><varlistentry><term><literal>EINTR</literal></term>
+        <listitem><para>Veri gönderilmeden önce işlem bir sinyal tarafından kesildi. Bkz. <xref linkend="glibc-Interrupted-Primitives"/>.
+        </para></listitem>
+        </varlistentry><varlistentry><term><literal>ENOTSOCK</literal></term>
+        <listitem><para><varname>soket</varname> dosya tanımlayıcısı bir soket değil.
+        </para></listitem>
+        </varlistentry><varlistentry><term><literal>EMSGSIZE</literal></term>
+        <listitem><para>Soket türü verinin bütün olarak gönderilmesini gerektiriyor, fakat veri bunun olması için çok büyük.
+        </para></listitem>
+        </varlistentry><varlistentry><term><literal>EWOULDBLOCK</literal></term>
+        <listitem><para>Soket baskılanamayan kipte ve yazma işlemi soketi baskılar. (Normalde <command>send</command> işlem bitinceye kadar soketi baskılar.)
+        </para></listitem>
+        </varlistentry><varlistentry><term><literal>ENOBUFS</literal></term>
+        <listitem><para>Yeterli dahili tampon alanı yok.
+        </para></listitem>
+        </varlistentry><varlistentry><term><literal>ENOTCONN</literal></term>
+        <listitem><para>Bu sokete hiç bağlanmadınız.
+        </para></listitem>
+        </varlistentry><varlistentry><term><literal>EPIPE</literal></term>
+        <listitem><para> Bu soket bağlıydı ancak bağlantı koptu. Bu durumda, <command>send</command> öncelikle bir <command>SIGPIPE</command> sinyali üretir; sinyal ihmal edilir veya baskılanırsa ya da bu sinyalin yakalayıcısı dönerse <command>send</command> işlevi <command>EPIPE</command> hatası ile sonlanır.
+        </para></listitem></varlistentry></variablelist>
+       </para><para>
+Bu işlev çok evreli yazılımlar için iptal noktası olarak tanımlanmıştır, bu nedenle ayrılan özkaynakların (bellek, dosya tanımlayıcısı, semafor veya her hangi başka bir kaynak) evre iptal edilse dahi serbest bırakılmasının sağlanması şarttır.
+      </para></funcdescr></funcsynopsis>
+    </para></sect2>
+    <sect2 id="glibc-Receiving-Data">
+      <title>Veri Alımı</title>
+      <titleabbrev>Verinin <command>recv</command> ile okunması.</titleabbrev>
+      <para>
+<indexterm scope="glibc-pg"><primary>sys/socket.h</primary></indexterm>
+<command>recv</command> işlevi <filename>sys/socket.h</filename> başlık dosyası içinde tanımlıdır. Eğer <varname>bayraklar</varname> argümanlarınız sıfırsa, <command>recv</command> yerine <command>read</command> kullanabilirsiniz; bkz. <xref linkend="glibc-I-O-Primitives"/>.
+     </para><para id="glibc-recv">
+<indexterm scope="glibc-fn"><primary>recv</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>int <command>recv</command></funcdef>
+<paramdef>(int    <varname>soket</varname>,
+ void  *<varname>tampon</varname>,
+ size_t <varname>boyut</varname>,
+ int    <varname>bayraklar</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+<command>recv</command> işlevi <link linkend="glibc-read"><command>read</command></link> gibidir, ancak fazladan <varname>bayraklar</varname> argümanına sahiptir. Olası bayrak değerleri <xref linkend="glibc-Socket-Data-Options"/> bölümünde anlatılmıştır.
+     </para><para>
+Eğer <varname>soket</varname> için baskılanamayan kip seçildiyse ve okunacak veri yoksa, <command>recv</command> beklemeden hemen sonlanır. Baskılanamayan kip hakkında daha fazla bilgi için <xref linkend="glibc-File-Status-Flags"/> bölümüne bakınız.
+     </para><para>
+Bu işlev aktarılan bayt miktarı ile veya hata durumunda <command>-1</command> ile döner. Aşağıdaki <command>errno</command> hata durumları bu işlev için tanımlanmıştır:
+      </para><para>
+        <variablelist><varlistentry><term><literal>EBADF</literal></term>
+        <listitem><para><varname>soket</varname> soketi geçerli bir dosya tanımlayıcı değil.
+        </para></listitem>
+        </varlistentry><varlistentry><term><literal>ENOTSOCK</literal></term>
+        <listitem><para><varname>soket</varname> dosya tanımlayıcısı bir soket değil.
+        </para></listitem>
+        </varlistentry><varlistentry><term><literal>EWOULDBLOCK</literal></term>
+        <listitem><para>Soket baskılanamayan kipte ve okuma işlemi soketi baskılar. (Normalde <command>recv</command> okunacak girdi oluncaya kadar soketi baskılar.)
+        </para></listitem>
+        </varlistentry><varlistentry><term><literal>EINTR</literal></term>
+        <listitem><para>Veri okunmadan önce işlem bir sinyal tarafından kesildi. Bkz. <xref linkend="glibc-Interrupted-Primitives"/>.
+        </para></listitem>
+        </varlistentry><varlistentry><term><literal>ENOTCONN</literal></term>
+        <listitem><para> Bu sokete hiç bağlanmadınız.
+        </para></listitem></varlistentry></variablelist>
+       </para><para>
+Bu işlev çok evreli yazılımlar için iptal noktası olarak tanımlanmıştır, bu nedenle ayrılan özkaynakların (bellek, dosya tanımlayıcısı, semafor veya her hangi başka bir kaynak) evre iptal edilse dahi serbest bırakılmasının sağlanması şarttır.
+      </para></funcdescr></funcsynopsis>
+    </para></sect2>
+    <sect2 id="glibc-Socket-Data-Options">
+      <title>Soket Verisi Seçenekleri</title>
+      <titleabbrev><command>send</command> ve <command>recv</command> kullanımı.</titleabbrev>
+      <para>
+<indexterm scope="glibc-pg"><primary>sys/socket.h</primary></indexterm>
+<command>send</command> ve <command>recv</command> işlevlerindeki <varname>bayraklar</varname> argümanı bir bit maskesidir. Aşağıdaki makroların değerlerini bit bit VEYAlayarak bu argüman için değer elde edebilirsiniz. Hepsi <filename>sys/socket.h</filename> başlık dosyası içinde tanımlıdır.
+     </para><para id="glibc-MSG_OOB">
+<indexterm scope="glibc-vr"><primary>MSG_OOB</primary></indexterm>
+<funcsynopsis><funcprototype role="makro">
+<funcdef>int <command>MSG_OOB</command></funcdef>
+<paramdef></paramdef>
+</funcprototype><funcdescr><para>
+Sırasız veri gönderilir ve alınır; bkz. <xref linkend="glibc-Out-of-Band-Data"/>.
+</para></funcdescr></funcsynopsis></para><para id="glibc-MSG_PEEK">
+<indexterm scope="glibc-vr"><primary>MSG_PEEK</primary></indexterm>
+<funcsynopsis><funcprototype role="makro">
+<funcdef>int <command>MSG_PEEK</command></funcdef>
+<paramdef></paramdef>
+</funcprototype><funcdescr><para>
+Veriye bakılır ancak girdi kuyruğundan çıkarılmaz. Bu sadece <command>recv</command> gibi girdi işlevleri için anlamlıdır (<command>send</command> ile anlamlı değildir).
+</para></funcdescr></funcsynopsis></para><para id="glibc-MSG_DONTROUTE">
+<indexterm scope="glibc-vr"><primary>MSG_DONTROUTE</primary></indexterm>
+<funcsynopsis><funcprototype role="makro">
+<funcdef>int <command>MSG_DONTROUTE</command></funcdef>
+<paramdef></paramdef>
+</funcprototype><funcdescr><para>
+Yönlendirme bilgisi iletinin içinde bulunmaz. Bu sadece çıktı işlevlerinde anlamlıdır ve genellikle sadece tanı veya yönlendirme amaçlı yazılımlarda kullanılır. Bunu burada anlatmaya çalışmayacağız.
+      </para></funcdescr></funcsynopsis>
+    </para></sect2>
+  </sect1><sect1 id="glibc-Byte-Stream-Example">
+    <title>Bayt Akımlı Soket Örneği</title>
+    <titleabbrev>Örnek bir yazılım; Internet isim alanında bayt akımlı soket üzerinden haberleşen istemci.</titleabbrev>
+    <para>
+Burada Internet isim alanında bayt akımlı bir soket için bağlantı yapan örnek bir istemci yazılım görüyoruz; sunucuya bağlandıktan sonra sunucuya sadece bir dizge gönderip çıkmaktadır.
+    </para><para>
+Bu yazılım soket adresini ayarlamak için <command>init_sockaddr</command> kullanmaktadır; bkz. <xref linkend="glibc-Inet-Example"/>.
+    </para><para>
+<screen>
+#include &lt;stdio.h>
+#include &lt;errno.h>
+#include &lt;stdlib.h>
+#include &lt;unistd.h>
+#include &lt;sys/types.h>
+#include &lt;sys/socket.h>
+#include &lt;netinet/in.h>
+#include &lt;netdb.h>
+
+#define PORT            5555
+#define MESSAGE         "Alooo!! Hala egleniyor musun?!?"
+#define SERVERHOST      "mescaline.gnu.org"
+
+void
+write_to_server (int filedes)
+{
+  int nbytes;
+
+  nbytes = write (filedes, MESSAGE, strlen (MESSAGE) + 1);
+  if (nbytes &lt; 0)
+    {
+      perror ("write");
+      exit (EXIT_FAILURE);
+    }
+}
+
+
+int
+main (void)
+{
+  extern void init_sockaddr (struct sockaddr_in *name,
+                              const char *hostname,
+                              uint16_t port);
+  int sock;
+  struct sockaddr_in servername;
+
+  /* Soketi oluşturalım. */
+  sock = socket (PF_INET, SOCK_STREAM, 0);
+  if (sock &lt; 0)
+    {
+      perror ("socket (client)");
+      exit (EXIT_FAILURE);
+    }
+
+  /* Sunucuya bağlanalım. */
+  init_sockaddr (&amp;servername, SERVERHOST, PORT);
+  if (0 > connect (sock,
+                    (struct sockaddr *) &amp;servername,
+                    sizeof (servername)))
+    {
+      perror ("connect (client)");
+      exit (EXIT_FAILURE);
+    }
+
+  /* Sunucuya veriyi gönderelim. */
+  write_to_server (sock);
+  close (sock);
+  exit (EXIT_SUCCESS);
+}
+</screen></para></sect1>
+  <sect1 id="glibc-Server-Example">
+    <title>Bayt Akımlı Bağlantı Sunucusu Örneği</title>
+    <titleabbrev>Böyle bir sunucu yazılımı.</titleabbrev>
+    <para>
+Sunucu tarafı daha karmaşıktır. Aynı anda ço sayıda istemcinin sunucuya bağlı kalmasını istediğimiz için, basitçe <command>read</command> veya <command>recv</command> işlevini çağırarak tek bir istemciden girdi beklemek doğru olmaz. Yapılması gereken şey <command>select</command> işlevini (<xref linkend="glibc-Waiting-for-I-O"/>) kullanarak açık olan bütün soketlerden girdi beklemektir. Bu sunucuya ilave bağlantı istekleriyle ilgilenme imkanı da verir.
+    </para><para>
+Bu sunucu istemciden bir ileti aldığında ilgi çekecek hiç bir şey yapmaz. Dosya sonu durumunu algıladığında o istemci için soketi kapatır (bu aynı zamanda istemcinin de soketi kapatmasına neden olur).
+    </para><para>
+Bu yazılım soket adresini ayarlamak için <command>make_socket</command>'i  kullanır; bkz. <xref linkend="glibc-Inet-Example"/>.
+    </para><para>
+<screen>
+#include &lt;stdio.h>
+#include &lt;errno.h>
+#include &lt;stdlib.h>
+#include &lt;unistd.h>
+#include &lt;sys/types.h>
+#include &lt;sys/socket.h>
+#include &lt;netinet/in.h>
+#include &lt;netdb.h>
+
+#define PORT    5555
+#define MAXMSG  512
+
+int
+read_from_client (int filedes)
+{
+  char buffer[MAXMSG];
+  int nbytes;
+
+  nbytes = read (filedes, buffer, MAXMSG);
+  if (nbytes &lt; 0)
+    {
+      /* Okuma hatası. */
+      perror ("read");
+      exit (EXIT_FAILURE);
+    }
+  else if (nbytes == 0)
+    /* Sosya sonu. */
+    return -1;
+  else
+    {
+      /* Veri okundu. */
+      fprintf (stderr, "Sunucu: gelen ileti: `%s'\n", buffer);
+      return 0;
+    }
+}
+
+int
+main (void)
+{
+  extern int make_socket (uint16_t port);
+  int sock;
+  fd_set active_fd_set, read_fd_set;
+  int i;
+  struct sockaddr_in clientname;
+  size_t size;
+
+  /* Soketi oluşturalım ve bağlantıları kabul etmesi için ayarlayalım. */
+  sock = make_socket (PORT);
+  if (listen (sock, 1) &lt; 0)
+    {
+      perror ("listen");
+      exit (EXIT_FAILURE);
+    }
+
+  /* Etkin soketleri ilklendirelim. */
+  FD_ZERO (&amp;active_fd_set);
+  FD_SET (sock, &amp;active_fd_set);
+
+  while (1)
+    {
+      /* Etkin soketlerden bilgi gelene kadar baskılayalım. */
+      read_fd_set = active_fd_set;
+      if (select (FD_SETSIZE, &amp;read_fd_set, NULL, NULL, NULL) &lt; 0)
+        {
+          perror ("select");
+          exit (EXIT_FAILURE);
+        }
+
+      /* Girdi bekleyerek bütün soketleri hizmete sokalım. */
+      for (i = 0; i &lt; FD_SETSIZE; ++i)
+        if (FD_ISSET (i, &amp;read_fd_set))
+          {
+            if (i == sock)
+              {
+                /* Dinlenen sokette bağlantı isteği var. */
+                int new;
+                size = sizeof (clientname);
+                new = accept (sock,
+                              (struct sockaddr *) &amp;clientname,
+                              &amp;size);
+                if (new &lt; 0)
+                  {
+                    perror ("accept");
+                    exit (EXIT_FAILURE);
+                  }
+                fprintf (stderr,
+                          "Sunucu: Konak %s, %hd. portundan baglaniyor\n",
+                          inet_ntoa (clientname.sin_addr),
+                          ntohs (clientname.sin_port));
+                FD_SET (new, &amp;active_fd_set);
+              }
+            else
+              {
+                /* Bağlı olan sokete veri ulaşıyor. */
+                if (read_from_client (i) &lt; 0)
+                  {
+                    close (i);
+                    FD_CLR (i, &amp;active_fd_set);
+                  }
+              }
+          }
+    }
+}
+</screen></para></sect1>
+  <sect1 id="glibc-Out-of-Band-Data">
+    <title>Bantdışı Veri Aktarımı</title>
+    <titleabbrev>Önceliği olan bir özellik.</titleabbrev>
+    <para>
+<indexterm scope="glibc-cp"><primary>bantdışı veri</primary></indexterm>
+<indexterm scope="glibc-cp"><primary>soketler</primary><secondary>öncelikli veri</secondary></indexterm>
+<indexterm scope="glibc-cp"><primary>soketler</primary><secondary>bantdışı veri</secondary></indexterm>
+Bağlantılı akımlar, sıradan veriye nazaran teslim edilme önceliğine sahip <wordasword>bantdışı veri</wordasword> aktarımına izin vermektedir. Bantdışı veri gönderiminin asıl kullanılma nedeni, özel durumlarda uyarı gönderme ihtiyacıdır. Bantdışı veri göndermek için <command>send</command> işlevini <command>MSG_OOB</command> bayrağıyla kullanınız (Bkz. <xref linkend="glibc-Sending-Data"/>).
+    </para><para>
+Bantdışı veriler yüksek öncelikle alınırlar çünkü alıcı işlem onu sırayla almak zorunda değildir; bir sonraki bantdışı veriyi okumak için, <command>recv</command> işlevini <command>MSG_OOB</command> bayrağıyla kullanınız (Bkz. <xref linkend="glibc-Receiving-Data"/>). Sıradan okuma işlemleri bantdışı veriyi okumazlar; sadece sıradan veriyi okurlar.
+    </para><para>
+<indexterm scope="glibc-cp"><primary>soketler</primary><secondary>acil durum</secondary></indexterm>
+Soket, bantdışı verinin geldiğini görünce, kendi sürecine ya da süreç grubuna <command>SIGURG</command> sinyalini gönderir. Soket sahibini <command>fcntl</command> işlevinde <command>F_SETOWN</command> komutunu  kullanarak belirtebilirsiniz; bkz. <xref linkend="glibc-Interrupt-Input"/>. Bantdışı veriyi okuma gereksinimi gibi bir durumda uygun hareketi yapmak için bu sinyalin yakalayıcısını kurmanız gerekir, bkz. <xref linkend="glibc-Signal-Handling"/>.
+    </para><para>
+Diğer bir seçenek olarak,  sokette özel durum oluşması için bekleyebilen <command>select</command> işlevini kullanarak bantdışı veri olana kadar bekleyebilir ya da bekleyen bantdışı veri var mı diye bakabilirsiniz.  <command>select</command> işlevi hakkında daha fazla bilgi için <xref linkend="glibc-Waiting-for-I-O"/> bölümüne bakınız.
+    </para><para>
+Bantdışı verinin bildirilmesi (<command>SIGURG</command> veya <command>select</command> ile) bantdışı verinin gelmek üzere olduğunu gösterir; veri daha sonra ulaşabilir. Eğer bantdışı veriyi daha gelmeden okumaya çalışırsanız, <command>recv</command> işlevi <command>EWOULDBLOCK</command> hatası ile sonlanır.
+    </para><para>
+Bantdışı veri gönderilince, akımdaki sıradan veri otomatik olarak "im"lenir, ki bu da bant-dışı verinin "ne durumda olabileceğini" gösterir. Bu bantdışı verinin anlamı "şimdiye kadar gönderdiklerimi iptal et" ise kullanışlıdır. Buradaki alıcı işlemde, imlenmeden önce sıradan verinin gönderilip gönderilmediğini sınayabilirsiniz:
+    </para><para>
+<screen>success = ioctl (socket, SIOCATMARK, &amp;imgeldi);</screen>
+    </para><para>
+Eğer soketin okuma göstericisine "im" ulaştıysa bir tamsayı değişken olan <varname>imgeldi</varname> sıfır olmayan bir değer yapılır.
+    </para><para>
+Burada bantdışı iminden önce gelen sıradan veriyi iptal eden bir işlev görüyoruz:
+    </para><para>
+<screen>
+int
+discard_until_mark (int soket)
+{
+  while (1)
+    {
+      /* Bu isteğe bağlı bir sınır değildir; herhangi bir büyüklük olabilir.  */
+      char tampon[1024];
+      int imgeldi, tamam;
+
+      /* İm geldiyse işlev dönsün.  */
+      tamam = ioctl (soket, SIOCATMARK, &amp;imgeldi);
+      if (tamam &lt; 0)
+        perror ("ioctl");
+      if (imgeldi)
+        return;
+
+      /* Aksi takdirde, bir miktar sıradan veriyi oku ve iptal et.
+         Bu imden sonrasını okumamayı garantiler
+         tabii ki imden önce başlıyorsa.  */
+      tamam = read (soket, tampon, sizeof(tampon));
+      if (tamam &lt; 0)
+        perror ("read");
+    }
+}
+</screen></para><para>
+Eğer imden önceki veriyi iptal etmek istemiyorsanız, belki de bantdışı veriye sistem içi tampon bölgesinde yer açmak için bir kısmını okumak istersiniz. Eğer bantdışı veriyi okumaya çalışır ve <command>EWOULDBLOCK</command> hatası alırsanız, bir miktar sıradan veriyi okumaya çalışın (kaydederek daha sonra istediğinizde kullanabilirsiniz) ve yer açıldığını görün. Örnek:
+    </para><para>
+<screen>
+struct tampon
+{
+  char *tmp;
+  int boyut;
+  struct tampon *sonraki;
+};
+
+/* Bantdışı veriyi SOKET'ten oku ve verinin adresini ve
+   büyüklüğünü `struct tampon' içinde döndür.
+
+   Bantdışı veriye yer açmak için bir miktar sıradan veriyi okumak gerekebilir.
+   Bu durumda, sıradan veri 'sonraki' alanında bulunan
+   bir tamponlar zincirine kaydedilir.  */
+
+struct tampon *
+read_oob (int soket)
+{
+  struct tampon *son = 0;
+  struct tampon *liste = 0;
+
+  while (1)
+    {
+      /* Bu keyfi bir sınırdır.
+         Bunu sınırsız yapmayı bilen birileri var mı?  */
+#define BOYUT 1024
+      char *tamp = (char *) xmalloc (BOYUT);
+      int tamam;
+      int imgeldi;
+
+      /* Bantdışı veriyi bir daha okumaya çalışalım.  */
+      tamam = recv (soket, tamp, BOYUT, MSG_OOB);
+      if (tamam >= 0)
+        {
+          /* Artık elimizde, döndürüyoruz.  */
+          struct tampon *veri
+            = (struct buffer *) xmalloc (sizeof (struct tampon));
+          veri->tmp = tamp;
+          veri->boyut = tamam;
+          veri->sonraki = liste;
+          return veri;
+        }
+
+      /* Yoksa, imin gelip gelmediğine bakalım.  */
+      tamam = ioctl (soket, SIOCATMARK, &amp;imgeldi);
+      if (tamam &lt; 0)
+        perror ("ioctl");
+      if (imgeldi)
+        {
+          /* İm gelmiş; geriye kalan sıradan verinin faydası olmaz.
+             Bir süre bekleyelim.   */
+          sleep (1);
+          continue;
+        }
+
+      /* Aksi takdirde, bir miktar sıradan veriyi okuyup kaydedelim.
+         Bu imden sonrasını okumamayı garantiler
+         tabii ki imden önce başlıyorsa.  */
+      tamam = read (soket, tamp, BOYUT);
+      if (tamam &lt; 0)
+        perror ("read");
+
+      /* Bu veriyi tampon listesine kaydedelim.  */
+      {
+        struct tampon *veri
+          = (struct tampon *) xmalloc (sizeof (struct tampon));
+        veri->tmp = tamp;
+        veri->boyut = tamam;
+
+        /* Yeni veriyi listenin sonuna ekleyelim.  */
+        if (son)
+          son->sonraki = veri;
+        else
+          liste = veri;
+
+        son = veri;
+      }
+    }
+}
+</screen></para></sect1></chapter>
+<chapter id="glibc-Datagrams">
+  <title>Datagram Soket İşlemleri</title>
+  <titleabbrev>Bağlantısız soketlerle işlemler</titleabbrev>
+  <para>
+<indexterm scope="glibc-cp"><primary>datagramlar</primary><secondary>dtagram soketi</secondary></indexterm>
+Bu bölüm bağlantı kullanmayan iletişim tarzlarının (<command>SOCK_DGRAM</command> ve <command>SOCK_RDM</command> tarzları) nasıl kullanıldığını anlatır. Bu tarzların kullanımında veri paketler içerisinde gruplanır ve her paket bağımsız birer iletişim sağlar. Her paket için hedef adresi belitmeniz gerekir.
+   </para><para>
+Datagram paketleri mektuplara benzer: her birini bağımsız olarak kendi hedef adresleriyle gönderirsiniz ve onlar yanlış sırayla ulaşabilirler veya ulaşamazlar.
+   </para><para>
+<command>listen</command> ve <command>accept</command> işlevleri soketlerde bağlantısız iletişim tarzlarında kullanılamazlar.
+  </para>
+  <sect1 id="glibc-Sending-Datagrams">
+    <title>Datagramların Gönderilmesi</title>
+    <titleabbrev>Bir datagram soketinde paketlerin gönderimi.</titleabbrev>
+    <para>
+<indexterm scope="glibc-cp"><primary>datagramlar</primary><secondary>gönderilmesi</secondary></indexterm>
+<indexterm scope="glibc-cp"><primary>datagramlar</primary><secondary>aktarılması</secondary></indexterm>
+<indexterm scope="glibc-pg"><primary>sys/socket.h</primary></indexterm>
+Datagram soketinden veri gönderiminin normal yolu <filename>sys/socket.h</filename> içinde tanımlı <command>sendto</command> işlevini kullanmaktır.
+    </para><para>
+Bir datagram soketi üzerinde <command>connect</command> işlevini çağırabilirsiniz, fakat bu sadece soket üzerinden veri aktarımları için öntanımlı hedefi belirler. Bir soketin bir öntanımlı adresi olduğunda oraya <command>send</command> (<xref linkend="glibc-Sending-Data"/>) veya <command>write</command> (<xref linkend="glibc-I-O-Primitives"/>) kullanarak paket gönderebilirsiniz. Öntanımlı hedefi, <varname>adres</varname> argümanında <command>AF_UNSPEC</command> adres biçimiyle <command>connect</command> işlevini çağırarak iptal edebilirsiniz. <command>connect</command> işlevi hakkında daha fazla bilgi için <xref linkend="glibc-Connecting"/> bölümüne bakınız.
+    </para><para id="glibc-sendto">
+<indexterm scope="glibc-fn"><primary>sendto</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>int <command>sendto</command></funcdef>
+<paramdef>(int              <varname>soket</varname>,
+ void            *<varname>tampon</varname>,
+ size_t           <varname>boyut</varname>,
+ int              <varname>bayraklar</varname>,
+ struct sockaddr *<varname>adres</varname>,
+ socklen_t        <varname>uzunluk</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+<command>sendto</command> işlevi <varname>tampon</varname> içindeki veriyi,  <varname>soket</varname> soketi üzerinden, <varname>adres</varname> ve <varname>uzunluk</varname> argümanlarıyla belirtilmiş hedef adresine aktarır. <varname>boyut</varname> argümanı aktarılacak bayt sayısını belirtir.
+    </para><para>
+<varname>bayraklar</varname> argümanı <command>send</command> işlevindeki gibi yorumlanır; bkz. <xref linkend="glibc-Socket-Data-Options"/>.
+    </para><para>
+Dönüş değeri ve hata durumları da <command>send</command> işlevindeki gibidir, fakat hataların algılanması ve raporlanması için sisteme güvenemezsiniz; en sık rastlanan hata paket kaybolması veya belirtilen adreste onu alıcının bulunmamasıdır ve makinenizdeki işletim sisteminin genelde bundan haberi yoktur.
+    </para><para>
+<command>sendto</command> işlevinden bir önceki çağrıya ilişkin sorunları raporlaması istenebilir.
+    </para><para>
+Bu işlev çok evreli yazılımlar için iptal noktası olarak tanımlanmıştır, bu nedenle ayrılan özkaynakların (bellek, dosya tanımlayıcısı, semafor veya her hangi başka bir kaynak) evre iptal edilse dahi serbest bırakılmasının sağlanması şarttır.
+      </para></funcdescr></funcsynopsis>
+    </para>
+  </sect1><sect1 id="glibc-Receiving-Datagrams">
+    <title>Datagramların Alınması</title>
+    <titleabbrev>Bir datagram soketinde paketlerin alımı.</titleabbrev>
+    <para>
+<indexterm scope="glibc-cp"><primary>datagramlar</primary><secondary>alınması</secondary></indexterm>
+<indexterm scope="glibc-pg"><primary>sys/socket.h</primary></indexterm>
+<command>recvfrom</command> işlevi datagram soketinden bir paket okur ve ek olarak nereden gönderilmiş olduğunu söyler. Bu işlev <filename>sys/socket.h</filename> içinde tanımlıdır.
+    </para><para id="glibc-recvfrom">
+<indexterm scope="glibc-fn"><primary>recvfrom</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>int <command>recvfrom</command></funcdef>
+<paramdef>(int              <varname>soket</varname>,
+ void            *<varname>tampon</varname>,
+ size_t           <varname>boyut</varname>,
+ int              <varname>bayraklar</varname>,
+ struct sockaddr *<varname>adres</varname>,
+ socklen_t       *<varname>uzunluk_gstr</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+<command>recvfrom</command> işlevi <varname>soket</varname> soketinden bir paketi <varname>tampon</varname> alanına okur. <varname>boyut</varname> argümanı okunacak azami bayt sayısını belirtir.
+    </para><para>
+Eğer paket <varname>boyut</varname> bayttan uzunsa, paketin ilk <varname>boyut</varname> baytı alınır ve paketin geri kalanı kaybolur. Paketin gerisini okumanın hiç bir yolu yoktur. Bu nedenle, bir paket protokolü kullandığınızda, paketin ne uzunlukta olacağını her zaman bilmeniz gerekir.
+    </para><para>
+<varname>adres</varname> ve <varname>uzunluk_gstr</varname> argümanları paketin geldiği yerin adresini döndürmek için kullanılır. Bkz. <xref linkend="glibc-Socket-Addresses"/>. Yerel etki alanındaki bir soket için adres bilgisi anlamlı değildir, çünkü böyle bir soketin adresini okuyamazsınız (Bkz. <xref linkend="glibc-Local-Namespace"/>). Bu bilgiyle ilgilenmiyorsanız <varname>adres</varname> argümanına boş gösterici belirtebilirsiniz.
+    </para><para>
+<varname>bayraklar</varname> argümanı <command>recv</command> işlevindeki gibi yorumlanır (bkz. <xref linkend="glibc-Socket-Data-Options"/>). Dönüş değeri ve hata durumları da <command>recv</command> işlevi ile aynıdır.
+    </para><para>
+Bu işlev çok evreli yazılımlar için iptal noktası olarak tanımlanmıştır, bu nedenle ayrılan özkaynakların (bellek, dosya tanımlayıcısı, semafor veya her hangi başka bir kaynak) evre iptal edilse dahi serbest bırakılmasının sağlanması şarttır.
+       </para></funcdescr></funcsynopsis></para><para>
+Paketi kimin gönderdiğini bulmak istemiyorsanız <command>recvfrom</command> yerine sadece <command>recv</command> işlevini de (bkz. <xref linkend="glibc-Receiving-Data"/>) kullanabilirsiniz (çünkü paketin nereden gelmesi gerektiğini biliyor olabilirsiniz). Hatta <varname>bayraklar</varname> argümanını belirtmek istemezseniz <command>read</command> işlevi bile kullanılabilir (bkz. <xref linkend="glibc-I-O-Primitives"/>).
+    </para>
+  </sect1><sect1 id="glibc-Datagram-Example">
+    <title>Datagram Soket Örneği</title>
+    <titleabbrev>Örnek bir yazılım: yerel isim alanı içindeki datagram soketi üzerinden paket gönderimi.</titleabbrev>
+    <para>
+Burada yerel isim alanındaki datagram akımı üzerinden veri gönderen bir grup örnek bulunmaktadır. Hem istemci hem de sunucu yazılımları <xref linkend="glibc-Local-Socket-Example"/> içinde gösterilen<command>make_named_socket</command> işlevini kendi soketlerini oluşturmak ve isimlendirmek için kullanmaktadır.
+    </para><para>
+Öncelikle sunucu yazılımını görüyoruz. Gelecek veriler için bir döngü içerisinde beklemekte ve gelen veri gerisin geriye göndericiye iletilmektedir. Tabii ki bu işe yarar bir yazılım değil, fakat ana fikri vermektedir.
+    </para><para>
+<screen>
+#include &lt;stdio.h>
+#include &lt;errno.h>
+#include &lt;stdlib.h>
+#include &lt;sys/socket.h>
+#include &lt;sys/un.h>
+
+#define SERVER  "/tmp/serversocket"
+#define MAXMSG  512
+
+int
+main (void)
+{
+  int sock;
+  char message[MAXMSG];
+  struct sockaddr_un name;
+  size_t size;
+  int nbytes;
+
+  /* Öncelikle dosya ismini kaldıralım,
+     eğer isim yoksa bir sorun yok */
+  unlink (SERVER);
+
+  /* Soketi oluşturup sonsuz döngüye girelim. */
+  sock = make_named_socket (SERVER);
+  while (1)
+    {
+      /* Bir datagram bekliyoruz */
+      size = sizeof (name);
+      nbytes = recvfrom (sock, message, MAXMSG, 0,
+                          (struct sockaddr *) &amp; name, &amp;size);
+      if (nbytes &lt; 0)
+        {
+          perror ("recfrom (server)");
+          exit (EXIT_FAILURE);
+        }
+
+      /* Bir tanı iletisi verelim */
+      fprintf (stderr, "Sunucu: alınan ileti: %s\n", message);
+
+      /* İletiyi göndericiye geri gönderelim. */
+      nbytes = sendto (sock, message, nbytes, 0,
+                        (struct sockaddr *) &amp; name, size);
+      if (nbytes &lt; 0)
+        {
+          perror ("sendto (server)");
+          exit (EXIT_FAILURE);
+        }
+    }
+}
+</screen></para></sect1>
+  <sect1 id="glibc-Example-Receiver">
+    <title>Datagramların Okunmasıyla İlgili Örnek</title>
+    <titleabbrev>Bu paketleri alan bir yazılım.</titleabbrev>
+    <para>
+Bu da önceki sunucuyla ilişkili istemci yazılımıdır.
+    </para><para>
+It sends a datagram to the server and then waits for a reply.  Notice that the socket for the client (as well as for the server) in this example has to be given a name.  This is so that the server can direct a message back to the client.  Since the socket has no associated connection state, the only way the server can do this is by referencing the name of the client.
+    </para><para>
+<screen>
+#include &lt;stdio.h>
+#include &lt;errno.h>
+#include &lt;unistd.h>
+#include &lt;stdlib.h>
+#include &lt;sys/socket.h>
+#include &lt;sys/un.h>
+
+#define SERVER  "/tmp/serversocket"
+#define CLIENT  "/tmp/mysocket"
+#define MAXMSG  512
+#define MESSAGE "Aloo!!! Adanaaa, Adana mi orasi?!?"
+
+int
+main (void)
+{
+  extern int make_named_socket (const char *name);
+  int sock;
+  char message[MAXMSG];
+  struct sockaddr_un name;
+  size_t size;
+  int nbytes;
+
+  /* Soketi oluşturalim. */
+  sock = make_named_socket (CLIENT);
+
+  /* Sunucu soket adresini ilklendirelim. */
+  name.sun_family = AF_LOCAL;
+  strcpy (name.sun_path, SERVER);
+  size = strlen (name.sun_path) + sizeof (name.sun_family);
+
+  /* Datagramı gönderelim. */
+  nbytes = sendto (sock, MESSAGE, strlen (MESSAGE) + 1, 0,
+                    (struct sockaddr *) &amp; name, size);
+  if (nbytes &lt; 0)
+    {
+      perror ("sendto (client)");
+      exit (EXIT_FAILURE);
+    }
+
+  /* Yanıt bekleyelim. */
+  nbytes = recvfrom (sock, message, MAXMSG, 0, NULL, 0);
+  if (nbytes &lt; 0)
+    {
+      perror ("recfrom (client)");
+      exit (EXIT_FAILURE);
+    }
+
+  /* Durumu bildirelim. */
+  fprintf (stderr, "İstemci: gelen ileti: %s\n", message);
+
+  /* Ortalığı temizleyelim. */
+  remove (CLIENT);
+  close (sock);
+}
+</screen></para><para>
+Datagram soket haberleşmesinin güvenilir olmadığını aklınızdan çıkarmayınız. Bu örnekte, istemci yazılım, ileti sunucuya ulaşmazsa veya sunucunun cevabı gelmezse sonsuza kadar bekler. Yazılımı sonlandırmak veya yeniden başlatmak çalıştıran kişiye kalmıştır. Daha özdevinimli bir çözüm ise <command>select</command> (<xref linkend="glibc-Waiting-for-I-O"/>) ile cevap için bir zaman aşımı belirtmek ve bu süre sonunda iletiyi tekrar göndermek veya soketi kapatarak çıkmaktır.
+    </para>
+  </sect1>
+</chapter>
+<chapter id="glibc-Inetd">
+  <title><literal>inetd</literal> Artalan Süreci</title>
+  <titleabbrev><command>inetd</command> istek geldiğinde sunucuyu başlatan bir artalan sürecidir(daemon). Bir sunucu yazmak için en uygun yol <command>inetd</command> ile çalışmasını sağlamaktır.</titleabbrev>
+  <para>
+Önceki bölümde kendi dinleme işlemini yapan bir sunucu yazılımınının nasıl yazıldığını anlattık. Bu tür bir sunucu bağlanacaklar için çalışıyor durumda olmalıdır.
+  </para><para>
+Bir Internet portunda bir hizmet sunmanın diğer bir yolu ise bir artalan süreç yazılımı olan <command>inetd</command>'nin dinlemesidir. <command>inetd</command>, sürekli çalışan ve belirli portlardan gelecek iletiler için bekleyen bir yazılımdır. Bir ileti aldığında, bağlantıyı kabul eder (eğer soket tarzı bağlantı kabul ediyorsa) ve ilgili sunucu yazılımını çalıştırmak için <command>fork</command> ile bir alt süreç oluşturur. Port ve ilgili programları <filename>/etc/inetd.conf</filename> dosyasında tanımlamalısınız.
+  </para>
+  <sect1 id="glibc-Inetd-Servers">
+    <title><literal>inetd</literal> Sunucuları</title>
+    <para>
+<command>inetd</command> ile çalışacak bir sunucu yazmak oldukça basittir. Her seferinde birileri uygun porttan bağlantı isteğinde bulunur ve yeni bir sunucu süreci başlar. Bu durumda bağlantı zaten vardır; soket, sunucu sürecinde standart girdi ve çıktı tanımlayıcısı (0 ve 1) olarak bulunmaktadır. Böylece sunucu yazılımı okuma ve yazma işlemlerine başlayabilir. Genelde yazılım sadece sıradan G/Ç imkanlarına ihtiyaç duyar; aslında, genel kullanıma yönelik, soketten birşey anlamayan bir filtreleme yazılımı <command>inetd</command> ile bayt akımlı sunucu olarak çalışabilir.
+    </para><para>
+<command>inetd</command>'yi aynı zamanda bağlantısız iletişim tarzlarını kullanan sunucular için de kullanabilirsiniz. Bu sunucular için, <command>inetd</command> bağlantı kabul etmeye çalışmaz çünkü bağlantı imkanı yoktur. Sadece, 0 tanımlayıcısından gelen datagram paketini okuyabilen sunucu yazılımınıı başlatır. Sunucu yazılımı bir isteği ele alıp sonra çıkabilir veya daha fazla istek gelmeden, yazmasını sağlayabilirsiniz. <command>inetd</command>'yi ayarlarken sunucunun kullandığı bu iki teknikten birini belirtmelisiniz.
+    </para>
+  </sect1><sect1 id="glibc-Configuring-Inetd">
+    <title><command>inetd</command> Yapılandırması</title>
+    <titleabbrev></titleabbrev>
+    <para>
+<filename>/etc/inetd.conf</filename> dosyası <command>inetd</command>'ye hangi portları dinleyeceğini ve bunlarda hangi sunucu yazılımlarını çalıştıracağını söyler. Normalde dosya içindeki her girdi bir satırdır, bunları çoklu satırlara bölmek isterseniz girdinin ilk satırını boşlukla başlatmanız gerekir. <command>#</command> ile başlayan satırlar açıklama satırlarıdır.
+    </para><para>
+Aşağıda <filename>/etc/inetd.conf</filename> dosyasından iki standart girdi görüyoruz:
+    </para><para>
+<screen>
+ftp     stream  tcp     nowait  root    /libexec/ftpd   ftpd
+talk    dgram   udp     wait    root    /libexec/talkd  talkd
+</screen></para><para>
+ Bir girdi aşağıdaki biçimdedir:
+    </para><para>
+<literallayout indent="0">
+    <varname>servis tarz protokol bekleme kullanıcı yazılım seçenekler</varname>
+</literallayout>
+    </para><para>
+<varname>servis </varname>alanı bu programın hangi servisi desteklediğini söyler. Bu <command>/etc/services</command> içinde tanımlı servis isimlerinden biri olmalıdır. <command>inetd</command>, <varname>servis</varname>i bu girdi için hangi portun dinleneceğine karar vermek için kullanır.
+    </para><para>
+<varname>tarz</varname> ve <varname>protokol</varname> alanları soketi dinlemek için kullanılan iletişim tarzını ve protokolünü belirler. <varname>tarz</varname>, küçük harflere çevrilmiş ve başındaki <command>SOCK_</command> kaldırılmış, <command>stream</command> veya <command>dgram</command> gibi bir iletişim tarzı adı olmalıdır. <varname>protokol</varname>, <filename>/etc/protocols</filename> içinde listelenen protokollerden biri olmalıdır. Tipik protokol isimleri bayt akımlı bağlantılar için <command>tcp</command> ve güvensiz datagramlar için <command>udp</command>'dir.
+    </para><para>
+<varname>bekleme</varname> alanı ya <command>wait</command> ya da <command>nowait</command> olmalıdır. Eğer bağlantısız iletişim tarzı kullanıyorsanız ve sunucu başladığında gelen çoklu istekler ele alınıyorsa <command>wait</command> kullanın. <command>inetd</command>'nin gelen her ileti veya istek için yeni bir süreç başlatması gerekiyorsa <command>nowait</command> kullanın. <varname>tarz</varname> bağlantıları kullanıyorsa, <varname>bekleme</varname> alanı <command>nowait</command> olmalıdır.
+    </para><para>
+<varname>kullanıcı</varname> sunucunun hangi kullanıcı altında çalışması gerektiğidir. <command>inetd root</command> olarak çalışır, böylece çocuklarına istediği kullanıcı kkimliğini verebilir. Yapabilirseniz, <varname>kullanıcı</varname> için <command>root</command> kullanmamak en iyisidir; fakat bazı sunucular, örneğin Telnet ve FTP, kendileri için kullanıcı adı ve parola okurlar. Bu sunucuların ilk başta <command>root</command> olmaları gerekir böylece ağ üzerinden gelen verinin yönlendirdiği şekilde giriş yapabilirler.
+    </para><para>
+<varname>seçenekler</varname> ile birlikte <varname>yazılım</varname> sunucuyu başlatacak komutu belirtir. <varname>yazılım</varname> çalıştırılabilir bir dosyanın tam dosya ismi olmalıdır. <varname>seçenekler</varname> boşluklarla ayrılmış her hangi sayıda sözcükten oluşur, ki bunlar <varname>yazılım</varname>'ın komut satırı seçenekleri olur. <varname>seçenekler</varname> içindeki ilk sözcüğün argüman numarası sıfırdır ve bu yazılım isminin kendisidir (dizinsiz olarak).
+    </para><para>
+<filename>/etc/inetd.conf</filename> dosyasını değiştirirseniz, <command>inetd</command>'ye <command>SIGHUP</command> sinyali göndererek dosyayı tekrar okumasını ve yeni içeriğe uymasını söyleyebilirsiniz. <command>ps</command> ile <command>inetd</command>'nin süreç kimliğini (PID) saptayabilirsiniz.
+    </para></sect1></chapter>
+<chapter id="glibc-Socket-Options">
+  <title>Socket Seçenekleri</title>
+  <titleabbrev>Çeşitli düşük seviyeli soket seçenekleri.</titleabbrev>
+  <para>
+<indexterm scope="glibc-cp"><primary>soket seçenekleri</primary></indexterm>
+Bu bölümde soketlerin davranışlarını değiştiren çeşitli özelliklerin nasıl okunduğu veya ayarlandığı ve altındaki haberleşme protokolleri anlatılmıştır.
+   </para><para>
+<indexterm scope="glibc-cp"><primary>soket seçeneklerinde seviye</primary></indexterm>
+<indexterm scope="glibc-cp"><primary>soket seçenek seviyesi</primary></indexterm>
+Bir soket seçeneğini değiştirirken seçeneğin hangi <wordasword>seviye</wordasword>ye ait olduğunu belirtmeniz gerekir. Bu, özelliğin soket arayüzüne mi yoksa alt-seviye haberleşme protokol arayüzüne mi etki edeceğini belirler.
+   </para>
+  <sect1 id="glibc-Socket-Option-Functions">
+    <title>Soket Seçenek İşlevleri</title>
+    <titleabbrev>Soket seçeneklerini ayarlamak ve değerlerini almak için işlevler.</titleabbrev>
+    <para>
+<indexterm scope="glibc-pg"><primary>sys/socket.h</primary></indexterm>
+Burada soket seçeneklerini incelemek ve değiştirmek için kullanılan işlevleri göreceğiz. Bunlar <filename>sys/socket.h</filename> içinde bildirilmiştir.
+    </para><para id="glibc-getsockopt">
+<indexterm scope="glibc-fn"><primary>getsockopt</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>int <command>getsockopt</command></funcdef>
+<paramdef>(int        <varname>soket</varname>,
+ int        <varname>seviye</varname>,
+ int        <varname>sçnismi</varname>,
+ void      *<varname>sçndeğeri</varname>,
+ socklen_t *<varname>sçnuzunluk_gstr</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+<command>getsockopt</command>  işlevi <varname>soket</varname> soketi için <varname>seviye</varname> seviyesindeki <varname>sçnismi</varname> seçeneğinin değeriyle ilgili bilgi döndürür.
+      </para><para>
+Seçenek değeri <varname>sçndeğeri</varname>'nin gösterdiği tampon içinde saklanır. İşlevi çağırmadan önce, tampon boyutunu <literal>*</literal><varname>sçnuzunluk_gstr</varname> içinde vermeniz gerekir; dönüşte, tamponda gerçekte saklanan bilginin bayt sayısını içerecektir.
+      </para><para>
+Çoğu seçenek <varname>sçndeğeri</varname> tamponunu tek bir <command>int</command> değer olarak yorumlar.
+      </para><para>
+<command>getsockopt</command> işlevinin başarı halinde döndürdüğü değer <command>0</command>, başarısızlık halinde <command>-1</command> dir. Aşağıdaki <command>errno</command> hata durumları bu işlev için tanımlanmıştır:
+      </para><para>
+       <variablelist><varlistentry><term><command>EBADF</command></term>
+       <listitem><para><varname>soket</varname> argümanı geçerli bir dosya tanımlayıcısı değil.
+       </para></listitem>
+       </varlistentry><varlistentry><term><command>ENOTSOCK</command></term>
+       <listitem><para><varname>soket</varname> tanımlayıcısı bir soket değil.
+       </para></listitem>
+       </varlistentry><varlistentry><term><command>ENOPROTOOPT</command></term>
+       <listitem><para><varname>sçnismi</varname> belirtilen <varname>seviye</varname>ye duyarsız.
+       </para></listitem></varlistentry></variablelist>
+</para></funcdescr></funcsynopsis></para><para id="glibc-setsockopt">
+<indexterm scope="glibc-fn"><primary>setsockopt</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>int <command>setsockopt</command></funcdef>
+<paramdef>(int       <varname>soket</varname>,
+ int       <varname>seviye</varname>,
+ int       <varname>sçnismi</varname>,
+ void     *<varname>sçndeğeri</varname>,
+ socklen_t <varname>sçnuzunluğu</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+Bu işlev <varname>soket</varname> soketi için <varname>seviye</varname> seviyesinde <varname>sçnismi</varname> soket seçeneğini etkinleştirmek kullanılır. Seçenek değeri  <varname>sçnuzunluğu</varname> uzunluğundaki <varname>sçndeğeri</varname> tamponuna aktarılır.
+    </para></funcdescr></funcsynopsis>
+  </para></sect1>
+  <sect1 id="glibc-Socket-Level-Options">
+    <title>Soket Seviye Seçenekleri</title>
+    <titleabbrev>Soket seviyesindeki seçeneklerin ayrıntıları.</titleabbrev>
+    <para id="glibc-SOL_SOCKET">
+<indexterm scope="glibc-vr"><primary>SOL_SOCKET</primary></indexterm>
+<funcsynopsis><funcprototype role="sabit">
+<funcdef>int <command>SOL_SOCKET</command></funcdef>
+<paramdef></paramdef>
+</funcprototype><funcdescr><para>
+Bu sabit, bu bölümde açıklanan soket seviye seçeneklerini değiştirmek için <command>getsockopt</command> veya <command>setsockopt</command> işlevinde <varname>seviye</varname> argümanı olarak  kullanınılır.
+      </para><para>
+<indexterm scope="glibc-pg"><primary>sys/socket.h</primary></indexterm>
+Aşağıda listesi verilen soket seviye seçeneklerinin isimleri <filename>sys/socket.h</filename> başlık dosyası içinde tanımlıdır.
+      </para><para>
+       <variablelist><varlistentry><term><command>SO_DEBUG</command></term>
+       <listitem><para>Bu seçenek ilgili protokol modülleri içindeki hata ayıklama bilgileri kaydının etkinleştirilmesi ile ilgilidir. <command>int</command> türünde değer alır; sıfırdan farklı ise "evet" anlamına gelir.
+       </para></listitem>
+       </varlistentry><varlistentry><term><command>SO_REUSEADDR</command></term>
+       <listitem><para>Bu seçenek <command>bind</command> (<xref linkend="glibc-Setting-Address"/>) işlevinin soket için yerel adreslerin tekrar kullanımına izin verip vermeyeceğini kontrol eder. Bu özellik etkinleştirilirse, aynı Internet port numarasına sahip iki sokete sahip olursunuz; fakat sistem bu iki aynı-isimli soketi Internet ortamında karışıklık yaratacak şekilde kullanmanıza izin vermez. Bu özelliğin varoluş nedeni bazı yüksek seviyeli Internet protokollerine dayanmaktadır, örneğin FTP, aynı port numarasının tekrar kullanımını gerektirmektedir.
+       </para><para>
+<command>int</command> türünde değer alır; sıfırdan farklı ise "evet" anlamına gelir.       </para></listitem>
+       </varlistentry><varlistentry><term><command>SO_KEEPALIVE</command></term>
+       <listitem><para>Bu seçenek ilgili protokolün bağlantılı bir soketten iletinin belirli aralıklarla gönderilip gönderilmeyeceğini belirler. Eğer karşıdaki soket bu iletilere yanıt veremezse, bağlantı kesilmiş olarak kabul edilir. <command>int</command> türünde değer alır; sıfırdan farklı ise "evet" anlamına gelir.
+       </para></listitem>
+       </varlistentry><varlistentry><term><command>SO_DONTROUTE</command></term>
+       <listitem><para>Bu seçenek giden iletilerin normal ileti yönlendirme imkanlarını devre dışı bırakıp bırakmayacağını kontrol eder. Eğer belirtilirse, iletiler doğrudan ağ arayüzüne gönderilir. <command>int</command> türünde değer alır; sıfırdan farklı ise "evet" anlamına gelir.
+       </para></listitem>
+       </varlistentry><varlistentry><term><command>SO_LINGER</command></term>
+       <listitem><para>Bu seçenek güvenli teslim garantisi veren bir soketin bağlantısı kesilirse ve hala aktarılmamış ileriler varsa ne olacağını belirtir; bkz. <xref linkend="glibc-Closing-a-Socket"/>. <command>struct linger</command> türünde değer alır.
+       </para><para id="glibc-struct-linger">
+<indexterm scope="glibc-tp"><primary sortas="linger">struct linger</primary></indexterm>
+<funcsynopsis><funcprototype role="veri türü">
+<funcdef>struct <command>linger</command></funcdef>
+<paramdef></paramdef>
+</funcprototype><funcdescr><para>
+Bu yapı aşağıdaki üyelere sahiptir:
+        </para><para>
+          <glosslist><glossentry><glossterm>
+          <literal>int <command>l_onoff</command></literal>
+          </glossterm><glossdef><para> Bu alan mantıksal değer olarak yorumlanır. Sıfırdan farklıysa, <command>close</command> veri aktarılıncaya kadar veya zaman aşımına uğrayıncaya kadar baskılanır.
+          </para></glossdef></glossentry><glossentry><glossterm>
+          <literal>int <command>l_linger</command></literal>
+          </glossterm><glossdef><para>
+Bu zaman aşımını saniye cinsinden belirtir.
+          </para></glossdef></glossentry></glosslist>
+          </para></funcdescr></funcsynopsis>
+        </para></listitem>
+        </varlistentry><varlistentry><term><command>SO_BROADCAST</command></term>
+        <listitem><para>Bu seçenek datagramların soketten yayınlanabilmesi ile iilgilidir. <command>int</command> türünde değer alır; sıfırdan farklı ise "evet" anlamına gelir.
+       </para></listitem>
+       </varlistentry><varlistentry><term><command>SO_OOBINLINE</command></term>
+       <listitem><para>Eğer bu seçenek belirtilirse, soketten alınan bantdışı veri normal girdi sırasına konulur. Bu <command>MSG_OOB</command> bayrağını belirtmeden <command>read</command> veya <command>recv</command> ile okuma yapmaya izin verir. Bkz. <xref linkend="glibc-Out-of-Band-Data"/>. <command>int</command> türünde değer alır; sıfırdan farklı ise "evet" anlamına gelir.
+       </para></listitem>
+       </varlistentry><varlistentry><term><command>SO_SNDBUF</command></term>
+       <listitem><para>Bu seçenek çıktı için kullanılan tamponun boyutunu getirir veya belirtir. Bayt cinsinden olan <command>size_t</command> türündedir.
+       </para></listitem>
+       </varlistentry><varlistentry><term><command>SO_RCVBUF</command></term>
+       <listitem><para>Bu seçenek girdi için kullanılan tamponun boyutunu getirir veya belirtir. Bayt cinsinden olan <command>size_t</command> türündedir.
+       </para></listitem>
+       </varlistentry><varlistentry><term><command>SO_STYLE</command></term>
+       </varlistentry><varlistentry><term><command>SO_TYPE</command></term>
+       <listitem><para>Bu seçenek sadece <command>getsockopt</command> ile kullanılabilir. Soketin iletişim tarzını getirmek için kullanılır. <command>SO_TYPE</command> eski ismidir ve <command>SO_STYLE</command> GNU içinde tercih edilen ismidir. <command>int</command> türünde değer alır ve değeri bir iletişim tarzını gösterir; bkz. <xref linkend="glibc-Communication-Styles"/>.
+       </para></listitem>
+       </varlistentry><varlistentry><term><command>SO_ERROR</command></term>
+       <listitem><para>Bu seçenek sadece <command>getsockopt</command> ile kullanılabilir. Soketin hata durumunu sıfırlamak için kullanılır. Önceki hata durumunu gösteren <command>int</command> türünde bir değerdir.
+       </para></listitem></varlistentry></variablelist>
+     </para></funcdescr></funcsynopsis></para>
+   </sect1>
+</chapter>
+
+<chapter id="glibc-Networks-Database">
+  <title>Ağ İsimleri Veritabanı</title>
+  <titleabbrev>Ağ isimleri veritabanına erişim.</titleabbrev>
+  <para>
+<indexterm scope="glibc-cp"><primary>ağ veritabanı</primary></indexterm>
+<indexterm scope="glibc-cp"><primary>ağ numaralarını ağ isimlerine dönüştürme</primary></indexterm>
+<indexterm scope="glibc-cp"><primary>ağ isimlerini ağ numaralarına dönüştürme</primary></indexterm>
+<indexterm scope="glibc-pg"><primary sortas="etc/networks">/etc/networks</primary></indexterm>
+<indexterm scope="glibc-pg"><primary>netdb.h</primary></indexterm>
+Birçok sistem bilinen ağ isimlerinin listesini kaydederek sistem geliştiricisine sunan bir veritabanı ile beraber gelir. Bu bilgi genellikle <command>/etc/networks</command> dosyası içerisinde veya eşdeğer bir isim sunucusunda tutulur. Bu veritabanı <command>route</command> gibi yönlendirme yazılımları için kullanışlıdır ancak ağ üzerinde basitçe haberleşen yazılımlar için değildir. Bu veritabanına erişmek için gerekli işlevler <filename>netdb.h</filename> içinde bildirilmiştir.
+  </para><para id="glibc-struct-netent">
+<indexterm scope="glibc-tp"><primary sortas="netent">struct netent</primary></indexterm>
+<funcsynopsis><funcprototype role="veri türü">
+<funcdef>struct <command>netent</command></funcdef>
+<paramdef></paramdef>
+</funcprototype><funcdescr><para>
+Bu veri türü ağ veritabanındaki girdi bilgilerininin gösterimi için kullanılır. Aşağıdaki üyelere sahiptir:
+    </para><para>
+      <glosslist><glossentry><glossterm>
+      <literal>char *<command>n_name</command></literal></glossterm>
+      <glossdef><para>"Resmi" ağ ismidir.
+      </para></glossdef></glossentry><glossentry><glossterm>
+      <literal>char **<command>n_aliases</command></literal></glossterm>
+      <glossdef><para>Bunlar bir dizgeler dizisi olarak alternatif ağ isimleridir. Diziyi bir boş gösterici sonlandırır.
+      </para></glossdef></glossentry><glossentry><glossterm>
+      <literal>int <command>n_addrtype</command></literal></glossterm>
+      <glossdef><para>Bu ağ numarasının türüdür; Internet ağları için herzaman <command>AF_INET</command>'e eşittir.
+      </para></glossdef></glossentry><glossentry><glossterm>
+      <literal>unsigned long int <command>n_net</command></literal></glossterm>
+      <glossdef><para>Bu ağ numarasıdır. Ağ numaraları <link linkend="glibc-Byte-Order">konak bayt sırası</link> ile döndürülür.
+      </para></glossdef></glossentry></glosslist>
+    </para></funcdescr></funcsynopsis>
+  </para><para>
+Ağ veritabanında belirli bir ağ hakkında arama yapıp bilgi edinmek için  <command>getnetbyname</command> veya <command>getnetbyaddr</command> işlevi kullanılır. Bilgi durağan olarak ayrılmış bir yapıda geri döner; saklamak gerekiyorsa bilginin kopyalanması gerekir.
+  </para><para id="glibc-getnetbyname">
+<indexterm scope="glibc-fn"><primary>getnetbyname</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>struct netent *<command>getnetbyname</command></funcdef>
+<paramdef>(const char *<varname>isim</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+<command>getnetbyname</command> işlevi <varname>isim</varname> ile isimlendirilmiş ağ hakkında bilgi döndürür. Öyle bir ağ yoksa boş gösterici döndürür.
+</para></funcdescr></funcsynopsis></para><para id="glibc-getnetbyaddr">
+<indexterm scope="glibc-fn"><primary>getnetbyaddr</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>struct netent *<command>getnetbyaddr</command></funcdef>
+<paramdef>(unsigned long int <varname>ağ</varname>,
+ int               <varname>tür</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+<command>getnetbyaddr</command> işlevi <varname>tür</varname> türünde ve <varname>ağ</varname> numarasındaki ağ hakkında bilgi döndürür. Internet ağları için <varname>tür</varname> argümanına bir <command>AF_INET</command> değeri belirtmelisiniz.
+   </para><para>
+<command>getnetbyaddr</command> öyle bir ağ yoksa boş gösterici döndürür.
+    </para></funcdescr></funcsynopsis>
+  </para><para>
+Ayrıca <command>setnetent</command>, <command>getnetent</command> ve <command>endnetent</command> kullanarak ağ veritabanını tarayabilirsiniz. Bu işlevleri kullanırken dikkatli olun çünkü bunlar evresel (reentrant) işlevler değildir.
+  </para><para id="glibc-setnetent">
+<indexterm scope="glibc-fn"><primary>setnetent</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>void <command>setnetent</command></funcdef>
+<paramdef>(int <varname>açıkkal</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+Bu işlev ağ veritabanını açar ve sayacı başa getirir.
+   </para><para>
+<varname>açıkkal</varname> argümanı sıfır ise bu bir bayrağa değer verir böylece sonraki <command>getnetbyname</command> veya <command>getnetbyaddr</command> işlev çağrıları veritabanını kapatmaz (normalde olması gerektiği gibi). Eğer bu işlevleri çok kez çağırıyorsanız, her çağrıda veritabanını tekrar açmakdan kurtulur ve daha verimli bir sonuç elde edersiniz.
+</para></funcdescr></funcsynopsis></para><para id="glibc-getnetent">
+<indexterm scope="glibc-fn"><primary>getnetent</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>struct netent *<command>getnetent</command></funcdef>
+<paramdef>(void)</paramdef>
+</funcprototype><funcdescr><para>
+Bu işlev ağ veritabanındaki sonraki girdiyi döndürür. Eğer sonraki girdi yoksa boş gösterici döndürür.
+</para></funcdescr></funcsynopsis></para><para id="glibc-endnetent">
+<indexterm scope="glibc-fn"><primary>endnetent</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>void <command>endnetent</command></funcdef>
+<paramdef>(void)</paramdef>
+</funcprototype><funcdescr><para>
+Bu işlev ağ veritabanını kapatır.
+   </para></funcdescr></funcsynopsis></para>
+ </chapter>
+</part>
+

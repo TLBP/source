@@ -1,0 +1,323 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--DOCTYPE article SYSTEM "../docbook/dtd/docbookx.dtd"-->
+<!-- ********************************************************************
+     $Id: nfs-kok-istemci-nasil.xml,v 1.2 2002/09/18 20:11:34 nilgun Exp $
+     ******************************************************************** -->
+
+<article id="archive-nfs-kok-istemci-nasil">
+  <articleinfo>
+    <title>NFS-Kök İstemcisi Mini NASIL</title>
+    <author>
+      <firstname>Ofer Maor</firstname>
+      <affiliation>
+          <address><email>ofer@hadar.co.il</email></address>
+      </affiliation>
+    </author>
+    <pubdate>v1.0, 5 Aralık 1997</pubdate>
+  </articleinfo>
+<div>
+
+<pre>
+
+  Bu minik nasıl'ın amacı NFS kök bağlanmış istemciler kullanan sunucu üzerinde
+  istemci kök dizinlerinin nasıl oluşturulacağını açıklamaktadır. Bu dokumanın
+  en son sürümünü http://www.hadar.co.il/ofer/nfs-root-client adresinde
+  bulabilirsiniz.
+
+  </pre><h2> 1. Telif Hakkı</h2><pre>
+
+  Aksi belirtilmedikçe , Linux NASIL dökumanlarının telif hakları
+  yazarlarına aittir. Linux NASIL dökumanları yukarıdaki telif hakkı işareti
+  bütün kopyalarda bulunmak şartı ile bütün veya parça olarak yeniden
+  oluşturulup, fiziksel veya elektronik herhangi bir araç yolu ile
+  dağıtılabilir. Ticari dağıtıma izin verilmekte ve teşvik edilmektedir.
+  Fakat yazarın bu dağıtımlardan haberi olmalıdır.
+
+  Bütün ceviriler , türevsel işler veyahut herhangi Linux NASIL dökumanı
+  birleştirici işler bu telif hakkına dikkat edilerek yapılmalıdır.Bu, bir
+  NASIL dökumanından türetilen işin üzerinde, dağıtımda fazladan kısıtlamalar
+  koyulamaması demektir.Bu kuralların istisnaları belli bazı durumlarda
+  mümkündür; bu gibi durumlarda lütfen Linux NASIL koordinatörü ile aşağıda
+  verilen adresten bağlantıya geçiniz.
+
+  Kısacası biz, bu bilginin mümkün olan bütün kanallardan dağıtımına destek
+  olmak isteriz. Fakat, biz NASIL dökumanları üzerindeki telif hakkımızı
+  korumayı ve NASIL ' ların  tekrar dağıtım planlarından haberdar olmak isteriz.
+
+  Eğer herhangi bir sorununuz varsa,  bu minik nasıl'ın yazarı Ofer Maor
+  (mailto:ofer@hadar.co.il) veya Linux NASIL koordinatörü Greg Hankins
+  (mailto:gregh@sunsite.unc.edu) ile e-posta yoluyla haberleşebilirsiniz.
+
+  </pre><h3> 1.1. Teşekkürler</h3><pre>
+
+  NFS-kök minik nasıl dokumanının yazarı Andreas Kostryka teşekkürlerimi
+  belirtmek isterim. Onun yazısı NFS bağlanmış istemci oluşturmanın ilk
+  aşamalarında yardımcı oldu. Fakat benim yazımın amacı hiçbir zaman onun
+  yerine geçmek olmadı.
+
+  </pre><h2> 2. Önsöz</h2><pre>
+
+  Bu minik NASIL dokumanı istemcilerin dizinlerini oluşturmak için NFS kök
+  bağlamayı kullanmak isteyen insanlara yardım amacıyla yazılmıştır. Lütfen
+  bunu yapmanın isteklerimize ve amaçlarımıza bağlı olarak birçok yolu
+  olduğunu unutmayın. Eğer istemciler bağımsızsa ve her istemcinin kendi
+  kullanıcıları ve sistem yöneticisi varsa, istemci dizinlerinin önemli
+  bölümlerinin diğer istemcilerle paylaşımının kaldırılması gerekli olacaktır.
+  Diğer yandan istemci birçok kullanıcı için oluşturulmuş ve hepsi aynı
+  kişi tarafından yönetiliyorsa(örneğin bir bilgisayar sınıfı) yönetimi
+  kolaylaştırmak için yapılabilecek bütün dosyalar paylaşılmış olmalıdır.
+  Bu NASIL ikinci durum üzerinde yoğunlaşacaktır.
+
+  </pre><h3> 2.1. Genel Bakış</h3><pre>
+
+  İstemci kök dizini oluştururken ve kendimizi minimum istemci boyutuyla
+  sınırlamaya calışırken, genel olarak hangi dosyaları paylaşacağımızı
+  ya da sunucudan yükleyeceğimizi düşünürüz. Bu dokümanda, deneyimlerime
+  dayanan bir istemci konfigürasyonu önereceğim. Fakat başlamadan önce
+  şunları not edin:
+
+  * Bu NASIL ilk NFS kök yüklemesinin nasıl yapılacağını anlatmamaktadır. O
+    konu hakkında daha fazla bilgi için NFS-kök minik NASIL'a başvurun.
+
+  * İstemci konfigürasyonunu genel olarak yüklemeler ve sembolik bağlantılar
+    üzerine kurdum. Bu sembolik bağlantıların çoğu sabit bağlantı haline
+    getirilebilir. Herkes kişisel seçimine göre davranabilir. Bağlamalar ve
+    sembolik bağlantılar kurmanın bazı avantajları vardır fakat karışıklığa
+    neden olabilir. Bir dosya bütün sabit bağlantılarını ortadan kaldırmadan
+    silinemeyecektir.Bu yüzden bir dosyanın güncellenmesi ve o dosyanın sabit
+    bağlarının hala eski sürümü gösteriyor olması gibi durumlardan korunmak
+    için, çok dikkatli olmalı ve koyduğunuz her bağlantının izini sürmelisiniz.
+
+  * Bilgiyi sunucudan yüklerken iki yol kullanılabilir. Birinci(ve en genel)
+    yol, sunucunun kök dizininin tümünü yerel bir dizin altına yüklemek ve
+    daha sonra sadece yolu değiştirerek veya ilgili dizinleri oraya
+    bağlamaktır. Ben kişisel olarak sunucunun kök bölümlemelerini istemciler
+    üzerine yüklemekten hoşlanmıyorum. Bu nedenle bu NASIL sunucunun ilgili
+    dizinlerini sistemde ilgili yerlere yükleyecek bir yol öneriyor.
+
+  * Bu NASIL Slackware 3.1 tabanlı bir dağıtım üzerinde istemci dizinleri
+    oluştururken edindiğim deneyimlere dayanmaktadır. Bazı şeyler
+    (özellikle rc.* dosyalarında) diğer kullanıcılar için farklı olabilir
+    fakat konular hala sabit kalır.
+
+  </pre><h2> 3. İstemcinin Kök Dizinini Oluşturma</h2>
+  <h3> 3.1. Dizin Ağacını Oluşturma</h3><pre>
+
+  Herşeyden önce, dizin yapısının kendisini oluşturmalısınız. Ben bütün
+  istemcileri /clients/hostname altında oluşturdum ve aşağıdaki
+  örneklerimde bunları kullanacağım. Bu tabii ki herhangi birşey ile
+  değiştirilebilir. İlk aşama gerekli dizinleri kök dizinde oluşturmaktır.
+  Şu dizinleri oluşturmalısınız :
+    bin,dev,etc,lib,mnt,proc,sbin,server,tmp,usr,var ve sisteminizde olmasını
+  istediğiniz diğer dizinler.
+  Diğer dizinler bütünüyle veya parça parça kalan istemcilerle paylaşılacakken,
+  local,proc ve dev dizinleri her makinada ayrı ayrı kullanılacaktır.
+
+  </pre><h3> 3.2. Başlatmak İçin Gerekli Minimum Dosya Sisteminin Oluşturulması</h3>
+  <h4>3.2.1. dev Dizininin Oluşturulması </h4><pre>
+
+  dev dizininin paylaşılabilmesine rağmen her istemci için ayrı oluşturmak
+  daha iyidir. İstemcinin dev dizinini uygun kabuk programlarıyla
+  oluşturabilirsiniz fakat birçok durumda sunucudan sadece kopyalamak daha
+  kolaydır :
+    cp -a /dev /clients/hostname
+
+  /dev/mouse/, /dev/cdrom ve /dev/modem 'in asıl aygıtlara birer sembolik
+  bağ olduklarını akılda tutmalısınız ve bu yüzden istemcinin donanımına
+  uyacak şekilde doğru olarak ilişkilendirildiğine emin olmalısınız.
+
+  </pre><h4>3.2.2. Gerekli İkilileri Kopyalamak</h4><pre>
+
+  Herşeyi sunucudan yüklediğimiz halde, her istemciye kopyalamamız gereken bazı
+  şeyler vardır.Herşeyden önce "init" e ihtiyacımız vardır. init'lemeden önce
+  sistemimiz hiçbir şeyi çalıştıramaz.(programcının zor yoldan öğrendiği gibi)
+  Demekki öncelikle /sbin/init'i istemcinizin dizinine kopyalamalısınız ve
+  daha sonra rc.S çalışacağı için /bin/sh'ı istemcinizin bin dizinine
+  kopyalamalısınız. Ayrıca herşeyi yükleyebilmek için /sbin/mount'u istemcinin
+  sbin dizinine kopyalamanız gerekir. rc.S dosyasının ilk satırının
+  mount -av olduğunu farzedersek bu gereken minimumdur. Fakat, ben birkaç
+  dosyanın daha kopyalanmasını öneririm : update, ls, rm, cp ve umount;
+  bu sayede eğer istemcinin bağlanmayla ilgili problemleri olursa elimizde
+  temel araçlar olur. Eğer yüklemeden önce takas alanınızı hatta bırakmayı
+  seçerseniz ayrıca swapon ikilisini de kopyalamalısınız.
+  Bu ikililerin çoğu varsayılan şekilde dinamik olarak bağlanmış olmasına
+  rağmen /lib dizininin birçok bölümünü de kopyalamanız gerekecek :
+    cp -a /lib/ld* /lib/libc.* /lib/libcursses.* /client/hostname/lib
+
+  Kopyalamak yerine ikililerin kendilerini donanımsal bağlamak düşünülmelidir.
+  Lütfen bu konudaki yorumlarımı bu dökumanın 2.1. bölümünde okuyun.
+
+  Lütfen yukarıdaki tüm bilgilerin ilk açılış sırasında çekirdeğe ağ
+  parametrelerinin verildiğini farzettiğine dikkat edin. Eğer RARP veya
+  BOOTP kullanmayı planlıyorsanız ilgili ikililere de gereksinim duyacaksınız.
+
+  Genel olarak, iyi konfigüre etmek ve rc.S'yi dosya sisteminin kalanını
+  yükleyeceği yere kadar çaılştırabilmek için gerekli dosyalara ihtiyacınız
+  vardır. /etc/init ve rc.S dosyalarınızı kontrol ettiğinize emin olun.
+  Herhangi birisinde ilk yükleme tamamlanmadan önce erişilecek diğer
+  dosyalara gereksinim duyan "sürprizler" olmadığından emin olmalısınız.
+  Eğer böyle dosyalar bulursanız ya onları da kopyalarsınız ya da init
+  ve rc.S dosyalarından ilgili bölümleri çıkarırsınız.
+
+  </pre><h4>3.2.3. var Dizini</h4><pre>
+
+  Birçok durumda var dizini her istemci için ayrı olmalıdır. Fakat verinin
+  çoğu paylaşılabilir. Sunucu dizini altında var isminde bir dizin oluşturun.
+  Sunucunun var dizinini oraya bağlayacağız.Yerel var dizinini oluşturmak
+  için sadece şu komutu yazın :
+    cp -a /var /clients/hostname
+
+  Şimdi neleri ayırıp neleri paylaşacağınıza karar vermek sizin elinizde.
+  Hangi dosyayı paylaştırmak istiyorsanız onu istemcinin var dizininden silin
+  ve /server/var dizinine sembolik olarak bağlayın. Fakat lütfen /server/var
+  ya da ../server/var dizinlerine sembolik bağlayabileceğinizi ama
+  /clients/hostname/var bağlayamayacağınızı unutmayın çünkü kök değişirse
+  çalışmaz.
+
+  Genel olarak /var/run, /var/log, /var/spool, /var/lock dosyalarının
+  ayrılmasını öneririm.
+
+  </pre><h4>3.2.4. Kalan Dizinler</h4><pre>
+
+  * etc sonraki bölümde ayrıntılı olarak anlatılacak.
+  * mnt ve proc yerel amaçlar içindir.
+  * usr ve home sadece bağlanma noktalarıdır.
+  * tmp size kalmış. Her istemci için ayrı tmp dizini de oluşturabilirsiniz
+    veya birkaç /clients/tmp dizini oluşturup her istemci için /tmp altına
+    bağlayabilirsiniz.Ben her istemci için farklı tmp dizini oluşturulmasını
+    öneririm.
+
+  </pre><h3> 3.3. etc Dizini Oluşturmak ve İstemcileri Konfigüre Etmek</h3><pre>
+
+  Lütfen dikkat : Bu bölüm genelde istemciler tarafından paylaşılan bir etc
+  dizininin yapılmasını anlatır. Eğer disksiz istemcinizin ayrı sistem
+  yöneticileri varsa her istemci için farklı etc dizini oluşturmak en iyisidir.
+
+  </pre><h4>3.3.1. İstemcinin Geniş etc Dizinini Oluşturmak </h4><pre>
+
+  İstemcilerin etc dizinlerini ayırdığımız halde halen dosyanın geniş bir
+  bölümünü paylaşmak istiyoruz. Genelde sanırım etc dosyalarını sunucunun
+  /etc'si ile paylaşmak kötü bir düşüncedir ve bu yüzden ben istemciler için
+  gerekli bilgileri tutan bir /clients/etc dizini oluşturmayı öneririm.
+  Başlangıç olarak sadece sunucunun etc'sinin içeriğini /clients/etc dizinine
+  kopyalayın. Bu dizine makinaya özel olmayan konfigürasyon dosyalarının
+  hepsini, örnek olarak motd,issue vb. kopyalamalı ve istemciye özel olanları
+  kopyalamamalısınız(örnek inittab veya fstab). En önemli değişiklikler rc.d
+  dizininde olacaktır. İlk olarak rc.inet1'i yerel kurulumunuza göre
+  değiştirmelisiniz. Bütün ağ parametrelerini çekirdeğe LILO/Loadlin yoluyla
+  aktardğım için rc.inet1 dosyasının neredeyse tümünü sildim. orada bıraktığım
+  tek şey ifconfig ve yerel istemciye yönlendirme oldu. Eğer RARP veya BOOTP
+  kullanırsanız ona göre ayarlamalısınız. İkinci olarak rc.S dosyanızı
+  değiştirmelisiniz. Önce fsck testinden sorumlu bütün parçaları silin çünkü
+  fsck sunucu ilk çalışırken oluşur. Daha sonra fstab'ı bağlayan satırı
+  bulmalısınız.Bu satır aşağıdaki gibi birşey olmalıdır.
+    mount -avt nonfs
+
+  -t nonfs oradadır çünkü normal istemciler önce rc.S dosyasını çalıştırırlar ve
+  yanlız daha sonra rc.inet1'i ethernet'i konfigüre etmek için kullanırlar. Bu
+  hiçbir NFS bölümlemesne sebep olmayacağından bu satır silinmelidir. Bu nedenle
+  bu satırı mount -av ile değiştirin. Eğer ağınızı konfigüre etmek için RARP veya
+  BOOTP çalıştırmanız gerekiyorsa bunu bağlamadan önce rc.S dosyasında yapın(veya
+  gerekli programcığı rc.S'den çağırın.) ve fiziksel bin ve sbin dizinlerinizin
+  gerekli dosyalara sahip olduğundan emin olun.
+  mount -av çalıştırıldıktan sonra çalışan diğer bir dosya sisteminiz oluşmuştur.
+  Daha sonra her istemciye kopyalamak için genel bir fstab dosyası yapın.
+  fstab'ınızın şuna benzemesi gerekir :
+
+  server:/clients/hostname      /               nfs             default 1 1
+  server:/bin                 /bin              nfs             default 1 1
+  server:/usr                 /usr              nfs             default 1 1
+  server:/sbin                /sbin     nfs             default 1 1
+  server:/home                /home             nfs             default 1 1
+  server:/lib                 /lib              nfs             default 1 1
+  server:/clients/etc           /server/etc     nfs             default 1 1
+  server:/clients/var           /server/var     nfs             default 1 1
+  none                          /proc           proc            default 1 1
+
+  Lütfen anahtar kelime _default_'un mount komutunun her sürümünde
+  çalışmayabileceğini unutmayın. Onu _rw_ ya da _ro_ 'ya değiştirmeniz
+  gerekebilir veya bütün _default 1 1_ bölümünü silersiniz.
+
+  Aynı zamanda sunucunuzun /etc/exports şuna benzediğinden emin olun :
+
+  /clients/hostname     hostname.domainname(rw,no_root_squash)
+  /clients/etc          hostname.domainname(rw,no_root_squash)
+  /clients/var          hostname.domainname(rw,no_root_squash)
+  /usr                  hostname.domainname(rw,no_root_squash)
+  /sbin                 hostname.domainname(rw,no_root_squash)
+  /bin                  hostname.domainname(rw,no_root_squash)
+  /lib                  hostname.domainname(rw,no_root_squash)
+  /home                 hostname.domainname(rw,no_root_squash)
+
+  Her istemci için farklı olan ilk satır dışında kalan satırların bütün
+  istemcilerinize uyması için hostmask ile değiştirilebilir.
+  (pc*.domain gibi - *'ın sadece içinde . olmayan karakter kümelerine karşılık
+  geldiğini unutmayın) Ben dizinlerin çoğunu salt okunur yapmanızı öneririm
+  tabii bu size kalmış. no_root_squash istemciler üzerindeki root
+  kullanıcılarının nfsd'de de root haklarına sahip olmasını sağlar. man
+  exports(5)'i kontrol edin. Eğer kullanıcıların istemci üzerinden de passwd
+  çalıştırmasını isterseniz /etc'nin ro değil rw hakkına sahip olmasını sağlayın
+  fakat bu önerilen birşey değildir.
+
+  Rc.S dosyası ile ilgili şunu da unutmayın; Slackware'de varsayılan doğru
+  olarak her çalışışta yeni bir /etc/issue ve /etc/motd oluşturur. Eğer bu
+  dosyalar sunucudan ro bağlanmışsa bu fonksyon kapatılmak zorundadır ve ben
+  bu fonksyonun her durumda kapalı olmasını öneririm.
+
+  Son olarak, sunucu üzerinde istemcilerde olduğu gibi aynı kullanıcı veri
+  tabanını edinmek istiyorsanız, şunlardan birini seçmelisiniz; 1) NIS kullanmak
+  (Sarı sayfalar - yp-NASIL'ını kontrol edin) ve sonra her istemci NIS sunucudan
+  aldığından farklı /etc/passwd ve /etc/group dosyaları olur. 2) Birçok durumda
+  sadece bir sembolik bağ yeterli olur. Bu yüzden ya /clients/etc/passwd'yi
+  /etc/passwd'ye donanımsal bağlayın ya da eğer sembolik bağı tercih ederseniz
+  /etc/passwd'yi /clients/etc/passwd'ye bağlayın. Aynını /etc/group için de yapın.
+
+  </pre><h4>3.3.2. İstemcinin etc Dizinini Oluşturmak</h4><pre>
+
+  Genel olarak istemcinin etc dizinindeki dosyaların çoğu sunucunun /server/etc
+  dizinine sembolik olarak bağlanmış olmalıdır. Fakat bazı dosyalarher makina
+  için farklıdır ve bazıları da çekirdek yüklendiği anda orada olmalıdrlar. etc
+  dizininde ihtiyacınız olan minimum şeyler şunlardır :
+
+    resolf.conf, hosts, inittab, rc.d/rc.S, fstab
+
+  Bu beş dosya her istemcide aynı olduğu için siz sadece kopyalamalısınız. Fakat,
+  rc.S ve fstab dosyalarından her istemci için ayrı kopya bulundurulması önerilir.
+  Ayrıca her istemci için ayrı etc/HOSTNAME'e ihtiyaç vardır. Ben kişisel olarak
+  bütün rc.d dosyalarının her istemci için farklı olmasını öneririm, cünkü
+  konfigürasyon ve donanım birinden diğerine farklılık gösterir. Her istemci için,
+  uygun takas satırını fstab'a ekleyin.
+
+    /dev/swap_partition                 swap            swap            default 1 1
+
+  İstemcinin /etc dosyalarının kalanlarını ya /clients/etc/* dosyalarına
+  donanımsal bağlarsınız ya da /server/etc dizinine(/clients/etc dizininin
+  bağlanma noktasıdır) sembolik olarak bağlarsınız.
+
+  Makinanızın isimlendirilmiş olmasına ya da etc/hosts dosyasından çözülebileceğine
+  emin olun. Sunucunun IP'sini çözümleme sırasında saymaktansa etc/hosts'da tutmak
+  iyi bir düşüncedir. Eğer sadece isimlendirilmiş çözümleme sırasında sayarsanız,
+  isimlendirilmişte oluşacak bir arıza istemcilerin çalışmasını engeller.
+
+  </pre><h3> 3.4. İlk Başlatmak</h3><pre>
+
+  Şimdi, yapmanız gereken tek şey makinanızı başlatmak, herşeyin yolunda gitmesi
+  için dua etmektir.
+
+  </pre><h2> 4. Başka istemciler Oluşturma</h2><pre>
+
+  Eğer anlattıklarımı tamamiyle takip ettiyseniz bu kolay olmalıdır. /clients/
+  dizinine gecin ve;
+
+    cp -a hostname1 hostname2
+
+  yazın ve şu noktalara dikkat ettiğinize emin olun:
+
+  rc.d/* dosyaları donanıma uymalı ve etc/HOSTNAME'deki istenen yazılım
+  konfigürasyonu doğru olmalıdır, fstab'ın takas satırı doğru olmalı, dev/mouse,
+  dev/modem, dev/cdrom'lara sembolik bağlar doğru olmalıdır.
+
+  Başarılar...
+
+</pre></div></article>

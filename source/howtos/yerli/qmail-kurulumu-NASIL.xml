@@ -1,0 +1,2906 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--DOCTYPE article SYSTEM "../../docbook/dtd/docbookx.dtd"-->
+<!-- ********************************************************************
+     $Id: qmail-kurulumu-NASIL.xml,v 1.2 2002/10/17 23:07:55 nilgun Exp $
+     ******************************************************************** -->
+
+<article id="qmail-kurulumu-nasil" lang="tr">
+  <articleinfo>
+
+    <!-- Use "HOWTO", "mini HOWTO", "FAQ" in title, if appropriate -->
+    <title>QMAIL Kurulumu NASIL</title>
+    <subtitle>(vpopmail + qmailadmin + courier-imap + sqwebmail + ezmlm + autoresponder + antivirus) kurulumu</subtitle>
+    <author>
+       <firstname>İsmail</firstname>
+       <surname>YENİGÜL</surname>
+       <affiliation>
+         <address>
+          <email>yenigul@rt.net.tr</email>
+         </address>
+       </affiliation>
+     </author>
+     <pubdate>23 Eylül 2002</pubdate>
+     <pubdate> </pubdate>
+     <revhistory>
+       <revision>
+          <revnumber>3.0</revnumber>
+          <date>23 Eylül 2002</date>
+          <authorinitials>İY</authorinitials>
+       </revision>
+       <revision>
+          <revnumber>3.1</revnumber>
+          <date>17 Ekim 2019</date>
+          <authorinitials>NBB</authorinitials>
+          <revremark>Çalışmayan bağlantılar düzeltildi.
+          </revremark>
+       </revision>
+    </revhistory>
+    <abstract>
+      <para>
+Bu  belgedeki bilgiler güvenli ve performanlı bir sistem kurmak isteyen
+sistem yoneticilerine yonelik olacaktır.
+      </para>
+      <para>
+Bu belgenin özgün sürümüne
+<ulink url="http://www.enderunix.org/docs/qmail.html"
+>http://www.enderunix.org/docs/qmail.html</ulink> adresinden erişebilirsiniz.
+      </para>
+    </abstract>
+
+  </articleinfo>
+<!-- Content follows...include introduction, license information, feedback -->
+  <sect1 id="qmail-kurulumu-nasil_qmail-nedir">
+    <title>Qmail Nedir?</title>
+    <para>
+Qmail, UNIX ve UNIX benzeri(*BSD, Linux) işletim sistemleri için bir MTA
+(Mail Transfer Agent - Posta Aktarım Aracısı) dır. Qmail, sendmail ve
+postfix'e bir alternatiftir. Qmail kullanmanız için bir çok neden var:
+      </para><variablelist>
+        <varlistentry>
+          <term>Yüksek Güvenlik</term>
+          <listitem>
+            <para>
+Daha az root olarak çalışan veya setuid olarak çalışan program var. (qmail'in
+yazarı Mart 1997 yılında qmail'in en son sürümünde güvenlik açığı bulana $500
+vaad etmişti. Bu zamana kadar bu parayı kimse alamadı :)
+<ulink url="http://cr.yp.to/qmail/guarantee.html"
+>http://cr.yp.to/qmail/guarantee.html</ulink>)
+            </para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>Performans</term>
+          <listitem>
+            <para>
+Aynı anda yüzlerce eposta gönderebilir. Her bir iş (posta alma, yerel
+sisteme posta gönderme, uzaktaki sisteme posta gönderme, smtp servisini
+çalıştırma,...) için ayrı ayrı programlar çalışmaktadır. Sendmail'de ise
+tüm bu işleri yapan sadece koskoca bir sendmail programı bulunmaktadır.
+            </para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>Basitlik</term>
+          <listitem><para>
+Qmail diğer MTA'lara göre daha az  bir koda sahiptir ve  sendmail.cf
+gibi çok karmakarışık bir yapılandırma dosyası yoktur.
+            </para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>Güvenilirlik</term>
+          <listitem><para>
+Qmail eposta ile ilgili herhangi bir iş (posta gönderme, alma, kuyruğa
+atma,...) yapmadan önce postayı diske kaydettikten sonra postalar ve
+kişiye epostanız kabul edildi cevabını verir. Sistemde bir fiziksel sorun
+olsa da (elektrik kesintisi filan ..) posta kaybolmaz.
+            </para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>Özelleştirilebilirlik</term>
+          <listitem><para>
+Qmail için yazılmış bir çok program vardır. Bu programlar sayesinde
+qmail kulllanımı daha kolay hale gelmektedir. Örneğin
+<literal>vpopmail</literal> programı sayesinde kullanıcıların:
+            </para><itemizedlist>
+              <listitem>Adı ve soyadı</listitem>
+              <listitem>Kullanıcı ismi</listitem>
+              <listitem>Parolası</listitem>
+              <listitem>Eposta kotası</listitem>
+            </itemizedlist><para>
+gibi bilgileri bir veritabanında (cdb, MySQL, Oracle, Interbase,
+Informix) tutularak çok büyük bir kolaylık sağlamaktadır ve çok
+kolay bir şekilde sanal alan (virtual domain) ve sanal kullanıcılar
+(virtual users) açılabilmektedir.
+            </para>
+          </listitem>
+        </varlistentry>
+      </variablelist><para>
+Özellikte Internet Servis Sağlayıcıları (ISS) için mükemmel bir fırsattır.
+Çünkü her bir kullanıcı için sistem kullanıcısı (/etc/passswd'deki kullanıcılar)
+açmak yerine veritabanındaki tabloda kullanıcı açılmaktadır. Bu sayede işler
+hem daha kolay hale geliyor, hemde kullanıcılardan sisteme gelecebilecek
+saldırılar en aza iniyor.
+    </para>
+  </sect1>
+  <sect1 id="qmail-kurulumu-nasil_genel">
+    <title>Genel Bilgiler</title>
+    <para>Bu belgede:</para>
+      <itemizedlist>
+<listitem>qmail + gerekli paketler</listitem>
+<listitem>vpopmail</listitem>
+<listitem>qmailadmin</listitem>
+<listitem>Courier-IMAP  (qmail icin IMAP )</listitem>
+<listitem>sqwebmail</listitem>
+<listitem>ezmlm</listitem>
+<listitem>autoresponder</listitem>
+<listitem>rblsmtpd</listitem>
+<listitem>Antivirus</listitem>
+      </itemizedlist><para>
+kurulumu ile qmail'in özelleştirilmesini anlatacağım.
+    </para>
+    <para>
+Kurulum planı şu şekildedir:
+    </para>
+    <para>
+Önce normal bir şekilde qmail kurulacak, daha sonra 2 tür daha kurulum
+yapacağım.
+      </para><variablelist>
+        <varlistentry>
+          <term>1. Tür Kurulum</term>
+          <listitem><para>
+Hiç sanal alana (virtual domain) sahip olmadığımız kabul edilecek.
+Kullanıcıların sistem kullanıcısı olarak kalmasını istiyoruz.
+(<literal>/etc/passwd</literal> dosyasına kayıtlı kullanıcılar).
+Kullanıcıların sisteme erişip telnet, ftp, www gibi servisleri de
+kullanmasını da göze alarak kurulum anlatılacaktır. Eğer
+sunucuyu sadece eposta sunucu olarak kullanacaksanız kesinlikle
+2.tür kurulumu yapmanızı tavsiye ederim.
+            </para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>2. Tür Kurulum</term>
+          <listitem><para>
+Tüm kullanıcılar sanal (virtual) olacaktır. Kullanıcıların sisteme hiç
+bir şekilde erişmesini istemiyoruz (ISS'ler için çok ideal) ve tüm
+bilgileri <literal>mysql</literal> veya <ulink url="http://cr.yp.to/cdb.html">cdb</ulink>
+veritabanında  tutulacaktır (<literal>oracle</literal>, <literal>informix</literal>, vs. de kullanabilirsiniz).
+Bunun için <literal>mysql</literal> veya <literal>cdb</literal> kurulu olması lazım ve vpopmail kullanacağız.
+İstediğimiz kadar sanal alan oluşturabiliriz. Burada <literal>mysql</literal> mi yoksa
+<literal>cdb</literal> mi kullanacağınıza karar vermeniz lazım. Her ikisininde kendine göre
+getirileri ve götürüleri vardır.
+            </para>
+            <variablelist>
+              <varlistentry>
+                <term>MySQL</term>
+                <listitem><para>
+                  <variablelist>
+                    <varlistentry>
+                      <term>Getirileri</term>
+                      <listitem><para>
+PHP veya Perl gibi programlar sayesinde web üzerinden
+çalışan çeşitli uygulamalar basitçe yazılabilir (hattaki
+kullanıcının kendi parolasını değiştirmesi gibi..).
+                        </para>
+                      </listitem>
+                    </varlistentry>
+                    <varlistentry>
+                      <term>Götürüleri</term>
+                      <listitem><para>
+MySQL'in herhangi bir sebepden dolayı durması sonucu
+pop3'den parola doğrulaması yapılamama ve eposta
+sunucusunun geçici olarak posta alamaması durumları
+oluşabilir.</para>
+                      </listitem>
+                    </varlistentry>
+                  </variablelist></para>
+                </listitem>
+              </varlistentry><varlistentry>
+                <term>cdb</term>
+                <listitem><para>
+                  <variablelist>
+                    <varlistentry>
+                      <term>Getirileri</term>
+                      <listitem><para>
+Çalışması için MySQL gibi bir port'a ihtiyacı yok. Çok
+hızlı ve performanslı.</para>
+                      </listitem>
+                    </varlistentry>
+                    <varlistentry>
+                      <term>Götürüleri</term>
+                      <listitem><para>
+PHP veya Perl'de web tabanlı uygulama yazmak için dosyada
+düzenleme işlemleri ile uğraşmak gerekir.</para>
+                      </listitem>
+                    </varlistentry>
+                  </variablelist></para>
+                </listitem>
+              </varlistentry>
+            </variablelist>
+          </listitem>
+        </varlistentry>
+      </variablelist>
+    <warning>
+      <para>
+Bu belgeyi tamamiyle okumadan qmail'i kurmaya baslamayın. Çünkü ilerleyen
+bölümlerde istediğiniz bir şekilde sistem kurmak için qmail'in veya
+paketlerin kurulum yöntemini değiştirmeniz veya qmail'e yama yapmanız
+gerekebilir.
+      </para>
+    </warning>
+  </sect1>
+  <sect1 id="qmail-kurulumu-nasil_qmailkur">
+    <title>Qmail Kurulumu</title>
+    <para>
+Qmail'in <ulink url="http://cr.yp.to/software/qmail-1.03.tar.gz">kendi 
+sitesinden</ulink> en son qmail sürümünü indirin (Şu anki sürümü: 1.03)
+     </para>
+     <para>
+Qmail kurulumuna başlamadan önce qmail için gerekli sistem kullanıcılarını
+ekleyelim.
+       </para><orderedlist>
+         <listitem><para>
+<ulink url="http://www.freebsd.org/">FreeBSD</ulink> kullanıyorsanız:
+</para><para>
+<screen>
+# pw groupadd nofiles
+
+# pw useradd qmaild -g nofiles -d /var/qmail -s /nonexistent
+# pw useradd qmaill -g nofiles -d /var/qmail -s /nonexistent
+# pw useradd qmailp -g nofiles -d /var/qmail -s /nonexistent
+# pw useradd alias -g nofiles -d /var/qmail/alias -s /nonexistent
+
+# pw groupadd qmail
+# pw useradd qmailq -g qmail -d /var/qmail -s /nonexistent
+# pw useradd qmailr -g qmail -d /var/qmail -s /nonexistent
+# pw useradd qmails -g qmail -d /var/qmail -s /nonexistent
+</screen></para>
+         </listitem>
+         <listitem><para>
+Linux kullanıyorsanız:
+</para><para>
+<screen>
+# groupadd nofiles
+
+# useradd -g nofiles -d /var/qmail qmaild
+# useradd -g nofiles -d /var/qmail/alias alias
+# useradd -g nofiles -d /var/qmail qmaill
+# useradd -g nofiles -d /var/qmail qmailp
+# groupadd qmail
+# useradd -g qmail -d /var/qmail qmailq
+# useradd -g qmail -d /var/qmail qmailr
+# useradd -g qmail -d /var/qmail qmails
+</screen></para>
+         </listitem>
+         <listitem><para>
+Solaris kullanıyorsanız:
+</para><para>
+<screen>
+# groupadd nofiles
+
+# useradd -g nofiles -m -d /var/qmail -s /bin/false qmaild
+# useradd -g nofiles -m -d /var/qmail/alias -s /bin/false alias
+# useradd -g nofiles -m -d /var/qmail -s /bin/false qmaill
+# useradd -g nofiles -m -d /var/qmail -s /bin/false qmailp
+# groupadd qmail
+# useradd -g qmail -m -d /var/qmail -s /bin/false qmailq
+# useradd -g qmail -m -d /var/qmail -s /bin/false qmailr
+# useradd -g qmail -m -d /var/qmail -s /bin/false qmails
+</screen></para>
+         </listitem>
+       </orderedlist><para>
+Şimdi qmail'i kurmaya başlayabiliriz. Unutmayın, yukarıdaki kullanıcıları
+açmazsanız qmail kurulmayacaktır.
+</para><para>
+<screen>
+# mkdir /var/qmail
+# tar -zxvf qmail-1.03.tar.gz
+# cd qmail-1.03
+# make setup check
+</screen>
+    </para>
+    <para>
+daha sonra <literal>/var/qmail/control</literal> dizini altında gerekli
+qmail yapılandırma dosyalarını oluşturmak için
+</para><para>
+<screen>
+# ./config
+</screen>
+</para><para>
+komutunu verin, qmail kurduğunuz sunucunun doğru bir DNS kaydı olması
+lazımdır.
+     </para>
+     <para>
+DNS hakkında bilginiz yoksa DNS ile ilgili <ulink
+url="bind-ile-dns-howto.html">BIND 8 ile DNS NASIL</ulink> veya <ulink
+url="djbdns-kurulumu-nasil.html">djbDNS Kurulumu NASIL</ulink> belgelerini
+okuyabilirsiniz. DNS sunucu olarak djbDNS kullanmanızı tavsiye ederim.
+     </para>
+     <para>
+Eposta sunucunun IP'sinin ters (reverse) DNS kaydı olmazsa qmail çalışmaz.
+Herhangi bir sorundan dolayı qmail, DNS bilgilerinize geçici olarak
+erişemezse aşağıdaki komutu verin.
+</para><para>
+<screen>
+#./config-fast mail.example.com
+</screen>
+     </para>
+     <para>
+<literal>mail.example.com</literal> yerine sizin eposta sunucunuzun adını
+yazınız.
+     </para>
+     <para>
+Kurulumun tamamlanması için bazı takma isimlerin (alias) oluşturulması lazım.
+     </para><itemizedlist>
+         <listitem>
+<emphasis role="bold">postmaster</emphasis>: eposta yoneticisi,
+         </listitem>
+         <listitem>
+<emphasis role="bold">mailer-daemon</emphasis>: bazı geri dönen postaların alıcısı,
+         </listitem>
+         <listitem>
+<emphasis role="bold">root</emphasis>: sistemdeki root kullanıcısı.
+         </listitem>
+       </itemizedlist><para>
+<literal>root</literal>'a, <literal>mailer-daemon</literal>'a ve
+<literal>postmaster</literal>'a gelen postaları
+<literal>ismail@enderunix.org</literal>'a yönlendirmek için aşağıdaki
+komutları vereceğiz. (<literal>ismail@enderunix.org</literal> yerine siz
+kendi eposta adresinizi kullanınız, bu belgeyi okuyanlardan bazıları
+kendi eposta sunucularındaki bu takma isimlere benim eposta adresimi
+yazmışlar <literal>!:)</literal>)
+</para><para>
+<screen>
+# cd ~alias
+# echo  ismail@enderunix.org> .qmail-root
+# echo ismail@enderunix.org > .qmail-postmaster
+# echo ismail@enderunix.org > .qmail-mailer-daemon
+
+# chmod 2755 ~alias
+# chmod 644 ~alias/.qmail*
+</screen>
+    </para>
+  </sect1>
+  <sect1 id="qmail-kurulumu-nasil_ekkur">
+    <title>Gerekli Paketlerin Kurulumu</title>
+    <variablelist>
+      <varlistentry>
+        <term>ucspi-tcp</term>
+        <listitem><para>
+Qmail'i çalıştırmak için gerekli program,
+<literal>/etc/inetd.conf</literal>'a alternatif:
+<ulink url="http://cr.yp.to/ucspi-tcp/ucspi-tcp-0.88.tar.gz"
+>http://cr.yp.to/ucspi-tcp/ucspi-tcp-0.88.tar.gz</ulink>
+</para><para>
+İki kurulum içinde gerekli, ama qmail'i <literal>inetd</literal>'den
+çalıştırmak isterseniz kurmayın. Ama <literal>inetd</literal> tavsiye
+edilmiyor.
+</para><para>
+<screen>
+# tar -zxvf ucspi-tcp-0.88.tar.gz
+# cd ucspi-tcp-0.88
+# make setup check
+</screen>
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>daemontool</term>
+        <listitem><para>
+Bazı servisleri çalıştırmak ve günlük kayıtlarını tutmak için gerekli:
+<ulink url="http://cr.yp.to/daemontools/daemontools-0.76.tar.gz"
+>http://cr.yp.to/daemontools/daemontools-0.76.tar.gz</ulink>
+          </para><para>
+İki kurulum içinde gerekli qmail'i <literal>inetd</literal>'den
+çalıştırmak isterseniz kurmayın.
+</para><para>
+<screen>
+# mkdir /package
+# chmod 1755 /package
+# cd /package
+# tar zxvf /path/to/daemontools-0.76.tar.gz
+# cd admin/daemontools-0.76
+# ./package/install
+</screen>
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>fastforward</term>
+        <listitem><para>
+Sendmail <literal>/etc/aliasses</literal> dosyasını kullanmak için:
+<ulink url="http://cr.yp.to/software/fastforward-0.51.tar.gz"
+>http://cr.yp.to/software/fastforward-0.51.tar.gz</ulink>
+          </para><para>
+Fastforward programı eğer qmail kurmadan önce sendmail kullanıyor
+idiyseniz <literal>/etc/mail/aliases</literal> veya
+<literal>/etc/aliases</literal> dosyasındaki takma adların qmail ile
+çalışmasını sağlar.
+</para><para>
+<screen>
+# tar -zxvf fastforward-0.51.tar.gz
+# cd fastforward-0.51
+# make setup check
+</screen>
+          </para>
+          <para>
+Fastforward'i kullanmak için  qmail'i kurduktan sonra
+<literal>/var/qmail/alias/.qmail-default</literal> dosyasına
+</para><para>
+<screen>
+|fastforward -d /etc/aliases.cdb
+</screen>
+</para><para>yazın ve daha sonra
+</para><para>
+<screen>
+# /var/qmail/bin/newaliases
+</screen>
+</para><para>komutunu verin.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>dot-forward</term>
+        <listitem><para>
+Sendmail'deki <literal>.forward</literal> dosyasını kullanabilmek için:
+<ulink url="http://cr.yp.to/software/dot-forward-0.71.tar.gz"
+>http://cr.yp.to/software/dot-forward-0.71.tar.gz</ulink>
+           </para><para>
+(İki kurulum icinde gerekli.) dot-forward paketi sendmail epostalarını
+başka bir adrese yönlendirmede kullanılan <literal>.forward</literal>
+dosyasının qmail'de de kullanılmasını sağlar. Ama çok büyük bir
+<literal>/etc/aliases</literal> dosyası yoksa kullanmanıza gerek yok.
+Qmail'in kendi yönlendirme sistemini kullanın.
+</para><para>
+<screen>
+# tar -zxvf dot-forward-0.71.tar.gz
+# cd dot-forward-0.71
+# make setup check
+</screen>
+           </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><anchor id="qmail-kurulumu-nasil_chkpaswd"/>checkpassword</term>
+        <listitem><para>
+<literal>/etc/passwd</literal> dosyasına göre pop3 kimlik kanıtlaması
+için kullanılır: <ulink url="http://cr.yp.to/checkpwd/checkpassword-0.90.tar.gz"
+>http://cr.yp.to/checkpwd/checkpassword-0.90.tar.gz</ulink>
+          </para><para>
+Eğer 1. tür kurulumu seçtiyseniz, pop3 kimlik kanıtlaması için
+checkpassword paketini kurmalıyız.
+</para><para>
+<screen>
+# tar -zxvf checkpassword-0.81.tar.gz
+# cd checkpassword-0.81
+#make setup check
+</screen>
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </sect1>
+  <sect1 id="qmail-kurulumu-nasil_qmail-rc">
+    <title>/var/qmail/rc Dosyası ve Maildir</title>
+    <para>
+<literal>/var/qmail/rc</literal> dosyası, <literal>qmail-send</literal>'i
+çalıştırmak için kullanılan dosyadır. <literal>/var/qmail/boot</literal>
+altında değişik örnekleri mevcuttur.
+    </para>
+    <para>
+Bizim örnek <literal>/var/qmail/rc</literal> dosyamız şöyle olacaktır:
+</para><para>
+<screen>
+#!/bin/sh
+exec env - PATH="/var/qmail/bin:$PATH" \
+qmail-start ./Maildir/
+</screen>
+    </para>
+    <para>
+Eğer 1. kurulum yöntemini seçtiyseniz ve <literal>dot-forward</literal>
+paketini kurduysanız, <literal>.forward</literal> dosyasının qmail ile
+çalışması için <literal>/var/qmail/rc</literal> şöyle olmalıdır:
+</para><para>
+<screen>
+#!/bin/sh
+exec env - PATH="/var/qmail/bin:$PATH" \
+qmail-start   '|dot-forward .forward ./Maildir/'
+</screen>
+</para><para>
+Bu bilgileri istediğiniz bir metin düzenleyici ile yazdıktan sonra
+<literal>/var/qmail/rc</literal> dosyası olarak kaydedip aşağıdaki
+komutları verin:
+</para><para>
+<screen>
+# chmod 755 /var/qmail/rc
+# mkdir /var/log/qmail
+</screen>
+    </para>
+    <para>
+<literal>Maildir</literal> gelen postaların saklanma yeridir.
+<literal>Maildir</literal> bir dizindir ve kullanıcıların postaları
+sendmail'deki gibi <literal>/var/spool/mail/kullanıcı_adı</literal>
+dosyasında değil de her kullanıcının ev dizininde bulunur ve
+postalar bu dizin altında saklanır.
+    </para>
+    <para>
+Getirileri:
+    </para><itemizedlist>
+        <listitem>Kilitlenme (locking) söz konusu değildir</listitem>
+        <listitem>Qmail ile gelen pop3 ile kullanılabilir</listitem>
+        <listitem>
+Sendmail'deki gibi her posta geldiğinde tümden <literal>mbox</literal>
+dosyasını açmaz. Bu sayede daha fazla performans sağlar.
+(Düşünsenize mbox dosyasında binlerce posta varsa bu kaç dakikada açılır...)
+        </listitem>
+        <listitem>Güvenlidir</listitem>
+      </itemizedlist><para>
+Götürüleri:
+      </para><itemizedlist>
+        <listitem>
+Her posta ayrı bir dosya olarak saklandığı için çok fazla posta
+geldiğinde dosya endekslerinin sayısı çok fazla olacaktır.
+        </listitem>
+      </itemizedlist>
+  </sect1>
+  <sect1 id="qmail-kurulumu-nasil_qmail-init">
+    <title>Qmail'in Başlatılması</title>
+    <sect2>
+      <title>Qmail'in Açılış Betiği (initscript) ile Başlatılması</title>
+      <para>
+Eğer INETD kullanmak isterseniz bu kısmı hiç okumadan
+bir sonraki bölüme (<xref linkend="qmail-kurulumu-nasil_qmail-inetd"/>)
+geçiniz. Son olarak uyarıyorum INETD kullanmak çok sağlıklı bir yöntem
+değildir.
+      </para>
+      <para>
+Qmail'i açılışta başlatmak için  ve qmail'i durdurup çalıştırmayı daha
+kolay hale getirmek için aşağıdaki betiği yazalım. (Bunları yazmakla
+vakit kaybetmeyin. Ya buradan bir metin düzenleyiciye kopyalayın ya da
+doğrudan <ulink url="http://www.enderunix.org/docs/qmail.sh"
+>http://www.enderunix.org/docs/qmail.sh</ulink> adresinden alın.
+      </para>
+      <para>
+        <emphasis role="bold">qmail.sh</emphasis> Betiği:
+</para><para>
+<screen>
+#!/bin/sh
+PATH=/var/qmail/bin:/usr/local/bin:/usr/bin:/bin
+export PATH
+case "$1" in
+
+start)
+ echo -n "Qmail başlatılıyor: svscan"
+ cd /var/qmail/supervise
+ env - PATH="$PATH" svscan &amp;
+ echo $! > /var/run/svscan.pid
+ echo "."
+ ;;
+
+stop)
+ echo -n "Qmail durduruluyor: svscan"
+ kill `cat /var/run/svscan.pid`
+ echo -n " qmail"
+ svc -dx /var/qmail/supervise/*
+ echo -n " logging"
+ svc -dx /var/qmail/supervise/*/log
+ echo "."
+ ;;
+
+reload|hup)
+ echo "qmail-send'e HUP sinyali gönderiliyor."
+ svc -h /var/qmail/supervise/qmail-send
+ ;;
+
+pause)
+ echo "qmail-send bekletmeye alınıyor"
+ svc -p /var/qmail/supervise/qmail-send
+ echo "qmail-smtpd bekletmeye alınıyor"
+ svc -p /var/qmail/supervise/qmail-smtpd
+ ;;
+
+cont)
+ echo "qmail-send bekletmeden çıkıyor"
+ svc -c /var/qmail/supervise/qmail-send
+ echo "qmail-smtpd bekletmeden çıkıyor"
+ svc -c /var/qmail/supervise/qmail-smtpd
+ ;;
+
+
+restart)
+ echo Qmail yeniden başlatılıyor:"
+ echo "* qmail-smtpd durduruluyor."
+ svc -d /var/qmail/supervise/qmail-smtpd
+ echo "* qmail-send'e SIGTERM gönderiliyor ve yeniden başlatılıyor."
+ svc -t /var/qmail/supervise/qmail-send
+ echo "* qmail-smtpd başlatılıyor."
+ svc -u /var/qmail/supervise/qmail-smtpd
+ ;;
+
+cdb)
+
+tcprules /etc/tcp.smtp.cdb /etc/tcp.smtp.tmp &lt; /etc/tcp.smtp
+ chmod 644 /etc/tcp.smtp*
+ echo "/etc/tcp.smtp yeniden yüklendi."
+ ;;
+
+help)
+
+cat &lt;&lt;HELP
+
+stop    -- eposta hizmeti durdurulur.
+           (smtp bağlantıları reddedilir, dışarı birşey gönderilmez)
+start   -- eposta hizmeti başlatılır.
+           (smtp bağlantıları kabul edilir, postalar gönderilir)
+pause   -- eposta hizmeti geçici olarak durdurulur.
+           (bağlantılar kabul edilir, hiçbir şeye izin verilmez)
+cont    -- Geçici olarak durdurulan hizmet başlatılır.
+cdb     -- smtp için kullanılan tcpserver cdb dosyası yeniden kurgulanır.
+restart -- smtp durdurulur, qmail-send'e bir TERM sinyali gönderilerek
+           qmail-send ve ardından smtp yeniden başlatılır.
+reload  -- qmail-send HUP gönderilir, yerel ve sanal alanlar yeniden okunur.
+HELP
+ ;;
+
+*)
+
+echo "Kullanım: $0 {start|stop|restartreload|pause|cont|cdb|help}"
+ exit 1
+ ;;
+ esac
+ exit 0
+</screen>
+      </para>
+      <para>
+Bu betiğin çalışması için bir kaç  dizin ve dosya oluşturmamız lazım.
+Sıra ile aşağıdaki komutları verelim:
+</para><para>
+<screen>
+# mkdir -p /var/qmail/supervise/qmail-send/log
+# mkdir -p /var/qmail/supervise/qmail-smtpd/log
+# chmod +t /var/qmail/supervise/qmail-send
+# chmod +t /var/qmail/supervise/qmail-smtpd
+# chown -R qmaill.wheel /var/log/qmail
+</screen>
+</para><para>
+daha sonra <literal>/var/qmail/supervise/qmail-send/run</literal> diye
+bir dosya oluşturun ve içine aşağıdakieri yazın:
+</para><para>
+<screen>
+#!/bin/sh
+exec /var/qmail/rc
+</screen>
+</para><para>
+<literal>/var/qmail/supervise/qmail-send/log/run</literal> diye bir
+dosya oluşturun ve içine aşağıdakieri yazın:
+</para><para>
+<screen>
+#!/bin/sh
+exec /usr/local/bin/setuidgid qmaill /usr/local/bin/multilog t /var/log/qmail
+</screen>
+</para><para>
+yukarıdaki ifade ile <literal>qmail-send</literal> programının
+günlük kayıtlarının <literal>/var/log/qmail</literal> dizine atılmasını
+sağlıyoruz.
+      </para>
+      <para>
+<literal>/var/qmail/supervise/qmail-smtpd/run</literal> diye bir
+dosya oluşturun ve içine aşağıdakileri yazın:
+</para><para>
+<screen>
+#!/bin/sh
+qmailDUID=`id -u qmaild`
+NOFILESGID=`id -g qmaild`
+
+exec /usr/local/bin/softlimit -m 4000000 \
+/usr/local/bin/tcpserver -v -p -H -R -l 0 -x /etc/tcp.smtp.cdb -c 256\
+-u "$qmailDUID" -g "$NOFILESGID" 0 smtp /var/qmail/bin/qmail-smtpd 2>&amp;1
+</screen>
+</para><para>
+<literal>-l 0</literal> (küçük L ve sıfır) parametresi ile eposta
+sunucusunun makina ismini (hostname) bulurken DNS sorgulaması
+yapmaması sağlanir. Bu parametreyi koymazsanız, eposta sunucunuza
+bağlantı çok yavaş olacaktır.
+      </para>
+      <para>
+<literal>-c</literal> parametresi ile eposta sunucusuna aynı anda kaç
+tane bağlantıya izin verileceği belirlenir (burada 256 tane).
+      </para>
+      <warning>
+        <para>
+Yukarıdaki satırlarda <literal>\</literal> işaretinden sonra boş
+satır olmaması lazım, aksi takdirde qmail çalışmaz.
+        </para>
+      </warning>
+      <caution>
+        <para>
+<emphasis role="bold">Solaris</emphasis> kullanıyorsanız,
+yukarıdaki dosyada
+</para><para>
+<screen>
+qmailDUID=`id -u qmaild`
+NOFILESGID=`id -g qmaild`
+</screen>
+</para><para> satırları yerine</para><para>
+<screen>
+qmailDUID=`/usr/xpg4/bin/id -u qmaild`
+NOFILESGID=`/usr/xpg4/bin/id -g qmaild`
+</screen> ifadelerini yazın.
+        </para>
+      </caution>
+      <para>
+<literal>/var/qmail/supervise/qmail-smtpd/log/run</literal> diye bir
+dosya oluşturun ve içine aşağıdakileri yazın:
+</para><para>
+<screen>
+#!/bin/sh
+exec /usr/local/bin/setuidgid qmaill /usr/local/bin/multilog t /var/log/qmail/smtpd
+</screen>
+</para><para>
+yukarıdaki ifade ile <literal>qmail-smtp</literal> programının günlük
+kayıtlarının <literal>/var/log/qmail/smtpd</literal> dizine atılmasını
+sağlıyoruz.
+      </para>
+      <para>
+Şimdi de dosyaların izinlerini değiştirelim.
+</para><para>
+<screen>
+# chmod 755 /var/qmail/supervise/qmail-send/run
+# chmod 755 /var/qmail/supervise/qmail-send/log/run
+# chmod 755 /var/qmail/supervise/qmail-smtpd/run
+# chmod 755 /var/qmail/supervise/qmail-smtpd/log/run
+# mkdir -p /var/log/qmail/smtpd
+# chown qmaill /var/log/qmail /var/log/qmail/smtpd
+</screen>Evet dizinleri ve dosyaları oluşturduk.
+      </para>
+      <para>
+İstediğimiz makinalara (hosts) <literal>smtp relay</literal> izni vermek
+için  aşağıdaki komutu verelim:
+</para><para>
+<screen>
+#echo '127.:allow,RELAYCLIENT=""' >>/etc/tcp.smtp
+</screen>
+</para><para>
+Bu ifade ile makinanın kendi <literal>lo0</literal> arayüzüne (loopback)
+izin verilir.
+      </para>
+      <para>
+Ve eposta sunucusunun IP'sine de relay izni verelim (IP'si 212.65.128.82
+olsun). <literal>RELAYCLIENT=""</literal> ifadesi ile
+<literal>RELAYCLIENT</literal> değişkenine boş bir değer atanmış olur,
+bu değişkene bir değer atandığı için <literal>qmail-smtpd</literal>
+bu IP'li istemciye RELAY iznini verir:
+</para><para>
+<screen>
+# echo '212.65.128.82:allow,RELAYCLIENT=""' >>/etc/tcp.smtp
+</screen>
+</para><para>
+belli bir IP ailesine izin vermek için (örneğin 212.144.12.)
+</para><para>
+<screen>
+# echo '212.144.12.:allow,RELAYCLIENT=""' >>/etc/tcp.smtp
+</screen>
+      </para>
+      <para>
+Ve <literal>/etc/tcp.smtp</literal> dosyasının en sonuna
+<screen>:allow</screen>ifadesini ekleyin (manası şudur: tüm smtp
+bağlantılarına izin ver ama <literal>RELAYCLIENT</literal> değiskenini
+atama). SMTP erişim veritabanını oluşturmak için aşağıdaki komutu verin:
+</para><para>
+<screen>
+# /usr/local/bin/tcprules /etc/tcp.smtp.cdb /etc/tcp.smtp.tmp &lt; /etc/tcp.smtp
+</screen>
+      </para>
+      <para>
+<literal>/etc/tcp.smtp</literal> dosyasına kayıt ekleme/çıkarma yaptıktan
+sonra bu komutu tekrar çalıştırmanız gerekir. Ama qmail'i yeniden
+başlatmanıza (restart)  gerek yok!.
+      </para>
+      <para>
+Qmail'in her açılışta otomatik olarak çalışması
+      </para><variablelist>
+          <varlistentry>
+            <term>FreeBSD için:</term>
+            <listitem><para>
+Yukarıda yazdığımız <literal>qmail.sh</literal> betiğini
+<literal>/usr/local/etc/rc.d/</literal> altına kopyalayın:
+</para><para>
+<screen>
+# cp qmail.sh /usr/local/etc/rc.d/
+# chmod 700  /usr/local/etc/rc.d/qmail.sh
+</screen>
+</para><para>
+                Qmail'i çalıştırmak için
+</para><para>
+<screen>
+/usr/local/etc/rc.d/qmail.sh start
+</screen>
+              </para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>OpenBSD için:</term>
+            <listitem><para>
+Yukarıda yazdığımız <literal>qmail.sh</literal> betiğini
+<literal>/usr/local/etc/</literal> altına kopyalayın:
+</para><para>
+<screen>
+# cp qmail.sh /usr/local/etc
+#chmod 755  /usr/local/etc/qmail.sh
+</screen>
+</para><para>
+<literal>etc/rc.local</literal> dosyasına
+</para><para>
+<screen>
+/usr/local/etc/qmail.sh start
+</screen>
+</para><para>satırını ekleyin.
+              </para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>Red Hat ve Mandrake için:</term>
+            <listitem><para>
+Yukarıda yazdığımız <literal>qmail.sh</literal> betiğini
+<literal>/usr/local/etc/rc.d/init.d/</literal> altına kopyalayın:
+</para><para>
+<screen>
+# cp qmail.sh /etc/rc.d/init.d
+# chmod 700  /etc/rc.d/init.d/qmail.sh
+</screen>
+</para><para>
+Qmail'in açılışta başlatılması için
+<literal>/etc/rc.d/rc.local</literal> dosyasına
+</para><para>
+<screen>
+/etc/rc.d/init.d/qmail.sh start
+</screen>
+</para><para>yazmanız yeterlidir.
+              </para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>Solaris için:</term>
+            <listitem><para>
+<screen>
+# cp qmail.sh /etc/init.d
+# chmod 700  /usr/local/etc/rc.d/qmail.sh
+# ln -s /etc/init.d/qmail.sh /etc/rc2.d/S90qmail
+# ln -s /etc/init.d/qmail.sh /etc/rc2.d/K90qmail
+</screen></para>
+            </listitem>
+          </varlistentry>
+        </variablelist>
+    </sect2>
+    <sect2  id="qmail-kurulumu-nasil_qmail-inetd">
+      <title>Qmail'in INETD ile Başlatılması</title>
+      <para>
+<literal>/etc/inetd.conf</literal> dosyasına aşağıdaki ifadeleri yazın:
+</para><para>
+<screen>
+smtp stream tcp nowait qmaild /usr/local/bin/tcpd /var/qmail/bin/tcp-env ¬
+  /var/qmail/bin/qmail-smtpd
+</screen>
+</para><para>ve şu komutu verin:
+</para><para>
+<screen>
+# kill -HUP inetd_pid
+</screen>
+      </para>
+      <para>
+Ayrıca qmail'in <literal>/var/log/maillog</literal> veya
+<literal>/var/log/syslog</literal> dosyasında günlük kayıtlarını tutmasını
+istiyorsanız <literal>/var/qmail/rc</literal> dosyasına "splogger qmail"
+parametresini ekleyin. Örnek bir <literal>/var/qmail/rc</literal> dosyası
+şöyledir:
+</para><para>
+<screen>
+#!/bin/sh
+exec env - PATH="/var/qmail/bin:$PATH" \
+qmail-start ./Maildir/ splogger qmail
+</screen>
+</para><para>
+hepsi bu <literal>:))</literal>. Ama  <literal>inetd.conf</literal>'dan çalıştırmak kolay
+diye inetd'yi kullanmayın. Eğer eposta sunucunuz çok yoğun bir şekilde
+çalışıyorsa  inetd yüzünden performans düşüklüğü olabilir ve en önemlisi
+RELAY  yapamazsınız.
+      </para>
+    </sect2>
+  </sect1>
+  <sect1 id="qmail-kurulumu-nasil_qmail-files">
+    <title>Yapılandırma Dosyaları</title>
+    <para>
+Qmail yapılandırma dosyaları <literal>/var/qmail/control/</literal>
+dizininde bulunur:
+    </para>
+      <variablelist>
+        <varlistentry>
+          <term>defaultdomain</term>
+          <listitem><para>
+Öntanımlı makina ismini içerir.
+            </para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>me</term>
+          <listitem><para>
+Makinanin kendi adını içerir.
+            </para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>locals</term>
+          <listitem><para>
+Yerel olarak gönderilecek alan (domain) isimlerini içerir.
+            </para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>rcpthosts</term>
+          <listitem><para>
+Posta kabul ettiğimiz alan isimleri bulunur.
+            </para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>virtualdomains</term>
+          <listitem><para>
+Sanal alan isimleri bulunur.
+            </para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>badmailfrom</term>
+          <listitem><para>
+Postasını kabul etmek istemediğimiz eposta adresleri. Bu dosya öntanımlı
+olarak yoktur.
+            </para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>concurrencylocal</term>
+          <listitem><para>
+Aynı anda yerel'e gönderilen posta sayısı (öntanımlı 10).
+Bu dosya öntanımlı olarak yoktur.
+            </para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>concurrencyremote</term>
+          <listitem><para>
+Ayni anda dışarı gönderilen eposta sayısı (öntanımlı 20).
+Bu dosya öntanımlı olarak yoktur.
+            </para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>databytes</term>
+          <listitem><para>
+Bir seferde gönderilen eposta iletisinin izin verilen maximum boyutu
+(öntanımlı: 0 - sınırsız)
+            </para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>queuelifetime</term>
+          <listitem><para>
+Bir eposta iletisinin eposta kuyruğunda kaç gün kalacağını belirler.
+Bu dosyadaki değer saniye cinsindendir (öntanımlı: 7 gün).
+Bu dosya öntanımlı olarak yoktur.
+            </para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>smtpgreeting</term>
+          <listitem><para>
+Eposta sunucusunun 25. portuna bağlantı kurulduğunda görünen mesaj
+Bu dosya öntanımlı olarak yoktur. Öntanımlı değer olarak eposta
+sunucusunu adı gözükür)
+            </para>
+          </listitem>
+        </varlistentry>
+      </variablelist>
+  </sect1>
+  <sect1 id="qmail-kurulumu-nasil_sendmail">
+    <title>Sendmail'in Durdurulması</title>
+    <para>
+<screen>
+# ps ax | grep sendmail
+</screen>
+</para><para>
+komutu ile sendmail süreç numarasını
+      bulun ve
+</para><para>
+<screen>
+# kill -TERM sendmail_PID
+</screen>
+</para><para>ile sendmail sürecini
+öldürün. Büyük ihtimalle sendmail otomatik olarak her açılışta çalışıyordur.
+Kendi sisteminize göre makina tekrar açıldığında sendmail'in çalışmasını
+engelleyin:
+      </para>
+      <variablelist>
+        <varlistentry>
+          <term>FreeBSD</term>
+          <listitem><para>
+<literal>/etc/rc.conf</literal> dosyasında
+<literal>sendmail_enable="YES"</literal> ifadesini
+<literal>sendmail_enable="NONE"</literal> olarak değiştirin ve
+şu komutları verin:
+</para><para>
+<screen>
+# mv /usr/libexec/sendmail/sendmail/usr/libexec/sendmail/sendmail.bak
+# mv /usr/sbin/sendmail /usr/sbin/sendmail.bak
+# chmod 0 /usr/libexec/sendmail/sendmail.bak /usr/sbin/sendmail.bak
+
+# ln -s /var/qmail/bin/sendmail /usr/libexec/sendmail/sendmail
+# ln -s /var/qmail/bin/sendmail /usr/sbin/sendmail
+
+# mv /usr/sbin/newaliases /usr/sbin/newaliases.bck
+# ln -s /var/qmail/bin/newaliases /usr/sbin/newaliases
+</screen>
+            </para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>OpenBSD</term>
+          <listitem><para>
+<literal>/etc/rc.conf</literal> dosyasında
+<literal>sendmail_enable="-q30"</literal> ifadesini
+<literal>sendmail_enable="NO"</literal> olarak değiştirin ve
+aşağıdaki komutları verin:
+</para><para>
+<screen>
+# mv /usr/libexec/sendmail/sendmail  /usr/libexec/sendmail/sendmail.bak
+# mv /usr/sbin/sendmail  /usr/sbin/sendmail.bak
+# chmod 0 /usr/libexec/sendmail/sendmail.bak  /usr/sbin/sendmail.bak
+
+# ln -s /var/qmail/bin/sendmail   /usr/libexec/sendmail/sendmail
+# ln -s /var/qmail/bin/sendmail   /usr/sbin/sendmail
+
+# mv /usr/sbin/newaliases /usr/sbin/newaliases.bck
+# ln -s /var/qmail/bin/newaliases /usr/sbin/newaliases
+</screen>
+            </para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>Red Hat ve Mandrake</term>
+          <listitem><para>
+<screen>
+# ntsys
+</screen>
+            </para><para>
+komutunu çalıştırın ve sendmail kısmındakı
+<literal>*</literal> ifadesini kaldırın.. En iyisi
+</para><para>
+<screen>
+# rpm -e --nodeps sendmail
+</screen>
+</para><para>komutu ile tümden sendmail'i silin :))
+            </para>
+            <para>
+Sonra da aşağıdaki komutları verin.
+</para><para>
+<screen>
+# mv /usr/libexec/sendmail /usr/libexec/sendmail.bak
+# mv /usr/sbin/sendmail /usr/sbin/sendmail.bak
+# chmod 0 /usr/libexec/sendmail.bak /usr/sbin/sendmail.bak
+# ln -s /var/qmail/bin/sendmail /usr/libexec/sendmail
+# ln -s /var/qmail/bin/sendmail /usr/sbin/sendmail
+
+# mv /bin/newaliases /bin/newaliases.bck
+# ln -s /var/qmail/bin/newaliases /bin/newaliases
+</screen>
+            </para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>Solaris</term>
+          <listitem><para>
+<screen>
+#mv /etc/init.d/sendmail /sendmail.bck
+</screen>
+            </para><para>
+Ayrıca <literal>/etc/rc2.d/</literal> veya <literal>/etc/rc3.d</literal>
+dizinlerinde sendmail'i çalıştıran bağları kaldırınız.
+</para><para>
+<screen>
+# mv /usr/lib/sendmail /usr/lib/sendmail/sendmail.bak
+# mv /usr/sbin/sendmail /usr/sbin/sendmail.bak
+
+# chmod 0 /usr/libexec/sendmail.bak /usr/sbin/sendmail.bak
+# ln -s /var/qmail/bin/sendmail /usr/libexec/sendmail
+# ln -s /var/qmail/bin/sendmail /usr/sbin/sendmail
+
+# mv /usr/bin/newaliases /usr/bin/newaliases.bck
+# ln -s /var/qmail/bin/newaliases /usr/bin/newaliases
+</screen>
+            </para>
+          </listitem>
+        </varlistentry>
+      </variablelist>
+  </sect1>
+  <sect1 id="qmail-kurulumu-nasil_test">
+    <title>Qmail'in Çalışmasının Test Edilmesi</title>
+    <para>
+Qmail'in çalışıp çalışmadığını test etmek için
+</para><para>
+<screen>
+#csh -cf '/var/qmail/rc'
+# ps ax|grep qmail
+</screen>
+</para><para>
+komutunu verdiğinizde
+</para><para>
+<screen>
+367 p0 S 0:00.18 qmail-send
+368 p0 I 0:00.03 qmail-lspawn ./Maildir/
+369 p0 I 0:00.01 qmail-rspawn
+370 p0 I 0:00.03 qmail-clean
+</screen>
+</para><para>
+benzeri bir çıktı alıyorsanız qmail çalışıyor demektir.
+    </para>
+    <para>
+Qmail'i durdurmak, başlatmak veya yeniden başlatmak isterseniz, bunu
+<literal>qmail.sh stop|start|restart</literal> komutları ile
+yapabilirsiniz.
+    </para>
+    <para>
+Sadece <literal>qmail-send</literal> sürecini durdurmak için
+</para><para>
+<screen>
+svc -d /var/qmail/supervise/qmail-send
+</screen>
+</para><para>
+Bu komutla durdurulmuş <literal>qmail-send</literal>'i başlatmak için
+</para><para>
+<screen>
+svc -u /var/qmail/supervise/qmail-send
+</screen>
+</para><para>
+<literal>qmail-send</literal>'i yeniden başlatmak için
+</para><para>
+<screen>
+svc -t /var/qmail/supervise/qmail-send
+</screen>
+</para><para>
+komutlarını kullanabilirsiniz.
+    </para>
+    <para>
+<literal>/var/qmail/supervise/qmail-send</literal> yerine
+<literal>/var/qmail/supervise/qmail-smtpd</literal> dizinini kullanarak
+yukarıdaki en son üç komutu <literal>qmail-smtpd</literal>'yi yeniden
+başlatmak için de kullanabilirsiniz.
+    </para>
+    <para id="qmail-kurulumu-nasil_kavsak">
+<emphasis role="bold">Buraya kadar herşey, başta bahsettiğimiz iki tür
+kurulum için aynıydı. Yapacağınız kurulum türüne göre
+<xref linkend="qmail-kurulumu-nasil_kur-1"/> ve/veya
+<xref linkend="qmail-kurulumu-nasil_kur-2"/> bölümünü
+okuduktan sonra tekrar buraya döneceksiniz ve iki kurulum için ortak olan
+kuruluma devam edeceğiz.</emphasis>
+    </para>
+  </sect1>
+  <sect1 id="qmail-kurulumu-nasil_rblsmtpd">
+    <title>RBLSMTPD Kurulumu</title>
+    <para>
+RBL (Realtime Blocking List - Anında Engelleme Listesi)
+    </para>
+    <para>
+<emphasis role="bold">Open Relay</emphasis>: Internet üzerinde bulunan eposta
+sunucunun sistem yöneticisi tarafından yanlış yapılandırılması sonucu, bu
+sunucu üzerinden herkesin herhangi bir kısıtlama olmaksızın, istediği yerden
+posta gönderebilmesi diye tanımlıyabiliriz.
+    </para>
+    <para>
+rblsmtpd'nin yaptığı iş kısaca open relay eposta sunucularından gelen postaları
+almamaktır. Herkesin rblsmtpd'yi kullanmasını kesinlikle tavsiye ederim. Internet
+üzerinde bir sürü ücretli ya da ücretsiz olarak hizmet veren organizasyonlar vardır.
+Biz burada www.ordb.org'un RBL veritabanını kullanacağız. (Sene 2019: ordb.org 
+bu hizmeti durdurmuş. <ulink url="http://cr.yp.to/ucspi-tcp/rblsmtpd.html"
+>http://cr.yp.to/ucspi-tcp/rblsmtpd.html</ulink> adresinde diğer rbl
+sunucularının listesini görebilirsiniz.)
+    </para>
+    <para>
+rblsmtpd <literal>ucspi-tcp</literal> paketi ile birlikte gelmektedir.
+rblsmtpd'yi kullanmak için <literal>qmail-smtpd</literal>'yi çalıştırdığımız
+<literal>/var/qmail/supervise/qmail-smtpd/run</literal> dosyasını biraz
+değiştirmemiz gerekir. rblsmtpd'yi kullanmadan önceki
+<literal>/var/qmail/supervise/qmail-smtpd/run</literal> dosyası
+</para><para>
+<screen>
+#!/bin/sh
+qmailDUID=`id -u qmaild`
+NOFILESGID=`id -g qmaild`
+
+exec /usr/local/bin/softlimit -m 4000000 \
+/usr/local/bin/tcpserver -v -p -H -R -l 0 -x /etc/tcp.smtp.cdb -c 256\
+-u "$qmailDUID" -g "$NOFILESGID" 0 smtp /var/qmail/bin/qmail-smtpd 2>&amp;1
+</screen>
+</para><para>
+rblsmtp'yi etkinleştirdikten sonraki
+<literal>/var/qmail/supervise/qmail-smtpd/run</literal> dosyası
+</para><para>
+<screen>
+#!/bin/sh
+qmailDUID=`id -u qmaild`
+NOFILESGID=`id -g qmaild`
+
+exec /usr/local/bin/softlimit -m 4000000 \
+/usr/local/bin/tcpserver -v -p -H -R -l 0 -x /etc/tcp.smtp.cdb -c 256\
+-u "$qmailDUID" -g "$NOFILESGID" 0 smtp /usr/local/bin/rblsmtpd \
+-r relays.ordb.org /var/qmail/bin/qmail-smtpd 2>&amp;1
+</screen>
+    </para>
+    <para>
+Artık sunucunuza gelen her bir eposta için rblsmtpd
+<literal>relays.ordb.org</literal>'a eposta gönderen kullanıcının IP'sini
+gönderecek, eğer kullanıcının IP'si <literal>ordb.org</literal>'un kara
+listesinde ise eposta sunucu bu sunucudan eposta almayacak ve eposta gönderene
+şöyle bir hata dönecektir:
+    </para>
+    <para>
+<emphasis>This mail was handled by an open relay - please visit
+&lt;http://ORDB.org/lookup/?host=193.140.253.19></emphasis>
+    </para>
+    <para>
+Ve <literal>/var/log/qmail/smtpd/current</literal> günlük kayıt dosyasına
+    </para>
+    <para>
+<emphasis>@400000003d76174d069ae90c rblsmtpd: 193.140.253.19 pid 20630: 451
+This mail was handled by an open relay - please visit
+&lt;http://ORDB.org/lookup/?host=193.140.253.19></emphasis> şeklinde bir bilgi
+yazacaktır. Dediğim gibi herkesin kullanmasını şiddetle tavsiye ederim.
+    </para>
+    <para>
+<ulink url="http://cr.yp.to/ucspi-tcp/rblsmtpd.html"
+>http://cr.yp.to/ucspi-tcp/rblsmtpd.html</ulink> adresinde diğer rbl
+sunucularının listesini görebilirsiniz.
+    </para>
+  </sect1>
+  <sect1 id="qmail-kurulumu-nasil_antivirus">
+    <title>Antivirus Kurulumu</title>
+    <para>
+Günümüzde antivirus neredeyse vazgeçilmez oldu ve virüsler en çabuk eposta
+yoluyla yayılmaktadır. Antivirus olarak 
+<ulink url="https://www.clamav.net/">clamav</ulink>, antispam olarak da 
+<ulink url="http://www.enderunix.org/qsheff/">qsheff</ulink> kullanılabilir.
+    </para>
+  </sect1>
+  <sect1 id="qmail-kurulumu-nasil_ozellestirilir">
+    <title>Qmail'in Özelleştirilmesi</title>
+    <para>
+Bu bölümde qmail'e uygulanabilecek bir kaç yamadan bahsedeceğim:
+    </para><variablelist>
+        <varlistentry>
+          <term>
+<ulink 
+url="https://github.com/bruceg/qmail-patches/blob/master/big-concurrency.patch"> Concurrency Greater Yaması</ulink>
+          </term>
+          <listitem><para>
+Qmail normalde aynı anda en fazla 240 eposta işleyebilir. Bu yama
+sayesinde bu değer 509'a kadar çıkmaktadır. Bu yamayı qmail'i kurarken
+uygulamanız lazım. Eğer daha önce kurulu bir qmail var ise baştan
+kurulması lazımdır.
+</para><para>
+<screen>
+# cd qmail-1.03
+# patch &lt; /yama-dizini/big-concurrency.patch
+</screen>
+</para><para>
+<literal>/yama-dizini/</literal> ifadesinin yerine yamanın bulunduğu dizinin yolunu yazınız.
+</para><para>
+<screen>
+#make clean
+</screen>
+           </para>
+           <para>
+<literal>conf-spawn</literal> dosyasındaki 1000 değerini 500 yapın.
+</para><para>
+<screen>
+#make setup check
+#./config
+</screen>
+</para><para>
+sonra normal qmail yapılandırması yapın ve
+</para><para>
+<screen>
+# echo 500 >/var/qmail/control/concurrencylocal
+# echo 500 >/var/qmail/control/concurrencyremote
+</screen>
+</para><para>
+qmail çalıştığında ya da yeniden başlatıldığında değişiklikler
+              etkin olacaktır.
+            </para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>
+<ulink url="http://www.fehcom.de/qmail/spamcontrol.html">SPAMCONTROL Yaması</ulink>
+          </term>
+          <listitem><para>
+Bu yama sayesinde qmail'e spam'i engelleme ile ilgili bir sürü özellik
+eklenmektedir.
+            </para><para>
+Aşağıdaki dosyalar <literal>/var/qmail/control</literal> dizininde
+bulunmaktadır.
+            </para><variablelist>
+                <varlistentry>
+                  <term>badrcptto</term>
+                  <listitem><para>
+<literal>badmailfrom</literal> dosyasının biçemindedir ve bu
+dosyaya yazdığınız eposta adreslerine sunucunuzdan eposta
+gitmesini engelleyebilirsiniz (her satırda bir eposta adresi
+olmak zorundadır.</para>
+                  </listitem>
+                </varlistentry>
+                <varlistentry>
+                  <term>badmailpatterns</term>
+                  <listitem><para>
+Bu dosyada bulunan genel arama karakteri (wildcards) ile
+eşleşen adreslerden gelen epostalar sunucu tarafından
+reddedilir. Örneğin, bu dosyada <literal>*spamci*</literal>
+yazıyorsa içinde <literal>spamci</literal> geçen eposta
+adreslerinden gelen epostaları sunucu kabul etmez.
+                    </para><para>
+Örnek bir <literal>badmailpatterns</literal> dosyası
+</para><para>
+<screen>
+*list.emailbucks.*
+*mailer1.asseenontw.*
+*@ed.ac.uk
+*@porn-4-*
+</screen>
+                    </para>
+                  </listitem>
+                </varlistentry>
+                <varlistentry>
+                  <term>badrcptpatterns</term>
+                  <listitem><para>
+<literal>badmailpatterns</literal> dosyasının yaptığı işi yapar
+ama bu sefer sunucu üzerinden eposta gönderecek kişiler üzerinde
+kısıtlama yapar. IP bazlı kısıtlama da yapılabilir. Örneğin:
+</para><para>
+<screen>
+badmailfrom @12.34.56.78
+badrcptto @12.34.56.78
+badmailpatterns *12.34.56.78*
+badrcptpatterns *12.34.56.78*
+badmailpatterns *78.56.34.12.in-addr.arpa*
+badrcptpatterns *78.56.34.12.in-addr.arpa*
+</screen>
+                    </para>
+                  </listitem>
+                </varlistentry>
+              </variablelist><para>
+Ve daha bir sürü özellik ve dosya, geniş bilgi için
+<ulink url="https://github.com/bruceg/qmail-patches">siteyi</ulink>
+ziyaret ediniz. Bu yamayı uygulamanızı kesinlikle tavsiye ederim.
+            </para>
+          </listitem>
+        </varlistentry>
+      </variablelist>
+  </sect1>
+  <sect1 id="qmail-kurulumu-nasil_yazardan">
+    <title>Yazarın Notu</title>
+    <para>
+Bu belgede elimden geldiğince qmail'i ve qmail ile alakalı programları
+anlatmaya çalıştım. Lütfen qmail ile ilgili herhangi bir sorun için bana
+eposta atmayın. Cevap alamazsınız!
+    </para>
+    <para>
+Bu sürümden sonra yeni bir sürüm çıkarmayacağız.
+    </para>
+    <para>
+Lütfen sadece belgedeki hatalar için veya görüşleriniz için eposta atınız.
+Eğer qmail konusunda ticari destek istiyorsanız benimle irtibata
+geçebilirsiniz.
+    </para>
+    <para>
+İsmail YENİGÜL <email>ismail@enderunix.org</email>
+    </para>
+  </sect1>
+
+  <appendix id="qmail-kurulumu-nasil_kur-1">
+    <title>Birinci Tür Kurulum</title>
+    <sect1 id="qmail-kurulumu-nasil_kur-1.1">
+      <title>Kurulumun Tamamlanması</title>
+      <para>
+1. tür kurulumda sistemdeki tüm kullanıcıların sistem kullanıcısı olacağını
+söylemiştik. Sistem kullanıcılarının eposta alabilmeleri için
+kullanıcıların home dizininde <literal>Maildir</literal> dizinin
+oluşturulması lazım. Bunun için <literal>/var/qmail/bin/</literal>
+dizinindeki <literal>maildirmake</literal> komutunu kullanacağız.
+Tek bir kullanıcı için <literal>Maildir</literal> dizini oluşturmak
+istersek:
+</para><para>
+<screen>
+# su - kullanıcı
+# /var/qmail/bin/maildirmake  ~kullanıcı/Maildir
+</screen>
+</para><para>
+komutu ile kullanıcının ev dizininde kullanıcı haklarına sahip bir
+<literal>Maildir</literal> dizini  oluşur.
+      </para>
+      <para>
+Tek tek tüm kullanıcıların ev dizininde elle <literal>Maildir</literal>
+oluşturmak yerine, basit bir kaç kabuk betiği ile bu işi de halledelim..
+<screen># echo "./Maildir/" >.qmail</screen>komutu ile <literal>.qmail</literal>
+dosyasını oluşturun.
+</para><para>
+<screen>
+# cp /etc/passwd /var/tmp/tmppass
+# cp .qmail  /var/tmp/
+</screen>
+</para><para>
+komutu ile <literal>/etc/passwd</literal> dosyasındaki tüm kullanıcıların
+ev dizinlerinin yollarını <literal>qmailusers</literal> dosyasına ekleyelim.
+      </para>
+      <para>
+Bu <literal>/var/tmp/tmppass</literal> dosyasını bir metin düzenleyici ile
+açın ve bu dosyadaki <literal>root</literal>, <literal>ftp</literal>,
+<literal>bin</literal>, <literal>daemon</literal>, <literal>wheel</literal>,
+<literal>lpr</literal>, <literal>tty</literal>, <literal>games</literal>,
+<literal>qmail</literal>* gibi sistemin kendisi ile alakalı kullanıcıların
+bilgilerini silin.
+      </para><para>
+Daha sonra aşağıdaki betiği <literal>createmaildir.pl</literal> olarak
+kaydedin (bu dosyayı <ulink url="http://www.enderunix.org/docs/createmaildir.pl.gz"
+>http://www.enderunix.org/docs/createmaildir.pl.gz</ulink>  adresinden elde
+edebilirsiniz.)
+</para><para>
+<screen>
+###############################################
+# İsmail YENIGUL 27 Temmuz  createmaildir.pl
+#!/usr/bin/perl -w
+open(FILE,"&lt;/var/tmp/tmppass") or die ("Dosya acilamadi");
+while($line=&lt;FILE>) {
+chomp($line);
+@USER=split(/:/,$line);
+$mdir="$USER[5]/Maildir";
+$home=$USER[5];
+$id=$USER[2];
+$gid=$USER[3];
+system("/var/qmail/bin/maildirmake $mdir") ;
+system("cp /var/tmp/.qmail $home");
+system("chown -R $id $mdir $home/.qmail");
+system("chgrp -R $gid $mdir $home/.qmail");
+
+}
+###############################################
+</screen>
+</para><para><literal>qmailusers</literal> dosyasından yukarıda bahsettiğim
+kullanıcıların ev dizini yollarını sildikten sonra
+</para><para>
+<screen>
+# perl createmaildir.pl
+</screen>
+</para><para>komutunu çalıştırarak sistemdeki
+kullanıcılar için otomatik olarak <literal>Maildir</literal> ve
+<literal>.qmail</literal> dosyasını oluşturun.
+(<literal>qmailuser</literal> ve <literal>createmaildir.pl</literal>
+dosyasının aynı dizinde olması lazım)
+      </para><para>
+<literal>.qmail</literal> dosyasındaki <literal>./Maildir/</literal>
+bilgisi gelen postanın <literal>Maildir</literal> dizinine iletileceğini
+belirtir. <literal>./Maildir/</literal> ifadesinin en sonundaki
+<literal>/</literal> Maildir'ın bir dizin olduğunu belirtir. Eğer Maildir
+değilde <literal>Mailbox</literal> kullansaydınız bu <literal>.qmail</literal>
+dosyasının içeriği <literal>./Mailbox</literal> olacaktı.
+(<literal>Mailbox</literal> dosyası kullanılmasını tavsiye etmem..)
+      </para><para>
+Var olan kullanıcıların <literal>Maildir</literal> dizinleri oluşturulduktan
+sonra yeni kullanıcılar için elle <literal>Maildir</literal> oluşturmak
+yerine <literal>/etc/skel</literal> dizininde <literal>Maildir</literal>
+oluşturarak bu dertten kurtulalım. Kullandığınız sisteme bağlı olarak:
+      </para><variablelist>
+          <varlistentry>
+            <term>FreeBSD için</term>
+            <listitem><para>
+<screen>
+# /var/qmail/bin/maildirmake /etc/share/skel/Maildir
+# echo "./Maildir/" >/usr/share/skel/.qmail
+</screen></para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>Linux ve Solaris için</term>
+            <listitem><para>
+<screen>
+# /var/qmail/bin/maildirmake /etc/skel/Maildir
+# echo "./Maildir/" >/etc/skel/.qmail
+</screen></para>
+            </listitem>
+          </varlistentry>
+        </variablelist><para>
+Eğer <literal>dot-forward</literal> paketini kurduysaniz ve
+<literal>/var/qmail/rc</literal>'de dot-forward için gerekli değişikliği
+yaptıysanız, kullanıcıların <literal>.forward</literal> dosyasını kullanabilmesi
+için  <literal>.qmail</literal> dosyasını silmeleri gerekir.
+      </para><para>
+<literal>dot-forward</literal> kurmadıysanız <literal>.qmail</literal>
+dosyasını <literal>.forward</literal> dosyası yerine kullanabilirsiniz.
+      </para><para>
+Son olarak <xref linkend="qmail-kurulumu-nasil_kur-1.pop3"/> kısmına bakınız.
+      </para><para>
+Sqwebmail kurulumu için <xref linkend="qmail-kurulumu-nasil_kur-1.sqweb"/>
+kısmına bakınız.
+      </para><para>
+Courier-IMAP kurmak için <xref linkend="qmail-kurulumu-nasil_kur-1.cimap"/>
+kısmına bakınız.
+      </para>
+    </sect1>
+    <sect1 id="qmail-kurulumu-nasil_kur-1.ezmlm">
+      <title>Ezmlm Kurulumu</title>
+      <para>
+<literal>Ezmlm</literal> qmail için olan bir listecidir.
+<ulink url="http://cr.yp.to/ezmlm.html">http://cr.yp.to/ezmlm.html</ulink>
+adresinden <literal>ezmlm-0.53</literal> ve 
+<ulink url="https://untroubled.org/ezmlm/">https://untroubled.org/ezmlm/</ulink> 
+adresinden <literal>ezmlm-idx-0.40</literal> paketlerini (veya daha yeni sürümlerini) indiriniz ve aşağıda belirtildiği gibi kurunuz.
+      </para>
+      <para>
+<screen>
+# tar -zxvf ezmlm-0.53.tar.gz
+# tar -zxvf ezmlm-idx-0.40.tar.gz
+
+# mv ezmlm-idx-0.40/* ezmlm-0.53/
+# cd ezmlm-0.53
+# patch &lt; idx.patch
+</screen>
+</para><para>(Solaris kullanıyorsanız <ulink url="http://www.sunfreeware.com"
+>www.sunfreeware.com</ulink>'daki yama paketini kullanınız).
+      </para>
+      <para>
+Aşağıdaki dosyaları "Mysql destekli ezmlm" kurmak istiyorsanız değiştiriniz.
+</para><para>
+<screen>
+# cd sub_mysql
+</screen>
+</para><para><literal>conf-sqlcc</literal> dosyasındaki
+<literal>-I/usr/include/mysql</literal> ifadesini sizin MySQL
+<literal>include</literal> dosya yolunuz ile değiştirin (FreeBSD'de
+<literal>-I/usr/local/include/mysql</literal>)
+      </para><para>
+<literal>conf-sqlld</literal> dosyasındaki
+<literal>-L/usr/lib/mysql -lmysqlclient -lnsl -lm</literal>
+ifadesini sizin MySQL  <literal>include</literal> dosya yolunuz ile değiştirin
+(FreeBSD'de <literal>-L/usr/local/lib/mysql -lmysqlclient -lm</literal>)
+      </para><para>
+<screen>
+# cd ..
+# make clean
+# make
+# make man
+# make setup
+</screen>
+      </para>
+    </sect1>
+    <sect1 id="qmail-kurulumu-nasil_kur-1.resp">
+      <title>Autoresponder Kurulumu</title>
+      <para>
+        <literal>Autoresponder</literal> epostalara otomatik cevap yazmaya yarayan
+        bir programdır. <ulink url="https://github.com/roffe/autorespond-2.0.6"
+        >https://github.com/roffe/autorespond-2.0.6</ulink> adresinden indirip aşağıdaki gibi kurabilirsiniz:
+</para><para>
+<screen>
+# unzip autorespond-2.0.6-master.zip
+# cd autorespond-2.0.6-master
+
+# gcc  -o autorespond autorespond.c
+# cp autorespond /usr/local/bin
+</screen>
+</para><para>
+        Kullanımı ile ilgili geniş bilgiyi README dosyasında bulabilirsiniz.
+      </para>
+    </sect1>
+    <sect1 id="qmail-kurulumu-nasil_kur-1.cimap">
+      <title>Courier-IMAP Kurulumu</title>
+      <para>
+        <literal>Courier-IMAP</literal> qmail ile çalışan bir IMAP programıdır.
+        <ulink url="http://www.courier-mta.org/download.php#imap"
+        >http://www.courier-mta.org/download.php#imap</ulink> adresinden en son
+        sürümünü indiriniz. Biz <literal>courier-imap-1.5.3</literal> sürümünü
+        kullanacağız.
+      </para><para>
+        Buraya kadar tüm işleri <literal>root</literal> olarak yapmıştık. Ama
+        bu Courier-IMAP belasını derlemek için ben size artık root olarak yapın
+        diyene kadar derleme işlemlerini (make install demedim :) ) root olmayan
+        bir kullanıcı ile yapın..
+      </para><para>
+<screen>
+# su - ismail
+</screen>
+</para><para>Courier-IMAP'ı <literal>make install</literal>
+        yapana kadar tüm işleri bu root hakkı olmayan kullanıcı ile yapacağız.
+</para><para>
+<screen>
+$ tar -zxvf courier-imap-1.5.3.tar.gz
+$ cd courier-imap-1.5.3
+</screen>
+</para><para>(hala root değilim!)
+      </para><para>
+        Bazı parametrelerin ne manaya geldiğini açıklayayım.
+      </para><variablelist>
+          <varlistentry>
+            <term>--enable-workarounds-for-imap-client-bugs</term>
+            <listitem><para>
+              Netscape, IMAP ile bağlandıktan sonra yeni bir eposta geldiği zaman
+              sapıtmakta ve hata vermektedir. Bu hatayı gidermek için bu parametreyi
+              kullanmak şarttır.</para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>--with--authpwd</term>
+            <listitem><para>
+              <literal>/etc/password</literal> dosyasından kimlik kanıtlama
+              desteği için.</para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>--with-authpam</term>
+            <listitem><para>
+              <literal>PAM</literal>'den kimlik kanıtlama desteği için.</para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>--with-authshadow</term>
+            <listitem><para>
+              <literal>/etc/shadow</literal> dosyasından kimlik kanıtlama
+              desteği için.</para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>--with-authmysql</term>
+            <listitem><para>
+              MySQL tablosundan kimlik kanıtlama desteği için.</para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>--with-authvchkpw</term>
+            <listitem><para>
+              <literal>vpopmail</literal>'den kimlik kanıtlama desteği için.</para>
+            </listitem>
+          </varlistentry>
+        </variablelist><para>
+        Bir de bu tüm <literal>--with</literal>'le başlayan ifadelerin
+        <literal>--without</literal>'la başlayanları da vardır. Anlaşılacağı gibi
+        öntanımlı bazı destekleri vermemek için kullanılırlar.
+      </para><variablelist>
+          <varlistentry>
+            <term>--without-authldap</term>
+            <listitem><para>
+              <literal>ldap</literal> desteği vermemek için. Eğer hantal Solaris
+              belası  üzerinde courier-IMAP kurmaya çalışıyorsanız kullanın.</para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>--with-waitfunc=wait3</term>
+            <listitem><para>
+              Parametresini de tüm kurulumlara mutlaka ekleyiniz. Solaris kullanıyorsanız
+              Solaris'i yamayın (daha fazla bilgi için: Courier-IMAP FAQ).</para>
+            </listitem>
+          </varlistentry>
+        </variablelist><para>
+<screen>
+$ ./configure --enable-workarounds-for-imap-client-bugs \
+--with-authpwd --with-authpam --with-authshadow --without-authmysql \
+--without-authldap --without-authvchkpw --enable-unicode
+
+$ make          (<emphasis>root degilsiniz</emphasis> !)
+$ make check    (<emphasis>hata verirse sorun değil</emphasis>)
+$ su root       (<emphasis>şimdi root olma zamanı</emphasis> ! )
+# make install  (<emphasis>veya # make install-strip</emphasis>)
+</screen>
+      </para>
+      <para>
+        Eğer FreeBSD kullanıyorsanız ve pam'den kimlik kanıtlaması yapmak
+        istiyorsanız, <literal>/etc/pam.conf</literal> dosyasında imap ile ilgili
+        kısmı aşağıdaki gibi olacak şekilde değiştirin:
+</para><para>
+<screen>
+imap auth required pam_unix.so try_first_pass
+imap account required pam_unix.so
+imap session required pam_permit.so
+</screen>
+</para><para>öntanımlı olarak courier-imap <literal>/usr/lib/courier-imap</literal>
+        dizinine kurulur. Hangi modülün desteğinin bulunduğunu anlamak için
+        <literal>/usr/lib/courier-imap/etc/imapd.conf</literal> dosyasından
+        <literal>AUTHMODULES</literal> satırına bakmanız yeterlidir. Örnek bir
+        <literal>AUTHMODULES</literal> şöyledir:
+</para><para>
+<screen>
+AUTHMODULES="authcustom authuserdb authpwd authvchkpw"
+</screen>
+      </para><para>
+        Courier-IMAP'ı çalıştırmak için
+</para><para>
+<screen>
+# /usr/lib/courier-imap/libexec/imapd.rc start
+</screen>
+</para><para>
+        komutunu vermeniz yeterlidir.
+      </para><para>
+        Courier-IMAP'ı her açılışta çalıştırmak için kullandığınız işletim sistemine
+        göre açılışta programların çalıştırıldığı dosyaya
+        <literal>/usr/lib/courier-imap/libexec/imapd.rc start</literal> ifadesini ekleyiniz.
+      </para>
+    </sect1>
+    <sect1 id="qmail-kurulumu-nasil_kur-1.sqweb">
+      <title>Sqwebmail Kurulumu</title>
+      <para>
+        <literal>Sqwebmail</literal> C CGI'da qmail için yazılmış web üzerinden eposta
+        gönderip almaya yarayan bir webmail programıdır ve sadece <literal>Maildir</literal>
+        biçeminde çalışır.
+      </para>
+      <para>
+        CGI olmasına rağmen HTML'ler ayrı bir dizinde tutulur. Bu sayede sadece
+        HTML'leri değiştirmekle istediğiniz biçimde bir webmail hazırlayabilirsiniz.
+      </para><para>
+        <ulink url="http://www.courier-mta.org/download.html#sqwebmail"
+        >http://www.courier-mta.org/download.html#sqwebmail</ulink> adresinden <literal>sqwebmail</literal>'in
+        en son sürümünü indiriniz ve root olarak paketi açın:
+</para><para>
+<screen>
+#tar -zxvf sqwebmail-3.3.7.tar.gz
+# cd  sqwebmail-3.3.7
+</screen>
+      </para><para>
+        Bazı <literal>sqwebmail</literal> yapılandırma parametreleri:
+      </para><variablelist>
+          <varlistentry>
+            <term>--with-module</term>
+            <listitem><para>
+              Destek vermek istediğiniz kimlik kanıtlaması modülünü belirtmek için.
+              </para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>--without-module</term>
+            <listitem><para>
+              Destek vermek istemediğiniz kimlik kanıtlaması modülünü belirtmek
+              için.</para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>--with-cachedir</term>
+            <listitem><para>
+              Sqwebmail koltukaltı (cache) dizini belirtilir.
+              </para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>--with-htmllibdir</term>
+            <listitem><para>
+              Sqwebmail'in HTML dosyalarının hangi dizinde tutulacağı belirtilir.
+              </para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>--enable-imagedir</term>
+            <listitem><para>
+              Resimlerin saklanacağı dizin belirtilir.
+              </para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>--enable-mimetypes</term>
+            <listitem><para>
+              Apache web sunucusunun <literal>mime.types</literal> dosyasının
+              nerede olduğu belirtilir.
+              </para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>--enable-cgibindir</term>
+            <listitem><para>
+              Apache web sunucusunun <literal>cgi-bin</literal> dizini belirtilir.
+              Derleme sonucu oluşan <literal>sqwebmail</literal> isimli CGI bu
+              dizin altına kopyalanır. Daha fazla bilgi için
+              <literal>sqwebmail.tar.gz</literal> ile gelen <literal>INSTALL</literal>
+              dosyasını okuyunuz.
+              </para>
+            </listitem>
+          </varlistentry>
+        </variablelist><para>
+        Şimdi kuruluma başlayabiliriz.
+</para><para>
+<screen>
+# mkdir /usr/local/sqwebmail
+# ./configure --with-authpam \
+--with-authshadow --with-authpwd --without-authldap \
+--without-authmysql --without-authvchkpw \
+--enable-imagedir=/usr/local/sqwebmail/sqimage \
+--enable-mimetypes=/usr/local/etc/apache/mime.types \
+--enable-cgibindir=/usr/local/www/cgi-bin/  --enable-unicode
+#make
+#make install
+</screen>
+      </para>
+      <para>
+        Sqwebmail'in her açılışta çalışması için aşağıdaki komutu açılış dosyalarına
+        ekleyin.
+</para><para>
+<screen>
+/usr/local/share/sqwebmail/libexec/authlib/authdaemond start
+</screen>
+      </para>
+      <para>
+        Sorunsuz bir şekilde yukarıdaki işlemler biterse devam edelim. PAM desteği
+        verdiğimizden eğer <emphasis role="bold">Red Hat</emphasis> kullanıyorsanız
+        <literal>/etc/pam.d/webmail</literal> dosyasının olup olmadığını kontrol edin.
+        Yoksa oluşturun ve içine aşağıdaki bilgileri yazın.
+</para><para>
+<screen>
+#%PAM-1.0
+
+auth required /lib/security/pam_pwdb.so shadow nullok
+account required /lib/security/pam_pwdb.so
+</screen>
+      </para>
+      <para>
+        Eğer <emphasis role="bold">FreeBSD</emphasis> kullanıyorsanız
+        <literal>/etc/pam.conf</literal> dosyasına
+</para><para>
+<screen>
+#%PAM-1.0
+
+webmail auth required pam_pwdb.so shadow nullok
+webmail account required pam_pwdb.so shadow nullok
+</screen>şeklinde bir ekleme yapın.
+      </para>
+      <para>
+        Bazı yapılandırma dosyaları (öntanımlı dizin
+        <literal>/usr/local/share/sqwebmail</literal>'dir):
+      </para><variablelist>
+          <varlistentry>
+            <term>/usr/local/share/sqwebmail/hostname</term>
+            <listitem><para>
+              Kullanıcılar webmail ile girdiklerinde eposta adresleri
+              <literal>kullanıcı@eposta.alanadı.com</literal> olarak gozukur.
+              <literal>@</literal>'ten sonra sadece alan adının gözukmesi için
+              bu dosyaya alan adınızı yazınız. Bu dosya öntanımlı olarak yoktur.
+              Sizin oluşturmanız lazım.</para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>/usr/local/share/sqwebmail/nochangingfrom</term>
+            <listitem><para>
+              Bu dosyayı oluşturursanız kullanıcılar eposta gönderirken
+              <literal>From</literal> alanını değitiremez.</para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>/usr/local/share/sqwebmail/noimages</term>
+            <listitem><para>
+              Webmail'de resim ve simgelerin gözükmemesi için bu dosyayı oluşturun.
+              </para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>/usr/local/share/sqwebmail/html/LANG/footer</term>
+            <listitem><para>
+              Bu dosya varsa webmail'den gönderilen her postanın altına bu dosyaya yazılanlar
+              eklenir. <literal>LANG</literal> değişkeni sizin kurarken seçtiğiniz
+              dildir (genelde LANG değeri "en"'dir).
+              </para>
+            </listitem>
+          </varlistentry>
+        </variablelist><para>
+        <literal>http://mail.example.com/cgi-bin/sqwebmail</literal> adresinden
+        sunucudaki  kullanıcı adı ve parolanızı yazarak epostalarınıza
+        erişebilirsiniz.
+      </para>
+    </sect1>
+    <sect1 id="qmail-kurulumu-nasil_kur-1.pop3">
+      <title>POP3 Sunucusu Kurulumu</title>
+      <para>
+        Burada TCPSERVER'dan pop3'ü çalıştırmayı anlatacağız. INETD'den çalıştırmak
+        için <xref linkend="qmail-kurulumu-nasil_kur-1.pop3-inetd"/> kısmını okuyun.
+      </para>
+      <para>
+        Burada <literal>/etc/passwd</literal>'den kimlik kanıtlaması yapmaya yarayan
+        <link linkend="qmail-kurulumu-nasil_chkpaswd">yukarıda kurduğumuz
+        checkpassword programını</link> kullanacağız.
+      </para>
+      <para>
+        <literal>qmail-pop3.sh</literal> diye bir dosya oluşturun ve içine
+</para><para>
+<screen>
+#!/bin/sh
+tcpserver -H -R  -l 0 0 pop3 /var/qmail/bin/qmail-popup HOST \
+ /bin/checkpassword /var/qmail/bin/qmail-pop3d Maildir &amp;
+</screen>
+</para><para>
+        ifadelerini yazın. <literal>HOST</literal> kısmını sizin eposta sunucunuzun
+        tüm adı ile değiştirin. Daha sonra
+</para><para>
+<screen>
+# chmod 755   qmail-pop3.sh
+#./qmail-pop3.sh
+</screen>
+</para><para>komutu ile pop3'ü çalıştırabilirsiniz. Açılışta çalıştırmak için:
+        </para><variablelist>
+          <varlistentry>
+            <term>FreeBSD</term>
+            <listitem><para>
+<screen>
+# cp    qmail-pop3.sh /usr/local/etc/rc.d
+# chmod 755   /usr/local/etc/rc.d/qmail-pop3.sh
+</screen></para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>Red Hat ve Mandrake</term>
+            <listitem><para>
+              <literal>qmail-pop3.sh</literal> dosyasını <literal>/etc/rc.d/init.d</literal>
+              altına kopyalayın <literal>/etc/rc.d/rc.local</literal> dosyasına
+              <literal>/etc/rc.d/init.d/qmail-pop3.sh</literal> ifadesini yazın.
+              </para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>Solaris</term>
+            <listitem><para>
+<screen>
+# cp qmail-pop3.sh /etc/init.d
+#chmod 700  /usr/local/etc/rc.d/qmail-pop3.sh
+#ln -s /etc/init.d/qmail-pop3.sh /etc/rc2.d/S91qmail-pop3
+#ln -s /etc/init.d/qmail-pop3.sh /etc/rc2.d/K91qmail-pop3
+</screen></para>
+            </listitem>
+          </varlistentry>
+        </variablelist>
+      <sect2 id="qmail-kurulumu-nasil_kur-1.pop3-inetd">
+        <title>pop3'ün INETD'den çalıştırılması</title>
+        <para><literal>/etc/inetd.conf</literal>'a
+</para><para>
+<screen>
+pop3 stream tcp nowait root /var/qmail/bin/qmail-popup ¬
+  MAILHOST /bin/checkpassword /var/qmail/bin/qmail-pop3d Maildir
+</screen>
+</para><para>
+yazdıktan sonra:
+</para><para>
+<screen>
+#kill -HUP inetd_pid
+</screen>
+     </para>
+     <para>
+       1. tür kurulumu bitirdik. <link linkend="qmail-kurulumu-nasil_kavsak"
+       >Kaldığımız yere</link> dönüp kurulumlar için ortak olan işlemlere devam
+       edebiliriz. Özellikle <xref linkend="qmail-kurulumu-nasil_ozellestirilir"/>
+       kısmını mutlaka okuyunuz.
+      </para>
+      </sect2>
+    </sect1>
+  </appendix>
+
+  <appendix id="qmail-kurulumu-nasil_kur-2">
+    <title>İkinci Tür Kurulum</title>
+    <sect1 id="qmail-kurulumu-nasil_kur-2.vop1">
+      <title>Vpopmail Kurulumu</title>
+      <para>
+        Bu kurulumlarda sanal kullanıcılar olacağı için sanal makina ve kullanıcı
+işlerini çok kolaylaştıran <literal>vpopmail</literal> programını kuracağız.
+      </para>
+      <para>
+        Vpopmail otomatik olarak kullanıcı ve alanadı (domain) ekler ve qmail'deki
+        gerekli değişiklikleri otomatik olarak yapar. Biz burada "vpopmail mysql
+        desteği" vererek kullanıcı adı, parolası, kullanıcının adı soyadı, vb.
+        bilgileri  mysql tablolarında tutacağız.
+      </para><para>
+        <ulink url="https://www.inter7.com/vpopmail-virtualized-email/"
+        >https://www.inter7.com</ulink>
+        adresinden en son kararlı vpopmail sürümünü indiririn. MySQL'in kurulu
+        olduğunu kabul ediyoruz.
+</para><para>
+<screen>
+# tar -zxf vpopmail-5.2.1.tar.gz
+# cd vpopmail-5.2.1
+</screen>
+</para><para>
+ile paketi açtıktan sonra vpopmail'in cdb veya Mysql destekli kurulumunu
+        anlatacağım. Kullanıcı bilgilerinin nerede saklanacağına karar vermeniz
+        gerekir. Açıkçası bu noktada size tam olarak cdb veya MySQL'i seçin demek
+        istemiyorum. ama 1000-2000 gibi kullanıcınız varsa ve MySQL kurmak
+        istemiyorsanız cdb'yi tavsiye ederim.
+      </para>
+      <para>
+cdb yine qmail'in yazarı tarafından yazılmış, çok hızlı, güvenli, performanslı
+        bir dosya tabanlı veritabanıdır. cdb destekli vpopmail'de bilgiler
+        <literal>vpasswd.cdb</literal> adlı hash yapılmış bir dosyada saklanır.
+        Daha fazla bilgi için <ulink url="http://cr.yp.to/cdb.html"
+        >http://cr.yp.to/cdb.html</ulink> adresine bakınız.
+      </para><para>
+        vpopmail için <literal>vchkpw</literal> grubu ve vpopmail kullanıcısının
+        oluşturulması gerekir. Kullandığınız sisteme göre,
+      </para><variablelist>
+          <varlistentry>
+            <term>FreeBSD için:</term>
+            <listitem><para>
+<screen>
+# pw groupadd vchkpw
+# pw useradd vpopmail -g vchkpw -d /home/vpopmail -m -s /sbin/nologin
+</screen></para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>Linux ve Solaris için:</term>
+            <listitem><para>
+<screen>
+# groupadd vchkpw
+# useradd  -g vchkpw  -m -d /home/vpopmail vpopmail   -s /bin/false
+</screen></para>
+            </listitem>
+          </varlistentry>
+        </variablelist><para>
+vpopmail isimli kullanıcı için ev dizini <literal>/home/vpopmail</literal>'dir.
+        Mümkün olduğu kadar bu dizini değiştirmemeye bakın.
+      </para><para>
+        Bazı vpopmail parametrelerin ne manaya geldiğini açıklayalım:
+      </para><variablelist>
+          <varlistentry>
+            <term>--enable-mysql=y</term>
+            <listitem><para>
+              MySQL desteği vermek için. cdb kullanacaksanız bu parametreyi
+              vermeyin.</para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>--enable-sqlincdir=/usr/local/include/mysql</term>
+            <listitem><para>
+              MySQL başlık dosyalarının bulunduğu dizin.</para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>--enable-sqllibdir=/usr/local/lib/mysql</term>
+            <listitem><para>
+              MySQL kitaplıklarının bulunduğu dizin.</para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>--enable-roaming-users=y</term>
+            <listitem><para>
+              Kullanıcı pop ile bağlandığı zaman otomatik olarak istediği IP'den
+              eposta gönderme özelliğine sahip oluyor (Belli bir süre  için).
+              Bu değişken özellikle web sitesi evsahipliği yapan firmalar için
+              çok idealdir. Bu sayede kullanıcılara dinamik olarak relay izni
+              verilebildiği için kullanıcı istediği yerden bağlanarak posta
+              gönderebilir.</para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>--enable-logging=y</term>
+            <listitem><para>
+              Günlük kayıtlarının tutulmasını sağlar.</para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>--enable-defaultquota=10485760</term>
+            <listitem><para>
+Otomatik olarak açılan tüm kullanıcılara byte olarak kota koymayı saglar.
+(Öntanımlı olarak 50MB'tır. 10485760=10MB). Önceki vpopmail
+sürümlerinde bu ifade <literal>--enable-hardquota</literal> idi.</para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>--enable-default-domain=example.com</term>
+            <listitem><para>
+              vpopmail'de pop3 kullanıcılarının epostalarını okuyabilmeleri için
+              netscape, pine veya outlook'ta kullanıcı adını,
+              <literal>kullanıcı_adı%alan.adı</literal> şeklinde tanımlamaları
+              gerekmektedir.
+              </para><para>
+                Ama tek bir alanadı için  bunu yapılandırma parametresinde vererek
+belirttiğiniz alanın kullanıcılarının <literal>kullanıcı_adı%alan.adı</literal>
+                yerine sadece <literal>kullanıcı_adı</literal>  şeklinde kullanıcı
+                adı yazmalarını sağlayabilirsiniz.
+              </para><para>
+Diğer alanadı kullanıcıları yine yukarıdaki gibi <literal>kullanıcı_adı%diğer.alan.adı</literal>
+                şeklinde kullanıcı adı tanımlaması yapmalıdır.
+              </para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>--enable-clear-passwd=y|n</term>
+            <listitem><para>
+              (Öntanımlı: "yes"). Bu parametre ile parolalar hem salt metin halinde
+hem de şifrelenmiş olarak saklanır. Parola doğrulaması için şifrelenmiş
+              parola kullanılır. Parolalarını unutan kullanıcılar için parola
+              değiştirmeye gerek kalmıyor :)</para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>--enable-many-domains=y|n</term>
+            <listitem><para>
+(Öntanımlı: "yes"). 10'dan fazla alanadınız olacaksa bu parametreyi "y" olarak
+seçin. Eğer 10'dan az alanadınız olacaksa ve 10,000'den fazla kullanıcı
+             olacaksa bu özelliği "n" olarak seçin.</para>
+           </listitem>
+          </varlistentry>
+        </variablelist><para>
+        <literal>--enable-clear-passwd=y</literal> desteği verilince
+        <literal>vuserinfo</literal> komutu ile kullanıcı bilgisine baktığımızda,
+        aşağıda gördüğünüz gibi kullanıcının hem şifrelenmiş hem de salt metin
+        olarak parolasını görebilirsiniz. Bu özelliğin olmasını istemiyorsaniz
+        parametreyi "n" olarak seçiniz. Eğer bu desteği seçtiyseniz ve vpopmail
+        kurulumu değil de güncellemesi yapacaksanız <literal>vpopmail-5.2.1</literal>
+        dizindeki <literal>UPDATE</literal> dosyasını okuyunuz.
+</para><para>
+<screen>
+#vuserinfo cayci@simitci.com
+name: cayci nuri
+passwd: $1IzoeelSC87c
+clear passwd: rize
+uid: 0
+gid: 0
+all services available
+dir: /hme/vpopmail/domains/simitci.com/cayci
+quota: 1048760
+usage: 0%
+account created: Fri Apr 19 17:08:04 2002
+last auth: Never logged in
+</screen>
+      </para>
+      <para>
+        vpopmail'i önce cdb desteği ile kuralım:
+</para><screen>
+# ./configure \
+--enable-roaming-users=y \
+--enable-logging=y \
+--enable-defaultquota=10485760 \
+--enable-default-domain=mydomain.org \
+--enable-clear-passwd=y
+#make
+#make install-strip     <co id="qmail-kurulumu-nasil-co1"/>
+</screen><calloutlist>
+ <callout arearefs="qmail-kurulumu-nasil-co1"><para>
+Hata verirse <command>make install</command> komutunu kullanınız.
+ </para></callout>
+ </calloutlist><para>
+        cdb desteği ile vpopmail kurulumu bitti. Şimdi MySQL desteği ile kuralım.
+      </para><para>
+        vpopmail'i MySQL ile yapılandırmak için <literal>vpopmail-5.2.1</literal>
+        dizinindeki <literal>vmysql.h</literal> dosyasında aşağıdaki gibi ifadeler
+        vardır.
+</para><para>
+<screen>
+#define MYSQL_UPDATE_SERVER "localhost"
+#define MYSQL_UPDATE_USER "root"
+#define MYSQL_UPDATE_PASSWD "secret"
+
+#define MYSQL_READ_SERVER "localhost"
+#define MYSQL_READ_USER "root"
+#define MYSQL_READ_PASSWD "secret"
+</screen>
+      </para><itemizedlist>
+          <listitem>MYSQL_UPDATE_SERVER "MySQL sunucu adı",</listitem>
+          <listitem>MYSQL_UPDATE_USER "MySQL'e erişim kullanıcısı",</listitem>
+<listitem>MYSQL_UPDATE_PASSWD "MySQL'e erişim kullanıcısının parolası",</listitem>
+        </itemizedlist><para>
+        ile MYSQL_READ_SERVER, MYSQL_READ_USER, MYSQL_READ_PASSWD değişkenlerinin
+        değerini sizin MySQL değişkenlerine göre değiştirin.
+      </para><para>
+<screen>
+# ./configure  \
+--enable-mysql=y \
+--enable-sqllibdir=/usr/local/lib/mysql/ \
+--enable-sqlincdir=/usr/local/include/mysql/  \
+--enable-roaming-users=y \
+--enable-logging=y \
+--enable-defaultquota=10485760 \
+--enable-default-domain=mydomain.org \
+--enable-clear-passwd=y
+#make
+#make install-strip
+</screen>
+</para><para>(<emphasis>hata verirse</emphasis>
+<screen>
+# make install
+</screen>
+</para><para><emphasis>komutunu kullanınız</emphasis>.)
+      </para><para>
+Eğer <literal>--enable-roaming-users=y</literal> seçtiyseniz, POP3 ile login
+        olan kullanıcının bir saat boyunca posta göndermediği durumda vpopmail'in
+        bu kullanıcıya relay iznini kapatması için crontab'ı düzenleyelim.
+</para><para>
+<screen>
+# crontab -e
+40 * * * * /home/vpopmail/bin/clearopensmtp 2>&amp;1 > /dev/null
+</screen>
+</para><para>
+ifadesini ekleyin. (vpopmail'in ev dizini <literal>/home/vpopmail</literal>
+        değilse siz kendi vpopmail ev dizini ile değiştirin).
+      </para><para>
+Burada vpopmail kullanımı ile alakalı bir kaç komutun kulanımını gösterelim.
+</para><para>
+<screen>
+#export PATH=$PATH:/home/vpopmail/bin
+#vadddomain enderunix.org
+</screen>
+</para><para>
+komutu ile <literal>enderunix.org</literal> için sanal alan oluşturalım.
+        <literal>/home/vpopmain/domains/enderunix.org</literal> dizini oluşacaktır.
+        Ve <literal>enderunix.org</literal>'a ait tüm kullanıcıların ev dizinleri
+        bu dizin altında olacaktır.
+      </para><para>
+<screen>
+# vadduser yenigul@enderunix.org
+</screen>
+</para><para>veya</para><para>
+<screen>
+# vadduser yenigul@enderunix.org parola
+# vadduser -c "Murat Balaban" balaban@enderunix.org  balaban_parolası
+</screen>
+      </para><para>
+<screen>
+# vdeluser yenigul@enderunix.org
+</screen>
+</para><para>kullanıcıyı siler.</para><para>
+<screen>
+# vdeldomain enderunix.org
+</screen>
+</para><para>alanadını siler.</para><para>
+<screen>
+# vsetquota balaban@enderunix.org KotaBoyutu[Byte]
+</screen>
+</para><para>
+kullanıcıya kota vermek için,
+</para><para>
+<screen>
+vpasswd yenigul@enderunix.org
+</screen>
+</para><para>kullanıcı parolasını değiştirmek için.
+      </para><para>
+        vpopmail'de takma ad (alias) tanımlaması ise şu şekilde yapılır:
+      </para><para>
+        <literal>~vpopmai/domains/yenigul.net</literal> dizini altında
+        <literal>.qmail-ulgen</literal> diye bir dosya oluştursak ve bu dosyaya
+        <literal>ulgen@enderunix.org</literal> yazarsak,
+        <literal>ulgen@yenigul.net</literal> adresine gelen epostalar
+        <literal>ulgen@enderunix.org</literal> adresine yönlendirilecektir.
+      </para><para>
+<literal>Vpopmail</literal> kurulumu tamamlanmıştır. Son olarak vpopmail'de
+POP3 ayarları için <xref linkend="qmail-kurulumu-nasil_kur-2.pop3"/> kısmına
+bakınız.
+      </para>
+    </sect1>
+    <sect1 id="qmail-kurulumu-nasil_kur-2.vpop2">
+      <title>Vpopmail'in Özelleştirlmesi</title>
+      <para>
+        Bu bölümde anlatılanları yapmak zorunda değilsiniz ama yaparsanız da fena
+        olmaz :)
+      </para><para>
+        Kota uyarısı:
+      </para><para>
+        Kullanıcıların eposta hesaplarındaki doluluk oranı %90'a geldiğinde
+kullanıcılara bir uyarı gitmesini sağlayabilirsiniz. Kullanıcının kullandığı
+        eposta alani boyutunu hesaplamak için, vpopmail her kullanıcının dizinde
+<literal>maildirsize</literal> diye bir dosya tutar. Her posta geldiğinde bu
+        dosyada gerekli değişiklikleri yapar. Ama qmail'in pop3 programı
+<literal>qmail-pop3</literal> bunu desteklemediği için
+<literal>qmail-pop3d</literal> programına
+<literal>vpopmail-5.2.1/contrib/qmail-pop3d-maildirquota.patch.gz</literal>
+        yamasının uygulanıp qmail'in baştan kurulması gerekiyor.
+      </para><para>
+Bu iş için qmail'i herşeyi ile baştan kurmaya gerek yok. Qmail'i derledikten
+        sonra sadece yeni derlenen <literal>qmail-pop3</literal> dosyasını
+        <literal>/var/qmail/bin</literal> dizine kopyalamak yeterli. (Tüm
+        paketlerin aynı dizinde olduğunu kabul ediyorum).
+</para><para>
+<screen>
+# gunzip vpopmail-5.2.1/contrib/qmail-pop3d-maildirquota.patch.gz
+# cd qmail-1.03
+# patch &lt; ../ vpopmail-5.2.1/contrib/qmail-pop3d-maildirquota.patch
+# make
+# cp -p qmail-pop3d /var/qmail/bin
+</screen>
+      </para><para>
+<literal>vpopmail-5.2.1/</literal> dizinindeki <literal>quotawarn.msg</literal>
+        dosyasını istediğiniz şekilde değiştirin ve
+        <literal>~vpopmail/domains/.quotawarn.msg</literal> adresine kopyalayın.
+        Bu sayede kullanıcının eposta hesabı %90 doluluğa ulaştığında, kullanıcıya
+        <literal>.quotawarn.msg</literal> dosyasına yazdığınız uyarı iletilecektir.
+Ama dosyayı <literal>~vpopmail/domains/enderunix.org/.quotawarn.msg</literal>
+gibi sadece bir alanadı altına kopyalarsanız sadece o alanadındaki kullanıcılar
+        için uyarı gidecektir.
+      </para><para>
+        Son olarak kotası dolan kullanıcıya bir eposta geldiğinde vpopmail postayı
+gönderen kişiye <literal>user_is_over_quota</literal> şeklinde bir hata döndürür.
+      </para><para>
+        İsterseniz bu mesajı özelleştirebilirsiniz. Örneğin karşı tarafa "Kullanıcı
+kotası dolmuştur, epostanız kullanıcıya iletilememiştir / User is over quota"
+        şeklinde bir uyarı ile dönmek istiyorsaniz
+<literal>~vpopmail/domains/.over-quota.msg</literal> veya sadece bir alanismi
+        için <literal>~vpopmail/domains/enderunix.org/.over-quota.msg</literal>
+        dosyasına bu mesajı yazmanız yeterli. (<literal>.over-quota.msg</literal>
+        dosyasının çalışması için herhangi bir yamaya gerek yoktur.)
+      </para>
+    </sect1>
+    <sect1 id="qmail-kurulumu-nasil_kur-2.ezmlm">
+      <title>Ezmlm Kurulumu</title>
+      <para>
+        <literal>Ezmlm</literal> qmail için olan bir listecidir.
+<ulink url="http://cr.yp.to/ezmlm.html">http://cr.yp.to/ezmlm.html</ulink>
+adresinden <literal>ezmlm-0.53</literal> ve 
+<ulink url="https://untroubled.org/ezmlm/">https://untroubled.org/ezmlm/</ulink> 
+adresinden <literal>ezmlm-idx-0.40</literal> paketlerini (veya daha yeni sürümlerini) indiriniz ve aşağıda belirtildiği gibi kurunuz.
+</para><para>
+<screen>
+# tar -zxvf ezmlm-0.53.tar.gz
+# tar -zxvf ezmlm-idx-0.40.tar.gz
+
+# mv ezmlm-idx-0.40/* ezmlm-0.53/
+# cd ezmlm-0.53
+# patch &lt; idx.patch
+</screen>
+      </para><para>
+         MySQL destekli ezmlm  kuracaksanız aşağıdaki 2 dosyayı değiştirin.
+</para><para>
+<screen>
+# cd sub_mysql
+</screen>
+      </para><para>
+        <literal>conf-sqlcc</literal> dosyasındaki <literal>-I/usr/include/mysql</literal>
+        ifadesini sizin MySQL include dizini ile değiştirin. (FreeBSD'de
+        <literal>-I/usr/local/include/mysql</literal>)
+      </para><para>
+        <literal>conf-sqlld</literal> dosyasındaki
+        <literal>-L/usr/lib/mysql -lmysqlclient -lnsl -lm</literal> ifadesini sizin
+        MySQL include dizini ile değiştirin.(FreeBSD'de
+        <literal>-L/usr/local/lib/mysql -lmysqlclient -lm</literal>)
+</para><para>
+<screen>
+# cd ..
+# make clean
+# make
+# make man
+# make setup
+</screen>
+      </para>
+    </sect1>
+    <sect1 id="qmail-kurulumu-nasil_kur-2.resp">
+      <title>Autoresponder Kurulumu</title>
+      <para>
+        <literal>Autoresponder</literal> epostalara otomatik cevap yazmaya 
+        yarayan bir programdır. 
+        <ulink url="https://github.com/roffe/autorespond-2.0.6"
+        >https://github.com/roffe/autorespond-2.0.6</ulink> adresinden indirip 
+        aşağıdaki gibi kurabilirsiniz:
+</para><para>
+<screen>
+# tar -zxvf autorespond-2.0.6.tar.gz
+# cd autorespond-2.0.6
+
+# gcc  -o autorespond autorespond.c
+# cp autorespond /usr/local/bin
+</screen>Kullanımı ile ilgili geniş bilgiyi README dosyasında bulabilirsiniz.
+      </para>
+    </sect1>
+    <sect1 id="qmail-kurulumu-nasil_kur-2.admin">
+      <title>QmailAdmin Kurulumu</title>
+      <para>
+<literal>Qmailadmin</literal> vpopmail'i web'den yönetmeye yarayan bir programdır.
+Bu program ile kullanıcı açma, silme, yönlendirme, takma ad (alias) tanımlama,
+liste açma, liste özelliklerini değiştirme gibi özellikleri vardır. Qmailadmin
+ile qmail+vpopmail yönetimi çok kolay hale gelmektedir. Hatta şirketinizdeki
+        qmail'in "q"sundan bir şey anlamayan sekreter bile çok yukarıda saydığım
+        işlemleri çok rahat bir şekilde yapabilir. :)
+      </para><para>
+<ulink url="http://www.inter7.com/qmailadmin-project/"
+>http://www.inter7.com/qmailadmin-project/</ulink>
+adresinden  en son sürümünü indiriniz. Şu anki sürümü: 1.0.6
+</para><para>
+<screen>
+# tar -zxvf qmailadmin-1.0.6.tar.gz
+# cd qmailadmin-1.0.6
+</screen>
+      </para><para>
+Qmailadmin'i kurmadan önce vpopmail, ezmlm ve autorespond'u  kurmanız lazim.
+        Kurmadıysanız hemen kurunuz.
+      </para><para>
+        Bazı yapılandırma parametrelerin açıklamaları:
+      </para><variablelist>
+          <varlistentry>
+            <term>--enable-cgibindir=</term>
+            <listitem><para>Qmailmin'in kurulacagi CGI dizini</para></listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>--with-htmllibdir=</term>
+             <listitem><para>HTML dosyalarının kurulacağı dizin</para></listitem>
+           </varlistentry>
+          <varlistentry>
+            <term>--enable-cgipath=/cgi-bin/qmailadmin/qmailadmin</term>
+            <listitem>
+              <para>
+              CGI için URL (yani
+<literal>http://mail.domain.org/cgi-bin/qmailadmin/qmailadmin</literal>)
+              </para>
+            </listitem>
+          </varlistentry>
+        </variablelist><para>
+<screen>
+# ./configure --enable-cgibindir=/usr/local/www/cgi-bin/qmailadmin \
+              --with-htmllibdir=/usr/local/www/data/qmailadmin \
+              --enable-vpopuser=vpopmail \
+              --enable-autoresponder-bin=/usr/local/bin \
+              --enable-ezmlmdir=/usr/local/bin  \
+              --enable-cgipath=/cgi-bin/qmailadmin/qmailadmin
+# make
+# make install-strip
+</screen>
+      </para><para>
+        Yukarıdaki kurulum sonucu qmailadmin programı
+<literal>/usr/local/www/cgi-bin/qmailadmin</literal> altına kurulacaktır. Eğer
+aşağıdaki gibi hata alırsanız (bu hatayı sadece vpopmail'i MySQL desteği ile
+        kurduğunuz zaman alırsınız).
+</para><para>
+<screen>
+/home/vpopmail/lib/libvpopmail.a(vauth.o): In function `vupdate_rules':
+/usr/local/qmail/vpopmail-5.2.1/vauth.c:591: undefined reference to ¬
+ `mysql_query'
+/usr/local/qmail/vpopmail-5.2.11/vauth.c:594: undefined reference to ¬
+ `mysql_query'
+/usr/local/qmail/vpopmail-5.2.1/vauth.c:599: undefined reference to ¬
+ `mysql_use_result'
+/usr/local/qmail/vpopmail-5.2.1/vauth.c:606: undefined reference to ¬
+ `mysql_fetch_row'
+/usr/local/qmail/vpopmail-5.2.1/vauth.c:607: undefined reference to ¬
+ `mysql_free_result'
+/home/vpopmail/lib/libvpopmail.a(vauth.o): In function `vclear_open_smtp':
+/usr/local/qmail/vpopmail-5.2.1/vauth.c(.text+0x1058): undefined reference to ¬
+ `mysql_query'
+/home/vpopmail/lib/libvpopmail.a(vauth.o): In function `vcreate_relay_table':
+/usr/local/qmail/vpopmail-5.2.1/vauth.c:630: undefined reference to ¬
+ `mysql_query'
+/usr/local/qmail/vpopmail-5.2/1/vauth.c:634: undefined reference to ¬
+ `mysql_store_result'
+/usr/local/qmail/vpopmail-5.2.1/vauth.c:635: undefined reference to ¬
+ `mysql_free_result'
+/home/vpopmail/lib/libvpopmail.a(vauth.o): In function `vclose':
+</screen>
+</para><para>
+Makefile dosyasında  <literal>CPPFLAGS</literal>, <literal>LDFLAGS</literal>
+        ve <literal>LIBS</literal> değişkenlerine değer olarak sizin vpopmail
+        ve mysql include ve lib dizinleri belirtin:
+</para><para>
+<screen>
+CPPFLAGS = -I/home/vpopmail/include -I/usr/local/include/mysql
+LDFLAGS=-L/home/vpopmail/lib -L/usr/local/lib/mysql
+LIBS= -lvpopmail -lmysqlclient
+#make
+#make install-strip
+</screen>
+      </para><para>
+Qmailadmin'e <literal>http://yourdomain/cgi-bin/qmailadmin/qmailadmin</literal>
+adresinden erişebilirsiniz. Ekrana gelen sayfada <literal>postmaster</literal>
+yazan bölüme dokunmayın.
+      </para><para>
+        Altındaki <literal>domain</literal> bölümünde işlem yapmak istediğiniz
+        alanadını yazınız. En alttaki parola bölümüne ise
+</para><para>
+<screen>
+# vadddomain example.com
+</screen>
+</para><para>
+komutunu verdikten sonra sizden
+istenilen parolaya ne yazdıysanız onu yazınız.(alanadınız açılırken verdiğiniz
+parola postmaster kullanıcısının paroalsıdır.). Son olarak sisteminizin
+güvenliği için, mümkünse qmailadmin sitesine erişirken SSL (https) ile bağlantı
+kurun ve <literal>/usr/local/www/cgi-bin/qmailadmin</literal> dizinine erişimi
+apache'deki <literal>.htaccess</literal> ile kısıtlayın. Apache'de
+<literal>.htaccess</literal> ile erişim kısıtlamasının nasıl yapılacağı hakkında
+bilgi almak için <link linkend="sanal-adresleme-nasil_constraint">Apache Web
+Sunucusunda Sanal Adresleme ve Dizin Erişiminin Kısıtlanması NASIL</link>
+belgesine bakabilirsiniz.
+      </para>
+    </sect1>
+    <sect1 id="qmail-kurulumu-nasil_kur-2.cimap">
+      <title>Courier-IMAP Kurulumu</title>
+      <para>
+        <literal>Courier-IMAP</literal> qmail ile çalışan bir IMAP programıdır.
+        <ulink url="http://www.courier-mta.org/download.php#imap"
+        >http://www.courier-mta.org/download.php#imap</ulink> adresinden en son
+        sürümünü indiriniz. Biz <literal>courier-imap-1.5.3</literal> sürümünü
+        kullanacağız.
+      </para><para>
+        Buraya kadar tüm işleri <literal>root</literal> olarak yapmıştık. Ama
+        bu Courier-IMAP belasını derlemek için ben size artık root olarak yapın
+        diyene kadar derleme işlemlerini (make install demedim :) ) root olmayan
+        bir kullanıcı ile yapın..
+      </para><para>
+<screen>
+# su - ismail
+</screen>
+</para><para>
+Courier-IMAP'ı <literal>make install</literal>
+        yapana kadar tüm işleri bu root hakkı olmayan kullanıcı ile yapacağız.
+</para><para>
+<screen>
+$ tar -zxvf courier-imap-1.5.3.tar.gz
+$ cd courier-imap-1.5.3
+</screen>
+</para><para>(hala root değilim!)
+      </para><para>
+        Bazı parametrelerin ne manaya geldiğini açıklayayım.
+        </para><variablelist>
+          <varlistentry>
+            <term>--enable-workarounds-for-imap-client-bugs</term>
+            <listitem><para>
+              Netscape, IMAP ile bağlandıktan sonra yeni bir eposta geldiği zaman
+sapıtmakta ve hata vermektedir. Bu hatayı gidermek için bu parametreyi
+              kullanmak şarttır.</para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>--with--authpwd</term>
+            <listitem><para>
+              <literal>/etc/password</literal> dosyasından kimlik kanıtlama
+              desteği için.</para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>--with-authpam</term>
+            <listitem><para>
+              <literal>PAM</literal>'den kimlik kanıtlama desteği için.</para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>--with-authshadow</term>
+            <listitem><para>
+              <literal>/etc/shadow</literal> dosyasından kimlik kanıtlama
+              desteği için.</para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>--with-authmysql</term>
+            <listitem><para>
+              MySQL tablosundan kimlik kanıtlama desteği için.</para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>--with-authvchkpw</term>
+            <listitem><para>
+              <literal>vpopmail</literal>'den kimlik kanıtlama desteği için.</para>
+            </listitem>
+          </varlistentry>
+        </variablelist><para>
+        Bir de bu tüm <literal>--with</literal>'le başlayan ifadelerin
+        <literal>--without</literal>'la başlayanları da vardır. Anlaşılacağı gibi
+        öntanımlı bazı destekleri vermemek için kullanılırlar.
+        </para><variablelist>
+          <varlistentry>
+            <term>--without-authldap</term>
+            <listitem><para>
+              <literal>ldap</literal> desteği vermemek için. Eğer hantal Solaris
+              belası  üzerinde courier-IMAP kurmaya çalışıyorsanız kullanın.</para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>--with-waitfunc=wait3</term>
+            <listitem><para>
+Parametresini de tüm kurulumlara mutlaka ekleyiniz. Solaris kullanıyorsanız
+              Solaris'i yamayın (daha fazla bilgi için: Courier-IMAP FAQ).</para>
+            </listitem>
+          </varlistentry>
+        </variablelist><para>
+<screen>
+$ ./configure --enable-workarounds-for-imap-client-bugs \
+--with-authpwd --with-authpam --with-authshadow --without-authmysql \
+--without-authldap --without-authvchkpw --enable-unicode
+</screen>
+</para><para>
+Eğer aşağıdaki gibi hata alırsanız (bu hatayı sadece vpopmail'i MySQL
+        desteği ile kurduğunuz zaman alırsınız).
+</para><para>
+<screen>
+/home/vpopmail/lib/libvpopmail.a(vauth.o): In function `vupdate_rules':
+/usr/local/qmail/vpopmail-5.2.1/vauth.c:591: undefined reference to ¬
+ `mysql_query'
+/usr/local/qmail/vpopmail-5.2.1/vauth.c:594: undefined reference to ¬
+ `mysql_query'
+/usr/local/qmail/vpopmail-5.2.1/vauth.c:599: undefined reference to ¬
+ `mysql_use_result'
+/usr/local/qmail/vpopmail-5.2.1/vauth.c:606: undefined reference to ¬
+ `mysql_fetch_row'
+/usr/local/qmail/vpopmail-5.2.1/vauth.c:607: undefined reference to ¬
+ `mysql_free_result'
+/home/vpopmail/lib/libvpopmail.a(vauth.o): In function `vclear_open_smtp':
+/usr/local/qmail/vpopmail-5.2.1/vauth.c(.text+0x1058): undefined reference to ¬
+ `mysql_query'
+/home/vpopmail/lib/libvpopmail.a(vauth.o): In function `vcreate_relay_table':
+/usr/local/qmail/vpopmail-5.2.1/vauth.c:630: undefined reference to ¬
+ `mysql_query'
+/usr/local/qmail/vpopmail-5.2.1/vauth.c:634: undefined reference to ¬
+ `mysql_store_result'
+/usr/local/qmail/vpopmail-5.2.1/vauth.c:635: undefined reference to ¬
+ `mysql_free_result'
+/home/vpopmail/lib/libvpopmail.a(vauth.o): In function `vclose':
+</screen>
+</para><para>
+bu durumda <literal>courier-imap-1.5.3</literal> dizinindeki
+        <literal>authlib/Makefile</literal> dosyasında  <literal>LDFLAGS</literal>
+        ve <literal>LIBS</literal> değişkenlerine değer olarak sizin vpopmail
+        ve MySQL kitaplık dizinlerini belirtin:
+</para><para>
+<screen>
+LDFLAGS=-L/home/vpopmail/lib -L/usr/local/lib/mysql
+LIBS= -lvpopmail -lmysqlclient
+</screen>
+      </para><para>
+Buradaki <literal>/home/vpopmail/</literal> dizini vpopmail'in kurulu olduğu
+        dizindir. Sizinki farklı ise değiştirin.
+      </para><para>
+        <literal>/usr/local/lib/mysql</literal>
+        ifadesi ise benim MySQL kitaplıklarının bulunduğu dizini göstermekteder.
+        Bu kısmı sizin MySQL kitaplığınızın bulunduğu dizin ile değiştiriniz.
+      </para><para>
+<screen>
+$ make          (<emphasis>root degilsiniz</emphasis> !)
+$ su root       (<emphasis>şimdi root olma zamanı</emphasis> ! )
+# make install  (<emphasis>komutu ile kurulumu tamamlayın</emphasis>)
+</screen>
+      </para><para>
+        Öntanımlı olarak, courier-imap, <literal>/usr/lib/courier-imap</literal>
+        dizine kurulur. Hangi modülle desteğinin bulundugunu anlamak için
+        <literal>/usr/lib/courier-imap/etc/imapd.conf</literal> dosyasından
+        <literal>AUTHMODULES</literal> satırına bakmanız yeterlidir. Örnek bir
+        <literal>AUTHMODULES</literal> şöyledir.
+</para><para>
+<screen>
+AUTHMODULES="authcustom authuserdb authpwd authvchkpw"
+</screen>
+      </para><para>
+        courier-IMAP'i çalıştırmak için
+</para><para>
+<screen>
+# /usr/lib/courier-imap/libexec/imapd.rc start
+</screen>
+</para><para>
+       komutunu vermeniz yeterlidir.
+      </para><para>
+Courier-IMAP'ı her açılışta çalıştırmak için kullandığınız işletim sistemine
+        göre açılışta programların çalıştırıldığı dosyaya
+        <literal>/usr/lib/courier-imap/libexec/imapd.rc start</literal> ifadesini
+        ekleyiniz.
+      </para><para>
+Courier-IMAP'a vpopmail desteği verdiğimiz için Netscape, Pine ve Outlook'da
+        IMAP kullanıcı adı olarak <literal>kullanıcıadı%example.com</literal>
+        şeklinde tanımlama  yapılmalıdır.
+      </para>
+    </sect1>
+    <sect1 id="qmail-kurulumu-nasil_kur-2.sqweb">
+      <title>Sqwebmail Kurulumu</title>
+      <para>
+        <literal>Sqwebmail</literal> C CGI'da qmail için yazılmış web üzerinden
+        eposta gönderip almaya yarayan bir webmail programıdır ve sadece Maildir
+        biçeminde çalışır.
+      </para><para>
+        CGI olmasına rağmen HTML'ler ayrı bir dizinde tutulur. Bu sayede sadece
+HTML'leri değiştirmekle istediğiniz biçemde bir webmail hazırlayabilirsiniz.
+      </para><para>
+<ulink url="http://www.courier-mta.org/download.html#sqwebmail"
+>http://www.courier-mta.org/download.html#sqwebmail</ulink> adresinden
+<literal>sqwebmail</literal>'in
+en son sürümünü indiriniz ve root olarak paketi açın:
+</para><para>
+<screen>
+# tar -zxvf sqwebmail-3.3.7.tar.gz
+# cd  sqwebmail-3.3.7
+</screen>
+      </para><para>
+        Bazı <literal>sqwebmail</literal> yapılandırma parametreleri:
+      </para><variablelist>
+          <varlistentry>
+            <term>--with-module</term>
+            <listitem><para>
+              Destek vermek istediğiniz kimlik kanıtlaması modülünü belirtmek için.
+              </para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>--without-module</term>
+            <listitem><para>
+              Destek vermek istemediğiniz kimlik kanıtlaması modülünü belirtmek
+              için.</para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>--with-cachedir</term>
+            <listitem><para>
+              Sqwebmail koltukaltı (cache) dizini belirtilir.
+              </para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>--with-htmllibdir</term>
+            <listitem><para>
+              Sqwebmail'in HTML dosyalarının hangi dizinde tutulacağı belirtilir.
+              </para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>--enable-imagedir</term>
+            <listitem><para>
+              Resimlerin saklanacağı dizin belirtilir.
+              </para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>--enable-mimetypes</term>
+            <listitem><para>
+              Apache web sunucusunun <literal>mime.types</literal> dosyasının
+              nerede olduğu belirtilir.
+              </para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>--enable-cgibindir</term>
+            <listitem><para>
+              Apache web sunucusunun <literal>cgi-bin</literal> dizini belirtilir.
+              Derleme sonucu oluşan <literal>sqwebmail</literal> isimli CGI bu
+              dizin altına kopyalanır. Daha fazla bilgi için
+              <literal>sqwebmail.tar.gz</literal> ile gelen <literal>INSTALL</literal>
+              dosyasını okuyunuz.
+              </para>
+            </listitem>
+          </varlistentry>
+        </variablelist><para>
+        Şimdi kuruluma başlayabiliriz.
+</para><para>
+<screen>
+# mkdir /usr/local/sqwebmail
+# ./configure --without-authldap --without-authmysql --with-authvchkpw \
+--enable-imagedir=/usr/local/sqwebmail/sqimage \
+--enable-mimetypes=/usr/local/etc/apache/mime.types \
+--enable-cgibindir=/usr/local/www/cgi-bin/  --enable-unicode=ISO8859-9
+#make
+#make install
+</screen>
+      </para>
+      <para>
+Sqwebmail'in her açılışta çalışması için aşağıdaki komutu açılış dosyalarına
+        ekleyin.
+</para><para>
+<screen>
+/usr/local/share/sqwebmail/libexec/authlib/authdaemond start
+</screen>
+      </para><para>
+Diyelim ki eposta sunucunuz <literal>mail.example.net</literal> ve öntanımlı
+        alanadı <literal>example.net</literal>, yani
+        <literal>--enable-default-domain=example.net</literal> şeklinde vpopmail
+        kurduk ve başka bir <literal>example.org</literal> diye ikinci bir
+alanadımız var. <literal>example.net</literal> alanadı altında
+<literal>yenigul</literal> diye bir kullanıcımız var.
+ <literal>example.org</literal> alanadı altında ise
+        <literal>balaban</literal> diye bir kullanıcımız var.
+        <literal>http://mail.example.net/cgi-bin/sqwebmail</literal> adresinden
+        <literal>yenigul</literal> kullanıcısı, kullanıcı adı olarak yenigul ve
+        parolasını yazarak login olabilir. <literal>example.org</literal> alanadı
+        altındaki <literal>balaban</literal> kullanıcısı ile kullanıcı adı olarak
+        <literal>balaban@example.org</literal> şeklinde yazmalı.
+      </para>
+    </sect1>
+    <sect1 id="qmail-kurulumu-nasil_kur-2.pop3">
+      <title>POP3 Sunucu Kurulumu</title>
+      <para>
+        POP3 şifre doğrulaması için vpopmail ile gelen <literal>vchkpw</literal>
+        programını kullanacağız.
+      </para><para>
+Aşağıdaki ifadeleri <literal>qmail-pop3.sh</literal> diye bir dosyaya yazın:
+<screen>
+#!/bin/sh
+env - PATH="/var/qmail/bin:/usr/local/bin" \
+tcpserver -H -R -l 0 0 pop3 /var/qmail/bin/qmail-popup MAILSUNUCU \
+/home/vpopmail/bin/vchkpw /var/qmail/bin/qmail-pop3d Maildir &amp;
+</screen>
+</para><para>
+<literal>MAILSUNUCU</literal> yerine sizin eposta sunucunuzun tam
+        adı (örn: mail.enderunix.org) ile değiştirin, daha sonra
+</para><para>
+<screen>
+# chmod 755   qmail-pop3.sh
+# ./qmail-pop3.sh
+</screen>
+</para><para>komutu ile pop3 sunucusunu çalıştırabilirsiniz.
+      </para><para>
+        Açılışta çalıştırmak için
+      </para><variablelist>
+          <varlistentry>
+            <term>FreeBSD</term>
+            <listitem><para>
+</para><para>
+<screen>
+# cp    qmail-pop3.sh /usr/local/etc/rc.d
+# chmod 755   /usr/local/etc/rc.d/qmail-pop3.sh
+</screen></para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>Red Hat ve Mandrake</term>
+            <listitem><para>
+              <literal>qmail-pop3.sh</literal> dosyasını <literal>/etc/rc.d/init.d</literal>
+              altına kopyalayın <literal>/etc/rc.d/rc.local</literal> dosyasına
+              <literal>/etc/rc.d/init.d/qmail-pop3.sh</literal> ifadesini yazın.
+              </para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>Solaris</term>
+            <listitem><para>
+<screen>
+# cp qmail-pop3.sh /etc/init.d
+# chmod 700  /usr/local/etc/rc.d/qmail-pop3.sh
+# ln -s /etc/init.d/qmail-pop3.sh /etc/rc2.d/S91qmail-pop3
+# ln -s /etc/init.d/qmail-pop3.sh /etc/rc2.d/K91qmail-pop3
+</screen></para>
+            </listitem>
+          </varlistentry>
+        </variablelist><para>
+        INETD'den pop3'ü çalıştırmak isterseniz. <literal>/etc/inetd.conf</literal>
+        dosyasına
+</para><para>
+<screen>
+pop3 stream tcp nowait root /var/qmail/bin/qmail-popup ¬
+  MAILHOST /home/vpopmail/bin/vchkpw /var/qmail/bin/qmail-pop3d Maildir
+</screen>
+</para><para>ve son olarak</para><para>
+<screen>
+# kill -HUP inetd_pid
+</screen>
+</para><para>yazınız.
+      </para><para>
+        POP3'den epostalarınızı çekmek için Netscape Messanger ve Mozilla'da
+        kullanıcı adı olarak <literal>kullanıcıadı%example.com</literal>,
+        Outlook ve Outlook Express'de 
+<literal>kullanıcıadı@example.com</literal>
+        şeklinde tanımlar kullanın.
+      </para><para>
+        Eğer alanadınız sistem yoneticisi tarafından öntanımlı alanadı olarak
+        tanımlanmış ise sadece kullanıcıadı yazmanız yeterlidir.
+      </para><para>
+        2. tür kurulumu bitirdik. <link linkend="qmail-kurulumu-nasil_kavsak"
+       >Kaldığımız yere</link> dönüp kurulumlar için ortak olan işlemlere devam
+       edebiliriz. Özellikle <xref linkend="qmail-kurulumu-nasil_ozellestirilir"/>
+       kısmını mutlaka okuyunuz.
+      </para>
+    </sect1>
+  </appendix>
+  <appendix id="qmail-kurulumu-nasil_yasal-uyari">
+    <title>Telif Hakkı ve Lisans</title>
+    <!-- The LDP recommends, but doesn't require, the GFDL -->
+    <para>
+     Bu belgenin, <emphasis>QMAIL Kurulumu NASIL</emphasis>,
+     3.0 sürümünün telif hakkı © 2002  <emphasis>İsmail Yenigül</emphasis>'e
+     aittir. Bu belgeyi, Free Software Foundation tarafından yayınlanmış bulunan <link linkend="gpl">GNU Genel Kamu Lisansı</link>nın 2. ya da daha sonraki sürümünün koşullarına bağlı kalarak kopyalayabilir, dağıtabilir ve/veya değiştirebilirsiniz. Bu Lisansın özgün kopyasını <ulink url="http://www.gnu.org/copyleft/gpl.html"/> adresinde bulabilirsiniz.
+    </para>
+
+    <para>
+     Linux, Linus Torvalds adına kayıtlı bir ticarî isimdir.
+    </para>
+  </appendix>
+
+  <appendix id="qmail-kurulumu-nasil_feragat">
+    <title>Feragatname</title>
+
+    <para>
+      Bu belgedeki bilgilerin kullanımından doğacak sorumluluklar,
+      ve olası zararlardan belge yazarı sorumlu tutulamaz.
+      Bu belgedeki bilgileri uygulama sorumluluğu uygulayan aittir.
+    </para>
+
+    <para>
+      Tüm telif hakları aksi özellikle belirtilmediği sürece sahibine
+      aittir. Belge içinde geçen herhangi bir terim bir ticarî isim
+      yada kuruma itibar kazandırma olarak algılanmamalıdır. Bir ürün
+      ya da markanın kullanılmış olması ona onay verildiği anlamında
+      görülmemelidir.
+    </para>
+  </appendix>
+
+</article>

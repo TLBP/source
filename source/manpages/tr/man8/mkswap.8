@@ -1,0 +1,94 @@
+.\" http://belgeler.org \N'45' 2006\N'45'11\N'45'26T10:18:39+02:00  
+.\" Copyright 1998 Andries E. Brouwer (aeb@cwi.nl) 
+.\" 
+.\" May be distributed under the GNU General Public License 
+.\" Rewritten for 2.1.117, aeb, 981010. 
+.\"   
+.TH "mkswap" 8 "25 Mart 1999" "Linux 2.2.4" "Linux Yazılımcısının Kılavuzu"
+.nh    
+.SH İSİM
+mkswap \N'45' Linux takas alanını ayarlar    
+.SH KULLANIM 
+.nf
+\fBmkswap\fR  [\fB\N'45'c\fR] [\fB\N'45'v\fR\fIN\fR] [\fB\N'45'f\fR] [\fB\N'45'p \fR\fIsayfa_boyu\fR] \fIaygıt\fR [\fIboyut\fR]
+.fi
+       
+.SH AÇIKLAMA     
+\fBmkswap\fR, bir aygıt ya da dosya üzerinde Linux takas alanını oluşturur.     
+
+(Takas alanını oluşturduktan sonra \fBswapon\fR komutuyla etkinleştirmeniz gerekir. Takas alanları çoğunlukla /etc/fstab içinde listelenirler ve sistemin açılışı sırasında \fBswapon \N'45'a\fR komutunu çalıştıran betiklerle kullanıma hazır hale getirilirler.)     
+
+\fIaygıt\fR argümanı çoğunlukla bir disk bölümü (/dev/hda4, /dev/sdb7 gibi) olmakla birlikte bir dosya da olabilir. Linux çekirdeği disk bölümlerinin kimliklerine bakmaz ama çoğu kurulum betiği, onaltılık tabanda türü 82 (LINUX_SWAP) olan disk bölümünü Linux takas alanı olarak kabul eder. (Uyarı: Solaris de bu türü kullanır. Solaris disk bölümünüzü öldürürken dikkatli olun.)     
+
+\fIboyut\fR argümanı gereksiz olmakla birlikte geriye uyumluluk amacıyla korunmuştur. (İstenen takas alanı miktarını 1024 baytlık bloklar halinde belirtmek için kullanılır. Şayet bu argüman belirtilmemişse, \fBmkswap\fR bütün disk bölümünü veya dosyanın tamamını takas alanı olarak kabul eder. \N'45' olarak belirtmek pek akıllıca olmaz, diskinizin bozulmasına sebep olabilir.)     
+
+\fIsayfa_boyu\fR parametresi kullanılacak sayfa boyunu belirtmek içindir. Bu parametreyi belirtmek genellikle gereksizdir (hatta akılsızcadır) ama bazı libc sürümleri sayfa boyu hakkında yanlış bilgi verirler, bu nedenle \fBmkswap\fR\N'39'ın bu boyutu yanlış algılaması mümkündür. Sonradan ortaya çıkan, takas imzası bulunamadı şeklindeki, \fBswapon\fR hataları bunun belirtisi sayılabilir. Takas bölümüne özgü \fIsayfa_boyu\fR değerleri 4096 ve 8192 dir.     
+
+Linux iki tür takas alanı tanır: eski tür ve yeni tür. Takas alanının ilk sayfasının son 10 baytı bu ayrımı yapmak için kullanılır. Eski türün imzası \N'96'SWAP_SPACE\N'39' iken yeni türün imzası \N'96'SWAPSPACE2\N'39'dir.     
+
+Eski türde, ilk sayfanın kalanı, takas alanının kullanılabilir her sayfası için 1 bit olmak üzere bir bit eşlemdi. İlk sayfa bu biteşlemi tuttuğundan ilk bit 0 idi. Ayrıca son 10 bayt imza için ayrılmıştır. Bu durumda, şayet sayfa boyu B ise, eski türte bir takas alanı en fazla 8*(B\N'45'10)\N'45'1 sayfalık takas alanı kullanabilir. i386\N'39'da olduğu gibi B=4096 ise, kullanılabilecek alan en fazla  133890048 bayt olabilir (takriben 128MiB). Bir Alpha veya Sparc64\N'39'de ise, B=8192 ve kullanılabilecek alan  en fazla 535560992 bayt (takriben 512 MiB) olabilir     
+
+Eski türler, bu biteşlem sayfasının çoğunu boşa harcar. Çünkü sıfır bitleri bozuk blok alanları veya takas alanından sonraki bloklar olarak kabul edilir. Basit bir  tamsayı, \N'45'şayet varsa\N'45' bozuk blokların listelenebilmesi için yeterli olmaktadır. Hiçkimse yüzlerce bozuk blok bulunan bir takas alanını kullanmak istemez (hatta ben içinde 1 tane bile bozuk blok bulunan bir takas alanı kullanmak istemem).  Yeni türdeki takas alanlarında, bu olması gerektiği gibi yapılmıştır. Şimdi takas alanının kullanılabilecek azami boyutu mimariye bağlıdır. Kabaca: bir i386, PPC, m68k, ARM için 2GiB; mips\N'39'lerde 512 MiB; alpha\N'39'da 128GiB ve bir sparc64\N'39'de 3TiB\N'39'tır.     
+
+Not: Linux 2.1.117\N'39'den önce, çekirdek belleğinde her sayfa için bir bayt ayrılırdı, şimdi ise iki bayt ayrılmaktadır. Bu yüzden, 2GiB\N'39'lık bir takas alanı kullanımı, 2MiB\N'39'lık bir çekirdek belleği gerektirebilir.     
+
+Şu an, Linux 8 adet takas alanına izin vermektedir.  Kullanımdaki takas alanlarını /proc/swaps dosyası içinde görebilirsiniz (Linux\N'45'2.1.25\N'39'den  beri).     
+
+\fBmkswap\fR 10 sayfadan daha küçük alanları kabul etmez.     
+
+Şayet makinanızın kullandığı sayfa boyutunu bilmiyorsanız, \fBcat /proc/cpuinfo\fR komutu ile bunu öğrenebilirsiniz (veya öğrenemezsiniz. Bu dosyanın içeriği kullandığınız çekirdek sürümüne ve mimariye göre değişiklik gösterebilir).     
+
+Bir takas dosyası oluşturmak için, \fBmkswap\fR ile başlatmadan önce aşağıdakine benzer bir komutla önce bir dosya oluşturmalısınız:     
+
+
+
+.IP 
+
+.IP
+.RS
+.nf
+# dd if=/dev/zero of=swapfile bs=1024 count=65536
+.fi
+.RE
+.IP
+
+
+.PP     
+
+Not: Bir takas dosyası kesintisiz, tek parça olmalıdır. Bu nedenle \fBcp\fR(1) komutu ile oluşturulmuş bir takas dosyası kabul edilmez.     
+   
+.SH SEÇENEKLER     
+
+.br
+.ns
+.TP 
+\fB\N'45'c\fR
+Takas alanı oluşturmadan önce aygıtı bozuk bloklar için (bir blok aygıtı ise) tarar ve bozuk blok varsa sayısını gösterir.         
+
+.TP 
+\fB\N'45'f\fR
+Baskıcı kiptir. Verilen komut salakça olsa bile, yapılmasını sağlar. İçinde bulunacağı dosya ya da bölümden daha büyük bir takas alanı oluşturulmasını sağlar. SPARC\N'39'larda, takas alanının oluşturulmasını zorlar. Bu seçenek olmadan, \fBmkswap\fR geçerli bir SPARC süperbloklu aygıtta bir v0  takasını oluşturmayı reddecektir (bu komut bölüm tablosunu silmek gibi algılanacağı için).         
+
+.TP 
+\fB\N'45'p \fR\fIsayfa_boyu\fR
+Kullanılacak sayfa boyu belirtilir.         
+
+.TP 
+\fB\N'45'v0\fR
+Eski tarz takas alanı oluşturur.         
+
+.TP 
+\fB\N'45'v1\fR
+Yeni tarz takas alanı oluşturur.         
+
+.PP     
+
+Şayet \fB\N'45'v\fR seçeneği belirtilmemişse \fBmkswap\fR, yeni türde bir takas alanı oluşturur, ancak kullanılan çekirdek 2.1.117 sürümünden daha eski ise (ayrıca, PAGE_SIZE < 2048 ise) eski tarz takas alanı oluşturur. Yeni tarz başlıklar ilk bloğu kullanmazlar, bu nedenle önyükleyici veya disk etiketi için burası kullanılacaksa tercih edilebilirler. Eğer hem 2.0 hem de 2.2 çekirdek kullanmak zorunda iseniz, takas alanını oluştururken \fB\N'45'v0\fR seçeneğini kullanın.     
+   
+.SH İLGİLİ BELGELER     
+\fBfdisk(8)\fR, \fBswapon(8)\fR.     
+   
+.SH ÇEVİREN     
+Yalçın Kolukısa <yalcink01 (at) yahoo.com>, Ocak 2004
+    
+   

@@ -1,0 +1,82 @@
+.\" http://belgeler.org \N'45' 2006\N'45'11\N'45'26T10:18:35+02:00  
+.TH "CREATE TABLE AS" 7 "" "PostgreSQL" "SQL \N'45' Dil Deyimleri"
+.nh   
+.SH İSİM
+CREATE TABLE AS \N'45' bir sorgunun sonuçlarından yeni bir tablo tanımlar   
+.SH KULLANIM 
+.nf
+\fBCREATE\fR [ [ \fBGLOBAL\fR | \fBLOCAL\fR ] { \fBTEMPORARY\fR | \fBTEMP\fR } ] \fBTABLE\fR \fItablo_ismi\fR
+\    [ (\fIsütun_ismi\fR [, ...] ) ] [ [ \fBWITH\fR | \fBWITHOUT\fR ] \fBOIDS\fR ]
+\    \fBAS\fR \fIsorgu\fR
+.fi
+    
+.SH AÇIKLAMA
+\fBCREATE TABLE AS\fR bir tablo oluşturur ve bir \fBSELECT\fR cümlesi ile ya da hazırlanmış bir \fBSELECT\fR cümlesini çalıştıran bir \fBEXECUTE\fR komutu ile hesaplanan veriyi kullanarak bu tabloyu doldurur. Tablonun sütunları için \fBSELECT\fR çıktısındaki veri türleri ve sütun isimleri (sütun isimleri listesi açıkça belirtilmedikçe) kullanılır.   
+
+\fBCREATE TABLE AS\fR tabloyu bir sanal tablo oluşturur gibi oluşturur, ama bunu biraz farklı yapar: yeni bir tablo oluşturduktan sonra tabloyu doldurmak için sorguyu bir defalığına işleme sokar. Yeni tablo, sorgulanan kaynak tabloda sonradan yapılan değişiklikleri izlemeyecektir. Bir sanal tabloda ise her sorgulanışında kendini oluşturan \fBSELECT\fR cümlesi yeniden işleme sokulur.   
+
+.SH PARAMETRELER   
+.br
+.ns
+.TP 
+\fBGLOBAL\fR veya \fBLOCAL\fR
+Uyumluluk içindirler ve yoksayılırlar. Ayıntılı bilgi için \fBCREATE TABLE\fR [create_table(7)] kılavuz sayfasına bakınız.     
+
+.TP 
+\fBTEMPORARY\fR veya \fBTEMP\fR
+Belirtilmişse, tablo bir geçici tablo olarak oluşturulur. Ayıntılı bilgi için \fBCREATE TABLE\fR [create_table(7)] kılavuz sayfasına bakınız.     
+
+.TP 
+\fItablo_ismi\fR
+Oluşturulacak tablonun ismi (şema nitelemeli olabilir).     
+
+.TP 
+\fIsütun_ismi\fR
+Yeni tablodaki bir sütunun ismi. Eğer sütun isimleri verilmezse, sorgunun çıktısındaki sütun isimleri kullanılır. Eğer tablo bir \fBEXECUTE\fR komutu ile oluşturuluyorsa, bir sütun listesi belirtilemez.     
+
+.TP 
+\fBWITH OIDS\fR, \fBWITHOUT OIDS\fR
+Oluşturulan tablonun nesne kimliklerini içerip içermeyeceğini belirtirler. Bunların hiçbiri belirtilmezse, default_with_oids  yapılandırma değişkeninin değeri kullanılır.     
+
+.TP 
+\fIsorgu\fR
+Bir sorgu cümlesi (bir \fBSELECT\fR cümlesi ya da hazırlanmış bir \fBSELECT\fR cümlesini çalıştıran bir \fBEXECUTE\fR komutu). Sorgu cümlesinde kullanılabilecek sözdizimleri için, \fBSELECT\fR [select(7)] ve \fBEXECUTE\fR [execute(7)] kılavuz sayfalarına bakınız.     
+
+.PP  
+.SH EK BİLGİ
+Bu komut, işlevsellik bakımından \fBSELECT INTO\fR [select_into(7)] cümlesine benzer, fakat sözdizimi \fBSELECT INTO\fR sözdiziminden daha az karışık olduğundan bu komut tercih edilir.  Dahası, \fBCREATE TABLE AS\fR,  \fBSELECT INTO\fR işlevselliğini daha üst seviyeden sunar.   
+
+PostgreSQL 8.0 öncesinde, \fBCREATE TABLE AS\fR\N'39'in oluşturduğu tablo nesne kimliklerini daima içerirdi. PostgreSQL 8.0 sürümünden itibaren kullanıcı oluşturulan tablonun nesne kimliklerini içerip içermeyeceğini belirtebilmektedir. Eğer kullanıcı seçimini belirtmezse, default_with_oids  yapılandırma değişkeninin değeri kullanılır. Bu değişkenin şimdilik öntanımlı değeri true olmasına rağmen öntanımlı değer ileride değiştirilebilir. Bu bakımdan, uygulamalarınızda \fBCREATE TABLE AS\fR ile tablo oluşturuyorsanız, PostgreSQL\N'39'in ileri sürümlerindeki olası değişikliklerden etkilenmemek için \fBWITH OIDS\fR seçeneğini açıkça belirtmelisiniz.   
+
+.SH ÖRNEKLER
+filmler tablosundan sadece son girdileri alarak son_filmler tablosunu oluşturmak için:   
+
+
+.RS 4
+.nf
+CREATE TABLE son_filmler AS
+\  SELECT * FROM filmler WHERE tarih >= \N'39'2002\N'45'01\N'45'01\N'39';
+.fi
+.RE   
+
+.SH UYUMLULUK
+\fBCREATE TABLE AS\fR SQL:2003 standardında belirtilmiştir. Komutun PostgreSQL gerçeklemesi standarttan biraz farklıdır:   
+
+.IP \fB·\fR 3
+Standart altsorgunun parantez içine alınmasını gerektirir, PostgreSQL\N'39'de ise parantezler isteğe bağlıdır.    
+
+.IP \fB·\fR 3
+Standart bir \fBON COMMIT\fR deyimi içerir; PostgreSQL\N'39'de bu henüz gerçeklenmemiştir.    
+
+.IP \fB·\fR 3
+Standart bir \fBWITH DATA\fR  deyimi içerir; PostgreSQL\N'39'de bu henüz gerçeklenmemiştir.    
+
+.PP   
+
+.SH İLGİLİ BELGELER
+\fBCREATE TABLE\fR [create_table(7)], \fBEXECUTE\fR [execute(7)], \fBSELECT\fR [select(7)], \fBSELECT INTO\fR [select_into(7)].   
+
+.SH ÇEVİREN
+Nilgün Belma Bugüner <nilgun (at) belgeler·gen·tr>, Nisan 2005 
+ 
+    

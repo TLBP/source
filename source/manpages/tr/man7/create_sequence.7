@@ -1,0 +1,139 @@
+.\" http://belgeler.org \N'45' 2006\N'45'11\N'45'26T10:18:35+02:00  
+.TH "CREATE SEQUENCE" 7 "" "PostgreSQL" "SQL \N'45' Dil Deyimleri"
+.nh   
+.SH İSİM
+CREATE SEQUENCE \N'45' yeni bir kayıt listesi üreteci tanımlar   
+.SH KULLANIM 
+.nf
+\fBCREATE\fR [ \fBTEMPORARY\fR | \fBTEMP\fR ] \fBSEQUENCE\fR \fIisim\fR [ \fBINCREMENT\fR [ \fBBY\fR ] \fIartış\fR ]
+\    [ \fBMINVALUE\fR \fIasgarideğer\fR | \fBNO MINVALUE\fR ]
+\    [ \fBMAXVALUE\fR \fIazami_değer\fR | \fBNO MAXVALUE\fR ]
+\    [ \fBSTART\fR [ \fBWITH\fR ] \fIbaşlangıç\fR ]
+\    [ \fBCACHE\fR \fIkayıt_sayısı\fR ] [ [ \fBNO\fR ] \fBCYCLE\fR ]
+.fi
+    
+.SH AÇIKLAMA
+\fBCREATE SEQUENCE\fR yeni bir kayıt listesi üreteci oluşturur. Bunu \fIisim\fR isimli yeni bir özel tek satırlık tabloyu oluşturarak ve ilklendirirerek yapar. Komutu kullanan üretecin sahibi olur.   
+
+Bir şema ismi verilmişse, kayıt listesi belirtilen şemada oluşturulur. Aksi takdirde, o anki şemada oluşturulur. Geçici kayıt listeleri özel bir şema içinde mevcuttur, dolayısıyla bir geçici kayıt listesi oluştururken bir şema ismi belirtilmemelidir. Satır listesinin ismi aynı şemadaki başka bir kayıt listesi, tablo, indeks ya da sanal tablo ile çakışmayacak şekilde seçilmelidir.   
+
+Bir kayıt listesi oluşturulduktan sonra, üzerinde \fBnextval\fR, \fBcurrval\fR ve \fBsetval\fR işlevleri ile işlem yapabilirsiniz. Bu işlevlerin açıklamalarını http://belgeler.org/uygulamalar/pgsql/pgsql\N'45'functions\N'45'sequence.html adresinde bulabilirsiniz.   
+
+Bir kayıt listesini doğrudan göncelleyemezsiniz, bir kayıt listesinin o anki durumunu ve parametrelerini incelemek için şöyle bir sorgu kullanabilirsiniz:   
+
+
+.RS 4
+.nf
+SELECT * FROM \fIisim\fR;
+.fi
+.RE   
+
+Kısmen, kayıt listesinin last_value alanı herhangi bir oturum tarafından ayrılmış son değeri gösterir. (Şüphesiz, başka oturumlar o an \fBnextval\fR çağrıları yapıyorsa, aldığınız değer atıl olmuş olabilir.)   
+
+.SH PARAMETRELER   
+.br
+.ns
+.TP 
+\fBTEMPORARY\fR veya \fBTEMP\fR
+Belirtilmişse, kayıt listesi nesnesi sadece bu oturum için oluşturulur ve oturum sonunda silinir. Aynı isimdeki kalıcı kayıt listelerinin varlığı durumunda, bunlara şema nitelemeli isimlerle erişilmedikçe, geçici şemanın varlığı durumunda görünür olmazlar.      
+
+.TP 
+\fIisim\fR
+Oluşturulacak kayıt listesinin ismi (şema nitelemeli olabilir).      
+
+.TP 
+\fIartış\fR
+İsteğe bağlı INCREMENT BY \fIartış\fR deyimi,  yeni değeri oluşturmak üzere o anki sıra değerine eklenecek değeri belirtmek için kullanılır. Bir pozitif değer bir artan değerli liste, negatif bir değer ise azalan değerli bir liste oluşturacaktır. Öntanımlı değer 1\N'39'dir.      
+
+.TP 
+\fIasgarideğer\fR, \fBNO MINVALUE\fR
+İsteğe bağlı \fBMINVALUE \fR\fIasgarideğer\fR deyimi üretilen bir kayıt listesinin asgari sıra değerini belirlemekte kullanılır. Belirtilmezse ya da \fBNO MINVALUE\fR  belirtilirse, öntanımlı sıra değeri kullanılır. Öntanımlı değer artan değerli bir liste için 1, azalan değerli bir liste için 2\N'45'1\N'39'dir.      
+
+.TP 
+\fIazami_değer\fR, \fBNO MAXVALUE\fR
+İsteğe bağlı \fBMAXVALUE \fR\fIazami_değer\fR deyimi üretilen bir kayıt listesinin azami sıra değerini belirlemekte kullanılır. Belirtilmezse ya da \fBNO MAXVALUE\fR  belirtilirse, öntanımlı sıra değeri kullanılır. Öntanımlı değer artan değerli bir liste için 2\N'45'1, azalan değerli bir liste için \N'45'1\N'39'dir.      
+
+.TP 
+\fIbaşlangıç\fR
+İsteğe bağlı \fBSTART WITH \fR\fIbaşlangıç\fR  deyimi kayıt listesinin başlangıcını belirtmek için kullanılır. Öntanımlı başlangıç değeri, artan değerli bir liste için \fIasgarideğer\fR, azalan değerli bir liste için \fIazami_değer\fR\N'39'dir.      
+
+.TP 
+\fIsatır_sayısı\fR
+İsteğe bağlı \fBCACHE \fR\fIsatır_sayısı\fR deyimi daha hızlı erişim için sıralı listeyi saklamak üzere bellekte yer ayrılmasını ve ilklendirilmesini sağlar. En az değer 1\N'39'dir ve bu ayrıca öntanımlıdır.      
+
+.TP 
+\fBCYCLE\fR, \fBNO CYCLE\fR
+\fBCYCLE\fR seçeneği, artan bir değerli bir listede \fIazami_değer\fR, azalan değerli bir listede \fIasgarideğer\fR aşıldığında tekrar başlangıca dönülmesini sağlar.      
+
+\fBNO CYCLE\fR belirtilmişse, bir \fBnextval\fR çağrısı bir listenin sonunda yapıldığında bir hata döndürecektir. Ne \fBCYCLE\fR ne de \fBNO CYCLE\fR belirtilmişse, \fBNO CYCLE\fR öntanımlıdır.      
+
+.PP  
+.SH EK BİLGİ
+Bir kayıt listesini silmek için \fBDROP SEQUENCE\fR kullanın.   
+
+Satır listeleri bigint aritmetiğine tabidirler, dolayısıyla listedeki satır sayısı sekiz baytlık tamsayı genişliğini (\N'45'9223372036854775808 .. 9223372036854775807) aşamaz. Bazı eski platformlarda sekiz baytlık tamsayılara derleyici desteği olmadığından mecburen integer aritmetiği (\N'45'2147483648 .. +2147483647 aralığı) kullanılır.   
+
+Çok sayıda oturum tarafından ortaklaşa kullanılacak bir kayıt listesi için  \fIkayıt_sayısı\fR 1\N'39'den büyük seçilirse, umulmadık sonuçlar ortaya çıkabilir. Herhangi bir oturum bu sıralama değişkenine eriştiği her bir defa için bir dizi değere yer ayırıp, orada saklar ve sıralama nesnesine ait  last_value değerini bir artırır. Bundan sonraki \fIkayıt_sayısı\fR\N'45'1 defalık erişimde mevcut kayıt listesine dokunmadan değerler için önceden ayrılmış yerler kullanılır. Ayrılmış ama kullanılmamış yerler var ise bunlar boşa gider ve oturum bittiğinde kayıt listesinde boşluklar kalmış olur.   
+
+Bunun yanında farklı oturumlar için farklı sıralama değerleri belirlenmesi garanti edilmiş olmasına rağmen bütün oturumlar dikkate alındığında bunlar bir sıra takip etmeyebilir. Örneğin, \fIkayıt_sayısı\fR için 10 belirtilmiş olsun, A oturumu 1 den 10 a kadar sıra değeri ayırmış ve nextval=1 döndürmüş olsun. Daha sonra B oturumu da 11 den 20 ye kadar sıra değeri ayırmış olsun ve A oturumunun değer döndürmesini beklemeden nextval=11 döndürmüş olsun. Burada, \fIkayıt_sayısı\fR=1 değeri için döndürülen nextval değerleri bir sıra takip ederken 1\N'39'den büyük \fIkayıt_sayısı\fR değerleri için bu garanti edilemez, sadece üretilen değerlerin birbirinden farklı değerler olacakları garanti edilebilir. Ayrıca last_value değeri de henüz nextval tarafından döndürülmüş olmasa da herhangi bir oturum tarafından ayrılmış son değeri içerir.   
+
+Diğer bir önemli husus, ayrılarak belleğe alınmış değerler kullanılana kadar üzerinde setval uygulanan bir oturumun diğer oturumlar tarafından uyarılmayacağıdır.   
+
+.SH ÖRNEKLER
+101\N'39'den başlayacak ve artan sıralı olacak serial isimli kayıt listesininin oluşturulması:    
+
+
+.RS 4
+.nf
+CREATE SEQUENCE serial START 101;
+.fi
+.RE   
+
+Bir kayıt listesinden sonraki kaydın seçilmesi:   
+
+
+.RS 4
+.nf
+SELECT nextval(\N'39'serial\N'39');
+
+nextval
+\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'\N'45'
+\    114
+.fi
+.RE   
+
+Bu kayıt listesinin bir \fBINSERT\fR cümlesinde kullanılması:   
+
+
+.RS 4
+.nf
+INSERT INTO distributors VALUES (nextval(\N'39'serial\N'39'), \N'39'nothing\N'39');
+.fi
+.RE   
+
+Kayıt listesi değerinin bir \fBCOPY FROM\fR sonrasında güncellenmesi:   
+
+
+.RS 4
+.nf
+BEGIN;
+COPY distributors FROM \N'39'input_file\N'39';
+SELECT setval(\N'39'serial\N'39', max(id)) FROM distributors;
+END;
+.fi
+.RE   
+
+.SH UYUMLULUK
+\fBCREATE SEQUENCE\fR, SQL:2003\N'39'de belirtilmiştir. PostgreSQL aşağıdaki durumlar dışında standartla uyumludur:    
+.IP \fB·\fR 
+Standardın AS <veri türü> ifadesi desteklenmemektedir.    
+
+.IP \fB·\fR 
+Sonraki değerin sağlanması, standardın \fBNEXT VALUE FOR\fR ifadesi yerine nextval() işlevi kullanılarak yapılır.    
+
+.PP   
+
+.SH ÇEVİREN
+Nilgün Belma Bugüner <nilgun (at) belgeler·gen·tr>, Mart 2005 
+ 
+    

@@ -1,0 +1,169 @@
+.\" http://belgeler.org \N'45' 2006\N'45'11\N'45'26T10:18:28+02:00  
+.\" Copyright 1993 Rickard E. Faith (faith@cs.unc.edu) 
+.\" May be distributed under the GNU General Public License   
+.TH "login" 1 "4 Kasım 1996" "util\N'45'linux 1.6" "Kullanıcı Komutları"
+.nh    
+.SH İSİM
+login \N'45' Kullanıcının sisteme girişini sağlar.    
+.SH KULLANIM 
+.nf
+\fBlogin\fR [ \fIisim\fR ]
+\fBlogin \N'45'p\fR
+\fBlogin \N'45'h\fR \fIkonakismi\fR
+\fBlogin \N'45'f\fR \fIisim\fR
+.fi
+       
+.SH AÇIKLAMA     
+\fBlogin\fR, bir sisteme bağlanmak için kullanılır. Ayrıca, istenilen bir anda, bir kullanıcı adından başka birine geçiş yapmak içinde kullanılabilir (günümüzdeki pek çok kabuk, yerleşik olarak bu özelliği desteklemektedir).     
+
+Herhangi bir argüman belirtilmemişse, \fBlogin\fR kullanıcı adını soracaktır.     
+
+Şayet kullanıcı root değilse, ve eğer /etc/nologin dosyası varsa, bu dosyanın içeriği ekrana basılacak ve \fBlogin\fR sonlandırılacaktır. Bu genellikle, sistem kapanırken, yapılacak bağlantıları önlemek için kullanılır.     
+
+Şayet kullanıcı için /etc/usertty içinde özel erişim kısıtlamaları tanımlanmışsa, kullanıcı bu şartları karşılamak zorundadır. Aksi taktirde bağlantı girişimi reddedilecek ve bir \fBsyslog\fR iletisi üretilecektir. Daha fazla bilgi için "\fBÖZEL ERİŞİM KISITLAMALARI\fR" bölümüne bakınız.     
+
+Şayet kullanıcı root ise, /etc/securetty içinde listelenen uçbirimlerden birisini kullanarak bağlanmak zorundadır. Giriş hataları \fBsyslog\fR tarafından kaydedilir.     
+
+Bütün bu şartlar kontrol edildikten sonra, parola istenecek ve kontrol edilecektir (şayet bu kullanıcı için parola gerekli ise). \fBlogin\fR sonlandırılmadan önce, 10 giriş denemesine izin vardır, fakat ilk üç denemeden sonra isteğe karşılık verme süresi uzayacaktır. Bağlantı hataları \fBsyslog\fR üzerinden rapor edilecektir. Bu, ayrıca başarılı root bağlantılarını raporlamak içinde kullanılır.     
+
+Şayet .hushlogin dosyası varsa, bir "hızlı" bağlantı gerçekleştirilir (bu özellik; e\N'45'posta kontrolünü, en son bağlantı zamanının ve günün iletisinin ekrana basılmasını engeller). Diğer yandan, şayet /var/log/lastlog dosyası varsa, son bağlantı zamanı ekrana basılacaktır (ve o anki bağlantı kaydedilecektir).     
+
+Uçbirimin UID ve GID ayarlarını yapmak gibi, rastgele yönetim işleri yapılır. Şayet daha önceden belirtilmişse, TERM ortam değişkeni korunur (\fB\N'45'p\fR seçeneği kullanılmışsa diğer çevre değişkenleri de korunur).  Daha sonra HOME, PATH, SHELL, TERM, MAIL ve LOGNAME ortam değişkenleri ayarlanır. PATH değişkeni normal kullanıcılar için öntanımlı olarak /usr/local/bin:/bin:/usr/bin:. ve root kullanıcı için /usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin\N'39'dir. Son olarak, şayet bu bir "hızlı" bağlantı değilse; günün iletisi görüntülenir, kullanıcıya ait /var/spool/mail içindeki dosya kontrol edilir ve şayet dosya uzunluğu sıfırdan farklı ise bir ileti görüntülenir (şayet bu dosyanın uzunluğu sıfırdan farklı ise, kullanıcıya bir ileti gelmiş demektir).     
+
+Daha sonra kullanıcı kabuğu başlatılır. Şayet \fB/etc/passwd\fR içinde  kullanıcı için bir kabuk tanımlı değilse, \fB/bin/sh\fR kullanılır. Şayet /etc/passwd içinde bir dizin tanımlı değilse, ev dizini olarak \fB/\fR (kök) dizini kullanılır (yukarıda bahsedilen .hushlogin dosyası için ev dizinine bakılır).     
+      
+.SH SEÇENEKLER            
+.br
+.ns
+.TP 
+\fB\N'45'p\fR
+\fBgetty(8)\fR tarafından kullanılır, ortam değişkenlerinin korunmasını sağlar.         
+
+.TP 
+\fB\N'45'f\fR
+İkinci bağlantı doğrulamasını atlamak için kullanılır. Özellikle root kullanıcı için çalışmaz ve Linux altında da çalıştığı görülmemiştir.         
+
+.TP 
+\fB\N'45'h\fR
+Diğer sunucular tarafından (\fBtelnetd(8)\fR gibi) uzak konak adını, \fBlogin\fR\N'39'e bildirmek için kullanılır, böylece uzak adı utmp ve wtmp içine yerleştirilebilir. Bu seçenek sadece root kullanıcı içindir.         
+
+.PP        
+.SH ÖZEL ERİŞİM KISITLAMALARI     
+/etc/securetty dosyası, root kullanıcının bağlantı yapabileceği, uçbirim isimlerinin listesini içerir. Her bir satırda, /dev/ öneki olmaksızın bir tty aygıtının adı belirtilmelidir. Şayet bu dosya yoksa, root kullanıcı herhangi bir uçbirim üzerinden bağlanabilir.     
+
+Günümüzde çoğu Linux sistemi PAM (Pluggable Authentication Modules \N'45' Eklenebilir Kimlik Kanıtlama Modülleri) kullanmaktadır. PAM kullanılmayan sistemlerde /etc/usertty dosyası, belirlenen kullanıcılar için, ek erişim kısıtlamaları içerir. Şayet bu dosya yoksa, ek erişim kısıtlamaları yüklenemez. Bu dosya çeşitli bölümler içerir. Üç bölüm türü münkündür: CLASSES, GROUPS ve USERS. CLASSES bölümü uçbirim sınıflarının ve sunucu adlarının şablonlarını içerir. GROUPS  bölümü her bir grup için, USERS bölümü  ise her bir kullanıcı için izin verilen uçbirimleri ve sunucuları tanımlar.     
+
+Bu dosya içindeki her bir satır en fazla 255 karaktere sahip olabilir. Açıklamalar \fB#\fR ile başlar ve satır sonuna kadar devam eder.     
+     
+.SS CLASSES Bölümü       
+Bir CLASSES bölümü bir satırın başında tamamen büyük harflerden oluşmuş CLASSES dizgesi ile başlar. Yeni bir bölümün başlangıcına veya dosyanın sonuna kadar  her bir satır sekmeler ya da boşluklar tarafından ayrılmış sözcük dizilimleri içerir. Her bir satır uçbirim sınıfları ve sunucu şablonları içerir.       
+
+Satır başındaki sözcük, satırın kalanında tanımlanmış uçbirimler ve sunucu şablonları için ortak sınıf ismidir. Bu sınıf ismi GROUPS veya USERS bölümlerinde kullanılabilir. Yinelenmiş sınıflar oluşturma hatasından korunmak için sınıf isimleri tanımlamaların içinde kullanılmamalıdır.       
+
+Örnek bir CLASSES bölümü:       
+
+
+.nf
+CLASSES
+sinif1       tty1 tty2
+sinif2       tty3 @.foo.com
+.fi       
+
+Burada \fIsinif1\fR ve \fIsinif2\fR sınıfları sağ taraflarındakilerle tanımlanmıştır.       
+     
+.SS GROUPS Bölümü       
+Bir GROUPS bölümü; her bir UNIX grubu için izin verilen uçbirim ve sunucuları tanımlar.  Şayet bir kullanıcı /etc/passwd ve /etc/group dosyalarındaki tanımlara göre göre bir UNIX grubunun üyesi ise ve bu grup /etc/usertty içindeki GROUPS bölümünde belirtilmiş ise, kullanıcıya erişim izni verilmiş demektir.       
+
+Bir GROUPS bölümü bir satırda tamamen büyük harflerden oluşmuş GROUPS yazısı ile başlar ve altındaki tüm satırlar, boşluklar veya sekmeler ile ayrılmış, kelime dizileridir. Bir satırdaki ilk kelime grup adı ve diğer kelimeler; grup elemanlarına bağlantı için izin verilen tty\N'39'lerin ve konakların adlarıdır. Bu tanımlamalar önceki bölümde( CLASSES bölümünde) açıklanan sınıfları içerebilirler.       
+
+Örnek bir GROUPS bölümü:       
+
+
+.nf
+GROUPS
+sys       tty1 @.bar.edu
+stud      sinif1 tty4
+.fi       
+
+Bu örneğe göre, sys grubunun üyelerinin bar.edu alanından ve tty1 üzerinden oturum açabilir. stud grubunun üyeleri ise sinif1 sınıfında belirtilen tty\N'39'lerden veya tty4\N'39'den oturum açabilir.       
+     
+.SS USERS Bölümü       
+Bir USERS bölümü bir satırda tamamen büyük harflerden oluşmuş USERS yazısı ile başlar ve altındaki tüm satırlar, boşluklar veya sekmeler ile ayrılmış kelime dizilerinden oluşur. Bir satırdaki ilk kelime kullanıcı adı olup diğer kelimeler bağlantı için izin verilen tty\N'39'lerin ve konakların adlarıdır. Bu tanımlamalar CLASSES bölümünde açıklanan sınıfları içerebilirler. Dosyanın başında bölüm adı belirtilmeden yerleştirilmiş satırlar varsa bu satırların öntanımlı olarak USERS bölümünün satırları olduğu varsayılır. Örnek bir USERS bölümü:       
+
+
+.nf
+USERS
+zacho     tty1 @130.225.16.0/255.255.255.0
+blue      tty3 sinif2
+.fi       
+
+Bu örneğe göre, zacho sadece tty1\N'39'den ve IP adresi 130.225.16.0  \N'45'  130.225.16.255 aralığında olan konaklardan oturum açabilirken, blue\N'39'ya tty3\N'39'den ve sinif2 sınıfında belirtilen yerlerden oturum açabilir.       
+
+USERS bölümünde kullanıcı adı olarak * belirtilmiş bir satır bulunabilir ve bu satırdaki tanımlar diğer satırlardaki tanımlarla uyuşmayan kullanıcılara uygulanır.       
+
+Eğer bir kullanıcı için hem  USERS hem de GROUPS bölümünde eşleşme sağlanıyorsa, bu kullanıcı her iki bölümde izin verilen yerlerin herhangi birinden bağlanabilir.       
+     
+.SS Kökenler       
+USERS, GROUPS ve CLASSES bölümlerinde tanımlanan tty ve konak kalıplarına köken (origin) adı verilir. Bir köken dizgesi şu biçimlerde olabilir:       
+
+.IP \fB·\fR 
+/dev/ öneki olmaksızın bir tty aygıtının ismi; örneğin, tty1 veya ttyS0.       
+
+.IP \fB·\fR 
+@localhost dizgesi; bu, kullanıcının yerel konaktan  aynı konağa \fBtelnet\fR/\fBrlogin\fR yapmasına izin verildiği anlamına gelir. Bu sayede, kullanıcı \fBxterm \N'45'e /bin/login\fR gibi bir komutu çalıştırabilir.       
+
+.IP \fB·\fR 
+@.bir.dom gibi bir alan adı soneki; bu, kullanıcının belirtilen soneke sahip alanlardaki konaklardan \fBtelnet\fR/\fBrlogin\fR yapmasına izin verildiği anlamına gelir.       
+
+.IP \fB·\fR 
+@x.x.x.x/y.y.y.y biçiminde yazılmış bir IPv4 adres aralığı; burada x.x.x.x ağ adresini, y.y.y.y ise ağ maskesini belirtir. Örneğin, @130.225.16.0/255.255.254.0 dizgesi, kullanıcının 130.225.16.0  \N'45' 130.225.17.255 aralığında bir IP adresinden \fBtelnet\fR/\fBrlogin\fR yapmasına izin verildiği anlamına gelir.       
+
+.PP       
+
+Yukarıdaki belirtimlerin başına, aşağıdaki sözdizimlerine uygun olarak bir zaman belirtimi getirilebilir:       
+
+
+.nf
+zaman_belirtimi ::= \N'39'[\N'39' \fIgün_veya_saat\fR [\N'39':\N'39' \fIgün_veya_saat\fR]* \N'39']\N'39'
+\fIgün\fR             ::= \N'39'mon\N'39' | \N'39'tue\N'39' | \N'39'wed\N'39' | \N'39'thu\N'39' | \N'39'fri\N'39' | \N'39'sat\N'39' | \N'39'sun\N'39'
+\fIsaat\fR            ::= \N'39'0\N'39' | \N'39'1\N'39' | ... | \N'39'23\N'39'
+\fIsaat_belirtimi\fR  ::= \fIsaat\fR | \fIsaat\fR \N'39'\N'45'\N'39' \fIsaat\fR
+\fIgün_veya_saat\fR   ::= \fIgün\fR | \fIsaat_belirtimi\fR
+.fi
+
+
+Örneğin, [mon:tue:wed:thu:fri:8\N'45'17]tty3 kökeni, Pazartesi gününden Cuma gününe kadar 8:00 ile 17:59 saatleri arasında tty3 üzerinde oturum açılabileceğini belirtir. Bu açıklamadan da anlaşılacağı üzere a\N'45'b biçiminde belirtilen bir zaman aralığı a:00 ile b:59 arasındaki tüm anları içerir. 10 gibi tek bir saat belirtimi ise, 10:00 ile 10:59 arasındaki tüm anları içerecektir.       
+
+Bir tty veya konak belirtiminin başında bir zaman belirtiminin olmayışı buralardan zaman sınırlaması olmaksızın her an oturum açılabileceği anlamına gelir. Eğer bir zaman belirtimi kullanmak isterseniz, hem bağlantıya izin verilen günleri hem da saati ya da saat aralığını belirtmelisiniz. Zaman belirtimleri boşluk karakterlerini içeremezler.       
+
+Öntanımlı kural belirtilmemiş bir /etc/usertty içindeki satırlardan biriyle eşleşmeyen her kullanıcıya herhangi bir anda herhangi bir yerden oturum açma izni verilmiş demektir (standart davranış).       
+        
+.SH İLGİLİ DOSYALAR
+
+.nf
+/var/run/utmp
+/var/log/wtmp
+/var/log/lastlog
+/usr/spool/mail/*
+/etc/motd
+/etc/passwd
+/etc/nologin
+/etc/usertty
+.hushlogin
+.fi   
+
+.SH İLGİLİ BELGELER
+\fBmail(1)\fR, \fBpasswd(1)\fR, \fBpasswd(5)\fR, \fBenviron(7)\fR, \fBinit(8)\fR, \fBgetty(8)\fR, \fBshutdown(8)\fR.   
+
+.SH YETERSİZLİKLER
+Belgelenmemiş olan BSD\N'39'nin \fB\N'45'r\fR seçeneği desteklenmemektedir. Bu bazı \fBrlogind(8)\fR uygulamaları için gerekli olabilir.   
+
+Eskiden mümkün olan ardışık oturum açmalar artık çalışmamaktadır; çoğu amaçlar için \fBsu(8)\fR bunu zaten ikame ediyor. Bunun yerine, güvenlik gerekçeleriyle, tty üzerinde olası dinleme süreçlerini kaldırmak için \fBlogin\fR bir vhangup() sistem çağrısı yapar. Bu parola dinlemeyi engellemek içindir. Biri kabuk üzerinde \fBlogin\fR komutunu kullanırsa, o kabuk artık tty\N'39'nin gerçek sahibi olmayacağından vhangup() tarafından öldürülür. Üst seviye kabuk veya xterm\N'39'de \fBexec login\fR kullanılarak bunun olması engellenebilir.   
+
+.SH YAZAN
+HP\N'45'UX için Michael Glad (<glad (at) daimi.dk>) tarafından geliştirilen BSD login 5.40 (5/9/89) Linux 0.12\N'39'ye  Peter Orbaek (<poe (at) daimi.aau.dk>) tarafından uyarlandı.   
+
+.SH ÇEVİREN
+Yalçın Kolukısa <yalcink01 (at) yahoo.com>, Eylül 2005
+    
+     

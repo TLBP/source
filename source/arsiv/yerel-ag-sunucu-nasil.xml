@@ -1,0 +1,933 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--DOCTYPE article SYSTEM "../docbook/dtd/docbookx.dtd"-->
+<!-- ********************************************************************
+     $Id: yerel-ag-sunucu-nasil.xml,v 1.2 2002/10/03 19:49:13 nilgun Exp $
+     ******************************************************************** -->
+
+<article id="archive-yerel-ag-sunucu-nasil">
+  <articleinfo>
+    <title>Linux Yerel Ağ Sunucu NASIL</title>
+    <author role="translator">
+      <firstname>Ahmet Burak Can</firstname>
+      <affiliation>
+          <address><email>bbm635@eti.cc.hun.edu.tr</email></address>
+      </affiliation>
+    </author>
+    <author>
+      <firstname>Pramod Karnad</firstname>
+      <affiliation>
+        <address>
+          <email>karnad@indiamail.com</email>
+        </address>
+      </affiliation>
+    </author>
+    <pubdate>Çeviri: v1.0, ?</pubdate>
+    <pubdate>Özgün Belge: v2.11, 7 Ağustos 1997</pubdate>
+  </articleinfo>
+<div>
+
+<pre>
+
+Bu belge, Linux'un bir yerel ağ üzerinde Unix,Netware,NT ve Windows
+ortamlarını  bağlayan bir hizmet sunucu olarak nasıl kurulacağını
+anlatır.Linux'la bağlantının kurulmasından sonra bütün değişik
+altyapılara saydam bir erişim kazanırsınız.NCSA sunucusu kullanarak
+HTTP kurulumu ve bunun Novell üzerinde TCP/IP,Windows3.1,WFWG,Win95
+ve WinNT üzerinde Microsoft ve Apple PowerMac üzerinde MacTCP kulla-
+narak bağlanması hakkındada ayrıntılı açıklamalar verilmektedir.
+
+</pre><h2> 1.Giriş</h2><pre>
+
+Yerel ağ kısaca ,Internet teknolojilerinin genel Internet ağına
+bağlantılar yerine birleşik bir organizasyon içinde gerçekleştirimi
+için tanımlayıcı bir terim olarak kullanılır.Bu gerçekleştirim,
+bir organizasyonun sahip olduğu uçsuz bucaksız bilgi kaynaklarının
+bütün bireylerine minimum para,zaman ve emek sarfedilerek dağıtıl-
+masını kapsar.Bu belge,yerel ağ kurulumunun halihazırda bulunan
+ve genellikle az bir ücretle veya ücretsiz olarak elde edilebilen
+birtakım araçlarla nasıl gerçekleştirilebileceğini anlatmaktadır.
+
+Bu belge ,Linux sunucu üzerinde nasıl TCP/IP kurulumu ve Ethernet
+kartı kullanarak bir yerel ağda fiziksel bağlantının nasıl yapılaca-
+ğını bildiğinizi farzederek hazırlanmıştır.Ayrıca Netware,WinNT ve
+Mac sistemleri hakkında temel bilgilere de sahip olmanız gerekmektedir.
+Netware sunucu konfigürasyonu 3.1x uyarlamasına göre anlatılmıştır.Aynı
+sonucu alabilmek için INETCFG'de kullanılabilir.Kullanıcı tarafında
+ise Windows 3.1x,Windows for Workgroups,Win95,WinNT ve Apple PowerMac
+ortamlarına göre konu ele alınmıştır.
+
+Bu belgede özel ağ adresleri olarak 172.16.0.0 ve 172.17.0.0 (RFC-1918)
+kullanılmıştır.Siz kendi konfigürasyonunuza göre uygun adresler seçe-
+bilirsiniz.
+
+              Linux       Netware      WFWG/WinNT
+              Sunucu      Sunucu       Sunucu
+             172.16.0.1   172.16.0.2   172.16.0.3
+                |           |           |    172.16.0.0
+          ------+-----+-----+--------+--+--------------
+                      |              | 172.16.0.254
+                    W/S 1          Yöneltici
+                  172.16.0.5         | 172.17.0.254
+                                     |
+                           ----------+-------+--------
+                      172.17.0.0             |
+                                           W/S 2
+                                         172.17.0.5
+
+</pre><h3> 1.1.  Neler gerekli?</h3><pre>
+
+Kurulum için aşagıdaki yazılımlara sahip olmalısınız:
+
+- HTTP hizmet sunucu programı.OneStep NCSA'dan yüklenebilir.
+  http://hoohoo.ncsa.uiuc.edu/docs/setup/OneStep.html page
+
+- Novell Netware Client yazılımı.
+  http://support.novell.com/ adresinden yüklenebilir.
+
+- Microsoft TCP/IP kullanıcı yazılımı.
+  http://www.microsoft.com/ adresinden yüklenebilir.
+
+- Apple MacTCP kullanıcı yazılımı
+  HTTP://www.apple.com/ adresinden yüklenebilir.
+
+- WWW browser programları.
+  Netscape HTTP://home.netscape.com/
+  MS Internet Explorer HTTP://www.microsoft.com/
+  NCSA Mosaic http://www.ncsa.uiuc.edu/SDG/Software/Mosaic/NCSAMosaicHome.html
+
+</pre><h3> 1.2. Bu belgenin yeni sürümleri</h3><pre>
+
+Bu belgenin yeni versiyonları periyodik olarak comp.os.linux.announce
+ve comp.os.linux.help adreslerine postalanmaktadır.Ayrıca çeşitli Linux
+FTP sitelerinden de bulunabilir.(sunsite.unc.edu gibi)
+
+Bu belgenin html formatındaki en son ingilizce uyarlaması aşağıdaki
+adresten alınabilir:
+http://www.inet.co.th/cyberclub/karnadp/http.html
+
+</pre><h3> 1.3. Geribildirim</h3><pre>
+
+Bu belge hakkında soru ve yorumlarınızı maille bbm635@eti.cc.hun.edu.tr
+adresine gönderebilirsiniz.Bir sonraki uyarlamada yeralması için önerile-
+rinizi veya bulduğunuz hataları gönderebilirsiniz.
+
+</pre><h2> 2. HTTP hizmet sunucusu kuruluşu</h2><pre>
+
+Hizmet sunucuyu Internet'ten yükleyeceğiniz zaman iki seçenek vardır:
+Programın kaynak kodunu alıp bunu tekrar derlemek ya da ön derlenmiş
+ikili kodunu kullanmaktır.Önderlenmiş ikili kodun Linux (ELF) son uyarlaması
+NCSA'dan yüklenebilir.
+
+</pre><h3> 2.1. Yüklemeden önceki hazırlık</h3><pre>
+
+HTTP hizmet sunucu yüklerken NCSA'daki sunucu konfigurasyon adımlarında
+size rehberlik eder ve çeşitli dosyaları hazırlar.Fakat programı yüklemeye
+başlamadan önce aşağıda belirtilen birtakım soruları cevaplamalısınız.
+
+</pre><h4> 2.1.1. İşletim Sistemi</h4><pre>
+
+İlk olarak HTTPd yazılımının önderlenmiş hali veya kaynak kodu arasında bir
+seçim yapmanız gerekir.Eğer menüde gözükmeyen özel bir sisteme sahipseniz
+saptanmış kaynak kodu seçmelisiniz.
+
+Linux uyarlamanızı öğrenmek için Linux makinanız üzerinde komut satırından
+aşağıdakı komutu girmelisiniz:
+
+     linux:~$  uname -a
+
+Bu komut aşagıdaki gibi sonuç verir:
+
+     linux:~$  uname -a
+     Linux linux 2.0.29 #4 Tue Sep 13 04:05:51 CDT 1994 i586
+     linux:~$
+
+Bu da Linux 2.0.29 sürümü demektir.
+
+Diğer parametreler yüklemeden önce veya sonradan /usr/local/etc/httpd/conf
+dizinindeki srm.conf dosyasını değiştirerek konfigüre edilebilir.Gerçek
+parametrelerin adları httpd.conf dosyasında parantezler içinde belirtilir.
+Sadece DocumentRoot parametresi srm.conf dosyasında bulunur.
+
+</pre><h4> 2.1.2. Süreç türü (ServerType)</h4><pre>
+
+Bu parametre makinanızın HTTPd hizmet sunucuyu nasıl çalıştıracağını
+belirler.Tercih edilen method 'standalone' türüdür.Bu HTTP sunucunun
+sürekli çalışmasına sebep olur.Eğer HTTPd'nin 'inetd' altında yüklenmesini
+isterseniz, her yeni istek geldiğinde HTTPd ikili kodu hafızaya yüklenir ve
+bu da sistemi yavaşlatır.
+
+</pre><h4> 2.1.3. Bağlantı noktası Bağlamak (Port)</h4><pre>
+
+Bu parametre HTTPd hizmet sunucunun makinanız üzerinde hangi bağlantı
+noktasına bağlanacağını ve HTTP isteklerinin hangi bağlantı noktasından
+dinleneceğini belirler.Eğer sisteme 'root' olarak bağlanabiliyorsanız,
+saptanmış değer olan 80'i kullanın.Aksi halde 1025 ile 65535 arası bir
+değer seçiniz.
+
+</pre><h4> 2.1.4. Sunucu kullanıcı kimliği (User)</h4><pre>
+
+Bu parametre sunucu  HTTP isteklerine cevap verirken ve dosyalar
+üzerine çalışırken kullanılan kullanıcı kodudur.Bu parametre, yalnızca
+sunucu 'standalone' çalışırken gereklidir.Eğer root haklarına
+sahip değilseniz,kendi kullanıcı kodunuzu kullanmalısınız.Eğer sistem
+yöneticisi iseniz,dosya erişim haklarını kontrol edebilmek için özel bir
+kullanıcı kodu kullanabilirsiniz.
+
+</pre><h4> 2.1.5. Sunucu grup kimliği (Group)</h4><pre>
+
+Bu parametre sunucu HTTP isteklerine cevap verirken ve dosyalar
+üzerine çalışırken kullanılan grup kodudur. Bu parametre aynı bir önceki
+kullanıcı kimlikleri parametresinde olduğu gibi sunucu 'standalone'
+calışırken geçerlidir.
+
+Eğer root haklarına sahip değilseniz,kendi grup kodunuzu kullanın.Linux
+komut satırından 'groups' komutunu girerek grubunuzu öğrenebilirsiniz.
+
+</pre><h4> 2.1.6. Sunucu yöneticisi elektronik posta adresi (ServerAdmin)</h4><pre>
+
+Bu parametre,kullanıcıların sunucu ile ilgili sorunlarını bildirebilmesi
+için hizmet programı yöneticisi tarafından verilen bir elektronik posta
+adresidir.Kişisel elektronik posta adresi de verilebilir.
+
+</pre><h4> 2.1.7. Sunucunun ana dizininin konumu (ServerRoot)</h4><pre>
+
+Hizmet programının sistem üzerindeki yerini ifade eder.Eğer root haklarına
+sahipseniz tavsiye edilen '/usr/local/etc/httpd'  dizinidir.Aksi halde,
+kendi dizininizde bir alt dizin verebilirsiniz.Kendinize ait dizinin
+yolunu bulmak için 'pwd' komutunu kullanabilirsiniz.
+
+</pre><h4> 2.1.8. HTML dosyalarının yeri (DocumentRoot)</h4><pre>
+
+Internet üzerinden sunulacak HTML dosyalarının sistem üzerindeki yeridir.
+Bunun için saptanmış dizin /usr/local/etc/httpd/htdocs'dir.Eğer root
+değilseniz,kendi ana dizininizde bir alt dizin veya sunucu kullanıcı
+kimliğinde (user) verilen özel bir kullanıcının ana dizinindeki
+bir alt dizin verilebilir.
+
+Emin olamadığınız durumlarda önceden saptanmış değerleri kullanabilirsiniz.
+Şu anda kurulum için gerekli olan soruların cevaplarına sahipsiniz.Ayrıca
+http://hoohoo.ncsa.uiuc.edu/docs/ adresindeki çeşitli belgeleri de
+okumanız yararlı olur.Eğer kaynak kodu derlemeyi düşünüyorsanız, support,
+src,cgi-src dizinlerindeki çeşitli dosyaları değiştirmeniz gerekir.Eğer
+Linux uyarlamanız destekleniyorsa,en üstteki dizinde (/usr/local/etc/httpd)
+'make linux' komutunu giriniz.
+
+</pre><h3> 2.2. HTTPd programını derleme</h3><pre>
+
+Derlemek için hizmet programı kök dizininde 'make linux' komutunu giriniz.
+Not : Eğer pre-ELF Linux kullanacaksınız, derlemeden önce portability.h
+dosyasındaki #define NO_PASS satırını , Makefile dosyasındaki
+set DBM_LIBS= -ldbm satırını geçerli yapmalısınız.
+
+</pre><h2> 3. HTTPd programını test etme</h2><pre>
+
+HTTPd kurulumu yapıldıktan sonra root olarak sisteme girin ve 'httpd&amp;'
+komutunu girin.(HTTPd'nin standalone kurulduğu varsayılıyor.) 'ps' komutu
+girilerek çalışan görevlerinizin bir listesini alabilirsiniz.HTTPd'nin
+en kolay test yöntemi Telnet programı kullanılarak yapılabilir.Linux komut
+satırından :
+
+    linux:~$  telnet 172.16.0.1 80
+
+komutunu girin.Burada 80 HTTP için saptanmış bağlantı noktasıdır.Eğer
+kapı (Port) parametresini değişik bir değer verdiyseniz,bu değeri kullanmalısınız.
+Bu komutu girdikten sonra şöyle bir cevap alırsınız:
+
+    Trying 172.16.0.1...
+    Connected to linux.mydomain.
+    Escape character is '^]'.
+
+Eğer, herhangi bir tuşa basıp Enter tuşuna basarsanız,muhtemelen aşağıdakine
+benzer bir cevap alırsınız:
+
+    HTTP/1.0 400 Bad Request
+    Date: Wed, 10 Jan 1996 10:24:37 GMT
+    Server: NCSA/1.5
+    Content-type: text/html
+
+    &lt;HEAD>&lt;TITLE>400 Bad Request &lt;/TITLE> &lt;/HEAD>
+    &lt;BODY>&lt;H1>400 Bad Request &lt;/H1>
+    Your client sent a query that this server could
+    not understand.&lt;P>
+    Reason: Invalid or unsupported method.&lt;P>
+    &lt;/BODY>
+
+Şu anda başka bir PC ve WWW tarayıcısı kullanarak bu HTTP sunucuya
+bağlanabilirsiniz.
+
+</pre><h2> 4. Linux Sunucuya Bağlanma</h2><pre>
+
+Bu kesim , 'giriş' kesiminde verilen adres şemasını dikkate alınarak
+anlatımıştır.İş istasyonu 1 (W/S1) 172.16.0.0 adresli bilgisayar ağı
+üzerinde olduğu için doğrudan Linux sunucusuna ulaşabilirken,
+iş istasyonu 2 (W/S2) 172.17.0.0 adresli bilgisayar ağı üzerinde olduğu
+için Linux  sunucuya ulaşabilmek için 172.17.0.254 nolu ağ geçidini
+(router) kullanmalıdır.Bu ağ geçidi bilgisi sadece iş istasyonu 2 üzerindeki
+kullanıcıların konfigürasyonu sırasında gereklidir.Netware ağ geçitlerini
+(router) 'ip-router' olarak tanımlar.
+
+Kullanıcı kurulumunu göstermek için iş istasyonu 2'yi kullanalım.İş istasyonu
+1 eğer kurulacaksa adresi 172.16.0.5 yapıp , ağ geçidi/yönelticiye olan
+referansları dikkate almayın.
+
+Eğer bir yönelticiniz yoksa bir sonraki kesimi atlayın ve aşagıdaki kesimlere
+devam edin.
+
+. Eğer Netware sunucu kullanıyorsanız, 'Netware sunucu kurulumu'
+. Eğer Microsoft Client  kullanıyorsanız, 'MS Windows Client kurulumu'
+
+</pre><h3> 4.1. Linux Sunucu kurulumu</h3><pre>
+
+Eğer yöneltici kullanmıyorsanız bu kesimi atlayabilirsiniz.
+
+İş istasyonu 2'yi Web sunucuya bağlayabilmek için,Linux sunucuyu
+yönelticiyi tanıyabilmesi için ayarlama yapmanız gerekir.
+Ayarlamaları yapabilmeniz için Linux'a root olarak bağlamanız
+gerekir.Komut satırından,
+
+      route add gw default 172.16.0.254
+
+komutunu girmelisiniz.Bu ağ geçidini her açılışta kullanabilmek için
+Linux sunucuda /etc/rc.d/rc.inet1 dosyasında ağ geçidi tanımı olarak
+GATEWAY = "172.16.0.254" satırını eklemelisiniz.
+
+ALT: Ayrıca bilgisayar ağınıza yöneltici dışından rota verebilmek için
+
+      route add -net 172.17.0.0 gw 172.16.0.254
+
+komutunu girin.Eğer Linux'un her açılışında geçerli olması için bu
+komutu /etc/rc.d/rc.local dosyasına eklemelisiniz.
+
+</pre><h3> 4.2. Netware Sunucu Kurulumu</h3><pre>
+
+Netware sunucu kurulumunu yapabilmeniz için süper kullanıcı
+haklarına veya en azından konsol işletmeni haklarına sahip olma-
+sınız.Eğer bu haklarınız yoksa ,sistem yöneticinizden yardım
+istemelisiniz.Sunucu aşagıdaki komutları girerek veya bunları
+AUTOEXEC.ncf dosyasına ekleyerek Ethernet_II çerçeve türünü
+geçerli yapabilirsiniz.
+
+       load NE2000 frame=Ethernet_II name=IPNET
+       load TCPIP
+       bind IP to IPNET addr=172.16.0.2 mask=FF.FF.FF.0
+
+Makina konfigürasyonunuza göre NE2000 sürücüsü yüklenirken,yuva veya
+devre kartı numarası vermeniz gerekebilir.(Mesela : load NE2000
+slot=3 frame=.....)
+
+</pre><h3> 4.3. Netware kullanıcı kurulumu</h3><pre>
+
+Kişisel bilgisayar olarak Win3.1,WFWG veya Win95 olmalıdır.Eğer
+Microsoft veya Novell'in 32 bitlik kullanıcıları kullanılıyorsa
+Win95 ile eski uyarlamalarının kurulumu farklıdır.Eğer 16 bit ise
+yöntem aynıdır ve Windows 3.x kurulum aşamalarını takip
+edebilirsiniz.Win95 için 32 bitlik kullanıcı kurulumu yapacaksanız
+'Windows 95 kurulumu' kısmına atlayın.
+
+</pre><h4> 4.3.1. Windows 3.x</h4><pre>
+
+Eğer Win3.1 veya WFWG kullanıyorsanız, Netware Client (VLMs) programını
+ve TCP/IP disketindeki bazı dosyaları yükleyebilirsiniz.Bu disketten :
+
+TCPIP.exe, VTCPIP.386, WINSOCK.dll and WLIBSOCK.dll
+
+dosyalarını yüklemelisiniz.Burada verilen WINSOCK.dll dosyası Win95 ve
+Trumpet ile gelenden farklıdır.Netware Client programının Windows
+desteğiyle geleni yüklenmelidir.VTCPIP.386, WINSOCK.dll ve WLIBSOCK.dll
+dosyalarını SYSTEM dizini altına  ve  TCPIP.EXE programını NWCLIENT
+dizini altına kopyalayın.Şimdi  NWCLIENT dizinindeki STARTNET.bat
+dosyasına aşağıdaki satırları ekleyin.
+
+        lsl
+        ne2000     ---> sizin ağ kartı sürücünüz
+        c:\windows\odihlp.exe     ---->Eğer WFWG kullanıyorsanız
+        ipxodi
+        tcpip
+        nwip       ---> Eğer Netware/IP kullanıyorsanız
+        vlm
+
+Ardından örneğin, \NET\TCP gibi bir dizin oluşturup,Linux sunucunun
+/etc dizinindeki veya Netware sunucucunun SYS:ETC dizinindeki HOSTS,
+NETWORKS,PROTOCOLS and SERVICES dosyalarını oluşturduğunuz dizine
+kopyalayın. Kopyaladığınız HOSTS dosyasını yeni Linux sunucuyu
+eklemek için değiştirin.Bu sizin WWW tarayıcıdan http://172.16.0.1/
+şeklinde adres yerine, http://linux.mydomain/ gibi tanımlı bir
+adresten ulaşmanızı sağlar.Mesela aşagıdaki gibi :
+
+        127.0.0.1      localhost
+        172.16.0.1     linux.mydomain
+
+NWCLIENT dizini altında NET.cfg dosyasına aşağıdaki satırları
+eklemelisiniz :
+
+          Link Driver NE2000
+              port 300
+              int 3
+              MEM D0000
+              FRAME Ethernet_802.2
+
+       ; ---- bu satırları ekleyin ----
+
+             FRAME Ethernet_II
+
+          Protocol TCPIP
+             PATH TCP_CFG C:\NET\TCP
+             ip_address  172.17.0.5
+             ip_netmask  255.255.255.0
+             ip_router   172.17.0.254    ---> Sizin yönelticinizin adresi,
+                                      ---> Eğer HTTP sunucuya ulaşabilmek için
+                                      ---> bu yönelticiyi kullanıyorsanız ekleyin
+
+          Link Support
+             MemPool 6192       ---> Minimum 1024.Başka değerleri deneyebilirsiniz
+             Buffers 10 1580
+
+       ;---------------------------------
+       ; Eğer Netware/IP kullanıyorsanız eklemeniz gerekebilir.
+       ;
+          NWIP
+             NWIP_DOMAIN_NAME  mydomain
+             NSQ_BROADCAST   ON
+             NWIP1_1 COMPATIBILITY   OFF
+             AUTORETRIES     1
+             AUTORETRY SECS  10
+
+WINDOWS dizini altından SYSTEM.ini dosyasına VTCPIP.386 için aşağıdaki
+satırları ekleyin:
+
+          [386Enh]
+          .....
+          network=*vnetbios, vipx.386, vnetware.386, VTCPIP.386
+          .....
+
+Bilgisayarınızı yeniden başlatın.STARTNET.bat dosyasını çalıştırıp
+herhangi bir tarayıcıyla Web sayfalarınıza ulaşabilirsiniz.Bunu yaparken
+Netware veya TCPMAN  (Trumpet Winsock kullanıyorsanız) ağına bağlanmanıza
+gerek yoktur.
+
+</pre><h4> 4.3.3. Windows 95</h4><pre>
+
+Bu bölüm 32 bit kullanıcının Win95 üzerinde nasıl kurulacağını gösterir.
+Öncelikle aşağıdaki yazaılımları kurmalısınız:
+
+       Client for Netware Networks (from Microsoft or Novell)
+       Microsoft TCP/IP Protocol
+       Network Adapter
+
+Bu yazılımları kurmak için,My Computer ikonuna tıklayın, sonra Control
+Panel'den Networks ikonuna ve buradan Add düğmesine tıklayın.Bundan sonra
+ekranda  Client, Adapter, Protocol ve Service seçeneklerinin bulunduğu bir
+pencere açılır.Client for Netware Networks yazılımını yüklemek için :
+
+       1. Client seçeneğine çift tıklayın.
+       2. Microsoft veya Novell seçeneklerine tıklayın.
+       3. Client for Netware Networks seçeneğine çift tıklayın.
+
+TCP/IP protocol yazılımını  yüklemek için :
+
+       1. Protocol seçeneğine çift tıklayın.
+       2. Microsoft seçeneğine tıkllayın.
+       3. TCP/IP seçeneğine çift tıklayın.
+
+Windows 95 saptanmış değer olarak başka protokolleride yükler.Önce
+üzerine tıklayıp ardından Remove düğmesine basarak kaldırabilirsiniz.
+Tipik olarak Win95 NetBeui protokolünü ve IPX/SPX protokolünü yükler.
+NetBeui protokolünü silebilirsiniz,fakat Netware sunucuya bağlanabilmek
+için IPX/SPX protokolüne ihtiyacınız olacaktır.
+
+TCP/IP kurulumunu yapmak  için TCP/IP üzerine tıklayın ve Properties
+düğmesine basın.Ardından IP address seçeneğine tıklayın.
+
+     -  'Specify an IP address ' kutusundan IP adresinizi girin.(buradaki
+         değer 172.17.0.5 )
+
+     -  Subnet Mask kısmına 255.255.255.0 girin.
+
+Yukarıdan Gateway seçeneğini seçin.
+
+     -  New gateway kutusuna sizin ağ geçidi adresinizi giriniz.(burada
+        172.17.0.254 )
+     -  Add düğmesine tıklayın.
+
+Şimdi ağ geçidi adresi kurulu ağ geçitleri kısmında gözükecektir.Şimdi
+aşağıdaki OK düğmesine basın.
+
+Şimdi makinayı tekrar başlatmanız için bir mesaj alırsınız.Bunu yaptıktan
+sonra Web tarayıcınızla HTTP sunucunuza bağlanabilirsiniz.
+
+</pre><h3> 4.4. Microsoft Client kurulumu</h3><pre>
+
+Eğer ağa ulaşmak için Microsoft Client kullanıyorsanız,aşağıdaki seçenekler
+için TCP/IP protokolünün nasıl kurulacağını anlatılmaktadır.
+
+.  ``Windows for Workgroups (WFWG)''
+
+·  ``Windows 95''
+
+·  ``Windows NT 4.0''
+
+Not : Linux sununucuzu WWW tarayıcınızdan veya diğer yerel ağ komutlarından
+http://172.16.0.1/ şeklinde kullanmak yerine http://linux.mydomain/ kullanmak
+isterseniz hosts dosyasına bazı eklemeler yapmalısınız.Diğer sunucularınız
+içinde aynı eklemeleri  (Netware, Unix, WinNT) yapabilirsiniz.Bütün Windows
+ailesi HOSTS dosyasını Windows uyarlamasına göre \WINDOWS veya \WINDOWS\SYSTEM
+dizini altında tutar.Bu dosyaya aşağıdaki satırları ekleyin :
+
+          127.0.0.1      localhost
+          172.16.0.1     linux.mydomain
+
+          172.16.0.2     netware.mydomain    -->diğer sunucular
+          172.16.0.3     winNT.mydomain
+          172.16.0.5     ws_1
+
+</pre><h4> 4.4.1. Windows for Workgroups</h4><pre>
+
+Bu kesim 32 bit kullacıcının WFWG için nasıl kurulacağını anlatır.Öncelikle
+Windows için TCP/IP sürücülerini Microsoft sitesinden çekebilirsiniz.Son
+uyarlaması olan 3.11b' yi ftp://ftp.microsoft.com ve diğer adreslerden
+tcp32b.exe adıyla çekebilirsiniz.TCP/IP-32bit sürücüsünü yüklemeden önce
+Win32s yüklenmiş olmalıdır.
+
+TCP/IP dosyalarını geçici bir dizine atın(mesela C:\TEMP).\WINDOWS\SYSTEM
+dizini altında OEMSETUP.INF dosyasının olup olmadığını kontrol edin,eğer
+varsa ismini değiştirin.Geçici dizinden (C:\TEMP) OEMSETUP.INF dosyasını
+\WINDOWS\SYSTEM dizinine kopyalayın.Eğer önceden TCP/IP sürücülerini
+yüklemişseniz ,bu işlemlerden önce onları kaldırın.
+
+Network Setup veya Windows Setup/Change Networks Settings programlarını
+çalıştırın.
+
+     Networks düğmesine basın.
+     Install Microsoft Windows Network seçeneğine  tıklayın.
+        Eğer başka ağ desteği gerekiyorsa onları da seçin.
+     OK tuşuna basın.
+
+Bunlardan sonra ağ bağdaştırıcısını seçmeniz gerekir.Eğer seçim ekranı
+çıkmazsa,
+
+     Adapter düğmesine basın.
+        Bir adapter seçin (mesela NE2000)
+        OK tuşuna basın
+     Protocol düğmesine basın.
+        MS TCP/IP-32 protokolünü seçin.
+        OK tuşuna basın.
+
+Şimdi TCP/IP protokol yığıtını konfigüre etmeniz gerekir.Bu kısmı  her
+zaman Adapters kutusundaki TCP/IP protokolünü işaretleyip Setup düğmesine
+basarak konfigüre edebilirsiniz.
+
+     IP address kutusuna 172.17.0.5 girin.
+     Subnet Mask kutusuna  255.255.255.0 girin.
+     Adanmış ağ geçidi kutusuna sizin ağ geçidi adresini (burada
+     172.17.0.254) girin.
+
+OK düğmesine basın.Bilgisayarı yeniden başlatmanız gerekecektir. Bunu
+yaptıktan sonra Web tarayıcınızla HTTP sunucunuza bağlanabilirsiniz.
+
+</pre><h4> 4.4.2. Windows 95</h4><pre>
+
+Bu kesim 32 bit kullacıcının Win95 için nasıl kurulacağını anlatır.
+Öncelikle aşağıdakileri kurmanız gerekecektir:
+
+     Client for Microsoft Networks
+     Microsoft TCP/IP Protocol
+     Network Adapter
+
+Bunları yüklemek için My Computer penceresinden Control Panel'den
+Networks ikonuna tıklayın.Add düğmesine bastıktan sonra ekranda
+Client, Adapter, Protocol ve Service seçenekleri bulunan bir pencere
+çıkar.Client for Microsoft Networks  yazılımını kurmak için:
+
+     1. Client seçeneğine çift tıklayın.
+     2. Microsoft seçeneğine tıklayın.
+     3. Client for Microsoft Networks seçeneğine çift  tıklayın.
+
+TCP/IP protokolünü yüklemek için :
+
+     1. Protocol seçeneğine çift tıklayın.
+     2. Microsoft seçeneğine tıkllayın.
+     3. TCP/IP seçeneğine çift tıklayın.
+
+Windows 95 saptanmış değer olarak başka protokolleride yükler.Önce
+üzerine tıklayıp ardından Remove düğmesine basarak kaldırabilirsiniz.
+Tipik olarak Win95 NetBeui protokolünü ve IPX/SPX protokolünü yükler.
+
+TCP/IP kurulumunu yapmak için TCP/IP seçeneğine tıklayın ve Properties
+düğmesine tıklayın.Ardından yukarıdan IP address seçeneğine tıklayın.
+
+     -  'Specify an IP address ' kutusundan IP adresinizi girin.(buradaki
+         değer 172.17.0.5 )
+
+     -  Subnet Mask kısmına 255.255.255.0 girin.
+
+Yukarıdan Gateway seçeneğini seçin.
+
+     -  New gateway kutusuna sizin ağ geçidi adresinizi giriniz.(burada
+        172.17.0.254 )
+     -  Add düğmesine tıklayın.
+
+Şimdi ağ geçidi adresi kurulu ağ geçitleri kısmında gözükecektir.Şimdi
+aşağıdaki OK düğmesine basın.
+
+Şimdi makinayı tekrar başlatmanız için bir mesaj alırsınız.Bunu yaptıktan
+sonra Web tarayıcınızla HTTP sunucunuza bağlanabilirsiniz.
+
+</pre><h4> 4.4.3. Windows NT</h4><pre>
+
+Bu kesim TCP/IP kullanıcının WinNT 4.0 üzerinde nasıl kurulacağını anlatır.
+Önce Control Panel'den Network seçeneğini seçin.
+
+     Yukarıdan adapter seçeneğini seçin.
+       Yeni bağdaştırıcıyı kurmak için Add düğmesine basın.(Eğer kurulu
+       bir tane yoksa)
+
+Bundan sonra ağ bağdaştırıyı seçmeniz gerekir.Size uygun olan bir tanesini
+seçin. Protokol kurmak için :
+
+     Yukarıdan Protocol seçeneğini seçin.
+       Add düğmesine basın.
+       TCP/IP protokolünü seçin.
+       OK düğmesine basın.
+
+Şimdi TCP/IP protokol yığıtını konfigüre etmeniz gerekir.Bunu herhangi bir
+zamanda TCP/IP protokolünü seçip Properties düğmesine basarak yapabilirsiniz.
+
+     Yukarıdan IP address seçeneğini seçin.
+       'Specify an IP address' onay kutusunu işaretleyin.
+       IP address kutusuna 172.17.0.5 girin.
+       Subnet Mask kutusuna 255.255.255.0 girin.
+       Adanmış ağ geçidi olarak 172.17.0.254 girin.
+
+OK düğmesine basın.Şimdi makinayı tekrar başlatmanız için bir mesaj alırsınız.
+Bunu yaptıktan sonra Web tarayıcınızla HTTP sunucunuza bağlanabilirsiniz.
+
+</pre><h3> 4.5. Macintosh üzerinde TCP/IP kurulumu</h3><pre>
+
+Eğer bilgisayar ağına ulaşmak için Macintosh kullanıyorsanız,bu kesim
+PowerMac üzerinde MacTCP'nin nasıl kurulacağını anlatır.
+
+Not : Linux sununucuzu WWW tarayıcınızdan veya diğer yerel ağ komutlarından
+http://172.16.0.1/ şeklinde kullanmak yerine http://linux.mydomain/ kullanmak
+isterseniz hosts dosyasına bazı eklemeler yapmalısınız.Hosts dosyasının
+biçimi Unix'tekinden farklıdır.Mac hosts  dosyası RFC-1035 standardına
+göre belirlenmiştir.Diğer anasistemlere ilişkin kayıtları da (Netware,
+Unix, WinNT) bu dosyaya ekleyebilirsiniz.MacOS HOSTS dosyasını
+System dizini altındaki Preferences dizininde saklar.Bu dosyaya Linux
+sunucuyu aşağıdaki  şekilde ekleyebilirsiniz :
+
+         linux.mydomain    A  172.16.0.1
+
+         netware.mydomain  A  172.16.0.2
+         winNT.mydomain    A  172.16.0.3
+         ws_1              A  172.16.0.5
+
+</pre><h4> 4.5.1. MacTCP</h4><pre>
+
+Bu kesim MacTCP kurulumunu anlatır.Öncelikle MacTCP dosyalarını Apple
+sitesinden veya Internet Connection CD'sinden yüklemelisiniz.MacTCP'yi
+konfigüre etmek için, Apple Menu'den Control Panel'den TCP/IP'ye
+tıklayın.Ekrandaki 'Connect via:' seçeneği için ayarı 'Ethernet' olarak
+değiştirin.
+
+'Configure' seçeneği ayarını 'Manually' yapın.
+
+      IP address kutusuna 172.17.0.5 girin.
+      Subnet Mask kutusuna 255.255.255.0 girin.
+      Router Address kutusuna ağ geçidi adresini girin.(172.17.0.254)
+
+OK düğmesine tıklayın.Artık tarayıcınızı kullanarak HTTp sunucuya
+bağlanabilirsiniz.
+
+</pre><h2> 5. Yerel Ağın kurulumu</h2><pre>
+
+Bir yerel ağ değişik platformlardaki kaynakları paylaşamadan tam
+anlamıyla kurulmuş sayılmaz.Diğer dosya sistemlerindeki bilgilere
+erişebilmek içinde bu sistemler için desteğe  ihtiyacınız vardır.Bu
+doküman Linux sunucunuzun aşağıda belirtilen en popüler dosya
+sistemlerine nasıl erişeceğini anlatır.
+
+  ·  ``Netware için NCP dosya sistemi''
+
+  ·  ``Windows için SMB dosya sistemi''
+
+  ·  ``Unix için NFS dosya sistemi''
+
+Bu dosya sistemleri Linux uyarlamanıza göre  ya Linux çekirdeğine
+derlenerek ya da modüller halinde eklenir.Eğer cekirdek derlemeyi
+bilmiyorsanız http://sunsite.unc.edu/mdw/HOWTO/Kernel-HOWTO.html
+adresinden Kernel-HOWTO dokümanı ile öğrenebilirsiniz.Çekirdeği
+modüllerle birlikte derlemeyi bilmiyorsanız Module HOWTO dokümanını
+http://sunsite.unc.edu/mdw/HOWTO/Module-HOWTO.html adresinden
+alabilirsiniz.
+
+</pre><h3> 5.1. NCPFS</h3><pre>
+
+Netware sunucu üzerinde dosyaları paylaşmak için NCP için desteğe
+ihtiyacınız vardır.NCPFS çekirdek uyarlaması 1.2.x ,1.3.71 ve
+sonrası için çalışır.Netware 4.x için NDS veritabanına erişemez,
+fakat bindery kullanımına imkan verir.Eğer Netware 4.x kullanıyorsanız,
+konsoldan Set Bindery Context komutuyla bindery desteğini özel
+taşıyıcılar için geçerli yababilirsiniz.
+
+     set Bindery Context = CORP.MYDOM;WEBUSER.MYDOM
+
+Yukarıdaki örnekte iki taşıyıcı geçerli yapılmıştır.
+
+Şimdi NCP dosya sistemi hizmet programlarının dosyalarını
+ftp://sunsite.unc.edu/pub/Linux/system/filesystems/ncpfs/ncpfs.tgz
+adresinden çekebilir.
+
+</pre><h4> 5.1.1. Kurulumu</h4><pre>
+
+NCPFS dosyalarını kurmak için,
+
+        zcat ncpfs.tgz | tar xvf -
+
+komutuyla dosyaları kendi dizininize açın.Şimdi ncpfs-2.0.10 isminde
+bir dizin oluşacaktır.Bu dizine geçip README dosyasını okuyun ve
+Makefile dosyasında gerekirse değişiklik yapın.
+
+NCPFS kurulumu sizin çekirdek uyarlamanıza göre değişir.Çekirdek
+uyarlaması 1.2 için basitçe 'make' komutuyla yapılabilir. Ardından
+'make install' komutu, çalıştırılabilir dosyaları  yükler ve yardım
+dosyalarını kopyalar.
+
+Eğer çekirdek 1.3.71 ve sonrası kullanıyorsanız,çekirdeği tekrar
+derlemeniz gerekebilir.Bu çekirdekler için ncpfs desteği çekirdek
+parçası olarak kaynak koda eklenmiştir.çekirdeğin tekrar derlenmesinin
+gerekip gerekmediğini anlamak için :
+
+        cat /proc/filesystems
+
+komutunu girin.Eğer ncpfs yüklü ise ekranda görünür.Bu durumda tekrar
+derleme gerekmez.
+
+Eğer ncpfs yoksa ,çekirdeği yeniden derleyip ncpfs modülünü eklemelisiniz.
+Çekirdeği tekrar derlemek için 'make config' komutunu girin ve
+
+  The IPX protocol (CONFIG_IPX) [N/y/?]
+
+sorusuna 'y' cevabını verin.Çekirdek başarılı şekilde yüklendikten sonra
+bilgisayarı yeniden başletın ve /proc/filesystems dosyasını tekrar kontrol
+edin ve herşey  tamam ise ncfps hizmet programlarını yükleyebilirsiniz.
+ncpfs dosyalarının olduğu dizine gidin ve 'make' komutunu girin.Sonra da
+'make install' komutunu girerek programları yükleyin.
+
+</pre><h4> 5.1.2. NCPFS'ye bağlanma</h4><pre>
+
+Kurulum türünü görmek için
+
+          ipx_configure --auto_interface=on --auto_primary=on
+
+          slist
+
+komutunu girin.Şimdi Netware sunucularının bir listesini göreceksiniz.
+Şimdi Netware sunucularının dosyalarını paylaşmaya hazırsınız.
+
+Farzedelim ki, MYDOM_NW sunucusu altında VOL1: birimi altında
+\home\htmldocs dizini altındaki HTML dosyalarına erişmek istiyorsunuz.
+Bu sunucu üzerinde SYSCON ve NWADMIN dosyaları üzerinde değişiklik
+yaparak kullanıcı adı  'EXPORT'  ve şifresi 'EXP123' olan bir
+kullanıcı  oluşturalım.
+
+Linux sunucu üzerinde /mnt/MYDOM_NW adıyla yeni bir dizin oluşturalım.
+Şimdi netware dosya sistemini bağlamak için aşağıdaki komutu girin :
+
+       ncpmount -S MYDOM_NW -U EXPORT -P EXP123 /mnt/MYDOM_NW
+
+Şimdi aşağıdaki komutla ,
+
+       ls /mnt/MYDOM_NW/vol1/home/htmldocs
+
+MYDOM_NW/VOL1:\HOME\HTMLDOCS altındaki dosyaları görebilirsiniz.Eğer
+problemler çıkıyorsa  http://sunsite.unc.edu/mdw/HOWTO/IPX-HOWTO.html
+adresinden IPX HOWTO dokümanını okuyarak IPX sistemler hakkında daha
+çok bilgi edinebilirsiniz.
+
+</pre><h3> 5.2. SMBFS</h3><pre>
+
+Windows sunucudaki dosyalarınızı paylaşmak için SMB (smbfs) için
+desteğiniz olmalıdır.
+
+ftp://sunsite.unc.edu/pub/Linux/system/filesystems/smbfs/smbfs.tgz
+adresinden SMB dosya sistemi ile ilgili hizmet programlarını
+alabilirsiniz.(en son uyarlaması smbfs-2.0.1)
+
+</pre><h4> 5.2.1. Kurulumu</h4><pre>
+
+Önce kendi dizininiz altında sıkıştırılmış SMB dosyalarını
+
+       zcat smbfs.tgz | tar xvf -
+
+komutuyla açmalısınız.smbfs-2.0.1 adıyla bir dizin oluşacaktır.Kuruluma
+geçmeden önce bu dizine geçin.README dosyasını okuyup ,gerekirse Makefile
+üzerinde değişiklik yapın.
+
+SMBFS kurulumu sizin çekirdek uyarlamanıza göre değişir.Çekirdek
+uyarlaması 1.2 için basitçe 'make' komutuyla yapılabilir. Ardından
+'make install' komutu ,çalıştırılabilir dosyaları  yükler ve yardım
+dosyalarını kopyalar.
+
+Eğer çekirdek 2.0 ve sonrası kullanıyorsanız,çekirdeği tekrar
+derlemeniz gerekebilir.Bu çekirdekler için smbfs desteği çekirdek
+parçası olarak kaynak koda eklenmiştir.çekirdeğin tekrar derlenmesinin
+gerekip gerekmediğini anlamak için :
+
+       cat /proc/filesystems
+
+komutunu girin.Eğer smbfs yüklü ise ekranda görünür.Bu durumda tekrar
+derleme gerekmez.
+
+Eğer smbfs yoksa ,çekirdeği yeniden derleyip ncpfs modülünü eklemelisiniz.
+Çekirdeği tekrar derlemek için 'make config' komutunu girin ve SMB dosya
+sistemi desteği için sorulan soruya 'y' cevabı verin.Çekirdek başarılı
+şekilde yüklendikten sonra bilgisayarı yeniden başletın ve /proc/filesystems
+dosyasını tekrar kontrol edin ve herşey  tamam ise smbps hizmet programlarını
+yükleyebilirsiniz.smbfs dosyalarının olduğu dizine gidin ve 'make' komutunu
+girin.Sonra da 'make install' komutunu girerek programları yükleyin.
+
+</pre><h4> 5.2.2. SMB dosya sistemine bağlanma</h4><pre>
+
+Bu kesimde bağlanmayı anlatırken WinNT sunucunun adının 'MYDOM_NT' olduğunu
+ve C:\PUB\HTMLDOCS dizinini 'HTMLDOCS' adıyla şifresiz olarak paylaştığını
+varsayalım.Linux sunucu üzerinde /mnt/MYDOM_NT gibi yeni bir dizin oluşturun.
+Şimdi SMB dosya sistemine bağlanmak için aşağıdaki komutu girin:
+
+       smbmount //MYDOM_NT/HTMLDOCS /mnt/MYDOM_NT -n
+
+
+Eğer bu çalışmazsa :
+
+       smbmount //MYDOM_NT/COMMON /mnt/MYDOM_NT -n -I 172.16.0.3
+
+komutunu girin.
+
+       ls /mnt/MYDOM_NT
+
+komutu ,\\MYDOM_NT\PUB\HTMLDOCS altındaki dosyaları size gösterir.
+
+</pre><h3> 5.3. NFS</h3><pre>
+
+Öncelikle ya NFS dosya sistemi ile derlenmiş bir çekirdeğe ya da
+modül halinde desteğe ihtiyacınız vardır.
+
+Farzedelim ki,MYDOM_UNIX adıyla NFS ile çalıştırılan bir Unix ana
+sisteminiz var ve IP adresi 172.16.0.4 olsun.Bu ana sistemden
+paylaşılmış dizinleri görebilmek için :
+
+        showmount -e 172.16.0.4
+
+komutunu girmelisiniz.Eğer paylaşılmış dizimleri bilirseniz, uygun
+mount komutuyla bağlanabilirsiniz.Bir tavsiye olarak her bağlanma noktası
+için /mnt dizini altında bir alt dizin oluşturun.(mesela /mnt/MYDOM_UNIX)
+
+  mount -o rsize=1024,wsize=1024 172.16.0.4:/pub/htmldocs /mnt/MYDOM_UNIX
+
+rsize ve wsize parametreleri sizin sisteminize göre değişebilir.
+
+Bir problem oluşursa http://sunsite.unc.edu/mdw/HOWTO/NFS-HOWTO.html
+adresinden NFS HOWTO belgesiyle gerekli bilgiyi alabilirsiniz.
+
+</pre><h2> 6. Web üzerinden ulaşma</h2><pre>
+
+Şimdi kullanıcılar ve diğer Linux sunucuların , sizin sunucunuza
+bağlanmış olan diğer dosya sistemlerine Web üzerinden ulaşabilmesi
+için HTTP sunucu üzerinde birtakım ufak ayarların yapılması gerekir.
+
+</pre><h3> 6.1. Bağlanmış dosya sistemlerine ulaşmak</h3><pre>
+
+Bağlanmış dosya sistemlerine HTML sayfalarından ulaşabilmeniz için iki
+yol kullanılabilir.
+
+1- DocumentRoot (/usr/local/etc/httpd/htdocs) dizininden bağlanmış
+   dizininize bir link koyun.
+
+     ln -s /mnt/MYDOM_NW/vol1/home/htmldocs netware
+
+     veya
+     ln -s /mnt/MYDOM_NT    winNT
+
+     veya
+     ln -s /mnt/MYDOM_UNIX    unix
+
+  Komutlarıyla bunu yapabilirsiniz.
+
+2- /usr/local/etc/httpd/conf dizini altındaki srm.conf dosyasını
+   düzenleyip ,yeni bir alias tanımlamanız gerekir.
+
+         # Alias fakename realname
+         Alias /icons/     /usr/local/etc/httpd/icons/
+
+         # alias for netware server
+         Alias /netware/   /mnt/MYDOM_NW/vol1/home/htmldocs/
+         Alias /winNT/     /mnt/MYDOM_NT/
+         Alias /unix/      /mnt/MYDOM_UNIX
+
+  Sonra HTTPd sunucuyu yeniden başlatın.Bunu yaptıktan sonra mesela
+  netware sunucu üzerindeki belgelere ulaşabilmek için
+  http://linux.mydomain/netware/index.htm şeklinde yazmanız yeterli
+  olacaktır.
+
+</pre><h3> 6.2. Internet'e bağlanma</h3><pre>
+
+Bunları yaptıktan sonra artık yerel ağınızı Internet'e bağlayarak her
+türlü bilgiye ulaşabilirsiniz.Bunlar hakkında ayrıntılı bilgiye
+http://sunsite.unc.edu/mdw/HOWTO/ISP-Hookup-HOWTO.html adresinden ISP
+Hookup HOWTO belgesiyle ve http://sunsite.unc.edu/mdw/HOWTO/mini/Diald
+adresinden Diald mini HOWTO belgesiyle ulaşabilirsiniz.
+
+</pre><h3> 6.3. Diğer kullanımlar</h3><pre>
+
+HTTP sunucu ofis içinde  farklı sunucularda değişik yer ve dızınlerde
+tutulan bilgilere saydam bir ulaşım sağlamak için kullanılabilir.Bu bilgi
+basit Word belgeleri,Lotus elektronik çizelge dosyaları veya veritabanı
+dosyaları olabilir
+
+Bu teknolojilerin tipik uygulamaları aşağıdaki şekillerde olabilir :
+
+- Ortak belgelerin yayınlanması
+
+  Bu belgeler senelik raporlar , haberler ,haritalar ,şirket aktiviteleri
+  hakkında bilgiler,ücret listeleri,ürün bilgi katalokları ve şirket işleri
+  için önemli bir takım belgeler olabilir.
+
+- Araştırılabilir dizinlere ulaşım
+
+  Telefon rehberi gibi bilgilere hızlı ulaşım.Bu bilgiler bir Web sitesinde
+  yansısı alınarak ,CGI programları ile kullanıma açılabilir.Yani standard
+  yollar kullanılarak bilgi daha geniş bir alanda ve daha basit bir şekilde
+  kullanıma sunulabilir.Bu da ORACLE ve SYBASE gibi bir RDBMS ile bir arayüz
+  oluşturulması anlamına gelir.Bu tür sitelere bazı örnekler :
+
+  http://cscsun1.larc.nasa.gov/~beowulf/db/web_access.html
+  HTTP://www.w3.org/hypertext/WWW/RDBGate/Overview.html
+
+- Birleşik/Bölüm/Şahsi sayfalar
+
+  Bir organizasyondaki ayrı bölümler arası yapılan işlerin farklılığından
+  dolayı birtakım kültür farkları olabilir.Yerel ağ teknolojisi bölümler
+  ve bireyler arası bilgi iletişiminin olabilmesi için size uygun bir ortam
+  sağlar.Güçlü arama motorları günlük iş hayatındaki öğrenme süreci boyunca
+  karşınıza çıkan soruların cevaplarını veya cevapları olan kişileri bulmanıza
+  yardımcı olur.
+
+- Yazılım dağıtımı
+
+  Sistem yöneticileri yerel ağları yazılımları veya onların güncellemelerini
+  dağıtmak üzere kullanabilirler.
+
+- Mail
+
+  Yerel ağlar üzerinde şahıslar arası veya gruplar içi haberleşmelerin kullanıl-
+  masıyla şirket içi iletişimin ucuz ve etkin bir yöntemi sağlanmış olur.Linux
+  altında e-mail iletişimini sağlamak sendmail,pop3d,imapd gibi programlar
+  kullanılmaktadır.
+
+- Kullanıcı Arayüzü
+
+  HTML kullanarak kullanıcılarınıza sadece sızın hayal gücünüzle sınırlı olan
+  arayüzler sunabilirsiniz.Yerel ağ teknolojilerinin en güzel yanı bunları
+  oluşturmanın çok basit olmasıdır.
+
+</pre></div></article>

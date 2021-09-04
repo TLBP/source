@@ -1,0 +1,1684 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--DOCTYPE article SYSTEM "../../docbook/dtd/docbookx.dtd"-->
+<!-- ********************************************************************
+     $Id: opengl-giris.xml,v 1.1 2002/12/20 22:51:00 nilgun Exp $
+     ******************************************************************** -->
+
+<article id="opengl-giris" lang="tr">
+  <articleinfo>
+    <title>30 Dakikada OpenGL'e Giriş</title>
+    <author>
+      <firstname>Ziver Alen Malhasoğlu</firstname>
+      <affiliation>
+        <address>
+          <email>malhasoglu@itu.edu.tr</email>
+        </address>
+      </affiliation>
+    </author>
+    <pubdate>Aralık 2002</pubdate>
+     <revhistory>
+       <revision>
+          <revnumber>1.0</revnumber>
+          <date>5 Aralık 2002</date>
+          <authorinitials>ZAM</authorinitials>
+          <revremark>İlk sürüm</revremark>
+       </revision>
+     </revhistory>
+     <abstract>
+        <para>
+Bu belge OpenGL'i tanıtmak amacıyla hazırlanmıştır. OpenGL'i duymuş
+ama bu konuda bir fikri olmayanlara bilgi vermek amacındadır.
+        </para>
+        <para>
+Belge kısaca Linux'da nasıl OpenGL programlama yapılacağını anlatır,
+örnek birkaç program göstererek elde edilebilecek sonuçlar hakkında
+bilgi verir ve daha fazla bilgi edinilebilecek kaynakları gösterir.
+        </para><para>
+Bu belgenin özgün sürümünü
+<ulink url="http://www.students.itu.edu.tr/~malhasoglu/OpenGL-GirisDok/"/>
+adresinde bulabilirsiniz.
+        </para>
+     </abstract>
+    <legalnotice><title>Yasal Uyarı</title><para>
+Bu belgenin, <emphasis>30 Dakikada OpenGL'e Giriş</emphasis> 1.0 sürümünün <emphasis role="bold">telif hakkı © 2002 <emphasis>Ziver Alen Malhasoğlu</emphasis></emphasis>'na aittir. &notice.gpl;</para>
+&notice.disc;
+    </legalnotice>
+  </articleinfo>
+
+  <sect1 id="opengl-giris_1">
+    <title>OpenGL Programlamaya Giriş</title>
+    <sect2>
+      <title>API (Uygulama Programlama Arayüzü) Nedir?</title>
+      <para>
+Bir işletim sisteminin veya bir programın sunduğu bir hizmeti kullanmak
+için verilmiş yöntemlerdir. Bunu bir kitaplıktan işlev çağırmak gibi
+düşünebiliriz. Biz isteği API ile yaparız ve isteğimiz yerine getirilir,
+sonra programımız normal çalışmasına devam eder.
+      </para>
+    </sect2>
+    <sect2>
+      <title>OpenGL Nedir?</title>
+      <variablelist>
+        <varlistentry>
+          <term>Kitaplıktır</term>
+          <listitem>
+            <para>
+Open Graphics Library (OpenGL), 2 veya 3 boyutlu grafik çizdirmek
+için kullanılan bir API'dir bir başka deyişle kitaplıktır. Bu
+kitaplık yazılım geliştiricilere grafik donanımını yönetme şansı
+verir.
+            </para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>Taşınabilirdir</term>
+          <listitem>
+            <para>
+Bu kitaplık işletim sisteminden ve işletim sisteminin çalıştığı
+platformdan bağımsızdır. Nasıl ki ekrana yazı yazmak kullanıcıdan
+veri almak ANSI C'de <literal>printf()</literal> ve scanf() gibi
+işlevlerle standartlaştırılmış ve hangi işletim sistemine
+giderseniz gidin bu iki işlev aynı işi yapıyorsa, OpenGL kitaplığı
+da ekrana grafik çizmeyi standartlaştırmıştır. OpenGL sayesinde
+grafik kartının modeli veya işlemcinin mimarisi gibi donanımsal
+etkenlerden bağımsız programlama yapılır. Ayrıca aynı zamanda
+işletim sisteminden de bağımsız programlama yapılır. Kolay kullanım
+ve bu "taşınabilirlik" özellikleri yüzünden OpenGL popüler bir araç
+olmuştur.
+            </para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>İşletim sisteminden bağımsızdır</term>
+          <listitem>
+            <para>
+OpenGL kullanan bir programı işletim sisteminizde çalıştırmanız
+için öncelikle işletim sisteminizde programın çalışırken kullanacağı
+işlevleri içeren kitaplığın bulunması gerekir, bu kitaplıkların
+genel adı "runtime-library", türkçesi çalışma anı kitaplığıdır.
+            </para>
+            <para>
+OpenGL çalışma anı kitaplığı Linux, Unix, Mac OS, OS/2, Windows
+95/98/NT/2000, OPENStep ve BeOS işletim sistemlerinde vardır.
+Windows ailesinde standart olarak gelir. Yani OpenGL kullanan bir
+programı çalıştırmak için bir çaba harcamazsınız.
+            </para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>Pencere yöneticisinden bağımsızdır</term>
+          <listitem>
+            <para>
+OpenGL kullanılarak yazılmış programlar, Win32, MacOS ve X-Window
+pencere yöneticilerinde sorunsuz çalışırlar.
+            </para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>Birçok programlama dilinden kullanılabilir</term>
+          <listitem>
+            <para>
+Ada, C, C++, C# (SharpGL adı verilen sınıflar sayesinde), Fortran,
+Python,Perl ve Java programlama dilleri kullanılarak OpenGL
+kitaplığından faydalanılabilir. [<link linkend="opengl-giris_kaynakca.2">#2</link>]
+            </para>
+          </listitem>
+        </varlistentry>
+      </variablelist>
+    </sect2>
+    <sect2>
+      <title>GLUT Hakkında</title>
+      <para>
+Taşınabilirlikten bahsetmişken GLUT'tan sözetmemek olmaz. OpenGL
+platformdan bağımsız olduğu için bazı işlemler bu kitaplık ile yapılamaz.
+Örneğin kullanıcıdan veri almak, bir pencere çizdirmek gibi işler hep
+kullanılan pencere yöneticisi ve işletim sistemine bağlıdir. Bu yüzden
+bir an için OpenGL'in bu durumlarda platforma bağımlı olduğunu
+düşünebiliriz. Çünkü penceresini her pencere yöneticisinde farklı
+çizdirecek bir canlandırma programı yazmak demek her bilgisayarda çalışacak
+ayrı pencere açma kodu yazmak demektir. Bu ise OpenGL'in doğasına
+aykırıdır. Neyse ki OpenGL Araç Kiti (GLUT - OpenGL Utility Toolkit) var
+da yazılım geliştiricileri bir platforma bağlılıktan tamamen kurtarıyor.
+      </para><para>
+GLUT, birçok işletim sistemine aktarılmış bir kitaplıktır. Amacı
+OpenGL programlarının pencerelerini oluşturmak, klavye ve fareden veri
+almak gibi ihtiyaçlarını karşılamaktır.
+      </para><para>
+GLUT olmadan da OpenGL programlama yapılabilir, örneğin Linux'ta
+kullanılan X-Window sistemin kendi işlevleri kullanılarak pencere
+çizdirilebilir fakat bu kod sadece X-Window'da çalışır. Kod Windows'a
+götürülüp derlendiğinde çalışmaz, çünkü Windows'da X-Window işlevleri
+yoktur!
+      </para><para>
+Bu yüzden bu belgede GLUT kitaplığı kullanılarak klavye ve fare
+için işletim sisteminden bağımsız giris/çıkış işlemleri yapılması
+sağlanmıştır.
+      </para>
+    </sect2>
+  </sect1>
+  <sect1 id="opengl-giris_nenasil">
+    <title>Ne gerekir? Nasıl yapılır?</title>
+    <sect2>
+      <title>OpenGL ile programlamaya başlamak: Mesa kurulumu</title>
+      <para>
+Bu belgede OpenGL ile programlama konusunu anlatmak için C programlama
+dili ve Linux işletim sistemi seçilmiştir.
+      </para><para>
+OpenGL programlarını çalıştırmanız için gereken kitaplık bilgisayarınızda
+yüklü olabilir fakat sadece bu kitaplıkların varlığı OpenGL kullanan
+programlar geliştirmenize yetmez. Programınızda kullanacağınız başlık
+dosyalarını ve geliştirme ortamınızın kullandığı iç bağlantıların ihtiyaç
+duyacağı OpenGL kitaplık dosyalarına da ihtiyacınız olacaktır.
+      </para><para>
+OpenGL kitaplığındaki birçok işlevi kapsayan ve amacı OpenGL'i uyarlamak
+olmasa da OpenGL kullanan birçok programı çalıştırabilen "Açık Kod"
+lisansına sahip bir kitaplık mevcuttur; Mesa. Mesa'nın bu belge
+yazıldığı sırada son kararlı versiyonu 5.0 idi; bu kitaplığı
+<ulink url="http://www.mesa3d.org"/> adresinden indirdikten ve kurduktan
+sonra OpenGL işlevlerini kullanmaya başlayabilirsiniz. Yeri gelmişken
+Mesa'nın, Windows'da derlenip kullanılabileceğini belirtelim. Mesa'yı
+Linux dağıtımınızaki RPM paketlerinden veya en son sürümünü Mesa'nın
+resmi sitesinden indirip derleyerek elde edebilirsiniz. Burada kaynak
+koddan derleme anlatılacaktır.
+      </para><para>
+<ulink url="http://www.mesa3d.org"/> sayfasından <literal>MesaLib</literal>
+ve <literal>MesaDemos</literal> dosyalarını indirin ve <literal>root</literal>
+olarak şu komutları verin (<literal>MesaLib.tar.gz</literal> ve
+<literal>MesaDemos.tar.gz</literal> dosyalarını indirdiğiniz varsayılmıştır):
+</para><para><screen>
+# tar xzfv MesaLib.tar.gz
+# tar xzfv MesaDemos.tar.gz
+# cd Mesa-5.0/
+# ./configure
+# make
+# make install
+</screen></para><para>
+Bu komutları verdikten sonra sorun (ki bende çıkmamıştı ;-),
+çıkarsa Mesa'nın sitesindeki SSS/Eposta Listesi gibi yardım kaynaklarına
+başvurunuz) sisteminizde kurulu ve kullanıma hazır bir OpenGL kitaplığınız
+olacaktır.
+      </para><para>
+<literal>make check</literal> komutunu da verirseniz Mesa ile gelen örnek
+programlar da derlenecektir. Daha sonra bu demoları inceleyip nasıl
+çalıştıklarını öğrenebilirsiniz.
+      </para>
+    </sect2>
+    <sect2>
+      <title>İlk OpenGL Programınız</title>
+      <para>
+Bir metin düzenleyici kullanarak glilk.c adında bir dosya oluşuralım ve
+içine şunları yazalım:
+</para><para><screen>
+#include &lt;GL/glut.h>
+
+void myDisplay()
+{
+        glClear(GL_COLOR_BUFFER_BIT);
+        glBegin(GL_POLYGON);
+        glVertex2f(0.0, 0.0);
+        glVertex2f(0.2, 0.0);
+        glVertex2f(0.2, 0.5);
+        glEnd();
+
+        glFlush();
+}
+
+int main (int argc, char ** argv)
+{
+        glutInit (&amp;argc, argv);
+        glutCreateWindow("İşte ilk pencerem!");
+        glutDisplayFunc(myDisplay);
+        glutMainLoop();
+        return(0);
+}
+</screen></para><para>
+Programı şu şekilde derleyebilirsiniz:
+</para><para><screen>
+gcc glilk.c -o glilk -lGL -lGLU -lglut
+</screen></para><para>
+        Çalıştırmak için <literal>./glilk</literal> komutu kullanılabilir.
+      </para>
+    </sect2>
+  </sect1>
+  <sect1 id="opengl-giris_islevler">
+    <title>Bazı OpenGL İşlevlerinin Tanıtımı</title>
+    <para>
+Burada işlevler hakkında kısa bir bilgi verilmiştir. Daha ayrıntılı
+bilgi almak isterseniz man sayfalarına bakınız.
+    </para>
+    <sect2>
+      <title>Temel İşlevler</title>
+      <para>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>void <command>glutInit</command></funcdef>
+<paramdef>(int   *<emphasis>argcp</emphasis>,
+ char **<emphasis>argv</emphasis>)</paramdef>
+</funcprototype><funcdescr><para>
+GLUT kitaplığının ilklendirilmesi için çağrılması gereken
+işlevdir. Bu çağırılmadan GLUT kitaplığından başka bir işlev
+çağrılamaz. Argümanlar programın <literal>main()</literal>
+işlevinden alınır ve değiştirilmeden kullanılır. Kullanımı söyledir:
+</para><para><screen>
+glutInit(&amp;argc, argv); // main(int argc, char ** argv) olduğu varsayılmıştır.
+</screen>
+</para></funcdescr></funcsynopsis>
+</para><para>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>int <command>glutCreateWindow</command></funcdef>
+<paramdef>(char <emphasis>isim</emphasis>)</paramdef>
+</funcprototype><funcdescr><para>
+Pencere sisteminde bir pencere oluşturur ve pencere başlığına
+<parameter>isim</parameter> parametresindeki metni yazar. Pencere
+numarası ile döner.
+</para></funcdescr></funcsynopsis>
+</para><para>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>void <command>glutDisplayFunc</command></funcdef>
+<paramdef>(int   (*<emphasis>islev</emphasis>) (void))</paramdef>
+</funcprototype><funcdescr><para>
+Pencere ekrana çizildikten sonra pencerenin içerisinde
+gösterilecekleri oluşturan işlevin belirtileceği işlevdir (callback).
+</para></funcdescr></funcsynopsis>
+</para><para>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>void <command>glutMainLoop</command></funcdef>
+<paramdef>()</paramdef>
+</funcprototype><funcdescr><para>
+Bu işlev sayesinde program kendisine gelecek olayları (event)
+dinlemeye başlar ve eğer tanımlıysa gelen olaya göre
+tanımlanmış bir işlevi (callback) çalıştırır.
+</para></funcdescr></funcsynopsis>
+</para><para>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>void <command>glClear</command></funcdef>
+<paramdef>(GLbitfield <emphasis>maske</emphasis>)</paramdef>
+</funcprototype><funcdescr><para>
+Tamponların içeriğini <literal>glClearColor</literal>,
+<literal>glClearIndex</literal>,  <literal>glClearDepth</literal>,
+<literal> glClearStencil</literal> ve <literal>glClearAccum</literal>
+işlevleri ile belirlenen değerlerle temizler.
+</para><para>
+Parametre olarak <literal>GL_COLOR_BUFFER_BIT</literal>,
+<literal>GL_DEPTH_BUFFER_BIT</literal>,
+<literal>GL_ACCUM_BUFFER_BIT</literal>,
+<literal>GL_STENCIL_BUFFER_BIT</literal> sabitlerinden birini
+ya da bunların VEYAlanmış değerini alır.
+</para></funcdescr></funcsynopsis>
+</para><para>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>void <command>glBegin</command></funcdef>
+<paramdef>(enum <emphasis>kip</emphasis>)</paramdef>
+</funcprototype><funcdescr><para>
+Bu işlev bir çizimin başlatıldığını belirtir. Aldığı parametre
+ise çizilen şeyin noktalar, çizgiler veya içi dolu çizgiler
+şeklinde görüneceğini belirtir.
+</para><para>
+Parametre olarak aldığı sembolik sabitler:
+</para><variablelist>
+  <varlistentry>
+    <term><literal>GL_POINTS</literal></term>
+    <listitem>
+      <para>
+Verilen noktaları nokta olarak çizer.
+      </para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><literal>GL_LINES</literal></term>
+    <listitem>
+      <para>
+Verilen noktaları doğrularla birleştirir.
+      </para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><literal>GL_POLYGON</literal></term>
+    <listitem>
+      <para>
+Verilen noktaları doğrularla birleştirir ve oluşan şeklin
+içini renklendirir.
+      </para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><literal>GL_QUADS</literal></term>
+    <listitem>
+      <para>
+Verilen dört noktadan içi boyanmış dörtgen oluşturur.
+      </para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><literal>GL_TRIANGLES</literal></term>
+    <listitem>
+      <para>
+Verilen üç noktadan içi boyanmış üçgen oluşturur.
+      </para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><literal>GL_TRIANGLE_STRIP</literal></term>
+    <listitem>
+      <para>
+Şu noktalar <literal>glBegin</literal> ve
+<literal>glEnd</literal> arasında çizdirilmiş
+olsun: <literal>p0, p1, p2, p3, p4, p5</literal>.
+<literal>p0, p1</literal> ve <literal>p2</literal>'den
+bir üçgen oluşturulur ve sonraki her nokta için önceki iki
+nokta birleştirilerek bir üçgen daha oluşturulur. Yani
+<literal>p3</literal> ile <literal>p1</literal> ve
+<literal>p2</literal> birleştirilir. Daha sonra
+<literal>p4</literal> ile <literal>p3</literal> ve
+<literal>p2</literal>, ... vs.
+      </para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><literal>GL_QUAD_STRIP</literal></term>
+    <listitem>
+      <para>
+<literal>GL_TRIANGLE_STRIP</literal> gibi çalışır, ama bu sefer
+verilen iki noktayı önceki iki nokta ile birleştirerek bir
+dörtgen oluşturur.
+      </para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><literal>GL_TRIANGLE_FAN</literal></term>
+    <listitem>
+      <para>
+<literal>p0, p1, p2, p3, p4, p5</literal> verilmiş olsun.
+<literal>p0, p1</literal> ve <literal>p2</literal> üçgeni
+çizilir. Daha sonra <literal>p4</literal> için
+<literal>p0</literal> ve <literal>p3</literal>
+birleştirilerek yeni üçgen elde edilir. <literal>p5</literal>
+ile <literal>p4</literal> ve <literal>p0</literal>
+birleştirilir, ...vs. Böylece şekil yelpaze gibi olur.
+      </para>
+    </listitem>
+  </varlistentry>
+</variablelist>
+</funcdescr></funcsynopsis>
+</para><para>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>void <command>glEnd</command></funcdef>
+<paramdef>()</paramdef>
+</funcprototype><funcdescr><para>
+<literal>glBegin()</literal> ile başlayan çizim işleminin bittiğini
+belirtir. Çizdirilen şekil ekrana yazılmak üzere saklanır;
+<literal>glFlush()</literal> ile ekrana yazılır.
+</para></funcdescr></funcsynopsis>
+</para><para>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>void <command>glFlush</command></funcdef>
+<paramdef>()</paramdef>
+</funcprototype><funcdescr><para>
+Eğer çizilenler tamponlanmışsa, tampon bellekteki tüm şekillerin
+ekrana basılmasını sağlar.
+</para></funcdescr></funcsynopsis>
+</para><para>
+Sadece yukarıdaki işlevleri kullanarak basit geometrik şekillerin iki
+boyutta çizimi mümkündür. Yukarıdaki <literal>glilk.c</literal> adlı
+program bu işlevlerden yararlanarak yazdığımız ilk OpenGL uygulamamızdır.
+</para><para>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>void <command>glClearColor</command></funcdef>
+<paramdef>(GLclampf <emphasis>kırmızı</emphasis>,
+ GLclampf <emphasis>yeşil</emphasis>,
+ GLclampf <emphasis>mavi</emphasis>,
+ GLclampf <emphasis>donukluk</emphasis>)</paramdef>
+</funcprototype><funcdescr><para>
+<literal>glClear()</literal> işleviyle temizlenen ekran renk
+tamponunun ne renk alacağını belirler. Her parametre 0 ya da 1
+değerini alır. Örneğin <parameter>donukluk</parameter> değeri 0 ise
+şeffaflık, 1 ise donukluk elde edilir. Öntanımlı değerlerin tümü 0'dır.
+</para></funcdescr></funcsynopsis>
+</para><para>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>void <command>glColor3s</command></funcdef>
+<paramdef>(short <emphasis>kırmızı</emphasis>,
+ short <emphasis>yeşil</emphasis>,
+ short <emphasis>mavi</emphasis>)</paramdef>
+</funcprototype><funcdescr><para>
+Çizilecek şeklin rengini belirler. Öntanımlı değerlerin tümü 0'dır.
+</para></funcdescr></funcsynopsis>
+</para><para>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>void <command>glutInitWindowSize</command></funcdef>
+<paramdef>(int <emphasis>genişlik</emphasis>,
+ int <emphasis>yükseklik</emphasis>)</paramdef>
+</funcprototype><funcdescr><para>
+Oluşturulan pencerenin boyutlarını belirler. Pencere boyutlarının
+öntanımlı değeri (300, 300)'dür.
+</para></funcdescr></funcsynopsis>
+</para><para>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>void <command>glutInitWindowPosition</command></funcdef>
+<paramdef>(int <emphasis>x</emphasis>,
+ int <emphasis>y</emphasis>)</paramdef>
+</funcprototype><funcdescr><para>
+Pencerenin konumlanacağı yeri belirtir. Pencere yerinin öntanımlı
+değeri (-1, -1)'dir, böylece yerini pencere yöneticisi belirler.
+</para></funcdescr></funcsynopsis>
+</para><para>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>void <command>glLineWidth</command></funcdef>
+<paramdef>(float <emphasis>genişlik</emphasis>)</paramdef>
+</funcprototype><funcdescr><para>
+Çizginin kalınlığını belirtir. Bu işlevle değiştirilmedikçe
+kalınlığın öntanımlı değeri 1.0'dır.
+</para></funcdescr></funcsynopsis>
+</para><para>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>void <command>glLineStipple</command></funcdef>
+<paramdef>(int   <emphasis>çarpan</emphasis>,
+ short <emphasis>örüntü</emphasis>)</paramdef>
+</funcprototype><funcdescr><para>
+Çizginin nokta nokta ya da düz çizgi şeklinde görünmesini ayarlar.
+Eğer <parameter>örüntü</parameter>deki bit 0 ise bu bite karşı gelen
+benek ekrana basılmaz, eğer 1 ise ekrana basılır; Böylece kesik kesik
+çizgi çizilebilir.
+</para><para>
+ Örnek:
+</para><para><screen>
+glLineStipple(3, 0xcccc); /* 0xCCCC = 1100110011001100 */
+</screen></para><para>
+Bu örnekte ikilik <parameter>örüntü</parameter> 3 ile genişletilmiştir. Bu işlevle, ekrandaki
+çizgiler 6 beneklik gruplara ayrılacak ve bir grup  ekrana basılacak,
+bir grup basılmayacaktır.
+</para></funcdescr></funcsynopsis>
+</para><para>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>void <command>glEnable</command></funcdef>
+<paramdef>()</paramdef>
+</funcprototype><funcprototype role="işlev">
+<funcdef>void <command>glDisable</command></funcdef>
+<paramdef>()</paramdef>
+</funcprototype><funcdescr><para>
+Performans artışı sağlamak için OpenGL'deki kesiklililik, ışıklandırma,
+kaplama gibi özellikler <literal>glDisable()</literal> ile
+kapatılabilir. Böylece bu özellikler şeklin ekranda oluşturulması
+sırasında gözardı edilecek şekil daha hızlı ortaya çıkacaktır.
+</para><para>
+<literal>glEnable()</literal> özelliğin kullanılmasını sağlarken
+<literal>glDisable()</literal> kullanılmaz hale getirir.
+Örneğin:
+</para><para><screen>
+glEnable(GL_LINE_STIPPLE); // kesikli çizgi çizebilmek için
+glEnable(GL_SMOOTH);       // renk geçişlerini yumuşatmak için
+</screen>
+</para></funcdescr></funcsynopsis>
+</para><para>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>void <command>glRecti</command></funcdef>
+<paramdef>(int <emphasis>x1</emphasis>,
+ int <emphasis>y1</emphasis>,
+ int <emphasis>x2</emphasis>,
+ int <emphasis>y2</emphasis>)</paramdef>
+</funcprototype><funcdescr><para>
+İşlev, bir köşesi ilk iki parametresi ile çapraz köşesi ise son iki parametresi
+ile belirtilen bir dörtgenin çizilmesini sağlar.
+</para><para>
+İşlevin <literal>glRects, glRectf, glRectd</literal> türevleri de
+vardır. Tek farkları parametrelerinin sırasıyla <literal>short, float</literal>,
+ve <literal>double</literal> olmasıdır.
+</para></funcdescr></funcsynopsis>
+</para>
+</sect2>
+<sect2>
+  <title>Dönüşümler</title>
+<para>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>void <command>glRotate</command></funcdef>
+<paramdef>(double <emphasis>açı</emphasis>,
+ double <emphasis>x</emphasis>,
+ double <emphasis>y</emphasis>,
+ double <emphasis>z</emphasis>)</paramdef>
+</funcprototype><funcdescr><para>
+Şekil, <parameter>açı</parameter> derece kadar koordinatları
+<parameter>x</parameter>, <parameter>y</parameter>,
+<parameter>z</parameter> ile belirtilen noktanın etrafında
+döndürülür.
+</para></funcdescr></funcsynopsis>
+</para><para>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>void <command>glTranslated</command></funcdef>
+<paramdef>(double <emphasis>x</emphasis>,
+ double <emphasis>y</emphasis>,
+ double <emphasis>z</emphasis>)</paramdef>
+</funcprototype><funcdescr><para>
+Koordinatları
+<parameter>x</parameter>, <parameter>y</parameter>,
+<parameter>z</parameter> ile belirtilen noktaya
+koordinat sistemini öteler.
+</para></funcdescr></funcsynopsis>
+</para><para>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>void <command>gluOrtho2D</command></funcdef>
+<paramdef>(double <emphasis>sol</emphasis>,
+ double <emphasis>sağ</emphasis>,
+ double <emphasis>alt</emphasis>,
+ double <emphasis>üst</emphasis>)</paramdef>
+</funcprototype><funcdescr><para>
+İki boyutlu görüş peneresinin (clipping window) büyüklüğünü belirler.
+</para></funcdescr></funcsynopsis>
+</para><para>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>void <command>glLoadIdentity</command></funcdef>
+<paramdef>()</paramdef>
+</funcprototype><funcdescr><para>
+Yapılmış tüm dönüşümlerin geri alınmasını sağlar.
+</para></funcdescr></funcsynopsis>
+</para><para>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>void <command>glScaled</command></funcdef>
+<paramdef>(double <emphasis>x</emphasis>,
+ double <emphasis>y</emphasis>,
+ double <emphasis>z</emphasis>)</paramdef>
+</funcprototype><funcdescr><para>
+Bu dönüşüm sayesinde ölçekleme yapılır. Eğer girilen değerler
+1'den küçükse nesneler küçültülür, 1'den büyükse nesneler
+büyütülür. Bu işlevin <literal>float</literal> parametreler alan
+<literal>glScalef</literal> isimli türevi de mevcuttur.
+</para></funcdescr></funcsynopsis>
+</para>
+</sect2>
+<sect2>
+<title>Olay Tanımlama İşlevleri</title><para>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>void <command>glutReshapeFunc</command></funcdef>
+<paramdef>(void (*<emphasis>işlev</emphasis>) (int    <emphasis>genişlik</emphasis>,
+              double <emphasis>yükseklik</emphasis>)</paramdef>
+</funcprototype><funcdescr><para>
+Eğer pencere yeniden boyutlandırılırsa bu işlevin parametresi olan
+işlev çağrılır ve parametre olarak yeni genişlik ve yükseklik
+değerleri atanır.
+</para></funcdescr></funcsynopsis>
+</para><para>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>void <command>glutIdleFunc</command></funcdef>
+<paramdef>(void (*<emphasis>işlev</emphasis>) (void)</paramdef>
+</funcprototype><funcdescr><para>
+Hiçbir olay oluşturulmadığında çalıştırılacak işlevi belirtir.
+</para></funcdescr></funcsynopsis>
+</para>
+</sect2>
+    <sect2>
+      <title>Artalanda Tamponlama</title>
+      <para>
+Her seferinde ekrandaki görüntünün tazelenmesi CRT (=Cathode Ray Tube)
+tarafından yapılır. Bu olaya programımız müdahale edemez. Bellekte
+OpenGL'in çizim için kullandığı ekran bölgesine nokta eklemek çizgi
+çizmek gibi işlemlerle değişiklik yaptıkça ekrana bu değişiklikler
+anında yansıtılır. Ama tüm değişikliklerin yapıldıktan sonra ekranın
+tazelenmesini sağlayacak bir yol da vardır.
+      </para><para>
+Çizimi başka bir bellek bölgesinde yapıp sonra ekran bölgesine
+aktarabiliriz (double buffering). Arka planda ekranın yeni görüntüsü
+işlevlerle hazırlanır ve bu sırada ön planda yani kullanıcının gördüğü
+pencerede bir değişiklik olmaz. Biz programımızda <literal>glFlush()</literal>
+yerine <literal>glSwapBuffers()</literal> işlevini kullanırsak arka planda
+hazırladığımız değişiklikler ön plana yansır.
+      </para><para>
+Bu durumu "ya hep ya hiç" şeklinde işlenmesi gereken verilere
+benzetebiliriz. Arka planda şeklin tamamı çizildikten sonra ön plana
+aktarılır. Böylece ekran tazelenmesi sırasında ekranın titrememesi
+sağlanır.
+      </para><para>
+Ama artalanda tamponlama yapabilmek için penceremiz oluşturulmadan
+şu şekilde ilklendirme yapılması gerekmektedir:
+</para><para><screen>
+glutInitDisplayMode (GLUT_RGBA | GLUT_DOUBLE);
+</screen></para><para>
+<literal>GLUT_DOUBLE</literal> sayesinde çift tamponlu bir penceremiz olur.
+Artık <literal>glFlush()</literal> yerine <literal>glSwapBuffers()</literal>
+kullanılarak artalanda tamponlama yapılabilir.
+      </para>
+    </sect2>
+    <sect2>
+      <title>Klavye ve Fare Kullanımı</title>
+      <sect3>
+        <title>Klavye İşlevleri</title>
+<para>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>void <command>glutKeyboardFunc</command></funcdef>
+<paramdef>(void (*<emphasis>işlev</emphasis>) (char <emphasis>tuş</emphasis>,
+              int  <emphasis>x</emphasis>,
+              int  <emphasis>y</emphasis>)</paramdef>
+</funcprototype><funcdescr><para>
+Klavyeden bir tuşa basıldığında bu işlev çağrılır.
+<parameter>x</parameter> ve <parameter>y</parameter> farenin
+o andaki konumunu belirtir. <parameter>tuş</parameter> ise
+klavyede basılan tuşu belirtir.
+</para></funcdescr></funcsynopsis>
+</para><para>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>void <command>glutSpecialFunc</command></funcdef>
+<paramdef>(void (*<emphasis>işlev</emphasis>) (int <emphasis>tuş</emphasis>,
+              int <emphasis>x</emphasis>,
+              int <emphasis>y</emphasis>)</paramdef>
+</funcprototype><funcdescr><para>
+Klavyedeki "F tuslarini" yani işlev tuşları için bu işlev kullanılır.
+Örnek:
+</para><para><screen>
+  if(key == GLUT_KEY_F1){ printf("F1'e bastiniz.\n"); }
+  else if(key == GLUT_KEY_UP) { printf("Yukari ok tusuna bastiniz.\n"); }
+</screen>
+</para></funcdescr></funcsynopsis>
+</para><para>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>int <command>glutGetModifiers</command></funcdef>
+<paramdef>()</paramdef>
+</funcprototype><funcdescr><para>
+Herhangi bir tuşa basılmışken CTRL, ALT veya SHIFT tuşlarından
+birine basılıp basılmadığını bu işlev sayesinde öğrenebiliriz.
+Örneğin <literal>glutSpecialFunc</literal> işlevi tarafından
+çalıştırılan <literal>myFunction</literal> işlevi şöyle bir kod
+içerebilir:
+</para><para><screen>
+void myFunction(void){
+  int modifier;
+  ...
+  modifier = glutGetModifiers();
+  if(modifier = GLUT_ACTIVE_SHIFT){ printf("SHIFT tusuna bastiniz."); }
+  ...
+}
+</screen></para><para>
+İşlevden dönen değeri <literal>GLUT_ACTIVE_SHIFT</literal>,
+<literal>GLUT_ACTIVE_CTRL</literal>, <literal>GLUT_ACTIVE_ALT</literal>
+sabitleri ile bulabiliriz.
+</para></funcdescr></funcsynopsis>
+</para>
+</sect3>
+      <sect3>
+        <title>Fare İşlevleri</title>
+<para>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>void <command>glutMouseFunc</command></funcdef>
+<paramdef>(void (*<emphasis>işlev</emphasis>) (int <emphasis>tuş</emphasis>,
+              int <emphasis>durum</emphasis>,
+              int <emphasis>x</emphasis>,
+              int <emphasis>y</emphasis>)</paramdef>
+</funcprototype><funcdescr><para>
+Bu işlev farenin herhangi bir tuşuna basıldı veya bırakıldığı
+zaman calışır. <parameter>x</parameter> ve <parameter>y</parameter>
+farenin o andaki konumunu belirtir. <parameter>tuş</parameter>
+GLUT_LEFT_BUTTON, GLUT_RIGHT_BUTTON, GLUT_MIDDLE_BUTTON olarak
+tanımlanan sırasıyla  sol, sağ ve orta fare tuşlarını belirtir.
+<parameter>durum</parameter> ise tuşun ne durumda olduğunu söyler.
+GLUT_UP, GLUT_DOWN sabitleriyle tanımlanır.
+</para></funcdescr></funcsynopsis>
+</para><para>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>void <command>glutMouseFunc</command></funcdef>
+<paramdef>(void (*<emphasis>işlev</emphasis>) (int <emphasis>x</emphasis>,
+              int <emphasis>y</emphasis>)</paramdef>
+</funcprototype><funcdescr><para>
+Tuş basılı olarak fare hareket ettiğinde çalışan işlevdir.
+Farenin o anki konumu <parameter>x</parameter> ve
+<parameter>y</parameter> parametrelerine atanır.
+</para></funcdescr></funcsynopsis>
+</para><para>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>void <command>glutPassiveMotionFunc</command></funcdef>
+<paramdef>(void (*<emphasis>işlev</emphasis>) (int <emphasis>x</emphasis>,
+              int <emphasis>y</emphasis>)</paramdef>
+</funcprototype><funcdescr><para>
+Herhangi bir tuşa basılmaksızın farenin hareket edişi sırasında
+çağrılan işlevdir. Farenin o anki konumu <parameter>x</parameter>
+ve <parameter>y</parameter> parametrelerine atanır.
+</para></funcdescr></funcsynopsis>
+</para><para>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>void <command>glutEntryFunc</command></funcdef>
+<paramdef>(void (*<emphasis>işlev</emphasis>) (int <emphasis>durum</emphasis>)</paramdef>
+</funcprototype><funcdescr><para>
+Fare pencere sınırlarına girince veya sınırlarından çıkınca
+çağrılan işlevdir. <parameter>durum</parameter> parametresinin
+aldığı değere göre <literal>GLUT_ENTERED</literal> ile farenin
+pencereye girdiği, <literal>GLUT_LEFT</literal> ile farenin
+pencereden çıktığı anlaşılır.
+</para></funcdescr></funcsynopsis>
+</para>
+</sect3>
+</sect2>
+</sect1>
+  <sect1 id="opengl-giris_ornekler">
+    <title>Örnekler</title>
+    <para>
+      <variablelist>
+        <varlistentry>
+          <term>glilk.c</term>
+          <listitem>
+            <para>
+<screen>
+#include &lt;GL/glut.h>
+
+void myDisplay()
+{
+  glClear(GL_COLOR_BUFFER_BIT);
+  glColor3f (0,0,1);
+  glBegin(GL_POLYGON);
+    glVertex2f (0.0, 0.0);
+    glVertex2f (0.2, 0.0);
+    glVertex2f (0.2, 0.5);
+  glEnd();
+
+  glFlush();
+}
+
+int main (int argc, char ** argv)
+{
+  glutInit (&amp;argc,argv);
+  glutCreateWindow("Iste ilk pencerem!");
+  glutDisplayFunc(myDisplay);
+  glutMainLoop();
+  return(0);
+}
+</screen></para><para>
+              <mediaobject>
+                <imageobject>
+                  <imagedata fileref="openglbeginner/glilk.png" format="PNG"/>
+                </imageobject>
+              </mediaobject>
+            </para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>glKesikCizgi.c</term>
+          <listitem>
+            <para>
+<screen>
+#include &lt;GL/glut.h>
+
+void display(void)
+{
+  glClear(GL_COLOR_BUFFER_BIT);
+
+  glColor3f(1,1,1);// white
+  glEnable(GL_LINE_STIPPLE);
+  glLineStipple (2, 0x0C0F);
+  glBegin(GL_LINE_STRIP);
+    glVertex2f(0,-1);
+    glVertex2f(0,1);
+  glEnd();
+
+glFlush();
+}
+
+int main(int argc, char **argv)
+{
+  glutInit(&amp;argc, argv);
+  glutCreateWindow("Kesik Cizgi");
+  glutDisplayFunc(display);
+  glutMainLoop();
+  return(0);
+}
+</screen></para><para>
+              <mediaobject>
+                <imageobject>
+                  <imagedata fileref="openglbeginner/kesikcizgi.png" format="PNG"/>
+                </imageobject>
+              </mediaobject>
+            </para>
+          </listitem>
+        </varlistentry>
+                <varlistentry>
+          <term>glCember.c</term>
+          <listitem>
+            <para>
+<screen>
+#include &lt;GL/glut.h>
+#include &lt;math.h>
+#include &lt;stdio.h>
+
+#define RADIUS 0.75
+
+void cember(void);
+
+int main(int argc, char ** argv)
+{
+  glutInit(&amp;argc, argv);
+  glutCreateWindow("Cember");
+  glutDisplayFunc(cember);
+  glutMainLoop();
+  return(0);
+}
+
+void cember(void)
+{
+  double x,y;
+  int i;
+
+  glClearColor(1.0,1.0,0.0,0.0);
+  glClear(GL_COLOR_BUFFER_BIT);
+  glColor3f(0,0,1);// blue
+
+  glPointSize(10.0);
+  glBegin(GL_POINTS);
+    for(i = 1; i &lt; 360; i++){
+      x = RADIUS * sin(((double)i)*M_PI/180);
+      y = RADIUS * cos(((double)i)*M_PI/180);
+      #ifdef DEBUG
+        fprintf(stderr, "(%f, %f)\n", x, y);
+      #endif
+      glVertex2f(x,y);
+    }
+  glEnd();
+
+  glFlush();
+}
+</screen></para><para>
+              <mediaobject>
+                <imageobject>
+                  <imagedata fileref="openglbeginner/cember.png" format="PNG"/>
+                </imageobject>
+              </mediaobject>
+            </para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>glRenkliCizgi.c</term>
+          <listitem>
+            <para>
+<screen>
+#include &lt;GL/glut.h>
+#include &lt;math.h>
+
+void RenkliCiz(void);
+
+#define RADIUS 0.75
+
+int main(int argc, char **argv)
+{
+  glutInit(&amp;argc, argv);
+  glutCreateWindow("Renkli Cizgi");
+  glClearColor (0.1, 0.1, 0.1, 0.0);
+  glutDisplayFunc(RenkliCiz);
+  gluOrtho2D (-5.0, 5.0, -5.0, 5.0);
+  glutMainLoop();
+  return(0);
+}
+
+void RenkliCiz (void)
+{
+  int i, j, k, tur;
+  double x, y;
+  int teta=0;
+
+  glClear(GL_COLOR_BUFFER_BIT);
+  glPointSize(12.0);
+  glBegin(GL_POINTS);
+    for(i = 0; i &lt;= 10; i++){
+      for(j = 0; j &lt;= 10; j++){
+        for(k = 0; k &lt;= 10; k++){
+          glColor3f (i*0.1, j*0.1, k*0.1);
+          x = teta; y = x;
+          #ifdef DEBUG
+            fprintf(stderr, "teta: %d, Color: %f, %f, %f; (%f, %f)\n",
+                    teta, i*0.1, j*0.1, k*0.1, x,y);
+          #endif
+          tur = teta/360;
+          x = RADIUS*(tur+1)*sin(((double)(teta-tur*360))*M_PI/180);
+          y = RADIUS*(tur+1)*cos(((double)(teta-tur*360))*M_PI/180);
+          glVertex2f(x,y);
+
+          teta++;
+        }
+      }
+    }
+  glEnd();
+
+  glFlush();
+}
+</screen></para><para>
+              <mediaobject>
+                <imageobject>
+                  <imagedata fileref="openglbeginner/renklicizgi.png" format="PNG"/>
+                </imageobject>
+              </mediaobject>
+            </para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>glKare.c</term>
+          <listitem>
+            <para>
+<screen>
+#include &lt;GL/glut.h>
+#include &lt;GL/gl.h>
+#include &lt;GL/glu.h>
+#include &lt;math.h>
+#include &lt;stdio.h>
+
+#define RADIUS 0.75
+
+#define X0 -1
+#define Y0 -1
+#define X1 1
+#define Y1 1
+
+
+void cember (void);
+void dondur (unsigned char ,int, int);
+
+int teta;
+int viewX0, viewY0, viewX1, viewY1;
+
+int
+main(int argc, char **argv)
+{
+  printf("Kullanim sekli:\n");
+  printf("a: sol,          d: sag,         s: asagi,      w: yukari\n");
+  printf("u: yukari cevir, n: asagi cevir, h: sola cevir, j: saga cevir\n");
+  printf("b: duzlemde sola dondur,         m: duzlemde saga dondur\n");
+  printf("-: goruntuyu kucult,             +: goruntuyu buyut\n");
+  printf("r: goruntuyu ilk duruma getir, ESC: Cikis\n");
+
+  teta=0;
+  viewX0 = -2; viewX1 = 2; viewY0 = -2; viewY1 = 2;
+  glutInit(&amp;argc, argv);
+  glutInitDisplayMode (GLUT_DOUBLE | GLUT_RGB);
+  glutCreateWindow("Kare &amp; Cember");
+
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+  gluOrtho2D(viewX0, viewX1, viewY0, viewY1);
+
+  glutDisplayFunc(cember);
+  glutKeyboardFunc(dondur);
+  glutMainLoop();
+  return(0);
+}
+
+void cember(void)
+{
+  double x, y;
+  int i;
+
+  glClearColor(0.0, 0.0, 0.0, 0.0);
+  glClear(GL_COLOR_BUFFER_BIT);
+
+  glColor3f(1, 1, 1);// blue
+
+  glBegin(GL_POINTS);
+    for(i = 1; i &lt; 360; i++){
+      x = RADIUS * sin(((double)i) * M_PI / 180);
+      y = RADIUS * cos(((double)i) * M_PI / 180);
+      glVertex2f(x, y);
+    }
+  glEnd();
+
+  glColor3f(1, 1, 1);// white
+  glEnable(GL_LINE_STIPPLE);
+  glLineStipple (2, 0x0C0F);
+  glBegin(GL_LINE_STRIP);
+    glVertex2f(0, -1);
+    glVertex2f(0, 1);
+  glEnd();
+  glBegin(GL_LINES);
+    glVertex2f(-1, 0);
+    glVertex2f (1, 0);
+  glEnd();
+
+  glColor3f(1.0, 1.0, 1.0);
+
+  glRectf(-0.5, -0.5, 0.5, 0.5);
+  glBegin(GL_LINES);
+    glVertex2f(-1, 0);
+    glVertex2f (1, 0);
+  glEnd();
+
+  glutSwapBuffers();
+}
+
+void dondur (unsigned char tus, int x, int y)
+{
+  if (tus == 'd'){
+   glTranslatef (1.0, 0.0, 0.0);
+  } else if (tus == 'a'){
+     glTranslatef (-1.0, 0.0, 0.0);
+  } else if (tus == 'w'){
+     glTranslatef (0.0, 1.0, 0.0);
+  } else if (tus == 's'){
+     glTranslatef (0.0, -1.0, 0.0);
+  } else if (tus == 'u'){
+     glRotatef(15,1.0, 0.0, 0.0);
+  } else if (tus == 'n'){
+     glRotatef(15,-1.0, 0.0, 0.0);
+  } else if (tus == 'h'){
+     glRotatef(15, 0.0, 1.0, 0.0);
+  } else if (tus == 'j'){
+     glRotatef(15, 0.0, -1.0, 0.0);
+  } else if (tus == 'b'){
+     glRotatef(15, 0.0, 0.0, 1.0);
+  } else if(tus == 'm'){
+     glRotatef(15, 0.0, 0.0, -1.0);
+  } else if (tus == '+'){
+     glScalef(1.5, 1.5, 1.5);
+  } else if (tus == '-'){
+     glScalef(0.5, 0.5, 0.5);
+  } else if (tus == 'r'){
+     glLoadIdentity();
+  } else if (tus == 27){
+     exit(0);
+  }
+  cember();
+}
+</screen></para><para>
+              <mediaobject>
+                <imageobject>
+                  <imagedata fileref="openglbeginner/kare.png" format="PNG"/>
+                </imageobject>
+              </mediaobject>
+            </para>
+          </listitem>
+        </varlistentry>
+      </variablelist>
+    </para>
+  </sect1>
+  <appendix id="opengl-giris_ekler">
+    <title>Örnek Programlar</title>
+    <para>
+      Bu bölümde benim yazmadığım ama farklı kaynaklardan elime geçen
+      OpenGL ile yapılabileceklere örnek olacak programlar bulunmaktadır.
+    </para>
+    <para>
+      Aşağıdaki programların her birini derlemek için şu komut kullanılabilir:
+</para><para><screen>
+# gcc DOSYAADI.c -o DOSYAADI -lGL -lGLU -lglut -lm
+</screen>
+    </para>
+    <sect1 id="opengl-giris_ekler-cube">
+      <title>cube.c</title>
+      <para>
+<screen>
+/* Kullanımı: YUKARI ve AŞAĞI OK tuşları ve X, Y, Z tuşları */
+
+#include &lt;GL/gl.h>
+#include &lt;GL/glu.h>
+#include &lt;GL/glut.h>
+
+#include &lt;stdio.h>
+#include &lt;stdlib.h>
+#include &lt;math.h>
+
+#define WIDTH  480
+#define HEIGHT 480
+
+#define RED   0
+#define GREEN 0
+#define BLUE  0
+#define ALPHA 1
+
+#define KEY_ESC 27
+#define KEY_UP 101
+#define KEY_DOWN 103
+#define KEY_X 120
+#define KEY_Y 121
+#define KEY_Z 122
+
+GLuint face;
+GLuint cube;
+
+#define DELTA 5
+int x = 0;
+int rotateX = 0;
+int y = 0;
+int rotateY = 0;
+int z = 0;
+int rotateZ = 0;
+int speed = 0;
+
+void init_scene();
+void render_scene();
+GLvoid initGL();
+GLvoid window_display();
+GLvoid window_reshape(GLsizei width, GLsizei height);
+GLvoid window_idle();
+GLvoid window_key(unsigned char key, int x, int y);
+GLvoid window_special_key(int key, int x, int y);
+
+int main(int argc, char **argv)
+{
+  glutInit(&amp;argc, argv);
+  glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH);
+
+  glutInitWindowSize(WIDTH, HEIGHT);
+  glutInitWindowPosition(0, 0);
+  glutCreateWindow("Rotating Cube");
+
+  initGL();
+  init_scene();
+
+  glutDisplayFunc(&amp;window_display);
+  glutReshapeFunc(&amp;window_reshape);
+  glutIdleFunc(&amp;window_idle);
+  glutKeyboardFunc(&amp;window_key);
+  glutSpecialFunc(&amp;window_special_key);
+
+  glutMainLoop();
+
+  return 1;
+}
+
+GLvoid initGL()
+{
+  glClearColor(RED, GREEN, BLUE, ALPHA);
+  glClearDepth(1.0);
+  glDepthFunc(GL_LESS);
+  glEnable(GL_DEPTH_TEST);
+}
+
+void init_scene()
+{
+  face = glGenLists(2);
+  cube = face + 1;
+
+  glNewList(face, GL_COMPILE);
+    glBegin(GL_POLYGON);
+      glVertex3f(0, 0, 0);
+      glVertex3f(1, 0, 0);
+      glVertex3f(1, 1, 0);
+      glVertex3f(0, 1, 0);
+    glEnd();
+  glEndList();
+
+  glNewList(cube, GL_COMPILE);
+    glTranslatef(-0.5, -0.5, 0.5);
+
+    glColor3f(1, 0, 0);
+    glCallList(face);
+
+    glColor3f(1, 1, 0);
+    glPushMatrix();
+    glTranslatef(0, 0, -1);
+    glCallList(face);
+    glPopMatrix();
+
+    glColor3f(0, 1, 0);
+    glPushMatrix();
+    glRotatef(90, 0, 1, 0);
+    glCallList(face);
+    glPopMatrix();
+
+    glColor3f(0, 1, 1);
+    glPushMatrix();
+    glTranslatef(1, 0, 0);
+    glRotatef(90, 0, 1, 0);
+    glCallList(face);
+    glPopMatrix();
+
+    glColor3f(0, 0, 1);
+    glPushMatrix();
+    glRotatef(-90, 1, 0, 0);
+    glCallList(face);
+    glPopMatrix();
+
+    glColor3f(1, 0, 1);
+    glPushMatrix();
+    glTranslatef(0, 1, 0);
+    glRotatef(-90, 1, 0, 0);
+    glCallList(face);
+    glPopMatrix();
+
+  glEndList();
+}
+
+GLvoid window_display()
+{
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  glLoadIdentity();
+  gluLookAt(0, 0, 5, 0, 0, 0, 0, 1, 0);
+  render_scene();
+  glutSwapBuffers();
+}
+
+GLvoid window_reshape(GLsizei width, GLsizei height)
+{
+  if (height == 0)
+    height = 1;
+
+  glViewport(0, 0, width, height);
+
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+  gluPerspective(45, (GLdouble)width/(GLdouble)height, 1, 10);
+  glMatrixMode(GL_MODELVIEW);
+}
+
+GLvoid window_key(unsigned char key, int x, int y)
+{
+  switch (key) {
+  case KEY_ESC:
+    exit(1);
+    break;
+  case KEY_X:
+    rotateX = !rotateX;
+    glutPostRedisplay();
+    break;
+  case KEY_Y:
+    rotateY = !rotateY;
+    glutPostRedisplay();
+    break;
+  case KEY_Z:
+    rotateZ = !rotateZ;
+    glutPostRedisplay();
+    break;
+  default:
+    printf ("Pressing %d doesn't do anything.\n", key);
+    break;
+  }
+}
+
+GLvoid window_special_key(int key, int x, int y)
+{
+  switch (key) {
+  case KEY_UP:
+    speed = (speed + DELTA + 360) % 360;
+    glutPostRedisplay();
+    break;
+
+  case KEY_DOWN:
+    speed = (speed - DELTA + 360) % 360;
+    glutPostRedisplay();
+    break;
+
+  default:
+    printf ("Pressing %d doesn't do anything.\n", key);
+    break;
+  }
+}
+
+GLvoid window_idle()
+{
+  if (rotateX) x = (x + speed + 360) % 360;
+  if (rotateY) y = (y + speed + 360) % 360;
+  if (rotateZ) z = (z + speed + 360) % 360;
+  if (speed > 0 &amp;&amp; (rotateX || rotateY || rotateZ))
+    glutPostRedisplay();
+}
+
+void render_scene()
+{
+  glRotatef(x, 1, 0, 0);
+  glRotatef(y, 0, 1, 0);
+  glRotatef(z, 0, 0, 1);
+  glCallList(cube);
+}
+</screen>
+      </para>
+    </sect1>
+    <sect1 id="opengl-giris_ekler-glorgMolehill">
+      <title>glorgMolehill.c</title>
+      <para>
+<screen>
+#include &lt;GL/glut.h>
+
+GLfloat mat_red_diffuse[] = { 0.7, 0.0, 0.1, 1.0 };
+GLfloat mat_green_diffuse[] = { 0.0, 0.7, 0.1, 1.0 };
+GLfloat mat_blue_diffuse[] = { 0.0, 0.1, 0.7, 1.0 };
+GLfloat mat_yellow_diffuse[] = { 0.7, 0.8, 0.1, 1.0 };
+GLfloat mat_specular[] = { 1.0, 1.0, 1.0, 1.0 };
+GLfloat mat_shininess[] = { 100.0 };
+GLfloat knots[8] = { 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0 };
+GLfloat pts1[4][4][3], pts2[4][4][3];
+GLfloat pts3[4][4][3], pts4[4][4][3];
+GLUnurbsObj *nurb;
+int u, v;
+
+static void
+display(void)
+{
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  glCallList(1);
+  glFlush();
+}
+
+int
+main(int argc, char **argv)
+{
+  glutInit(&amp;argc, argv);
+  glutCreateWindow("molehill");
+  glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
+  glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess);
+  glEnable(GL_LIGHTING);
+  glEnable(GL_LIGHT0);
+  glEnable(GL_DEPTH_TEST);
+  glEnable(GL_AUTO_NORMAL);
+  glEnable(GL_NORMALIZE);
+  nurb = gluNewNurbsRenderer();
+  gluNurbsProperty(nurb, GLU_SAMPLING_TOLERANCE, 25.0);
+  gluNurbsProperty(nurb, GLU_DISPLAY_MODE, GLU_FILL);
+
+  /* Build control points for NURBS mole hills. */
+  for(u=0; u&lt;4; u++) {
+    for(v=0; v&lt;4; v++) {
+      /* Red. */
+      pts1[u][v][0] = 2.0*((GLfloat)u);
+      pts1[u][v][1] = 2.0*((GLfloat)v);
+      if((u==1 || u == 2) &amp;&amp; (v == 1 || v == 2))
+        /* Stretch up middle. */
+        pts1[u][v][2] = 6.0;
+      else
+        pts1[u][v][2] = 0.0;
+
+      /* Green. */
+      pts2[u][v][0] = 2.0*((GLfloat)u - 3.0);
+      pts2[u][v][1] = 2.0*((GLfloat)v - 3.0);
+      if((u==1 || u == 2) &amp;&amp; (v == 1 || v == 2))
+        if(u == 1 &amp;&amp; v == 1)
+          /* Pull hard on single middle square. */
+          pts2[u][v][2] = 15.0;
+        else
+          /* Push down on other middle squares. */
+          pts2[u][v][2] = -2.0;
+      else
+        pts2[u][v][2] = 0.0;
+
+      /* Blue. */
+      pts3[u][v][0] = 2.0*((GLfloat)u - 3.0);
+      pts3[u][v][1] = 2.0*((GLfloat)v);
+      if((u==1 || u == 2) &amp;&amp; (v == 1 || v == 2))
+        if(u == 1 &amp;&amp; v == 2)
+          /* Pull up on single middple square. */
+          pts3[u][v][2] = 11.0;
+        else
+          /* Pull up slightly on other middle squares. */
+          pts3[u][v][2] = 2.0;
+      else
+        pts3[u][v][2] = 0.0;
+
+      /* Yellow. */
+      pts4[u][v][0] = 2.0*((GLfloat)u);
+      pts4[u][v][1] = 2.0*((GLfloat)v - 3.0);
+      if((u==1 || u == 2 || u == 3) &amp;&amp; (v == 1 || v == 2))
+        if(v == 1)
+          /* Push down front middle and right squares. */
+          pts4[u][v][2] = -2.0;
+        else
+          /* Pull up back middle and right squares. */
+          pts4[u][v][2] = 5.0;
+      else
+        pts4[u][v][2] = 0.0;
+    }
+  }
+  /* Stretch up red's far right corner. */
+  pts1[3][3][2] = 6;
+  /* Pull down green's near left corner a little. */
+  pts2[0][0][2] = -2;
+  /* Turn up meeting of four corners. */
+  pts1[0][0][2] = 1;
+  pts2[3][3][2] = 1;
+  pts3[3][0][2] = 1;
+  pts4[0][3][2] = 1;
+
+  glMatrixMode(GL_PROJECTION);
+  gluPerspective(55.0, 1.0, 2.0, 24.0);
+  glMatrixMode(GL_MODELVIEW);
+  glTranslatef(0.0, 0.0, -15.0);
+  glRotatef(330.0, 1.0, 0.0, 0.0);
+
+  glNewList(1, GL_COMPILE);
+    /* Render red hill. */
+    glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_red_diffuse);
+    gluBeginSurface(nurb);
+      gluNurbsSurface(nurb, 8, knots, 8, knots,
+        4 * 3, 3, &amp;pts1[0][0][0],
+        4, 4, GL_MAP2_VERTEX_3);
+    gluEndSurface(nurb);
+
+    /* Render green hill. */
+    glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_green_diffuse);
+    gluBeginSurface(nurb);
+      gluNurbsSurface(nurb, 8, knots, 8, knots,
+        4 * 3, 3, &amp;pts2[0][0][0],
+        4, 4, GL_MAP2_VERTEX_3);
+    gluEndSurface(nurb);
+
+    /* Render blue hill. */
+    glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_blue_diffuse);
+    gluBeginSurface(nurb);
+      gluNurbsSurface(nurb, 8, knots, 8, knots,
+        4 * 3, 3, &amp;pts3[0][0][0],
+        4, 4, GL_MAP2_VERTEX_3);
+    gluEndSurface(nurb);
+
+    /* Render yellow hill. */
+    glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_yellow_diffuse);
+    gluBeginSurface(nurb);
+      gluNurbsSurface(nurb, 8, knots, 8, knots,
+        4 * 3, 3, &amp;pts4[0][0][0],
+        4, 4, GL_MAP2_VERTEX_3);
+    gluEndSurface(nurb);
+  glEndList();
+
+  glutDisplayFunc(display);
+  glutMainLoop();
+  return 0;             /* ANSI C requires main to return int. */
+}
+</screen>
+      </para>
+    </sect1>
+    <sect1 id="opengl-giris_ekler-lesson4">
+      <title>lesson4.c</title>
+      <para>
+<screen>
+//
+// This code was created by Jeff Molofee '99
+// (ported to Linux/GLUT by Richard Campbell '99)
+//
+// If you've found this code useful, please let me know.
+//
+// Visit me at www.demonews.com/hosted/nehe
+// (email Richard Campbell at ulmont@bellsouth.net)
+//
+#include &lt;GL/glut.h>    // Header File For The GLUT Library
+#include &lt;GL/gl.h>   // Header File For The OpenGL32 Library
+#include &lt;GL/glu.h>  // Header File For The GLu32 Library
+#include &lt;unistd.h>     // Header File For sleeping.
+
+/* ASCII code for the escape key. */
+#define ESCAPE 27
+
+/* The number of our GLUT window */
+int window;
+
+/* rotation angle for the triangle. */
+float rtri = 0.0f;
+
+/* rotation angle for the quadrilateral. */
+float rquad = 0.0f;
+
+/* A general OpenGL initialization function.
+   Sets all of the initial parameters. */
+void InitGL(int Width, int Height)       // We call this right after our OpenGL
+                                         // window is created.
+{
+  glClearColor(0.0f, 0.0f, 0.0f, 0.0f);  // This Will Clear The Background
+                                         // Color To Black
+  glClearDepth(1.0);                     // Enables Clearing Of The Depth Buffer
+  glDepthFunc(GL_LESS);                  // The Type Of Depth Test To Do
+  glEnable(GL_DEPTH_TEST);               // Enables Depth Testing
+  glShadeModel(GL_SMOOTH);               // Enables Smooth Color Shading
+
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();                      // Reset The Projection Matrix
+
+  gluPerspective(45.0f,(GLfloat)Width/(GLfloat)Height,0.1f,100.0f);
+                                    // Calculate The Aspect Ratio Of The Window
+
+  glMatrixMode(GL_MODELVIEW);
+}
+
+/* The function called when our window is resized
+   (which shouldn't happen, because we're fullscreen) */
+void ReSizeGLScene(int Width, int Height)
+{
+  if (Height==0)         // Prevent A Divide By Zero If The Window Is Too Small
+    Height=1;
+
+  glViewport(0, 0, Width, Height);  // Reset The Current Viewport And
+                                    // Perspective Transformation
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+
+  gluPerspective(45.0f,(GLfloat)Width/(GLfloat)Height,0.1f,100.0f);
+  glMatrixMode(GL_MODELVIEW);
+}
+
+/* The main drawing function. */
+void DrawGLScene()
+{
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);   // Clear The Screen And
+                                                        // The Depth Buffer
+  glLoadIdentity();                 // Reset The View
+
+  glTranslatef(-1.5f,0.0f,-6.0f); // Move Left 1.5 Units And Into The Screen 6.0
+
+  glRotatef(rtri,0.0f,1.0f,0.0f);   // Rotate The Triangle On The Y axis
+  // draw a triangle (in smooth coloring mode)
+  glBegin(GL_POLYGON);              // start drawing a polygon
+  glColor3f(1.0f,0.0f,0.0f);        // Set The Color To Red
+  glVertex3f( 0.0f, 1.0f, 0.0f);    // Top
+  glColor3f(0.0f,1.0f,0.0f);        // Set The Color To Green
+  glVertex3f( 1.0f,-1.0f, 0.0f);    // Bottom Right
+  glColor3f(0.0f,0.0f,1.0f);        // Set The Color To Blue
+  glVertex3f(-1.0f,-1.0f, 0.0f);    // Bottom Left
+  glEnd();                          // we're done with the polygon (smooth
+                                    // color interpolation)
+  glLoadIdentity();                 // make sure we're no longer rotated.
+  glTranslatef(1.5f,0.0f,-6.0f);    // Move Right 3 Units, and back into the
+                                    // screen 6.0
+  glRotatef(rquad,1.0f,0.0f,0.0f);  // Rotate The Quad On The X axis
+  // draw a square (quadrilateral)
+  glColor3f(0.5f,0.5f,1.0f);        // set color to a blue shade.
+  glBegin(GL_QUADS);                // start drawing a polygon (4 sided)
+  glVertex3f(-1.0f, 1.0f, 0.0f);    // Top Left
+  glVertex3f( 1.0f, 1.0f, 0.0f);    // Top Right
+  glVertex3f( 1.0f,-1.0f, 0.0f);    // Bottom Right
+  glVertex3f(-1.0f,-1.0f, 0.0f);    // Bottom Left
+  glEnd();                          // done with the polygon
+
+  rtri+=15.0f;               // Increase The Rotation Variable For The Triangle
+  rquad-=15.0f;              // Decrease The Rotation Variable For The Quad
+
+  // swap the buffers to display, since double buffering is used.
+  glutSwapBuffers();
+}
+
+/* The function called whenever a key is pressed. */
+void keyPressed(unsigned char key, int x, int y)
+{
+    /* sleep to avoid thrashing this procedure */
+    usleep(100);
+
+    /* If escape is pressed, kill everything. */
+    if (key == ESCAPE)
+    {
+        /* shut down our window */
+        glutDestroyWindow(window);
+
+        /* exit the program...normal termination. */
+        exit(0);
+    }
+}
+
+int main(int argc, char **argv)
+{
+  /* Initialize GLUT state - glut will take any command line arguments
+     that pertain to it or X Windows - look at its documentation at
+     http://reality.sgi.com/mjk/spec3/spec3.html */
+  glutInit(&amp;argc, argv);
+
+  /* Select type of Display mode:
+     Double buffer
+     RGBA color
+     Alpha components supported
+     Depth buffer */
+  glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_ALPHA | GLUT_DEPTH);
+
+  /* get a 640 x 480 window */
+  glutInitWindowSize(640, 480);
+
+  /* the window starts at the upper left corner of the screen */
+  glutInitWindowPosition(0, 0);
+
+  /* Open a window */
+  window = glutCreateWindow("Jeff Molofee's GL Code Tutorial ... NeHe '99");
+
+  /* Register the function to do all our OpenGL drawing. */
+  glutDisplayFunc(&amp;DrawGLScene);
+
+  /* Go fullscreen.  This is as soon as possible. */
+  glutFullScreen();
+
+  /* Even if there are no events, redraw our gl scene. */
+  glutIdleFunc(&amp;DrawGLScene);
+
+  /* Register the function called when our window is resized. */
+  glutReshapeFunc(&amp;ReSizeGLScene);
+
+  /* Register the function called when the keyboard is pressed. */
+  glutKeyboardFunc(&amp;keyPressed);
+
+  /* Initialize our window. */
+  InitGL(640, 480);
+
+  /* Start Event Processing Engine */
+  glutMainLoop();
+
+  return 1;
+}
+</screen>
+      </para>
+    </sect1>
+  </appendix>
+
+  <bibliography id="opengl-giris_kaynakca">
+    <title>Faydalanılan Kaynaklar</title>
+    <bibliodiv>
+      <biblioentry id="opengl-giris_kaynakca.1">
+        <abbrev>1</abbrev>
+        <title>OpenGL: A Primer</title>
+        <author role="biblio"><firstname>Edward ANGEL</firstname></author>
+        <isbn>ISBN: 0201741865</isbn>
+      </biblioentry>
+    </bibliodiv>
+    <bibliodiv>
+      <biblioentry id="opengl-giris_kaynakca.2">
+        <abbrev>2</abbrev>
+        <edition><ulink url="http://www.opengl.org/developers/about/overview.html"/></edition>
+      </biblioentry>
+    </bibliodiv>
+    <bridgehead renderas='sect2'>Bilgi alınabilecek diğer adresler</bridgehead>
+    <variablelist>
+      <varlistentry>
+        <term><ulink url="http://www.google.com"/></term>
+        <listitem><para>Arama motoru</para></listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><ulink url="http://www.whatis.com"/></term>
+        <listitem><para>Bilisim terimleri sözlüğü</para></listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><ulink url="http://www.opengl.org"/></term>
+        <listitem><para>Kitaplığın resmi web sayfası</para></listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><ulink url="http://www.mesa3d.org"/></term>
+        <listitem>
+          <para>OpenGL destekleyen özgur yazılım uygulamasının resmi sayfası.</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><ulink url="http://www.cevis.uni-bremen.de/~uwe/opengl/opengl.html"/></term>
+        <listitem><para>OpenGL işlevlerinin yardım sayfaları</para></listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><ulink url="http://www.eecs.tulane.edu/www/Terry/OpenGL/Introduction.html"/></term>
+        <listitem><para>OpenGL programlamaya giriş belgesi</para></listitem>
+      </varlistentry>
+    </variablelist>
+  </bibliography>
+</article>
