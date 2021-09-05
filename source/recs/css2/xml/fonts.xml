@@ -1,0 +1,2118 @@
+<?xml version='1.0' encoding='UTF-8'?>
+
+<div1 id="fonts">
+<head>Yazıtipleri</head>
+  <div2 id="fonts1">
+  <head>Giriş</head>
+
+<p><indexterm><primary>karakter</primary></indexterm>
+<indexterm><primary>motif</primary></indexterm>
+<indexterm><primary>soyut motif</primary></indexterm>
+<indexterm><primary>yazıtipi</primary></indexterm>
+Bir belgenin metni görsel olarak gösterildiğinde, karakterlerin (soyut bilgi elemanları) <term>soyut motifler</term>e eşlenmeleri gerekir. Bir veya daha fazla sayıda karakter, bağlama bağımlı bir tarzda bir veya daha fazla sayıda soyut motif ile tasvir edilebilir. Bir <term>motif</term> [İng.: glyph] dizgisel tarzda bir soyut motifin gerçek estetik bir ifadesidir ve motifler ekranda veya kağıtta biteşlemler halinde veya birer çizim olarak gösterilirler. Bir <term>yazıtipi</term> bir motif kümesi olup, motiflerin hepsinde boyut, tasarım ve görünüm olarak aynı temel örüntü gözlenir; bir yazıtipi karakterleri soyut motiflere eşler.</p>
+
+<p>Bir görsel kullanıcı arayüzü bir karekteri gerçekte oluşturmadan önce şu konuları dikkate almalıdır:</p>
+
+<slist>
+<sitem>İster miras alınmış ister belirtilmiş olsun, o karakter için belirtilmiş bir yazıtipi var mı?</sitem>
+<sitem>Kullanıcı arayüzü bu yazıtipine erişebiliyor mu?</sitem>
+<sitem>Erişebiliyorsa bu karakter veya karakter dizisine hangi motifler eşlenmiş?</sitem>
+<sitem>Değilse ne yapılmalı? Yerine başka bir yazıtipi mi kullanılmalı? Yazıtipi bireştirilebilir mi? Genel Ağ'dan temin edilebilir mi?</sitem>
+</slist>
+
+<p>BB1 ve BB2'nin her ikisinde de, biçembent yazarları yazıtiplerinin özelliklerini yazıtipi nitelikleri üzerinden belirtebilirler.</p>
+
+<p>Eşleşen bir yazıtipinin bulunamaması halinde bir istemcinin bu nitelikleri nasıl yorumlayacağı BB1 ve BB2 açısından incelemek gerekirse, BB1'de tüm yazıtiplerinin istemci sistemde mevcut olacağı varsayılır ve bu yazıtipleri yalnızca isimleri ile ifade edilir. Seçimlik yazıtipleri nitelikler üzerinden belirtilebilirse de herşeye karşın kullanıcı arayüzleri kullanıcıya soysal öntanımlı yazıtiplerinden başkasını teklif edemezler (kullanıcı arayüzleri estetik olarak benzer yazıtiplerine sahip olsalar bile).</p>
+
+<p>BB2'de herşey farklıdır ve daha fazla özgürlük mümkündür. BB2'de:</p>
+
+<slist>
+<sitem>biçembent yazarları kullanmak istedikleri yazıtiplerini tanımlamakta;</sitem>
+<sitem>kullanıcı arayüzleri yazarın istediği yazıtipini temin edemedikleri takdirde bir yazıtipi seçiminde,</sitem>
+</slist>
+
+<p>BB1'e göre daha fazla özgürlüğe sahiptirler. BB2'de istemci taraflı yazıtipi eşleme daha gelişkindir. BB2 yazıtipi bireştirmeyi ve aşamalı oluşturmayı etkin kılar ve yazıtiplerinin Genel Ağ'dan teminini mümkün kılar. Bu gelişmiş yetenekler 'masaüstü yazıtipleri' adını alır.</p>
+
+<p>BB2 yazıtipi modelinde, BB1'deki gibi, her kullanıcı arayüzünün kendi yönetiminde bir "yazıtipi veritabanı" vardır. BB1'de bu veritabanından bahsedilir ama hakkında bir ayrıntı verilmez. BB2 ise bu veritabanındaki bilgiyi tanımlar ve biçembent yazarlarının katkıda bulunmasına izin verir. Belli bir yazıtipinden bir karakterin gösterilmesi istendiğinde kullanıcı arayüzü önce belirtilen yazıtipine en çok uyan yazıtipini veritabanında tanımlar (<titleref ref="algorithm">yazıtipi eşleştirme algoritmasını</titleref> kullanarak). Yazıtipi tanımlandıktan sonra, yazıtipi verisini yerel olarak veya Genel Ağ'dan temin eder ve bu motifleri kullanarak istenen karakterleri gösterebilir.</p>
+
+<p>Bu model ışığında, belirtimi iki bölüm halinde düzenledik. İlki yazarların kullanmak istedikleri yazıtiplerini belirtebildikleri <titleref ref="font-specification">yazıtipi belirtim mekanizması</titleref> ile ilgiliyken, ikincisi yazarın belirttiği yazıtipiyle en uyumlu yazıtipini istemcinin kullanıcı arayüzünün bulup yüklemesini sağlayan <titleref ref="font-selection">yazıtipi seçim mekanizması</titleref> ile ilgilidir.</p>
+
+<p>Veritabanının gerçeklenimi işletim sistemi, pencereleme sistemi ve istemci gibi birçok dış etmene bağlı olduğundan, kullanıcı arayüzlerinin yazıtipi veritabanını nasıl oluşturdukları bu belirtimin kapsamı dışında bırakılmıştır.</p>
+</div2>
+
+<div2 id="font-specification">
+<head>Yazıtipinin belirtilmesi</head>
+
+<p>BB yazıtipi mekanizmasının ilk aşaması, biçembent yazarlarının kullanıcı arayüzü tarafından kullanılması gereken yazıtipini nasıl belirtecekleri ile ilgilidir. En başta, bir yazıtipi belirtmenin en kolay yolu yazıtipini ismiyle, tek bir dizge olarak belirtmek gibi görünür ("BT Swiss 721 Heavy Italic" gibi belirgin parçalara ayrılmış tek bir dizge olarak).</p>
+
+<p>Ne yazık ki, yazıtiplerini isimlerine dayanarak sınıflandırmak için iyi tanımlanmış ve evrensel olarak kabul görmüş bir yaklaşım yoktur ve bir yazıtipi ailesinin ismine uygulanan kurallar bir başkası için uygun olmayabilir. Örneğin, eğik yazıtipi için genel olarak kullanılan isim <literal>italic</literal> olsa da onun yerine <emph>Oblique, Slanted, Incline, Cursive</emph> veya <emph>Kursiv</emph> isimleri de kullanılmaktadır. Aynı şekilde, yazıtipi isimlerinde genellikle bir yazıtipinin kalınlığını belirten terimler de yer almaktadır. Bu terimlerin asıl amacı tek bir yazıtipi ailesindeki farklı koyuluktaki motifler arasında ayrım sağlamaktır.  Bu kalınlık ve kullanım isimlerinin farklılıklarını giderecek evrensel olarak kabul edilmiş bir yöntem yoktur. Örneğin, sizin kalın olarak düşündüğünüz bir yazıtipinin, tasarımda "normal" kabul edilen bir yazıtipine göre ne derece koyu olduğu <emph>Regular, Roman, Book, Medium, Semi-</emph> veya <emph>Demi-Bold, Bold,</emph> ya da <emph>Black</emph> isimleriyle belirtilmiş olabilir.</p>
+
+<p>Sistemli bir isimlendirmenin olmayışı, genel olarak, örneğin daha kalın olmak gibi belli bir yöntemle değiştirilmiş bir yazıtipi için isim üretmeyi imkansız kılar.</p>
+
+<p>Bundan dolayı, BB <titleref ref="font-properties">farklı bir model</titleref> kullanır. Yazıtipleri tek bir yazıtipi ismi üzerinden değil, belli yazıtipi niteliklerine değer belirterek talep edilirler. Bu nitelik değerleri kullanıcı arayüzünün <titleref ref="font-selection">yazıtipi seçim mekanizmasına</titleref> dayalı olarak şekillenir. Yazıtipi nitelikleri tek tek değiştirilebilir. Örneğin, kalınlığı arttırmak, yeni yazıtipi nitelik değerleriyle yazıtipi veritabanından tekrar bir seçim yapmayı sağlayabilir. Sonuçta, biçembent yazar ve gerçeklenimcileri açısından düzenlilik artarken genel olarak güçlülük de artmış olur.</p>
+
+<div3 id="font-properties">
+<head>Yazıtipi belirtim nitelikleri</head>
+
+<p>BB2 yazıtiplerini şu özelliklere göre belirtir:</p>
+
+<glist>
+<gitem>
+<label id="font-family">
+<indexterm><primary>yazıtipi ailesi</primary></indexterm>
+Yazıtipi ailesi (<property>font-family</property>)</label>
+<def><p>Yazıtipi ailesi ile metni oluşturmak için hangi yazıtipi ailesinin kullanılacağı belirtilir. Yazıtipi ailesi tasarımında benzerlikler bulunan ve birarada kullanılmak için tasarlanmış bir yazıtipi grubudur. Ailenin bir üyesi eğik, bir diğeri kalın, bir başkası dar veya kısa olabilir. Yazıtipi ailesi isimlerinden bazıları: "Helvetica", "New Century Schoolbook" ve "Kyokasho
+ICA L". Yazıtipi ailesi isimleri Latin karakterleriyle sınırlanmıştır. Yazıtipi aileleri sınıflar halinde gruplanabilir: çıkıntılı, çıkıntısız, eşit genişlikli, değişken genişlikli, elyazısı ve fantezi yazıtipleri gibi.</p></def>
+</gitem>
+<gitem>
+<label id="font-style">
+<indexterm><primary><literal>italic</literal></primary></indexterm>
+Yazıtipi biçemi (<property>font-style</property>)</label>
+<def><p>Yazıtipi biçemi ile metnin normal mi, eğik mi yoksa yatık motiflerle mi oluşturulacağı belirtilir.  <term>Italic</term> normal yazıya göre biraz daha elyazısını andırır ama karakterler bir araya geldiğinde tam bir elyazısı gibi görünmez; öyleleri ayrıca vardır ve onlara <term>curcive</term> denir. Normal motiflerin üstü yana itilmiş biçemine <term>Oblique</term> adı verilir (teknik resim yazıtipleri genelde normal yazının tepesine bir yatma açısı verilerek oluşturulur ve böyle oluşturulan motifler oblique adını alır) ve genellikle çıkıntısız grupta kullanılır. Genellikle, italic için çıkıntılı eğik; oblique için ise çıkıntısız eğik yazı denebilir. Ancak bu tanımlar, her yana yatık yazı oblique'tir, normal yunan harfleri italic'tir gibi çıkarımlara götürmemelidir.</p></def>
+</gitem>
+<gitem>
+<label id="font-variant">Yazıtipi çeşnisi (<property>font-variant</property>)</label>
+<def><p>Yazıtipi çeşnisi, metin oluşturulurken küçük harfler için normal motiflerin mi yoksa büyük harfli kısa motiflerin mi kullanılacağını belirtmek için kullanılır. Belli bir yazıtipi ailesi sadece normal, sadece kısa boylu veya her ikisini de içerebilir. Bu özellik uygun bir yazıtipi isterken, eğer yazıtipi ailesi her iki motifi de içeriyorsa uygun motifi istemek için kullanılır.</p></def>
+</gitem>
+<gitem>
+<label id="font-weight">Yazıtipi kalınlığı (<property>font-weight</property>)</label>
+<def><p>Yazıtipi kalınlığı, yazıtipi ailesi içinde motiflerin çizgilerinin diğerlerine göre ne kadar ince veya ne kadar kalın olduğunu belirtir.</p></def>
+</gitem>
+<gitem>
+<label id="font-stretch">Yazıtipi genişliği (<property>font-stretch</property>)</label>
+<def><p>Yazıtipi genişliği, yazıtipi ailesi içinde motiflerin eninin diğerlerine göre ne kadar dar veya ne kadar geniş olduğunu belirtir.</p></def>
+</gitem>
+<gitem>
+<label id="font-size">Yazıtipi yüksekliği (<property>font-size</property>)</label>
+<def><p>Yazıtipi yüksekliği, yazıtipinin düşey olarak taban çizgisinden taban çizgisine mesafesidir (BB bakımından <property>font-size</property> ve <property>line-height</property> niteliklerinin aynı değere eşit olduğu duruma karşılık düşer).</p></def>
+</gitem>
+</glist>
+
+<p><property>font-size</property> haricinde bütün niteliklerde <code>em</code> ve <code>ex</code> birimli uzunluk değerleri elemanın yazıtipi yüksekliğini ölçüt alır. <property>font-size</property> niteliğinde ise ebeveyn elemanın yazıtipi yüksekliğini ölçüt alınır. Daha fazla bilgi için lütfen <specref ref="length-units"/> bölümüne bakınız.</p>
+
+<p>BB yazıtipi nitelikleri belgedeki metnin arzulanan görüntüsünü belirtmek için kullanılır. Yazıtipi tanımlayıcıları, aslında yazıtipi özelliklerini tanımlamakta kullanılır, böylece arzulanan görünümü oluşturmak için uygun yazıtipi seçilebilir. Yazıtiplerinin sınıflandırılması ile ilgili daha fazla bilgi için <specref ref="font-descriptors"/> bölümüne bakınız.</p>
+</div3>
+
+<div3 id="font-family-prop">
+<head>Yazıtipi ailesi: <property>font-family</property> niteliği</head>
+
+<indexterm><primary sortas="font-family"><property>font-family</property></primary></indexterm>
+<indexterm><primary>nitelikler</primary> <secondary><property>font-family</property></secondary></indexterm>
+<propinfo role="asvalue">
+  <propname>font-family</propname>
+  <value>[[ <valueref>aile-adı</valueref> | <valueref>soysal-aile</valueref> ],]* [ <valueref>aile-adı</valueref> | <valueref>soysal-aile</valueref> ] | <literal>inherit</literal></value>
+  <initial>kullanıcı arayüzüne bağlı</initial>
+  <applies-to/>
+  <inherited>evet</inherited>
+  <percentages/>
+  <media><termref def="visual-media-group">görsel</termref></media>
+</propinfo>
+
+<p><indexterm><primary>yazıtipi kümesi</primary></indexterm>
+Bu nitelik yazıtipi ailelerinin ve/veya soysal ailelerin isimlerinin öncelik listesini belirtir. Tek bir yazıtipinin bir belgedeki tüm karakterlerin motiflerini içerememesi ve bütün yazıtiplerinin her sistemde olmayışı gibi sorunların üstesinden gelebilmek için bu nitelik yazarların yazıtiplerini bir liste halinde belirtebilmelerini mümkün kılar. Böylece, belli karakterler için aynı motifleri aynı biçem ve boyutta içeren tüm yazıtipleri sırayla denenebilir. Bu listeye <term>yazıtipi kümesi</term> denir.</p>
+
+<example>
+<p>Örneğin, metnin yanında matematiksel sembolleri içeren bir belge, biri Latin karakterlerini ve rakamları içeren, diğeri matematiksel sembolleri içeren iki yazıtipinden oluşan bir yazıtipi kümesini gerektirebilir. Aşağıdaki kural örneği, Latin ve Japon karakterlerinden başka matematiksel sembolleri de içereceği umulan bir belgeye uygun bir yazıtipi kümesi belirtmektedir:</p>
+
+<eg>BODY { font-family: Baskerville, "Heisi Mincho W3", Symbol, serif }</eg>
+
+<p>Latin karakterleri "Baskerville" yazıtipindeki motiflerden, Japon karakterleri "Heisi Mincho W3" yazıtipindeki motiflerden ve matematiksel semboller de "Symbol" yazıtipindeki motiflerden, başka herşey <literal>serif</literal> soysal yazıtipi ailesindeki motiflerden elde edilecektir.</p>
+</example>
+
+<p>Soysal yazıtipi ailesi, bir yazıtipi kümesindeki yazıtiplerinden birinin veya bir kaçının bulunamaması halinde kullanılır. Çoğu yazıtipi, boş bir çerçeve şeklinde bir "olmayan karakter" motifi içerse de bu doğru bir eşleşme olarak ele alınmamalıdır.</p>
+
+<p>Yazıtipi ailesi isimlerinin iki çeşidi vardır:</p>
+
+<varlist>
+<gitem>
+<label id="value-def-aile-adı">
+<indexterm><primary><valueref>aile-adı</valueref></primary></indexterm>
+<var>aile-adı</var></label>
+<def><p><indexterm><primary>yoksaymak</primary></indexterm>
+Seçilen yazıtipi ailesinin ismi. Yukarıdaki örnekteki "Baskerville", "Heisi Mincho W3" ve "Symbol" yazıtipi ailesi adlarıdır. <termref def="whitespace">Boşluk karakterleri</termref> içeren yazıtipi ailesi isimleri tırnak içine alınmalıdır. Eğer tırnak içine alınmazsa, yazıtipi isminden önceki ve sonraki tüm <termref def="whitespace">boşluk karakterleri</termref> <termref def="ignore">yoksayılır</termref>; yazıtipi isminin içinde kalan boşluk karakterleri ise birer boşluk karakterine dönüştürülür (normalleştirilir).</p></def>
+</gitem>
+<gitem>
+<label id="value-def-soysal-aile">
+<indexterm><primary><valueref>soysal-aile</valueref></primary></indexterm>
+<var>soysal-aile</var></label>
+<def><p>Tanımlanmış soysal aileler şunlardır: <literal>serif</literal>,
+<literal>sans-serif</literal>, <literal>cursive</literal>, <literal>fantasy</literal> ve <literal>monospace</literal>. Bu ailelerin açıklamaları için lütfen <specref ref="generic-font-families"/> bölümüne bakınız. Soysal yazıtipi aile adları anahtar sözcük olduklarından tırnak içine alınmamalıdırlar.</p>
+
+<p>Yazarların soysal yazıtipi ailelerini yazıtipi kümesinde son seçenek olarak kullanmaları önerilir.</p></def>
+</gitem>
+</varlist>
+
+<example>
+<eg><![CDATA[<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0//EN">
+<html>
+  <head>
+    <title>Yazıtipi denemesi</title>
+    <style type="text/css">
+      BODY { font-family: "new century schoolbook", serif }
+    </style>
+  </head>
+  <body>
+   <H1 style="font-family: 'Benim fontum', fantasy">Deneme</h1>
+    <p>Bu şimdi belge mi oluyor?
+  </body>
+</html>]]></eg>
+</example>
+
+<example>
+<p>BB2'nin zengin seçici sözdizimi dile duyarlı dizgi oluşturmakta kullanılabilir. Örneğin, Çince ve Japonca karakterler, iki dilin soyut motifleri aynı olmasa bile Unicode kodlaması altında biraraya getirilebilirler.</p>
+
+<eg>*:lang(ja-jp) { font: 900 14pt/16pt "Heisei Mincho W9", serif }
+*:lang(zh-tw) { font: 800 14pt/16.5pt "Li Sung", serif }</eg>
+
+<p>Bu kurallar dil belirtilmiş (Japonca ve Geleneksel Çince) elemanlarda kullanılacak yazıtiplerini seçer, yoksa uygun yazıtipini talep eder.</p>
+</example>
+</div3>
+
+<div3 id="font-styling">
+<head>Yazıtipi biçemleme: <property>font-style</property>,
+<property>font-variant</property>, <property>font-weight</property> ve <property>font-stretch</property> nitelikleri</head>
+
+<indexterm><primary sortas="font-style"><property>font-style</property></primary></indexterm>
+<indexterm><primary>nitelikler</primary> <secondary><property>font-style</property></secondary></indexterm>
+<propinfo role="asvalue">
+  <propname>font-style</propname>
+  <value><literal>normal</literal> | <literal>italic</literal> | <literal>oblique</literal> | <literal>inherit</literal></value>
+  <initial><literal>normal</literal></initial>
+  <applies-to/>
+  <inherited>evet</inherited>
+  <percentages/>
+  <media><termref def="visual-media-group">görsel</termref></media>
+</propinfo>
+
+<p><property>font-style</property> niteliği normal (dik), italic (eğik) ve oblique (yatık) motifli bir yazıtipi ailesi seçer. Değerlerin anlamları şöyledir:</p>
+
+<varlist>
+<gitem>
+<label><indexterm><primary><literal>normal</literal></primary></indexterm>
+<literal>normal</literal></label>
+<def><p>Kullanıcı arayüzünün yazıtipi veritabanında <literal>normal</literal> olarak sınıflandırılmış yazıtipini belirtir.</p></def>
+</gitem>
+<gitem>
+<label><indexterm><primary><literal>oblique</literal></primary></indexterm>
+<literal>oblique</literal></label>
+<def><p>Kullanıcı arayüzünün yazıtipi veritabanında <literal>oblique</literal> olarak sınıflandırılmış yazıtipini belirtir. İsimlerinde <emph>Oblique, Slanted</emph> veya <emph>Incline</emph> geçen yatıtipleri genellikle <literal>oblique</literal> adı altında anılır. Kullanıcı arayüzünün yazıtipi veritabanında <literal>oblique</literal> olarak sınıflandırılmış bir yazıtipi gerçekte normal bir yazıtipinden elektronik olarak üretilmiş olabilir.</p></def>
+</gitem>
+<gitem>
+<label><indexterm><primary><literal>italic</literal></primary></indexterm>
+<literal>italic</literal></label>
+<def><p>Kullanıcı arayüzünün yazıtipi veritabanında <literal>italic</literal> olarak sınıflandırılmış yazıtipini belirtir; böyle bir yazıtipi yoksa <literal>oblique</literal> olanı seçilir. İsimlerinde <emph>Italic, Cursive</emph> veya <emph>Kursiv</emph> geçen yazıtipleri genellikle <literal>italic</literal> olarak anılır.</p></def>
+</gitem>
+</varlist>
+
+<example>
+<p>Aşağıdaki kurallarla, <htmltag>h1</htmltag>, <htmltag>h2</htmltag> veya <htmltag>h3</htmltag> elemanlarındaki normal metinler eğik motiflerle; <htmltag>h1</htmltag>'in satıriçi elemanı <htmltag>em</htmltag>'in içeriği ise normal motiflerle gösterilir.</p>
+
+<eg>h1, h2, h3 { font-style: italic }
+h1 em { font-style: normal }</eg>
+</example>
+
+<indexterm><primary sortas="font-variant"><property>font-variant</property></primary></indexterm>
+<indexterm><primary>nitelikler</primary> <secondary><property>font-variant</property></secondary></indexterm>
+<propinfo role="asvalue">
+  <propname>font-variant</propname>
+  <value><literal>normal</literal> | <literal>small-caps</literal> | <literal>inherit</literal></value>
+  <initial><literal>normal</literal></initial>
+  <applies-to/>
+  <inherited>evet</inherited>
+  <percentages/>
+  <media><termref def="visual-media-group">görsel</termref></media>
+</propinfo>
+
+<p><indexterm><primary><literal>çift seviyeli</literal></primary></indexterm>
+<indexterm><primary><literal>tek seviyeli</literal></primary></indexterm>
+<literal>small-caps</literal> yazıtiplerindeki küçük harf motifleri büyük harf motiflerine benzerler ama büyük harfli motiflerden daha kısadırlar ve bazı bakımlardan biraz da farklıdırlar. <property>font-variant</property> niteliği böyle bir yazıtipini çift seviyeli (büyük ve küçük harfli) metinler için istemekte kullanılır. Bu niteliğin tek seviyeli (dünyadaki çoğu yazı sistemi aynı harf için büyük ve küçük diye iki ayrı motife sahip değildir) metinler için bir etkisi yoktur. Değerlerin anlamları şöyledir:</p>
+
+<varlist>
+<gitem>
+<label><indexterm><primary><literal>normal</literal></primary></indexterm>
+<literal>normal</literal></label>
+<def><p>Kısa harfli olmayan bir yazıtipi belirtir.</p></def>
+</gitem>
+<gitem>
+<label><indexterm><primary><literal>small-caps</literal></primary></indexterm>
+<literal>small-caps</literal></label>
+<def><p>Kısa harfli bir yazıtipi belirtir. Eğer gerçekten kısa boylu motifler içeren bir yazıtipi mevcut değilse kullanıcı arayüzlerinin yazıtipini taklit etmesi gerekir; örneğin, küçük harflerin yerine kısa görünecek şekilde oranlanmış büyük harfler kullanmak gibi. Neticede, normal bir yazıtipinde oranlanmamış büyük harfli motifler kısa harfli yazıtipindeki motiflerle değiştirilerek tamamı büyük harflerden oluşan bir metin elde edilir.</p></def>
+</gitem>
+</varlist>
+
+<example>
+<p>Aşağıdaki kurallar <htmltag>h3</htmltag> elemanının içeriğinin normal kısa harfli, <htmltag>em</htmltag> elemanının içeriğinin ise yatık kısa harfli olmasına sebep olur:</p>
+
+<eg>h3 { font-variant: small-caps }
+em { font-style: oblique }</eg>
+</example>
+
+<p>Bu niteliğin büyük harfe dönüşümle ilgili esasları <property>text-transform</property> niteliğininkilerle aynıdır.</p>
+
+<indexterm><primary sortas="font-weight"><property>font-weight</property></primary></indexterm>
+<indexterm><primary>nitelikler</primary> <secondary><property>font-weight</property></secondary></indexterm>
+<propinfo role="asvalue">
+  <propname>font-weight</propname>
+  <value><literal>normal</literal> | <literal>bold</literal> | <literal>bolder</literal> | <literal>lighter</literal> |<literal>100</literal> | <literal>200</literal> | <literal>300</literal> | <literal>400</literal> | <literal>500</literal> | <literal>600</literal> | <literal>700</literal> | <literal>800</literal> | <literal>900</literal> |<literal>inherit</literal></value>
+  <initial><literal>normal</literal></initial>
+  <applies-to/>
+  <inherited>evet</inherited>
+  <percentages/>
+  <media><termref def="visual-media-group">görsel</termref></media>
+</propinfo>
+<p><property>font-weight</property> niteliği yazıtipinin motif çizgisi kalınlığını belirler. Değerlerin anlamları şöyledir:</p>
+
+<varlist>
+<gitem>
+<label><literal>100</literal>, <literal>200</literal>, ..., <literal>900</literal></label>
+<def><p>Bu sayılar küçükten büyüğe doğru gidildikçe kalınlaşma belirtirler.</p></def></gitem>
+<gitem>
+<label><indexterm><primary><literal>normal</literal></primary></indexterm>
+<literal>normal</literal></label>
+<def><p><literal>400</literal> gibidir.</p></def>
+</gitem>
+<gitem>
+<label><indexterm><primary><literal>bold</literal></primary></indexterm>
+<literal>bold</literal></label>
+<def><p><literal>700</literal> gibidir.</p></def>
+</gitem>
+<gitem>
+<label><indexterm><primary><literal>bolder</literal></primary></indexterm>
+<literal>bolder</literal></label>
+<def><p>Bir yazıtipine atanmış kalınlıktan sonraki kalınlığı belirtir. Böyle bir değer yoksa ve miras alınan değer <literal>900</literal> değilse, sayısal bakımdan daha kalın bir yazıtipi değerine geçilir (ve değer <literal>900</literal> bile olsa sonuçta yazıtipi değişmeden kalabilir).</p></def>
+</gitem>
+<gitem>
+<label><indexterm><primary><literal>lighter</literal></primary></indexterm>
+<literal>lighter</literal></label>
+<def><p>Bir yazıtipine atanmış kalınlıktan önceki kalınlığı belirtir. Böyle bir değer yoksa ve miras alınan değer <literal>100</literal> değilse, sayısal bakımdan daha ince bir yazıtipi değerine geçilir (ve değer <literal>100</literal> bile olsa sonuçta yazıtipi değişmeden kalabilir).</p></def>
+</gitem>
+</varlist>
+
+<eg>p { font-weight: normal }   /* 400 */
+h1 { font-weight: 700 }     /* bold */
+body { font-weight: 400 }
+strong { font-weight: bolder } /* varsa, 500 */</eg>
+
+<p>Çocuk elemanlar <titleref ref="computed-value">hesaplanmış</titleref> kalınlık değerini miras alırlar.</p>
+
+<indexterm><primary sortas="font-stretch"><property>font-stretch</property></primary></indexterm>
+<indexterm><primary>nitelikler</primary> <secondary><property>font-stretch</property></secondary></indexterm>
+<propinfo>
+  <propname>font-stretch</propname>
+  <value><literal>normal</literal> | <literal>wider</literal> | <literal>narrower</literal> | <literal>ultra-condensed</literal> | <literal>extra-condensed</literal> | <literal>condensed</literal> | <literal>semi-condensed</literal> | <literal>semi-expanded</literal> | <literal>expanded</literal> | <literal>extra-expanded</literal> | <literal>ultra-expanded</literal> |<literal>inherit</literal></value>
+  <initial><literal>normal</literal></initial>
+  <applies-to/>
+  <inherited>evet</inherited>
+  <percentages/>
+  <media><termref def="visual-media-group">görsel</termref></media>
+</propinfo>
+
+<p><property>font-stretch</property> niteliği bir yazıtipi ailesinden normal, dar veya geniş bir motif kümesi seçer. Mutlak değerler (anahtar sözcükler) dardan genişe doru şöyle sıralanırlar:</p>
+
+<olist>
+<item><p><literal>ultra-condensed</literal> (dapdar)</p></item>
+<item><p><literal>extra-condensed</literal> (çok dar)</p></item>
+<item><p><literal>condensed</literal> (dar)</p></item>
+<item><p><literal>semi-condensed</literal> (az dar)</p></item>
+<item><p><literal>normal</literal></p></item>
+<item><p><literal>semi-expanded</literal> (az geniş)</p></item>
+<item><p><literal>expanded</literal> (geniş)</p></item>
+<item><p><literal>extra-expanded</literal> (çok geniş)</p></item>
+<item><p><literal>ultra-expanded</literal> (gepgeniş)</p></item>
+</olist>
+
+<p>Göreli değer belirten <literal>wider</literal> anahtar sözcüğü, miras alınan değeri bir sonraki geniş değere ayarlar (azami sınır: <literal>ultra-expanded</literal>); <literal>narrower</literal> anahtar sözcüğü ise miras alınan değeri bir önceki dar değere ayarlar (asgari sınır: <literal>ultra-condensed</literal>).</p>
+</div3>
+
+<div3 id="font-size-props">
+<head>Yazıtipi yüksekliği: <property>font-size</property> ve <property>font-size-adjust</property> nitelikleri</head>
+
+<indexterm><primary sortas="font-size"><property>font-size</property></primary></indexterm>
+<indexterm><primary>nitelikler</primary> <secondary><property>font-size</property></secondary></indexterm>
+<propinfo role="asvalue">
+  <propname>font-size</propname>
+  <value><valueref>mutlak-yükseklik</valueref> | <valueref>göreli-yükseklik</valueref> | <valueref>uzunluk</valueref> |<valueref>yüzdelik</valueref> | <literal>inherit</literal></value>
+  <initial><literal>medium</literal></initial>
+  <applies-to/>
+  <inherited>evet, hesaplanan değer miras kalır</inherited>
+  <percentages>ebeveyn elemanın yazıtipi yüksekliği ölçüt alınır</percentages>
+  <media><termref def="visual-media-group">görsel</termref></media>
+</propinfo>
+
+<p><indexterm><primary>katrat</primary></indexterm>
+Bu nitelik, sabit bir değer olarak belirtildiğinde yazıtipinin yüksekliğini belirtir. Yazıtipi yüksekliği basımcılıkta bir ölçü birimi olan <term>katrat</term>a (İng: "em square") karşı düşer. Bazı motifler kendi katratları dışına taşabilir. Değerlerin anlamları şöyledir:</p>
+
+<varlist>
+<gitem>
+<label id="value-def-mutlak-yükseklik">
+<indexterm><primary><valueref>mutlak-yükseklik</valueref></primary></indexterm>
+<var>mutlak-yükseklik</var></label>
+<def><p>Yazıtipi yüksekliği olarak, kullanıcı arayüzü tarafından tutulan yazıtipi yüksekliklerinin hesaplanmış yüksekliklerini içeren tablodaki değerlerinden birinin belirtilebileceğini ifade eder. Olası değerler şunlardır:</p>
+
+<p><indexterm><primary><literal>xx-small</literal></primary></indexterm>
+<indexterm><primary><literal>x-small</literal></primary></indexterm>
+<indexterm><primary><literal>small</literal></primary></indexterm>
+<indexterm><primary><literal>medium</literal></primary></indexterm>
+<indexterm><primary><literal>large</literal></primary></indexterm>
+<indexterm><primary><literal>x-large</literal></primary></indexterm>
+<indexterm><primary><literal>xx-large</literal></primary></indexterm>
+<tt>[ xx-small | x-small | small | medium | large | x-large |
+xx-large ]</tt></p>
+
+<p>Bir bilgisayar ekranında bu değerlerden iki komşu değer arasında çarpan olarak 1.2 çarpanı önerilir. Yani, <literal>medium</literal> için yükseklik 12pt ise <literal>large</literal> için 14.4pt olacaktır.Kullanıcı arayüzü tablodaki değerleri hesaplarken yazıtipinin bulunabilirliğini ve kalitesini de ayrıca hesaba katmalıdır. Tablodaki değerler yazıtipi ailelerine göre farklılık arzedebilir.</p>
+
+<note><p>BB1'de iki komşu değer arasında çarpan olarak önerilen değer 1.5 idi ve kullanıcılar bu değeri çok büyük bulmuştu.</p></note></def>
+</gitem>
+<gitem>
+<label id="value-def-göreli-yükseklik">
+<indexterm><primary><valueref>göreli-yükseklik</valueref></primary></indexterm>
+<var>göreli-yükseklik</var></label>
+<def><p>Ebeveyn elemanın yazıtipi yüksekliği ile yazıtipi yükseklikleri tablosuna göreli bir değer belirtilebileceğini ifade eder.Olası değerler şunlardır:</p>
+
+<p><indexterm><primary><literal>larger</literal></primary></indexterm>
+<indexterm><primary><literal>smaller</literal></primary></indexterm>
+<tt>[ larger | smaller ]</tt></p>
+
+<p>Örneğin, ebeveyn eleman <literal>medium</literal> yükseklikte bir yazıtipine sahipken, niteliğe belirtilen <literal>larger</literal> değeri, elemanın yazıtipi yüksekliğini <literal>large</literal> yapacaktır. Eğer ebeveyn'in yüksekliği ile tablo girdisi arasında bir uyum sağlanamıyorsa kullanıcı arayüzü uygun bir değeri atamakta özgürdür. Sayısal değerin tablodaki değerleri aşması durumunda kullanılmak üzere kullanıcı arayüzü bir tahmini değerler tablosu bulundurabilir.</p></def>
+</gitem>
+<gitem>
+<label><indexterm><primary><valueref>uzunluk</valueref></primary></indexterm>
+<valueref>uzunluk</valueref></label>
+<def><p>Kullanıcı arayüzünün yazıtipi yükseklikleri tablosundan bağımsız olarak mutlak bir değer belirtileceğini ifade eder. Negatif uzunluklar kuraldışıdır.</p></def>
+</gitem>
+<gitem>
+<label><indexterm><primary><valueref>yüzdelik</valueref></primary></indexterm>
+<valueref>yüzdelik</valueref></label>
+<def><p>Ebeveyn elemanın yazıtipi yüksekliğini ölçüt alan bir yüzdelik değer belirtilebileceğini ifade eder. Yüzdelik değerlerin veya katratların belirtilmesi daha güçlü ve daha birleştirilebilir biçembentlerle sonuçlanır.</p></def>
+</gitem>
+</varlist>
+
+<p>Belli yazıtipi yüksekliklerinin bulunmayışı veya <property>font-size-adjust</property> niteliğinde bir sayısal değer belirtilmiş olması sebebiyle bu niteliğin <titleref ref="actual-value">asıl</titleref> değeri <titleref ref="computed-value">hesaplanan</titleref> değerinden farklı olabilir.</p>
+
+<p>Çocuk elemanlar <property>font-size</property> niteliğinin hesaplanmış değerini miras alırlar (aksi takdirde tepkimeye <property>font-size-adjust</property> niteliği katılır).</p>
+
+<eg>p { font-size: 12pt; }
+blockquote { font-size: larger }
+em { font-size: 120% }
+em { font-size: 1.2em }</eg>
+
+<indexterm><primary><property>font-size-adjust</property></primary></indexterm>
+<indexterm><primary>nitelikler</primary> <secondary><property>font-size-adjust</property></secondary></indexterm>
+<propinfo>
+  <propname>font-size-adjust</propname>
+  <value><valueref>sayı</valueref> | <literal>none</literal> | <literal>inherit</literal></value>
+  <initial><literal>none</literal></initial>
+  <applies-to/>
+  <inherited>evet</inherited>
+  <percentages/>
+  <media><termref def="visual-media-group">görsel</termref></media>
+</propinfo>
+
+<p><indexterm><primary>iki seviyeli</primary></indexterm>
+<indexterm><primary>motif oranı</primary></indexterm>
+Büyük ve küçük harflerin bulunduğu metinlerde (iki seviyelilik), bir yazıtipinin nesnel yüksekliği ile okunabilirliği, <property>font-size</property> değerinden ziyade <descriptor>x-height</descriptor> değerine veya daha anlamlı olarak <term>motif oranı</term> de denilen ve bu iki değerin oranına karşılık gelen bir değere bağlıdır. Motif yüksekliği görece daha büyük bir yazıtipi küçük yazıtipi yüksekliklerinde bile daha okunaklı olacaktır. Motif yüksekliği görece daha küçük bir yazıtipi ise belli bir eşik aşıldıktan sonra hızla okunaksız hale gelecektir. Düz mantıkla sadece yazıtipi yüksekliğine bakarak yazıtipi ikamesi okunaksız karakterlerle sonuçlanabilir.</p>
+
+<p>Örneğin, tanınmış yazıtiplerinden Verdana'nın motif oranı 0.58'dir. Yani, Verdana'nın yazıtipi yüksekliği 100 birimken x yüksekliği 58 birim olacaktır. Bununla birlikte, Times New Roman'ın motif oranı 0.46'dır. Verdana bu bakımdan Times New Roman'a göre daha küçük yazıtipi yüksekliklerinde daha okunaklı  olacaktır; ancak, eğer Times New Roman için ikame yazıtipi olarak belirtildiği takdirde 'çok büyük' görünecektir.</p>
+
+<p>Bu nitelik yazarların yazıtipi kümesindeki ilk yazıtipinin x yüksekliğini korumak amacıyla ikame yazıtipleri için bir motif oranı belirtebilmelerini mümkün kılar. Değerlerin anlamları şöyledir:</p>
+
+<varlist>
+<gitem>
+<label><indexterm><primary><literal>none</literal></primary></indexterm>
+<literal>none</literal></label>
+<def><p>Yazıtipinin x yüksekliğini korumaz.</p></def>
+</gitem>
+<gitem>
+<label><indexterm><primary><valueref>sayı</valueref></primary></indexterm>
+<valueref>sayı</valueref></label>
+<def><p>Motif oranının belirtir. Bu değer kümedeki ilk yazıtipinin motif oranıdır. Bulunabilen yazıtiplerine uygulanacak oran şu bağıntı ile hesaplanır:</p>
+
+<eg role="layout">y ( a / a' ) = c</eg>
+
+<p>Burada</p>
+
+<eg role="layout">y  = kümedeki ilk yazıtipinin <property>font-size</property> değeri
+a  = kümedeki ilk yazıtipinin motif oranı
+a' = bulunan yazıtipinin motif oranı
+c  = bulunan yazıtipine uygulanacak <property>font-size</property> değeri</eg>
+
+<p>Örneğin, motif oranı 0.58 olan 14 puntoluk Verdana bulunamamışsa ve bulunan yazıtipinin motif oranı 0.46 ise ikame yazıtipi yüksekliği 14 * (0.58/0.46) = 17.65pt olacaktır.</p></def>
+</gitem>
+</varlist>
+
+<p>Yazıtipi yükseklik ayarlaması, <property>font-size</property> niteliğinin <titleref ref="actual-value">asıl değerinin</titleref> hesaplanması sırasında hesaba katılır. Kalıtsallık <titleref ref="computed-value">hesaplanan değere</titleref> dayandığından çocuk elemanlar ayarlanmamış değerleri miras alacaklardır.</p>
+
+<p>Bu bakımdan, <property>font-size-adjust</property> niteliğinin kümedeki ilk yazıtipine uygulanması gerekir. (Motif oranı, kümedeki ilk yazıtipinin ex/em oranına eşit olduğundan niteliğin değeri ilk yazıtipinde etkili olmaz.) Böylece, niteliğin satıriçi çocuk elemanlar tarafından miras alındığı durumda ortaya çıkabilecek olumsuzluklar düzelir.</p>
+
+<p>Aşağıdaki ilk resimde, kısa bir metnin aynı yazıtipi yüksekliğinde (72 pt/inç'lik ortamda 11pt) çeşitli yazıtipleriyle elde edilen sonuçlar yazıtipi isimleri ve motif oranlarıyla listelenmiştir. Dikkat ederseniz, motif oranları büyük olan yazıtipleriyle yazılan metinler diğerlerinden daha büyük yazıtipi yüksekliğiyle yazılmış izlenimi vermektedir. Çok düşük motif oranlarına sahip yazıtipleri aynı boyutta okunaksızlaşmaktadır.</p>
+
+<figure>
+<graphic source="images/font-adjust-a.gif" alt="12 puntoluk yazıtiplerinin karşılaştırılması" />
+</figure>
+
+<p>Sonraki resimde Verdana kümenin ilk üyesi olmak üzere <property>font-size-adjust</property> niteliği ile oranlama yapıldıktan sonra elde edilen sonuçları göstermektedir. Bu ayarlama yapıldığında yazıtiplerinin görünen boyutları birbirlerine çok yakın olurken asıl yükseklikler yerine göre %100'den fazla artmaktadır. <property>font-size-adjust</property> niteliğinin ayrıca motiflerin yataydaki dizilimlerini de dengelediğine dikkat ediniz.</p>
+
+<figure>
+<graphic source="images/font-adjust-b.gif" alt="Yükseklikleri ayarlanmış yazıtiplerinin karşılaştırılması" />
+</figure>
+</div3>
+
+<div3 id="font-shorthand">
+<head>Kestirme yazıtipi niteliği: <property>font</property></head>
+
+<indexterm><primary sortas="font-"><property>font</property></primary></indexterm>
+<indexterm><primary>nitelikler</primary> <secondary><property>font</property></secondary></indexterm>
+<propinfo>
+  <propname>font</propname>
+  <value>[ [ <valueref>font-style</valueref> || <valueref>font-variant</valueref> || <valueref>font-weight</valueref> ]? <valueref>font-size</valueref> [ / <valueref>line-height</valueref> ]? <valueref>font-family</valueref> ] | <literal>caption</literal> | <literal>icon</literal> | <literal>menu</literal> | <literal>message-box</literal> | <literal>small-caption</literal> | <literal>status-bar</literal> | <literal>inherit</literal></value>
+  <initial>ilgili niteliklere bakınız</initial>
+  <applies-to/>
+  <inherited>evet</inherited>
+  <percentages><valueref>font-size</valueref> ve <valueref>line-height</valueref> üzerinde izin verilir</percentages>
+  <media><termref def="visual-media-group">görsel</termref></media>
+</propinfo>
+
+<p><property>font</property> niteliği <termref def="almost">aşağıda açıklanan durum dışında</termref>,  <property>font-style</property>, <property>font-variant</property>, <property>font-weight</property>, <property>font-size</property>, <property>line-height</property> ve <property>font-family</property> niteliklerini biçembentte birarada belirtmek için kestirme bir niteliktir. Yazıtipleriyle ilgili çok sayıda niteliğe değer atamak için kullanılan bu niteliğin sözdizimi geleneksel dizgisel  kısayol gösterimine dayanır.</p>
+
+<p>Yazıtipiyle ilgili tüm nitelikler önce kendilerinin ilk değerlerini alırlar. Önceki paragraftakilere ek olarak bu işlem <property>font-stretch</property> ve <property>font-size-adjust</property> niteliklerine de uygulanır. Ancak bu işlemden sonra <property>font</property> kestirme niteliğinde belirtilen değerler uygulanır. İlk değerler ve izin verilen değerleri öğrenmek için her niteliğin kendi açıklamasına bakınız. Geriye uyumluluk sebebiyle, <property>font</property> kestirme niteliğini kullanarak <property>font-stretch</property> ve <property>font-size-adjust</property> niteliklerine ilk değerlerinden başka bir değer atamak mümkün değildir. Bu niteliklere değerleri kendileri üzerinden atanmalıdır.</p>
+
+<example>
+<eg>p { font: 12pt/14pt sans-serif }
+p { font: 80% sans-serif }
+p { font: x-large/110% "new century schoolbook", serif }
+p { font: bold italic large Palatino, serif }
+p { font: normal small-caps 120%/120% fantasy }
+p { font: oblique 12pt "Helvetica Nue", serif; font-stretch: condensed }</eg>
+
+<p>İkinci kuraldaki yüzdelik değer ('80%') yazıtipi yüksekliği olup ebeveyn elemanın yazıtipi yüksekliğini ölçüt alır. Üçüncü kuraldaki yüzdelik değer ('110%') ise satır yüksekliği olup elemanın kendi yazıtipi yüksekliğini ölçüt alır.</p>
+
+<p>İlk üç kural <property>font-variant</property> ve <property>font-weight</property> için değer belirtmez, dolayısıyla bu nitelikler ilk değerlerini (<literal>normal</literal>) alırlar. "new century schoolbook" yazıtipi aile adının boşluk içerdiğine ve bu yüzden tırnak içine alınmış oluşuna dikkat ediniz. Dördüncü kural, <property>font-weight</property> niteliğine <literal>bold</literal>, <property>font-style</property> niteliğine <literal>italic</literal> değerlerini doğrudan, <property>font-variant</property> niteliğine <literal>normal</literal> değerini dolaylı olarak atar.</p>
+
+<p>Beşinci kural <property>font-variant</property> (<literal>small-caps</literal>), the <property>font-size</property>
+(ebeveynin yazıtipi yüksekliğinin %120'si), <property>line-height</property> (yazıtipi yüksekliğinin %120'si) ve <property>font-family</property> (<literal>fantasy</literal>) niteliklerine atama yapar. Kuraldaki <literal>normal</literal> değeri kalan iki niteliğe uygulanır: <property>font-style</property> ve <property>font-weight</property>.</p>
+
+<p>Altıncı kuraldaki ilk bildirim <property>font-style</property>, <property>font-size</property> ve <property>font-family</property> niteliklerine doğrudan değer atarken diğer niteliklere ilk değerlerini atar. <property>font-stretch</property> niteliğine <property>font</property> kestirme niteliği ile değer atanamadığından niteliğe değeri kendisi üzerinden <literal>condensed</literal> olarak atanmıştır.</p>
+</example>
+
+<p><indexterm><primary>sistem yazıtipleri</primary></indexterm>
+Aşağıdaki değerler sistem yazıtiplerine atıf yapar:</p>
+
+<varlist>
+<gitem>
+<label><indexterm><primary><literal>caption</literal></primary></indexterm>
+<literal>caption</literal></label>
+<def><p>Bir başlığı olan pencere gereçlerinde (düğmeler, pencereler gibi) başlıkta kullanılacak yazıtipi.</p></def>
+</gitem>
+<gitem>
+<label><indexterm><primary><literal>icon</literal></primary></indexterm>
+<literal>icon</literal></label>
+<def><p>Simge yaftalarında kullanılan yazıtipi.</p></def>
+</gitem>
+<gitem>
+<label><indexterm><primary><literal>menu</literal></primary></indexterm>
+<literal>menu</literal></label>
+<def><p>Menülerde kullanılan yazıtipi.</p></def>
+</gitem>
+<gitem>
+<label><indexterm><primary><literal>message-box</literal></primary></indexterm>
+<literal>message-box</literal></label>
+<def><p>İleti penceresi içeriğinde kullanılan yazıtipi</p></def>
+</gitem>
+<gitem>
+<label><indexterm><primary><literal>small-caption</literal></primary></indexterm>
+<literal>small-caption</literal></label>
+<def><p>Küçük gereçleri yaftalamakta kullanılan yazıtipi.</p></def>
+</gitem>
+<gitem>
+<label><indexterm><primary><literal>status-bar</literal></primary></indexterm>
+<literal>status-bar</literal></label>
+<def><p>Pencere durum çubuğunda kullanılan yazıtipi</p></def>
+</gitem>
+</varlist>
+
+<p>Sistem yazıtipleri oldukları gibi sadece anahtar sözcükleri ile belirtilebilir; yani, bu anahtar sözcüklerden birini belirtmekle aynı anda aile, yükseklik, kalınlık, biçem, vs. belirtilmiş olur. Bu değerler sonradan istenirse değiştirilebilir. Belirtilen karakteristiklerin bazılarının bulunmadığı platformlarda kullanıcı arayüzü bunlara uygun değerleri atamalıdır (örneğin,  <literal>small-caption</literal> yazıtipi yerine <literal>caption</literal> yazıtipinin küçüğünü veya öntanımlı yazıtipini atamak gibi). Bir sistem yazıtipi için, normal yazıtiplerindeki gibi, işletim sisteminin kullanıcı tercihine bırakmadığı yazıtipi niteliklerine ilk değerleri atanır.</p>
+
+<p><termdef id="almost" term="yaklaşık"><property>font</property> niteliğinin neden bir <term>yaklaşık</term> kestirme nitelik olduğu şöyle açıklanabilir: sistem yazıtipleri sadece bu nitelik ile belirtilebilir, dolayısıyla bu nitelik yazarlara alt niteliklerinden fazlasını sunar. Bununla birlikte, <property>font-weight</property> gibi ayrı ayrı nitelikler değerlerini, sistem yazıtipi için belirtilmiş değerlerden biri olarak alırlar ve bu değerleri her kullanıcı sistemden değiştirebilir, biçembentle değil</termdef>.</p>
+
+<example>
+<eg>button { font: 300 italic 1.3em/1.7em "FB Armada", sans-serif }
+button p { font: menu }
+button p em { font-weight: bolder }</eg>
+
+<p><property>font</property> niteliği kestirme nitelik olduğundan temsil ettiği niteliklerden değer belirtilmeyenlere ilk değerlerini atar, bu bakımdan aşağıdaki iki kural eşdeğerdir:</p>
+
+<eg>
+button p { font: 600 9pt Charcoal }
+
+button p {
+  font-style: normal;
+  font-variant: normal;
+  font-weight: 600;
+  font-size: 9pt;
+  line-height: normal;
+  font-family: Charcoal
+}</eg>
+</example>
+</div3>
+
+<div3 id="generic-font-families">
+<head>Soysal yazıtipi aileleri</head>
+<p>Soysal yazıtipi aileleri bir son çare mekanizmasıdır. Biçembent yazarının belirttiği yazıtiplerinin hiçbirinin bulunamaması halinde başvurulacak son çare olarak hizmet verirler. En iyi dizgisel denetim için biçembentlerde belli isimlerdeki yazıtipleri kullanılmalıdır.</p>
+
+<p><termdef id="defined-to-exist" term="mevcutlu">Soysal yazıtipi ailelerinin beşi de tüm BB gerçeklenimlerinde <term>mevcutlu</term>dur (beşininin de beş ayrı yazıtipine eşlenmeleri zorunlu değildir)</termdef>. Kullanıcı arayüzleri soysal yazıtipi aileleri için, mevcut teknolojinin izin verdiği ölçüde her ailenin kendi özelliklerine uygun, makul öntanımlı seçimler sağlamalıdırlar.</p>
+
+<p>Kullanıcı arayüzleri soysal yazıtiplerine uygun seçimleri yapabilmelerini kullanıcılarına kolaylaştırmalıdırlar.</p>
+
+<div4 id="value-def-serif">
+<indexterm><primary><literal>serif</literal></primary></indexterm>
+<head><code><kw>serif</kw></code></head>
+
+<p>BB'de kullanıldığı anlamıyla çıkıntılı motifli (<literal>serif</literal>) yazıtiplerinde motif çizgileri fırça darbesi bitişlerine, incelen veya yuvarlanan ya da çıkıntılı uçlara (küt çıkıntılar dahil) sahiptir. Serif yazitiplerinin motif genişlikleri genellikle değişkendir. <literal>sans-serif</literal> soysal yazıtipi ailesindeki yazıtiplerine göre motif çizgisi kalınlıkları büyük değişiklik gösterir. Belli başlı dillerin yazıları için  örneğin Mincho (Japon), Pathang (Korece), Sung veya Song (Çince) gibi başka isimler daha uygun olsa da BB böyle her tür yazıya uygulanacak yazıtipi için <literal>serif</literal> terimini kullanır. Böyle her tür yazıtipi soysal <literal>serif</literal> ailesiyle temsil edilebilir.</p>
+
+<p>Bu açıklamaya uyan yazıtipi örnekleri:</p>
+
+<table>
+<tr>
+<td>Latin yazıtipleri</td>
+<td>Times New Roman, Bodoni, Garamond, Minion Web, ITC Stone Serif,
+MS Georgia, Bitstream Cyberbit</td>
+</tr>
+<tr>
+<td>Yunan yazıtipleri</td>
+<td>Bitstream Cyberbit</td>
+</tr>
+<tr>
+<td>Kril yazıtipleri</td>
+<td>Adobe Minion Cyrillic, Excelcior Cyrillic Upright, Monotype
+Albion 70, Bitstream Cyberbit, ER Bukinst</td>
+</tr>
+<tr>
+<td>İbranice yazıtipleri</td>
+<td>New Peninim, Raanana, Bitstream Cyberbit</td>
+</tr>
+<tr>
+<td>Japon yazıtipleri</td>
+<td>Ryumin Light-KL, Kyokasho ICA, Futo Min A101</td>
+</tr>
+<tr>
+<td>Arapça yazıtipleri</td>
+<td>Bitstream Cyberbit</td>
+</tr>
+<tr>
+<td>Çeroki yazıtipleri</td>
+<td>Lo Cicero Cherokee</td>
+</tr>
+</table>
+</div4>
+
+<div4 id="value-def-sans-serif">
+<indexterm><primary><literal>sans-serif</literal></primary></indexterm>
+<head><code><kw>sans-serif</kw></code></head>
+
+
+<p>BB'de kullanıldığı anlamıyla çıkıntısız ("sans-serif" serifsiz, çıkıntısız demektir) yazıtiplerindeki motiflerin çizgi genişlikleri hemen hemen sabittir, çıkıntılı yazıtipindeki gibi incelip kalınlaşmaz, uçlarda ilave çıkıntılar gibi süslemeleri yoktur. Sans-serif yazitiplerinin motif genişlikleri genellikle değişkendir. <literal>serif</literal> soysal yazıtipi ailesindeki yazıtiplerine göre motif çizgisi kalınlıkları daha az değişiklik gösterir. Belli başlı dillerin yazıları için örneğin Gothic (Japon), Kai (Çince), Totum veya Kodig (Korece) gibi başka isimler daha uygun olsa da BB böyle her tür yazıya uygulanacak yazıtipi için <literal>sans-serif</literal> terimini kullanır. Böyle her tür yazıtipi soysal <literal>sans-serif</literal> ailesiyle temsil edilebilir.</p>
+
+<p>Bu açıklamaya uyan yazıtipi örnekleri:</p>
+
+<table>
+<tr>
+<td>Latin yazıtipleri</td>
+<td>MS Trebuchet, ITC Avant Garde Gothic, MS Arial, MS Verdana,
+Univers, Futura, ITC Stone Sans, Gill Sans, Akzidenz Grotesk,
+Helvetica</td>
+</tr>
+<tr>
+<td>Yunan yazıtipleri</td>
+<td>Attika, Typiko New Era, MS Tahoma, Monotype Gill Sans 571,
+Helvetica Greek</td>
+</tr>
+<tr>
+<td>Kril yazıtipleri</td>
+<td>Helvetica Cyrillic, ER Univers, Lucida Sans Unicode,
+Bastion</td>
+</tr>
+<tr>
+<td>İbranice yazıtipleri</td>
+<td>Arial Hebrew, MS Tahoma</td>
+</tr>
+<tr>
+<td>Japon yazıtipleri</td>
+<td>Shin Go, Heisei Kaku Gothic W5</td>
+</tr>
+<tr>
+<td>Arapça yazıtipleri</td>
+<td>MS Tahoma</td>
+</tr>
+</table>
+</div4>
+
+<div4 id="value-def-cursive">
+<indexterm><primary><literal>cursive</literal></primary></indexterm>
+<head><code><kw>cursive</kw></code></head>
+
+<p>BB'de kullanıldığı anlamıyla elyazısı yazıtipleri sağa yatık işlek bir elyazısını andırır, motifler yanyana geldiklerinde hat başlangıçları ve bitişleri birleşir. Bazı dillerin yazıları, örneğin Arapça hemen hemen daima elyazısı türündedir. Belli başlı dillerin yazıları için  örneğin Chancery, Brush, Swing ve Script gibi başka isimler daha uygun olsa da BB böyle her tür yazıya uygulanacak yazıtipi için <literal>cursive</literal> terimini kullanır.</p>
+
+<p>Bu açıklamaya uyan yazıtipi örnekleri:</p>
+
+<table>
+<tr>
+<td>Latin yazıtipleri</td>
+<td>Caflisch Script, Adobe Poetica, Sanvito, Ex Ponto, Snell
+Roundhand, Zapf-Chancery</td>
+</tr>
+<tr>
+<td>Kril yazıtipleri</td>
+<td>ER Architekt</td>
+</tr>
+<tr>
+<td>İbranice yazıtipleri</td>
+<td>Corsiva</td>
+</tr>
+<tr>
+<td>Arapça yazıtipleri</td>
+<td>DecoType Naskh, Monotype Urdu 507</td>
+</tr>
+</table>
+</div4>
+
+<div4 id="value-def-fantasy">
+<indexterm><primary><literal>fantasy</literal></primary></indexterm>
+<head><code><kw>fantasy</kw></code></head>
+
+<p>Fantezi yazıtipleri BB'de başat olarak süsleme amaçlıdır (Bunlar, resimler, semboller değil süslü karakter motifleri içeren yazıtipleridir). Örnekler:</p>
+
+<table>
+<tr>
+<td>Latin yazıtipleri</td>
+<td>Alpha Geometrique, Critter, Cottonwood, FB Reactor, Studz</td>
+</tr>
+</table>
+</div4>
+
+<div4 id="value-def-monospace">
+<indexterm><primary><literal>monospace</literal></primary></indexterm>
+<head><code><kw>monospace</kw></code></head>
+
+<p>Bir eşalanlı (monospace) yazıtipinin biricik özelliği, bütün motiflerinin aynı genişlikte olmasıdır. Çıktısı daktilo yazısına benzer ve çoğunlukla kod örneklerini görüntülemek için kullanılır.</p>
+
+<p>Bu açıklamaya uyan yazıtipi örnekleri:</p>
+
+<table>
+<tr>
+<td>Latin yazıtipleri</td>
+<td>Courier, MS Courier New, Prestige, Everson Mono</td>
+</tr>
+<tr>
+<td>Yunan yazıtipleri</td>
+<td>MS Courier New, Everson Mono</td>
+</tr>
+<tr>
+<td>Kril yazıtipleri</td>
+<td>ER Kurier, Everson Mono</td>
+</tr>
+<tr>
+<td>Japon yazıtipleri</td>
+<td>Osaka Monospaced</td>
+</tr>
+<tr>
+<td>Çeroki yazıtipleri</td>
+<td>Everson Mono</td>
+</tr>
+</table>
+</div4>
+</div3>
+</div2>
+
+<div2 id="font-selection">
+<head>Yazıtipi seçimi</head>
+
+<p>BB2 yazıtipi mekanizmasının ikinci aşaması, yazarın belirttiği yazıtipi niteliklerine, mevcut yazıtiplerine dayalı olarak kullanıcı arayüzünün bir yazıtipini seçmesiyle ilgilidir. <titleref ref="algorithm">Yazıtipi eşleştirme mekanizması</titleref>nın ayrıntıları aşağıda bulunabilir.</p>
+
+<p>Dört olası yazı tipi seçme eylemi vardır: isim eşleme, akıllı eşleme, bireşim ve yazıtipi indirme.</p>
+
+<glist>
+<gitem>
+<label><indexterm><primary>yazıtipi ismi eşleme</primary></indexterm>
+yazıtipi ismi eşleme</label>
+<def><p>Bu durumda kullanıcı arayüzü, istenen yazıtipi ile aynı aile ismine sahip mevcut ve erişilebilir bir yazıtipini kullanır. (Eğer yazarın kullandığı ile kullanıcıdaki yazıtipi farklı üreticilere aitse, görünümün ve yazıtipi ölçülerinin eşleşmesi gerekmez.) Eşleştirme bilgisi, aile adı dahil BB yazıtipi nitelikleri ile sınırlıdır. Bu yöntem BB1'de kullanılan tek yöntem idi.</p></def>
+</gitem>
+<gitem>
+<label><indexterm><primary>akıllı yazıtipi eşleme</primary></indexterm>
+akıllı yazıtipi eşleme</label>
+<def><p>Bu durumda kullanıcı arayüzü, istenen yazıtipi ile  görsel olarak eşleşen mevcut ve erişilebilir bir yazıtipini kullanır. (Yazıtipi ölçülerinin tam olarak eşleşmesi gerekmez). Eşleştirme bilgisi, yazıtipi çeşidi (metin veya sembol), çıkıntıların doğası, kalınlık, yükseklik, motif oranı, alt boşluk, üst boşluk, eğim gibi bilgileri içerir.</p></def>
+</gitem>
+<gitem>
+<label><indexterm><primary>yazıtipi bireşimi</primary></indexterm>
+yazıtipi bireşimi</label>
+<def><p>Bu durumda kullanıcı arayüzü, görüntüsü ve ölçüleri istenen yazıtipine uygun bir yazıtipi oluşturur. Bireştirim bilgisi eşleşim bilgilerini içermenin yanında özellikle parametreler için bazı eşleştirme şemalarında kullanılandan daha doğru değerler gerektirir, özellikle de eğer belirtilen yazıtipinin tüm yerleşim özellikleri korunacaksa doğru genişlik ölçüleri, karakterlere uygun motifler ve konum bilgisi gerektirir.</p></def>
+</gitem>
+<gitem>
+<label><indexterm><primary>yazıtipinin indirilmesi</primary></indexterm>
+yazıtipinin indirilmesi</label>
+<def><p>Son olarak kullanıcı arayüzü Genel Ağ'dan bir yazıtipi indirebilir. Geçerli belge için bazı resimlerin, seslerin veya uygulamaların farklı adreslerden temin edilmesi gibi bir işlem olup, tıpkı onlar gibi sayfanın gösterilmesini biraz geciktirebilir.</p></def>
+</gitem>
+</glist>
+
+<p><indexterm><primary>aşamalı oluşturma</primary></indexterm>
+<term>Aşamalı oluşturma</term> yazıtipi indirme ile diğer yöntemlerden birinin birleşiminden oluşur; istenen yazı tipi indirilene kadar içeriğin okunmasına imkan vermek için geçici bir yazıtipi seçilir (isim eşleme, akıllı eşleme veya bireşim ile). Asıl yazıtipi indirildikten sonra geçici yazıtipinin yerine bu yazıtipi geçer (akışın/yerleşimin değişmeyeceği umuduyla).</p>
+
+<note><p>Aşamalı oluşturma, yazıtipi indirilip belge yeniden oluşturulurken içeriğin yeniden yerleştirilmesinin gerekmemesi için yazıtipi ölçülerinin bilinmesini gerektirir. Belgedeki her yazıtipi için bir kere belirtilmesi gereken bu ölçü bilgisi yeterince ayrıntılı olmalıdır.</p></note>
+
+<div3 id="font-descriptions">
+<indexterm><primary>yazıtipini verisiyle tanımlama</primary></indexterm>
+<head>Yazıtipi tanımları ve <code><kw>@font-face</kw></code></head>
+
+<p><indexterm><primary>yazıtipi verisi</primary></indexterm>
+Yazıtipi tanımlama yazarın yazıtipi belirtimi ile <term>yazıtipi verisi</term> arasında bir köprü sağlar. Yazıtipi verisi metni biçimlemek ve karakterlerle eşleşen soyut motifleri, yani biteşlemlerini veya oranlanabilir çizimlerini oluşturmak için gereken veridir. Yazıtipleri biçembent nitelikleri ile belirtilir.</p>
+
+<p>Yazıtipi tanımı yazıtipi veritabanına ekli olup uygun yazıtipi verisinin seçiminde kullanılır. Yazıtipi tanımı tanımlayıcılar içerir; bu tanımlayıcılar yazıtipinin Genel Ağ'da bulunacağı yer, yazıtipi verisinin özellikleri gibi tanımlar içerir. Ayrıca, biçembent yazıtipi niteliklerini belli bir yazıtipi verisiyle eşlemek için de gereklidir. Bir yazıtipi tanımının ayrıntı seviyesi, yazıtipi adından bir motif genişlikleri listesine kadar çeşitlilik gösterebilir.</p>
+
+<p>Yazıtipi tanımlayıcıları üç sınıfa ayrılabilir:</p>
+
+<olist>
+<item><p>Yazıtıpinin BB kullanımı ile yazıtipi tanımı arasında ilişki kuranlar (bunlar, BB yazıtipi nitelikleri ile aynı isimdedirler),</p></item>
+
+<item><p>yazıtipi verisinin temin edileceği tanım-yerini belirtenler,</p></item>
+
+<item><p>Yazıtipinin veri özelliklerini belirtenler; bunlar yazıtipi tanımı ile yazıtipi verisini ilişkilerdirirler.</p></item>
+</olist>
+
+<p><indexterm><primary>@-kuralı</primary></indexterm>
+<indexterm><primary><code>@font-face</code></primary></indexterm>
+Tüm yazıtipi tanımlayıcıları <code>@font-face</code> @-kuralı ile belirtilir. Sözdizimi şöyledir:</p>
+
+<eg role="layout">@font-face { <valueref>yazıtipi-tanımı</valueref> }</eg>
+
+<p><indexterm><primary><valueref>yazıtipi-tanımı</valueref> </primary></indexterm>
+<termdef id="value-def-yazıtipi-tanımı" term="yazıtipi-tanımı değeri">Burada  <var>yazıtipi-tanımı</var> şu biçimdedir</termdef>:</p>
+
+<eg role="layout">tanımlayıcı: değer;
+tanımlayıcı: değer;
+[...]
+tanımlayıcı: değer;</eg>
+
+<p><indexterm><primary><code>@font-face</code></primary></indexterm>
+Her <code>@font-face</code> kuralı, her yazıtipi için dolaylı ya da dolaysız bir değer belirtir. Bunların değerleri, bu belirtimde her tanımlayıcıda ilk değerleri listelenen kurallarda doğrudan belirtilmezler. Bu tanımlayıcılar sadece tanımlandıkları <code>@font-face</code> kuralı bağlamında uygulanırlar; belge dil elemanlarına uygulanmazlar. Bu bakımdan, hangi elemana hangi tanımlayıcı uygulanır veya çocuk elemanlar neleri miras alırlar gibi şeyler tanımlayıcılar için sözkonusu değildir.</p>
+
+<p>Kullanılabilecek yazıtipi tanımlayıcılar bu belirtimin sonraki bölümlerinde açıklanmıştır.</p>
+
+<example>
+<p>Burada 'Robson Celtic' yazıtipi bir HTML belge içindeki bir biçembentte tanımlanmıştır:</p>
+<eg><![CDATA[<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0//EN">
+<html>
+  <head>
+    <title>Yazıtipi denemesi</title>
+    <style type="text/css" media="screen, print">
+      @font-face {
+        font-family: "Robson Celtic";
+        src: url("http://site/fonts/rob-celt")
+      }
+      h1 { font-family: "Robson Celtic", serif }
+    </style>
+  </head>
+  <body>
+    <h1>Bu başlık Robson Celtic kullanarak gösterildi</h1>
+  </body>
+</html>]]></eg>
+
+<p>Biçembent (<htmltag>style</htmltag> elemanı altında), tüm <htmltag>h1</htmltag> elemanlarında 'Robson Celtic' yazıtipi ailesinin kullanılmasına belirten bir BB kuralı içermektedir.</p>
+
+<p>Bir BB1 gerçeklenimi, aile adı ve diğer nitelikleri 'Robson Celtic' ile eşleşen bir yazıtipi arayacak ve böyle bir yazıtipi bulamazsa kullanıcı arayüzüne özgü bir son çare serif yazıtipini (<termref def="defined-to-exist">mevcutlu</termref> olanı) kullanacaktır.</p>
+
+<p><indexterm><primary><code>@font-face</code></primary></indexterm>
+BB2'yi gerçekleyen bir kullanıcı arayüzü ise, önce 'Robson Celtic' ailesini tanımlayan bir yazıtipi tanımı aramak için <code>@font-face</code> kurallarını inceleyecektir. Bu örnekte, bir kural böyle bir eşleşmeyi içermektedir. Bu kural çok fazla yazıtipi verisi içermese de belgenin oluşturulması için gereken yazıtipinin alınacağı bir tanım-yeri belirtmektedir. İndirilen yazıtipi başka uygulamalar için de yararlı olabilecektir. Eğer uygun bir <code>@font-face</code> kuralı bulunamasaydı kullanıcı arayüzü bir BB1 gerçekleniminin yaptığını yapacaktı.</p>
+
+<p>Eğer 'Robson Celtic' yazıtipi istemci sistemde kurulu olsaydı, bu kural yazıtipinin kurulu kopyası için <specref ref="algorithm"/> bölümünde açıklandığı gibi kullanıcı arayüzünün kendi yazıtipi veritabanına bir girdi eklemesine sebep olurdu. Bu örnekte, kurulu kopya indirilebilir kopyadan önce eşleşirdi.</p>
+</example>
+
+<p><indexterm><primary><code>yoksaymak</code></primary></indexterm>
+<code>@font-face</code> kuralını anlamayan BB1 gerçeklenimleri, kaşlı ayraçlar arasında kalan herşeyi <termref def="ignore">yoksayacaklardır</termref>. Bu @-kuralı BB'nin <titleref ref="syntax">ileriye uyumlu çözümleme</titleref> gereksinimleri ile uyumludur. Çözümleyiciler bu kuralları hata vermeksizin <termref def="ignore">yoksayabilirler</termref>.</p>
+
+<p>Yazıtipi verisinden ayrı olarak yazıtipi tanımlayıcıların da olması yazıtipi seçimi ve/veya ikamesinin mamkün olması dışında başka yararları da vardır. Yazıtipi tanımlayıcıları üzerinde kopyalayarak çoğaltma kısıtlamaları ve verilerin korunması yazıtipi verisinin tamamı üzerindekinden çok daha zayıf olabilir. Bu bakımdan, bir çok belge tarafından ortaklaşa kullanılan bir biçembentte belirtilmişse yazıtipi tanımını yerel olarak kurmak veya en azından bir yerel depoda bulundurmak mümkün olabilir; bu, yazıtipi tanımının tamamına  Genel Ağ'dan ismiyle bir kereden fazla erişilebilir olmasına gerektirmez.</p>
+
+<p>Eğer bir yazıtipi tanımlayıcı birden fazla belirtilmişse son tanımlayıcı dışındakiler yoksayılır.</p>
+
+<p><indexterm><primary><code>yoksaymak</code></primary></indexterm>
+Ayrıca, tanınmayan veya kullanıcı arayüzüne yararsız olan yazıtipi tanımlayıcılarını kullanıcı arayüzlerinin <termref def="ignore">yoksayması</termref> gerekir. BB'nin ileri sürümlerinde daha iyi yazıtipi ikamesi, eşleşmesi veya bireşimi sağlamak için yeni tanımlayıcılar eklenebilir.</p>
+</div3>
+
+<div3 id="select">
+<head>Yazıtipi seçimi için tanımlayıcılar: <descriptor>font-family</descriptor>, <descriptor>font-style</descriptor>, <descriptor>font-variant</descriptor>, <descriptor>font-weight</descriptor>, <descriptor>font-stretch</descriptor> ve <descriptor>font-size</descriptor></head>
+
+<p>Aşağıdaki tanımlayıcılar kaşı düştuklerı BB2 yazıtipi nitelikleri ile aynı isme sahiptirler ve tek bir değer alabilecekleri gibi virgüllerle ayrılmış birden fazla değer alabilirler.</p>
+
+<p><indexterm><primary><code>@font-face</code></primary></indexterm>
+Bu listedeki değerler, aksi açıkça belirtilmedikçe, karşı düştükleri BB2 niteliğininkiyle aynıdır. Eğer tek bir değer varsa eşleşme bu değerle olur. Bir listeyse listedeki her değerle eşleşme aranır. <code>@font-face</code> etki alanında belirtilmeyen tanımlayıcılar için ilk değerleri kullanılır.</p>
+
+<indexterm><primary><descriptor>font-family</descriptor></primary></indexterm>
+<indexterm><primary>yazıtipi tanımlayıcılar</primary> <secondary><descriptor>font-family</descriptor></secondary></indexterm>
+<descinfo name="font-family">
+  <value>[ <valueref>aile-adı</valueref> | <valueref>soysal-aile</valueref> ] [,
+[ <valueref>aile-adı</valueref> | <valueref>soysal-aile</valueref> ]]*</value>
+  <initial>kullanıcı arayüzüne bağlı</initial>
+  <media><termref def="visual-media-group">görsel</termref></media>
+</descinfo>
+
+<p>Bu tanımlayıcı bir yazıtipinin <termref def="font-family">yazıtipi ailesi</termref> adı için olup <property>font-family</property> niteliğiyle aynı değerleri alır.</p>
+
+<indexterm><primary><descriptor>font-style</descriptor></primary></indexterm>
+<indexterm><primary>yazıtipi tanımlayıcılar</primary> <secondary><descriptor>font-style</descriptor></secondary></indexterm>
+<descinfo name="font-style">
+  <value><literal>all</literal> | [ <literal>normal</literal> | <literal>italic</literal> | <literal>oblique</literal> ] [, [ <literal>normal</literal> | <literal>italic</literal> | <literal>oblique</literal>] ]*</value>
+  <initial><literal>all</literal></initial>
+  <media><termref def="visual-media-group">görsel</termref></media>
+</descinfo>
+
+<p>Bu tanımlayıcı bir yazıtipinin biçemi için olup virgül ayraçlı bir değer listesi kabul etmesi dışında <property>font-style</property> niteliğiyle aynı değerleri alır.</p>
+
+<indexterm><primary><literal>small-caps</literal></primary></indexterm>
+<indexterm><primary><descriptor>font-variant</descriptor></primary></indexterm>
+<indexterm><primary>yazıtipi tanımlayıcılar</primary> <secondary><descriptor>font-variant</descriptor></secondary></indexterm>
+<descinfo name="font-variant">
+  <value>[ <literal>normal</literal> | <literal>small-caps</literal>] [,[ <literal>normal</literal> | <literal>small-caps</literal> ]]*</value>
+  <initial><literal>normal</literal></initial>
+  <media><termref def="visual-media-group">görsel</termref></media>
+</descinfo>
+
+<p>Bu yazıtipinin bir yazıtipi ailesinin <literal>small-caps</literal> üyesi olup olmadığını biçembentte belirtmek için kullanılır. Virgül ayraçlı bir değer listesi kabul etmesi dışında <property>font-variant</property> niteliğiyle aynı değerleri alır.</p>
+
+<note><p>Latin yazıtipleriyle tutarlılık sağlamak için Kril <emph>pryamo&#301;</emph> yazıtiplerine <literal>small-caps</literal> değerli bir <descriptor>font-variant</descriptor> ataması yapıyabilir (ve yoldaşı <emph>kursiv</emph> yazıtipi için de aynı sebeple <literal>italic</literal> değerli bir <descriptor>font-style</descriptor> ataması yapıyabilir).</p></note>
+
+<indexterm><primary><descriptor>font-weight</descriptor></primary></indexterm>
+<indexterm><primary>yazıtipi tanımlayıcılar</primary> <secondary><descriptor>font-weight</descriptor></secondary></indexterm>
+<descinfo name="font-weight">
+  <value><literal>all</literal> | [ <literal>normal</literal> | <literal>bold</literal> | <literal>100</literal> | <literal>200</literal> | <literal>300</literal> | <literal>400</literal> | <literal>500</literal> | <literal>600</literal> | <literal>700</literal>
+| <literal>800</literal> | <literal>900</literal>] [,[ <literal>normal</literal> | <literal>bold</literal> | <literal>100</literal> | <literal>200</literal> | <literal>300</literal> | <literal>400</literal> | <literal>500</literal> | <literal>600</literal> | <literal>700</literal>
+| <literal>800</literal> | <literal>900</literal>]]*</value>
+  <initial><literal>all</literal></initial>
+  <media><termref def="visual-media-group">görsel</termref></media>
+</descinfo>
+
+<p>Bu tanımlayıcı yazıtipi ailesinin diğer fertlerine göre bir yazıtipi kalınlığı tanımı sağlar. Aşağıda belirtilen üç şık haricinde <property>font-weight</property> niteliği ile aynı değerleri alır:</p>
+
+<olist>
+<item><p>Görelilik belirten anahtar sözcüklere (<literal>bolder</literal>, <literal>lighter</literal>) izin verilmez.</p></item>
+<item><p>Birden fazla kalınlıkta yazıtipi içeren aileler için virgül ayraçlı değer listesine izin verilir.</p></item>
+<item><p>Herhangi bir kalınlıktaki bir yazıtipinin uyacağını belirtmek üzere ek olarak <literal>all</literal> anahtar sözcüğüne izin verilmiştir.</p></item>
+</olist>
+
+<indexterm><primary><literal>condensed</literal></primary></indexterm>
+<indexterm><primary><literal>extra-condensed</literal></primary></indexterm>
+<indexterm><primary><literal>semi-condensed</literal></primary></indexterm>
+<indexterm><primary><literal>ultra-condensed</literal></primary></indexterm>
+<indexterm><primary><literal>expanded</literal></primary></indexterm>
+<indexterm><primary><literal>extra-expanded</literal></primary></indexterm>
+<indexterm><primary><literal>semi-expanded</literal></primary></indexterm>
+<indexterm><primary><literal>ultra-expanded</literal></primary></indexterm>
+<indexterm><primary><descriptor>font-stretch</descriptor></primary></indexterm>
+<indexterm><primary>yazıtipi tanımlayıcılar</primary> <secondary><descriptor>font-stretch</descriptor></secondary></indexterm>
+<descinfo name="font-stretch">
+  <value><literal>all</literal> | [ <literal>normal</literal> | <literal>ultra-condensed</literal> | <literal>extra-condensed</literal> | <literal>condensed</literal> | <literal>semi-condensed</literal> | <literal>semi-expanded</literal> | <literal>expanded</literal> | <literal>extra-expanded</literal> | <literal>ultra-expanded</literal> ] [, [ <literal>normal</literal> | <literal>ultra-condensed</literal> | <literal>extra-condensed</literal> | <literal>condensed</literal> | <literal>semi-condensed</literal> | <literal>semi-expanded</literal> | <literal>expanded</literal> | <literal>extra-expanded</literal> | <literal>ultra-expanded</literal> ] ]*</value>
+  <initial><literal>normal</literal></initial>
+  <media><termref def="visual-media-group">görsel</termref></media>
+</descinfo>
+
+<p>Bir yazıtipinin aynı ailedeki diğer yazıtiplerinden ne kadar daha dar veya daha geniş olacağını belirtir. Aşağıda belirtilen üç şık haricinde <property>font-stretch</property> niteliği ile aynı değerleri alır:</p>
+
+<slist>
+<sitem>Görelilik belirten anahtar sözcüklere (<literal>wider</literal>, <literal>narrower</literal>) izin verilmez.</sitem>
+<sitem>Virgül ayraçlı değer listesine izin verilir.</sitem>
+<sitem><literal>all</literal> anahtar sözcüğüne izin verilmiştir.</sitem>
+</slist>
+
+<indexterm><primary><descriptor>font-size</descriptor></primary></indexterm>
+<indexterm><primary>yazıtipi tanımlayıcılar</primary> <secondary><descriptor>font-size</descriptor></secondary></indexterm>
+<descinfo name="font-size">
+  <value><literal>all</literal> | <valueref>uzunluk</valueref> [, <valueref>uzunluk</valueref>]*</value>
+  <initial><literal>all</literal></initial>
+  <media><termref def="visual-media-group">görsel</termref></media>
+</descinfo>
+
+<p>Yazıtipi için sağlanan yükseklikler için tanımlayıcıdır. Göreli ve mutlak uzunluk değerlerine izin veren <property>font-size</property> niteliğinin aksine, sadece <termref def="absrel-units">mutlak uzunluk</termref> birimlerine izin verilir. Virgül ayraçlı mutlak uzunluk listesine de izin verilmiştir.</p>
+
+<p>Çoğu ölçeklenebilir yazıtipi için ilk değer olarak <literal>all</literal> daha uygundur, dolayısıyla bu tanımlayıcı aslında biteşlemli yazıtipleri ve yükseklikleri belli bir aralıkla sınırlanmış ölçeklenebilir yazıtipleri içindir.</p>
+</div3>
+
+<div3 id="dataqual">
+<head>Yazıtipi verilerini vasıflandırılma tanımlayıcıları: <descriptor>unicode-range</descriptor></head>
+
+<p>Aşağıdaki tanımlayıcının bir yazıtipi tanımı içinde belirtilmesi isteğe bağlı olsa da belli karakterleri oluşturmak için yeterli motifleri içermeyen bir yazıtipini indirmekten veya denemekten kaçınmak için kullanılır.</p>
+
+<indexterm><primary><descriptor>unicode-range</descriptor></primary></indexterm>
+<indexterm><primary>yazıtipi tanımlayıcılar</primary> <secondary><descriptor>unicode-range</descriptor></secondary></indexterm>
+<descinfo name="unicode-range">
+  <value><valueref>unicode-aralığı</valueref> [, <valueref>unicode-aralığı</valueref>]*</value>
+  <initial><tt>U+0-7FFFFFFF</tt></initial>
+  <media><termref def="visual-media-group">görsel</termref></media>
+</descinfo>
+
+<p>Bu tanımlayıcı yazıtipince kapsanmış <titleref ref="ucode">ISO 10646 karakter aralığı</titleref>nı belirtmek içindir.</p>
+
+<p><indexterm><primary><valueref>unicode-aralığı</valueref></primary></indexterm>
+<termdef id="value-def-unicode-aralığı" term="unicode-aralığı değeri"><var>unicode-aralığı</var> değeri, ISO 10646'daki (<bibref ref="ref-ISO10646"/>) karakter kodlarının konumlarını belirten onaltılık sayıların önüne "U+" getirilerek kullanılır</termdef>.</p>
+
+<p>Örneğin, <tt>U+015E</tt> ISO 10646 karakteri 'Türkçe Ş harfi'dir. Temel Çokdilli Tablo (Basic Multilingual Plane) dışında kalan değerler için, karakter kodunun başına tablo numarasına denk düşen rakam eklenir. Örneğin, <tt>U+A1234</tt> 10. tabloda onaltılık kodu 1234 olan karakteri belirtir. Bu belgenin yazımı sırasında Temel Çokdilli Tablo dışında herhangi bir karakter atanmış değildi. Sayının başındaki sıfırları (0000004D gibi) geçerlidir ama gerekli değillerdir.</p>
+
+<p>Bu tanımlayıcının <termref def="initial-value">ilk değeri</termref> sadece U+0-FFFF aralığına düşen Temel Çokdilli Tabloyu değil ISO 10646'nın tüm içeriğini kapsar. Bu bakımdan ilk değerde yazıtipinin ISO 10646'daki herhangi bir yerinden karakterin motifi belirtilebilir. <descriptor>unicode-range</descriptor> için bir değer belirtilmesi, belli bir aralıkla sınırlandığında bu karakterleri içeren bir yazıtipinin bulunması bakımından aramayı verimli kılar. Bu aralık dışında kalan karakterler için arama yapılması gerekmez.</p>
+
+<p>Değrlerin içereceği rakam sayısı isteğe bağlıdır. Herhangi bir tek rakam anlamına gelen '?' karakteri ile tek bir değer bir aralık belirtmek için kullanılabilir:</p>
+
+<varlist>
+<gitem>
+<label><tt>unicode-range: U+20A7</tt></label>
+<def><p>'?' olmaksızın - Tek bir karakter konumu belirtir (para simgesi olarak İspanyol Pezetası).</p></def>
+</gitem>
+<gitem>
+<label><tt>unicode-range: U+215?</tt></label>
+<def><p>tek '?' ile - 2150 - 215F aralığını belirtir.</p></def>
+</gitem>
+<gitem>
+<label><tt>unicode-range: U+00??</tt></label>
+<def><p>iki '?' ile - 0000 - 00FF aralığını (Latin-1) belirtir.</p></def>
+</gitem>
+<gitem>
+<label><tt>unicode-range: U+E??</tt></label>
+<def><p>iki '?' ile - 0E00 - 0EFF aralığını (Lao yazısı) belirtir.</p></def>
+</gitem>
+</varlist>
+
+<p>Bir <emph>sayı çifti</emph> aralarına tire imi konarak geniş bir aralığı belirtmek için kullanılabilir. Örnek:</p>
+
+<varlist>
+<gitem>
+<label><tt>unicode-range: U+AC00-D7FF</tt></label>
+<def><p>AC00 - D7FF aralığını (Hangul Heceleri bölgesi) belirtir.</p></def>
+</gitem>
+</varlist>
+
+<p><indexterm><primary>yoksaymak</primary></indexterm>
+Çok sayıda birbirinin devamı niteliğinde olmayan aralıklar aralarına virgül konarak belirtilebilir. BB'deki diğer virgül ayraçlı listelerdeki gibi virgülün öncesi ve sonrasındaki <termref def="whitespace">boşluk karakterleri</termref> <termref def="ignore">yoksayılır</termref>. Örnek:</p>
+
+<varlist>
+<gitem>
+<label><tt>unicode-range: U+370-3FF, U+1F??</tt></label>
+<def><p>0370 - 03FF aralığına (Modern Yunan) ek olarak 1F00 - 1FFF (Çok perdeli eski Yunan) aralığını içerir.</p></def>
+</gitem>
+<gitem>
+<label><tt>unicode-range: U+3000-303F, U+3100-312F, U+32??, U+33??,
+U+4E00-9FFF, U+F9000-FAFF, U+FE30-FE4F</tt></label>
+<def><p>Bu çok büyük gibi görünen aralık aslında sadece ISO 10646'daki Çince karakterleri içerir, Japonca ve Korece karakterler bile yoktur. 3000 - 303F aralığı (CJK sembolleri ve noktalama) artı 3100 - 312F (Bopomofo) artı
+3200 - 32FF (kapsanan CJK harfleri ve aylar) artı 3300 - 33FF
+(CJK uyumluluk bölgesi) artı 4E00 - 9FFF (CJK birleştirilmiş kavramsal simgeler)
+artı F900 - FAFF (CJK uyumlu kavramsal simgeler) artı FE30 - FE4F
+(CJK uyumluluk biçimleri).</p>
+
+<p>Bir Çince yazıtipi için daha kısa bir gösterim şöyle olurdu:</p>
+
+<eg role="layout">unicode-range: U+3000-33FF, U+4E00-9FFF</eg></def>
+</gitem>
+<gitem>
+<label><tt>unicode-range: U+11E00-121FF</tt></label>
+<def><p>1. tablodaki 1E00 - 21FF aralığı Aztekçe karakterler için teklif edilmiş bir bölgedir.</p></def>
+</gitem>
+<gitem>
+<label><tt>unicode-range: U+1A00-1A1F</tt></label>
+<def><p>1A00 - 1A1F aralığı eski İrlanda Ogam karakterleri için teklif edilmiş bir bölgedir.</p></def>
+</gitem>
+</varlist>
+</div3>
+
+<div3 id="unitsperem">
+<head>Sayısal değer tanımlayıcısı: <descriptor>units-per-em</descriptor></head>
+
+<p>Aşağıdaki tanımlayıcı ile 1 em'in kaç birim uzunlukta olacağı belirtilir. Bu birimler, çeşitli uzunlukları belirtmek için <descriptor>units-per-em</descriptor> tanımlayıcısına bağımlı diğer tanımlayıcılar tarafından kullanılır.</p>
+
+<indexterm><primary><descriptor>units-per-em</descriptor></primary></indexterm>
+<indexterm><primary>yazıtipi tanımlayıcılar</primary> <secondary><descriptor>units-per-em</descriptor></secondary></indexterm>
+<descinfo name="units-per-em">
+  <value><valueref>sayı</valueref></value>
+  <initial>tanımsız</initial>
+  <media><termref def="visual-media-group">görsel</termref></media>
+</descinfo>
+
+<p>Bu tanımlayıcı, boşluklarına motiflerin yerleştirildiği tasarım ızgarasını oluşturan <titleref ref="emsq">em karelerin kenar uzunluğunu</titleref> belirtmek için kullanılır.</p>
+</div3>
+
+<div3 id="referencing">
+<head>Kaynak tanımlayıcısı: <descriptor>src</descriptor></head>
+
+<p>Bu tanımlayıcı, yazıtipinin yerel olarak kurulu mu? yoksa, indirilebilir bir yazıtipi mi? olduğuna bağlı olarak, asıl yazıtipi verisine atıf yapmak için gerekir.</p>
+
+<indexterm><primary><descriptor>src</descriptor></primary></indexterm>
+<indexterm><primary><literal>format</literal></primary></indexterm>
+<indexterm><primary>yazıtipi tanımlayıcılar</primary> <secondary><descriptor>src</descriptor></secondary></indexterm>
+<descinfo name="src">
+  <value>[ <valueref>tanım-yeri</valueref> [ <literal>format</literal>(<valueref>dizge</valueref> [, <valueref>dizge</valueref> ]*)] | <valueref>tam-yazıtipi-adı</valueref> ] [, <valueref>tanım-yeri</valueref> [ <literal>format</literal>(<valueref>dizge</valueref> [, <valueref>dizge</valueref> ]*)] | <valueref>tam-yazıtipi-adı</valueref> ]*</value>
+  <initial>tanımsız</initial>
+  <media><termref def="visual-media-group">görsel</termref></media>
+</descinfo>
+
+<p>Bu tanımlayıcının değeri, yerel olarak kurulu yazıtipi isimlerinin ve/veya yazıtipinin indirileceği yerin belirtildiği, bunlar arasında öncelik belirtmeye imkan veren virgül ayraçlı bir listedir. Yazıtipinin indirileceği yer, bir Genel Ağ hiper adresidir (<valueref>tanım-yeri</valueref>). Eğer yazıtipinin indirilmesi gerekiyorsa bu değer gereklidir. Yazıtipi kaynağının eksiksiz bir yazıtipi verisi olması gerekmez, o anki sayfanın veya bazı sayfaların oluşturulması için gerekli bazı ek motifleri içeriyor da olabilir.</p>
+
+<p>Genel ağ hiper adresi bir tanım yeri olarak belirtilir. Bunun ardından istenirse, bu adresten alınacak yazıtipi kaynağının biçimiyle ilgili ipuçları belirtilebilir. Bu bilgi istemci tarafından, kullanımının uygun olmayacağı biçimlerdeki yazıtiplerine yapılacak atıflardan kaçınmak için kullanılmalıdır. Herhangi bir hiper metin adresindeki gibi bu atıflarda başka biçimler mevcut olabilir, fakat, istemcinin neyin daha iyi olacağı konusunda fikir sahibi olması sağlanabilir. Bu, dosya ismi uzantılarına bakarak kaynağı çözümlemeye çalışmaktan daha sağlıklı olacaktır.</p>
+
+<p>Biçim ipucu bildik yazıtipi biçimlerini ifade eden biçim dizgelerinden oluşan virgül ayraçlı bir liste içerir. Kullanıcı arayüzü desteklediği yazıtipi biçimlerinin isimlerini tanıyacak ve tanımadığı biçimlerdeki yazıtiplerini indirmekten kaçınacaktır.</p>
+
+<p>Biçim dizgeleri için bir ön liste bu belirtim tarafından tanımlanmıştır. Bu liste çeşitli platformlarda çalışan gerçeklenimler tarafından kullanılan biçimlerden derlenmiştir:</p>
+
+<table>
+<tr>
+<th>Dizge</th>
+<th>Yazıtipi Biçimi</th>
+<th>Bilinen uzantı örnekleri</th>
+</tr>
+<tr>
+<td>"truedoc-pfr"</td>
+<td>TrueDoc™ Portable Font Resource</td>
+<td>.pfr</td>
+</tr>
+<tr>
+<td>"embedded-opentype"</td>
+<td>Embedded OpenType</td>
+<td>.eot</td>
+</tr>
+<tr>
+<td>"type-1"</td>
+<td>PostScript™ Type 1</td>
+<td>.pfb, .pfa</td>
+</tr>
+<tr>
+<td>"truetype"</td>
+<td>TrueType</td>
+<td>.ttf</td>
+</tr>
+<tr>
+<td>"opentype"</td>
+<td>OpenType, TrueType Open dahil</td>
+<td>.ttf</td>
+</tr>
+<tr>
+<td>"truetype-gx"</td>
+<td>GX eklentili TrueType</td>
+</tr>
+<tr>
+<td>"speedo"</td>
+<td>Speedo</td>
+</tr>
+<tr>
+<td>"intellifont"</td>
+<td>Intellifont</td>
+</tr>
+</table>
+
+<p><indexterm><primary><code>@font-face</code></primary></indexterm>
+Tanım-yeri, <code>@font-face</code>'i içeren biçembendin bulunduğu yere göre çözümleneceği durumda <titleref ref="uri">BB'deki diğer tanım-yerleri</titleref> gibi kısmen belirtilebilir.</p>
+
+<p><indexterm><primary><valueref>tam-yazıtipi-adı</valueref></primary></indexterm>
+<indexterm><primary>tam yazıtipi adı</primary></indexterm>
+<termdef id="value-def-tam-yazıtipi-adı" term="tam-yazıtipi-adı değeri">Yerelde kurulu <var>tam-yazıtipi-adı</var> yerelde kurulu bir yazıtipinin tam yazıtipi adıdır. <term>Tam yazıtipi adı</term> işletim sisteminin raporladığı isim olup çoğunlukla yazıtipinin istemci biçembentleri, tarayıcının öntanımlı biçembentleri ve yerel ağdaki yazar biçembentlerinde kullanılan ismidir. <literal>bold</literal>, <literal>italic</literal>, <literal>underline</literal> gibi süslemeler çoğunlukla yazıtipi ailesinin farklılaştırılmış yazıtipi motiflerinden oluşur. Tam yazıtipi adları ile ilgili daha ayrıntılı bilgi edinmek için aşağıdaki <specref ref="aname"/> bölümüne bakınız</termdef>.</p>
+
+<p><var>tam-yazıtipi-adı</var> gösterimine karşılık olarak belirtilen tam yazıtipi adı boşluk ve noktalama işaretleri gibi her türlü karakteri içerebileceğinden tırnak içine alınmalı ve ayrıca <tt>local(</tt> ile <tt>)</tt> arasına yazılmalıdır.</p>
+
+<example>
+<varlist>
+<gitem>
+<label><tt>src: url("http://foo/bar")</tt></label>
+<def><p>Yazıtipi biçimi hakkında bilgi içermeyen bir tam yazıtipi adı tanım-yeri.</p></def>
+</gitem>
+<gitem>
+<label><tt>src: local("BT Century 751 No. 2 Semi Bold
+Italic")</tt></label>
+<def><p>Yerelde kurulu belli bir yazıtipine atıf yapılıyor.</p></def>
+</gitem>
+<gitem>
+<label><tt>src: url("../fonts/bar") format("truedoc-pfr")</tt></label>
+<def><p>Bir yazıtipinin TrueDoc biçimlisi için göreli tanım-yeri.</p></def>
+</gitem>
+<gitem>
+<label><tt>src: url("http://cgi-bin/bar?stuff") format("opentype",
+"intellifont")</tt></label>
+<def><p>OpenType ve Intellifont biçimlerinde yazıtipi üreten bir betiğe gönderme yapan bir tam tanım-yeri.</p></def>
+</gitem>
+<gitem>
+<label><tt>src: local("T-26 Typeka Mix"),
+url("http://site/magda-extra") format("type-1")</tt></label>
+<def><p>Burada yazıtipi için iki seçenek belrtilmiş; ilkinde yerelde kurulu bir yazıtipine, ikincisinde ise Type 1 biçiminde mevcut bir indirilebilir yazıtipine gönderme var.</p></def>
+</gitem>
+</varlist>
+</example>
+
+<p>Yerelde kurulu yazıtiplerine erişim <valueref>tam-yazıtipi-adı</valueref> üzerinden mümkündür. Bu gösterim için belirtilecek bir yazıtipi adı ne tamamen eşsizdir, ne de tamamen platform veya yazıtipi biçimine bağımlıdır; ancak, yerelde kurulu bir yazıtipini tanımlamanın en iyi yoludur. Yazıtipi ismi ile birlikte tamalayıcı motiflere gönderimler kullanılabilir. Bu, bazı motifleri içeren bir yazıtipi için ISO 10646 karakter konumları belirtilerek yapılabilir (bkz, <descriptor>unicode-range</descriptor>).</p>
+</div3>
+
+<div3 id="matching">
+<head>Eşleşme tanımlayıcılar: <descriptor>panose-1</descriptor>,
+<descriptor>stemv</descriptor>, <descriptor>stemh</descriptor>, <descriptor>slope</descriptor>, <descriptor>cap-height</descriptor>, <descriptor>x-height</descriptor>, <descriptor>ascent</descriptor>, and <descriptor>descent</descriptor></head>
+
+<p>Bu tanımlayıcıların bir BB2 tanımında kullanımları isteğe bağlıdır. Yazar tarafından akıllı yazıtipi eşleme veya yazıtipi ayarlaması yapılmak istenmesi durumuna kullanılabilir.</p>
+
+<indexterm><primary><descriptor>panose-1</descriptor></primary></indexterm>
+<indexterm><primary>yazıtipi tanımlayıcılar</primary> <secondary><descriptor>panose-1</descriptor></secondary></indexterm>
+<descinfo name="panose-1">
+  <value>[ <valueref>integer</valueref> ]{10}</value>
+  <initial>0 0 0 0 0 0 0 0 0 0</initial>
+  <media><termref def="visual-media-group">görsel</termref></media>
+</descinfo>
+
+<p><indexterm><primary>panose-1</primary></indexterm>
+<specref ref="pan1"/> için bir tanımlayıcı olup <termref def="whitespace">boşluk karakterleri</termref> ile ayrılmış on adet onluk tamsayıdan oluşur. Bunun böyle belirtilmesinin sebebi Panose-1 sisteminin bir eşleşme değerleri silsilesi olarak belirtilebilmesidir. İlk değer olarak sıfır verildiği takdirde bu "herhangi biri" anlamına gelir ve tüm yazıtipleri ile eşleşme sağlanır. Panose-1 tanımlayıcılarının kullanımı Latin yazıtipleri sözkonusu olduğunda şiddetle önerilir. Ayrıntılı bilgi için <specref ref="panose"/> bölümüne bakınız.</p>
+
+<indexterm><primary><descriptor>stemv</descriptor></primary></indexterm>
+<indexterm><primary>yazıtipi tanımlayıcılar</primary> <secondary><descriptor>stemv</descriptor></secondary></indexterm>
+<descinfo name="stemv">
+  <value><valueref>sayı</valueref></value>
+  <initial>tanımsız</initial>
+  <media><termref def="visual-media-group">görsel</termref></media>
+</descinfo>
+
+<p><specref ref="stemv"/> için tanımlayıcıdır. Değer tanımsızsa tanımlayıcı eşleşme için kullanılmaz. Tanımlayıcının kullanıldığı durumda <descriptor>units-per-em</descriptor> tanımlayıcı da kullanılmalıdır.</p>
+
+<indexterm><primary><descriptor>stemh</descriptor></primary></indexterm>
+<indexterm><primary>yazıtipi tanımlayıcılar</primary> <secondary><descriptor>stemh</descriptor></secondary></indexterm>
+<descinfo name="stemh">
+  <value><valueref>sayı</valueref></value>
+  <initial>tanımsız</initial>
+  <media><termref def="visual-media-group">görsel</termref></media>
+</descinfo>
+
+<p><specref ref="stemh"/> için tanımlayıcıdır. Değer tanımsızsa tanımlayıcı eşleşme için kullanılmaz. Tanımlayıcının kullanıldığı durumda <descriptor>units-per-em</descriptor> tanımlayıcı da kullanılmalıdır.</p>
+
+<indexterm><primary><descriptor>slope</descriptor></primary></indexterm>
+<indexterm><primary>yazıtipi tanımlayıcılar</primary> <secondary><descriptor>slope</descriptor></secondary></indexterm>
+<descinfo name="slope">
+  <value><valueref>sayı</valueref></value>
+  <initial>0</initial>
+  <media><termref def="visual-media-group">görsel</termref></media>
+</descinfo>
+
+<p><specref ref="slope"/> için tanımlayıcıdır.</p>
+
+<indexterm><primary><descriptor>cap-height</descriptor></primary></indexterm>
+<indexterm><primary>yazıtipi tanımlayıcılar</primary> <secondary><descriptor>cap-height</descriptor></secondary></indexterm>
+<descinfo name="cap-height">
+  <value><valueref>sayı</valueref></value>
+  <initial>tanımsız</initial>
+  <media><termref def="visual-media-group">görsel</termref></media>
+</descinfo>
+
+<p><specref ref="cap"/> için tanımlayıcıdır. Değer tanımsızsa tanımlayıcı eşleşme için kullanılmaz. Tanımlayıcının kullanıldığı durumda <descriptor>units-per-em</descriptor> tanımlayıcı da kullanılmalıdır.</p>
+
+<indexterm><primary><descriptor>x-height</descriptor></primary></indexterm>
+<indexterm><primary>yazıtipi tanımlayıcılar</primary> <secondary><descriptor>x-height</descriptor></secondary></indexterm>
+<descinfo name="x-height">
+  <value><valueref>sayı</valueref></value>
+  <initial>tanımsız</initial>
+  <media><termref def="visual-media-group">görsel</termref></media>
+</descinfo>
+
+<p><specref ref="xht"/> için tanımlayıcıdır. Değer tanımsızsa tanımlayıcı eşleşme için kullanılmaz. Tanımlayıcının kullanıldığı durumda <descriptor>units-per-em</descriptor> tanımlayıcı da kullanılmalıdır. Bu tanımlayıcı, <property>font-size-adjust</property> niteliğinin kullanıldığı durumda çok yararlı olabilir. Çünkü, aday yazıtiplerinin z değerlerinin hesaplanması hem yazıtipi yüksekliğinin hem de <termref def="ex">x-yüksekliğinin</termref> bilinmesini gerektirir. Bu tanımlacının da belirtilmesi bu bakımdan önerilmektedir.</p>
+
+<indexterm><primary><descriptor>ascent</descriptor></primary></indexterm>
+<indexterm><primary>yazıtipi tanımlayıcılar</primary> <secondary><descriptor>ascent</descriptor></secondary></indexterm>
+<descinfo name="ascent">
+  <value><valueref>sayı</valueref></value>
+  <initial>tanımsız</initial>
+  <media><termref def="visual-media-group">görsel</termref></media>
+</descinfo>
+
+<p><specref ref="ascent"/> için tanımlayıcıdır. Değer tanımsızsa tanımlayıcı eşleşme için kullanılmaz. Tanımlayıcının kullanıldığı durumda <descriptor>units-per-em</descriptor> tanımlayıcı da kullanılmalıdır.</p>
+
+<indexterm><primary><descriptor>descent</descriptor></primary></indexterm>
+<indexterm><primary>yazıtipi tanımlayıcılar</primary> <secondary><descriptor>descent</descriptor></secondary></indexterm>
+<descinfo name="descent">
+  <value><valueref>sayı</valueref></value>
+  <initial>tanımsız</initial>
+  <media><termref def="visual-media-group">görsel</termref></media>
+</descinfo>
+
+<p><specref ref="descent"/> için tanımlayıcıdır. Değer tanımsızsa tanımlayıcı eşleşme için kullanılmaz. Tanımlayıcının kullanıldığı durumda <descriptor>units-per-em</descriptor> tanımlayıcı da kullanılmalıdır.</p>
+</div3>
+
+<div3 id="synthesizing">
+<head>Bireşim tanımlayıcılar: <descriptor>widths</descriptor>,
+<descriptor>bbox</descriptor> ve <descriptor>definition-src</descriptor></head>
+<p>Bir yazıtipinin bireşimi denince, belirtilen yazıtipinin en azından genişlik ölçülerinde bir eşleşme olduğu anlaşılır. Bu bakımdan bireşim sözkonusu olduğunda bu ölçü bilgisi elimizde olmalıdır. Benzer şekilde, asıl yazıtipi yüklendiği takdirde içeriğin yeniden oluşturulmasını önlemek için aşamalı oluşturmada da genişlik ölçüleri gerekir. Asıl yazıtipi yüklenebilir hale gelmiş olsa bile, ikamesi kullanılır. Aşağıdaki tanımlayıcıların bir biçembentte kullanımları isteğe bağlı olsa da eğer yazar tarafından yazıtipi bireşimi istenmişse bazıları gerekli olabilir. Bu tanımlayıcıların herhangi birinin varlığı tasarlanan yazıtipine daha iyi ve daha hızlı bir yaklaşım üretmekte kullanılabilecektir.</p>
+
+<p>Bu tanımlayıcılardan en önemlileri <descriptor>widths</descriptor> ve <descriptor>bbox</descriptor> tanımlayıcıları olup, asıl yazıtipi yüklenebilir hale geldiğinde metnin yeniden oluşturulmasını önlemekte kullanılırlar. Buna ek olarak, asıl yazıtipinin daha iyi bireşimini sağlamak için <titleref ref="matching">eşleşme için kullanılan tanımlayıcılar</titleref>dan bir kısmı kullanılabilir.</p>
+
+<indexterm><primary><descriptor>widths</descriptor></primary></indexterm>
+<indexterm><primary>yazıtipi tanımlayıcılar</primary> <secondary><descriptor>widths</descriptor></secondary></indexterm>
+<descinfo name="widths">
+  <value>[ <valueref>unicode-aralığı</valueref> ]? [ <valueref>sayı</valueref> ]+ [,[ <valueref>unicode-aralığı</valueref> ]? <valueref>sayı</valueref> ]+]</value>
+  <initial>tanımsız</initial>
+  <media><termref def="visual-media-group">görsel</termref></media>
+</descinfo>
+
+<p><specref ref="lrwidth"/> için tanımlayıcıdır. Değer, hemen ardından bir veya daha fazla motif genişliğinin belirtildiği <valueref>unicode-aralığı</valueref> değerlerinin virgül ayraçlı bir  listesidir. Bu tanımlayıcının kullanıldığı durumda <descriptor>units-per-em</descriptor> tanımlayıcı da kullanılmalıdır.</p>
+
+<p><indexterm><primary>yoksaymak</primary></indexterm>
+Eğer <valueref>unicode-aralığı</valueref> belirtilmezse, tüm karakterleri kapsayan U+0-7FFFFFFF aralığının ve bunların motiflerinin belirtildiği varsayılır. Yeterince motif genişliği belirtilmemişse son belirtilen listenin kalanı için yinelenir. Gereğinden fazla genişlik belirtilmişse fazlalıklar <termref def="ignore">yoksayılır</termref>.</p>
+
+<example>
+<eg>widths: U+4E00-4E1F 1736 1874 1692
+widths: U+1A?? 1490, U+215? 1473 1838 1927 1684 1356 1792
+    1815 1848 1870 1492 1715 1745 1584 1992 1978 1770</eg>
+
+<p>İlk örnekte 4E00'dan 4E1F'ye kadar 32 karakterlik bir aralık belirtilmiştir. İlk karaktere (4E00) karşı düşen motifin genişliği 1736, ikincisi 1874, üçüncüsü ise 1692 olacaktır. Yeterince genişlik sağlanmadığından listenin kalanı için son genişlik kullanılacaktır. İkinci örnek, 256 motiflik bir aralığın tamamına tek bir genişlik (1490) belirtirken, 16 motiflik başka bir aralıktaki her motif için genişlikleri ayrı ayrı belirtmektedir.</p>
+</example>
+
+<p>Bu tanımlayıcı, tek bir karaktere karşılık çok sayıda motifin bulunduğu veya çok sayıda karakterden oluşan birleşik motifleri tanımlamakta kullanılamaz. Bu bakımdan bu tanımlayıcı <emph>sadece</emph> bağlamsal bir biçimleri olmayan ve zorunlu birleşik motifleri olmayan karakter kümeleri için kullanılabilir. Bununla birlikte bu durumlarda hala yararlı olabilir. Bir çoklu motife bir veya çok sayıda karakterin eşlenmesini gerektiren karakter kümelerinde, mevcut yazıtipi bireşimini etkin kılmak için kullanılamaz ama yazıtipinin indirilmesi veya akıllı eşleme için kullanılabilir.</p>
+
+<indexterm><primary><descriptor>bbox</descriptor></primary></indexterm>
+<indexterm><primary>yazıtipi tanımlayıcılar</primary> <secondary><descriptor>bbox</descriptor></secondary></indexterm>
+<descinfo name="bbox">
+  <value><valueref>sayı</valueref>, <valueref>sayı</valueref>, <valueref>sayı</valueref>, <valueref>sayı</valueref></value>
+  <initial>tanımsız</initial>
+  <media><termref def="visual-media-group">görsel</termref></media>
+</descinfo>
+
+<p><specref ref="bbox"/> için tanımlayıcıdır. Değer virgül ayraçlı dört sayılık bir listedir. Yazıtipinin tamamı için motif çerçevesinin sırasıyla: sol alt x, sol alt y, sağ üst x, sağ üst y koordinatlarıdır.</p>
+
+<indexterm><primary><descriptor>definition-src</descriptor></primary></indexterm>
+<indexterm><primary>yazıtipi tanımlayıcılar</primary> <secondary><descriptor>definition-src</descriptor></secondary></indexterm>
+<descinfo name="definition-src">
+  <value><valueref>tanım-yeri</valueref></value>
+  <initial>tanımsız</initial>
+  <media><termref def="visual-media-group">görsel</termref></media>
+</descinfo>
+
+<p><indexterm><primary>yazıtipi tanımlama kaynağı</primary></indexterm>
+Yazıtipi tanımlayıcıları biçembentteki yazıtipi tanımı içinde yer alabileceği gibi bir tanım-yeri ile belirtilen ayrı bir <emph>yazıtipi tanımlama kaynağı</emph>nda da yer alabilirler. İkinci yaklaşım, aynı yazıtipine çok sayıda biçembent tarafından atıfta bulunulduğunda ağ trafiğini düşürmekte yararlı olabilir.</p>
+</div3>
+
+<div3 id="alignment">
+<head>Hizalama tanımlayıcılar: <descriptor>baseline</descriptor>,
+<descriptor>centerline</descriptor>, <descriptor>mathline</descriptor> ve <descriptor>topline</descriptor></head>
+
+<p>Belirtilmeleri isteğe bağlı olan bu tanımlayıcılar farklı yazıtiplerini  hizalamakta kullanılır.</p>
+
+<indexterm><primary><descriptor>baseline</descriptor></primary></indexterm>
+<indexterm><primary>yazıtipi tanımlayıcılar</primary> <secondary><descriptor>baseline</descriptor></secondary></indexterm>
+<descinfo name="baseline">
+  <value><valueref>sayı</valueref></value>
+  <initial>0</initial>
+  <media><termref def="visual-media-group">görsel</termref></media>
+</descinfo>
+
+<p><specref ref="bline"/> için tanımlayıcıdır. Tanımlayıcının sıfıdan farklı bir değerle kullanıldığı durumda <descriptor>units-per-em</descriptor> tanımlayıcı da kullanılmalıdır.</p>
+
+<indexterm><primary><descriptor>centerline</descriptor></primary></indexterm>
+<indexterm><primary>yazıtipi tanımlayıcılar</primary> <secondary><descriptor>centerline</descriptor></secondary></indexterm>
+<descinfo name="centerline">
+  <value><valueref>sayı</valueref></value>
+  <initial>tanımsız</initial>
+  <media><termref def="visual-media-group">görsel</termref></media>
+</descinfo>
+
+<p><specref ref="cline"/> için tanımlayıcıdır. Değer tanımsızsa, kullanıcı arayüzü aksanlı ve kuyruklu yüksekliklerin orta noktaları gibi çeşitli ampirik yaklaşımlar yapabilir. Bu tanımlayıcının kullanıldığı durumda <descriptor>units-per-em</descriptor> tanımlayıcı da kullanılmalıdır.</p>
+
+<indexterm><primary><descriptor>mathline</descriptor></primary></indexterm>
+<indexterm><primary>yazıtipi tanımlayıcılar</primary> <secondary><descriptor>mathline</descriptor></secondary></indexterm>
+<descinfo name="mathline">
+  <value><valueref>sayı</valueref></value>
+  <initial>tanımsız</initial>
+  <media><termref def="visual-media-group">görsel</termref></media>
+</descinfo>
+
+<p><specref ref="mline"/> için tanımlayıcıdır. Değer tanımsızsa, kullanıcı arayüzü orta taban çizgisini kullanabilir. Bu tanımlayıcının kullanıldığı durumda <descriptor>units-per-em</descriptor> tanımlayıcı da kullanılmalıdır.</p>
+
+<indexterm><primary><descriptor>topline</descriptor></primary></indexterm>
+<indexterm><primary>yazıtipi tanımlayıcılar</primary> <secondary><descriptor>topline</descriptor></secondary></indexterm>
+<descinfo name="topline">
+  <value><valueref>sayı</valueref></value>
+  <initial>tanımsız</initial>
+  <media><termref def="visual-media-group">görsel</termref></media>
+</descinfo>
+
+<p><specref ref="tline"/> için tanımlayıcıdır. Değer tanımsızsa, kullanıcı arayüzü aksanlı yükseklik gibi yaklaşık değerler kullanabilir. Bu tanımlayıcının kullanıldığı durumda <descriptor>units-per-em</descriptor> tanımlayıcı da kullanılmalıdır.</p>
+</div3>
+
+<div3 id="fonts39">
+<head>Örnekler</head>
+
+<example>
+<p>Şöyle bir yazıtipi listesi verilmiş olsun:</p>
+
+<table>
+<tr>
+<td>Swiss 721 light</td>
+<td>ince ve ince eğik</td>
+</tr>
+<tr>
+<td>Swiss 721 medium</td>
+<td>normal ve eğik normal</td>
+</tr>
+<tr>
+<td>Swiss 721 heavy</td>
+<td>kalınca ve eğik kalınca</td>
+</tr>
+<tr>
+<td>Swiss 721 black</td>
+<td>çok kalın, eğik çok kalın ve çok çok kalın</td>
+</tr>
+<tr>
+<td>Swiss 721</td>
+<td>normal genişlikte; kalın, eğik ve eğik kalın</td>
+</tr>
+<tr>
+<td>Swiss 721 Condensed</td>
+<td>dar; kalın, eğik ve eğik kalın</td>
+</tr>
+<tr>
+<td>Swiss 721 Expanded</td>
+<td>geniş; kalın, eğik ve eğik kalın</td>
+</tr>
+</table>
+
+<p>Yazıtipini indirmek için aşağıdaki yazıtipi tanımları kullanılabilir.</p>
+
+<eg>@font-face {
+    font-family: "Swiss 721";
+    src: url("swiss721lt.pfr"); /* Swiss 721 ince */
+    font-style: normal, italic;
+    font-weight: 200;
+}
+@font-face {
+    font-family: "Swiss 721";
+    src: url("swiss721.pfr"); /* Swiss 721 normal genişlik */
+}
+@font-face {
+    font-family: "Swiss 721";
+    src: url("swiss721md.pfr"); /* Swiss 721 normal kalınlık */
+    font-style: normal, italic;
+    font-weight: 500;
+}
+@font-face {
+    font-family: "Swiss 721";
+    src: url("swiss721hvy.pfr"); /* Swiss 721 kalınca */
+    font-style: normal, italic;
+    font-weight: 700;
+}
+@font-face {
+    font-family: "Swiss 721";
+    src: url("swiss721blk.pfr"); /* Swiss 721 çok kalın */
+    font-style: normal, italic;
+    font-weight: 800,900; /* 900 ağırlıklı eğik yazıtipi yoktur */
+}
+@font-face {
+    font-family: "Swiss 721";
+    src: url(swiss721.pfr); /* Swiss 721 dar */
+    font-stretch: condensed;
+}
+@font-face {
+    font-family: "Swiss 721";
+    src: url(swiss721.pfr); /* Swiss 721 geniş */
+    font-stretch: expanded;
+}</eg>
+</example>
+</div3>
+</div2>
+
+<div2 id="font-descriptors">
+<head>Yazıtiplerinin Özellikleri</head>
+  <div3 id="universal">
+  <head>Yazıtipi özelliklerine giriş</head>
+
+<p>Bu bölümde, farklı platformlardan Genel Ağ'a erişen istemci tarafın yazıtipi eşleştirmesi, yazıtipi bireşimi yaparken veya yazıtipi indirirken yararlı olan yazıtipi özellikleri listelenmiştir. Yazıtipi verisinin ortamda gömülü olduğu durumlar hariç sanaldokuda yazıtipi kullanma gereksinimi bulunan her ortam için bu veri yararlı olabilir.</p>
+
+<p>Bu özellikler yazıtiplerini tanmlamakta kullanılır. Bunlar biçembentlere veya BB'ye özgü değillerdir. BB'de her özellik bir yazıtipi tanımlayıcı tarafından açıklanmıştır. Bu özellikler ayrıca, VRML düğümlerine, CGM Uygulama Yapılarına, Java Programlama Arayüzüne veya başka biçembent dillerine de uygun olabilir. Bir ortam tarafından alınan ve bir vekil arabelleğinde saklanan yazıtipleri, sistemler.</p>
+
+<p>Bu tür ortamların bazıları:</p>
+
+<ulist>
+<item>
+  <p>2 boyutlu vektörel biçimler</p>
+  <slist>
+    <sitem>Computer Graphics Metafile</sitem>
+    <sitem>Simple Vector Format</sitem>
+  </slist>
+</item>
+<item>
+  <p>^ boyutlu çizgesel biçimler</p>
+  <slist>
+    <sitem>VRML</sitem>
+    <sitem>3DMF</sitem>
+  </slist>
+</item>
+<item>
+  <p>Gömülü nesne teknolojileri</p>
+  <slist>
+    <sitem>Java</sitem>
+    <sitem>Active-X</sitem>
+    <sitem>Obliq</sitem>
+  </slist>
+</item>
+</ulist>
+</div3>
+
+<div3 id="aname">
+<head>Tam yazıtipi adı</head>
+
+<p>This is the full name of a particular face of a font family. It
+typically includes a variety of non-standardized textual qualifiers
+or <emph>adornments</emph> appended to the font family name. It may
+also include a foundry name or abbreviation, often prepended to the
+font family name. It is only used to refer to locally installed
+fonts, because the format of the adorned name can vary from
+platform to platform. It must be quoted.</p>
+
+<p>For example, the font family name of the TrueType font and the
+PostScript name may differ in the use of space characters,
+punctuation, and in the abbreviation of some words (e.g., to meet
+various system or printer interpreter constraints on length of
+names). For example, spaces are not allow in a PostScript name, but
+are common in full font names. The TrueType name table can also
+contain the PostScript name, which has no spaces.</p>
+
+<p>The name of the font definition is important because it is the
+link to any locally installed fonts. It is important that the name
+be robust, both with respect to platform and application
+independence. For this reason, the name should be one that is not
+application- or language-specific.</p>
+
+<p>The ideal solution would be to have a name that uniquely
+identifies each collection of font data. This name does not exist
+in current practice for font data. Fonts with the same face name
+can vary over a number of descriptors. Some of these descriptors,
+such as different complements of glyphs in the font, may be
+insignificant if the needed glyphs are in the font. Other
+descriptors, such as different width metrics, make fonts with the
+same name incompatible. It does not seem possible to define a rule
+that will always identify incompatibilities, but will not prevent
+the use of a perfectly suitable local copy of the font data with a
+given name. Therefore, only the range of ISO 10646 characters will
+be used to qualify matches for the font face name.</p>
+
+<p>Since a prime goal of the font face name in the font definition
+is to allow a user agent to determine when there is a local copy of
+the specified font data, the font face name must be a name that
+will be in all legitimate copies of the font data. Otherwise,
+unnecessary Web traffic may be generated due to missed matches for
+the local copy.</p>
+</div3>
+
+<div3 id="emsq">
+<indexterm><primary>emkare</primary></indexterm>
+<head>Emkare için koordinat birimleri</head>
+
+<p><termdef id="em-square" term="em-kare">Certain values, such as width metrics, are expressed in units
+that are relative to an abstract square whose height is the
+intended distance between lines of type in the same type size. This
+square is called the <term>em-kare</term> and it is the design grid on which the
+glyph outlines are defined. The value of this descriptor specifies
+how many units the EM square is divided into. Common values are for
+example 250 (Intellifont), 1000 (Type 1) and 2048 (TrueType,
+TrueType GX and OpenType)</termdef>.</p>
+
+<p>If this value is not specified, it becomes impossible to know
+what any font metrics mean. For example, one font has lowercase
+glyphs of height 450; another has smaller ones of height 890! The
+numbers are actually fractions; the first font has 450/1000 and the
+second has 890/2048 which is indeed smaller.</p>
+</div3>
+
+<div3 id="cline">
+<head>Orta Taban Çizgisi</head>
+
+<p><indexterm><primary>em-kare</primary></indexterm>
+Taban çizgisinin <termref def="em-square">em-kare</termref> konumunu belirtir. Özellikle alt taban çizgisinin kullanıldığı Latin, Yunan ve Kril yazılardaki hizalamalarda kullanılır.</p>
+</div3>
+
+<div3 id="encoding">
+<indexterm><primary>yazıtipi karakter kodlama tablosu</primary></indexterm>
+<indexterm><primary>karakter kodlama vektörü</primary></indexterm>
+<head>Yazıtipinin karakter kodlaması</head>
+
+<p>Either explicitly or implicitly, each font has a table
+associated with it, the <emph>font encoding
+table</emph>, that tells what character each glyph
+represents. This table is also referred to as an <emph>encoding vector</emph>.</p>
+
+<p>In fact, many fonts contain several glyphs for the same
+character. Which of those glyphs should be used depends either on
+the rules of the language, or on the preference of the
+designer.</p>
+
+<p>In Arabic, for example, all letters have four (or two) different
+shapes, depending on whether the letter is used at the start of a
+word, in the middle, at the end, or in isolation. It is the same
+character in all cases, and thus there is only one character in the
+source document, but when printed, it looks different each
+time.</p>
+
+<p>There are also fonts that leave it to the graphic designer to
+choose from among various alternative shapes provided.
+Unfortunately, CSS2 doesn't yet provide the means to select those
+alternatives. Currently, it is always the default shape that is
+chosen from such fonts.</p>
+</div3>
+
+<div3 id="family">
+<head>Yazıtipi aile adı</head>
+<p>This specifies the family name portion of the font face name.
+For example, the family name for Helvetica-Bold is Helvetica and
+the family name of ITC Stone Serif Semibold Italic is ITC Stone
+Serif. Some systems treat adornments relating to condensed or
+expanded faces as if they were part of the family name.</p>
+</div3>
+
+<div3 id="lrwidth">
+<head>Motif genişlikleri</head>
+<p>This is a list of widths, on the design grid, for the glyph
+corresponding to each character. The list is ordered by ISO10646
+code point. Widths cannot usefully be specified when more than one
+glyph maps to the same character or when there are mandatory
+ligatures.</p>
+</div3>
+
+<div3 id="stemh">
+<head>Gövde genişliği</head>
+<p>This value refers to the <emph>dominant</emph> stem(gövde)) of the font.
+There may be two or more designed widths. For example, the main
+vertical stems of Roman characters will differ from the thin stems
+on serifed "M" and "N", plus there may be different widths for
+uppercase and lowercase characters in the same font. Also, either
+by design or by error, all stems may have slightly different
+widths.</p>
+</div3>
+
+<div3 id="cap">
+<head>Büyük harf motiflerinin yüksekliği</head>
+<p>This measurement is the y-coordinate of the top of flat
+uppercase letters in Latin, Greek, and Cyrillic scripts, measured
+from the baseline. This descriptor is not necessarily useful for
+fonts that do not contain any glyphs from these scripts.</p>
+</div3>
+
+<div3 id="xht">
+<head>Küçük harf motiflerinin yüksekliği</head>
+<p>This measurement is the y-coordinate of the top of unaccented,
+non-ascending lowercase letters in Latin, Greek and Cyrillic
+scripts, measured from the baseline. Flat-topped letters are used,
+ignoring any optical correction zone. This is usually used as a
+ratio of lowercase to uppercase heights as a means to compare font
+families.</p>
+
+<figure>
+<graphic source="images/x-height.gif" alt="Illustration of x-height" />
+</figure>
+
+<p><indexterm><primary>unicameral</primary></indexterm>
+This descriptor is not useful for fonts that do not contain any
+glyphs from these scripts. Since the heights of lowercase and
+uppercase letters are often expressed as a ratio for comparing
+different fonts, it may be useful to set both the lowercase and
+uppercase heights to the same value for unicameral scripts such as Hebrew, where
+for mixed Latin and Hebrew text, the Hebrew characters are
+typically set at a height midway between the uppercase and
+lowercase heights of the Latin font.</p>
+
+<figure>
+<graphic source="images/heb-height.gif" alt="Height of Hebrew characters" />
+</figure>
+</div3>
+
+<div3 id="bline">
+<head>Alt Taban Çizgisi</head>
+<p>This gives the position in the em square of the lower baseline.
+The lower baseline is used by Latin, Greek, and Cyrillic scripts
+for alignment, just as the upper baseline is used for
+Sanscrit-derived scripts.</p>
+</div3>
+
+<div3 id="mline">
+<head>Matematiksel Taban Çizgisi</head>
+<p>This gives the position in the em square of the mathematical
+baseline. The mathematical baseline is used by mathematical symbols
+for alignment, just as the lower baseline is used for Latin, Greek,
+and Cyrillic scripts.</p>
+</div3>
+
+<div3 id="bbox">
+<head>En büyük motif çerçevesi</head>
+<p>The maximal bounding box is the smallest rectangle enclosing the
+shape that results if all glyphs in the font are placed with their
+origins coincident, and then painted.</p>
+
+<p>If a dynamically downloadable font has been generated by
+subsetting a parent font, the bbox should be that of the parent
+font.</p>
+</div3>
+
+<div3 id="ascent">
+<head>Azami aksansız yükseklik</head>
+<p>This measurement, on the em square, is from the baseline to the
+highest point reached by any glyph, excluding any accents or
+diacritical marks.</p>
+
+<figure>
+<graphic source="images/ascender.gif" alt="Diagram showing several glyphs and the maximum unaccented height" />
+</figure>
+</div3>
+
+<div3 id="descent">
+<head>Azami aksansız derinlik</head>
+<p>This measurement, on the em square, is from the baseline to the
+lowest point reached by any glyph, excluding any accents or
+diacritical marks.</p>
+
+<figure>
+<graphic source="images/descender.gif" alt="Diagram showing several glyphs and the maximum unaccented depth" />
+</figure>
+</div3>
+
+<div3 id="pan1">
+<indexterm><primary>Panose-1</primary></indexterm>
+<head>Panose-1 sayıları</head>
+
+<p><indexterm><primary>unicameral</primary></indexterm>
+<emph>Panose-1</emph> is an industry standard
+TrueType font classification and matching technology. The PANOSE
+system consists of a set of ten numbers that categorize the key
+attributes of a Latin typeface, a classification procedure for
+creating those numbers, and Mapper software that determines the
+closest possible font match given a set of typefaces. The system
+<emph>could</emph>, with modification, also be used for Greek and
+Cyrillic, but is not suitable for unicameral and ideographic scripts (Hebrew,
+Armenian, Arabic, Chinese/Japanese/Korean).</p>
+</div3>
+
+<div3 id="ucode">
+<head>ISO 10646 karakterleri aralığı</head>
+<p>This indicates the glyph repertoire of the font, relative to ISO
+10646 (Unicode). Since this is sparse (most fonts do not cover the
+whole of ISO 10646) this descriptor lists blocks or ranges that do
+have <emph>some</emph> coverage (no promise is made of complete
+coverage) and is used to eliminate unsuitable fonts (ones that will
+not have the required glyphs). It does not indicate that the font
+definitely has the required glyphs, only that it is worth
+downloading and looking at the font. See <bibref ref="ref-ISO10646"/> for
+information about useful documents.</p>
+
+<p>This method is extensible to future allocation of characters in
+Unicode, without change of syntax and without invalidating existing
+content.</p>
+
+<p>Font formats that do not include this information, explicitly or
+indirectly, may still use this characteristic, but the value must
+be supplied by the document or style sheet author.</p>
+
+<p>There are other classifications into scripts, such as the
+Monotype system (see <bibref ref="ref-MONOTYPE"/>) and a proposed ISO script
+system. These are not readily extensible.</p>
+
+<p>Because of this, classification of glyph repertoires by the
+range of ISO 10646 characters that may be represented with a
+particular font is used in this specification. This system is
+extensible to cover any future allocation.</p>
+</div3>
+
+<div3 id="tline">
+<head>Tepe Taban Çizgisi</head>
+
+<p>This gives the position in the em square of the top baseline.
+The top baseline is used by Sanscrit-derived scripts for alignment,
+just as the bottom baseline is used for Latin, Greek, and Cyrillic
+scripts.</p>
+</div3>
+
+<div3 id="stemv">
+<head>Gövde yüksekliği</head>
+
+<p>This is the width of vertical (or near-vertical) stems of
+glyphs. This information is often tied to hinting, and may not be
+directly accessible in some font formats. The measurement should be
+for the <emph>dominant</emph> vertical stem in the font because there
+might be different groupings of vertical stems (e.g., one main one,
+and one lighter weight one as for an uppercase M or N).</p>
+</div3>
+
+<div3 id="slope">
+<head>Düşey hat açısı</head>
+
+<p>This is the angle, in degrees counterclockwise from the
+vertical, of the dominant vertical strokes of the font. The value
+is negative for fonts that slope to the right, as almost all italic
+fonts do. This descriptor may also be specified for oblique fonts,
+slanted fonts, script fonts, and in general for any font whose
+vertical strokes are not precisely vertical. A non-zero value does
+not of itself indicate an italic font.</p>
+</div3>
+</div2>
+
+<div2 id="algorithm">
+<head>Yazıtipi eşleme algoritması</head>
+
+<p><indexterm><primary><code>@font-face</code></primary></indexterm>
+This specification extends the algorithm given in the CSS1
+specification. This algorithm reduces down to the algorithm in the
+CSS1 specification when the author and reader style sheets do not
+contain any <code>@font-face</code> rules.</p>
+
+<p>Matching of descriptors to font faces must be done carefully.
+The descriptors are matched in a well-defined order to insure that
+the results of this matching process are as consistent as possible
+across UAs (assuming that the same library of font faces and font
+descriptions is presented to each of them). This algorithm may be
+optimized, provided that an implementation behaves as if the
+algorithm had been followed exactly.</p>
+
+<olist>
+<item><p><indexterm><primary>yoksaymak</primary></indexterm>
+The user agent makes (or accesses) a database of relevant
+font-face descriptors of all the fonts of which the UA is aware. If
+there are two fonts with exactly the same descriptors, one of them
+is <termref def="ignore">ignored</termref>. The UA may be
+aware of a font because:</p>
+
+<ulist>
+<item><p>it has been installed locally</p></item>
+<item><p><indexterm><primary><code>@font-face</code></primary></indexterm>
+it is declared using an <code>@font-face</code> rule in one
+of the style sheets linked to or contained in the current
+document</p></item>
+
+<item><p>it is used in the UA default style sheet, which conceptually
+exists in all UAs and is considered to have full <code>@font-face</code> rules
+for all fonts which the UA will use for default presentation, plus
+<code>@font-face</code> rules for the five special generic font families (see
+<property>font-family</property>)
+defined in CSS2</p></item>
+</ulist>
+</item>
+
+<item><p>At a given element and for each character in that element, the
+UA assembles the font properties applicable to that element. Using
+the complete set of properties, the UA uses the <property>font-family</property> property to
+choose a tentative font family. Thus, matching on a family name
+will succeed before matching on some other descriptor. The
+remaining properties are tested against the family according to the
+matching criteria described with each descriptor. If there are
+matches for all the remaining properties, then that is the matching
+font face for the given element.</p></item>
+
+<item><p>If there is no matching font face within the <descriptor>font-family</descriptor> being processed by
+step 2, <emph>UAs that implement intelligent matching</emph> may
+proceed to examine other descriptors such as x-height, glyph
+widths, and panose-1 to identify a different tentative font family.
+If there are matches for all the remaining descriptors, then that
+is the matching font face for the given element. The <descriptor>font-family</descriptor> descriptor that is
+reflected into the CSS2 properties is the font family that was
+requested, not whatever name the intelligently matched font may
+have. UAs that do not implement intelligent matching are considered
+to fail at this step.</p></item>
+
+<item><p>If there is no matching font face within the <descriptor>font-family</descriptor> being processed by
+step 3, <emph>UAs that implement font downloading</emph> may proceed to
+examine the <descriptor>src</descriptor> descriptor of
+the tentative font face identified in step 2 or 3 to identify a
+network resource that is available, and of the correct format. If
+there are matches for all the remaining descriptors, then that is
+the matching font face for the given element and the UA may attempt
+to download this font resource. The UA may choose to block on this
+download or may choose to proceed to the next step while the font
+downloads. UAs that do not implement font download, or are not
+connected to a network, or where the user preferences have disabled
+font download, or where the requested resource is unavailable for
+whatever reason, or where the downloaded font cannot be used for
+whatever reason, are considered to fail at this step.</p></item>
+
+<item><p>If there is no matching font face within the <descriptor>font-family</descriptor> being processed by
+step 3, <emph>UAs that implement font synthesis</emph> may proceed to
+examine other descriptors such as <descriptor>x-height</descriptor>, glyph widths, and
+<descriptor>panose-1</descriptor> to identify a different
+tentative font family for synthesis. If there are matches for all
+the remaining descriptors, then that is the matching font face for
+the given element and synthesis of the faux font may begin. UAs
+that do not implement font synthesis are considered to fail at this
+step.</p></item>
+
+<item><p>If all of steps 2, 3, 4 and 5 fail, and if there is a next
+alternative <descriptor>font-family</descriptor> in the font set,
+then repeat from step 2 with the next alternative <descriptor>font-family</descriptor>.</p></item>
+
+<item><p>If there is a matching font face, but it doesn't contain
+glyph(s) for the current character(s), and if there is a next
+alternative <descriptor>font-family</descriptor> in the font sets,
+then repeat from step 2 with the next alternative <descriptor>font-family</descriptor>. The <descriptor>unicode-range</descriptor> descriptor may
+be used to rapidly eliminate from consideration those font faces
+that do not have the correct glyphs. If the <descriptor>unicode-range</descriptor> descriptor
+indicates that a font contains some glyphs in the correct range, it
+may be examined by the UA to see if it has that particular
+one.</p></item>
+
+<item><p>If there is no font within the family selected in 2, then use
+the inherited or UA-dependent <descriptor>font-family</descriptor> value and repeat from step 2, using the best match that can be obtained within this font.
+If a particular character cannot be displayed using this font, then the UA has no suitable font for that character. The UA should map each character for which it has no suitable font to a visible symbol chosen by the UA, preferably a "missing character" glyph from one of the font faces available to the UA.</p></item>
+
+<item><p>UAs that implement progressive rendering and have pending font
+downloads may, once download is successful, use the downloaded font
+as a font family. If the downloaded font is missing some glyphs
+that the temporary progressive font did contain, the downloaded
+font is not used for that character and the temporary font
+continues to be used.</p></item>
+</olist>
+
+<note><p>The above algorithm can be optimized
+to avoid having to revisit the CSS2 properties for each
+character.</p></note>
+
+<p>The per-descriptor matching rules from (2) above are as follows:</p>
+
+<olist>
+<item><p><descriptor>font-style</descriptor>
+is tried first. <literal>italic</literal> will be satisfied if there is either a
+face in the UA's font database labeled with the CSS keyword
+<literal>italic</literal> (preferred) or <literal>oblique</literal>. Otherwise the values must be
+matched exactly or font-style will fail.</p></item>
+
+<item><p><descriptor>font-variant</descriptor> is tried next.
+<literal>normal</literal> matches a font not labeled as <literal>small-caps</literal>; <literal>small-caps</literal>
+matches (1) a font labeled as <literal>small-caps</literal>, (2) a font in which the
+small caps are synthesized, or (3) a font where all lowercase
+letters are replaced by uppercase letters. A small-caps font may be
+synthesized by electronically scaling uppercase letters from a
+normal font.</p></item>
+
+<item><p><descriptor>font-weight</descriptor> is matched next, it
+will never fail. (See <descriptor>font-weight</descriptor> below.)</p></item>
+
+<item><p><descriptor>font-size</descriptor>
+must be matched within a UA-dependent margin of tolerance.
+(Typically, sizes for scalable fonts are rounded to the nearest
+whole pixel, while the tolerance for bitmapped fonts could be as
+large as 20%.) Further computations, e.g., by <tt>em</tt> values in other
+properties, are based on the <descriptor>font-size</descriptor> value that is used, not
+the one that is specified.</p></item>
+</olist>
+
+<div3 id="fonts51">
+<head>Mapping font weight values to font names</head>
+
+<p>The <property>font-weight</property> property values are
+given on a numerical scale in which the value '400' (or <literal>normal</literal>)
+corresponds to the "normal" text face for that family. The weight
+name associated with that face will typically be <emph>Book, Regular,
+Roman, Normal</emph> or sometimes <emph>Medium</emph>.</p>
+<p>The association of other weights within a family to the
+numerical weight values is intended only to preserve the ordering
+of weights within that family. User agents must map names to values
+in a way that preserves visual order; a face mapped to a value must
+not be lighter than faces mapped to lower values. There is no
+guarantee on how a user agent will map font faces within a family
+to weight values. However, the following heuristics tell how the
+assignment is done in typical cases:</p>
+
+<ulist>
+<item><p>If the font family already uses a numerical scale with nine
+values (as e.g., <emph>OpenType</emph> does), the font weights should
+be mapped directly.</p></item>
+
+<item><p>If there is both a face labeled <emph>Medium</emph> and one labeled
+<emph>Book, Regular, Roman</emph> or <emph>Normal,</emph> then the
+<emph>Medium</emph> is normally assigned to the '500'.</p></item>
+<item><p>The font labeled "Bold" will often correspond to the weight
+value '700'.</p></item>
+
+<item><p>If there are fewer then 9 weights in the family, the default
+algorithm for filling the "holes" is as follows. If '500' is
+unassigned, it will be assigned the same font as '400'. If any of
+the values '600', '700', '800', or '900' remains unassigned, they
+are assigned to the same face as the next darker assigned keyword,
+if any, or the next lighter one otherwise. If any of '300', '200',
+or '100' remains unassigned, it is assigned to the next lighter
+assigned keyword, if any, or the next darker otherwise.</p></item>
+</ulist>
+
+<p>There is no guarantee that there will be a darker face for each
+of the <property>font-weight</property> values; for
+example, some fonts may have only a normal and a bold face, others
+may have eight different face weights.</p>
+
+<p>The following two examples show typical mappings.</p>
+
+<example>
+<p>Assume four weights in the "Rattlesnake" family, from lightest
+to darkest: <emph>Regular, Medium, Bold, Heavy.</emph></p>
+
+<table border="1" summary="Example of font-weight mapping">
+<caption>First example of font-weight mapping</caption>
+<thead>
+<tr>
+<th>Available faces</th>
+<th>Assignments</th>
+<th>Filling the holes</th>
+</tr>
+</thead>
+<tr>
+<td>"Rattlesnake Regular"</td>
+<td>400</td>
+<td>100, 200, 300</td>
+</tr>
+<tr>
+<td>"Rattlesnake Medium"</td>
+<td>500</td>
+<td/>
+</tr>
+<tr>
+<td>"Rattlesnake Bold"</td>
+<td>700</td>
+<td>600</td>
+</tr>
+<tr>
+<td>"Rattlesnake Heavy"</td>
+<td>800</td>
+<td>900</td>
+</tr>
+</table>
+</example>
+
+<example>
+<p>Assume six weights in the "Ice Prawn" family: <emph>Book, Medium,
+Bold, Heavy, Black, ExtraBlack.</emph> Note that in this instance the
+user agent has decided <emph>not</emph> to assign a numeric value to
+"Example2 ExtraBlack".</p>
+
+<table border="1" summary="Example of font-weight mapping. Note that ExtraBlack is not mapped to a value.">
+<caption>Second example of font-weight mapping</caption>
+<thead>
+<tr>
+<th>Available faces</th>
+<th>Assignments</th>
+<th>Filling the holes</th>
+</tr>
+</thead>
+<tr>
+<td>"Ice Prawn Book"</td>
+<td>400</td>
+<td>100, 200, 300</td>
+</tr>
+<tr>
+<td>"Ice Prawn Medium"</td>
+<td>500</td>
+<td/>
+</tr>
+<tr>
+<td>"Ice Prawn Bold"</td>
+<td>700</td>
+<td>600</td>
+</tr>
+<tr>
+<td>"Ice Prawn Heavy"</td>
+<td>800</td>
+<td/>
+</tr>
+<tr>
+<td>"Ice Prawn Black"</td>
+<td>900</td>
+<td/>
+</tr>
+<tr>
+<td>"Ice Prawn ExtraBlack"</td>
+<td>(none)</td>
+<td/>
+</tr>
+</table>
+</example>
+</div3>
+
+<div3 id="fonts52">
+<head>Yazıtipi eşleme örnekleri</head>
+
+<example>
+<p>The following example defines a specific font face, Alabama
+Italic. A panose font description and source URI for retrieving a
+truetype server font are also provided. Font-weight and font-style
+descriptors are provided to describe the font. The declaration says
+that the weight will also match any request in the range 300 to
+500. The font family is Alabama and the adorned font name is
+Alabama Italic.</p>
+
+<eg>@font-face {
+  src: local("Alabama Italic"),
+       url(http://www.fonts.org/A/alabama-italic) format("truetype");
+  panose-1: 2 4 5 2 5 4 5 9 3 3;
+  font-family: Alabama, serif;
+  font-weight:   300, 400, 500;
+  font-style:  italic, oblique;
+}</eg>
+</example>
+
+<example>
+<p>The next example defines a family of fonts. A single URI is
+provided for retrieving the font data. This data file will contain
+multiple styles and weights of the named font. Once one of these
+<code>@font-face</code> definitions has been dereferenced, the data will be in
+the UA cache for other faces that use the same URI.</p>
+
+<eg>@font-face {
+  src: local("Helvetica Medium"),
+       url(http://www.fonts.org/sans/Helvetica_family) format("truedoc");
+  font-family: "Helvetica";
+  font-style: normal
+}
+@font-face {
+  src: local("Helvetica Oblique"),
+       url("http://www.fonts.org/sans/Helvetica_family") format("truedoc");
+  font-family: "Helvetica";
+  font-style: oblique;
+  slope: -18
+}</eg>
+</example>
+
+<example>
+<p>The following example groups three physical fonts into one
+virtual font with extended coverage. In each case, the adorned font
+name is given in the src descriptor to allow locally installed
+versions to be preferentially used if available. A fourth rule
+points to a font with the same coverage, but contained in a single
+resource.</p>
+
+<eg>@font-face {
+  font-family: Excelsior;
+  src: local("Excelsior Roman"), url("http://site/er") format("intellifont");
+  unicode-range: U+??; /* Latin-1 */
+}
+@font-face {
+  font-family: Excelsior;
+  src: local("Excelsior EastA Roman"), url("http://site/ear") format("intellifont");
+  unicode-range: U+100-220; /* Latin Extended A and B */
+}
+@font-face {
+  font-family: Excelsior;
+  src: local("Excelsior Cyrillic Upright"), url("http://site/ecr") format("intellifont");
+  unicode-range: U+4??; /* Cyrillic */
+}
+@font-face {
+  font-family: Excelsior;
+  src: url("http://site/excels") format("truedoc");
+  unicode-range: U+??,U+100-220,U+4??;
+}</eg>
+</example>
+
+<example>
+<p>This next example might be found in a UA's default style sheet.
+It implements the CSS2 generic font family, <tt>serif</tt> by
+mapping it to a wide variety of serif fonts that might exist on
+various platforms. No metrics are given since these vary among the
+possible alternatives.</p>
+
+<eg>@font-face {
+  src: local("Palatino"),
+          local("Times New Roman"),
+          local("New York"),
+          local("Utopia"),
+          url("http://somewhere/free/font");
+  font-family: serif;
+  font-weight: 100, 200, 300, 400, 500;
+  font-style: normal;
+  font-variant: normal;
+  font-size: all
+}</eg>
+</example>
+</div3>
+</div2>
+</div1>
+
+
+

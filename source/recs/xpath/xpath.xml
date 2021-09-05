@@ -1,0 +1,1642 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="xpath.xsl"?>
+<!DOCTYPE spec SYSTEM "../xmlspec-tr.dtd" [
+<!ENTITY w3c "http://www.w3.org">
+<!ENTITY XML "../xml">
+<!ENTITY XMLNames "../xml-names">
+<!ENTITY XML11 "../xml11">
+<!ENTITY XMLNames11 "../xml-names11">
+<!ENTITY XSLTrec "../xslt">
+<!ENTITY XSLT "../xslt">
+<!ENTITY year "1999">
+<!ENTITY month "November">
+<!ENTITY MM "11">
+<!ENTITY day "16">
+<!ENTITY DD "16">
+<!ENTITY YYYYMMDD "&year;&MM;&DD;">
+<!ENTITY LEV "REC">
+<!-- DTD customizations -->
+  <!ATTLIST arg
+    type  (sayı|dizge|mantıksal-tür|düğüm-kümesi|nesne) #REQUIRED
+    occur (opt|rep) #IMPLIED>
+  <!ATTLIST proto
+    name        NMTOKEN         #REQUIRED
+    return-type (sayı|dizge|mantıksal-tür|düğüm-kümesi|nesne)  #REQUIRED>
+  <!ATTLIST authlist
+    translator-name   CDATA #FIXED "Nilgün Belma Bugüner"
+    translator-email  CDATA #FIXED "nilgun (at) belgeler·org"
+    translation-date  CDATA #FIXED "4 Haziran 2007" >
+  <!ENTITY mdash "&#x2014;">
+]>
+<spec>
+<header>
+<title>XML Adresleme Dili (XPath)</title>
+<version>Sürüm 1.0</version>
+<w3c-designation>REC-xpath-19991116</w3c-designation>
+<w3c-doctype>W3C Önergesi</w3c-doctype>
+<pubdate><day>16</day><month>Kasım</month><year>1999</year></pubdate>
+<publoc>
+<loc href="http://www.w3.org/TR/1999/REC-xpath-19991116"/>
+<loc role="available-format" href="http://www.w3.org/TR/1999/REC-xpath-19991116.xml">XML</loc>
+<loc role="available-format" href="http://www.w3.org/TR/1999/REC-xpath-19991116.html">HTML</loc>
+<!--
+<loc href="http://www.w3.org/TR/&year;/&LEV;-xpath-&YYYYMMDD;.pdf"
+          >http://www.w3.org/TR/&year;/&LEV;-xpath-&YYYYMMDD;.pdf</loc>
+-->
+</publoc>
+<latestloc>
+<loc href="http://www.w3.org/TR/xpath"/>
+</latestloc>
+<prevlocs>
+<loc href="http://www.w3.org/TR/1999/PR-xpath-19991008"/>
+<loc href="http://www.w3.org/1999/08/WD-xpath-19990813"/>
+<loc href="http://www.w3.org/1999/07/WD-xpath-19990709"/>
+<loc href="http://www.w3.org/TR/1999/WD-xslt-19990421"/>
+</prevlocs>
+<authlist>
+<author>
+<name>James Clark</name>
+<email href="mailto:jjc@jclark.com">jjc@jclark.com</email>
+</author>
+<author>
+<name>Steve DeRose</name>
+<affiliation>Inso Corp. ve Brown Üniversitesi</affiliation>
+<email href="mailto:Steven_DeRose@Brown.edu">Steven_DeRose@Brown.edu</email>
+</author>
+</authlist>
+
+<status>
+
+<p>Bu belge W3C üyeleri ve diğer ilgili taraflarca gözden geçirilmiş ve W3C Yönetimi tarafından bir W3C <loc href="http://www.w3.org/Consortium/Process/#RecsW3C">Önergesi</loc> olarak onaylanmıştır. Kararlı bir belge olup başka belgelerden uyulması gerekli bir kaynak olarak atıfta bulunarak veya bir başvuru malzemesi olarak kullanılabilir. W3C'nin Önergedeki rolü, belirtime dikkatleri çekmek ve geniş bir alanda kullanımını yaygınlaştırmaktır. Bu, Web'in işlevselliğini ve birlikte çalışabilirliğini arttırmaktadır.</p>
+
+<p>Bu belirtimin bilinen hatalarının listesi
+<loc href="http://www.w3.org/1999/11/REC-xpath-19991116-errata"/> adresindedir. Bu listedeki düzeltmelerden 2 Kasım 2005'e kadar olanlar çeviriye yansıtılmıştır.</p>
+
+<p>Bu belirtimle ilgili yorumlarınızı <loc href="mailto:www-xpath-comments@w3.org">www-xpath-comments@w3.org</loc> adresine gönderebilirsiniz; Yorumların <loc href="http://lists.w3.org/Archives/Public/www-xpath-comments">arşivleri</loc> de mevcuttur.</p>
+
+<p>Bu belirtimin fiilen geçerli (İng: normative) tek sürümü İngilizce sürümü olmakla birlikte bilgilendirici (İng: non-normative) mahiyette olarak bu belgenin başka dillere <loc href="http://www.w3.org/Style/XSL/translations.html">tercümeleri</loc> de mevcuttur.</p>
+
+<p>Şu anki W3C yayınlarının ve bu teknik raporların en son sürümleri &w3c;/TR/ adresindeki <loc href="&w3c;/TR/">W3C teknik raporları dizini</loc>nde bulunabilir.</p>
+
+<p>Bu belge, <loc href="&w3c;/XML/Activity.html">W3C XML Etkinliği</loc>nin <loc href="http://www.w3.org/Style/Activity">W3C Biçim Etkinlği</loc>nin bir parçası olarak XSL Çalışma Grubu ve XML İlintileme Çalışma Grubu tarafından üretilmiştir.</p>
+
+</status>
+
+<abstract><p>XPath, bir XML belgenin parçalarını adreslemek için XSLT ve
+XPointer tarafından kullanılmak üzere tasarlanmış bir dildir.</p>
+</abstract>
+
+    <langusage>
+      <language id="tr">Türkçe</language>
+      <language id="special-bnf">Special Backus-Naur Form (UTF-8 Form)</language>
+    </langusage>
+
+<revisiondesc>
+<slist>
+<sitem>See RCS log for revision history.</sitem>
+</slist>
+</revisiondesc>
+</header>
+<body>
+
+<div1>
+<head>Giriş</head>
+<p>XPath, XSL Dönüşümleri <bibref ref="XSLT"/> ve XPointer <bibref ref="XPTR"/> arasında paylaşılan işlevsellik için ortak bir sözdizimi ve anlamsallık sağlama çabasının bir sonucudur. XPath'ın ana amacı, bir XML <bibref ref="XML"/> belgenin parçalarını birbirlerine adreslemektir. Bu birincil amacı desteklemek üzere, dizgeler, sayılar ve mantıksal ifadeler için temel oluşumlar sağlar. XPath, tanım-yeri (URI) başvurularında ve XML öznitelik değerlerinde XPath kullanımını kolaylaştırmak için XML-dışı, kısa ve özlü bir sözdizimi kullanır. XPath, bir XML belgenin yüzeysel sözdiziminden ziyade soyut, mantıksal yapısı üzerinde işlem yapar. XPath, bir XML belgenin orunsal yapısı boyunca gezinmek için URL'lerdeki gibi bir yol gösterimi kullanmasından dolayı bu adı almıştır.</p>
+
+<p>Adresleme için kullanımına ek olarak, eşleştirme işlemlerinde (bir düğümün bir örüntüyle eşleşip eşleşmediğinin sınanması gibi) kullanılabilen doğal bir altkümeye sahip olacak şekilde tasarlanmıştır. XPath'ın bu kullanımı <xspecref href="&XSLTrec;#patterns">XSLT</xspecref>de açıklanmıştır.</p>
+
+<p>XPath bir XML belgeyi düğümlerden oluşan bir ağaç olarak modeller. Eleman düğümleri, öznitelik düğümleri ve metin düğümleri gibi farklı düğüm türleri vardır. XPath her düğüm türü için bir <termref def="dt-string-value">dizgesel değer</termref>i hesaplayacak bir yöntem tanımlar. Bazı düğüm türlerinin ayrıca adları da mevcuttur. XPath, XML İsim-alanlarını <bibref ref="XMLNAMES"/> tamamen destekler. Bu bakımdan, bir düğüm adı, olası bir isim-alanı tanım-yeri ile bir yerel parçadan oluşan bir çift olarak modellenir; buna <termref def="dt-expanded-name">genişletilmiş isim</termref> adı verilir. Veri modeli <specref ref="data-model"/> bölümünde ayrıntılı olarak açıklanmıştır.</p>
+
+<p>XPath'ta başat sözdizimsel oluşum ifadedir. Bir ifade, <nt def="NT-Expr">İfade</nt> sözdizimi tanımıyla eşleşir. Bir ifade, aşağıdaki dört temel türden biri olarak bir nesneyle sonuçlanmak üzere değerlendirilir:</p>
+
+<slist>
+<sitem>düğüm-kümesi (yinelenmemiş düğümlerden oluşan sırasız düğüm kolleksiyonu)</sitem>
+<sitem>mantıksal ifade (doğru veya yanlış)</sitem>
+<sitem>sayı (bir gerçel sayı)</sitem>
+<sitem>dizge (UCS karakterleri dizisi)</sitem>
+</slist>
+
+<p>İfade, bağlamla ilişkili olarak değerlendirilir. XSLT ve XPointer, kendileri tarafından kullanılan XPath ifadeleri için bağlamın nasıl saptanacağını kendileri belirtirler. Bağlam şunlardan oluşur:</p>
+
+<slist>
+<sitem>bir düğüm (<termdef id="dt-context-node" term="Bağlamsal Düğüm"><term>bağlamsal düğüm</term></termdef>)</sitem>
+<sitem>sıfırdan farklı ve pozitif bir tamsayı çifti (<termdef id="dt-context-position" term="Bağlamsal Sıra"><term>bağlamsal sıra</term></termdef> ve <termdef id="dt-context-size" term="Bağlamsal Boyut"><term>bağlamsal boyut</term></termdef>)</sitem>
+<sitem>bir değişken bağıntıları kümesi</sitem>
+<sitem>bir işlev kütüphanesi</sitem>
+<sitem>ifadenin etki alanı içindeki isim-alanı bildirimleri kümesi</sitem>
+</slist>
+
+<p>Bağlamsal konum daima bağlamsal boyuttan küçük veya ona eşittir.</p>
+
+<p>Değişken bağıntıları, değişken isimleri değişken değerlerine eşlenerek oluşur. Bir değişkenin değeri bir nesne olup, bu nesne, bir ifade için olası türlerden biri olabileceği gibi burada belirtilmemiş ilave türlerden biri de olabilir.</p>
+
+<p>İşlev kütüphanesi işlev isimleri işlevlere eşlenerek oluşur. Her işlev sıfır veya daha fazla argüman alır ve tek bir sonuçla döner. Bu belirtim, tüm XPath gerçeklenimlerinin desteklemesi gereken temel bir işlev kütüphanesi tanımlar (bkz, <specref ref="corelib"/>). Temel işlev kütüphanesindeki bir işlev için argümanlar ve sonuçlar dört temel türde olabilir. XSLT ve XPointer, ek işlevler tanımlayarak XPath'ı genişletir; bu işlevlerin bazıları dört temel türde işlem yapar; bazıları da XSLT ve XPointer tarafından tanımlanmış veri türleri üzerinde işlem yapar.</p>
+
+<p>İsim-alanı bildirimleri, önekler isim-alanı tanım-yerlerine eşlenerek oluşur.</p>
+
+<p>Bir alt ifadeyi değerlendirmekte kullanılan değişken bağıntıları, işlev kütüphanesi ve isim-alanı bildirimleri, daima bu ifadeyi içeren ifadeyi değerlendirmekte kullanılanlarla aynıdır. Bir alt ifadeyi değerlendirmekte kullanılan bağlamsal düğüm, bağlamsal konum ve bağlamsal boyut bazan bu ifadeyi içeren ifadeyi değerlendirmekte kullanılanlardan farklıdır. Bazı ifade çeşitleri bağlamsal düğümü değiştirir; bağlamsal konumu ve bağlamsal boyutu sadece dayanaklar değiştirir (bkz, <specref ref="predicates"/>). Bir ifade çeşidinin değerlendirimi açıklanırken, daima doğrudan doğruya, alt ifadelerin değerlendirimi için bağlamsal düğüm, bağlamsal konum ve bağlamsal boyutun değişmesine göre durumlanır; eğer bağlamsal düğüm, bağlamsal konum ve bağlamsal boyut hakkında hiçbir şey söylenemiyorsa, ifade çeşidinin alt ifadelerinin değerlendirimi için bunlar değişmeden kalır.</p>
+
+<p>XPath ifadeleri çoğunlukla XML özniteliklerinde görülür. Bu bölümde belirtilen dilbilgisi öznitelik değerine XML normalleştirmesinden sonra uygulanır. Örneğin, dilbilgisi <code>&lt;</code> karakterini kullanıyorsa, bunun XML belgede <code>&lt;</code> olarak gözükmemesi, XML 1.0 kurallarına göre öncelenmesi gerekir (<code>&amp;lt;</code> olarak verilmesi gerekir). İfadelerin içinde, dizgesel sabitler, öznitelik değerleri için yapıldığı gibi, tek veya çift tırnak içine alınırlar. XML işlemcinin ifadedeki tırnak karakterlerini öznitelik değerini sonlandıran tırnak karakteri olarak algılamaması için ifade içindeki tırnak karakterleri karakter gönderimleri olarak girilmelidir (<code>&amp;quot;</code> veya <code>&amp;apos;</code> gibi). Başka bir yöntem de, XML özniteliğin değeri çift tırnak içine alınmışsa, ifade içinde tek tırnak kullanmak veya değer tek tırnak içine alınmışsa, ifade içinde çift tırnak kullanmaktır.</p>
+
+<p>Önemli ifade çeşitlerinden biri konumsal yoldur. Bir konumsal yol bağlamsal düğüme göreli olarak bir düğüm kümesini seçer. İfadenin konumsal yol olduğu durumda değerlendirme sonucu, konumsal yol tarafından seçilen düğümleri içeren düğüm kümesidir. Konumsal yollar düğüm kümelerini süzmekte kullanılan ifadeleri dönüşümlü olarak içerebilir. Konumsal yollar <nt def="NT-LocationPath">KonumsalYol</nt> sözdizimi tanımıyla eşleşirler.</p>
+
+<p>Aşağıdaki sözdizimi tanımları içindeki <xnt href="&XMLNames;#NT-QName">NitelAd</xnt> ve <xnt href="&XMLNames;#NT-NCName">KısaAd</xnt> tanım terimleri <bibref ref="XMLNAMES"/>'ında, <xnt href="&XML;#NT-S">B</xnt> ise <bibref ref="XML"/>'de tanımlanmıştır. Sözdizimi için kullanılan gösterim <bibref ref="XML"/>'de kullanılan BNF gösterimi ile aynıdır (tanım terimlerinin baş harflerinde büyük harf kullanılması dışında).</p>
+
+<p>İfadeler çözümlenirken, önce karakter dizgelerine bölünür, bunlar dizgecikler  halinde çözümlendikten sonra da dizgecikler çözümlenir. Dizgecikler arasında boşluk karakterleri özgürce kullanılabilir. Dizgeciklere ayırma işlemi <specref ref="exprlex"/> bölümünde açıklanmıştır.</p>
+
+<p>Ek olarak, XML 1.0 ve XML Adları 1.0 gönderimleri daima kolaylık olsun diyedir. Bununla birlikte, bir gerçeklenim <bibref ref="XML"/> ve <bibref ref="XMLNAMES"/> veya <bibref ref="XML11"/> ve <bibref ref="XMLNAMES11"/> sözdizimsel belirtimlerini desteklemeyi tercih edebilir. Bu bakımdan, uluslararası tanım-yeri (IRI) ayrıca destekleniyor olsa da tanım-yeri (URI) başvuruları ayrıca kullanılmıştır. Bazı durumlarda XML 1.0 ve XML 1.1 tanımları tamamen aynı olabilir.</p>
+</div1>
+
+<div1 id="location-paths">
+<head>Konumsal Yollar</head>
+
+<p>Konumsal yollar dildeki en genel sözdizimsel oluşum olmasa da, en önemli oluşumlardan olması nedeniyle öncelikle açıklanacaktır (bir <nt def="NT-LocationPath">KonumsalYol</nt>, <nt def="NT-Expr">İfade</nt>'nin özel bir durumudur).</p>
+
+<p>Her konumsal yol düz mantıkla fakat oldukça ayrıntılı bir sözdizimi kullanılarak ifade edilebilir. Ayrıca, ortak durumların kısa ve özlü olarak ifade edilebilmesini mümkün kılan bazı sözdizimsel kısaltmalar da mevcuttur. Bu bölümde konumsal yolların anlamları, kısaltılmış sözdizimi kullanılmaksızın açıklanacaktır. Kısaltılmış sözdizimi daha sonra kısaltılmamış sözdizimine nasıl genişletileceği gösterilerek açıklanacaktır (bkz, <specref ref="path-abbrev"/>).</p>
+
+<p>Kısaltılmamış sözdizimi kullanılan konumsal yol örnekleri:</p>
+
+<ulist>
+
+<item><p><code>child::para</code> bağlamsal düğümün <code>para</code> elemanlarından oluşan çocuklarını seçer</p></item>
+
+<item><p><code>child::*</code> bağlamsal düğümün bütün elemanlarından oluşan çocuklarını seçer</p></item>
+
+<item><p><code>child::text()</code> bağlamsal düğümün bütün metin düğümlerinden oluşan çocuklarını seçer</p></item>
+
+<item><p><code>child::node()</code> düğüm türleri ne olursa olsun bağlamsal düğümün bütün çocuklarını seçer</p></item>
+
+<item><p><code>attribute::name</code> bağlamsal düğümün <code>name</code> özniteliğini seçer</p></item>
+
+<item><p><code>attribute::*</code> bağlamsal düğümün özniteliklerinin hepsini seçer</p></item>
+
+<item><p><code>descendant::para</code> bağlamsal düğümün <code>para</code> elemanlarından oluşan astsallarını seçer</p></item>
+
+<item><p><code>ancestor::div</code> bağlamsal düğümün bütün <code>div</code> elemanlarından oluşan üstsellerini seçer</p></item>
+
+<item><p><code>ancestor-or-self::div</code> bağlamsal düğümün bütün <code>div</code> üstsellerinden başka eğer bağlamsal düğümün kendisi de bir
+<code>div</code> elemanı ise kendisini de seçer</p></item>
+
+<item><p><code>descendant-or-self::para</code> bağlamsal düğümün bütün <code>para</code> astsallarından başka eğer bağlamsal düğümün kendisi de bir
+<code>para</code> elemanı ise kendisini de seçer</p></item>
+
+<item><p><code>self::para</code> bağlamsal düğümün kendisi bir <code>para</code> elemanı ise kendisini seçer, yoksa hiçbir şey seçilir</p></item>
+
+<item><p><code>child::chapter/descendant::para</code> bağlamsal düğümün <code>chapter</code> çocuklarının <code>para</code> astsallarını seçer</p></item>
+
+<item><p><code>child::*/child::para</code> bağlamsal düğümün tüm <code>para</code> torunlarını seçer</p></item>
+
+<item><p><code>/</code> belge kökünü seçer (daima belge elemanının ebeveynidir)</p></item>
+
+<item><p><code>/descendant::para</code> bağlamsal düğümün yer aldığı belgenin tüm <code>para</code> elemanlarını seçer</p></item>
+
+<item><p><code>/descendant::olist/child::item</code> bağlamsal düğümün yer aldığı belgenin tüm <code>olist</code> elemanlarının tüm <code>item</code> çocuklarını seçer; başka bir deyişle belgenin ebeveynleri <code>olist</code> olan tüm <code>item</code> elemanlarını seçer</p></item>
+
+<item><p><code>child::para[position()=1]</code> bağlamsal düğümün ilk <code>para</code> çocuğunu seçer</p></item>
+
+<item><p><code>child::para[position()=last()]</code> bağlamsal düğümün son <code>para</code> çocuğunu seçer</p></item>
+
+<item><p><code>child::para[position()=last()-1]</code> bağlamsal düğümün sondan bir önceki <code>para</code> çocuğunu seçer</p></item>
+
+<item><p><code>child::para[position()&gt;1]</code> bağlamsal düğümün ilki hariç diğer bütün <code>para</code> çocuklarını seçer</p></item>
+
+<item><p><code>following-sibling::chapter[position()=1]</code> bağlamsal düğümün sonraki ilk <code>chapter</code> kardeşini seçer</p></item>
+
+<item><p><code>preceding-sibling::chapter[position()=1]</code> bağlamsal düğümün önceki ilk <code>chapter</code> kardeşini seçer</p></item>
+
+<item><p><code>/descendant::figure[position()=42]</code> belgenin 42. <code>figure</code> elemanını seçer</p></item>
+
+<item><p><code>/child::doc/child::chapter[position()=5]/child::section[position()=2]</code>
+<code>doc</code> belge elemanının 5. <code>chapter</code> çocuğunun 2. <code>section</code> çocuğunu seçer (belgenin 5. kısmının 2. bölümünü seçer)</p></item>
+
+<item><p><code>child::para[attribute::type="warning"]</code> bağlamsal düğümün <code>para</code> çocuklarından <code>type</code> özniteliğinin değeri <code>warning</code> olanları seçer</p></item>
+
+<item><p><code>child::para[attribute::type='warning'][position()=5]</code> bağlamsal düğümün <code>para</code> çocuklarından <code>type</code> özniteliğinin değeri <code>warning</code> olanların 5.sini seçer</p></item>
+
+<item><p><code>child::para[position()=5][attribute::type="warning"]</code> bağlamsal düğümün 5. <code>para</code> çocuğunu eğer <code>type</code> özniteliğinin değeri <code>warning</code> ise seçer</p></item>
+
+<item><p><code>child::chapter[child::title='Introduction']</code> bağlamsal düğümün <code>chapter</code> çocuklarından <code>title</code> çocuğunun <termref def="dt-string-value">dizgesel değeri</termref> <code>Introduction</code> olanlarını seçer</p></item>
+
+<item><p><code>child::chapter[child::title]</code> bağlamsal düğümün <code>chapter</code> çocuklarından <code>title</code> çocuğu olanları seçer</p></item>
+
+<item><p><code>child::*[self::chapter or self::appendix]</code> bağlamsal düğümün <code>chapter</code> ve <code>appendix</code> çocuklarını seçer</p></item>
+
+<item><p><code>child::*[self::chapter or self::appendix][position()=last()]</code> bağlamsal düğümün son <code>chapter</code> veya <code>appendix</code> çocuğunu seçer</p></item>
+
+</ulist>
+
+<p>İki çeşit konumsal yol vardır: göreli konumsal yollar ve mutlak konumsal yollar.</p>
+
+<p>Bir göreli konumsal yol, <code>/</code> imleriyle birbirlerinden ayrılmış bir veya daha fazla konumdan oluşur. Göreli konumsal yoldaki bu konumlar soldan sağa birlikte bir bütün oluştururlar. Her konumda bağlamsal düğüme göreli bir düğüm kümesi seçilir ve kümedeki her düğüm sonraki konumun bağlamsal düğümü olur. Örneğin, <code>child::div/child::para</code> yolu bağlamsal düğümün <code>div</code> elemanlarından oluşan çocuklarının <code>para</code> elemanlarından oluşan çocuklarını seçer, başka bir deyişle, bağlamsal düğümün ebeveynleri <code>div</code> olan <code>para</code> torunları seçilir.</p>
+
+<p>Bir mutlak konumsal yol <code>/</code> iminden sonra gelen bir göreli konumsal yoldan oluşur. Tek başına <code>/</code> imi, bağlamsal düğümü içeren belgenin kök düğümünü seçer. Kök düğüm, bu imden sonra gelen göreli konumsal yolun ilk konumunun bağlamsal düğümü olur.</p>
+
+<scrap>
+<head>Konumsal Yollar</head>
+<prodgroup pcw5="1" pcw2="10" pcw4="18">
+<prod id="NT-LocationPath">
+<lhs>KonumsalYol</lhs>
+<rhs><nt def="NT-RelativeLocationPath">GöreliKonumsalYol</nt></rhs>
+<rhs>| <nt def="NT-AbsoluteLocationPath">MutlakKonumsalYol</nt></rhs>
+</prod>
+<prod id="NT-AbsoluteLocationPath">
+<lhs>MutlakKonumsalYol</lhs>
+<rhs>'/' <nt def="NT-RelativeLocationPath">GöreliKonumsalYol</nt>?</rhs>
+<rhs>| <nt def="NT-AbbreviatedAbsoluteLocationPath">KısaltılmışMutlakKonumsalYol</nt></rhs>
+</prod>
+<prod id="NT-RelativeLocationPath">
+<lhs>GöreliKonumsalYol</lhs>
+<rhs><nt def="NT-Step">Konum</nt></rhs>
+<rhs>| <nt def="NT-RelativeLocationPath">GöreliKonumsalYol</nt> '/' <nt def="NT-Step">Konum</nt></rhs>
+<rhs>| <nt def="NT-AbbreviatedRelativeLocationPath">KısaltılmışGöreliKonumsalYol</nt></rhs>
+</prod>
+</prodgroup>
+</scrap>
+
+<div2 id="steps">
+<head>Konumlar</head>
+
+<p>Bir konum üç parçadan oluşur:</p>
+
+<ulist>
+
+<item><p>konum ve bağlamsal düğüm tarafından seçilen düğümler arasındaki ilişkiyi belirten dallar,</p></item>
+
+<item><p>konum tarafından seçilen düğümlerin <termref def="dt-expanded-name">genişletilmiş ismini</termref> ve düğüm türünü belirten bir düğüm sınaması ve</p></item>
+
+<item><p>konum tarafından seçilen düğüm kümesini sadeleştirecek keyfi ifadelerin kullanıldığı sıfır veya daha çok sayıda dayanak.</p></item>
+
+</ulist>
+
+<p>Bir konumun sözdizimi, bir çift ikinokta imi ile ayrılmış bir dal ismi ve düğüm sınamasından sonra gelebilen sıfır veya daha çok sayıda köşeli ayraç içine alınmış ifadeden ibarettir. Örneğin, <code>child::para[position()=1]</code> konumunda, <code>child</code> dalın ismi, <code>para</code> sınanan düğüm ve <code>[position()=1]</code> ise dayanaktır.</p>
+
+<p>Konum tarafından seçilen düğüm kümesi, daldaki düğüm sınamasının ilk düğüm kümesinden dayanaklardaki koşulları sağlayanların oluşturduğu düğüm kümesidir.</p>
+
+<p>Düğümleri oluşturan ilk düğüm kümesi, dal tarafından belirtilen bağlamsal düğümle ilişkilidir ve sınanan düğüm tarafından belirtilen <termref def="dt-expanded-name">genişletilmiş isme</termref> ve düğüm türüne sahiptir. Örneğin, <code>descendant::para</code> konumu, bağlamsal düğümün <code>para</code> elemanlarından oluşan tüm astsallarını seçer: <code>descendant</code>, ilk düğüm kümesindeki her düğümün, bağlamın astsalı olması gerektiğini belirtirken; <code>para</code>, ilk düğüm kümesindeki her düğümün, <code>para</code> isimli bir eleman olması gerektiğini belirtir. Olası dal çeşitleri <specref ref="axes"/> bölümüne açıklanmıştır. Olası düğüm sınamaları ise <specref ref="node-tests"/> bölümünde açıklanmıştır. Bazı düğüm sınamalarının anlamları dala bağlıdır.</p>
+
+<p>ilk düğüm kümesi, yeni düğüm kümesini üretecek ilk dayanak tarafından süzülür; bu yeni düğüm kümesi de ikinci dayanak tarafından süzülür ve böyle devam eder. Elde edilen düğüm kümesi konum tarafından seçilen düğüm kümesi olur. Dal, her dayanağın değerlendirilişine etki eder, dolayısıyla bir dayanağın anlamı ait olduğu dala göre tanımlanır.  Daha fazla bilgi için <specref ref="predicates"/> bölümüne bakınız.</p>
+
+<scrap>
+<head>Konumlar</head>
+<prodgroup pcw5="1" pcw2="10" pcw4="18">
+<prod id="NT-Step">
+<lhs>Konum</lhs>
+<rhs><nt def="NT-AxisSpecifier">DalBelirteci</nt>
+<nt def="NT-NodeTest">DüğümSınaması</nt>
+<nt def="NT-Predicate">Dayanak</nt>*</rhs>
+<rhs>| <nt def="NT-AbbreviatedStep">KısaKonum</nt></rhs>
+</prod>
+<prod id="NT-AxisSpecifier">
+<lhs>DalBelirteci</lhs>
+<rhs><nt def="NT-AxisName">DalAdı</nt> '::'</rhs>
+<rhs>| <nt def="NT-AbbreviatedAxisSpecifier">KısaKonumBelirteci</nt>
+</rhs>
+</prod>
+</prodgroup>
+</scrap>
+
+</div2>
+
+<div2 id="axes">
+<head>Dallar</head>
+<ednote>
+  <edtext>Bu bölümdeki resimler bu belirtimin <loc href="http://www2.informatik.hu-berlin.de/~obecker/obqo/w3c-trans/xpath-de/">Almanca çevirisinden alıntıdır</loc> ve açıklamaları şekillerle pekiştirmek için kullanılmışlardır.</edtext>
+</ednote>
+
+<p>Olası dallar:</p>
+
+<ulist>
+
+<item>
+  <p><code role="axis">child</code> dalı, bağlamsal düğümün çocuklarını içerir.</p>
+  <figure>
+    <graphic alt="çocuklar" source="images/axis-child.gif"/>
+  </figure>
+</item>
+
+<item>
+  <p><code role="axis">descendant</code> dalı, bağlamsal düğümün astsallarını içerir; bir astsal, bir çocuk veya bu çocuğun çocuğu veya benzeri olabilir. Bu bakımdan bir bağlamsal düğümün astsal düğümleri hiçbir zaman öznitelik veya başka isim-alanından düğümler içermez.</p>
+  <figure>
+    <graphic alt="astsallar" source="images/axis-descendant.gif"/>
+  </figure>
+</item>
+
+<item>
+  <p><code role="axis">parent</code> dalı, bağlamsal düğümün <termref def="dt-parent">ebeveyn</termref>ini içerir (varsa).</p>
+  <figure>
+    <graphic alt="ebeveyn" source="images/axis-parent.gif"/>
+  </figure>
+</item>
+
+<item>
+  <p><code role="axis">ancestor</code> dalı, bağlamsal düğümün üstsellerini içerir; bağlamsal düğümün üstselleri, bağlamsal düğümün <termref def="dt-parent">ebeveyn</termref>i ve bu ebeveynin ebeveyni ve benzerlerinden oluşur; bu durumda üstsel dal, bağlamsal düğümün kendisi bir kök düğüm olmadıkça, daima kök düğümü içerecektir.</p>
+  <figure>
+    <graphic alt="üstseller" source="images/axis-ancestor.gif"/>
+  </figure>
+</item>
+
+<item>
+  <p><code role="axis">following-sibling</code> dalı, bağlamsal düğümün tüm küçük kardeşlerini içerir; eğer bağlamsal düğüm bir öznitelik düğümü veya bir isim-alanı düğümü ise, <code>following-sibling</code> dalı boştur.</p>
+  <figure>
+    <graphic alt="küçük kardeşler" source="images/axis-following-sibling.gif"/>
+  </figure>
+</item>
+
+<item>
+  <p><code role="axis">preceding-sibling</code> dalı, bağlamsal düğümün tüm büyük kardeşlerini içerir;eğer bağlamsal düğüm bir öznitelik düğümü veya bir isim-alanı düğümü ise, <code>preceding-sibling</code> dalı boştur.</p>
+  <figure>
+    <graphic alt="büyük kardeşler" source="images/axis-preceding-sibling.gif"/>
+  </figure>
+</item>
+
+<item>
+  <p><code role="axis">following</code> dalı, bağlamsal düğümün astsalları, öznitelik düğümleri ve isim-alanı düğümleri hariç,  belgedeki sırasına göre bağlamsal düğümden sonra gelen tüm düğümleri içerir.</p>
+  <figure>
+    <graphic alt="sonrakiler" source="images/axis-following.gif"/>
+  </figure>
+</item>
+
+<item>
+  <p><code role="axis">preceding</code> dalı, bağlamsal düğümün üstselleri, öznitelik düğümleri ve isim-alanı düğümleri hariç,  belgedeki sırasına göre bağlamsal düğümden önce gelen tüm düğümleri içerir.</p>
+  <figure>
+    <graphic alt="öncekiler" source="images/axis-preceding.gif"/>
+  </figure>
+</item>
+
+<item><p><code role="axis">attribute</code> dalı, bağlamsal düğümün özniteliklerini içerir; bağlamsal düğüm bir eleman olmadığı takdirde dal boş olacaktır.</p>
+</item>
+
+<item><p><code role="axis">namespace</code> dalı, bağlamsal düğümün isim-alanı düğümlerini içerir; bağlamsal düğüm bir eleman olmadığı takdirde dal boş olacaktır.</p>
+</item>
+
+<item><p><code role="axis">self</code> dalı, sadece bağlamsal düğümün kendini içerir.</p>
+  <figure>
+    <graphic alt="kendisi" source="images/axis-self.gif"/>
+  </figure>
+</item>
+
+<item><p><code role="axis">descendant-or-self</code> dalı, bağlamsal düğümün kendini ve astsallarını içerir.</p>
+  <figure>
+    <graphic alt="kendisi veya astsalları" source="images/axis-descendant-or-self.gif"/>
+  </figure>
+</item>
+
+<item><p><code role="axis">ancestor-or-self</code> dalı, bağlamsal düğümün kendini ve üstsellerini içerir; bu durumda kök düğümü daima içerecektir.</p>
+  <figure>
+    <graphic alt="kendisi veya üstselleri" source="images/axis-ancestor-or-self.gif"/>
+  </figure>
+</item>
+
+</ulist>
+
+<note><p><code>ancestor</code>, <code>descendant</code>,
+<code>following</code>, <code>preceding</code> ve <code>self</code> dalları belgeyi bölümlere ayırır (öznitelik ve isim-alanı düğümleri hariç): Birbirlerini içermeksizin birlikte belgedeki tüm düğümleri içerirler.</p></note>
+
+<scrap>
+<head>Dallar</head>
+<prod id="NT-AxisName">
+<lhs>DalAdı</lhs>
+<rhs>'ancestor'</rhs>
+<rhs>| 'ancestor-or-self'</rhs>
+<rhs>| 'attribute'</rhs>
+<rhs>| 'child'</rhs>
+<rhs>| 'descendant'</rhs>
+<rhs>| 'descendant-or-self'</rhs>
+<rhs>| 'following'</rhs>
+<rhs>| 'following-sibling'</rhs>
+<rhs>| 'namespace'</rhs>
+<rhs>| 'parent'</rhs>
+<rhs>| 'preceding'</rhs>
+<rhs>| 'preceding-sibling'</rhs>
+<rhs>| 'self'</rhs>
+</prod>
+</scrap>
+
+</div2>
+
+<div2 id="node-tests">
+<head>Düğüm Sınamaları</head>
+
+<p><termdef id="dt-principal-node-type" term="Başat Düğüm Türü">Her dalın bir <term>başat düğüm türü</term> vardır.  Eğer bir dal eleman içeriyorsa, başat düğüm türü elemandır; aksi takdirde, dalı içeren düğümün türüdür</termdef>. Dolayısıyla,</p>
+
+<slist>
+<sitem>Öznitelik dalı için başat düğüm türü özniteliktir.</sitem>
+<sitem>İsim-alanı dalı için başat düğüm türü isim-alanıdır.</sitem>
+<sitem>Diğer dallar için başat düğüm türü elemandır.</sitem>
+</slist>
+
+<p>Bir <xnt href="&XMLNames;#NT-QName">NitelAd</xnt> için düğüm sınaması sadece ve sadece, düğüm türü başat düğüm türüyse ve <xnt href="&XMLNames;#NT-QName">NitelAd</xnt> tarafından belirtilen <termref def="dt-expanded-name">genişletilmiş isim</termref> ile aynı <termref def="dt-expanded-name">genişletilmiş isme</termref> sahipse, doğru sonucunu verir. Örneğin, <code>child::para</code> bağlamsal düğümün <code>para</code> elemanlarından oluşan çocuklarını seçer; eğer bağlamsal düğümün hiç <code>para</code> çocuğu yoksa bir boş düğüm kümesi seçecektir. <code>attribute::href</code> bağlamsal düğümün <code>href</code> özniteliğini seçer; eğer bağlamsal düğümün hiç <code>href</code> özniteliği yoksa bir boş düğüm kümesi seçecektir.</p>
+
+<p>Düğüm sınamasındaki bir <xnt href="&XMLNames;#NT-QName">NitelAd</xnt>, ifade bağlamındaki isim-alanı bildirimleri kullanılarak bir <termref def="dt-expanded-name">genişletilmiş isme</termref> genişletilir. Bu, <code>xmlns</code> ile bildirilen öntanımlı isim-alanının kullanılmaması dışında başlangıç ve bitiş etiketlerindeki eleman türü adları için yapılan genişletme ile aynıdır; eğer <xnt href="&XMLNames;#NT-QName">NitelAd</xnt> bir öneke sahip değilse, isim-alanı tanım-yeri (URI) boş demektir (bu, öznitelik adlarını genişletme yöntemiyle aynıdır). <xnt href="&XMLNames;#NT-QName">NitelAd</xnt>'ın bir öneki olup da ifade bağlamında hiç isim-alanı bildirimi olmaması bir hatadır.</p>
+
+<p><code>*</code> düğüm sınaması başat düğüm türü ne olursa olsun doğru sonucunu verecektir. Örneğin, <code>child::*</code> konumu bağlamsal düğümün bütün eleman çocuklarını,  <code>attribute::*</code> konumu ise bağlamsal düğümün bütün özniteliklerini içerecektir.</p>
+
+<p>Bir düğüm sınaması <xnt href="&XMLNames;#NT-NCName">KısaAd</xnt><code>:*</code> biçiminde olabilir. Bu durumda, önek, bağlamsal isim-alanı bildirimi kullanılarak bir <xnt href="&XMLNames;#NT-QName">NitelAd</xnt> nasıl genişletiliyorsa öyle genişletilecektir. Önek için ifade bağlamında hiç isim-alanı bildiriminin olmayışı bir hatadır. <termref def="dt-expanded-name">Genişletilmiş ismi</termref>, ismin yerel kısmından bağımsız olarak önekin genişletileceği bir isim-alanı tanım-yerine sahip başat türdeki her düğüm için düğüm sınaması doğru sonucunu verecektir.</p>
+
+<p><code>text()</code> düğüm sınaması herhangi bir metin düğümü için doğru sonucunu verecektir. Örneğin, <code>child::text()</code> konumu bağlamsal düğümün metin düğümü çocuklarını içerecektir. Benzer şekilde, <code>comment()</code> düğüm sınaması herhangi bir açıklama düğümü için ve <code>processing-instruction()</code> düğüm sınaması herhangi bir işlem yönergesi düğümü için doğru sonucunu verecektir. <code>processing-instruction()</code> sınaması bir <nt def="NT-Literal">DizgeselSabit</nt> argümana sahip olabilir; bu durumda <nt def="NT-Literal">DizgeselSabit</nt> değeriyle aynı isme sahip bir işlem yönergesi için sınama doğru sonucunu verecektir.</p>
+
+<p><code>node()</code> düğüm sınaması düğüm türü ne olursa olsun doğru sonucunu verecektir.</p>
+
+<scrap>
+<head/>
+<prod id="NT-NodeTest">
+<lhs>DüğümSınaması</lhs>
+<rhs><nt def="NT-NameTest">AdSınaması</nt></rhs>
+<rhs>| <nt def="NT-NodeType">DüğümTürü</nt> '(' ')'</rhs>
+<rhs>| 'processing-instruction' '(' <nt def="NT-Literal">DizgeselSabit</nt> ')'</rhs>
+</prod>
+</scrap>
+
+</div2>
+
+<div2 id="predicates">
+<head>Dayanaklar</head>
+
+<p>Bir dal ya ileri doğrudur ya da geriye doğrudur. Bir dal, <termref def="dt-document-order">belgedeki sıraya göre</termref> sadece bağlamsal düğümden sonraki bağlamsal düğümü veya düğümleri içeriyorsa dal ileri doğrudur. Bir dal, <termref def="dt-document-order">belgedeki sıraya göre</termref> sadece bağlamsal düğümden önceki bağlamsal düğümü veya düğümleri içeriyorsa dal geriye doğrudur. Bu bakımdan, <code>ancestor</code>, <code>ancestor-or-self</code>, <code>preceding</code> ve <code>preceding-sibling</code> dalları geriye doğru, diğer tüm dallar ileri doğrudur. <code>self</code> dalı daima en fazla bir düğüm içerdiğinden dalın yönüyle ilgili bir fark oluşturmaz.
+
+<termdef term="Yakınlık Derecesi" id="dt-proximity-position">Bir düğüm kümesi üyesinin bir dala göre <term>yakınlık derecesi</term>, düğümün düğüm kümesi içinde belgedeki sırasına göre kaçıncı kardeş olduğunu belirtir; eğer dal ileriye doğru ise sıralama ileri yönde, geriye doğru ise sıralama geriye doğrudur. İlk derece 1'dir.</termdef></p>
+
+<p>Bir dayanak yeni bir düğüm kümesi üretmek üzere bir düğüm kümesini bir dala göre filtreler. Düğüm kümesindeki filtrelenecek her düğüm için, <nt def="NT-PredicateExpr">Dayanakİfadesi</nt>nde bağlamsal düğüm olarak  bu düğüm, bağlamsal boyut olarak düğüm kümesindeki düğüm sayısı, bağlamsal konum olarak düğüm kümesindeki düğümün dala göre <termref def="dt-proximity-position">yakınlık derecesi</termref> alınarak değerlendirilir. Eğer <nt def="NT-PredicateExpr">Dayanakİfadesi</nt> bu düğüm için doğru sonucunu veriyorsa, bu düğüm yeni düğüm kümesinde yer alır, yoksa yer almaz.</p>
+
+<p>Bir <nt def="NT-PredicateExpr">Dayanakİfadesi</nt>, <nt def="NT-Expr">İfade</nt> değerlendirilerek ve sonuç bir mantıksal türe dönüştürülerek değerlendirilir. Sonuç bir sayı ise ve sayı bağlamsal konuma eşitse sonuç doğruya, değilse yanlışa dönüştürülür. Sonuç bir sayı değilse, sonuç <function>boolean</function> işlevi çağrılarak mantıksal türe dönüştürülür. Bu bakımdan, <code>para[3]</code> konumsal yolu <code>para[position()=3]</code> konumsal yoluna eşdeğer olur.</p>
+
+<scrap>
+<head>Dayanaklar</head>
+<prod id="NT-Predicate">
+<lhs>Dayanak</lhs>
+<rhs>'[' <nt def="NT-PredicateExpr">Dayanakİfadesi</nt> ']'</rhs>
+</prod>
+<prod id="NT-PredicateExpr">
+<lhs>Dayanakİfadesi</lhs>
+<rhs><nt def="NT-Expr">İfade</nt></rhs>
+</prod>
+</scrap>
+
+</div2>
+
+<div2 id="path-abbrev">
+<head>Kısaltılmış Sözdizimi</head>
+
+<p>Kısaltılmış sözdizimi kullanılan konumsal yol örnekleri:</p>
+
+<ulist>
+
+<item><p><code>para</code> bağlamsal düğümün <code>para</code> eleman çocuğunu seçer.</p></item>
+
+<item><p><code>*</code> bağlamsal düğümün tüm eleman çocuklarını seçer.</p></item>
+
+<item><p><code>text()</code> bağlamsal düğümün tüm metin düğümü çocuklarını seçer.</p></item>
+
+<item><p><code>@name</code> bağlamsal düğümün <code>name</code> özniteliğini seçer.</p></item>
+
+<item><p><code>@*</code> bağlamsal düğümün tüm özniteliklerini seçer.</p></item>
+
+<item><p><code>para[1]</code> bağlamsal düğümün ilk <code>para</code> çocuğunu seçer.</p></item>
+
+<item><p><code>para[last()]</code> bağlamsal düğümün son <code>para</code> çocuğunu seçer.</p></item>
+
+<item><p><code>*/para</code> bağlamsal düğümün tüm <code>para</code> torunlarını seçer.</p></item>
+
+<item><p><code>/doc/chapter[5]/section[2]</code> bağlamsal yolu <code>doc</code>'un 5. <code>chapter</code>'ının 2. <code>section</code>'ını seçer.</p></item>
+
+<item><p><code>chapter//para</code> bağlamsal düğümün <code>chapter</code> eleman çocuklarının <code>para</code> eleman astsallarını seçer.</p></item>
+
+<item><p><code>//para</code> belge kökünün <code>para</code> astsallarını, dolayısıyla bağlamsal düğümü içeren belgede bulunan tüm <code>para</code> elemanlarını seçer.</p></item>
+
+<item><p><code>//olist/item</code> bağlamsal düğümü içeren belgede bulunan ve ebeveynleri <code>olist</code> olan tüm <code>item</code> elemanlarını seçer.</p></item>
+
+<item><p><code>.</code> bağlamsal düğümün kendisini seçer.</p></item>
+
+<item><p><code>.//para</code> bağlamsal düğümün <code>para</code> eleman astsallarını seçer.</p></item>
+
+<item><p><code>..</code> bağlamsal düğümün ebeveynini seçer.</p></item>
+
+<item><p><code>../@lang</code> bağlamsal düğümün ebeveyninin <code>lang</code> özniteliğini seçer.</p></item>
+
+<item><p><code>para[@type="warning"]</code> bağlamsal düğümün, <code>type</code> özniteliğinin değeri <code>warning</code> olan tüm <code>para</code> çocuklarını seçer.</p></item>
+
+<item><p><code>para[@type="warning"][5]</code> bağlamsal düğümün, <code>type</code> özniteliğinin değeri <code>warning</code> olan 5. <code>para</code> çocuğunu seçer.</p></item>
+
+<item><p><code>para[5][@type="warning"]</code> bağlamsal düğümün 5. <code>para</code> çocuğunun <code>type</code> özniteliğinin değeri <code>warning</code> ise bu <code>para</code> çocuğu seçer.</p></item>
+
+<item><p><code>chapter[title="Introduction"]</code> bağlamsal düğümün <code>chapter</code> çocuklarından <termref def="dt-string-value">dizgesel değer</termref>i <code>Introduction</code>'a eşit <code>title</code> çocukları olanları seçer.</p></item>
+
+<item><p><code>chapter[title]</code> bağlamsal düğümün <code>chapter</code> çocuklarından en azından bir <code>title</code> çocuğu olanları seçer.</p></item>
+
+<item><p><code>employee[@secretary and @assistant]</code> bağlamsal düğümün <code>employee</code> çocuklarından hem <code>secretary</code> hem de <code>assistant</code> özniteliklerine sahip olanları seçer.</p></item>
+
+</ulist>
+
+<p>En önemli kısaltma bir konumda <code>child::</code> kullanmak zorunda kalmamaktır. Bunun için <code>child</code> öntanımlı dal olarak ele alınmıştır. Örneğin, <code>div/para</code> konumsal yolu <code>child::div/child::para</code> konumsal yolunun kısaltılmışıdır.</p>
+
+<p>Ayrıca, öznitelikler için de bir kısaltma mevcuttur: <code>attribute::</code> öneki yerine <code>@</code> kullanılabilir. Örneğin,  <code>para[@type="warning"]</code> konumsal yolu, <code>child::para[attribute::type="warning"]</code> yolunun kısaltılmışı olup
+bağlamsal düğümün <code>para</code> çocuklarından <code>type</code> özniteliğinin değeri <code>warning</code> olanlarını seçer.</p>
+
+<p><code>//</code> konumu, <code>/descendant-or-self::node()/</code> konumunun kısaltmasıdır.  Örneğin, <code>//para</code> konumu <code>/descendant-or-self::node()/child::para</code> konumunun kısaltılmışı olup belgedeki tüm <code>para</code> elemanlarını seçer (hatta <code>para</code> belge elemanı bile olsa seçilecektir, çünkü belge elemanı belge kökünün çocuğudur); <code>div//para</code> konumsal yolu <code>child::div/descendant-or-self::node()/child::para</code> yolunun kısaltılmışı olup bağlamsal düğümün <code>div</code> çocuklarının tüm <code>para</code> astsallarını seçer.</p>
+
+<note><p><code>//para[1]</code> konumsal yolu ile <code>/descendant::para[1]</code> aynı sonucu vermez. İkincisi <code>para</code> astsallarının ilkini seçerken, birincisi ebeveynlerinin ilk <code>para</code> çocukları olan tüm <code>para</code> elemanlarını seçer.</p></note>
+
+<p><code>.</code> konumu <code>self::node()</code> konumunun kısaltmasıdır. Bu özellikle <code>//</code> ile birlikte kullanışlıdır. Örneğin, <code>.//para</code> konumsal yolu</p>
+
+<eg>self::node()/descendant-or-self::node()/child::para</eg>
+
+<p>konumsal yolunun kısaltılmışı olup bağlamsal düğümün tüm <code>para</code> eleman astsallarını seçer.</p>
+
+<p>Benzer şekilde, <code>..</code> konumu <code>parent::node()</code> konumunun kısaltmasıdır. Örneğin, <code>../title</code> konumsal yolu <code>parent::node()/child::title</code> konumsal yolunun kısaltması olup bağlamsal düğümün ebeveyninin <code>title</code> çocuklarını seçer.</p>
+
+<scrap>
+<head>Kısaltmalar</head>
+<prodgroup pcw5="1" pcw2="15" pcw4="16">
+<prod id="NT-AbbreviatedAbsoluteLocationPath">
+<lhs>KısaltılmışMutlakKonumsalYol</lhs>
+<rhs>'//' <nt def="NT-RelativeLocationPath">GöreliKonumsalYol</nt></rhs>
+</prod>
+<prod id="NT-AbbreviatedRelativeLocationPath">
+<lhs>KısaltılmışGöreliKonumsalYol</lhs>
+<rhs><nt def="NT-RelativeLocationPath">GöreliKonumsalYol</nt> '//' <nt def="NT-Step">Konum</nt></rhs>
+</prod>
+<prod id="NT-AbbreviatedStep">
+<lhs>KısaKonum</lhs>
+<rhs>'.'</rhs>
+<rhs>| '..'</rhs>
+</prod>
+<prod id="NT-AbbreviatedAxisSpecifier">
+<lhs>KısaKonumBelirteci</lhs>
+<rhs>'@'?</rhs>
+</prod>
+</prodgroup>
+</scrap>
+
+</div2>
+
+</div1>
+
+<div1>
+<head>İfadeler</head>
+
+<div2>
+<head>Temel İfadeler</head>
+
+<p>Bir <nt def="NT-VariableReference">DeğişkenGönderimi</nt>, bağlamdaki değişken bağıntıları arasından belirtilen isme sahip değişkenin değeri olarak değerlendirilir. İfade bağlamında değişken bağıntıları içinde değişken ismine bir değerin atanmamış olması bir hatadır.</p>
+
+<p>Parantezler ifadeleri gruplamak için kullanılabilir.</p>
+
+<scrap>
+<head/>
+<prod id="NT-Expr">
+<lhs>İfade</lhs>
+<rhs><nt def="NT-OrExpr">Veyaİfadesi</nt></rhs>
+</prod>
+<prod id="NT-PrimaryExpr">
+<lhs>Başatİfade</lhs>
+<rhs><nt def="NT-VariableReference">DeğişkenGönderimi</nt></rhs>
+<rhs>| '(' <nt def="NT-Expr">İfade</nt> ')'</rhs>
+<rhs>| <nt def="NT-Literal">DizgeselSabit</nt></rhs>
+<rhs>| <nt def="NT-Number">Sayı</nt></rhs>
+<rhs>| <nt def="NT-FunctionCall">İşlevÇağrısı</nt></rhs>
+</prod>
+</scrap>
+
+</div2>
+
+<div2>
+<head>İşlev Çağrıları</head>
+
+<p>Bir <nt def="NT-FunctionCall">İşlevÇağrısı</nt> ifadesi, işlev kütüphanesinin ifade değerlendirme bağlamı işlevlerinden birini betimleyen <nt def="NT-FunctionName">İşlevAdı</nt> kullanılarak ve <nt def="NT-Argument">Argüman</nt>larının her biri, işleve gerekli türe dönüştürüldükten sonra işleve aktarılarak yapılan bir işlev çağrısı olarak değerlendirilir. Argüman sayısının yanlış belirtilmesi veya bir argümanın gerekli türe dönüştürülememesi bir hatadır. <nt def="NT-FunctionCall">İşlevÇağrısı</nt> ifadesinin sonucu işlevden dönen sonuçtur.</p>
+
+<p>Bir argüman, dizge türüne bir <function>string</function> işlevi çağrısındaki gibi dönüştürülür, sayı türüne <function>number</function> işlevindeki gibi ve mantıksal türe de <function>boolean</function> işlevindeki gibi dönüştürülür. Düğüm kümesi türünde olmayan bir argüman düğüm kümesine dönüştürülemez.</p>
+
+<scrap>
+<head/>
+<prod id="NT-FunctionCall">
+<lhs>İşlevÇağrısı</lhs>
+<rhs><nt def="NT-FunctionName">İşlevAdı</nt> '(' ( <nt def="NT-Argument">Argüman</nt> ( ',' <nt def="NT-Argument">Argüman</nt> )* )? ')'</rhs>
+</prod>
+<prod id="NT-Argument">
+<lhs>Argüman</lhs>
+<rhs><nt def="NT-Expr">İfade</nt></rhs>
+</prod>
+</scrap>
+
+</div2>
+
+<div2 id="node-sets">
+<head>Düğüm Kümeleri</head>
+
+<p>Bir konumsal yol bir ifade olarak  kullanılabilir. İfade, yol tarafından seçilen düğüm kümesini döndürür.</p>
+
+<p><code>|</code> işleci, terimlerinin düğüm kümeleri olmasını gerektirir ve terimlerinin birleşimini hesaplar.</p>
+
+<p><nt def="NT-Predicate">Dayanak</nt>lar konumsal yollarda kullanılan yöntemle ifadeleri filtrelemekte kullanılır. İfadenin sonucunun bir düğüm kümesi olmaması bir hatadır. <nt def="NT-Predicate">Dayanak</nt> düğüm kümesini dala göre filtreler.</p>
+
+<note><p>Bir <nt def="NT-Predicate">Dayanak</nt> kendisine uygulanan dalla ilişkili olarak anlamlandırılır. Örneğin, <code>preceding::foo[1]</code> konumu <emph>belgede geriye doğru</emph> ilk <code>foo</code> elemanını seçer, çünkü <code>[1]</code> dayanağına uygulanan dal öncekiler dalıdır; <code>(preceding::foo)[1]</code> konumu ise tersine <emph>belgede ileriye doğru</emph> ilk <code>foo</code> elemanını seçer, çünkü <code>[1]</code> dayanağına uygulanan dal çocuk daldır.</p></note>
+
+<p><code>/</code> ve <code>//</code> işleçleri bir ifade ve bir göreli konumsal yol oluştururlar.  İfadenin bir düğüm kümesi ile sonuçlanmaması bir hatadır. <code>/</code> işleci, bir konumsal yolda kullanılan <code>/</code> ile aynı anlama gelir. Bir konumsal yoldaki gibi <code>//</code> ifadesi de <code>/descendant-or-self::node()/</code> konumunun kısaltmasıdır.</p>
+
+<p>Düğüm kümelerine dönüştürülebilen hiçbir nesne türü yoktur.</p>
+
+<scrap>
+<head/>
+<prod id="NT-UnionExpr">
+<lhs>Birleşimİfadesi</lhs>
+<rhs><nt def="NT-PathExpr">Yolİfadesi</nt></rhs>
+<rhs>| <nt def="NT-UnionExpr">Birleşimİfadesi</nt> '|' <nt def="NT-PathExpr">Yolİfadesi</nt></rhs>
+</prod>
+<prod id="NT-PathExpr">
+<lhs>Yolİfadesi</lhs>
+<rhs><nt def="NT-LocationPath">KonumsalYol</nt></rhs>
+<rhs>| <nt def="NT-FilterExpr">Filtreİfadesi</nt></rhs>
+<rhs>| <nt def="NT-FilterExpr">Filtreİfadesi</nt> '/' <nt def="NT-RelativeLocationPath">GöreliKonumsalYol</nt></rhs>
+<rhs>| <nt def="NT-FilterExpr">Filtreİfadesi</nt> '//' <nt def="NT-RelativeLocationPath">GöreliKonumsalYol</nt></rhs>
+</prod>
+<prod id="NT-FilterExpr">
+<lhs>Filtreİfadesi</lhs>
+<rhs><nt def="NT-PrimaryExpr">Başatİfade</nt></rhs>
+<rhs>| <nt def="NT-FilterExpr">Filtreİfadesi</nt> <nt def="NT-Predicate">Dayanak</nt></rhs>
+</prod>
+</scrap>
+
+</div2>
+
+<div2 id="booleans">
+<head>Mantıksal İfadeler</head>
+
+<p>Mantıksal türdeki bir nesnenin değeri ya 'doğru' ya da 'yanlış' olabilir.</p>
+
+<p>Bir <code>or</code> ifadesi, her terimi <function>boolean</function> işlevi çağrısındaki gibi bir mantıksal değere dönüştürüldükten sonra değerlendirilir. Terimlerinin hepsi yanlış ise sonuç yanlış, herhangi biri doğru ise sonuç  doğrudur. Soldaki terim doğru ise sağdaki terim değerlendirilmez.</p>
+
+<p>Bir <code>and</code> ifadesi, her terimi <function>boolean</function> işlevi çağrısındaki gibi bir mantıksal değere dönüştürüldükten sonra değerlendirilir. Terimlerinin hepsi doğru ise sonuç doğru, herhangi biri yanlış ise sonuç yanlıştır. Soldaki terim yanlış ise sağdaki terim değerlendirilmez.</p>
+
+<p>Bir <nt def="NT-EqualityExpr">Eşitlikİfadesi</nt> (bir <nt def="NT-RelationalExpr">İlişkiselİfade</nt> olmayan) veya bir <nt def="NT-RelationalExpr">İlişkiselİfade</nt> (bir <nt def="NT-AdditiveExpr">Toplamİfadesi</nt> olmayan) iki terimin değerlendirilmesinden elde edilen nesneler karşılaştırılarak değerlendirilir. Elde edilen nesnelerin karşılaştırması aşağıdaki üç madde altında  tanımlanmıştır. İlkinde, düğüm kümelerinin katıldığı karşılaştırmalar, düğüm kümelerinin katılmadığı karşılaştırma kurallarıyla tanımlanmıştır; bu <code>=</code>, <code>!=</code>, <code>&lt;=</code>, <code>&lt;</code>, <code>&gt;=</code> ve <code>&gt;</code> için hep aynı tarzdadır. İkincide, <code>=</code> ve <code>!=</code> için düğüm kümelerinin katılmadığı karşılaştırmalar tanımlanmıştır. Üçüncüde, <code>&lt;=</code>, <code>&lt;</code>, <code>&gt;=</code> ve <code>&gt;</code> için düğüm kümelerinin katılmadığı karşılaştırmalar tanımlanmıştır.</p>
+
+<olist>
+<item><p>Düğüm kümelerin katıldığı karşılaştırmaların tanımları:</p>
+<ulist>
+<item><p>Eğer karşılaştırılan nesneler düğüm kümeleriyse, karşılaştırmanın doğru olabilmesi için gerek ve yeter koşul, her iki kümeden birer düğümün <termref def="dt-string-value">dizgesel değer</termref>lerinin karşılaştırmasının doğru olmasıdır.</p></item>
+<item><p>Eğer karşılaştırılan nesnelerden biri bir düğüm kümesi ve diğeri bir sayıysa, karşılaştırmanın doğru olabilmesi için gerek ve yeter koşul, düğüm kümesinden bir düğümünün <termref def="dt-string-value">dizgesel değer</termref>inin <function>number</function> işlevini kullanarak bir sayıya dönüştürüldükten sonra diğer nesnedeki sayıyla karşılaştırma sonucunun doğru olmasıdır.</p></item>
+<item><p>Eğer karşılaştırılan nesnelerden biri bir düğüm kümesi ve diğeri bir dizgeyse,  karşılaştırmanın doğru olabilmesi için gerek ve yeter koşul, düğüm kümesinden bir düğümün <termref def="dt-string-value">dizgesel değer</termref>inin diğer nesnedeki dizgeyle karşılaştırma sonucunun doğru olmasıdır.</p></item>
+<item><p>Eğer karşılaştırılan nesnelerden biri bir düğüm kümesi ve diğeri bir mantıksal ifadeyse, karşılaştırmanın doğru olabilmesi için gerek ve yeter koşul, düğüm kümesinden  bir düğümün <termref def="dt-string-value">dizgesel değer</termref>inin <function>boolean</function> işlevini kullanarak mantıksal bir değere dönüştürüldükten sonra diğer nesnenin mantıksal değeriyle karşılaştırma sonucunun doğru olmasıdır.</p></item>
+</ulist>
+</item>
+
+<item>
+<p>Karşılaştırılan nesnelerin ikisi de düğüm kümesi olmadığı takdirde, işleç de <code>=</code> veya <code>!=</code> olduğunda, nesneler aşağıdaki gibi ortak bir türe dönüştürüldükten sonra karşılaştırılırlar:</p>
+<ulist>
+<item><p>Eğer karşılaştırılan nesnelerden en az biri mantıksal ifade ise nesneler <function>boolean</function> işlevi uygulanmış gibi birer mantıksal değere dönüştürüldükten sonra karşılaştırılırlar. </p></item>
+<item><p>Aksi takdirde, karşılaştırılan nesnelerden en az biri bir sayıysa, nesneler <function>number</function> işlevi uygulanmış gibi birer sayıya dönüştürüldükten sonra karşılaştırılırlar.</p></item>
+<item><p>Aksi takdirde, karşılaştırılan nesnelerden en az biri bir dizgeyse, nesneler <function>string</function> işlevi uygulanmış gibi birer dizgeye dönüştürüldükten sonra karşılaştırılırlar.
+</p></item>
+</ulist>
+<p><code>=</code> karşılaştırmasının sonucu sadece ve sadece nesneler birbirine eşitse doğru olacaktır. Sayılar IEEE 754'e <bibref ref="IEEE754"/> göre karşılaştırılırlar. İki mantıksal ifadenin her ikisinin de sonucu doğruysa veya her ikisinin de sonucu yanlışsa eşitlik doğru olacaktır. İki dizgenin eşit olması için ikisininde aynı UCS karakter dizisine sahip olması gerekli ve yeterlidir.</p>
+<note><p>Eğer <code>$x</code> bir düğüm kümesini ifade ediyorsa, <code>$x="foo"</code> ile <code>not($x!="foo")</code> aynı anlama gelmeyecektir: Birincisi sadece ve sadece <code>$x</code>'teki <emph>bir</emph> düğüm <code>foo </code> <termref def="dt-string-value"> dizgesel değer</termref>ine sahipse doğru olacaktır; ikincisi ise sadece ve sadece <code>$x</code>'teki <emph>bütün</emph> düğümler <code>foo </code> <termref def="dt-string-value"> dizgesel değer</termref>ine sahipse doğru olacaktır.</p></note>
+</item>
+
+<item>
+<p>Karşılaştırılan nesnelerin ikisi de düğüm kümesi olmadığı takdirde, işleç de <code>&lt;=</code>, <code>&lt;</code>, <code>&gt;=</code> veya <code>&gt;</code> olduğunda, nesnelerin ikisi de sayıya dönüştürüldükten sonra bu sayılar IEEE 754'e göre karşılaştırılırlar.</p>
+<ulist>
+<item><p><code>&lt;</code> karşılaştırması sadece ve sadece ilk sayı ikinciden küçükse doğru olacaktır.</p></item>
+<item><p><code>&lt;=</code> karşılaştırması sadece ve sadece ilk sayı ikinciden küçük veya ona eşitse doğru olacaktır.</p></item>
+<item><p><code>&gt;</code> karşılaştırması sadece ve sadece ilk sayı ikinciden büyükse doğru olacaktır.</p></item>
+<item><p><code>&gt;=</code> karşılaştırması sadece ve sadece ilk sayı ikinciden büyük veya ona eşitse doğru olacaktır.</p></item>
+</ulist>
+<note>
+<p>Bir XPath ifadesi bir XML belgede yer aldığı takdirde, <code>&lt;</code> ve <code>&lt;=</code> işleçleri XML 1.0 kuralları gereğince örneğin, <code>&amp;lt;</code> ve <code>&amp;lt;=</code> olarak öncelenmiş değerleriyle kullanılmalıdır. Aşağıdaki örnekte, <code>test</code> özniteliğinin değeri bir XPath ifadesidir:</p>
+<eg><![CDATA[<xsl:if test="@value &lt; 10">...</xsl:if>]]></eg>
+</note>
+</item>
+</olist>
+
+<scrap>
+<head/>
+<prod id="NT-OrExpr">
+<lhs>Veyaİfadesi</lhs>
+<rhs><nt def="NT-AndExpr">Veİfadesi</nt></rhs>
+<rhs>| <nt def="NT-OrExpr">Veyaİfadesi</nt> 'or' <nt def="NT-AndExpr">Veİfadesi</nt></rhs>
+</prod>
+<prod id="NT-AndExpr">
+<lhs>Veİfadesi</lhs>
+<rhs><nt def="NT-EqualityExpr">Eşitlikİfadesi</nt></rhs>
+<rhs>| <nt def="NT-AndExpr">Veİfadesi</nt> 'and' <nt def="NT-EqualityExpr">Eşitlikİfadesi</nt></rhs>
+</prod>
+<prod id="NT-EqualityExpr">
+<lhs>Eşitlikİfadesi</lhs>
+<rhs><nt def="NT-RelationalExpr">İlişkiselİfade</nt></rhs>
+<rhs>| <nt def="NT-EqualityExpr">Eşitlikİfadesi</nt> '=' <nt def="NT-RelationalExpr">İlişkiselİfade</nt></rhs>
+<rhs>| <nt def="NT-EqualityExpr">Eşitlikİfadesi</nt> '!=' <nt def="NT-RelationalExpr">İlişkiselİfade</nt></rhs>
+</prod>
+<prod id="NT-RelationalExpr">
+<lhs>İlişkiselİfade</lhs>
+<rhs><nt def="NT-AdditiveExpr">Toplamİfadesi</nt></rhs>
+<rhs>| <nt def="NT-RelationalExpr">İlişkiselİfade</nt> '&lt;' <nt def="NT-AdditiveExpr">Toplamİfadesi</nt></rhs>
+<rhs>| <nt def="NT-RelationalExpr">İlişkiselİfade</nt> '&gt;' <nt def="NT-AdditiveExpr">Toplamİfadesi</nt></rhs>
+<rhs>| <nt def="NT-RelationalExpr">İlişkiselİfade</nt> '&lt;=' <nt def="NT-AdditiveExpr">Toplamİfadesi</nt></rhs>
+<rhs>| <nt def="NT-RelationalExpr">İlişkiselİfade</nt> '&gt;=' <nt def="NT-AdditiveExpr">Toplamİfadesi</nt></rhs>
+</prod>
+</scrap>
+
+<note><p>Yukarıdaki sözdizimi şu öncelik sırasıyla etki eder (ilkinin önceliği en düşük olmak üzere):</p>
+
+<ulist>
+
+<item><p><code>or</code></p></item>
+
+<item><p><code>and</code></p></item>
+
+<item><p><code>=</code>, <code>!=</code></p></item>
+
+<item><p><code>&lt;=</code>, <code>&lt;</code>, <code>&gt;=</code>,
+<code>&gt;</code></p></item>
+
+</ulist>
+
+<p>İşleçlerin hepsinde işlemler soldan sağa doğru uygulanır.</p>
+
+<p>Örneğin, <code>3 &gt; 2 &gt; 1</code> ifadesi <code>(3
+&gt; 2) &gt; 1</code> ifadesine eşdeğer olup ifade yanlış değeriyle sonuçlanır.</p>
+
+</note>
+
+</div2>
+
+<div2 id="numbers">
+<head>Sayılar</head>
+
+<p>Bir sayı bir gerçel sayı olarak ifade edilir ve çift hassasiyetli 64 bitlik bir IEEE 754 değeri <bibref ref="IEEE754"/> olabilir. Özel <quote>Not-a-Number</quote> (NaN) (Bir-Sayı-değil) değeri, artı ve eksi sonsuz, artı ve eksi sıfır değerleri de bu sayılara dahildir. IEEE 754 standardının ana kurallarının özeti için <bibref ref="JLS"/>'nin <loc href="http://java.sun.com/docs/books/jls/html/4.doc.html#9208">4.2.3. bölümüne</loc> bakınız.</p>
+
+<p>Aritmetik işleçler terimlerini <function>number</function> işlevi çağrılmışçasına sayıya çevirirler.</p>
+
+<p><code>+</code> işleci terimlerini toplar.</p>
+
+<p>İki terimli - işleci çıkarma yaparken tek terimli - işleci terimini olumsuzlar. -0'ın sıfırın eksi işaretlisi olarak değerlendirileceğine dikkat ediniz.</p>
+
+<note><p>XML <code>-</code> imine isimlerde de izin verdiğinden <code>-</code> iminin işleç olarak algılanması için önüne bir boşluk karakteri konması gerekir. Örneğin, <code>foo-bar</code> ifadesi <code>foo-bar</code> isimli çocuk elemanları içeren bir düğüm kümesi olarak ele alınacaktır. Halbuki, <code>foo - bar</code> ifadesi <code>foo</code> ve <code>bar</code> çocuk elemanlarının sayıya dönüştürülen <termref def="dt-string-value">dizgesel değer</termref>lerinin farkı olarak ele alınacaktır.</p></note>
+
+<p><code>*</code> işleci IEEE 754'e uygun olarak gerçel sayı çarpma işlemi yapar. Eğer sonuç bir NaN değilse, sonucun pozitif olması için gerek ve yeter koşul her iki terimin işaretlerinin aynı olmasıdır.</p>
+
+<p><code>div</code> işleci IEEE 754'e uygun olarak gerçel sayı bölme işlemi yapar. Eğer sonuç bir NaN değilse, sonucun pozitif olması için gerek ve yeter koşul her iki terimin işaretlerinin aynı olmasıdır.</p>
+
+<p><code>mod</code> işleci aşağı yuvarlayan tamsayı bölme işleminde kalanı verir. Örneğin,</p>
+
+<ulist>
+<item><p><code>5 mod 2</code> işlemi <code>1</code> ile sonuçlanır.</p></item>
+<item><p><code>5 mod -2</code> işlemi  <code>1</code> ile sonuçlanır.</p></item>
+<item><p><code>-5 mod 2</code> işlemi  <code>-1</code> ile sonuçlanır.</p></item>
+<item><p><code>-5 mod -2</code> işlemi  <code>-1</code> ile sonuçlanır.</p></item>
+</ulist>
+
+<note><p><code>%</code> işleci Java ve ECMAScript dillerindeki ile aynı işlemi yapar.</p></note>
+
+<note><p>Bu işlem, IEEE 754 kalan işlemi ile aynı değildir. IEEE 754 kalan işleminde sonuç yukarı yuvarlayan bölme işleminde kalandır.</p></note>
+
+<scrap>
+<head>Sayısal İfadeler</head>
+<prodgroup pcw5="1" pcw2="10" pcw4="21">
+<prod id="NT-AdditiveExpr">
+<lhs>Toplamİfadesi</lhs>
+<rhs><nt def="NT-MultiplicativeExpr">Çarpımİfadesi</nt></rhs>
+<rhs>| <nt def="NT-AdditiveExpr">Toplamİfadesi</nt> '+' <nt def="NT-MultiplicativeExpr">Çarpımİfadesi</nt></rhs>
+<rhs>| <nt def="NT-AdditiveExpr">Toplamİfadesi</nt> '-' <nt def="NT-MultiplicativeExpr">Çarpımİfadesi</nt></rhs>
+</prod>
+<prod id="NT-MultiplicativeExpr">
+<lhs>Çarpımİfadesi</lhs>
+<rhs><nt def="NT-UnaryExpr">TekTerimliİfade</nt></rhs>
+<rhs>| <nt def="NT-MultiplicativeExpr">Çarpımİfadesi</nt> <nt def="NT-MultiplyOperator">Çarpmaİşleci</nt> <nt def="NT-UnaryExpr">TekTerimliİfade</nt></rhs>
+<rhs>| <nt def="NT-MultiplicativeExpr">Çarpımİfadesi</nt> 'div' <nt def="NT-UnaryExpr">TekTerimliİfade</nt></rhs>
+<rhs>| <nt def="NT-MultiplicativeExpr">Çarpımİfadesi</nt> 'mod' <nt def="NT-UnaryExpr">TekTerimliİfade</nt></rhs>
+</prod>
+<prod id="NT-UnaryExpr">
+<lhs>TekTerimliİfade</lhs>
+<rhs><nt def="NT-UnionExpr">Birleşimİfadesi</nt></rhs>
+<rhs>| '-' <nt def="NT-UnaryExpr">TekTerimliİfade</nt></rhs>
+</prod>
+</prodgroup>
+</scrap>
+
+</div2>
+
+<div2 id="strings">
+<head>Dizgeler</head>
+
+<p>Dizgeler sıfır veya daha çok karakterden oluşan karakter dizileridir. Burada karakter, XML belirtimindeki <loc href="&XML;#NT-Char">Kark</loc> sözdizimi ile eşleşmelidir. Bu durumda XPath'taki tek bir karakter, Unicode'da tek bir sabit değere tekabül eden tek bir  Unicode soyut karakterine karşı düşer (bkz, <bibref ref="UNICODE"/>); bu, bir 16 bitlik Unicode değerle aynı şey değildir: Unicode sabit değeri U+FFFF'ten büyük olan bir soyut karakterin Unicode kodlu karakter gösterimi bir 16 bitlik Unicode kod değeri çiftidir (bir vekil çift). Çoğu yazılım dilinde bir dizge 16 bitlik Unicode değerleri dizisi olarak ifade edilir; XPath'ın böyle dillerle gerçekleniminde bir vekil çiftin tek bir XPath karakteri olarak gerektiği gibi ele alındığından emin olunması gerekir.</p>
+
+<note><p>Unicode'da iki dizge, iki ayrı Unicode soyut karakter dizisinden oluşsa bile bunların aynı olarak ele alınması olasıdır. Örneğin bazı aksanlı karakterler birleşik tek bir karakterle gösterilebileceği gibi, birden fazla karakterle de ifade edilebilir. Bundan dolayı, XPath ifadesinde ve XML belgede aynı karakterin aynı gösterimle ifade edilmemesi durumunda XPath ifadeleri beklenmedik sonuçlar üretebilir. Bak, <bibref ref="CHARMOD"/>.</p></note>
+
+</div2>
+
+<div2 id="exprlex">
+<head>Sözdizimsel Yapı</head>
+
+<p>Dizgeciklere ayırma işleminde daima olası en uzun dizgecik döner.</p>
+
+<p>Okunabilirlik açısından, sözdizimi tarafından açıkça izin verilmese bile boşluk karakterleri kullanılabilir: bir ifade içinde herhangi bir <nt def="NT-ExprToken">İfadeDizgeciği</nt>nden önce veya sonra özgürce istenen sayıda ve çeşitte <nt def="NT-ExprWhitespace">İfadeBoşlukları</nt> karakteri eklenebilir.</p>
+
+<p><nt def="NT-ExprToken">İfadeDizgeciği</nt> sözdizimindeki belirsizlikleri giderme sırasında aşağıdaki özel dizgeciklere ayırma kuralları uygulanmalıdır:</p>
+
+<ulist>
+
+<item><p>Eğer dizgeciğin öncesinde bir dizgecik varsa ve bu dizgecik <code>@ :: ( [ ,</code> dizgeciklerinden biri veya bir <nt def="NT-Operator">İşleç</nt> değilse, bir <code>*</code> bir <nt def="NT-MultiplyOperator">Çarpmaİşleci</nt> olarak ve bir <xnt href="&XMLNames;#NT-NCName">KısaAd</xnt> bir <nt def="NT-OperatorName">İşleçAdı</nt> olarak ele alınmalıdır.</p></item>
+
+<item><p>Eğer dizgeciğin ardından gelen karakter (araya girmesi olası <nt def="NT-ExprWhitespace">İfadeBoşlukları</nt> temizlendikten sonra) bir <code>(</code> karakteri ise, dizgecik ya bir <nt def="NT-NodeType">DüğümTürü</nt> ya da bir <nt def="NT-FunctionName">İşlevAdı</nt> olarak ele alınmalıdır.</p></item>
+
+<item><p>Eğer dizgeciğin ardından gelen iki karakter (araya girmesi olası <nt def="NT-ExprWhitespace">İfadeBoşlukları</nt> temizlendikten sonra) <code>::</code> ise, dizgecik bir <nt def="NT-AxisName">DalAdı</nt> olarak ele alınmalıdır.</p></item>
+
+<item><p>Aksi takdirde, dizgecik, bir <nt def="NT-MultiplyOperator">Çarpmaİşleci</nt>, <nt def="NT-OperatorName">İşleçAdı</nt>, <nt def="NT-NodeType">DüğümTürü</nt>, <nt def="NT-FunctionName">İşlevAdı</nt> veya bir <nt def="NT-AxisName">DalAdı</nt> olarak ele alınmalıdır.</p></item>
+
+</ulist>
+
+<scrap>
+<head>İfade Sözdizimi</head>
+<prodgroup pcw5="1" pcw2="8" pcw4="21">
+<prod id="NT-ExprToken">
+<lhs>İfadeDizgeciği</lhs>
+<rhs>'(' | ')' | '[' | ']' | '.' | '..' | '@' | ',' | '::'</rhs>
+<rhs>| <nt def="NT-NameTest">AdSınaması</nt></rhs>
+<rhs>| <nt def="NT-NodeType">DüğümTürü</nt></rhs>
+<rhs>| <nt def="NT-Operator">İşleç</nt></rhs>
+<rhs>| <nt def="NT-FunctionName">İşlevAdı</nt></rhs>
+<rhs>| <nt def="NT-AxisName">DalAdı</nt></rhs>
+<rhs>| <nt def="NT-Literal">DizgeselSabit</nt></rhs>
+<rhs>| <nt def="NT-Number">Sayı</nt></rhs>
+<rhs>| <nt def="NT-VariableReference">DeğişkenGönderimi</nt></rhs>
+</prod>
+<prod id="NT-Literal">
+<lhs>DizgeselSabit</lhs>
+<rhs>'"' [^"]* '"'</rhs>
+<rhs>| "'" [^']* "'"</rhs>
+</prod>
+<prod id="NT-Number">
+<lhs>Sayı</lhs>
+<rhs><nt def="NT-Digits">Rakamlar</nt> ('.' <nt def="NT-Digits">Rakamlar</nt>?)?</rhs>
+<rhs>| '.' <nt def="NT-Digits">Rakamlar</nt></rhs>
+</prod>
+<prod id="NT-Digits">
+<lhs>Rakamlar</lhs>
+<rhs>[0-9]+</rhs>
+</prod>
+<prod id="NT-Operator">
+<lhs>İşleç</lhs>
+<rhs><nt def="NT-OperatorName">İşleçAdı</nt></rhs>
+<rhs>| <nt def="NT-MultiplyOperator">Çarpmaİşleci</nt></rhs>
+<rhs>| '/' | '//' | '|' | '+' | '-' | '=' | '!=' | '&lt;' | '&lt;=' | '&gt;' | '&gt;='</rhs>
+</prod>
+<prod id="NT-OperatorName">
+<lhs>İşleçAdı</lhs>
+<rhs>'and' | 'or' | 'mod' | 'div'</rhs>
+</prod>
+<prod id="NT-MultiplyOperator">
+<lhs>Çarpmaİşleci</lhs>
+<rhs>'*'</rhs>
+</prod>
+<prod id="NT-FunctionName">
+<lhs>İşlevAdı</lhs>
+<rhs>
+<xnt href="&XMLNames;#NT-QName">NitelAd</xnt>
+- <nt def="NT-NodeType">DüğümTürü</nt>
+</rhs>
+</prod>
+<prod id="NT-VariableReference">
+<lhs>DeğişkenGönderimi</lhs>
+<rhs>'$' <xnt href="&XMLNames;#NT-QName">NitelAd</xnt></rhs>
+</prod>
+<prod id="NT-NameTest">
+<lhs>AdSınaması</lhs>
+<rhs>'*'</rhs>
+<rhs>| <xnt href="&XMLNames;#NT-NCName">KısaAd</xnt> ':' '*'</rhs>
+<rhs>| <xnt href="&XMLNames;#NT-QName">NitelAd</xnt></rhs>
+</prod>
+<prod id="NT-NodeType">
+<lhs>DüğümTürü</lhs>
+<rhs>'comment'</rhs>
+<rhs>| 'text'</rhs>
+<rhs>| 'processing-instruction'</rhs>
+<rhs>| 'node'</rhs>
+</prod>
+<prod id="NT-ExprWhitespace">
+<lhs>İfadeBoşlukları</lhs>
+<rhs><xnt href="&XML;#NT-S">B</xnt></rhs>
+</prod>
+</prodgroup>
+</scrap>
+<p>Bir taşıyıcı dil <bibref ref="XML"/> sözdizimi kurallarına mı yoksa <bibref ref="XMLNAMES"/>'ındakilere mi uyacağına ya da <bibref ref="XML11"/> sözdizimi kurallarına mı yoksa <bibref ref="XMLNAMES11"/>'ındakilere mi uyacağına kendi karar verebilir.</p>
+</div2>
+
+</div1>
+
+<div1 id="corelib">
+<head>Temel İşlev Kütüphanesi</head>
+
+<p>Bu bölümde XPath gerçeklenimlerinin ifadeleri değerlendirebilmek için daima içermesi gereken işlev kütüphanesi açıklanmıştır.</p>
+
+<p>İşlev kütüphanesindeki her işlev, dönüş türü, işlev ismi ve argüman türlerini içeren bir işlev prototipi kullanılarak belirtilmiştir. Eğer argüman türünden sonra bir soru imi geliyorsa argümanın belirtilmesi isteğe bağlıdır, aksi takdirde argüman zorunludur.</p>
+
+<div2>
+<head>Düğüm Kümesi İşlevleri</head>
+
+<proto name="last" return-type="sayı"/>
+
+<p><function>last</function> işlevi, ifade değerlendirme bağlamındaki <termref def="dt-context-size">bağlamsal boyut</termref>a eşit bir sayı ile döner.</p>
+
+<proto name="position" return-type="sayı"/>
+
+<p><function>position</function> işlevi, ifade değerlendirme bağlamındaki <termref def="dt-context-position">bağlamsal sıra</termref>ya eşit bir sayı ile döner.</p>
+
+<proto name="count" return-type="sayı"><arg type="düğüm-kümesi"/></proto>
+
+<p><function>count</function> işlevi, <var>düğüm-kümesi</var> argümanındaki düğümlerin sayısı ile döner.</p>
+
+<proto name="id" return-type="düğüm-kümesi"><arg type="nesne"/></proto>
+
+<p><function>id</function> işlevi, elemanları eşsiz ID'lerine göre seçer (bkz, <specref ref="unique-id"/>). <function>id</function> işlevinin argümanı <var>düğüm-kümesi</var> olduğu takdirde, işlevin dönen değeri, bu düğüm kümesindeki düğümlerin her birinin <termref def="dt-string-value">dizgesel değer</termref>ine uygulanan <function>id</function> sonuçlarının birleşimidir. <function>id</function> işlevinin argümanı <var>düğüm-kümesi</var> olmadığı takdirde, argüman <function>string</function> işlevi çağrılmış gibi bir dizgeye dönüştürülür; bu dizge boşluk (<xnt href="&XML;#NT-S">B</xnt> sözdizimiyle eşleşen karakterler) ayraçlı bir dizgecik listesine dönüştürülür; işlev, eşsiz ID'si bu listedeki dizgeciklerden biri olan bağlamsal düğüme sahip belgenin elemanlarını içeren bir düğüm kümesi ile döner.</p>
+
+<ulist>
+<item><p><code>id("foo")</code> ifadesi, eşsiz ID'si <code>foo</code> olan elemanı seçer.</p></item>
+<item><p><code>id("foo")/child::para[position()=5]</code> ifadesi, eşsiz ID'si <code>foo</code> olan elemanın 5. <code>para</code> çocuğunu seçer.</p></item>
+</ulist>
+
+<proto name="local-name" return-type="dizge"><arg occur="opt" type="düğüm-kümesi"/></proto>
+
+<p><function>local-name</function> işlevi, belirtilen <var>düğüm-kümesi</var> içinde <termref def="dt-document-order">belgedeki sıraya göre</termref> ilk düğümün <termref def="dt-expanded-name">genişletilmiş isminin</termref> yerel kısmı ile döner. Eğer belirtilen <var>düğüm-kümesi</var> boşsa veya ilk düğümün <termref def="dt-expanded-name">genişletilmiş ismi</termref> yoksa, bir boş dizge döner. Eğer bir argüman belirtilmezse, argümanın öntanımlı değeri işlev ifadesinin üyesi olduğu ifade bağlamıdır.</p>
+
+<proto name="namespace-uri" return-type="dizge"><arg occur="opt" type="düğüm-kümesi"/></proto>
+
+<p><function>namespace-uri</function> işlevi, belirtilen <var>düğüm-kümesi</var> içinde <termref def="dt-document-order">belgedeki sıraya göre</termref> ilk düğümün <termref def="dt-expanded-name">genişletilmiş isminin</termref> isim-alanı tanım-yeri (URI) ile döner. Eğer belirtilen <var>düğüm-kümesi</var> boşsa veya ilk düğümün <termref def="dt-expanded-name">genişletilmiş ismi</termref> yoksa ya da <termref def="dt-expanded-name">genişletilmiş ismin</termref> isim-alanı tanım-yeri boşsa, bir boş dizge döner. Eğer bir argüman belirtilmezse, argümanın öntanımlı değeri işlev ifadesinin üyesi olduğu  ifade bağlamıdır.</p>
+
+<note><p><function>namespace-uri</function> işlevi, eleman ve öznitelik düğümleri haricinde bir argüman için bir boş dizge ile dönecektir.</p></note>
+
+<proto name="name" return-type="dizge"><arg occur="opt" type="düğüm-kümesi"/></proto>
+
+<p><function>name</function> işlevi, belirtilen <var>düğüm-kümesi</var> içinde <termref def="dt-document-order">belgedeki sıraya göre</termref> ilk düğümün <termref def="dt-expanded-name">genişletilmiş ismini</termref> ifade eden <xnt href="&XMLNames;#NT-QName">NitelAd</xnt>ı içeren bir dizge ile döner. <xnt href="&XMLNames;#NT-QName">NitelAd</xnt>, <termref def="dt-expanded-name">genişletilmiş ismi</termref> ait olduğu düğümde etkili isim-alanı bildirimlerine göre ifade etmelidir. Normalde, bu, XML kaynakta yer alan <xnt href="&XMLNames;#NT-QName">NitelAd</xnt> olacaktır. Bu, aynı isim-alanlı çok sayıda önekle ilişkili bir düğüm üzerinde etkili isim-alanı bildirimlerinin olmadığı durumda gerekir. Bununla birlikte, bir gerçeklenim özgün önek hakkında bilgi içerebilir; bu durumda, bir gerçeklenim dönen dizgenin XML kaynakta kullanılan <xnt href="&XMLNames;#NT-QName">NitelAd</xnt> ile daima aynı olacağından emin olabilir. Eğer belirtilen <var>düğüm-kümesi</var> boşsa veya ilk düğümün <termref def="dt-expanded-name">genişletilmiş ismi</termref> yoksa, bir boş dizge döner. Eğer bir argüman belirtilmezse, argümanın öntanımlı değeri işlev ifadesinin üyesi olduğu ifade bağlamıdır.</p>
+
+<note><p><function>name</function> işlevinden dönen dizge, eleman ve öznitelik düğümleri haricinde bir argüman için <function>local-name</function> işlevinden dönen dizgeyle aynı olacaktır.</p></note>
+
+</div2>
+
+<div2>
+<head>Dizge İşlevleri</head>
+
+<proto name="string" return-type="dizge"><arg occur="opt" type="nesne"/></proto>
+
+<p><function>string</function> işlevi belirtilen <var>nesne</var>yi bir dizgeye şöyle dönüştürür:</p>
+
+<ulist>
+
+<item><p>Bir düğüm kümesini bir dizgeye dönüştürmek için, <termref def="dt-document-order">belgedeki sıraya göre</termref> ilk düğümün <termref def="dt-string-value">dizgesel değer</termref>i döndürülür. Eğer düğüm kümesi boşsa boş bir dizge döner.</p></item>
+
+<item><p>Bir sayıyı bir dizgeye şöyle dönüştürülür:</p>
+
+<ulist>
+
+<item><p>Bir NaN <code>NaN</code> dizgesine dönüştürülür.</p></item>
+
+<item><p>Artı sıfır <code>0</code> dizgesine dönüştürülür.</p></item>
+
+<item><p>Eksi sıfır <code>0</code> dizgesine dönüştürülür.</p></item>
+
+<item><p>Artı sonsuz, <code>Infinity</code> dizgesine dönüştürülür.</p></item>
+
+<item><p>Eksi sonsuz, <code>-Infinity</code> dizgesine dönüştürülür.</p></item>
+
+<item><p>Bir tamsayı, bir ondalık nokta ve ondalık kısım olmaksızın onluk biçimde bir <nt def="NT-Number">Sayı</nt> olarak, negatifse önüne tire imi (<code>-</code>) getirilerek gösterilir.</p></item>
+
+<item><p>Aksi takdirde, sayı, öncesinde ve sonrasında en az birer rakam bulunan bir ondalık nokta içeren bir <nt def="NT-Number">Sayı</nt> olarak, eğer sayı negatifse önüne bir tire imi (<code>-</code>) konarak gösterilir. Ondalık sayının ondalık noktanın solunda kalan kısmı, birden küçük sayılarda gerekli olan tek sıfır hariç sıfırla başlamamalı; ondalık sayının sağında en fazla, zorunlu olan tek rakam hariç, sayının IEEE 754'teki diğer sayılardan ayırd edilmesini sağlayacak kadar sayıda rakam olmalıdır.</p></item>
+
+</ulist>
+
+</item>
+
+<item><p>Mantıksal yanlış değeri <code>false</code> dizgesine, mantıksal doğru değeri ise <code>true</code> dizgesine dönüştürülür.</p></item>
+
+<item><p>Dört temel türden birinden olmayan bir nesne o türe özgü bir yöntemle dizgeye dönüştürülür.</p></item>
+
+</ulist>
+
+<p>Eğer bir argüman belirtilmezse, argümanın öntanımlı değeri işlev ifadesinin üyesi olduğu ifade bağlamıdır.</p>
+
+<note><p><code>string</code> işlevi, kullanıcılara sunum amacıyla sayıları dizgelere dönüştürmek için tasarlanmamıştır. Bu işlevselliği sağlamak için <bibref ref="XSLT"/>'deki <code>xsl:number</code> elemanı veya <code>format-number</code> işlevi kullanılabilir.</p></note>
+
+<proto name="concat" return-type="dizge"><arg type="dizge"/><arg type="dizge"/><arg occur="rep" type="dizge"/></proto>
+
+<p><function>concat</function> işlevi, argümanlarını birbirine ulayarak oluşturduğu dizgeyi döndürür.</p>
+
+<proto name="starts-with" return-type="mantıksal-tür"><arg type="dizge"/><arg type="dizge"/></proto>
+
+<p><function>starts-with</function> işlevi, eğer birinci dizge, ikinci dizge ile başlıyorsa doğru, aksi takdirde yanlış döndürür. Eğer ikinci dizge boşsa doğru döndürür.</p>
+
+<proto name="contains" return-type="mantıksal-tür"><arg type="dizge"/><arg type="dizge"/></proto>
+
+<p><function>contains</function> işlevi, eğer birinci dizge, ikinci dizgeyi içeriyorsa doğru, aksi takdirde yanlış döndürür. Eğer ikinci dizge boşsa doğru döndürür.</p>
+
+<proto name="substring-before" return-type="dizge"><arg type="dizge"/><arg type="dizge"/></proto>
+
+<p><function>substring-before</function> işlevi, birinci dizgenin başlangıcından ikinci dizgenin ilk bulunduğu yere kadar olan alt dizgeyi döndürür. Eğer birinci dizge ikinci dizgeyi içermiyorsa veya ikinci dizge boşsa boş bir dizge döner. Örneğin, <code>substring-before("1999/04/01","/")</code> ifadesi <code>1999</code> dizgesini döndürecektir.</p>
+
+<proto name="substring-after" return-type="dizge"><arg type="dizge"/><arg type="dizge"/></proto>
+
+<p><function>substring-after</function> işlevi, birinci dizgenin içinde ikinci dizgenin ilk bulunduğu konumda, ikinci dizgenin bitiminden birinci dizgenin sonuna kadar olan alt dizge ile döner. Eğer birinci dizge ikinci dizgeyi içermiyorsa veya ikinci dizge boşsa boş bir dizge döner. Örneğin, <code>substring-after("1999/04/01","/")</code> ifadesi <code>04/01</code> dizgesi ile ve <code>substring-after("1999/04/01","19")</code> ifadesi <code>99/04/01</code> dizgesi ile döner.</p>
+
+<proto name="substring" return-type="dizge">
+<arg type="dizge"/>
+<arg type="sayı"/>
+<arg type="sayı" occur="opt"/>
+</proto>
+
+<p><function>substring</function> işlevi, birinci argümanda belirtilen dizgenin başından itibaren ikinci argümanda belirtilen sıradaki karakterden başlayan ve üçüncü argümanda belirtilen sayıda karakter içeren dizgeyle döner. Örneğin, <code>substring("12345",2,3)</code> ifadesi <code>"234"</code> dizgesi ile döner. Eğer üçüncü argüman belirtilmezse, ikinci argümanda belirtilen sıradaki karakterden başlayan alt dizgenin tamamıyla döner. Örneğin, <code>substring("12345",2)</code> ifadesi <code>"2345"</code> dizgesi ile döner.</p>
+
+<p>Daha kesin bir ifadeyle, dizge (bkz, <specref ref="strings"/>) içindeki her karakterin sayısal konumu şöyle belirlenir: ilk karakterin sıra numarası 1'dir, ikinci karakterinki 2, ve böyle gider.</p>
+
+<note><p>Bu, Java ve ECMAScript'teki ilk karakter konumunun 0 kabul edildiği <code>String.substring</code> yönteminden farklıdır.</p></note>
+
+<p>Üretilen karakter altdizisinde bulunan karakterler, konum değeri ikinci
+argümanın yuvarlanmış değerinden büyük veya eşit veya eğer üçüncü bir
+argüman da varsa ikinci argümanın yuvarlanmış değeri ile üçüncü
+argümanın yuvarlanmış değerinin toplamından küçük olan karakterlerdir.
+Burada kullanılan karşılaştırma ve toplama işlemleri IEEE 754
+standardındaki kurallara göre yürütülür; yuvarlama işlemi ise <function>round</function> işlevi çağrısındaki gibidir. Aşağıdaki örnekler yararsız durumları göstermektedir:</p>
+
+<ulist>
+
+<item><p><code>substring("12345", 1.5, 2.6)</code> ifadesi
+<code>"234"</code> ile döner.</p></item>
+
+<item><p><code>substring("12345", 0, 3)</code> ifadesi
+<code>"12"</code> ile döner.</p></item>
+
+<item><p><code>substring("12345", 0 div 0, 3)</code> ifadesi
+<code>""</code> ile döner.</p></item>
+
+<item><p><code>substring("12345", 1, 0 div 0)</code> ifadesi
+<code>""</code> ile döner.</p></item>
+
+<item><p><code>substring("12345", -42, 1 div 0)</code> ifadesi
+<code>"12345"</code> ile döner.</p></item>
+
+<item><p><code>substring("12345", -1 div 0, 1 div 0)</code> ifadesi
+<code>""</code> ile döner.</p></item>
+
+</ulist>
+
+<proto name="string-length" return-type="sayı">
+<arg type="dizge" occur="opt"/>
+</proto>
+
+<p><function>string-length</function> işlevi, belirtilen <var>dizge</var> içindeki karakter sayısı ile döner (bkz, <specref ref="strings"/>). Eğer bir argüman belirtilmezse, öntanımlı dizge, bir dizgeye dönüştürülmüş olarak bağlamsal düğümdür; başka bir deyişle, öntanımlı dizge bağlamsal düğümün <termref def="dt-string-value">dizgesel değeri</termref>dir.</p>
+
+<proto name="normalize-space" return-type="dizge"><arg occur="opt" type="dizge"/></proto>
+
+<p><function>normalize-space</function> işlevi belirtilen <var>dizge</var>nin başındaki ve sonundaki boşluk karakterleri atıldıktan sonra kalan dizgenin içindeki boşluk dizgecikleri birer boşluk karakteri ile değiştirilerek elde edilen dizgeyi döndürür. Boşluk karakterleri XML belirtimindeki <xnt href="&XML;#NT-S">B</xnt> sözdizimiyle eşleşmelidir. Eğer bir argüman belirtilmezse, öntanımlı dizge bağlamsal düğümün <termref def="dt-string-value">dizgesel değeri</termref>dir.</p>
+
+<proto name="translate" return-type="dizge"><arg type="dizge"/><arg type="dizge"/><arg type="dizge"/></proto>
+
+<p><function>translate</function> işlevi birinci dizgenin içindeki karakterlerden ikinci dizgede belirtilenlerin yerlerine üçüncü dizgede belirtilenlerden ikincidekiyle aynı konumda olanları yerleştirerek elde edilen dizgeyi döndürür. Örneğin, <code>translate("bar","abc","ABC")</code> ifadesi <code>BAr</code> dizgesiyle döner. Eğer üçüncü dizgedeki karakter sayısı ikinci dizgedeki karakter sayısından azsa, ikinci dizgedeki karakterlerden üçüncü dizgede karşılığı olmayanlar birinci dizgeden silinir. Örneğin, <code>translate("--aaa--","abc-","ABC")</code> ifadesi <code>"AAA"</code> dizgesiyle döner. Eğer ikinci dizgede bir karakterden birden fazla varsa, sonucu belirleyen birincisidir, diğerleri yoksayılır. Eğer üçüncü dizge ikinci dizgeden uzunsa, üçüncü dizgedeki fazlalıklar yoksayılır.</p>
+
+<note><p><function>translate</function> işlevi tüm dillerdeki harf büyüklüğü dönüşüm işlemleri için yeterli değildir. XPath'ın gelecek sürümü harf büyüklüğü dönüşümü için ek işlevler içerebilir.</p></note>
+
+</div2>
+
+<div2>
+<head>Mantıksal İşlevler</head>
+
+<proto name="boolean" return-type="mantıksal-tür"><arg type="nesne"/></proto>
+
+<p><function>boolean</function> işlevi argümanını bir mantıksal değere şöyle dönüştürür:</p>
+
+<ulist>
+
+<item><p>Bir sayının doğru olması için gerek ve yeter koşul, ne artı veya eksi sıfır ne de NaN olmasıdır.</p></item>
+
+<item><p>Bir düğüm kümesinin doğru olması için gerek ve yeter koşul, boş olmamasıdır.</p></item>
+
+<item><p>Bir dizgenin doğru olması için gerek ve yeter koşul, uzunluğunun sıfır olmamasıdır.</p></item>
+
+<item><p>Dört temel türden birinden olmayan bir nesnenin bir mantıksal değere dönüştürülmesinin yolu bu türe bağlıdır.</p></item>
+
+</ulist>
+
+<proto name="not" return-type="mantıksal-tür"><arg type="mantıksal-tür"/></proto>
+
+<p><function>not</function> işlevi, argümanı yanlışsa doğru, doğruysa yanlış ile döner.</p>
+
+<proto name="true" return-type="mantıksal-tür"/>
+
+<p><function>true</function> işlevi doğru ile döner.</p>
+
+<proto name="false" return-type="mantıksal-tür"/>
+
+<p><function>false</function> işlevi yanlış ile döner.</p>
+
+<proto name="lang" return-type="mantıksal-tür"><arg type="dizge"/></proto>
+
+<p><function>lang</function> işlevi, bağlamsal düğümün dili olarak <code>xml:lang</code> özniteliğinde belirtilen dil, argüman olarak belirtilen dil ile aynı veya belirtilen dilin bir altdili olup olmamasına bağlı olarak doğru veya yanlış ile döner. Bağlamsal düğümün dili, bağlamsal düğümün varsa  <code>xml:lang</code> özniteliğinin değerine göre, yoksa bağlamsal düğümün <code>xml:lang</code> özniteliğine sahip en yakın üstselinin <code>xml:lang</code> özniteliğinin değerine göre belirlenir. Böyle bir öznitelik yoksa <function>lang</function> işlevi yanlış değeriyle döner. Böyle bir öznitelik varsa ve değeri işlevin argümanındaki değeriyle harf büyüklüğüne duyarsız olarak aynıysa veya öznitelik <code>-</code> imiyle başlayan bir sonek içeriyorsa, ve bu sonek olmaksızın değeri işlevin argümanındaki değeriyle harf büyüklüğüne duyarsız olarak aynıysa <function>lang</function> işlevi doğru değeriyle döner. Örneğin, <code>lang("en")</code> ifadesi, bağlamsal düğüm şu beş elemandan biri ise doğru değeriyle dönecektir:</p>
+
+<eg><![CDATA[<para xml:lang="en"/>
+<div xml:lang="en"><para/></div>
+<para xml:lang="EN"/>
+<para xml:lang="en-us"/>]]></eg>
+</div2>
+
+<div2>
+<head>Sayı İşlevleri</head>
+
+<proto name="number" return-type="sayı"><arg occur="opt" type="nesne"/></proto>
+
+<p><function>number</function> işlevi argümanını bir sayıya şöyle çevirir:</p>
+
+<ulist>
+
+<item><p>Sırayla, isteğe bağlı bir boşluk karakteri, isteğe bağlı bir tire işareti, zorunlu bir <nt def="NT-Number">Sayı</nt> ve zorunlu bir boşluk karakterinden oluşan bir dizge kendine en yakın (IEEE 754 en yakın değere yuvarlama kuralına göre) matematiksel değere sahip IEEE 754 sayıya çevrilir; diğer dizge oluşumları NaN'a çevrilir.</p></item>
+
+<item><p>Mantıksal doğru 1'e, yanlış 0'a çevrilir.</p></item>
+
+<item>
+
+<p>Bir düğüm kümesi önce <function>string</function> işlevi çağrılmış gibi bir dizgeye dönüştürüldükten sonra dizgeleri sayıya dönüştürmekte kullanılan yöntemle bir sayıya dönüştürülür.</p>
+
+</item>
+
+<item><p>Dört temel türden birinden olmayan bir nesne, kendi türüne özgü bir yöntemle sayıya çevrilir.</p></item>
+
+</ulist>
+
+<p>Eğer bir argüman belirtilmemişse, öntanımlı argüman bağlamsal düğümdür.</p>
+
+<note><p>Bir sayısal veri bir XML belgedeki bir eleman tarafından dilden bağımsız biçimde (normalde dile özgü biçime kullanıcıya göstermek için dönüştürülür) ifade edilmiş olmadıkça, <function>number</function> işlevi sayısal veri dönüşümü için kullanılmamalıdır. Ek olarak, eleman tarafından kullanılan dilden bağımsız biçim, XPath <nt def="NT-Number">Sayı</nt> sözdizimiyle eşleşmedikçe <function>number</function> işlevi kullanılamaz.</p></note>
+
+<proto name="sum" return-type="sayı"><arg type="düğüm-kümesi"/></proto>
+
+<p><function>sum</function> işlevi düğüm kümesi içindeki düğümlerin birer sayıya dönüştürülen <termref def="dt-string-value">dizgesel değer</termref>lerinin toplamı ile döner.</p>
+
+<proto name="floor" return-type="sayı"><arg type="sayı"/></proto>
+
+<p><function>floor</function> işlevi belirtilen <var>sayı</var>yı en yakın küçük tamsayıya yuvarlar. Eğer argüman bir NaN ise NaN, artı sonsuzsa artı sonsuz, eksi sonsuzsa eksi sonsuz, artı sıfırsa artı sıfır, eksi sıfırsa eksi sıfır döner. Örnek:</p>
+
+<eg>
+floor(-0.6) -> -1       floor(0.6) ->  0
+floor(-0.4) -> -1       floor(0.4) ->  0</eg><p/>
+
+<proto name="ceiling" return-type="sayı"><arg type="sayı"/></proto>
+
+<p><function>ceiling</function> işlevi belirtilen <var>sayı</var>yı en yakın büyük tamsayıya yuvarlar. Eğer argüman bir NaN ise NaN, artı sonsuzsa artı sonsuz, eksi sonsuzsa eksi sonsuz, artı sıfırsa artı sıfır, eksi sıfırsa eksi sıfır döner. Örnek:</p>
+
+<eg>ceiling(-0.6) -> 0        ceiling(0.6) -> 1
+ceiling(-0.4) -> 0        ceiling(0.4) -> 1</eg><p/>
+
+
+<proto name="round" return-type="sayı"><arg type="sayı"/></proto>
+
+<p><function>round</function> işlevi belirtilen <var>sayı</var>yı en yakın tamsayıya yuvarlar. Eğer argüman bir NaN ise NaN, artı sonsuzsa artı sonsuz, eksi sonsuzsa eksi sonsuz, artı sıfırsa artı sıfır, eksi sıfırsa eksi sıfır döner. Örnek:</p>
+
+<eg>round(-0.6) -> -1       round(0.6) ->  1
+round(-0.4) ->  0       round(0.4) ->  0</eg><p/>
+
+<note><p><function>round</function> ve <function>floor</function> işlevleri -1 ile 0 arasındaki değerler için farklı davranırlar. <function>round</function> işlevinin sonucuyla, aynı <var>sayı</var>ya 0.5 eklendikten sonra yapılan bir <function>floor</function> çağrısından dönen sonuç aynı olmayacaktır.</p></note>
+
+</div2>
+
+
+</div1>
+
+
+<div1 id="data-model">
+<head>Veri Modeli</head>
+<p>XPath bir XML belgeyi bir ağaç olarak işler. Bu bölümde bir XML belge ağacındaki XPath veri modelleri açıklanmıştır. Bu veri modeli kavramsal niteliktedir, bir gerçeklenim için kural koyucu değildir. Bu model ile XML Bilgi Kümesi <bibref ref="XINFO"/> arasındaki ilişki <specref ref="infoset"/> bölümünde açıklanmıştır.</p>
+
+<p>XML belgeler üzerinde XPath tarafından yapılan işlemler XML İsim-alanları Önergesine <bibref ref="XMLNAMES"/> uygun olmalıdır.</p>
+
+<p>Ağaç düğümlerden oluşur.  Yedi düğüm türü vardır:</p>
+
+<ulist>
+<item><p>kök düğümler</p></item>
+<item><p>eleman düğümleri</p></item>
+<item><p>metin düğümleri</p></item>
+<item><p>öznitelik düğümleri</p></item>
+<item><p>isim-alanı düğümleri</p></item>
+<item><p>işlem yönergesi düğümleri</p></item>
+<item><p>açıklama düğümleri</p></item>
+</ulist>
+
+<p><termdef term="Dizgesel Değer" id="dt-string-value">Her düğüm türü için o türe özgü bir <term>dizgesel değer</term> belirleme yöntemi vardır. Bazı düğüm türleri için dizgesel değer düğümün bir parçası iken bazıları için de, astsal düğümlerinin dizgesel değerlerinden hesaplanır.</termdef></p>
+
+<note><p>Eleman düğümleri ve kök düğümler için  bir düğümün dizgesel değeri DOM
+<code>nodeValue</code> yönteminden (bkz, <bibref ref="DOM"/>) dönen dizge ile aynı değildir.</p></note>
+
+<p><termdef term="Genişletilmiş İsim" id="dt-expanded-name">Bazı düğüm türlerinin ayrıca birer <term>genişletilmiş ismi</term> vardır ve bu isim bir isim-alanı tanım-yeri ile bir yerel kısımdan oluşur. Yerel kısım bir dizgedir. İsim-alanı tanım-yeri bir dizge olabileceği gibi bir null değer de olabilir.
+<!-- Alttaki paragraf bir alttaki iptal edilen paragrafın yerine geçti -->
+Bir XML belgenin bir isim-alanı bildiriminde belirtilmiş bir <xtermref href="&XMLNames;#dt-NSName">isim-alanı yeri</xtermref>, <bibref ref="RFC2396"/>'de tanımlandığı gibi bir tanım-yeri (URI) başvurusudur; bu onun bir bölüm belirteci olabileceği ve göreli olabileceği anlamına gelir. Bir <termref def="dt-expanded-name">genişletilmiş ismin</termref> isim-alanı tanım-yeri bileşeni, eğer <termref def="dt-expanded-name">genişletilmiş isim</termref> öneki isim-alanı yeri bir göreli tanım-yeri (bir bölüm belirteci olsun/olmasın) olan bir isim-alanı bildirimi tarafından bildirilmiş bir <xtermref href="&XMLNames;#NT-QName">NitelAd</xtermref>dan elde edilmişse, gerçeklenime bağlıdır. Böyle, <termref def="dt-expanded-name">genişletilmiş isim</termref>lerin isim-alanı tanım-yeri değerine bağlı olduğu bir XPath ifadesi birlikte çalışabilir değildir.
+
+<!-- **Known error as of 29 September 2000** gereğince değiştirildi.
+The namespace URI specified in the XML document can be a URI reference as defined in <bibref ref="RFC2396"/>; this means it can have a fragment identifier and can be relative.  A relative URI should be resolved into an absolute URI during namespace processing: the namespace URIs of <termref def="dt-expanded-name">genişletilmiş isim</termref>s of nodes in the data model should be absolute.
+-->
+</termdef>İki <termref def="dt-expanded-name">genişletilmiş isim</termref>, yerel kısımları aynıysa ve her ikiside boş isim-alanına sahipse veya her ikiside aynı isim-alanı tanım-yerine sahipse, bunlar eşittir.</p>
+
+<p><termdef id="dt-document-order" term="Belgedeki Sıra"><term>Belgedeki sıra</term> denilen, belgedeki tüm düğümler üzerinde tanımlı ve genel öğeler yorumlandıktan sonra belgenin XML gösteriminde yer alan her düğümün XML gösteriminin ilk karakterindeki sıraya karşı düşen bir sıralama mevcuttur. Bu bakımdan, kök düğüm ilk düğüm olur. Eleman düğümleri çocuklarından önce yer alır. Sonuç olarak, belgedeki sıra, (öğeler yorumlandıktan sonra) eleman düğümlerinin  başlangıç etiketlerinin belgede yer alış sırasıdır. Bir elemanın öznitelik ve isim-alanı düğümleri elemanın çocuklarından önce yer alır. İsim-alanı düğümleri, öznitelik düğümlerinden önce yer alacak şekilde tanımlanır. İsim-alanı düğümlerinin göreli sırası gerçeklenime bağlıdır. Öznitelik düğümlerinin göreli sırası gerçeklenime bağlıdır</termdef>. <termdef id="dt-reverse-document-order" term="Belgedeki Ters Sıra"><term>Belgedeki ters sıra</term>, <termref def="dt-document-order">belgedeki sıra</termref>nın tersidir</termdef>.</p>
+
+<p>Kök düğümler ve eleman düğümleri çocuk düğümleri sıralı bir liste halinde içerir. Düğümler çocuklarını asla paylaşmazlar: eğer bir düğüm başka bir düğümle aynı değilse, bir düğümün çocuklarının hiçbiri başka bir düğümün çocukları ile aynı olmayacaktır. <termdef id="dt-parent" term="Ebeveyn">Kök düğüm hariç, belge içindeki her düğümü içeren bir düğüm vardır ve bu düğüme <term>ebeveyn</term> düğüm denir. Bir kök düğüm veya bir eleman düğümü kendi çocuklarının her birinin ebeveynidir</termdef>. <termdef id="dt-descendants" term="Astsallar">Bir düğümün <term>astsalı</term> o düğümün çocukları ile onların astsallarından oluşur.</termdef></p>
+
+<div2 id="root-node">
+<head>Kök Düğüm</head>
+
+<p>Kök düğüm, ağacın köküdür. Bir kök düğüm, ağacın kökü olmak dışında başka bir yerde yer almaz. Belge elemanının eleman düğümü kök düğümün çocuğudur. Kök düğümün ayrıca, işlem yönergeleri ve açıklamalar için belge elemanının başından önce veya sonundan sonra yer alan işlem yönergesi ve açıklama düğümlerinden oluşan çocukları da vardır.</p>
+
+<p>Kök düğümün <termref def="dt-string-value">dizgesel değer</termref>i, kök düğümün belgedeki sıraya göre tüm metin düğümü <termref def="dt-descendants">astsallar</termref>ının <termref def="dt-string-value">dizgesel değer</termref>lerinin birleşimidir.</p>
+
+<p>Kök düğümün bir <termref def="dt-expanded-name">genişletilmiş ismi</termref> yoktur.</p>
+
+</div2>
+
+<div2 id="element-nodes">
+<head>Eleman düğümleri</head>
+
+<p>Belgedeki her eleman için bir eleman düğümü vardır. Bir eleman düğümü,
+XML İsim-alanları Önergesi <bibref ref="XMLNAMES"/> gereğince, etikette belirtilen elemanın <xnt href="&XMLNames;#NT-QName">NitelAd</xnt>ı genişletilerek elde edilen bir <termref def="dt-expanded-name">genişletilmiş isme</termref> sahiptir. Elemanın, eğer <xnt href="&XMLNames;#NT-QName">NitelAd</xnt>ının bir öneki ve uygulanabilir bir öntanımlı isim-alanı yoksa, <termref def="dt-expanded-name">genişletilmiş ismi</termref>nin isim-alanı tanım-yeri boş olacaktır.</p>
+
+<note><p><bibref ref="XMLNAMES"/> önergesinin düzeltmeler öncesi sürümünün <loc href="http://www.w3.org/TR/1999/REC-xml-names-19990114/#ns-expnames">A.3</loc>. ek bölümündeki gösterimde, <termref def="dt-expanded-name">genişletilmiş ismin</termref> yerel kısmı, <code>ExpEType</code> elemanının <code>type</code> özniteliğine karşı düşmektedir; <termref def="dt-expanded-name">genişletilmiş ismin</termref> isim-alanı tanım-yeri, <code>ExpEType</code> elemanının <code>ns</code> özniteliğine karşı düşmekte olup eğer bu öznitelik belirtilmezse değeri null olacaktır.</p></note>
+
+<p>Bir eleman düğümünün çocukları eleman düğümleri, açıklama düğümleri, işlem yönergesi düğümleri ve içeriği olarak metin düğümleridir. Dahili ve harici öğelere gönderimlerin her ikisi de yorumlanır. Karakter gönderimleri çözümlenir.</p>
+
+<p>Bir eleman düğümünün <termref def="dt-string-value">dizgesel değer</termref>i elemanın belgedeki sıraya göre tüm metin <termref def="dt-descendants">astsallar</termref>ının <termref def="dt-string-value">dizgesel değer</termref>lerinin birleşimidir.</p>
+
+<div3 id="unique-id">
+<head>Eşsiz ID'ler</head>
+
+<p>Bir eleman düğümü bir eşsiz betimleyiciye (ID) sahip olabilir. Bu, DTD'de <code>ID</code> türünde bildirilmiş özniteliğin değeridir. Bir belgede birden fazla eleman aynı ID'ye sahip olamaz. Eğer XML işlemci bir belgenin birden fazla elemanının aynı ID'ye sahip olduğunu bildiriyorsa (bu durumda belge geçersizdir), belgedeki sıraya göre birinci ID'den sonrakiler yoksayılır.</p>
+
+<note><p>Eğer belge bir DTD'ye sahip değilse, belgedeki hiçbir eleman eşsiz ID'ye sahip olmayacaktır.</p></note>
+
+</div3>
+
+</div2>
+
+<div2 id="attribute-nodes">
+<head>Öznitelik Düğümleri</head>
+
+<p>Her eleman düğümü kendisiyle ilişkili bir öznitelik düğümü kümesine sahiptir;  eleman bu öznitelik düğümlerinin her birinin <termref def="dt-parent">ebeveyn</termref>idir; bununla birlikte, bir öznitelik düğümü kendi ebeveyn elemanının bir çocuğu değildir.</p>
+
+<note><p>Bu, DOM'dakinden farklıdır. DOM, elemanı özniteliğin ebeveyni olarak ele almaz (bkz, <bibref ref="DOM"/>).</p></note>
+
+<p>Eleman düğümleri, öznitelik düğümlerini asla paylaşmazlar: eğer bir eleman başka bir elemanla aynı değilse, bir elemanın öznitelik düğümlerinin hiçbiri başka bir elemanın öznitelik düğümleri ile aynı olmayacaktır.</p>
+
+<note><p><code>=</code> işleci, iki düğümün aynı değere sahip olup olmadıklarını sınar, değerlerin aynı düğüme ait olup olmadıklarını değil. Bu bakımdan, iki farklı elemanın öznitelikleri, aynı düğüme ait olmasalar bile <code>=</code> işleci kullanılarak karşılaştırılabilir.</p></note>
+
+<p>Bir öntanımlı öznitelik belirtilmiş bir öznitelik gibi ele alınır. Eğer bir öznitelik DTD içinde eleman türü için bildirilmişse, öntanımlı değer <code>#IMPLIED</code> olarak bildirilmiş ve öznitelik elemanda belirtilmemişse, elemanın öznitelik kümesi bu öznitelik için bir düğüm içermez.</p>
+
+<p><code>xml:lang</code> ve <code>xml:space</code> gibi bazı öznitelikler,  özniteliğin ebeveyni olan elemanın astsalları olan tüm elemanlarda, başka bir astsal eleman tarafından aynı öznitelikle değer değiştirilmedikçe, aynı anlama sahiptirler. Bununla birlikte bu, ağaçta yer aldıkları öznitelik düğümleri üzerinde etkili değildir: bir elemanın sahip olduğu öznitelikler sadece, elemanın başlangıç etiketi veya boş eleman etiketinde açıkça belirtilenlerle DTD'de doğrudan bir öntanımlı değerle bildirilenlerdir.</p>
+
+<p>Bir öznitelik düğümü bir <termref def="dt-expanded-name">genişletilmiş isme</termref> ve bir <termref def="dt-string-value">dizgesel değer</termref>e sahiptir. <termref def="dt-expanded-name">genişletilmiş isim</termref>, XML İsim-alanları Önergesi <bibref ref="XMLNAMES"/> gereğince, etikette belirtilen elemanın <xnt href="&XMLNames;#NT-QName">NitelAd</xnt>ı genişletilerek elde edilir. Özniteliğin, eğer <xnt href="&XMLNames;#NT-QName">NitelAd</xnt>ının bir öneki yoksa, isim-alanı tanım-yeri boş olacaktır.</p>
+
+<note><p><bibref ref="XMLNAMES"/> önergesinin düzeltmeler öncesi sürümünün <loc href="http://www.w3.org/TR/1999/REC-xml-names-19990114/#ns-expnames">A.3</loc>. ek bölümündeki gösterimde, <termref def="dt-expanded-name">genişletilmiş ismin</termref> yerel kısmı, <code>ExpAName</code> elemanının <code>name</code> özniteliğine karşı düşmektedir; <termref def="dt-expanded-name">genişletilmiş ismin</termref> isim-alanı tanım-yeri, <code>ExpAName</code> elemanının <code>ns</code> özniteliğine karşı düşmekte olup eğer bu öznitelik belirtilmezse değeri null olacaktır.</p></note>
+
+<p>Bir öznitelik düğümü bir <termref def="dt-string-value">dizgesel değer</termref>e sahiptir. Bir <termref def="dt-string-value">dizgesel değer</termref> XML Önergesinde <bibref ref="XML"/> belirtildiği gibi normalleştirilir. Normalleştirilmiş değeri, sıfır uzunlukta bir dizge olan bir öznitelik özel olarak ele alınmaz: <termref def="dt-string-value">dizgesel değer</termref>i sıfır uzunluktaki bir dizge olan bir öznitelik düğümüyle sonuçlanır.</p>
+
+<note><p>Öntanımlı özniteliklerin bir harici DTD veya bir harici parametre öğesinde bildirilmesi olasıdır. XML Önergesi, geçerlilik sınaması yapan türde olmadıkça bir XML işlemcinin, bir harici DTD veya bir harici parametre öğesini okumasını gerektirmez. Bir biçembent veya bir başka oluşumun, bir  harici DTD veya bir harici parametre öğesinde bildirilmiş öntanımlı değer içeren bir XPath ağacının geçerlik sınaması yapmayan bir XML işlemciyle çalışmayabileceğini baştan kabul etmesi gerekir.</p></note>
+
+<p>İsim-alanların bildiren özniteliklere karşı düşen bir öznitelik düğümü yoktur (bkz, <bibref ref="XMLNAMES"/>).</p>
+
+</div2>
+
+<div2 id="namespace-nodes">
+<head>İsim-alanı Düğümleri</head>
+
+<p>Her eleman düğümü kendisiyle ilişkili bir isim-alanı düğümü kümesine sahiptir;
+isim-alanı düğümü kümesindeki her düğüm elemanın etki alanı içindeki ayrı bir öneke (bu öneklere XML İsim-alanı Önergesi <bibref ref="XMLNAMES"/> tarafından örtük olarak bildirilen <code>xml</code> öneki dahildir) ve bir düğüm elemanın etki alanının içinde olduğu öntanımlı isim-alanına aittir. Eleman, bu isim-alanı düğümlerinin her birinin <termref def="dt-parent">ebeveyn</termref>idir; bununla birlikte, bir isim-alanı düğümü ebeveyninin çocuğu değildir. Elemanlar, isim-alanı düğümlerini asla paylaşmazlar: eğer bir eleman başka bir elemanla aynı değilse, bir elemanın isim-alanı düğümlerinin hiçbiri başka bir elemanın isim-alanı düğümleri ile aynı olmayacaktır. Yani, bir eleman şu durumlarda bir isim-alanı düğümüne sahip olacaktır:</p>
+
+<ulist>
+<item><p>eleman tarafından veya ismi <code>xmlns:</code> ile başlayan ve elemanın kendisi veya daha yakın üstselleri tarafından yeniden boş değerli bir önek bildirilmedikçe, en yakın üstsel elemanın değeri boş olmayan her özniteliği için;</p>
+
+<note><p>bildirimsiz önekler sadece <bibref ref="XMLNAMES11"/>'e uyumlu belgelerde yer alabilir.</p></note>
+
+</item>
+
+<item><p>eğer eleman veya bazı üstsel elemanlar bir <code>xmlns</code> özniteliğine sahipse ve en yakın böyle bir elemanın <code>xmlns</code> özniteliğinin değeri boş değilse, <code>xmlns</code> özniteliği için;</p>
+
+<note><p><code>xmlns=""</code> şeklinde bir öznitelik, belirtildiği elemanın etki alanında öntanımlı isim-alanını <quote>geçersiz kılar</quote> (bkz, <bibref ref="XMLNAMES"/>).</p></note>
+
+</item>
+
+</ulist>
+
+<p>Bir isim-alanı düğümü bir <termref def="dt-expanded-name">genişletilmiş isme</termref> sahiptir: yerel kısım isim-alanı önekidir (isim-alanı öntanımlı isim-alanıysa bu boş olacaktır); isim-alanı tanım-yeri daima tanımsız olacaktır.</p>
+
+<p>Bir isim-alanı düğümünün <termref def="dt-string-value">dizgesel değer</termref>i isim-alanı önekine bağlı isim-alanı tanım-yeridir; eğer XML belge içindeki isim-alanı bildiriminde yer alan isim-alanı yeri bir göreli tanım-yeri (bir bölüm betimleyici olsun/olmasın) ise <termref def="dt-string-value">dizgesel değer</termref> gerçeklenim bağımlıdır. Böyle bir isim-alanı düğümünün <termref def="dt-string-value">dizgesel değer</termref>ine bağlı bir XPath ifadesi birlikte çalışılabilir olmayacaktır.
+<!--**Known error as of 29 September 2000**
+The <termref def="dt-string-value">dizgesel değer</termref> of a
+namespace node is the namespace URI that is being bound to the
+namespace prefix; if it is relative, it must be resolved just like a
+namespace URI in an <termref def="dt-expanded-name">genişletilmiş isim</termref>.
+--></p>
+
+</div2>
+
+
+<div2>
+<head>İşlem Yönergesi Düğümleri</head>
+
+<p>DTD içinde yer almadıkça, her işlem yönergesi (PI - processing instruction) için, bir işlem yönergesi düğümü vardır.</p>
+
+<p>Bir işlem yönergesi bir <termref def="dt-expanded-name">genişletilmiş isme</termref> sahiptir: yerel kısım işlem yönergesinin hedefidir; isim-alanı tanım-yeri tanımsızdır. Bir işlem yönergesi düğümünün <termref def="dt-string-value">dizgesel değer</termref>i işlem yönergesinden sonra gelen hedef ve bir miktar boşluk karakteridir. Sonlandırıcı <code>?&gt;</code> dizgesi dizgesel değere dahil değildir.</p>
+
+<note><p>XML bildirimi bir işlem yönergesi değildir. Dolayısıyla, XML bildirimine karşı düşen bir işlem yönergesi düğümü yoktur.</p></note>
+
+</div2>
+
+<div2>
+<head>Açıklama Düğümleri</head>
+
+<p>DTD içinde yer almadıkça, her açıklama için, bir açıklama düğümü vardır.</p>
+
+<p>Açıklama düğümünün <termref def="dt-string-value">dizgesel değer</termref>i açıklama açılış (<code>&lt;!--</code>) ve kapanış (<code>--&gt;</code>) dizgelerini içermez.</p>
+
+<p>Bir açıklama düğümünün bir <termref def="dt-expanded-name">genişletilmiş ismi</termref> yoktur.</p>
+
+</div2>
+
+<div2 id="text-nodes">
+<head>Metin Düğümleri</head>
+
+<p>Karakter verisi metin düğümleri halinde gruplanır. Her metin düğümünde mümkün olduğunca çok karakter verisi gruplanır: bir metin düğümünün asla komşu düğümü olarak kardeş metin düğümleri yoktur. Bir metin düğümünün <termref def="dt-string-value">dizgesel değer</termref>i karakter verisidir. Bir metin düğümü daima en azından bir veri karakteri içerir.</p>
+
+<p>Bir CDATA bölümündeki her karakter, karakter verisi olarak ele alınır. Bu bakımdan, kaynak belgedeki <code>&lt;![CDATA[&lt;]]&gt;</code> dizgesi <code>&amp;lt;</code> ile aynı olarak ele alınacaktır. Her ikisi de ağaçtaki bir metin düğümünde tek bir <code>&lt;</code> karakteriyle sonuçlanacaktır. Sonuç olarak, CDATA bölümü, <code>&lt;![CDATA[</code> ve <code>]]&gt;</code> bölümü silinmiş ve içerikte yer alan her <code>&lt;</code> ve <code>&amp;</code> karakterleri sırayla <code>&amp;lt;</code> ve <code>&amp;amp;</code> ile değiştirilmiş gibi ele alınır.</p>
+
+<note><p>Bir <code>&lt;</code> karakteri içeren bir metin düğümü XML olarak yazılmak istendiği takdirde, <code>&lt;</code> karakteri ya <code>&amp;lt;</code> örneğindeki gibi öncelenmeli ya da bir CDATA bölümü içine alınmalıdır.</p></note>
+
+<p>Açıklamalar, işlem yönergeleri ve öznitelik değerleri içindeki karakterler metin düğümleri üretmezler. Harici öğelerdeki satırsonları XML Önergesinde <bibref ref="XML"/> belirtildiği gibi sadece #xA içerecek şekilde normalleştirilir. Belge elemanının dışında kalan boşluk karakterleri metin düğümleri üretmezler.</p>
+
+<p>Bir metin düğümünün bir <termref def="dt-expanded-name">genişletilmiş ismi</termref> yoktur.</p>
+
+</div2>
+</div1>
+
+
+<div1>
+<head>Uyumluluk</head>
+
+<p>XPath aslında diğer belirtimler tarafından bir bileşen olarak kullanılmak üzere tasarlanmıştır. Diğer yandan, XPath'ın gerçeklenimi ve uyumluluk için koşul belirtme ve XPath'ın bağımsız gerçeklenimleri için herhangi bir uyumluluk kuralı tanımlamamak konularında XPath, kendini kullanan belirtimlere (<bibref ref="XPTR"/> ve <bibref ref="XSLT"/> gibi) güvenir.</p>
+</div1>
+
+
+</body>
+
+<back>
+<div1>
+<head>Kaynakça</head>
+<div2>
+<head>Uyulması Gerekenler</head>
+
+<blist>
+
+<bibl id="IEEE754" key="IEEE 754">Elektrik ve Elektronik Mühendisleri Enstitüsü. <titleref>İkilik Kayan Noktalı Aritmetik için IEEE Standardı</titleref>. ANSI/IEEE Std 754-1985.</bibl>
+
+<bibl id="RFC2396" key="RFC2396" href="http://www.ietf.org/rfc/rfc2396.txt">T. Berners-Lee, R. Fielding ve L. Masinter.  <titleref>Tek Biçimli Özkaynak Betimleyici (URI): Soysal Sözdizimi</titleref>. IETF RFC 2396. </bibl>
+
+<bibl id="XML" key="XML" href="&XML;">World Wide Web Consortium. <titleref>Genişletilebilir İmlenim Dili (XML) 1.0</titleref>. W3C Önergesi. Uyulması zorunlu İngilizce sürümü <loc href="&w3c;/TR/xml"/> adresindedir.</bibl>
+
+<bibl id="XMLNAMES" key="XML Adları" href="&XMLNames;">World Wide Web
+Consortium. <titleref>XML 1.0'da İsim-alanları</titleref>. W3C Önergesi. Uyulması zorunlu İngilizce sürümü <loc href="&w3c;/TR/xml-names"/> adresindedir.</bibl>
+
+<bibl id="XML11" key="XML 1.1" href="&XML11;">World Wide Web Consortium. <titleref>Genişletilebilir İmlenim Dili (XML) 1.1</titleref>. W3C Önergesi. Uyulması zorunlu İngilizce sürümü  <loc href="&w3c;/TR/xml11/"/> adresindedir.</bibl>
+
+<bibl id="XMLNAMES11" key="XML Adları 1.1" href="&XMLNames11;">World Wide Web Consortium. <titleref>XML 1.1'de İsim-alanları</titleref>. W3C Önergesi. Uyulması zorunlu İngilizce sürümü <loc href="&w3c;/TR/xml-names11/"/> adresindedir.</bibl>
+
+
+</blist>
+</div2>
+<div2>
+<head>Diğer Kaynaklar</head>
+
+<blist>
+
+<bibl id="CHARMOD" key="Karakter Modeli" href="http://www.w3.org/TR/WD-charmod">World Wide Web Consortium.
+<titleref>WWW için Karakter Modeli</titleref>. W3C Çalışma Taslağı.</bibl>
+
+<bibl id="DOM" key="DOM" href="http://www.w3.org/TR/REC-DOM-Level-1">World Wide Web Consortium.  <titleref>Belge Nesne Modeli (DOM - Document Object Model) 1. seviye Belirtimi.</titleref> W3C Önergesi.</bibl>
+
+<bibl id="JLS" key="JLS" href="http://java.sun.com/docs/books/jls/index.html">J. Gosling, B. Joy, and G. Steele.  <titleref>Java Dil Belirtimi</titleref>.</bibl>
+
+<bibl id="ISO10646" key="ISO/IEC 10646" href="http://www.iso.ch/cate/d18741.html">ISO (Uluslararası Standartlaşım Örgütü).  <titleref>ISO/IEC 10646-1:1993, Bilgi teknolojileri &mdash;Evrensel Çok Sekizli Kodlanmış Karakter Kümesi (UCS) &mdash; 1. Kısım: Mimari ve Temel Çokdilli Düzey</titleref>. Uluslararası Standart.</bibl>
+
+<bibl id="TEI" key="TEI" href="http://etext.virginia.edu/TEI.html">C.M. Sperberg-McQueen, L. Burnard <titleref>Elektronik Metin Kodlaması ve Değişimi için Kılavuzlar</titleref>.</bibl>
+
+<bibl id="UNICODE" key="Unicode" href="http://www.unicode.org/unicode/standard/standard.html">Unicode Konsorsiyumu. <titleref>Unicode
+Standardı</titleref>.</bibl>
+
+<bibl id="XINFO" key="XML BilgiKümesi" href="http://www.w3.org/TR/xml-infoset">World Wide Web Consortium. <titleref>XML Bilgi Kümesi.</titleref> W3C Önergesi.</bibl>
+
+<bibl id="XPTR" key="XPointer" href="http://www.w3.org/TR/WD-xptr">World Wide Web Consortium. <titleref>XML Gösterici Dili (XPointer).</titleref> W3C Çalışma Taslağı.</bibl>
+
+<bibl id="XQL" key="XQL" href="http://www.w3.org/TandS/QL/QL98/pp/xql.html">J. Robie, J. Lapp, D. Schach. <titleref>XML Sorgu dili (XQL)</titleref>.</bibl>
+
+<bibl id="XSLT" key="XSLT" href="&XSLT;">World Wide Web Consortium.  <titleref>XSL Dönüşümleri (XSLT).</titleref> W3C Önergesi.  Uyulması zorunlu İngilizce sürümü <loc href="&w3c;/TR/xslt"/> adresindedir.</bibl>
+
+</blist>
+
+</div2>
+</div1>
+
+<inform-div1 id="infoset">
+<head>XML Bilgi Kümesi Eşlemi</head>
+
+<p>XPath veri modelindeki düğümler XML Bilgi Kümesi <bibref ref="XINFO"/> tarafından sağlanmış bilgi kalemlerinden şöyle elde edilebilir</p>
+
+<div2><head>Kök Düğüm</head>
+<p>XPath Veri Modelinin bir örneği, tam olarak, bir XML Bilgi Kümesindeki eşsiz <kw>belge bilgi kalemi</kw>ne karşılık olan, bir kök düğüm içerir.</p>
+
+<ulist>
+<item><p>Kök düğümün <emph>çocukları</emph>, <emph role="infoset-property">çocuklar</emph> donatısında bulunan bilgi kalemlerinin (<kw>belge türü bildirimi bilgi kalemleri</kw> atlanarak) karşılığı olan düğümlerdir.</p>
+</item>
+</ulist>
+</div2>
+
+<div2><head>Eleman Düğümleri</head>
+<p>Bir eleman düğümü bir <kw>eleman bilgi kalemi</kw>ne karşılıktır..</p>
+
+<ulist>
+<item><p>Eleman düğümünün <emph>çocukları</emph>, <emph role="infoset-property">çocuklar</emph> donatısında yer alan bilgi kalemlerinin karşılığı olan düğümlerdir. Bu karşılıklılık bire bir değildir, <kw>karakter bilgi kalemi</kw> çocukları ardışık olarak tek bir metin düğümü oluşturmak üzere birleşirler. XPath veri modeli tüm genel öğelerin yorumlanmasını gerektirdiğinden, <kw>yorumlanmamış öğe gönderimi bilgi kalemi</kw> çocukları asla olmayacaktır.</p></item>
+
+<item><p>Eleman düğümünün <emph>öznitelikleri</emph>, <emph role="infoset-property">öznitelikler</emph> donatısında yer alan <kw>öznitelik bilgi kalemleri</kw>nin karşılığı olan düğümlerdir.</p></item>
+
+<item><p>Eleman düğümünün <emph>isim-alanları</emph>, <emph role="infoset-property">etki alanındaki isim-alanları</emph> donatısında yer alan <kw>isim-alanı bilgi kalemleri</kw>nin karşılığı olan düğümlerdir.</p></item>
+
+<item><p>Eleman düğümünün <termref def="dt-expanded-name">genişletilmiş ismi</termref>nin yerel kısmı, <emph role="infoset-property">yerel ad</emph> donatısının karşılığıdır. Eleman düğümünün <termref def="dt-expanded-name">genişletilmiş ismi</termref>nin isim-alanı tanım-yeri <emph role="infoset-property">isim-alanı yeri</emph> donatısına karşılıktır.</p></item>
+
+<item><p>Eleman düğümünün <emph>eşsiz ID'si</emph>, <emph role="infoset-property">öznitelikler</emph> donatısındaki <kw>öznitelik bilgi kalemi</kw>nin <emph role="infoset-property">normalleştirilmiş değer</emph> donatısının karşılığıdır; <emph role="infoset-property">öznitelikler</emph> donatısı ID için bir <emph role="infoset-property">öznitelik türü</emph> donatısına sahiptir ve ID için bir öznitelik varsa bu donatı mevcuttur aksi takdirde öznitelik tanımsızdır.</p></item>
+
+<item><p>Eleman düğümünün <termref def="dt-parent">ebeveyni</termref>, <emph role="infoset-property">ebeveyn</emph> donatısına karşılıktır.</p></item>
+</ulist>
+</div2>
+
+<div2 id="attr-nodes">
+<head>Öznitelik Düğümleri</head>
+<p>Bir öznitelik düğümü, <kw>öznitelik bilgi kalemi</kw>ne karşı düşer. İsim-alanı bildirimleri, öznitelikler olarak modellenmemiştir.</p>
+
+<ulist>
+<item><p>Öznitelik düğümünün <termref def="dt-expanded-name">genişletilmiş ismi</termref>nin yerel kısmı, <emph role="infoset-property">yerel ad</emph> donatısının karşılığıdır. Öznitelik düğümünün <termref def="dt-expanded-name">genişletilmiş ismi</termref>nin isim-alanı tanım-yeri <emph role="infoset-property">isim-alanı yeri</emph> donatısına karşı düşer.</p></item>
+
+<item><p>Öznitelik düğümünün <termref def="dt-string-value">dizgesel değeri</termref>, <emph role="infoset-property">normalleştirilmiş değer</emph> donatısının karşılığıdır.</p></item>
+
+<item><p>Öznitelik düğümünün <termref def="dt-parent">ebeveyni</termref>, <emph role="infoset-property">iye eleman</emph> donatısına karşılıktır.</p></item>
+</ulist>
+</div2>
+
+<div2><head>Metin Düğümleri</head>
+<p>Bir metin düğümü bir veya daha fazla ardışık <kw>karakter bilgi kalemi</kw>ne karşılıktır.</p>
+
+<ulist>
+<item><p>Metin düğümünün <termref def="dt-string-value">dizgesel değeri</termref>, <kw>karakter bilgi kalemleri</kw>nin her birinin <emph role="infoset-property">karakter kodu</emph> donatısının peşpeşe eklenmişine karşılıktır.</p></item>
+
+<item><p>Metin düğümünün <termref def="dt-parent">ebeveyni</termref>, ardışık <kw>karakter bilgi kalemleri</kw>nden birinin <emph role="infoset-property">ebeveyn</emph> donatısına karşılıktır (ardışık karakterler daima aynı ebeveyne sahiptir).</p></item>
+</ulist>
+</div2>
+
+<div2><head>İşlem Yönergesi Düğümleri</head>
+<p>Bir işlem yönergesi düğümü <kw>işlem yönergesi bilgi kalemi</kw>ne karşılıktır. Bir <kw>belge türü bildirimi bilgi kalemi</kw>nin çocukları olan işlem yönergelerinin işlem yönergesi düğümleri olmaz.</p>
+
+<ulist>
+<item><p>İşlem yönergesi düğümünün <termref def="dt-expanded-name">genişletilmiş ismi</termref>nin yerel kısmı, <emph role="infoset-property">hedef</emph> donatısının karşılığıdır. İşlem yönergesi düğümünün <termref def="dt-expanded-name">genişletilmiş ismi</termref>nin isim-alanı tanım-yeri boştur.</p></item>
+
+<item><p>İşlem yönergesi düğümünün <termref def="dt-string-value">dizgesel değeri</termref>, <emph role="infoset-property">içerik</emph> donatısının karşılığıdır.</p></item>
+
+<item><p>İşlem yönergesi düğümünün <termref def="dt-parent">ebeveyni</termref>, <emph role="infoset-property">ebeveyn</emph> donatısına karşılıktır.</p></item>
+</ulist>
+</div2>
+
+
+<div2><head>Açıklama Düğümleri</head>
+<p>Açıklama düğümü, <kw>açıklama bilgi kalemi</kw>nin karşılığıdır.</p>
+
+<ulist>
+<item><p>Açıklama düğümünün <termref def="dt-string-value">dizgesel değeri</termref>, <emph role="infoset-property">içerik</emph> donatısının karşılığıdır.</p></item>
+
+<item><p>Açıklama düğümünün <termref def="dt-parent">ebeveyni</termref>, <kw>açıklama bilgi kalemi</kw>nin <emph role="infoset-property">ebeveyn</emph> donatısına karşılıktır.</p></item>
+</ulist>
+</div2>
+
+
+<div2><head>İsim-alanı Düğümleri</head>
+<p>İsim-alanı düğümü <kw>isim-alanı bilgi kalemi</kw>nin karşılığıdır.</p>
+
+<ulist>
+<item><p>İsim-alanı düğümünün <termref def="dt-expanded-name">genişletilmiş ismi</termref>nin yerel kısmı, <emph role="infoset-property">önek</emph> donatısının karşılığıdır. İşlem yönergesi düğümünün <termref def="dt-expanded-name">genişletilmiş ismi</termref>nin isim-alanı tanım-yeri boştur.</p></item>
+
+<item><p>İsim-alanı düğümünün <termref def="dt-string-value">dizgesel değeri</termref>, <emph role="infoset-property">isim-alanı yeri</emph> donatısının karşılığıdır.</p></item>
+
+<item><p>İsim-alanı düğümünün <termref def="dt-parent">ebeveyn</termref>i bu düğümün içinde yer aldığı isim-alanı kümesinin eleman düğümüdür.</p></item>
+</ulist>
+</div2>
+
+<div2><head>XML Bilgi Kümesi Uyumluluğu</head>
+<p>Bu belirtim XML Bilgi Kümesi <bibref ref="XINFO"/> ile uyumludur. Aşağıdaki bilgi kalemleri, veri modelinin bir örneğini oluşturacak bilgi kümesi üreticileri tarafından gerçeklenmelidir:</p>
+
+<ulist>
+<item><p><emph role="infoset-property">çocuklar</emph> donatılarıyla <kw>Belge Bilgi Kalemi</kw></p></item>
+
+<item><p><emph role="infoset-property">çocuklar</emph>,
+<emph role="infoset-property">öznitelikler</emph>,
+<emph role="infoset-property">etki alanındaki isim-alanları</emph>,
+<emph role="infoset-property">yerel ad</emph>,
+<emph role="infoset-property">isim-alanı yeri</emph> ve
+<emph role="infoset-property">ebeveyn</emph> donatılarıyla
+<kw>Eleman Bilgi Kalemleri</kw>.</p></item>
+
+<item><p><emph role="infoset-property">isim-alanı yeri</emph>,
+<emph role="infoset-property">yerel ad</emph>,
+<emph role="infoset-property">normalleştirilmiş değer</emph>,
+<emph role="infoset-property">iye eleman</emph> ve
+<emph role="infoset-property">öznitelik türü</emph> donatılarıyla
+<kw>Öznitelik Bilgi Kalemleri</kw></p></item>
+
+<item><p><emph role="infoset-property">karakter kodu</emph> ve
+<emph role="infoset-property">ebeveyn</emph> donatılarıyla
+<kw>Karakter Bilgi Kalemleri</kw>.</p></item>
+
+<item><p><emph role="infoset-property">hedef</emph>,
+<emph role="infoset-property">içerik</emph> ve
+<emph role="infoset-property">ebeveyn</emph> donatılarıyla
+<kw>İşlem Yönergesi Bilgi Kalemleri</kw>.</p></item>
+
+<item><p><emph role="infoset-property">içerik</emph> ve
+<emph role="infoset-property">ebeveyn</emph> donatılarıyla
+<kw>Açıklama Bilgi Kalemleri</kw>.</p></item>
+
+<item><p><emph role="infoset-property">önek</emph> ve
+<emph role="infoset-property">isim-alanı yeri</emph> donatılarıyla
+<kw>İsim-alanı Bilgi Kalemleri</kw></p></item>
+</ulist>
+
+<p>Bilgikümesi işlemcisi tarafından elverişli kılınan bütün diğer bilgi kalemleri ve donatılar yoksayılır.</p>
+</div2>
+
+<!--**Known error as of 29 September 2000**
+<note><p>A new version of the XML Information Set Working Draft, which
+will replace the May 17 version, was close to completion at the time
+when the preparation of this version of XPath was completed and was
+expected to be released at the same time or shortly after the release
+of this version of XPath.  The mapping is given for this new version
+of the XML Information Set Working Draft. If the new version of the
+XML Information Set Working has not yet been released, W3C members may
+consult the internal Working Group version <loc href="http://www.w3.org/XML/Group/1999/09/WD-xml-infoset-19990915.html">
+http://www.w3.org/XML/Group/1999/09/WD-xml-infoset-19990915.html</loc>
+(<loc href="http://cgi.w3.org/MemberAccess/">members
+only</loc>).</p></note>
+
+<ulist>
+
+<item><p>The root node comes from the document information item.  The
+children of the root node come from the <emph role="infoset-property">children</emph> and <emph role="infoset-property">children - comments</emph>
+properties.</p></item>
+
+<item><p>An element node comes from an element information item.  The
+children of an element node come from the <emph role="infoset-property">children</emph> and <emph role="infoset-property">children - comments</emph> properties. The
+attributes of an element node come from the <emph role="infoset-property">attributes</emph> property.  The namespaces
+of an element node come from the <emph role="infoset-property">in-scope namespaces</emph> property.  The
+local part of the <termref def="dt-expanded-name">genişletilmiş isim</termref> of the element node
+comes from the <emph role="infoset-property">local name</emph>
+property.  The namespace URI of the <termref def="dt-expanded-name">genişletilmiş isim</termref> of the element node
+comes from the <emph role="infoset-property">namespace URI</emph>
+property. The unique ID of the element node comes from the <emph role="infoset-property">children</emph> property of the attribute
+information item in the <emph role="infoset-property">attributes</emph> property that has an <emph role="infoset-property">attribute type</emph> property equal to
+<code>ID</code>.</p></item>
+
+<item><p>An attribute node comes from an attribute information item.
+The local part of the <termref def="dt-expanded-name">genişletilmiş isim</termref> of the attribute node
+comes from the <emph role="infoset-property">local name</emph>
+property.  The namespace URI of the <termref def="dt-expanded-name">genişletilmiş isim</termref> of the attribute node
+comes from the <emph role="infoset-property">namespace URI</emph>
+property. The <termref def="dt-string-value">dizgesel değer</termref> of
+the node comes from concatenating the <emph role="infoset-property">character code</emph> property of each member
+of the <emph role="infoset-property">children</emph>
+property.</p></item>
+
+<item><p>A text node comes from a sequence of one or more consecutive
+character information items.  The <termref def="dt-string-value">dizgesel değer</termref> of the node comes from
+concatenating the <emph role="infoset-property">character code</emph>
+property of each of the character information items.</p></item>
+
+<item><p>A processing instruction node comes from a processing
+instruction information item.  The local part of the <termref def="dt-expanded-name">genişletilmiş isim</termref> of the node comes from
+the <emph role="infoset-property">target</emph> property. (The
+namespace URI part of the <termref def="dt-expanded-name">genişletilmiş isim</termref> of the node is null.)
+The <termref def="dt-string-value">dizgesel değer</termref> of the node
+comes from the <emph role="infoset-property">content</emph>
+property. There are no processing instruction nodes for processing
+instruction items that are children of document type declaration
+information item.</p></item>
+
+<item><p>A comment node comes from a comment information item.  The
+<termref def="dt-string-value">dizgesel değer</termref> of the node
+comes from the <emph role="infoset-property">content</emph> property.
+There are no comment nodes for comment information items that are
+children of document type declaration information item.</p></item>
+
+<item><p>A namespace node comes from a namespace declaration
+information item.  The local part of the <termref def="dt-expanded-name">genişletilmiş isim</termref> of the node comes from
+the <emph role="infoset-property">prefix</emph> property.  (The
+namespace URI part of the <termref def="dt-expanded-name">genişletilmiş isim</termref> of the node is null.)
+The <termref def="dt-string-value">dizgesel değer</termref> of the node
+comes from the <emph role="infoset-property">namespace URI</emph>
+property.</p></item>
+
+</ulist>
+-->
+</inform-div1>
+
+</back>
+</spec>

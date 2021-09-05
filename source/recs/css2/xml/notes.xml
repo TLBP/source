@@ -1,0 +1,612 @@
+<?xml version='1.0' encoding='UTF-8'?>
+
+<inform-div1 id="notes">
+<head>Implementation and performance notes for fonts</head>
+<p><emph>This appendix is informative, not normative.</emph></p>
+
+<div2 id="notes1"><head>Glossary of font terms</head>
+<glist><gitem>
+<label id="definingDocLock">DocLock™</label>
+<def><p>Bitstream's <emph>DocLock™</emph> technology ensures that
+TrueDoc PFRs can only be used with the site they are published for.
+A TrueDoc PFR moved to a different site or referenced from another
+site will not work.</p></def>
+</gitem>
+<gitem>
+<label id="definingDSIG">Digital Signature</label>
+<def><p>Part of a trust management technology, used to provide signed
+assertions about a resource.</p></def>
+</gitem>
+<gitem>
+<label id="definingFontCaching">Font Caching</label>
+<def><p><emph>Font caching</emph> allows for a temporary copy of fonts on the
+client system. They are often stored on disk with other cached
+items such as graphics specifically for the UA.</p></def>
+</gitem>
+<gitem>
+<label id="definingFontFace">Font Face</label>
+<def><p>A "handle" that refers to a specific face of a font, excluding
+the font size.</p></def>
+</gitem>
+<gitem>
+<label id="definingFontMatching">Font Matching</label>
+<def><p><emph>Font matching</emph> is a process of selecting a similar font
+based on using one or more attributes of the primary font. Common
+attribute include serif, sans-serif, weight, cap height, x-height,
+spacing, language, and posture. Font matching is dependent on the
+algorithm and the variety of candidate fonts.</p></def>
+</gitem>
+<gitem>
+<label id="definingSubsetting">Glyph Representation Sub-setting</label>
+<def><p><emph>Glyph Representation sub-setting</emph> is the process by which
+unwanted glyph representations (together with their side bearings
+and kerning information) are removed from a primary font to produce
+a smaller subset font that covers a particular document or set of
+documents. This is a particular win for documents that use
+ideographic scripts, where the glyph complement of the base font
+can be very large. Glyph representation sub-setting for documents
+using scripts that require ligatures, such as Arabic, is difficult
+without knowing the ligature formation rules of the final display
+system.</p></def>
+</gitem>
+<gitem>
+<label id="definingIntellifont">Intellifont</label>
+<def><p>Intellifont technology was developed by Agfa and is the native
+format for Hewlett-Packard and other printers that use the PCL5
+language. It is also the native font format on the Amiga
+computers.</p></def>
+</gitem>
+<gitem>
+<label id="defininginfinifont">Infinifont</label>
+<def><p>A font synthesis technique which, given a Panose-1 number (and,
+optionally, additional font description data) can generate a faux
+font without extrapolating from a single master outline or
+interpolating between two or more outlines (see <bibref ref="ref-INFINIFONT"/>).</p></def>
+</gitem>
+<gitem>
+<label id="definingItalic">Italic</label>
+<def><p>A class of letter forms for Latin scripts, that are more
+cursive than roman letter forms but less so than script forms.
+Often, a pair of fonts are designed to be used together; one is a
+serifed roman and one is italic. Other terms to describe this class
+of letter forms include cursive and, for Cyrillic scripts, kursiv.
+For sans-serif faces, the companion face is often a slanted or
+oblique variant rather than a different class of letter form.</p>
+<figure>
+<graphic source="./images/italic-40.gif" alt="Italic forms" />
+<loc href="images/longdesc/italic-40-desc.html" title="Long description for italic forms" id="img-italic-40">[D]</loc>
+</figure></def>
+</gitem>
+<gitem>
+<label id="definingKern">Kerning</label>
+<def><p>Altering the spacing between selected glyph representations,
+which would otherwise appear to be too close or too far apart, to
+obtain a more even typographical color.</p>
+<figure>
+<graphic source="./images/kern-22.gif" alt="Illustration of kerning" />
+<loc href="images/longdesc/kern-22-desc.html" title="Long description for kerning" id="img-kern-22">[D]</loc>
+</figure></def>
+</gitem>
+<gitem>
+<label id="definingMultiMaster">Multiple Master Font</label>
+<def><p>A <emph>Multiple Master Font</emph> contain two primary fonts that
+are used with special rendering software to provide an interpolated
+result. Adobe Systems provides a mechanism that allows for
+parameters to be used to control the output or the interpolated
+output font. These parameters generally describe the
+characteristics of an original font and the multiple master result
+is referred to as a "synthesized font."</p></def>
+</gitem>
+<gitem>
+<label id="definingOpenType">Open Type</label>
+<def><p>Open Type is an extension to the TrueType font format that
+contains additional information that extends the capabilities of
+the fonts to support high-quality international typography. Open
+Type can associate a single character with multiple glyph
+representations, and combinations of characters with a single glyph
+representation (ligature formation). Open Type includes
+two-dimensional information to support features for complex
+positioning and glyph attachment. TrueType Open and OpenType
+contain explicit script and language information, so a
+text-processing application can adjust its behavior accordingly
+(see <bibref ref="ref-OPENTYPE"/>).</p></def>
+</gitem>
+<gitem>
+<label id="definingServerFont">Server Font</label>
+<def><p>A <emph>Server Font</emph> is a font resource located on the web
+server that is referenced by the WebFont definition. The user agent
+may use this resource for rendering the page.</p></def>
+</gitem>
+<gitem>
+<label id="definingSpeedo">Speedo</label>
+<def><p><emph>Speedo</emph> font technology was developed by Bitstream and is
+the native font format on the Atari ST and Falcon computers. It is
+also used by computers running the X window system.</p></def>
+</gitem>
+<gitem>
+<label id="definingTrueDoc">TrueDoc</label>
+<def><p><emph>TrueDoc</emph> technology was developed by Bitstream for the
+creation, transport, and imaging of platform independent scalable
+font objects on the web. Creation of font objects is done by the
+TrueDoc character shape recorder (CSR) and the rendering of the
+font objects is done by TrueDoc's character shape player (CSP). The
+technology is intended to be used on the web for viewing and
+printing.</p></def>
+</gitem>
+<gitem>
+<label id="definingTrueDocPFR">TrueDoc Portable Font Resource</label>
+<def><p>A <emph>TrueDoc Portable font resource</emph> (or, <kw>PFR</kw>) is a
+platform-independent scalable font object that is produced by a
+character shape player. Input may be either TrueType or Type 1 of
+any flavor on either Windows, Mac, or Unix. TrueDoc Portable Font
+Resources provide good compression ratios, are platform
+independent, and because they are not in an native font format
+(TrueType or Type 1) they can not be easily installed.</p></def>
+</gitem>
+<gitem>
+<label id="definingTT">TrueType</label>
+<def><p><emph>TrueType</emph> is a font format developed by Apple and
+licensed to Microsoft. TrueType is the native operating system font
+format for Windows and Macintosh. TrueType contains a hierarchical
+set of tables and glyph representations. Characters can be hinted
+on a per character and point size basis yielding excellent quality
+at screen resolutions. TrueType fonts for Windows and Mac have few
+differences, though they can be different enough to prevent cross
+platform usage.</p></def>
+</gitem>
+<gitem>
+<label id="definingTTC">TrueType Collection</label>
+<def><p>A <emph>TrueType Collection</emph> (or <kw>TTC</kw>) is an extension to
+the TrueType format that includes tables that allow for multiple
+TrueType fonts to be contained within a single TrueType font file.
+TrueType collection files are relatively rare at this time.</p></def>
+</gitem>
+<gitem>
+<label id="definingTTGX">TrueType GX Fonts</label>
+<def><p><emph>TrueType GX Fonts</emph> contain extensions to the standard
+TrueType format that allow for mutable fonts, similar to Multiple
+Master fonts. There may be several mutation axis such as weight,
+height, and slant. The axis can be defined to obtain almost any
+effect. TrueType GX can also supports alternate glyph
+representation substitution for ligatures, contextual forms,
+fractions, etc. To date, TrueType GX is available only on the Mac
+(see <bibref ref="ref-TRUETYPEGX"/>).</p></def>
+</gitem>
+<gitem>
+<label id="definingT1">Type 1 font</label>
+<def><p><emph>Type 1 fonts</emph>, developed by Adobe Systems, were one of
+first scalable formats available. Type 1 fonts generally contain
+228 characters with the glyph representations described using third
+degree bezier curves. Mac, Windows, and X have similar but separate
+formats; Adobe provides Adobe Type Manager for all three platforms.
+Type1c is a more recent losslessly-compressed storage form for Type
+1 glyph representations.</p></def>
+</gitem>
+<gitem>
+<label id="definingURIbound">URI Binding</label>
+<def><p>A process of locking a particular font resource to a given Web
+site by embedding an encrypted URI or a digitally signed usage
+assertion into the font resource.</p></def>
+</gitem>
+</glist>
+</div2>
+
+<div2 id="coneg"><head>Font retrieval</head>
+<p>There are many different font formats in use by many different
+platforms. To select a preferred font format, transparent content
+negotiation is used (see <bibref ref="ref-NEGOT"/>). It is always possible to tell when
+a font is being dereferenced, because the URI is inside a font
+description. A given implementation will know which downloadable
+font formats it supports and can thus use the format hint to avoid
+downloading fonts in an unsupported format.</p>
+</div2>
+
+<div2 id="panose"><head>Meaning of the Panose Digits</head>
+<figure>
+<graphic source="./images/panose-16.gif" alt="Illustration of Panose-1" />
+<loc href="images/longdesc/panose-16-desc.html" title="Long description for screen shot of Windows 95 font description GUI" id="img-panose-16">[D]</loc>
+</figure>
+<p>The Family, Serif Style and Proportion numbers are used by
+Windows95 for font selection and matching.</p>
+<p>The meaning of the ten numbers and the allowable values (given
+in parentheses) are given below for the most common case, where the
+"family" digit is <code>2, Text and Display</code>. (If the first digit
+has a different value, the remaining nine digits have different
+meanings). For further details on Panose-1, see <bibref ref="ref-PANOSE"/>.</p>
+<glist>
+<gitem><label>Family</label>
+<def><slist>
+<sitem>Any (0)</sitem>
+<sitem>No Fit (1)</sitem>
+<sitem><bibref ref="ref-PANOSE"/> <kw>Latin Text and Display</kw> (2)</sitem>
+<sitem><bibref ref="ref-PANOSE"/> <kw>Latin Script</kw> (3)</sitem>
+<sitem><bibref ref="ref-PANOSE"/> <kw>Latin Decorative</kw> (4)</sitem>
+<sitem><bibref ref="ref-PANOSE"/> <kw>Latin Pictorial</kw> (5)</sitem>
+</slist></def>
+</gitem>
+<gitem>
+<label>Serif Style</label>
+<def><slist>
+<sitem>Any (0)</sitem>
+<sitem>No Fit (1)</sitem>
+<sitem>Cove (2)</sitem>
+<sitem>Obtuse Cove (3)</sitem>
+<sitem>Square Cove (4)</sitem>
+<sitem>Obtuse Square Cove (5)</sitem>
+<sitem>Square (6)</sitem>
+<sitem>Thin (7)</sitem>
+<sitem>Bone (8)</sitem>
+<sitem>Exaggerated (9)</sitem>
+<sitem>Triangle (10)</sitem>
+<sitem>Normal Sans (11)</sitem>
+<sitem>Obtuse Sans (12)</sitem>
+<sitem>Perp Sans (13)</sitem>
+<sitem>Flared (14)</sitem>
+<sitem>Rounded (15)</sitem>
+</slist></def>
+</gitem>
+<gitem>
+<label>Weight</label>
+<def><slist>
+<sitem>Any (0)</sitem>
+<sitem>No Fit (1)</sitem>
+<sitem>Very Light (2)[100]</sitem>
+<sitem>Light (3) [200]</sitem>
+<sitem>Thin (4) [300]</sitem>
+<sitem>Book (5) [400] <emph>same as CSS1 'normal'</emph></sitem>
+<sitem>Medium (6) [500]</sitem>
+<sitem>Demi (7) [600]</sitem>
+<sitem>Bold (8) [700] <emph>same as CSS1 'bold'</emph></sitem>
+<sitem>Heavy (9) [800]</sitem>
+<sitem>Black (10) [900]</sitem>
+<sitem>Extra Black / Nord (11) [900] <emph>force mapping to CSS1 100-900
+scale</emph></sitem>
+</slist></def>
+</gitem>
+<gitem>
+<label>Proportion</label>
+<def><slist>
+<sitem>Any (0)</sitem>
+<sitem>No Fit (1)</sitem>
+<sitem>Old Style (2)</sitem>
+<sitem>Modern (3)</sitem>
+<sitem>Even Width (4)</sitem>
+<sitem>Expanded (5)</sitem>
+<sitem>Condensed (6)</sitem>
+<sitem>Very Expanded (7)</sitem>
+<sitem>Very Condensed (8)</sitem>
+<sitem>Monospaced (9)</sitem>
+</slist></def>
+</gitem>
+<gitem><label>Contrast</label>
+<def><slist>
+<sitem>Any (0)</sitem>
+<sitem>No Fit (1)</sitem>
+<sitem>None (2)</sitem>
+<sitem>Very Low (3)</sitem>
+<sitem>Low (4)</sitem>
+<sitem>Medium Low (5)</sitem>
+<sitem>Medium (6)</sitem>
+<sitem>Medium High (7)</sitem>
+<sitem>High (8)</sitem>
+<sitem>Very High (9)</sitem>
+</slist></def>
+</gitem>
+<gitem><label>Stroke Variation</label>
+<def><slist>
+<sitem>Any (0)</sitem>
+<sitem>No Fit (1)</sitem>
+<sitem>No Variation (2)</sitem>
+<sitem>Gradual/Diagonal (3)</sitem>
+<sitem>Gradual/Transitional (4)</sitem>
+<sitem>Gradual/Vertical (5)</sitem>
+<sitem>Gradual/Horizontal (6)</sitem>
+<sitem>Rapid/Vertical (7)</sitem>
+<sitem>Rapid/Horizontal (8)</sitem>
+<sitem>Instant/Horizontal (9)</sitem>
+<sitem>Instant/Vertical (10)</sitem>
+</slist></def>
+</gitem>
+<gitem><label>Arm Style</label>
+<def><slist>
+<sitem>Any (0)</sitem>
+<sitem>No Fit (1)</sitem>
+<sitem>Straight Arms/Horizontal (2)</sitem>
+<sitem>Straight Arms/Wedge (3)</sitem>
+<sitem>Straight Arms/Vertical (4)</sitem>
+<sitem>Straight Arms/Single Serif (5)</sitem>
+<sitem>Straight Arms/Double Serif (6)</sitem>
+<sitem>Non-Straight Arms/Horizontal (7)</sitem>
+<sitem>Non-Straight Arms/Wedge (8)</sitem>
+<sitem>Non-Straight Arms/Vertical 90)</sitem>
+<sitem>Non-Straight Arms/Single Serif (10)</sitem>
+<sitem>Non-Straight Arms/Double Serif (11)</sitem>
+</slist></def>
+</gitem>
+<gitem><label>Letterform</label>
+<def><slist>
+<sitem>Any (0)</sitem>
+<sitem>No Fit (1)</sitem>
+<sitem>Normal/Contact (2)</sitem>
+<sitem>Normal/Weighted (3)</sitem>
+<sitem>Normal/Boxed (4)</sitem>
+<sitem>Normal/Flattened (5)</sitem>
+<sitem>Normal/Rounded (6)</sitem>
+<sitem>Normal/Off Center (7)</sitem>
+<sitem>Normal/Square (8)</sitem>
+<sitem>Oblique/Contact (9)</sitem>
+<sitem>Oblique/Weighted (10)</sitem>
+<sitem>Oblique/Boxed (11)</sitem>
+<sitem>Oblique/Flattened (12)</sitem>
+<sitem>Oblique/Rounded (13)</sitem>
+<sitem>Oblique/Off Center (14)</sitem>
+<sitem>Oblique/Square (15)</sitem>
+</slist></def>
+</gitem>
+<gitem>
+<label>Midline</label>
+<def><slist>
+<sitem>Any (0)</sitem>
+<sitem>No Fit (1)</sitem>
+<sitem>Standard/Trimmed (2)</sitem>
+<sitem>Standard/Pointed (3)</sitem>
+<sitem>Standard/Serifed (4)</sitem>
+<sitem>High/Trimmed (5)</sitem>
+<sitem>High/Pointed (6)</sitem>
+<sitem>High/Serifed (7)</sitem>
+<sitem>Constant/Trimmed (8)</sitem>
+<sitem>Constant/Pointed (9)</sitem>
+<sitem>Constant/Serifed (10)</sitem>
+<sitem>Low/Trimmed (11)</sitem>
+<sitem>Low/Pointed (12)</sitem>
+<sitem>Low/Serifed (13)</sitem>
+</slist></def>
+</gitem>
+<gitem><label>XHeight</label>
+<def><slist>
+<sitem>Any (0)</sitem>
+<sitem>No Fit (1)</sitem>
+<sitem>Constant/Small (2)</sitem>
+<sitem>Constant/Standard (3)</sitem>
+<sitem>Constant/Large (4)</sitem>
+<sitem>Ducking/Small (5)</sitem>
+<sitem>Ducking/Standard (6)</sitem>
+<sitem>Ducking/Large (7)</sitem>
+</slist></def>
+</gitem>
+</glist>
+<p><emph>Panose-2</emph> (see <bibref ref="ref-PANOSE2"/>) is a specification for a more
+comprehensive font classification and matching technology which is
+not limited to Latin typefaces. For example, the serif
+characteristics of a Latin face may be compared with the stroke
+terminations of a Kanji face.</p>
+<figure>
+<graphic source="./images/P2F24.gif" alt="Illustration of Panose-2" />
+</figure>
+<p>The Panose-2 value is not stored inside any known font formats,
+but may be measured.</p>
+</div2>
+
+<div2 id="truetype-unicode">
+  <head>Deducing Unicode Ranges for TrueType</head>
+<p>This information is available in the font by looking at the
+'ulUnicodeRange' bits in the 'OS/2' table (if it has one), which
+holds a bitfield representation of the set. This table is defined
+in revision 1.66 of the TrueType specification, from Microsoft.
+Considering this information as a set, each element corresponds to
+a Unicode 1.1 character block, and the presence of that element in
+the set indicates that the font has one or more glyph
+representations to represent at least one character in that block.
+The set has 128 elements as described below. The order generally
+follows that in the Unicode 1.1 standard. This table may be used to
+convert the information in a TrueType font into a CSS
+'unicode-range' descriptor.</p>
+<table><thead>
+<tr><th colspan="4"></th></tr>
+<tr><th>Block</th><th>Add</th><th>Block name</th><th>Unicode range</th></tr>
+<tr><th colspan="4"></th></tr>
+</thead><tbody>
+<tr><td>0</td><td>1</td><td>Basic Latin</td><td>U+0-7F</td></tr>
+<tr><td>1</td><td>2</td><td>Latin-1 Supplement</td><td>U+80-FF</td></tr>
+<tr><td>2</td><td>4</td><td>Latin-1 Extended-A</td><td>U+100-17F</td></tr>
+<tr><td>3</td><td>8</td><td>Latin Extended-B</td><td>U+180-24F</td></tr>
+<tr><th colspan="4"></th></tr>
+<tr><td>4</td><td>1</td><td>IPA Extensions</td><td>U+250-2AF</td></tr>
+<tr><td>5</td><td>2</td><td>Spacing Modifier Letters</td><td>U+2B0-2FF</td></tr>
+<tr><td>6</td><td>4</td><td>Combining Diacritical Marks</td><td>U+300-36F</td></tr>
+<tr><td>7</td><td>8</td><td>Greek</td><td>U+370-3CF</td></tr>
+<tr><th colspan="4"></th></tr>
+<tr><td>8</td><td>1</td><td><emph>Greek Symbols and Coptic</emph></td><td>U+3D0-3EF</td></tr>
+<tr><td>9</td><td>2</td><td>Cyrillic</td><td>U+400-4FF</td></tr>
+<tr><td>10</td><td>4</td><td>Armenian</td><td>U+530-58F</td></tr>
+<tr><td>11</td><td>8</td><td>Hebrew</td><td>U+590-5FF</td></tr>
+<tr><th colspan="4"></th></tr>
+<tr><td>12</td><td>1</td><td><emph>Hebrew Extended-A Hebrew Extended-B</emph></td><td>?? what ranges ??</td></tr>
+<tr><td>13</td><td>2</td><td>Arabic</td><td>U+600-69F</td></tr>
+<tr><td>14</td><td>4</td><td><emph>Arabic Extended</emph></td><td>U+670-6FF</td></tr>
+<tr><td>15</td><td>8</td><td>Devanagari</td><td>U+900-97F</td></tr>
+<tr><th colspan="4"></th></tr>
+<tr><td>16</td><td>1</td><td>Bengali</td><td>U+980-9FF</td></tr>
+<tr><td>17</td><td>2</td><td>Gurmukhi</td><td>U+A00-A7F</td></tr>
+<tr><td>18</td><td>4</td><td>Gujarati</td><td>U+A80-AFF</td></tr>
+<tr><td>19</td><td>8</td><td>Oriya</td><td>U+B00-B7F</td></tr>
+<tr><th colspan="4"></th></tr>
+<tr><td>20</td><td>1</td><td>Tamil</td><td>U+B80-BFF</td></tr>
+<tr><td>21</td><td>2</td><td>Telugu</td><td>U+C00-C7F</td></tr>
+<tr><td>22</td><td>4</td><td>Kannada</td><td>U+C80-CFF</td></tr>
+<tr><td>23</td><td>8</td><td>Malayalam</td><td>U+D00-D7F</td></tr>
+<tr><th colspan="4"></th></tr>
+<tr><td>24</td><td>1</td><td>Thai</td><td>U+E00-E7F</td></tr>
+<tr><td>25</td><td>2</td><td>Lao</td><td>U+E80-EFF</td></tr>
+<tr><td>26</td><td>4</td><td>Georgian</td><td>U+10A0-10EF</td></tr>
+<tr><td>27</td><td>8</td><td><emph>Georgian Extended</emph></td><td>U+10F0-10FF ??</td></tr>
+<tr><th colspan="4"></th></tr>
+<tr><td>28</td><td>1</td><td>Hangul Jamo</td><td>U+1100-11FF</td></tr>
+<tr><td>29</td><td>2</td><td>Latin Extended Additional</td><td>-</td></tr>
+<tr><td>30</td><td>4</td><td>Greek Extended</td><td>U+1F00-1FFF</td></tr>
+<tr><td>31</td><td>8</td><td>General Punctuation</td><td>U+2000-206F</td></tr>
+<tr><th colspan="4"></th></tr>
+<tr><td>32</td><td>1</td><td>Superscripts and Subscripts</td><td>-</td></tr>
+<tr><td>33</td><td>2</td><td>Currency Symbols</td><td>U+20A0-20CF</td></tr>
+<tr><td>34</td><td>4</td><td>Combining Marks for Symbols</td><td>U+20D0-20FF</td></tr>
+<tr><td>35</td><td>8</td><td>Letterlike Symbols</td><td>U+2100-214F</td></tr>
+<tr><th colspan="4"></th></tr>
+<tr><td>36</td><td>1</td><td>Number Forms</td><td>U+2150-218F</td></tr>
+<tr><td>37</td><td>2</td><td>Arrows</td><td>U+2190-21FF</td></tr>
+<tr><td>38</td><td>4</td><td>Mathematical Operators</td><td>U+2200-22FF</td></tr>
+<tr><td>39</td><td>8</td><td>Miscellaneous Technical</td><td>U+2300-23FF</td></tr>
+<tr><th colspan="4"></th></tr>
+<tr><td>40</td><td>1</td><td>Control Pictures</td><td>U+2400-243F</td></tr>
+<tr><td>41</td><td>2</td><td>Optical Character Recognition</td><td>U+2440-245F</td></tr>
+<tr><td>42</td><td>4</td><td>Enclosed Alphanumerics</td><td>U+2460-24FF</td></tr>
+<tr><td>43</td><td>8</td><td>Box Drawing</td><td>U+2500-257F</td></tr>
+<tr><th colspan="4"></th></tr>
+<tr><td>44</td><td>1</td><td>Block Elements</td><td>U+2580-259F</td></tr>
+<tr><td>45</td><td>2</td><td>Geometric Shapes</td><td>U+25A0-25FF</td></tr>
+<tr><td>46</td><td>4</td><td>Miscellaneous Symbols</td><td>U+2600-26FF</td></tr>
+<tr><td>47</td><td>8</td><td>Dingbats</td><td>U+2700-27BF</td></tr>
+<tr><th colspan="4"></th></tr>
+<tr><td>48</td><td>1</td><td>CJK Symbols and Punctuation</td><td>U+3000-303F</td></tr>
+<tr><td>49</td><td>2</td><td>Hiragana</td><td>U+3040-309F</td></tr>
+<tr><td>50</td><td>4</td><td>Katakana</td><td>U+30A0-30FF</td></tr>
+<tr><td>51</td><td>8</td><td>Bopomofo</td><td>U+3100-312F</td></tr>
+<tr><th colspan="4"></th></tr>
+<tr><td>52</td><td>1</td><td>Hangul Compatibility Jamo</td><td>U+3130-318F</td></tr>
+<tr><td>53</td><td>2</td><td>CJK Miscellaneous</td><td>??</td></tr>
+<tr><td>54</td><td>4</td><td>Enclosed CJK Letters and Months</td><td>U+3200-32FF</td></tr>
+<tr><td>55</td><td>8</td><td>CJK compatibility</td><td>U+3300-33FF</td></tr>
+<tr><th colspan="4"></th></tr>
+<tr><td>56</td><td>1</td><td>Hangul</td><td>U+AC00-D7FF</td></tr>
+<tr><td>59</td><td>8</td><td>CJK Unified Ideographs</td><td>U+4E00-9FFF</td></tr>
+<tr><th colspan="4"></th></tr>
+<tr><td>60</td><td>1</td><td>Private Use Area</td><td>U+E000-F8FF</td></tr>
+<tr><td>61</td><td>2</td><td>CJK Compatibility Ideographs</td><td>U+F900-FAFF</td></tr>
+<tr><td>62</td><td>4</td><td>Alphabetic Presentation Forms</td><td>U+FB00-FB4F</td></tr>
+<tr><td>63</td><td>8</td><td>Arabic Presentation Forms-A</td><td>U+FB50-FDFF</td></tr>
+<tr><th colspan="4"></th></tr>
+<tr><td>64</td><td>1</td><td>Combining Half Marks</td><td>U+FE20-FE2F</td></tr>
+<tr><td>65</td><td>2</td><td>CJK compatibility Forms</td><td>U+FE30-FE4F</td></tr>
+<tr><td>66</td><td>4</td><td>Small Form Variants</td><td>U+FE50-FE6F</td></tr>
+<tr><td>67</td><td>8</td><td>Arabic Presentation Forms-B</td><td>U+FE70-FEFF</td></tr>
+<tr><th colspan="4"></th></tr>
+<tr><td>68</td><td>1</td><td>Halfwidth and Fullwidth Forms</td><td>U+FF00-FFEF</td></tr>
+<tr><td>69</td><td>2</td><td>Specials</td><td>U+FFF0-FFFD</td></tr>
+</tbody>
+</table>
+
+<p role="comment">The TrueType bitfield system has the problem
+that it is tied to Unicode 1.1 and is unable to cope with Unicode
+expansion - it is unable to represent Tibetan for example, or other
+scripts introduced with Unicode 2.0 or later revisions.</p>
+</div2>
+
+<div2 id="autodescgen">
+  <head>Automatic descriptor generation</head>
+<p>Authoring tools should allow style sheet authors to add and edit
+font descriptors. In some cases, however, authoring tools can help
+by examining locally installed fonts and automatically generating
+descriptors for fonts referenced in the style sheet. This is also a
+function that can be carried out by tools which subset or convert
+fonts ready for dynamic download.</p>
+<p>This table suggests where such information can be found, for
+common font formats.</p>
+<table border="1">
+<thead>
+<tr><td>Descriptor</td><td>Type 1</td><td>TrueType and OpenType</td><td>TrueType GX <bibref ref="ref-TRUETYPEGX"/></td></tr>
+</thead><tbody>
+<tr>
+<td><descriptor>ascent</descriptor></td>
+<td><code>'Ascender'</code> in AFM/PFM file</td>
+<td><code>'Ascender'</code> in <code>'hhea'</code> table or (preferably)
+<code>'sTypoAscender'</code> in <code>'OS/2'</code> table</td>
+<td><code>'horizontalBefore'</code> in <code>'fmtx'</code> table</td>
+</tr>
+<tr>
+<td><descriptor>baseline</descriptor></td>
+<td/>
+<td/>
+<td><code>bsln</code> table, see <titleref ref="bsln">note</titleref></td>
+</tr>
+<tr>
+<td><descriptor>bbox</descriptor></td>
+<td><code>FontBBox</code>, font dictionary</td>
+<td><code>'xMin'</code>, <code>'xMax'</code>, <code>'yMin'</code> and
+<code>'yMax'</code> entries of the <code>'head'</code> table</td>
+<td/>
+</tr>
+<tr>
+<td><descriptor>cap-height</descriptor></td>
+<td><code>CapHeight</code> in AFM/PFM file</td>
+<td/>
+<td/>
+</tr>
+<tr>
+<td><descriptor>descent</descriptor></td>
+<td><code>'Descender'</code> in the AFM/PFM file.</td>
+<td/>
+<td/>
+</tr>
+<tr>
+<td><descriptor>mathline</descriptor></td>
+<td/>
+<td/>
+<td><code>bsln</code> table</td>
+</tr>
+<tr>
+<td><descriptor>font-family</descriptor></td>
+<td><code>FamilyName</code>, fontinfo dictionary</td>
+<td><code>name</code> table</td>
+<td/>
+</tr>
+<tr>
+<td><descriptor>stemh</descriptor></td>
+<td><code>StdHW</code>, private dictionary of AFM/PFM file</td>
+<td/>
+<td/>
+</tr>
+<tr>
+<td><descriptor>stemv</descriptor></td>
+<td><code>/StdVW</code>, private dictionary</td>
+<td><code>cvt</code> table</td>
+<td/>
+</tr>
+<tr>
+<td><descriptor>topline</descriptor></td>
+<td/>
+<td/>
+<td><code>bsln</code> table</td>
+</tr>
+<tr>
+<td><descriptor>unicode-range</descriptor></td>
+<td>cmap file</td>
+<td><code>OS/2</code> table, see <specref ref="truetype-unicode"/></td>
+<td/>
+</tr>
+<tr>
+<td><descriptor>units-per-em</descriptor></td>
+<td><code>FontMatrix</code>, font dictionary</td>
+<td><code>unitsPerEm</code>, <code>head</code> table.</td>
+<td/>
+</tr>
+<tr>
+<td><descriptor>widths</descriptor></td>
+<td/>
+<td><code>hmtx</code> table</td>
+<td/>
+</tr>
+</tbody>
+</table>
+
+<slist>
+<sitem><anchor id="bsln"/>Within the <code>bsln</code> table,
+the <code>ideographic centered baseline</code> may be used for
+stretches of predominantly ideographic characters and the
+<code>ideographic low baseline</code> is more suitable for ideographic
+characters in a run of predominantly Latin, Greek or Cyrillic
+characters.</sitem>
+</slist>
+</div2>
+
+</inform-div1>
+
+

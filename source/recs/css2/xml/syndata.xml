@@ -1,0 +1,851 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!--DOCTYPE div1 SYSTEM "../../xmlspec-tr.dtd"[
+  <!ENTITY % css2.dtd SYSTEM "css2.dtd">
+  %css2.dtd;
+]-->
+<div1 id="syndata">
+  <head>BB Sözdizimi ve Temel Veri Türleri</head>
+  <div2 id="syntax">
+    <head>Sözdizimi</head>
+
+<p><indexterm><primary>ileriye uyumlu çözümleme</primary></indexterm>
+Bu bölümde bütün BB sürümleri için ortak olan dilbilgisi kuralları (ve <term>ileriye uyumlu çözümleme</term> kuralları) açıklanmıştır (BB2 dahil). BB'nin ileri sürümlerinde başka sözdizimsel kurallar eklenecek olsa bile bu temel sözdizimine uyumluluk sağlanacaktır.</p>
+
+<p>Burada bahsedilenler uyulması gerekli türden belirtimlerdir. Ayrıca <specref ref="grammar"/> bölümündeki uyulması zorunlu dilbilgisi kurallarıyla bütünleşirler.</p>
+
+<div3 id="tokenization"><head>Dizgeciklere Ayırma</head>
+<p>BB'nin tüm aşamaları (1. aşama, 2. aşama ve ileri aşamalar) aynı çekirdek sözdizimini kullanır. Böylece, bir kullanıcı arayüzünün (KA) yazıldığı sırada henüz mevcut olmayan bir BB aşamasına göre yazılmış bir biçembendi (tamamını anlamasa bile) çözümleyebilmesi sağlanmış olur. Tasarımcılar bu özelliği, BB'nin son aşamasındaki özellikleri denerken eski KA'larda da çalışabilecek biçembentleri yazmak için kullanabilirler.</p>
+
+<p>Sözdizimsel seviyede BB biçembentleri peşpeşe dizilmiş dizgeciklerden oluşur. BB2 için bu dizgeciklerin listesi aşağıdadır. Tanımlarda Lex-vari düzenli ifadeler kullanılmıştır. ISO 10646 karakter gönderimleri için sekizlik kodlar kullanılmıştır (<bibref ref="ref-ISO10646"/>).  Lex'deki gibi, çok sayıda eşleşme varlığında dizgeciği en uzun eşleşme belirler.</p>
+
+<table>
+<colgroup><col width="20%"/><col width="80%"/></colgroup>
+<thead>
+<tr><th align="left">Tanım Terimi</th><th align="left">Tanım</th></tr>
+</thead><tbody>
+<tr><td colspan="2"></td></tr>
+<tr><td>ÖzAd</td><td><code>{ident}</code></td></tr>
+<tr><td>@Sözcük</td><td><code>@{ident}</code></td></tr>
+<tr><td>Dizge</td><td><code>{string}</code></td></tr>
+<tr><td>Diyez</td><td><code>#{name}</code></td></tr>
+<tr><td>Sayı</td><td><code>{num}</code></td></tr>
+<tr><td>YüzdeDeğeri</td><td><code>{num}%</code></td></tr>
+<tr><td>Boyutlar</td><td><code>{num}{ident}</code></td></tr>
+<tr><td>URI</td><td><code>url\({w}{string}{w}\)|url\({w}([!#$%&amp;*-~]|{nonascii}|{escape})*{w}\)</code></td></tr>
+<tr><td>UnicodeAralığı&#160;&#160;&#160;&#160;</td><td><code>U\+[0-9A-F?]{1,6}(-[0-9A-F]{1,6})?</code></td></tr>
+<tr><td>AçkBaşEtk</td><td><code>&lt;!--</code></td></tr>
+<tr><td>AçkBitEtk</td><td><code>--></code></td></tr>
+<tr><td>;</td><td><code>;</code></td></tr>
+<tr><td>{</td><td><code>\{</code></td></tr>
+<tr><td>}</td><td><code>\}</code></td></tr>
+<tr><td>(</td><td><code>\(</code></td></tr>
+<tr><td>)</td><td><code>\)</code></td></tr>
+<tr><td>[</td><td><code>\[</code></td></tr>
+<tr><td>]</td><td><code>\]</code></td></tr>
+<tr><td>B</td><td><code>[ \t\r\n\f]+</code></td></tr>
+<tr><td>Açıklama</td><td><code>\/\*[^*]*\*+([^/][^*]*\*+)*\/</code></td></tr>
+<tr><td>İşlevBaşı</td><td><code>{ident}\(</code></td></tr>
+<tr><td>BoşlukluEşlem</td><td><code>~=</code></td></tr>
+<tr><td>TireliEşlem</td><td><code>|=</code></td></tr>
+<tr><td>Ayraç</td><td>Ne bir tek tırnak ne bir çift tırnak ne de yukarıdaki kurallarla eşleşen bir karakterdir</td></tr>
+</tbody>
+</table>
+
+<p>Yukarıda kaşlı ayraçların ({}) içinde belirtilen makroların tanımları aşağıdadır:</p>
+<table>
+<colgroup><col width="20%"/><col width="80%"/></colgroup>
+<thead>
+<tr><th align="left">Makro</th><th align="left">Tanım</th></tr>
+</thead><tbody>
+<tr><td colspan="2"></td></tr>
+<tr><td>ident</td>
+<td><code>{nmstart}{nmchar}*</code></td>
+</tr>
+<tr>
+<td>name</td>
+<td><code>{nmchar}+</code></td>
+</tr>
+<tr>
+<td>nmstart</td>
+<td><code>[a-zA-Z_]|{nonascii}|{escape}</code></td></tr>
+<tr><td>nonascii</td>
+<td><code>[^\0-\177]</code></td>
+</tr>
+<tr>
+<td>unicode</td>
+<td><code>\\[0-9a-f]{1,6}[ \n\r\t\f]?</code></td>
+</tr>
+<tr>
+<td>escape</td>
+<td><code>{unicode}|\\[ -~\200-\4177777]</code></td>
+</tr>
+<tr><td>nmchar</td>
+<td><code>[a-zA-Z0-9-_]|{nonascii}|{escape}</code></td>
+</tr>
+<tr><td>num</td>
+<td><code>[0-9]+|[0-9]*\.[0-9]+</code></td>
+</tr>
+<tr><td>string</td>
+<td><code>{string1}|{string2}</code></td>
+</tr>
+<tr><td>string1</td>
+<td><code>\"([\t&#160;!#$%&amp;(-~]|\\{nl}|\'|{nonascii}|{escape})*\"</code></td>
+</tr>
+<tr><td>string2</td>
+<td><code>\'([\t&#160;!#$%&amp;(-~]|\\{nl}|\"|{nonascii}|{escape})*\'</code></td>
+</tr>
+<tr><td>nl</td>
+<td><code>\n|\r\n|\r|\f</code></td>
+</tr>
+<tr><td>w</td>
+<td><code>[ \t\r\n\f]*</code></td></tr>
+</tbody>
+</table>
+
+<p>BB'nin temel sözdizimi aşağıdadır. Devamındaki bölümlerde nasıl kullanılacağı açıklanmıştır. <specref ref="grammar"/> bölümündeki dilbilgisi kuralları BB'nin 2. aşamasına daha yakın olup daha ayrıntılı tanımlanmıştır.</p>
+
+<eg>biçembent    ::=  [ AçkBaşEtk | AçkBitEtk | B | yönerge ]*
+yönerge      ::=  kural_kümesi | @-kuralı
+@-kuralı     ::=  @-Sözcük B* terim* [ blok | ';' B* ]
+blok         ::=  '{' B* [ terim | blok | @-Sözcük B* | ';' ]* '}' B*
+kural_kümesi ::=  seçici? '{' B* bildirim? [ ';' B* bildirim? ]* '}' B*
+seçici       ::=  terim+
+bildirim     ::=  Nitelik ':' B* değer
+değer        ::=  [ terim | blok | @-Sözcük B* ]+
+terim        ::=  [ ÖzAd | Sayı | YüzdeDeğeri | Boyutlar | Dizge | Ayraç
+                  | URI | Diyez | UnicodeAralığı | BoşlukluEşlem | İşlevBaşı
+                    '(' terim* ')' | TireliEşlem | '(' terim* ')'
+                  | '[' terim* ']' ] B*</eg>
+
+<p><termref def="comment">Açıklama</termref> dizgecikleri dilbilgisi içinde yer almaz (okunabilir kılmak için), ancak bu dizgecikler diğer dizgecikler arasında her yerde istenen sayıda yer alabilirler.</p>
+
+<p><termdef term="Boşluk karakterleri" id="whitespace">Yukarıdaki sözdizimi tanımları içinde yer alan <nt def="NT-S">B</nt> karakterleri <term>boşluk karakterleri</term>ni ifade eder. Boşluk karakterleri, sadece "boşluk" (Unicode kodu 32), "sekme" (9), "satırsonu" (10), "satırbaşı" (13) ve "sayfa ileri" (12) karakterlerini içerebilir. Diğer boşluk benzeri Unicode karakterleri ("em-boşluk" (8195) and "simgesel boşluk" (12288) gibi), boşluk karakterlerinden sayılmazlar</termdef>.</p>
+</div3>
+
+<div3 id="keywords">
+<head>Anahtar Sözcükler</head>
+<p>Anahtar sözcükler betimleyici biçimindedirler ve tırnaklar arasında ("..." veya '...') yazılamazlar. Bu bakımdan,</p>
+
+<eg>red</eg>
+
+<p>bir anahtar sözcük olarak ele alınırken,</p>
+
+<eg>"red"</eg>
+
+<p>herhangi bir <titleref ref="strings">dizge</titleref> olarak ele alınır. Diğer kuraldışı örnekler:</p>
+
+<eg role="error">width: "auto";
+border: "none";
+font-family: "serif";
+background: "red";</eg>
+</div3>
+
+<div3 id="syndata13"><head>Karakterler ve Harf Büyüklüğü</head>
+<p>Aşağıdaki kurallara daima uyulur:</p>
+
+<ulist>
+<item><p><indexterm><primary>harf büyüklüğüne duyarlılık</primary></indexterm>
+Tüm BB biçembentleri, BB denetimi altında olmayan bölgeler hariç, harf büyüklüğüne duyarsızdır. Örneğin, HTML "id"
+ve "class" özniteliklerinin harf büyüklüğüne duyarlı değerleri ile yazıtipi isimleri ve tanım-yerleri bu belirtimin kapsamı dışındadır. Özellikle, HTML'deki eleman isimleri harf büyüklüğüne duyarsızken XML ve XHTML'de duyarlı oluşuna dikkat ediniz.</p></item>
+
+<item><p><indexterm><primary><valueref>betimleyici</valueref></primary></indexterm>
+<termdef id="value-def-betimleyici" term="Betimleyiciler">BB2'de, <var>betimleyici</var>ler (eleman isimleri, sınıflar ve <titleref ref="selector">seçiciler</titleref>deki ID'lar dahil) [_A-Za-z0-9-] karakterleriyle ISO 10646 karakterlerinden 161. ve sonrakileri içerebilir; bir tire imi veya bir rakamla başlayamazlar. Ayrıca öncelenmiş karakterleri ve sayısal kodlarıyla belirtilmek suretiyle bütün ISO 10646 karakterlerini içerebilirler (sonraki maddeye bakınız). Örneğin, "B&amp;W?" betimleyicisi "B\&amp;W\?" veya "B\26 W\3F" olarak da yazılabilir.</termdef>.</p>
+
+<p>Unicode ile ISO 10646 birebir eşdeğerdir (bkz,
+<bibref ref="ref-UNICODE"/> ve <bibref ref="ref-ISO10646"/>).</p></item>
+
+<item><p><indexterm><primary>tersbölü öncelemeli</primary></indexterm>
+<termdef id="escaped-characters" term="tersbölü öncelemeli karakterler">BB2'de, bir tersbölü (\) karakteri üç tür <term>karakter öncelemi</term> belirtir</termdef>.</p>
+
+<p>İlki, bir <titleref ref="strings">dizge</titleref>nin içinde, tersbölü karakteri satırın sonundaysa, yani tersbölü karakterinden hemen sonra satırsonu karakteri varsa, iki karakterde yoksayılır (fiziksel satıra sığmayan tek satırlık uzun bir dizge durumu).</p>
+
+<p>İkincisinde, özel BB karakterlerinin anlambilgisini yokeder (karakteri sıradanlaştırır). Bir karakter (onaltılık rakamlar hariç), özel anlamını ortadan kaldırmak için bir tersbölü karakteri ile öncelenebilir (karakterin önüne \ konur). Örneğin <code>"\""</code> dizgesi tek bir tane çift tırnak karakterinden oluşur. Biçembent önişlemcilerinin bu tersbölü karakterlerini, biçembendin anlamının değişmemesi için biçembentten kaldırmamaları gerekir.</p>
+
+<p>Üçüncüsünde, tersbölü öncelemleri yazarların belgeye kolayca yerleştiremedikleri karakterleri kodlamalarını sağlar. Bu durumda tersbölü karakterinden sonra ISO 10646 (<bibref ref="ref-ISO10646"/>) karakterinin numarasını belirtmek üzere en fazla altı tane onaltılık rakam [0-9a-f] gelebilir. Eğer karakter kodundan hemen sonra onaltılık rakam olabilecek bir harf veya rakam geliyorsa, kodun açıkça belirlenebilmesinin sağlanması gerekir. Bu iki yolla yapılabilir:</p>
+
+<olist>
+<item><p>Araya bir boşluk (veya herhangi bir boşluk karakteri) yerleştirerek: "&amp;B" için "\26 B" gibi. Bu durumda, kullanıcı arayüzlerinin bir satırsonu/satırbaşı çiftini (U+000D/U+000A) tek bir boşluk karakteri olarak ele alması gerekir.</p></item>
+
+<item><p>Tam altı tane onaltılık rakam yazarak: "&amp;B" için "\000026B" gibi.
+</p></item>
+</olist>
+
+<p>Aslında bu iki yöntem birleştirilebilir. Onaltılık önceleme sonrası sadece bir boşluk karakteri yoksayılır. Burada, önceleme dizisinden sonraki "asıl" boşluğun kendisinin ya öncelenmiş olması ya da bir boşluk çifti olması gerektiğine dikkat ediniz.</p></item>
+
+<item><p>Tersbölü öncelemleri daima ya bir <valueref>betimleyici</valueref>nin ya da <titleref ref="strings">dizge</titleref>nin parçası kabul edilirler (yani, "{" bir noktalama imi olsa bile "\7B" değildir ve "\32"'ye bir sınıf isminin başında izin verilir ama "2"'ye izin verilmez).</p></item>
+</ulist>
+</div3>
+
+<div3 id="syndata14">
+<indexterm><primary>yönergeler</primary></indexterm>
+<head>Yönergeler</head>
+
+<p><indexterm><primary>@-kuralı</primary></indexterm>
+<indexterm><primary>kural kümeleri</primary></indexterm>
+Bir BB biçembendi, hangi aşamadan olursa olsun, bir <term>yönerge</term> listesinden oluşur (yukarıdaki dilbilgisine bakın). İki çeşit yönerge vardır: <titleref ref="at-rules">@-kuralı</titleref> ve <termref def="css2-ruleset">kural kümesi</termref>. Yönergelerin çevresinde <termref def="whitespace">boşluk karakterleri</termref> yer alabilir.</p>
+
+<p>Bu belirtimde "hemen önce" ve "hemen sonra" ifadeleri arada bir boşluk karakteri veya açıklama yer almadığı anlamına gelecektir.</p>
+</div3>
+
+<div3 id="at-rules">
+<indexterm><primary>@-kuralı</primary></indexterm>
+<head>@-Kuralları</head>
+
+<p>@-kuralları bir <term>@-Sözcük</term> ile, yani bir <tt>@</tt> karakterinden hemen sonra gelen bir <valueref>betimleyici</valueref> ile başlar (<code>@import</code>, <code>@page</code> gibi).</p>
+
+<p><indexterm><primary>yoksaymak</primary></indexterm>
+Bir @-kuralı bir noktalı virgül (;) veya bir <nt def="NT-Block">Blok</nt> ile sonlanan (hangisi önce gelirse) bir şeylerden oluşur. Bir BB kullanıcı arayüzü bilinmeyen bir @-kuralı saptadığında bu @-kuralını bir bütün olarak <termref def="ignore">yoksaymalı</termref> ve çözümleme işlemine devam etmelidir.</p>
+
+<p>BB2 kullanıcı arayüzleri bir <titleref ref="block">blok</titleref> içinde kalan veya tüm kural kümelerinden önce yer almayan bir <titleref ref="at-import"><code>@import</code></titleref> kuralını <termref def="ignore">yoksaymalıdır</termref>.</p>
+
+<example>
+<p>Varsayalım, bir BB2 çözümleyici şöyle bir biçembente rastlamış olsun:</p>
+
+<eg role="error">@import "subs.css";
+H1 { color: blue }
+@import "list.css";</eg>
+
+<p><indexterm><primary>ignore</primary></indexterm>
+İkinci <code>@import</code> BB2'ye göre kuraldışıdır. BB2 çözümleyici @-kuralını tamamen <termref def="ignore">yoksayarak</termref> biçembendi şöyle ele alır:</p>
+
+<eg>@import "subs.css";
+H1 { color: blue }</eg>
+</example>
+
+<example>
+<p>Bu örnekte, ikinci <code>@import</code> kuralı, bir <code>@media</code> <titleref ref="block">blok</titleref>u içinde yer aldığından geçersizdir.</p>
+
+<eg role="error">@import "subs.css";
+@media print {
+  @import "print-main.css";
+  BODY { font-size: 10pt }
+}
+H1 {color: blue }</eg>
+</example>
+</div3>
+
+<div3 id="block">
+<indexterm><primary>blok</primary></indexterm>
+<head>Bloklar</head>
+
+<p><indexterm><primary>dizge</primary></indexterm>
+Bir <nt def="NT-Block">Blok</nt> bir sol kaşlı ayraç ({) ile başlar ve sağ kaşlı ayraçta (}) sona erer. Arada, daima eşleşen çiftler halinde yer alması gereken ve iç içe kullanılabilen parantezler ((&nbsp;)), köşeli ayraçlar ve kaşlı ayraçlar ({&nbsp;}) hariç her karakter yer alabilir. Tek ve çift tırnak imlerinin de eşleşen çiftler halinde yer alması gerekir ve bunlar arasında kalan karakterler bir <titleref ref="strings">dizge</titleref> olarak çözümlenir. Dizgenin sözdizimsel tanımı için yukarıya <specref ref="tokenization"/> bölümüne bakınız.</p>
+
+<example>
+<p>Burada bir blok örneği verilmiştir. Çift tırnaklar arasına alınmış sağ kaşlı ayracın bloku başlatan kaşlı ayraçla eşleşmeyeceğine ve ikinci tek tırnağın bir <termref def="escaped-characters">öncelenmiş karakter</termref> olarak ilk tek tırnakla eşleşmeyeceğine dikkat ediniz:</p>
+
+<eg role="error">{ bakusta: "}" + ({7} * '\'') }</eg>
+
+<p>Bu kural BB2 için geçersizdir, fakat yukarıda tanımlandığı gibi o yine de bir bloktur.</p>
+</example>
+</div3>
+
+<div3 id="syndata17">
+<head>Kural kümeleri, bildirim blokları ve seçiciler</head>
+
+<p><termdef id="css2-ruleset" term="Kural kümesi">Bir <term>kural kümesi</term> ("kural" dendiği de olur) ardından bir blok gelen bir seçiciden oluşur</termdef>.</p>
+
+<p><indexterm><primary>bildirim bloku</primary></indexterm>
+<termdef id="css2-declaration-block" term="Bildirim bloku">Bir  <term>bildirim bloku</term> ({}-bloku dendiği de olur) bir sol kaşlı ayraç ({) ile başlar ve sağ kaşlı ayraçta (}) sona erer. Arada, sıfır veya daha fazla sayıda noktalı virgül ayraçlı bildirimler yer almalıdır</termdef>.</p>
+
+<p><indexterm><primary>seçici</primary></indexterm>
+<indexterm><primary>yoksaymak</primary></indexterm>
+<termdef id="css2-selector" term="Seçici">Bir <term>seçici</term> (ayrıca, <specref ref="selector"/> bölümüne de bakınız) bloku başlatan ilk kaşlı ayraca kadar (onu içermeksizin) olan şeylerden oluşur. Bir seçici daima bir {}-bloku ile birlikte görünür. Bir kullanıcı arayüzü bir seçiciyi çözümleyemediği takdirde (bir BB2 biçembendi olmayabilir), seçiciyi {}-bloku ile birlikte <termref def="ignore">yoksaymalıdır</termref></termdef>.</p>
+
+<p>BB2, virgül (,) imine seçiciler içinde özel bir anlam atfeder. Bununla birlikte, BB'nin ileri sürümlerinde virgülün başka bir anlam taşıyıp taşımayacağı bilinmediğinden seçicide bir hata saptandığı takdirde, seçicinin kalanı BB2 için kabul edilebilir görünse bile yönergenin tamamı <termref def="ignore">yoksayılmalıdır</termref>.</p>
+
+<example>
+<p>Bir BB2 seçicisinde "&amp;" geçerli bir dizgecik olmadığından, bir BB2 kullanıcı arayüzünün örnekteki <htmltag>h3</htmltag> elemanının içeriğine kırmızı rengi uygulamaksızın ikinci satırı <termref def="ignore">yoksayması</termref> gerekir:</p>
+
+<eg role="error">h1, h2 {color: green }
+h3, h4 &amp; h5 {color: red }
+h6 {color: black }</eg>
+</example>
+
+<example>
+<p>Burada daha karmaşık bir örneğe yer verilmiştir. Kaşlı ayraçların ilk iki çifti bir dizgenin içindedir ve seçicinin sonu imlenmemiştir. Bu, geçerli bir BB2 yönergesidir.</p>
+
+<eg>p[example="public class foo\
+{\
+    private int x;\
+\
+    foo(int x) {\
+        this.x = x;\
+    }\
+\
+}"] { color: red }</eg>
+</example>
+</div3>
+
+<div3 id="declaration">
+<indexterm><primary>bildirim</primary></indexterm>
+<indexterm><primary>nitelik</primary></indexterm>
+<head id="properties">Bildirimler ve nitelikler</head>
+
+<p><termdef id="css2-declaration" term="Bildirim">Bir <nt def="NT-Declaration">Bildirim</nt> ya boştur ya da sırayla bir <nt def="NT-Property">Nitelik</nt>, bir ikinokta (:) imi ve bir değerden oluşur. Bunların her birinin etrafında <termref def="whitespace">boşluk karakterleri</termref> yer alabilir</termdef>.</p>
+
+<p>Seçicilerin çalışma yönteminden dolayı, aynı seçici için bildirimler noktalı virgül (;) ayraçlı olarak gruplanabilir.</p>
+
+<example>
+<p>Bu bakımdan, bu kurallarla:</p>
+
+<eg>h1 { font-weight: bold }
+h1 { font-size: 12pt }
+h1 { line-height: 14pt }
+h1 { font-family: Helvetica }
+h1 { font-variant: normal }
+h1 { font-style: normal }</eg>
+
+<p>bu eşdeğerdir:</p>
+
+<eg>h1 {
+  font-weight: bold;
+  font-size: 12pt;
+  line-height: 14pt;
+  font-family: Helvetica;
+  font-variant: normal;
+  font-style: normal
+}</eg>
+</example>
+
+<p>Bir nitelik bir <valueref>betimleyici</valueref>dir. Değerde her karakter yer alabilir, fakat  parantezler ("(&nbsp;)"), köşeli ayraçlar ("[&nbsp;]"), kaşlı ayraçlar ("{&nbsp;}"), tek (') ve çift (") tırnaklar çiftler halinde yer almalı ve dizgelerin içinde yer almayan noktalı virgül (;) imleri tersbölü ile <termref def="escaped-characters">öncelenmelidir</termref>. Parantezler, köşeli ve kaşlı ayraçlar iç içe olabilirler. Tırnaklar arasında kalan karakterler bir dizge olarak çözümlenir.</p>
+
+<p><indexterm><primary>değer</primary></indexterm>
+Değer sözdizimleri her nitelikte ayrı ayrı belirtilmiştir, fakat her durumda, değerler <nt def="NT-Ident">Betimleyici</nt>ler, <nt def="NT-String">Dizge</nt>ler, <nt def="NT-Number">Sayı</nt>lar, <nt def="NT-Length">Uzunluk</nt>lar, <nt def="NT-Percentage">YüzdeDeğer</nt>leri, <nt def="NT-URI">TanımYer</nt>leri, <nt def="NT-hexcolor">Renk</nt>ler, <nt def="NT-Angle">Açı</nt>lar, <nt def="NT-Time">Süre</nt>ler ve <nt def="NT-Freq">Frekans</nt>lardan oluşur.</p>
+
+<p><indexterm><primary>yoksaymak</primary></indexterm>
+Bir kullanıcı arayüzünün nitelik ismi veya değeri geçersiz bir bildirimi yoksayması gerekir. Her BB2 niteliğinin kabul ettiği değerler üzerinde kendine özgü sözdizimsel ve anlambilimsel kısıtlamaları vardır.</p>
+
+<example>
+<p>Bir BB2 çözümleyicinin şöyle bir biçembende rastladığını varsayalım:</p>
+
+<eg role="error">h1 { color: red; font-style: 12pt }  /* Geçersiz değer: 12pt */
+p  { color: blue;  font-vendor: any; /* Geçersiz nitelik: font-vendor */
+    font-variant: small-caps }
+em em { font-style: normal }</eg>
+
+<p>
+Birinci satırdaki ikinci bildirim geçersiz bir değer (12pt) içermektedir. İkici satırın ikinci bildirimi ise tanımsız bir nitelik ismi ('font-vendor') içermektedir. BB2 çözümleyici bu bildirimleri <termref def="ignore">yoksayarak</termref> biçembendi şuna indirgeyecektir:</p>
+
+<eg>
+h1 { color: red; }
+p  { color: blue;  font-variant: small-caps }
+em em { font-style: normal }</eg>
+</example>
+</div3>
+
+<div3 id="comments">
+<indexterm><primary>açıklamalar</primary></indexterm>
+<head>Açıklamalar</head>
+<p><termdef term="Açıklama" id="comment"><term>Açıklamalar</term> <tt>/*</tt> karakterleri ile başlar, <tt>*/</tt> karakterleri ile biter. Dizgecikler arasında her yerde bulunabilirler ve içerikleri yoksayılır. Açıklamalar iç içe olamazlar.</termdef>.</p>
+
+<p>BB ayrıca SGML açıklamalarının ayraçlarına da (<tt>&lt;!--</tt> ve
+<tt>--></tt>) belli yerlerde izin verir, fakat bunlar BB açıklama ayracı değillerdir. HTML 3.2 öncesi kullanıcı arayüzlerinden HTML belgelerde (<htmltag>style</htmltag> elemanında) bulunan biçembent kurallarını gizlemek için izin verilmiştir. Bu konuda daha fazla bilgi için HTML 4.0 belirtimine (<bibref ref="ref-HTML40"/>) bakınız.</p>
+</div3>
+</div2>
+
+<div2 id="parsing-errors">
+<indexterm><primary>yoksaymak</primary></indexterm>
+  <head>Çözümleme hatalarının eldesi ile ilgili kurallar</head>
+
+<p><termdef id="ignore" term="Yoksayma işlemi">Bazı durumlarda kullanıcı arayüzlerinin bir geçersiz biçembent bölümünü yoksayması gerekir. Bu belirtim <term>yoksayma işlemi</term>ni kullanıcı arayüzünün geçersiz bir biçembent parçasını (başını ve sonunu bularak) çözümlemesiyle ilgili bir durumu anlatmak için kullanır</termdef>.</p>
+
+<p>İleride yeni niteliklerin veya mevcut niteliklere yeni değerlerin eklenebilmesini sağlamak üzere, kullanıcı arayüzlerinin aşağı belirtilen senaryolara rastladıklarında yine aşağıdaki belirtilen kurallara uymaları gerekir:</p>
+
+<glist>
+<gitem>
+<label>Bilinmeyen nitelikler</label>
+<def><p>Kullanıcı arayüzlerinin bilinmeyen nitelik içeren bir <titleref ref="declaration">bildirim</titleref>i yoksayması gerekir.</p>
+<example>
+<eg role="error">h1 { color: red; rotation: 70minutes }</eg>
+
+<p>böyle bir biçembenti kullanıcı arayüzü şundan ibaretmiş gibi ele alacaktır:</p>
+
+<eg>h1 { color: red }</eg>
+</example></def>
+</gitem><gitem>
+<label>Kuraldışı değerler</label>
+<def><p>Kullanıcı arayüzlerinin kuraldışı değer içeren bir bildirimi yoksayması gerekir.</p>
+
+<example>
+<eg role="error">img { float: left }       /* BB2 için doğru */
+img { float: left here }  /* "here" bir <property>float</property> değeri değildir */
+img { background: "red" } /* BB2'de anahtar sözcükler */
+                          /* tırnak içine alınamazlar */
+img { border-width: 3 }   /* Uzunluk değerleri için birim */
+                          /* belirtmek gerekir */</eg>
+
+<p>Bir BB2 çözümleyici ilk kuralı işleme sokup diğerlerini yoksaymalıdır. Bu takdirde biçembent şuna indirgenmiş olur:</p>
+
+<eg>img { float: left }
+img { }
+img { }
+img { }</eg>
+
+<p>Daha ileri bir BB belirtimine uyumlu bir kullanıcı arayüzü diğer kuralları da kabul ediyor olabilir.</p>
+</example></def>
+</gitem><gitem>
+<label>Geçersiz @-Sözcükler</label>
+<def><p>Kullanıcı arayüzlerinin geçersiz bir @-sözcüğünü bir blok ({...}) başlangıcına veya olası bir sonlandırıcı noktalı virgül (;) imine kadar (im dahil) (hangisine önce rastlanırsa) yoksayması gerekir.</p>
+
+<example>
+<eg role="error">@three-dee {
+  @background-lighting {
+    azimuth: 30deg;
+    elevation: 190deg;
+  }
+  h1 { color: red }
+}
+h1 { color: blue }</eg>
+
+<p><tt>@three-dee</tt> @-kuralı BB2'nin bir parçası değildir. Dolayısıyla, @-kuralının tamamı (üçüncü sağ kaşlı ayraca kadar, ayraç dahil) yoksayılır. Bir BB2 kullanıcı arayüzü bunu yoksayarak biçembendi şuna indirger:</p>
+
+<eg>h1 { color: blue }</eg>
+</example></def>
+</gitem>
+</glist>
+</div2>
+
+  <div2 id="values">
+    <head>Değerler</head>
+    <div3 id="values1">
+<indexterm><primary><valueref>tamsayı</valueref></primary></indexterm>
+<indexterm><primary><valueref>sayı</valueref></primary></indexterm>
+      <head>Tam ve gerçel sayılar</head>
+
+<p>Bazı değerler <var>tamsayı</var> veya gerçel <var>sayı</var> türünde olabilir. Tam ve gerçel sayılar sadece onluk tabanda gösterilebilir. <termdef id="value-def-tamsayı" term="Tamsayı">Bir <var>tamsayı</var> "0" ile "9" arasında bir veya daha fazla rakam içerebilir</termdef>. <termdef id="value-def-sayı" term="Gerçel sayı">Bir gerçel <var>sayı</var> ise, bir tamsayı olabileceği gibi, aralarında tek bir nokta (.) bulunan iki veya daha fazla rakamdan oluşabilir</termdef>.  Tam ve gerçel sayıların önüne işaret belirten bir "+" veya "-" imi konmuş olabilir.</p>
+
+<p>Bazı nitelikler bir tam veya gerçel sayıyı belli bir değer aralığında kabul edebilir, sıklıkla da bu negatif bir değer olmamakla sınırlıdır.</p>
+  </div3>
+
+  <div3 id="length-units">
+<indexterm><primary><valueref>uzunluk</valueref></primary></indexterm>
+    <head>Uzunluklar</head>
+<p>Uzunluklar yatay veya düşey ölçü belirtirler.</p>
+
+<p><termdef id="value-def-uzunluk" term="Uzunluk">Bu belirtimde bir <var>uzunluk</var> değerinin biçimi bir <valueref>sayı</valueref>dan (ondalık nokta içersin/içermesin) hemen sonra bir birim belirtecinin (px, deg gibi) yer alması şeklindedir. '0' değerinden sonra bir birim belirtecinin bulunması zorunlu değildir</termdef>.</p>
+
+<p>Bazı nitelikler negatif <nt def="NT-Length">Uzunluk</nt> değerlerine izin verse de biçimleme modeliyle ilgili sorunlara yol açabilir ve dolayısıyla gerçeklenime özgü sınırlamalar bulunabilir. Eğer bir negatif değer desteklenemiyorsa, desteklenen en yakın değere dönüştürülmesi gerekir.</p>
+
+<p><indexterm><primary>göreli birimler</primary></indexterm>
+<termdef id="absrel-units" term="göreli ve mutlak birimler">İki tür uzunluk birimi vardır: göreli ve mutlak. <term>Göreli uzunluk</term> birimleri başka bir uzunluk niteliğine göreli bir uzunluk belirtir. Göreli birimler kullanılan biçembentlerde bir ortam bir diğeri ile kolayca ölçeklenebilir (örneğin bilgisayar ekranı ile bir laser yazıcı arasındaki oranlama gibi)</termdef>).</p>
+
+<p>Göreli birimler şunlardır:</p>
+
+<slist>
+<sitem><kw>em</kw>: geçerli yazıtipinin <property>font-size</property> değeri</sitem>
+<sitem><kw>ex</kw>: geçerli yazıtipinin <descriptor>x-height</descriptor> değeri</sitem>
+<sitem><kw>px</kw>: görüntüleme aygıtında geçerli benekler için</sitem>
+</slist>
+
+<eg>
+h1 { margin: 0.5em }      /* em */
+h1 { margin: 1ex }        /* ex */
+p  { font-size: 12px }    /* px */</eg>
+
+<p><indexterm><primary>em (birim)</primary></indexterm>
+<indexterm><primary>dördül genişlik</primary></indexterm>
+<termdef id="em-width" term="em (birim)"><code>em</code> birimi, kullanıldığı elemanın <property>font-size</property> niteliğinin hesaplanmış değerine eşit bir birimdir. Ancak, <property>font-size</property> niteliğinin kendisi için belirtilen değerin birimi olarak <code>em</code> bunu dışındadır; bu durumda, ebeveyn elemanın yazıtipi boyutuna görelilik sözkonusudur. Birim hem genişlik hem de yükseklik belirtmek için kullanılabilir. (Matbaacılıkla ilgili metinlerde bu birimden dördül genişlik diye bahsedildiği de olur.)</termdef></p>
+
+<p><indexterm><primary><descriptor>x-height</descriptor></primary></indexterm>
+<indexterm><primary>ex (birim)</primary></indexterm>
+<termdef id="ex" term="ex (birim)"><code>ex</code> birimi, geçerli yazıtipinin <descriptor>x-height</descriptor> değerine göre tanımlanır. "x-height" (x-yükseklik) denmesinin sebebi, çoğunlukla küçük "x" harfinin yüksekliğine eşit olmasındandır. Bununla birlikte, <code>ex</code> birimi küçük "x" harfi içermeyen yazıtipleri için bile tanımlıdır</termdef>.</p>
+
+<eg>h1 { line-height: 1.2em }</eg>
+
+<p>kuralı, <htmltag>h1</htmltag> elemanının satır yüksekliğinin kendi yazıtipinin yüksekliğinden %20 daha yüksek olacağı anlamına gelir. Diğer taraftan,</p>
+
+<eg>h1 { font-size: 1.2em }</eg>
+
+<p>kuralı, <htmltag>h1</htmltag> elemanının yazıtipi yüksekliği için elemanın ebeveyninin yazıtipi yüksekliğinden %20 daha büyük bir yükseklik belirtir.</p>
+
+<p><code>em</code> ve <code>ex</code> birimleri <termref def="doctree">belge ağacı</termref>nın kökü (HTML için <htmltag>html</htmltag>) için belirtildiği takdirde, niteliğin <termref def="initial-value">ilk değer</termref>i birimin değeri olur.</p>
+
+<p><indexterm><primary>ölçek benek</primary></indexterm>
+<indexterm><primary>benek</primary></indexterm>
+<termdef id="pixel-units" term="Ölçek benek">Benek birimleri genellikle görüntüleme aygıtının (ekran gibi) çözünürlüğüne bağlıdır. Eğer çıktı aygıtının benek yoğunluğu (genelde inç başına benek sayısı [dpi] olarak belirtilir) sıradan bir ekranın benek yoğunluğundan çok farklıysa, kullanıcı arayüzünün gerekli ayarlamaları yapması gerekir. Benek yoğunluğu 96dpi olan bir aygıt üzerinde ve okuyucunun kol mesafesinde bir beneğin görüş açısının <term>ölçek benek</term> olarak alınması önerilmektedir. Normal kol uzurluğu 28&nbsp;inç alındığında bu açı yaklaşık 0,0213&nbsp;derece olmaktadır</termdef>.</p>
+
+<p>Bu durumda, kol mesafesinden okumak için, 1px yaklaşık 0,26&nbsp;mm'ye denk düşmektedir (1/96&nbsp;inç). Görüntüleme aygıtı bir lazer yazıcı olduğunda, kol mesafesinden daha küçük bir okuma mesafesi (55&nbsp;cm,
+21&nbsp;inç) kullanılır ve dolayısıyla 1px yaklaşık 0,21&nbsp;mm olur. 300&nbsp;dpi'lik bir yazıcı için bu yaklaşık 3 noktaya (0,25&nbsp;mm); 600&nbsp;dpi'lık bir yazıcı için ise yaklaşık 5 noktaya denk düşer.</p>
+
+<p>Aşağıdaki iki resimde bir beneğin boyutuna görüş mesafesinin ve aygıt çözünürlüğünün etkisi gösterilmiştir. İlk resimde, 71&nbsp;cm.lik (28&nbsp;inç) okuma mesafesi 0,26&nbsp;mm.lik bir benekle sonuçlanmaktayken, 3,5&nbsp;m.lik bir okuma mesafesi için benek boyutu 1,4&nbsp;mm olmaktadır.</p>
+
+<figure id="img-pixel1">
+<graphic source="images/pixel1.png" alt="Okuma mesafesindeki artışa bağlı olarak benek boyutunun büyümesi gerekir."></graphic>
+[<loc href="images/longdesc/pixel1-desc.html" title="Benek tanımı için şematik gösterimin geniş açıklaması">Açıklama</loc>]
+</figure>
+
+<p>İkinci resimde, düşük çözünürlüklü bir aygıt üzerindeki 1px<sup>2</sup> lik bir alan tek bir nokta iken yüksek çözünürlüklü bir aygıtta aynı alanın 16 nokta kaplaması (400&nbsp;dpi'lık lazer yazıcı için) resmedilmiştir.</p>
+
+<figure>
+<graphic source="images/pixel2.png" alt="Düşük çözünürlüklü bir aygıttaki 1 benek karelik alan için yüksek çözünürlüklü bir aygıtta daha fazla aygıt beneği gerekir."></graphic>
+[<loc href="images/longdesc/pixel2-desc.html" title="Ölçek ve aygıt benekleri farkı için geniş açıklama" id="img-pixel2">Açıklama</loc>]
+</figure>
+
+<p>Çocuk elemanlar ebeveynleri için belirtilmiş göreli değerleri değil, (genellikle) <titleref ref="computed-value">hesaplanmış değerleri</titleref> miras alırlar.</p>
+
+<example>
+<p>Aşağıdaki kurallarda, <htmltag>h1</htmltag> elemanı <htmltag>body</htmltag> elemanının çocuğu olduğundan <htmltag>h1</htmltag> elemanının hesaplanmış <property>text-indent</property> değeri 45pt değil 36pt olacaktır.</p>
+
+<eg>body {
+  font-size: 12pt;
+  text-indent: 3em;  /* yani, 36pt */
+}
+h1 { font-size: 15pt }</eg>
+</example>
+
+<p><indexterm><primary>mutlak uzunluk</primary></indexterm>
+<term>Mutlak uzunluk</term> birimleri sadece çıktı ortamının fiziksel nitelikleri bilindiği takdirde yararlıdır. Mutlak birimler şunlardır:</p>
+
+<slist>
+<sitem><kw>in</kw>: inç -- 1 inç = 2,54 cm</sitem>
+<sitem><kw>cm</kw>: santimetre</sitem>
+<sitem><kw>mm</kw>: milimetre</sitem>
+<sitem><kw>pt</kw>: punto -- BB2 için 72 punto = 1 inç</sitem>
+<sitem><kw>pc</kw>: pika -- 12 pika = 1 inç</sitem>
+</slist>
+
+<eg>h1 { margin: 0.5in }      /* inç  */
+h2 { line-height: 3cm }   /* santimetre */
+h3 { word-spacing: 4mm }  /* milimetre */
+h4 { font-size: 12pt }    /* punto */
+h4 { font-size: 1pc }     /* pika */</eg>
+
+<p>Belirtilen uzunluk desteklenemediği takdirde, kullanıcı arayüzü asıl değer üzerinde yaklaşımda bulunmalıdır.</p>
+  </div3>
+
+  <div3 id="percentage-units">
+<indexterm><primary><valueref>yüzdelik</valueref></primary></indexterm>
+    <head>Yüzde Değerleri</head>
+
+<p><termdef id="value-def-yüzdelik" term="Yüzde değeri">Bir <var>yüzdelik</var> değerin bu belirtimdeki biçimi sırasıyla, isteğe bağlı bir işaret karakteri ('+' veya '-', '+' öntanımlıdır), bir <valueref>sayı</valueref> ve hemen ardından gelen bir yüzde iminden ('%') oluşur</termdef>.</p>
+
+<p>Yüzdelik değerler daima başka değerlere (uzunluk gibi) görelidir. Yüzdelik değerlere izin veren her nitelik ayrıca birer ölçü değeri de tanımlar. Değer aynı elemanın başka bir niteliği, üstsel elemanlardan birinin bir niteliği veya biçimleme bağlamından bir değer (bir <termref def="containing-block">taşıyıcı blok</termref> genişliği gibi) olabilir. Bir yüzdelik değer bir <termref def="root">kök</termref> elemanın bir özniteliği için atandığında ve bazı niteliklerden miras alınan bir değere göre belirtildiğinde, hesaplanan değer için yüzdelik değerin çarpanı niteliğin <termref def="initial-value">ilk değer</termref>i olur.</p>
+
+<p>Çocuk elemanlar ebeveynlerinden (genellikle) <titleref ref="computed-value">hesaplanmış değerleri</titleref> miras aldıklarından, aşağıdaki örnekte, <htmltag>p</htmltag> elemanının çocukları <property>line-height</property> niteliğinin değeri olarak yüzdelik değeri (120%) değil, 12pt'luk değeri miras alacaklardır:</p>
+
+<eg>p { font-size: 10pt }
+p { line-height: 120% }  /* <property>font-size</property>'ın %120'si' */</eg>
+  </div3>
+
+  <div3 id="uri">
+<indexterm><primary>URL (Uniform Resource Locator)</primary></indexterm>
+<indexterm><primary>URL (Tekbiçimli Özkaynak Konumlayıcı)</primary></indexterm>
+<indexterm><primary>Tekbiçimli Özkaynak Konumlayıcı (URL)</primary></indexterm>
+<indexterm><primary>URN (Uniform Resource Name)</primary></indexterm>
+<indexterm><primary>URN (Tekbiçimli Özkaynak Adı)</primary></indexterm>
+<indexterm><primary>Tekbiçimli Özkaynak Adı (URN)</primary></indexterm>
+<indexterm><primary>URI (Uniform Resource Identifier)</primary></indexterm>
+<indexterm><primary>URI (Tekbiçimli Özkaynak Betimleyici)</primary></indexterm>
+<indexterm><primary>tanım-yeri (URI)</primary></indexterm>
+    <head>URL + URN = URI</head>
+<p>URL'ler (Uniform Resource Locators - Tekbiçimli Özkaynak Konumlayıcı, bkz, <bibref ref="ref-RFC1738"/> ve <bibref ref="ref-RFC1808"/>) Genel Ağ üzerinde bir özkaynağın adresini belirtmekte kullanılırlar. Özkaynakları betimlemenin yeni yolu da URN (Uniform Resource Name - Tekbiçimli Özkaynak Adı) olarak bilinir. Bunların ikisine birden tanım-yeri denir (URI - Uniform Resource Identifier, Tekbiçimli Özkaynak Betimleyici, bkz, <bibref ref="ref-URI"/>).</p>
+
+<p><indexterm><primary><valueref>uri</valueref></primary></indexterm>
+<termdef id="value-def-tanım-yeri" term="tanım-yeri">Tanım-yerlerinin değer türü olarak bu belirtimde <var>tanım-yeri</var> gösterimi kullanılacaktır. Tanım-yerlerini atamak için kullanılan işlevsel gösterim aşağıdaki örnekten de görüldüğü gibi <code>url()</code> biçimindedir</termdef>:</p>
+
+<eg>body { background: url("http://www.bg.com/pinkish.gif") }</eg>
+
+<p>Bir tanım-yeri biçimi sırayla, <code>url(</code> karakter dizisinden sonra isteğe bağlı olarak <termref def="whitespace">boşluk karakterleri</termref>, tek (') veya çift (") tırnak içine alınması isteğe bağlı olarak tanım-yerinin kendisi ve isteğe bağlı boşluk karakterlerinden sonra gelen bir <code>)</code>'den oluşur. Tırnak karakterlerinin ikisinin de aynı olması gerekir.</p>
+
+<example>
+<p>Tırnaksız bir örnek:</p>
+
+<eg>LI { list-style: url(http://www.redballs.com/redball.png) disc }</eg>
+</example>
+
+<p>Parantezler, virgüller, boşluk karakterleri, tek ve çift tırnaklar bir tanım-yeri içinde yer aldıkları takdirde bir tersbölü ile öncelenmelidirler: <code>&#160;\(&#160;&#160;\)&#160;&#160;\,&#160;</code></p>
+
+<p>Tanım-yeri türüne bağlı olarak, yukarıdaki karakterleri <bibref ref="ref-URI"/> belirtiminde açıklandığı gibi tanım-yeri öncelemleri olarak da yazmak mümkündür (<code>"(" = %28</code>, <code>")" = %29</code>, vs.).</p>
+
+<p>Bir özkaynağın mutlak konumuna bağlı olmayan uyarlanabilir biçembentlerin oluşturulması sırasında yazarlar göreli tanım-yerleri kullanabilirler. Göreli tanım-yerleri (<bibref ref="ref-RFC1808"/> belirtiminde tanımlandığı gibi) bir temel tanım-yeri kullanılarak mutlak tanım-yerlerine dönüştürülürler. RFC&nbsp;1808'in 3. bölümünde bu sürecin uyulması zorunlu algoritması tanımlanmıştır. BB biçembentleri için biçembendin temel tanım-yeri, kaynak belgenin mutlak tanım-yeri değildir.</p>
+
+<example>
+<eg>http://www.myorg.org/style/basic.css</eg>
+
+<p>tanım-yerine göre atanmış bir biçembentte şöyle bir kural olsun:</p>
+
+<eg>body { background: url("yellow") }</eg>
+
+<p>Kaynak belgenin <htmltag>body</htmltag> elemanının artalan resmi</p>
+
+<eg>http://www.myorg.org/style/yellow</eg>
+
+<p>adresinden alınacaktır.</p>
+</example>
+
+<p>Geçersiz veya kullanışsız tanım-yerlerinin elde ediliş yöntemi kullanıcı arayüzleri arasında değişiklik gösterebilir.</p>
+</div3>
+
+<div3 id="counter">
+<indexterm><primary><valueref>sayaç</valueref></primary></indexterm>
+  <head>Sayaçlar</head>
+<p><indexterm><primary>counter()</primary></indexterm>
+<termdef term="Sayaç" id="value-def-sayaç">Sayaçlar <valueref>betimleyici</valueref>lerle ifade edilir. Bir sayaç değerine atıfta bulunmak için <code>counter(</code><valueref>betimleyici</valueref><code>)</code> veya <code>counter(</code><valueref>betimleyici</valueref>, <valueref>list-style-type</valueref><code>)</code> gösterimi kullanılır. Öntanımlı liste biçemi türü onluk sayı biçemidir (<literal>decimal</literal>)</termdef>.</p>
+
+<p>Aynı isimde olup iç içe bir dizi oluşturan sayaçları ifade etmek için <code>counter(</code><valueref>betimleyici</valueref>, <valueref>dizga</valueref><code>)</code> veya <code>counter(</code><valueref>betimleyici</valueref>, <valueref>dizge</valueref>, <valueref>list-style-type</valueref><code>)</code> gösterimi kullanılır. <specref ref="scope"/> bölümüne de bakınız.</p>
+
+<p>BB2'de sayaç değerlerine sadece <property>content</property> niteliklerinden atıfta bulunulabilir. <literal>none</literal> değerinin bir olası <valueref>list-style-type</valueref> değeri oluşuna dikkat ediniz: <code>counter(x, none)</code> bir boş dizgeye karşılıktır.</p>
+
+<example>
+<p>Bu örnekte, bölümlerin (<htmltag>h1</htmltag>) içinde yer alan paragrafları (<htmltag>p</htmltag>) numaralamakta kullanılan bir biçembende yer verilmiştir. Paragraflar romen rakamları ile numaralanmakta ve numaranın ardına bir nokta ve bir boşluk konmaktadır:</p>
+
+<eg>p {counter-increment: par-num}
+h1 {counter-reset: par-num}
+p:before {content: counter(par-num, upper-roman) ". "}</eg>
+</example>
+
+<p>Bir <property>counter-reset</property>'in <titleref ref="scope">etki alanında</titleref> olmayan sayaçların kök elemandaki bir <property>counter-reset</property> tarafından 0 değeriyle başlatılmak zorunda oldukları varsayılır.</p>
+</div3>
+
+<div3 id="color-units">
+<indexterm><primary><valueref>renk</valueref></primary></indexterm>
+  <head>Renkler</head>
+<indexterm><secondary><literal>black</literal> (siyah)</secondary>
+<primary>renkler</primary></indexterm>
+<indexterm><secondary><literal>silver</literal> (gümüşi)</secondary>
+<primary>renkler</primary></indexterm>
+<indexterm><secondary><literal>gray</literal> (gri)</secondary>
+<primary>renkler</primary></indexterm>
+<indexterm><secondary><literal>navy</literal> (denizci mavisi)</secondary>
+<primary>renkler</primary></indexterm>
+<indexterm><secondary><literal>blue</literal> (mavi)</secondary>
+<primary>renkler</primary></indexterm>
+<indexterm><secondary><literal>aqua</literal> (turkuaz)</secondary>
+<primary>renkler</primary></indexterm>
+<indexterm><secondary><literal>teal</literal> (koyu turkuaz)</secondary>
+<primary>renkler</primary></indexterm>
+<indexterm><secondary><literal>purple</literal> (mor)</secondary>
+<primary>renkler</primary></indexterm>
+<indexterm><secondary><literal>fuchsia</literal> (pembe)</secondary>
+<primary>renkler</primary></indexterm>
+<indexterm><secondary><literal>white</literal> (beyaz)</secondary>
+<primary>renkler</primary></indexterm>
+<indexterm><secondary><literal>lime</literal> (yeşil)</secondary>
+<primary>renkler</primary></indexterm>
+<indexterm><secondary><literal>maroon</literal> (kahverengi)</secondary>
+<primary>renkler</primary></indexterm>
+<indexterm><secondary><literal>green</literal> (koyu yeşil)</secondary>
+<primary>renkler</primary></indexterm>
+<indexterm><secondary><literal>red</literal> (kırmızı)</secondary>
+<primary>renkler</primary></indexterm>
+<indexterm><secondary><literal>orange</literal> (turuncu)</secondary>
+<primary>renkler</primary></indexterm>
+<indexterm><secondary><literal>yellow</literal> (sarı)</secondary>
+<primary>renkler</primary></indexterm>
+<indexterm><secondary><literal>olive</literal> (haki)</secondary>
+<primary>renkler</primary></indexterm>
+
+<indexterm><primary><literal>black</literal></primary></indexterm>
+<indexterm><primary><literal>silver</literal></primary></indexterm>
+<indexterm><primary><literal>gray</literal></primary></indexterm>
+<indexterm><primary><literal>navy</literal></primary></indexterm>
+<indexterm><primary><literal>blue</literal></primary></indexterm>
+<indexterm><primary><literal>aqua</literal></primary></indexterm>
+<indexterm><primary><literal>teal</literal></primary></indexterm>
+<indexterm><primary><literal>purple</literal></primary></indexterm>
+<indexterm><primary><literal>fuchsia</literal></primary></indexterm>
+<indexterm><primary><literal>white</literal></primary></indexterm>
+<indexterm><primary><literal>lime</literal></primary></indexterm>
+<indexterm><primary><literal>maroon</literal></primary></indexterm>
+<indexterm><primary><literal>green</literal></primary></indexterm>
+<indexterm><primary><literal>red</literal></primary></indexterm>
+<indexterm><primary><literal>orange</literal></primary></indexterm>
+<indexterm><primary><literal>yellow</literal></primary></indexterm>
+<indexterm><primary><literal>olive</literal></primary></indexterm>
+
+<p><termdef id="value-def-renk" term="Renk">Bir <var>renk</var> ya bir anahtar sözcüktür ya da sayısal bir KYM (Kırmızı-Yeşil-Mavi) belirtimidir.</termdef>.</p>
+
+<p>Renklerin anahtar sözcükleri:
+<termdef id="value-def-black" term="siyah"><code>black</code></termdef>,
+<termdef id="value-def-silver" term="gümüşi"><code>silver</code></termdef>, <termdef id="value-def-gray" term="gri"><code>gray</code></termdef>,
+<termdef id="value-def-navy" term="denizci mavisi"><code>navy</code></termdef>,
+<termdef id="value-def-blue" term="mavi"><code>blue</code></termdef>,
+<termdef id="value-def-aqua" term="turkuaz"><code>aqua</code></termdef>,
+<termdef id="value-def-teal" term="koyu turkuaz"><code>teal</code></termdef>,
+<termdef id="value-def-purple" term="mor"><code>purple</code></termdef>,
+<termdef id="value-def-fuchsia" term="pembe"><code>fuchsia</code></termdef>,
+<termdef id="value-def-white" term="beyaz"><code>white</code></termdef>,
+<termdef id="value-def-lime" term="yeşil"><code>lime</code></termdef>,
+<termdef id="value-def-green" term="koyu yeşil"><code>green</code></termdef>,
+<termdef id="value-def-maroon" term="kahverengi"><code>maroon</code></termdef>,
+<termdef id="value-def-red" term="kırmızı"><code>red</code></termdef>,
+<termdef id="value-def-orange" term="turuncu"><code>orange</code></termdef>,
+<termdef id="value-def-yellow" term="sarı"><code>yellow</code></termdef>,
+<termdef id="value-def-olive" term="haki"><code>olive</code></termdef>. Bu 17 rengin KYM değerleri aşağıdaki gibidir. Bunların 16 tanesi (<tt>orange</tt> hariç) HTML 4.0'da tanımlanmıştır (<bibref ref="ref-HTML40"/>).</p>
+
+<ednote><edtext>Bu resim, BB2.1 belirtiminin çalışma taslağından alıntıdır.</edtext></ednote>
+
+<figure>
+<graphic source="images/renkler.png"/>
+<caption>İsimleri anahtar sözcük olarak geçerli olan renkler ve KYM değerleri</caption>
+</figure>
+
+<p>Bu renk anahtar sözcüklerine ilaveten kullanıcının çalışma ortamındaki belli nesneler tarafından kullanılan renklere karşı düşen anahtar sözcükler de belirtilebilir. Daha fazla bilgi için <specref ref="system-colors"/> bölümüne bakınız.</p>
+
+<eg>body {color: black; background: white }
+h1 { color: maroon }
+h2 { color: olive }</eg>
+
+<p>KYB renk modeli sayısal renk belirtirken kullanılır. Bu örneklerin hepsi aynı rengi belirtir:</p>
+
+<eg>em { color: #f00 }              /* #kym */
+em { color: #ff0000 }           /* #kkyymm */
+em { color: rgb(255,0,0) }
+em { color: rgb(100%, 0%, 0%) }</eg>
+
+<p>Bir KYM değerinin biçimi onaltılık gösterimle şöyledir: bir '#' ile başlar ve hemen ardından ya üç ya da 6 hanelik bir onaltılık sayı gelir. Üç haneli KYM gösterimi (#kym) rakamların her biri yinelenerek (0 eklenerek değil) 6 haneli biçime (#kkyymm) dönüştürülür. Örneğin, #fb0, #ffbb00 olarak genişletilir. Böylece beyaz rengi (#ffffff) kısa gösterimle (#fff) ifade etmek mümkün olmaktan başka ekranın renk derinliğine bir bağımlılık olmaz.</p>
+
+<p>Bir KYM değerinin biçimi işlevsel gösterimle şöyledir: '<tt>rgb(</tt>' karakter dizisi ile başlar, birbirlerinden virgüllerle ayrılmış üç sayısal değerin ardından bir '<tt>)</tt>' ile sonlanır. Üç sayısal değer birer tamsayı olabilecekleri gibi yüzdelik değerlerde olabilirler ve bunların etrafında <termref def="whitespace">boşluk karakterleri</termref> bulunabilir. Tamsayı 255 değeri, 100% ve onaltılık gösterimle F veya FF  değerine karşılıktır:</p>
+<eg>rgb(255,255,255) = rgb(100%,100%,100%) = #FFF</eg>
+
+<p>Tüm KYM renkleri sRGB renk uzayında belirtilirler (bkz, <bibref ref="ref-SRGB"/>). Kullanıcı arayüzleri renkleri gösterirken asıllarına sadakat konusunda farklı davranabilirler, fakat sRGB kullanımı uluslararası standartlarla (bkz, <bibref ref="ref-COLORIMETRY"/>) ilgili olarak renklerin olması gerekli renk değerleri için belirsizliği ortadan kaldıran, nesnel olarak ölçülebilen tanımlar sağlar.</p>
+
+<p>Uyumlu kullanıcı arayüzleri, renk gösterme çabalarını bir gamma düzeltmesi uygulayarak düşük tutabilirler. sRGB, belirtilen görüntüleme koşulları altında 2.2'lik bir ekran gamması belirtir. BB'de belirtilmiş renkleri kullanıcı arayüzleri şöyle ayarlamalıdır: çıktı aygıtının "doğal" ekran gamması ile birlikte, 2.2'lik bir etkin ekran gamması üretilir. Ayrıntılar için <specref ref="gamma-correction"/> bölümüne bakınız. Bundan sadece BB'de belirtilen renklerin etkileneceği, örneğin resimlerin kendi renk bilgilerini taşıyacakları varsayılır.</p>
+
+<p>Aygıtın renk tayfı dışında kalan değerler kırpılmalıdır: kırmızı, yeşil ve mavi değerleri aygıt tarafından desteklenen aralığın içine düşecek şekilde değiştirilmelidir. Sıradan bir CRT monitör için, aygıt renk tayfı sRGB ile aynı olduğunda aşağıdaki üç kural eşdeğerdir:</p>
+
+<eg>
+em { color: rgb(255,0,0) }       /* tamsayı aralığı 0 - 255 */
+em { color: rgb(300,0,0) }       /* rgb(255,0,0) olacak şekilde kırpılır */
+em { color: rgb(255,-10,0) }     /* rgb(255,0,0) olacak şekilde kırpılır */
+em { color: rgb(110%, 0%, 0%) }  /* rgb(100%,0%,0%) olarak kırpılır */</eg>
+
+<p>Diğer aygıtlar, örneğin yazıcılar sRGB için farklı bir tayfa sahiptirler;  0..255'lik sRGB aralığının dışında kalan bazı renkler (aygıt renk tayfı içinde kalanlar) gösterilebilecekken, 0..255'lik sRGB aralığının içinde kalan bazı renkler aygıt renk tayfının dışında kalarak kırpılabilecektir.</p>
+
+<note>
+<p>Renkler belgeye önemli miktarda bilgi ekleyebildiği ve onları daha okunabilir yaptığı halde renk körlüğü olan kullanıcılarda belli renk birleşimlerinin sorunlara yol açabileceğini lütfen dikkate alınız. Eğer bir artalan resmi veya rengi kullanıyorsanız, lütfen önalandaki renkleri de uygun değerlere ayarlayınız.</p>
+</note>
+</div3>
+
+<div3 id="values7">
+<indexterm><primary><valueref>açı</valueref></primary></indexterm>
+  <head>Açılar</head>
+<p><termdef id="value-def-açı" term="Açı">Açı değerleri (metin içinde <var>açı</var> olarak geçer) <titleref ref="aural">işitsel biçembentler</titleref>de kullanılırlar.</termdef>.</p>
+
+<p>Biçimleri, isteğe bağlı bir işaret karakterinden ('+' veya '-'; '+' öntanımlıdır) hemen sonra gelen bir <valueref>sayı</valueref>dan hemen sonra gelen bir açı birimi belirtecinden oluşur. Tıpkı uzunluklarda olduğu gibi 0 değeri için birim belirtilmeyebilir. '0deg' yerine basitçe '0' yazılabilir.</p>
+
+<p>Açı birimi belirteçleri:</p>
+
+<slist>
+<sitem><kw>deg</kw>: derece</sitem>
+<sitem><kw>grad</kw>: grad</sitem>
+<sitem><kw>rad</kw>: radyan</sitem>
+</slist>
+
+<p>Açı değerleri negatif olabilir. 0-360 derecelik bir aralıkta kalacak şekilde kullanıcı arayüzleri tarafından  normalleştirilirler. Örneğin, -10deg ile 350deg eşdeğerdir.</p>
+
+<p>Örneğin bir dik açı '90deg' veya '100grad' ya da '1.570796326794897rad' olarak belirtilebilir.</p>
+</div3>
+
+<div3 id="values8">
+<indexterm><primary><valueref>süre</valueref></primary></indexterm>
+  <head>Süreler</head>
+<p><termdef id="value-def-süre" term="Süre">Zaman aralığı değerleri (metin içinde <var>süre</var> olarak geçer) <titleref ref="aural">işitsel biçembentler</titleref>de kullanılır.</termdef>.</p>
+
+<p>Biçimleri, bir <valueref>sayı</valueref>dan hemen sonra gelen bir süre birimi belirtecinden oluşur. Tıpkı uzunluklarda olduğu gibi 0 değeri için birim belirtilmeyebilir. '0ms' yerine basitçe '0' yazılabilir.</p>
+
+<p>Süre birimi belirteçleri:</p>
+
+<slist>
+<sitem><kw>ms</kw>: milisaniye</sitem>
+<sitem><kw>s</kw>: saniye</sitem>
+</slist>
+
+<p>Süre değerleri negatif olamaz.</p>
+</div3>
+
+<div3 id="values9">
+<indexterm><primary><valueref>frekans</valueref></primary></indexterm>
+  <head>Frekanslar</head>
+<p><termdef id="value-def-frekans" term="Frekans">Frekans değerleri (metin içinde <var>frekans</var> olarak geçer) <titleref ref="aural">işitsel biçembentler</titleref>de kullanılır</termdef>.</p>
+
+<p>Biçimleri, bir <valueref>sayı</valueref>dan hemen sonra gelen bir frekans birimi belirtecinden oluşur. Tıpkı uzunluklarda olduğu gibi 0 değeri için birim belirtilmeyebilir. '0Hz' yerine basitçe '0' yazılabilir.</p>
+
+<p>Frekans birimi belirteçleri:</p>
+
+<slist>
+<sitem><kw>Hz</kw>: Hertz</sitem>
+<sitem><kw>kHz</kw>: kiloHertz</sitem>
+</slist>
+
+<p>Frekans değerleri negatif olamaz.</p>
+
+<p>Örneğin, 200Hz (veya 200hz) bir bas ses belirtirken 6kHz (veya
+6khz) bir tiz ses belirtir.</p>
+</div3>
+
+<div3 id="strings">
+<indexterm><primary><valueref>dizge</valueref></primary></indexterm>
+  <head>Dizgeler</head>
+<p><termdef id="value-def-dizge" term="Dizge"><nt def="NT-String">Dizge</nt>ler (metin içinde <var>dizge</var> olarak geçer) çift ya da tek tırnaklar arasına yazılır. Çift tırnaklar, çift tırnaklar içine yazılmış bir dizgede öncelenmiş ('\"' veya '\22' olarak) olmadıkça yer alamaz. Aynı şeyler tek tırnaklar için de geçerlidir ("\'" veya "\27" olarak öncelenirler)</termdef>.</p>
+
+<eg>"bu bir 'dizgedir'"
+"bu bir \"dizgedir\""
+'bu bir "dizgedir"'
+'bu bir \'dizgedir\''</eg>
+
+<p><indexterm><primary>satırsonu</primary></indexterm>
+Bir <valueref>dizge</valueref> doğrudan bir satırsonu karakteri içeremez. Bir satırsonu karakterini bir dizge içinde belirtebilmek için "\A" öncelemi kullanılır (Onaltılık A rakamı Unicode'daki satır ileri karakterine karşılıktır, fakat BB'de satırsonu denmektedir.) <termref def="newlined-string">Örnek için</termref> <property>content</property> niteliğinin tanımına bakınız.</p>
+
+<p>Dizgeleri estetik kaygılar, vs. nedeniyle satırlara bölmek olasıdır, fakat böyle bir durumda satırsonu karakterinin kendisinin bir tersbölü (\) karakteriyle öncelenmesi gerekir. Örneğin aşağıdaki iki seçici tamamen aynıdır:</p>
+
+<eg>A[TITLE="a not s\
+o very long title"] {/*...*/}
+A[TITLE="a not so very long title"] {/*...*/}</eg>
+</div3>
+</div2>
+
+<div2 id="syndata4"><head>BB belge karakter kodlaması</head>
+<p><indexterm><primary>karakter kodlaması</primary></indexterm>
+Bir BB biçembendi Evrensel Karakter Kümesindeki <bibref ref="ref-ISO10646"/> karakterlerden oluşan bir dizidir. Aktarım ve saklama amacıyla, bu karakterler US-ASCII'deki karakterleri destekleyen bir karakter kodlaması ile kodlanmalıdır (ISO 8859-x, SHIFT JIS gibi). Karakter kümeleri ve karakter kodları ile ilgili iyi bir başlangıç olarak lütfen HTML 4.0 belirtimine (<bibref ref="ref-HTML40"/>, <loc href="&HTML;#charset">5. fasıl</loc>) ve ayrıca XML 1.0 belirtiminin (<bibref ref="ref-XML10"/>) <loc href="&XML;#charsets">2.2</loc> ve <loc href="&XML;#charencoding">4.3.3</loc> bölümleri ile <loc href="&XML;#sec-guessing">F ekine</loc> bakınız.</p>
+
+<p><indexterm><primary>karakter kodlaması</primary> <secondary>kullanıcı arayüzünün saptadığı</secondary></indexterm>
+Bir biçembent bir belgenin (XML veya HTML gibi) içine gömüldüğünde, örneğin HTML'nin <htmltag>style</htmltag> elemanında veya '<tt>style</tt>' özniteliğinde, biçembent belgenin bütününün karakter kodlamasını paylaşır.</p>
+
+<p><indexterm><primary>karakter kodlaması</primary> <secondary>öntanımlı</secondary></indexterm>
+<indexterm><primary>öntanımlı</primary> <secondary>karakter kodlaması</secondary></indexterm>
+Bir biçembent kendine ait ayrı bir dosyada bulunuyorsa, kullanıcı arayüzü bir belgenin karakter kodlamasını saptarken aşağıdaki önceliklere (en yüksekten en düşüğe) uyması gerekir:</p>
+
+<olist>
+<item><p>Bir HTTP '<tt>Content-Type</tt>' alanındaki '<tt>charset</tt>' değergeci.</p></item>
+<item><p><indexterm><primary><code>@charset</code></primary></indexterm>
+<code>@charset</code> @-kuralı.</p></item>
+<item><p>Atıf yapılan belgenin dil mekanizmaları (örn, HTML'de <htmltag>link</htmltag> elemanının '<tt>charset</tt>' özniteliği).</p></item>
+</olist>
+<p>Bir <code>@charset</code> kuralı olsa olsa bir harici biçembentte görülebilir -- bir gömülü biçembentte bulunmamalıdır -- ve belgenin oldukça başlarında, kendinden önce bir karakter yer almayacak kadar başlarında yer almalıdır. <code>@charset</code>'in ardından karakter kodlamasının ismini belirtilir. İsim, <bibref ref="ref-IANA"/>'da kayıtlı bir karakter kümesi ismi olmalıdır. Ayrıca, karakter kümelerinin tam listesi için <bibref ref="ref-CHARSETS"/> belgesine bakınız. Örnek:</p>
+
+<p><code>@charset "ISO-8859-1";</code></p>
+
+<p>Bu belirtim kullanıcı arayüzlerinin desteklemesi gereken karakter kümeleri için zorlayıcı değildir.</p>
+
+<p><code>@charset</code> oluşumuna güvenmek, nasıl kodlanacağına dair tam bir bilgi olmadığından kuramsal olarak bir sorunmuş gibi görünür. Uygulamada ise, GenelAğ'da yaygın olarak kullanılan kodlamalar vardır: ASCII, UTF-16, UCS-4 gibi. Yani, sırf belgenin ilk baytına bakarak bir kullanıcı arayüzünün kodlama ailesini saptaması ve esas karakter kodlamasını tespit için <code>@charset</code> kuralını çözümleyecek yeterli bilgiyi edinmesi mümkündür.</p>
+
+  <div3 id="syndata41">
+  <head>Karakter Gönderimleri ve Karakter Öncelemleri</head>
+
+<p>Bir biçembentte geçerli karakter kodlaması ile elde edilemeyen karakterlerin kullanılması gerekebilir. Bu karakterler, ISO 10646 karakterlerine gönderim yapacak şekilde <termref def="escaped-characters">öncelenmiş</termref> olarak yazılmalıdır. Bu öncelemler, HTML ve XML'deki sayısal karakter gönderimleri ile aynı amaca hizmet ederler (<bibref ref="ref-HTML40"/>, <loc href="&HTML;#charset">5.</loc> ve <loc href="&HTML;#entities">24.</loc> fasıllara bakınız).</p>
+
+<p>Karakter önceleme mekanizması sadece birkaç karakter için bu yola başvurulacaksa kullanılmalıdır. Eğer bir belge çok fazla öncelem gerektiriyorsa, yazarlar belgeyi uygun bir kodlama ile kodlamalıdırlar (örneğin, belge Türkçe karakterler içeriyorsa yazar "ISO-8859-9" veya "UTF-8" kullanmalıdır).</p>
+
+<p>Ara işlemcilerle farklı bir karakter kodlaması kullanılarak bu öncelemli diziler uygun kodlamanın bayt dizilerine dönüştürülebilir. Bu ara işlemciler özel anlamı olan ASCII karakterlerinin anlamlarını önceleme yaparak değiştirmemelidirler.</p>
+
+<p><titleref ref="conformance">Uyumlu kullanıcı arayüzlerinin</titleref> tüm Unicode karakterlerini tanıdıkları herhangi bir karakter kodlamasına doğru olarak eşleyebilmesi gerekir.</p>
+
+<p>Örneğin, ISO-8859-1 (Latin-1) kodlamalı bir belge Yunan karakterlerini doğrudan içeremez: "κουρος" (Okunuşu: "kouros") biçembende  "\3BA\3BF\3C5\3C1\3BF\3C2" dizgesi olarak yazılmalıdır.</p>
+
+<note><p>HTML 4.0'da, sayısal karakter gönderimleri '<tt>style</tt>' özniteliklerinde yorumlanırken, <htmltag>style</htmltag> elemanlarında yorumlanmazlar. Bu dengesizlikten dolayı, yazarlara her iki alanda da BB karakter önceleme mekanizmasını kullanmalarını öneririz. Örneğin,</p>
+
+<eg><![CDATA[<SPAN style="voice-family: D&amp;#252;rst">...</SPAN>]]></eg>
+
+<p><emph>yerine</emph></p>
+
+<eg><![CDATA[<SPAN style="voice-family: D\FC rst">...</SPAN>]]></eg>
+
+<p>kullanılmasını öneririz.</p>
+
+</note>
+</div3>
+</div2>
+</div1>
+

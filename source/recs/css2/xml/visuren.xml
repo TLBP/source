@@ -1,0 +1,1405 @@
+<div1 id="visuren">
+<head>Görsel Biçimleme Modeli</head>
+  <div2 id="visuren1">
+  <indexterm><primary>görsel biçimleme modeli</primary></indexterm>
+  <head>Görsel biçimleme modeline giriş</head>
+
+<p>Bu bölümde ve sonraki bölümde görsel biçimleme modeli, yani kullanıcı arayüzlerinin <termref def="doctree">belge ağacını</termref> görsel <titleref ref="media">ortam</titleref> için nasıl işleyeceği açıklanacaktır.</p>
+
+<p>Görsel biçimleme modelinde, belge ağacındaki her eleman <titleref ref="box">çerçeve modeli</titleref>ne göre çerçeve üretir (veya üretmez). Bu çerçevelerin yerleşimi şunlara bağlıdır:</p>
+
+<slist>
+<sitem>Çerçeve <titleref ref="box-dimensions">boyutları</titleref> ve
+<titleref ref="box-gen">türü</titleref>.</sitem>
+
+<sitem><titleref ref="positioning-scheme">Konumlama şeması</titleref> (normal
+akış, yüzen çerçeveler ve mutlak konumlama).</sitem>
+
+<sitem><termref def="doctree">Belge ağacı</termref>ndaki elemanlar arasındaki ilişkiler</sitem>
+
+<sitem>Harici bilgi (görüntü alanının boyutları, resimlerin <termref def="intrinsic">yerleşik</termref> boyutları gibi).</sitem>
+</slist>
+
+<p>Bu ve sonraki bölümde tanımlanan nitelikler <termref def="continuous-media-group">sürekli ortam</termref> ve <termref def="paged-media-group">sayfalı ortam</termref>da da uygulanır. Bununla birlikte <titleref ref="margin-properties">kenar dış boşluk nitelikleri</titleref>nin anlamları sayfalı ortamdaki anlamlarından farklıdır (ayrıntılar için <termref def="page-model">sayfa modeli</termref> tanımına bakınız).</p>
+
+<p>Görsel biçimleme modeli biçimlemeyi bütün ayrıntıları ile belirtmez (örneğin harfler arası boşluk algoritmasını belirtmez). Bu belirtimin kapsamına alınmamış bu biçimleme ayrıntılarında <titleref ref="conformance">uyumlu kullanıcı arayüzleri</titleref> farklı davranabilir.</p>
+
+<div3 id="viewport">
+<indexterm><primary>görüntü alanı</primary></indexterm>
+<head>Görüntü Alanı</head>
+
+<p><termref def="continuous-media-group">Sürekli ortamın</termref> kullanıcı arayüzleri bir belgeyi incelemek isteyen kullanıcılarına belgeyi bir <term>görüntü alanı</term>ndan sunar (ekran veya bir pencere). Kullanıcı arayüzleri görüntü alanının boyutları değiştikçe belgenin yerleşimini değiştirebilir (<termref def="initial-containing-block">ilk taşıyıcı blok</termref> tanımına bakınız). Görüntü alanı belgenin ilk taşıyıcı bloğundan küçük olduğunda, kullanıcı arayüzleri kaydırma mekanizmasını devreye sokmalıdır. Çoğunlukla tuval başına birden fazla görüntü alanı vardır, fakat kullanıcı arayüzleri bir tuvalden fazlasını görüntüleyebilirler (aynı belgenin farklı görünümlerini sağlamak gibi).</p>
+</div3>
+
+<div3 id="containing-block">
+<indexterm><primary>taşıyıcı blok</primary></indexterm>
+<head>Taşıyıcı bloklar</head>
+
+<p>BB2'de çerçeve konumu ve boyutları çoğunlukla <term>taşıyıcı blok</term> denen bir dikdörtgen çerçeveye göre hesaplanır. Genelde üretilen çerçeveler astsal çerçeveler için taşıyıcı blokluk yaparlar; başka bir deyişle bir çerçeve astsalları için kendini bir taşıyıcı blok haline getirir. "Bir çerçevenin taşıyıcı bloku" demek, "çerçevenin varlığını sürdürdüğü taşıyıcı blok" demektir, birinin ürettiği birşey değildir.</p>
+
+<p>Her çerçeve kendi taşıyıcı blokuna göreli bir konumla belirtilir, fakat taşıyıcı blokla sınırlanmaz; dışına <titleref ref="overflow">taşabilir</titleref>.</p>
+
+<p><indexterm><primary>ilk taşıyıcı blok</primary></indexterm>
+<indexterm><primary>taşıyıcı blok</primary> <secondary>ilk</secondary></indexterm>
+<termdef id="initial-containing-block" term="İlk taşıyıcı blok"><termref def="doctree">Belge ağacı</termref>nın kökünün ürettiği çerçeve, yerleşimin kalanı için <term>ilk taşıyıcı blok</term> olarak hizmet verir</termdef>.</p>
+
+<p>İlk taşıyıcı blokun genişliği kök elemannın <property>width</property> niteliği ile belirtilebilir. Eğer niteliğin değeri <literal>auto</literal> ise kullanıcı arayüzü bu genişliği kendisi belirler (kullanıcı arayüzü <termref def="viewport">görüntü alanı</termref>nın o anki genişliğini kullanır).</p>
+
+<p>İlk taşıyıcı blokun yüksekliği kök elemannın <property>height</property> niteliği ile belirtilebilir. Eğer niteliğin değeri <literal>auto</literal> ise taşıyıcı bloğun yüksekliği belgenin içeriğine uygun olarak büyüyecektir.</p>
+
+<p>İlk taşıyıcı blok konumlanamaz ve yüzdürülemez; başka bir deyişle, kullanıcı arayüzleri kök elemanda belirtildiği takdirde <property>position</property> ve <property>float</property> niteliklerini <termref def="ignore">yoksayar</termref>.</p>
+
+<p>Bir taşıyıcı blokun boyutlarının nasıl hesaplandığı <titleref ref="containing-block-details">ayrıntılı olarak</titleref> sonraki, <specref ref="visudet"/> bölümünde açıklanmıştır.</p>
+</div3>
+</div2>
+
+<div2 id="box-gen">
+<head>Çerçeve üretiminin denetimi</head>
+
+<p>Aşağıdaki bölümlerde BB2'de üretilebilen çerçeve türleri açıklanacaktır. Bir çerçevenin türü görsel biçimleme modelindeki davranışının kısmen belirleyicisidir. Bir çerçevenin türü <property>display</property> niteliği ile belirtilir.</p>
+
+<div3 id="block-level">
+<indexterm><primary>blok seviyesinden eleman</primary></indexterm>
+<head>Blok seviyesinden elemanlar ve blok çerçeveleri</head>
+
+<p><term>Blok seviyesinden elemanlar</term> kaynak belgenin görsel olarak blokları (örn, paragraflar) olan elemanlardır. Bir elemanı blok seviyesinden eleman yapan <property>display</property> niteliği değerleri: <literal>block</literal>, <literal>list-item</literal>, <literal>table</literal>, <literal>compact</literal> ve <literal>run-in</literal>  (son ikisi için ayrıca <specref ref="compact"/> ve <specref ref="run-in"/> bölümlerine de bakınız).</p>
+
+<p><indexterm><primary>ilkesel blok çerçevesi</primary></indexterm>
+<indexterm><primary>blok çerçevesi</primary></indexterm>
+<termdef id="block-box" term="blok çerçevesi">Blok seviyesinden elemanlar sadece <term>blok çerçeveleri</term>ni içeren </termdef> <termdef id="principal-box" term="İlkesel blok çerçevesi">bir <term>ilkesel blok çerçevesi</term> üretir. Bir ilkesel blok çerçevesi astsalları ve <titleref ref="generate">üretilen içerik</titleref> için <titleref ref="containing-block">taşıyıcı blok</titleref> olmaktan başka, konumlama şemasına dahil bir çerçevedir. İlkesel blok çerçeveleri <titleref ref="block-formatting">blok biçimleme bağlamının</titleref> parçalarıdır</termdef>.</p>
+
+<p>Bazı <termref def="block-level">blok seviyesinden</termref> elemanlar ilkesel çerçeve dışında kalan ek çerçeveler üretirler: <literal>list-item</literal> elemanları ve <titleref ref="markers">imliler</titleref>. Bu ek çerçeveler ilkesel çerçeveye göre yerleştirilirler.</p>
+
+
+<div4 id="anonymous-block-level">
+<head>Anonim blok çerçeveleri</head>
+
+<p>Şöyle bir belge olsun:</p>
+<eg><![CDATA[<div>
+  Bir metin ...
+  <p>Başka bir metin ...</p>
+</div>]]></eg>
+
+<p><indexterm><primary>anonim</primary></indexterm>
+(ayrıca, <htmltag>div</htmltag> ve <htmltag>p</htmltag> elemanlarının ikisi için de <tt>display: block</tt> olsun). Burada <htmltag>div</htmltag> elemanı hem satıriçi hem de blok içeriğe sahip görünmektedir. Biçimlemeyi daha kolaylaştırmak için "Bir metin ..." dizgesinin bir <term>anonim blok çerçevesi</term>nde yer aldığı varsayılır.</p>
+
+<figure id="img-anon-block">
+<graphic source="images/anon-blok.png" alt="Yukarıdaki örnek için üç çerçevenin yerleşimini gösteren şekil" />
+[<loc href="images/longdesc/anon-block-desc.html" title="Anonim blok çerçevesi için geniş açıklama">Açıklama</loc>]
+<caption>Yukarıdaki örnek için üç çerçevenin yerleşimini gösteren şekil</caption>
+</figure>
+
+<p>Başka bir deyişle: İçinde bir blok çerçevesi (yukarıdaki <htmltag>p</htmltag> gibi) bulunan bir blok çerçevesi (yukarıda <htmltag>div</htmltag> için üretilen gibi) varsa, satıriçi çerçeveler, bir anonim blok çerçevesi ile sarmalanarak <emph>ayrı</emph> bir blok çerçevesi içinde kalmaya zorlanırlar.</p>
+
+<example>
+<p>Bu model aşağıdaki kurallarla:</p>
+
+<eg>
+/* Bilgi: HTML tarayıcı bu kuralları umursamayabilir */
+body { display: inline }
+p    { display: block }
+</eg>
+
+<p>bu HTML belgeye uygulanmış olsun:</p>
+
+<eg><![CDATA[<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<head>
+  <title>Bir blok tarafından kesintiye uğratılan anonim metin</title>
+</head>
+<body>
+  <emph>Bu anonim metin P elemanından öncedir.</emph>
+  <p>Bu metin P elemanının içeriğidir.</p>
+  <emph>Bu anonim metin P elemanından sonradır.</emph>
+</body>]]>
+</eg>
+
+<p><htmltag>body</htmltag> elemanı sırayla bir anonim metin parçası (A1), bir <termref def="block-level">blok seviyesinden</termref> eleman ve başka bir anonim metin (A2) içermektedir. Bu yapı, A1'i sarmalayan bir anonim blok çerçevesi, <htmltag>p</htmltag> blokunun çerçevesi ve A2'yi sarmalayan başka bir anonim blok çerçevesi ile bunların üçünü birden içeren bir anonim blok çerçevesinden (<htmltag>body</htmltag> elemanının çerçevesi) oluşur.</p>
+</example>
+
+<p>Anonim çerçeveler niteliklerini kendilerini içeren ve anonim olmayan  çerçeveden miras alırlar (ilk örnekte <htmltag>div</htmltag> elemanından). Miras alınmayan nitelikler ilk değerleriyle uygulanırlar. Örneğin, anonim çerçevelerin yazıtipi <htmltag>div</htmltag> elemanından miras alınacak ama kenar dış boşlukları 0 olacaktır.</p>
+</div4>
+</div3>
+
+<div3 id="inline-level">
+<indexterm><primary>satıriçi seviyeden elemanlar</primary></indexterm>
+<head>Satıriçi seviyeden elemanlar ve satıriçi çerçeveler</head>
+
+<p><term>Satıriçi seviyeden elemanlar</term> kaynak belgenin içeriğinde blok bulunmayan elemanlarıdır; içerik satırlara yayılmıştır (bir paragrafın metninin vurgulu kısımları, satıriçi resimler gibi). Bir elemanı satıriçi seviyeden eleman yapan <property>display</property> niteliği değerleri: <literal>inline</literal>, <literal>inline-table</literal>, <literal>compact</literal> ve <literal>run-in</literal> (<specref ref="compact"/> ve <specref ref="run-in"/> bölümlerine de bakınız).
+<termdef  id="inline-box" term="Satıriçi çerçeveler">Satıriçi seviyeden elemanlar <term>satıriçi çerçeveler</term> üretir</termdef>.</p>
+
+<p>Satıriçi çerçeveler çeşitli biçimleme bağlamlarının parçaları olabilirler:</p>
+
+<ulist>
+<item><p>Blok çerçevesi içinde, <titleref ref="inline-formatting">satıriçi biçimleme bağlamının</titleref> çerçeveleri olarak.</p></item>
+
+<item><p>Bir blok çerçevesinin dış boşluğuna konumlanmış bir <titleref ref="compact">girintili başlık çerçevesi</titleref> olarak.</p></item>
+
+<item><p>Bir blok çerçevesinin dışına konumlanmış bir <titleref ref="markers">İmleme</titleref> çerçevesi olarak.</p></item>
+</ulist>
+
+<div4 id="anonymous">
+<indexterm><primary>anonim satıriçi çerçeveler</primary></indexterm>
+<head>Anonim satıriçi çerçeveler</head>
+
+<p>Şöyle bir belgemiz olsun:</p>
+
+<eg><![CDATA[<p>Oldukça <em>önemli</em> birşeyler</p>]]></eg>
+
+<p><htmltag>p</htmltag> elemanı çeşitli satıriçi çerçeveler içeren bir blok çerçevesi üretir. "önemli" dizgesinin çerçevesi <htmltag>em</htmltag> satıriçi elemanı tarafından üretilen bir satıriçi çerçeveyken, diğer çerçeveler ("Oldukça" ve "birşeyler") bir <termref def="block-level">blok seviyesinden</termref> eleman (<htmltag>p</htmltag>) tarafından üretilen satıriçi çerçeveler olup bunları üreten satıriçi seviyeden elemanlar olmadığından bunlara <term>anonim satıriçi çerçeveler</term> denir.</p>
+
+<p>Böyle anonim satıriçi çerçeveler kalıtsal nitelikleri kendi ebeveyn blok çerçevelerinden miras alırlar. Miras alınmayan nitelikler kendi ilk değerlerini alırlar. Örnekteki anonim satıriçi çerçeveler renklerini <htmltag>p</htmltag>'den miras alırlar fakat artalanları saydamdır.</p>
+
+<p>Bağlamı anonim çerçeve türleriyle daha fazla karıştırmamak için blok/satıriçi ayrımı yapmadan bütün anonim çerçevelerden bu belirtim boyunca anonim çerçeveler olarak bahsedilecektir.</p>
+
+<p><titleref ref="anonymous-boxes">Tabloları</titleref> biçimlerken ortaya çıkan başka anonim çerçeve türleri de vardır.</p>
+</div4>
+</div3>
+
+
+<div3 id="compact">
+<indexterm><primary>girintide başlık çerçevesi</primary></indexterm>
+<anchor id="value-def-compact"/>
+<head>Girintide başlık (<literal>compact</literal>) çerçeveleri</head>
+
+<p>Bir <term>girintide başlık çerçevesi</term> şöyle bir davranış sergiler:</p>
+
+<ulist>
+<item><p>Bir girintide başlık çerçevesinin ardından bir <termref def="block-box">blok</termref> çerçevesi (yüzen veya <termref def="absolutely-positioned">mutlak konumlu</termref> olmayan) geliyorsa, girintideki başlık çerçevesi bir tek satırlık satıriçi çerçeve gibi biçimlenir. Elde edilen çerçevenin genişliği blok çerçevesinin dış boşluk genişliklerinden biri ile karşılaştırılır. Karşılaştırma için sol boşluğun mu yoksa sağ boşluğun mu kullanılacağına her iki çerçevenin <titleref ref="containing-block">taşıyıcı çerçevesini</titleref> üreten eleman için belirtilen <property>direction</property> niteliğinin değeri belirler. Eğer satıriçi çerçevenin genişliği bu genişlikten küçük veya ona eşitse, satıriçi çerçeve boşluğun içine biraz aşağıda açıklandığı gibi konumlanır.</p></item>
+
+<item><p>Aksi takdirde, girintide başlık çerçevesi bir blok çerçevesi haline gelir.</p></item>
+</ulist>
+
+<p>Girintide başlık çerçevesi dış boşluğun içine şöyle yerleştirilir: Blokun ilk <termref def="line-box">satır çerçevesi</termref>nin (sol veya sağ) dışındadır fakat  <titleref ref="line-height">satır çerçevesinin yüksekliği</titleref>nin hesabında etkili olur. Girintide başlık çerçevesinin <property>vertical-align</property> niteliği bu satır çerçevesine göre düşey konumu belirler. Girintide başlık çerçevesinin yatay konumu daima blok çerçevesinin kenar dış boşluğunun içinde kalır.</p>
+
+<p>Tek satır olarak biçimlenemeyen bir eleman ardından gelen çerçevenin kenar dış boşluğuna yerleştirilemez. Örneğin, HTML'deki <htmltag>br</htmltag> elemanını içeren bir girintide başlık elemanı daima bir blok çerçevesi olarak biçimlenecektir (<htmltag>br</htmltag> için varsayılan öntanımlı biçem, bir satırsonu karakteri yerleştirmektir). Çok satırlı metinleri kenar dış boşluklarına yerleştirmek için <property>float</property> niteliği çoğunlukla daha uygundur.</p>
+
+<example>
+<p>Girintide başlık (<literal>compact</literal>) çerçevesi örneği:</p>
+
+<eg><![CDATA[
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0//EN">
+<html>
+  <head>
+    <title>Girintide başlık çerçevesi örneği</title>
+    <style type="text/css">
+      dt { display: compact }
+      dd { margin-left: 4em }
+    </style>
+  </head>
+  <body>
+    <dl>
+      <dt>Kısa
+        <dd><p>Açıklama burada olacak.
+      <dt>Boşluk için fazla uzun
+        <dd><p>Açıklama burada olacak.
+    </dl>
+  </body>
+</html>]]></eg>
+</example>
+
+<p>Bu örnek şöyle biçimlenebilirdi:</p>
+
+<eg><kw>Kısa</kw>    Açıklama burada olacak.
+
+<kw>Boşluk için fazla uzun</kw>
+        Açıklama burada olacak.</eg>
+
+<p><property>text-align</property> niteliği girintide başlık çerçevesini kenar dış boşluğu içinde yatayda hizalamak için kullanılabilir: boşluğun sol kenarına (<literal>left</literal>), sağ kenarına (<literal>right</literal>) veya ortasına (<literal>center</literal>). <literal>justify</literal> değeri uygulanmaz ve boşluğun yönünü belirleyen bloğun <property>direction</property> niteliğine uygun olarak <literal>left</literal> veya <literal>right</literal> değeri belirtilmiş gibi işlem yapılır. (Yön soldan sağa (<literal>ltr</literal>) ise <literal>left</literal>; sağdan sola (<literal>rtl</literal>) ise <literal>right</literal> değeri kullanılır.)</p>
+
+<p>Girintide başlık çerçevelerinin <titleref ref="generate">üretilen içerik</titleref>le nasıl etkileştiği hakkında bilgi edinmek için <specref ref="compact-run-in-gen"/> bölümüne bakınız.</p>
+</div3>
+
+<div3 id="run-in">
+<indexterm><primary>gömme başlık çerçevesi</primary></indexterm>
+<anchor id="value-def-run-in"/>
+<head>Gömme başlık (<literal>run-in</literal>) çerçeveleri</head>
+
+<p>Bir <term>gömme başlık çerçevesi</term> şöyle bir davranış sergiler:</p>
+
+<ulist>
+<item><p>Bir gömme başlık çerçevesinin ardından bir <termref def="block-box">blok</termref> çerçevesi (yüzen veya <termref def="absolutely-positioned">mutlak konumlu</termref> olmayan) geliyorsa, gömme başlık çerçevesi blok çerçevesinin ilk satıriçi çerçevesi haline gelir.</p></item>
+
+<item><p>Aksi takdirde, gömme başlık çerçevesi bir blok çerçevesi haline gelir.</p></item>
+</ulist>
+
+<p>Bir gömme başlık (<literal>run-in</literal>) çerçevesi bir başlığı paragrafın gömülü başlığı haline getirmek için kullanışlıdır:</p>
+
+<example>
+<eg><![CDATA[
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0//EN">
+<html>
+  <head>
+    <title>Bir gömme başlık çerçevesi örneği</title>
+    <style type="text/css">
+      h3 { display: run-in }
+    </style>
+  </head>
+  <body>
+    <h3>Bir gömme başlık </h3>
+    <p>Ve başlığın devamında yer alacak paragraf metni.
+  </body>
+</html>]]></eg>
+
+<p>Bu örnek şöyle biçimlenebilirdi:</p>
+
+<eg><kw>Bir gömme başlık </kw>Ve başlığın
+devamında yer alacak paragraf
+metni.</eg>
+</example>
+
+<p>Gömme başlık çerçeveleri niteliklerini görsel olarak parçası haline geldikleri blok çerçevesinden değil, kaynak ağacındaki ebeveyninden miras alır.</p>
+
+<p>Gömme başlık çerçevelerinin <titleref ref="generate">üretilen içerik</titleref>le nasıl etkileştiği hakkında bilgi edinmek için <specref ref="compact-run-in-gen"/> bölümüne bakınız.</p>
+</div3>
+
+<div3 id="display-prop">
+<head><property>display</property> niteliği</head>
+
+<indexterm><primary><property>display</property></primary></indexterm>
+<indexterm><primary>nitelikler</primary> <secondary><property>display</property></secondary></indexterm>
+<propinfo>
+  <propname>display</propname>
+  <value><literal>inline</literal> | <literal>block</literal> | <literal>list-item</literal> | <literal>run-in</literal> | <literal>compact</literal> | <literal>marker</literal> | <literal>table</literal> | <literal>inline-table</literal> | <literal>table-row-group</literal> | <literal>table-header-group</literal> | <literal>table-footer-group</literal> | <literal>table-row</literal> | <literal>table-column-group</literal> | <literal>table-column</literal> | <literal>table-cell</literal> | <literal>table-caption</literal> | <literal>none</literal> | <literal>inherit</literal></value>
+  <initial><literal>inline</literal></initial>
+  <applies-to/>
+  <inherited>hayır</inherited>
+  <percentages/>
+  <media><termref def="all-media-group">hepsi</termref></media>
+</propinfo>
+
+<p>Bu niteliğin değerlerinin anlamları:</p>
+
+<varlist>
+<gitem>
+<label id="value-def-block">
+<indexterm><primary><literal>block</literal></primary></indexterm>
+<code>block</code></label>
+<def><p>Bu değer bir elemanın bir ilkesel blok çerçevesi üretmesine sebep olur.</p></def>
+</gitem>
+<gitem>
+<label id="value-def-inline">
+<indexterm><primary><literal>inline</literal></primary></indexterm>
+<code>inline</code></label>
+<def><p>Bu değer bir elemanın bir veya daha fazla sayıda satıriçi çerçeve üretmesine sebep olur.</p></def>
+</gitem>
+<gitem>
+<label id="value-def-list-item">
+<indexterm><primary><literal>list-item</literal></primary></indexterm>
+<code>list-item</code></label>
+<def><p>Bu değer bir elemanın (HTML'deki <htmltag>li</htmltag> gibi) bir ilkesel blok çerçevesi ve bir liste öğesi satıriçi çerçevesi üretmesine sebep olur. Listeler ve liste biçimleme örnekleri hakkında bilgi edinmek için <specref ref="lists"/> bölümüne bakınız.</p></def>
+</gitem>
+<gitem>
+<label id="value-def-marker">
+<indexterm><primary><literal>marker</literal></primary></indexterm>
+<code>marker</code></label>
+<def><p>Bu değer bir imleyici olarak bir çerçeveden önce veya sonra bir <titleref ref="generate">üretilen içerik</titleref> bildirir. Bu değer sadece, bir <termref def="block-level">blok seviyesinden</termref> elemanlara eklemlenmiş <selector>:before</selector> ve <selector>:after</selector> sözde elemanları ile kullanılabilir. Diğer durumlarda bu değer <literal>inline</literal> olarak yorumlanır. Daha fazla bilgi için <specref ref="markers"/> bölümüne bakınız.</p></def>
+</gitem>
+<gitem>
+<label><indexterm><primary><tt>none</tt></primary> <secondary><property>display</property> değeri olarak</secondary></indexterm>
+<tt>none</tt></label>
+<def><p>Bu değer bir elemanın <termref def="formatting-structure">biçimleme yapısında</termref> hiçbir çerçeve üretmemesine sebep olur (yani, elemanın yerleşime hiçbir etkisi olmaz; başka bir deyişle, gösterilmez). Ayrıca astsal elemanlar da çerçeve üretemez ve bu davranış astsalların <property>display</property> nitelikleriyle etkisiz kılınamaz.</p>
+
+<p>Lütfen dikkat ediniz: <literal>none</literal> değeri bir görünmez çerçeve oluşturmaz; gizli veya açık hiçbir çerçeve oluşmaz. BB, bir elemanın biçimleme yapısını etkileyen ancak görünmeyen çerçeveler üretmesini mümkün kılan mekanizmalar da içerir. Ayrıntılar için lütfen  <specref ref="visibility"/> bölümüne bakınız.</p></def>
+</gitem>
+<gitem>
+<label><indexterm><primary><literal>run-in</literal></primary></indexterm>
+<indexterm><primary><literal>compact</literal></primary></indexterm>
+<literal>run-in</literal></label>
+<label><literal>compact</literal></label>
+<def><p>Bu değerler bağlama göre bir blok veya satıriçi çerçeve üretirler. Nitelikler bu çerçevelere son durumlarına göre (satıriçi/<termref def="block-level">blok seviyesinden</termref>) uygulanır. Örneğin, <property>white-space</property> niteliği sadece çerçevenin bir blok çerçevesi haline gelmesi durumunda uygulanır.</p></def>
+</gitem>
+<gitem>
+<label><indexterm><primary><literal>table</literal></primary></indexterm>
+<indexterm><primary><literal>inline-table</literal></primary></indexterm>
+<indexterm><primary><literal>table-row-group</literal></primary></indexterm>
+<indexterm><primary><literal>table-column</literal></primary></indexterm>
+<indexterm><primary><literal>table-column-group</literal></primary></indexterm>
+<indexterm><primary><literal>table-header-group</literal></primary></indexterm>
+<indexterm><primary><literal>table-footer-group</literal></primary></indexterm>
+<indexterm><primary><literal>table-row</literal></primary></indexterm>
+<indexterm><primary><literal>table-cell</literal></primary></indexterm>
+<indexterm><primary><literal>table-caption</literal></primary></indexterm>
+<literal>table</literal>, <literal>inline-table</literal>, <literal>table-row-group</literal>, <literal>table-column</literal>, <literal>table-column-group</literal>, <literal>table-header-group</literal>,  <literal>table-footer-group</literal>, <literal>table-row</literal>, <literal>table-cell</literal> ve <literal>table-caption</literal></label>
+<def><p>Bu değerler bir elemanın bir tablo elemanı gibi davranmasına sebep olur. (Kısıtlamalara konu olan durumlar <specref ref="tables"/> bölümünde açıklanmıştır.)</p></def>
+</gitem>
+</varlist>
+
+<p><property>display</property> niteliğinin <termref def="initial-value">ilk değeri </termref>  <literal>inline</literal> olsa bile kullanıcı arayüzünün <termref def="default-style-sheet">öntanımlı biçembendindeki</termref> kurallar bu değere <titleref ref="cascade">üstün</titleref> gelebilir. HTML 4.0 için <specref ref="sample"/> bölümüne bakınız.</p>
+
+<example>
+<p><property>display</property> niteliği örnekleri:</p>
+
+<eg>
+p   { display: block }
+em  { display: inline }
+li  { display: list-item }
+img { display: none }      /* resimler gösterilmez */
+</eg>
+</example>
+
+<p><indexterm><primary>uyumluluk</primary></indexterm>
+<indexterm><primary>yoksaymak</primary></indexterm>
+<titleref ref="conformance">Uyumlu</titleref> HTML kullanıcı arayüzleri <property>display</property> niteliğini <termref def="ignore">yoksayabilirler</termref>.</p>
+</div3>
+</div2>
+
+<div2 id="positioning-scheme">
+<indexterm><primary>konumlama</primary><secondary>şeması</secondary></indexterm>
+<head>Konumlama şemaları</head>
+
+<p>2'de bir çerçeve üç <term>konumlama şeması</term>na göre yerleştirilebilir:</p>
+
+<olist>
+<item><p><specref ref="normal-flow"/>. BB2'de normal akışa şunlar dahildir:
+<termref def="block-box">blok</termref> çerçevelerinin <titleref ref="block-formatting">blok biçimleme bağlamı</titleref>,
+<termref def="inline-box">satıriçi</termref> çerçevelerin <titleref ref="inline-formatting">satıriçi biçimleme bağlamı</titleref>, blok ve satıriçi çerçevelerin <titleref ref="relative-positioning">göreli konumlanması</titleref>, <titleref ref="compact">girintide</titleref> ve
+<titleref ref="run-in">gömme</titleref> başlık çerçevelerinin konumlanması.</p></item>
+
+<item><p><specref ref="floats"/>. Yüzen eleman modelinde, bir çerçeve önce normal akışa göre yerleştirildikten sonra akıştan alınıp sola veya sağa mümkün olduğunca uzağa kaydırılır. İçerik bir yüzen çerçevenin yanından akıp gidebilir.</p></item>
+
+<item><p><specref ref="absolute-positioning"/>. Mutlak konumlama modelinde, bir çerçeve normal akıştan tamamiyle kaldırılıp (sonraki kardeşleri üzerinde etkisi olmayacak şekilde), kendisine bir taşıyıcı bloka göre bir konum atanır.</p></item>
+</olist>
+<note><p>BB2 konumlama şeması,yazarlara, yerleşimde kullanılan imlenim hilelerinden (boşluk oluşturmak için görünmez resimler kullanmak gibi) kaçınmalarını mümkün kılarak belgelerini daha erişilebilir yapmalarını sağlayabilir.</p></note>
+
+<div3 id="choose-position">
+<head>Bir konumlama şemasının seçimi: <property>position</property> niteliği</head>
+
+<p><property>position</property> ve <property>float</property> nitelikleri bir çerçevenin konumunun hesaplanmasında hangi BB2 konumlama algoritmasının kullanılacağını belirlerler.</p>
+
+<indexterm><primary><property>position</property></primary></indexterm>
+<indexterm><primary>nitelikler</primary> <secondary><property>position</property></secondary></indexterm>
+<propinfo>
+  <propname>position</propname>
+  <value><literal>static</literal> | <literal>relative</literal> | <literal>absolute</literal> | <literal>fixed</literal> | <literal>inherit</literal></value>
+  <initial><literal>static</literal></initial>
+  <applies-to>tüm elemanlar, fakat <titleref ref="generate">üretilen içeriğe</titleref> değil</applies-to>
+  <inherited>hayır</inherited>
+  <percentages/>
+  <media><termref def="visual-media-group">görsel</termref></media>
+</propinfo>
+
+<p>Niteliğin değerlerinin anlamları (Değerlerin Türkçeleri köşeli ayraç içinde yanlarına yazılmıştır):</p>
+
+<varlist>
+<gitem>
+<label><indexterm><primary><literal>static</literal></primary></indexterm>
+<literal>static</literal> [durağan]</label>
+<def><p>Çerçeve, <titleref ref="normal-flow">normal akışa</titleref> göre yerleştirilecek normal bir çerçevedir. <property>top</property>, <property>right</property>, <property>bottom</property> ve <property>left</property> nitelikleri uygulanmaz.</p></def>
+</gitem>
+<gitem>
+<label><indexterm><primary><literal>relative</literal></primary></indexterm>
+<literal>relative</literal> [göreli]</label>
+<def><p>Çerçevenin konumu önce <titleref ref="normal-flow">normal akışa</titleref> göre hesaplanır (buna normal akıştaki konum denir) sonra da bu konuma <titleref ref="relative-positioning">göreli</titleref> konuma yerleştirilir. Bir B çerçevesi göreli olarak konumlandığında, ondan sonra gelen çerçevenin konumu B'nin normal akıştaki konumuna göre hesaplanır, göreli konumuna göre değil.</p></def>
+</gitem>
+<gitem>
+<label><indexterm><primary><literal>absolute</literal></primary></indexterm>
+<literal>absolute</literal> [mutlak]</label>
+<def><p>Çerçevenin konumu (ve muhtemelen boyutları) <property>left</property>, <property>right</property>, <property>top</property> ve <property>bottom</property> nitelikleri ile belirtilir. Bu niteliklerle belirtilen uzunluklar çerçevenin <titleref ref="containing-block">taşıyıcı blokuna</titleref> göredir. Mutlak konumlu çerçeveler normal akışın dışına alınır, böylece kendinden sonra gelen kardeşlerinin yerleşimlerinde etkili olmazlar. Ayrıca, <termref def="absolutely-positioned">mutlak olarak konumlanmış</termref> çerçevelerin kenar dış boşlukları olsa bile bunlar diğer kenar dış boşlukları ile <titleref ref="collapsing-margins">örtüşmezler</titleref>.</p></def>
+</gitem>
+<gitem>
+<label><indexterm><primary><literal>fixed</literal></primary></indexterm>
+<literal>fixed</literal> [sabit]</label>
+<def><p>Çerçevenin konumu <literal>absolute</literal> değerindeki gibi hesaplanır ancak ek olarak çerçevenin konumu bazı etkenlere göre <titleref ref="fixed-positioning">sabitlenir</titleref>. <termref def="continuous-media-group">Sürekli ortamda</termref>, çerçeve <termref def="viewport">görüntü alanına</termref> göre sabitlenir (ve kaydırma yapıldığında hareket etmez). <termref def="paged-media-group">Sayfalı ortamda</termref>, sayfa bir <termref def="viewport">görüntü alanında</termref> görünüyorsa bile (örn, yazıcı önizleme), sayfaya göre sabitlenir. Yazarlar <literal>fixed</literal> değerini ortama bağlı bir yolla belirtmek isteyebilirler. Örneğin, bir yazar bir çerçevenin ekranda bir <termref def="viewport">görüntü alanının</termref> tepesinde kalmasını ama basılan her sayfanın tepesinde olmamasını isteyebilir. Bu iki istek aşağıdaki gibi bir <titleref ref="at-media-rule"><code>@media</code> kuralı</titleref> kullanılarak belirtilebilir:</p>
+
+<eg>@media screen {
+  h1#first { position: fixed }
+}
+@media print {
+  h1#first { position: static }
+}</eg>
+</def>
+</gitem>
+</varlist>
+</div3>
+
+<div3 id="position-props">
+<head>Konumlama nitelikleri: <property>top</property>, <property>right</property>, <property>bottom</property>, <property>left</property></head>
+
+<p><indexterm><primary>konumlu eleman</primary></indexterm>
+<indexterm><primary>konumlu çerçeve</primary></indexterm>
+<termdef id="positioned-element" term="Konumlu eleman">Bir elemanın <property>position</property> niteliğinin değeri <literal>static</literal> olmadığı takdirde bu eleman bir <term>konumlu eleman</term>dır</termdef>. <termdef id="positioned-box" term="Konumlu çerçeve">Konumlu elemanlar <term>konumlu çerçeve</term>ler üretirler ve dört niteliğe göre yerleştirilirler</termdef>:</p>
+
+<indexterm><primary sortas="top-"><property>top</property></primary></indexterm>
+<indexterm><primary>nitelikler</primary> <secondary><property>top</property></secondary></indexterm>
+<propinfo>
+  <propname>top</propname>
+  <value><valueref>uzunluk</valueref> | <valueref>yüzdelik</valueref> | <literal>auto</literal> | <literal>inherit</literal></value>
+  <initial><literal>auto</literal></initial>
+  <applies-to><termref def="positioned-element">konumlu elemanlar</termref></applies-to>
+  <inherited>hayır</inherited>
+  <percentages><titleref ref="containing-block">taşıyıcı blok</titleref>un yüksekliği ölçüt alınır</percentages>
+  <media><termref def="visual-media-group">görsel</termref></media>
+</propinfo>
+
+<p>Bu nitelik, bir çerçevenin üst kenar dış boşluğunun üst kenarının çerçevenin <titleref ref="containing-block">taşıyıcı blokunun</titleref> üst kenarından ne kadar aşağıda olduğunu belirtir. <titleref ref="relative-positioning">Göreli olarak konumlanan</titleref> çerçevelerde bu mesafe çerçevenin kendi üst kenarına göredir (yani, çerçeve normal akışa göre konumlandıktan sonra bu niteliğe göre yerine kaydırılır).</p>
+<note><p>Taşıyıcı bloku bir <termref def="block-level">blok seviyesinden</termref> elemana dayalı' mutlak olarak konumlanan çerçeveler için, bu nitelik bu elemanın kenar iç boşluğunun iç kenarına göre bir uzaklık belirtir.</p></note>
+
+<indexterm><primary sortas="right-"><property>right</property></primary></indexterm>
+<indexterm><primary>nitelikler</primary> <secondary><property>right</property></secondary></indexterm>
+<propinfo>
+  <propname>right</propname>
+  <value><valueref>uzunluk</valueref> | <valueref>yüzdelik</valueref> | <literal>auto</literal> | <literal>inherit</literal></value>
+  <initial><literal>auto</literal></initial>
+  <applies-to><termref def="positioned-element">konumlu elemanlar</termref></applies-to>
+  <inherited>hayır</inherited>
+  <percentages><titleref ref="containing-block">taşıyıcı blok</titleref>un genişliği ölçüt alınır</percentages>
+  <media><termref def="visual-media-group">görsel</termref></media>
+</propinfo>
+
+<p>Bu nitelik, bir çerçevenin sağ kenar dış boşluğunun dış kenarının çerçevenin <titleref ref="containing-block">taşıyıcı blokunun</titleref> sağ kenarından ne kadar solda olduğunu belirtir. <titleref ref="relative-positioning">Göreli olarak konumlanan</titleref> çerçevelerde bu mesafe çerçevenin kendi sağ kenarına göredir.</p>
+<note><p>Taşıyıcı bloku bir blok seviyesinden elemana dayalı' mutlak olarak konumlanan çerçeveler için, bu nitelik bu elemanın kenar iç boşluğunun iç kenarına göre bir uzaklık belirtir.</p></note>
+
+<indexterm><primary sortas="bottom-"><property>bottom</property></primary></indexterm>
+<indexterm><primary>nitelikler</primary> <secondary><property>bottom</property></secondary></indexterm>
+<propinfo>
+  <propname>bottom</propname>
+  <value><valueref>uzunluk</valueref> | <valueref>yüzdelik</valueref> | <literal>auto</literal> | <literal>inherit</literal></value>
+  <initial><literal>auto</literal></initial>
+  <applies-to><termref def="positioned-element">konumlu elemanlar</termref></applies-to>
+  <inherited>hayır</inherited>
+  <percentages><titleref ref="containing-block">taşıyıcı blok</titleref>un yüksekliği ölçüt alınır</percentages>
+  <media><termref def="visual-media-group">görsel</termref></media>
+</propinfo>
+
+<p>Bu nitelik, bir çerçevenin alt kenar dış boşluğunun dış kenarının çerçevenin <titleref ref="containing-block">taşıyıcı blokunun</titleref> alt kenarından ne kadar yukarıda olduğunu belirtir. <titleref ref="relative-positioning">Göreli olarak konumlanan</titleref> çerçevelerde bu mesafe çerçevenin kendi alt kenarına göredir.</p>
+<note><p>Taşıyıcı bloku bir <termref def="block-level">blok seviyesinden</termref> elemana dayalı' mutlak olarak konumlanan çerçeveler için, bu nitelik bu elemanın kenar iç boşluğunun iç kenarına göre bir uzaklık belirtir.</p></note>
+
+<indexterm><primary sortas="left-"><property>left</property></primary></indexterm>
+<indexterm><primary>nitelikler</primary> <secondary><property>left</property></secondary></indexterm>
+<propinfo>
+  <propname>left</propname>
+  <value><valueref>uzunluk</valueref> | <valueref>yüzdelik</valueref> | <literal>auto</literal> | <literal>inherit</literal></value>
+  <initial><literal>auto</literal></initial>
+  <applies-to><termref def="positioned-element">konumlu elemanlar</termref></applies-to>
+  <inherited>hayır</inherited>
+  <percentages><titleref ref="containing-block">taşıyıcı blok</titleref>un genişliği ölçüt alınır</percentages>
+  <media><termref def="visual-media-group">görsel</termref></media>
+</propinfo>
+
+<p>Bu nitelik, bir çerçevenin sol kenar dış boşluğunun dış kenarının çerçevenin <titleref ref="containing-block">taşıyıcı blokunun</titleref> sol kenarından ne kadar sağda olduğunu belirtir. <titleref ref="relative-positioning">Göreli olarak konumlanan</titleref> çerçevelerde bu mesafe çerçevenin kendi sol kenarına göredir.</p>
+<note><p>Taşıyıcı bloku bir <termref def="block-level">blok seviyesinden</termref> elemana dayalı' mutlak olarak konumlanan çerçeveler için, bu nitelik bu elemanın kenar iç boşluğunun iç kenarına göre bir uzaklık belirtir.</p></note>
+
+<p>Bu dört niteliğin değerlerinin anlamları:</p>
+
+<varlist><gitem>
+<label><indexterm><primary><valueref>uzunluk</valueref></primary></indexterm>
+<valueref>uzunluk</valueref></label>
+<def><p><titleref ref="containing-block">Taşıyıcı blok</titleref>un kenarından uzaklık.</p></def>
+</gitem>
+<gitem>
+<label><indexterm><primary><valueref>yüzdelik</valueref></primary></indexterm>
+<valueref>yüzdelik</valueref></label>
+<def><p><titleref ref="containing-block">taşıyıcı blok</titleref>un kenarından uzaklığın, <property>left</property> ve <property>right</property> nitelikleri için taşıyıcı blokun genişliğine, <property>top</property> ve <property>bottom</property> nitelikleri için taşıyıcı blokun yüksekliğine oranı. Eğer taşıyıcı blokun yüksekliği açıkça belirtilmemişse (yani, içeriğin yüksekliğine bağlıysa) yüzdelik değer <literal>auto</literal> gibi yorumlanır.</p></def>
+</gitem>
+<gitem>
+<label><indexterm><primary><literal>auto</literal></primary></indexterm>
+<literal>auto</literal></label>
+<def><p>Bu değerin etkisi bu değere sahip olan ilgili diğer niteliklere göre değişir. Ayrıntılar için <termref def="absolutely-positioned">mutlak olarak konumlanmış</termref>, yeri değiştirilemeyen elemanların <titleref ref="abs-non-replaced-height">yükseklik</titleref> ve <titleref ref="abs-non-replaced-width">genişlik</titleref>leri ile ilgili bölümlere bakınız.</p></def>
+</gitem>
+</varlist>
+
+<p><termref def="absolutely-positioned">Mutlak olarak konumlanmış</termref> çerçeveler için, mesafeler çerçevenin <titleref ref="containing-block">taşıyıcı bloku</titleref> ile ilgilidir. <titleref ref="relative-positioning">Göreli olarak konumlanan</titleref> çerçevelerde mesafeler çerçevenin kendi dış kenarları ile igilidir (yani, çerçeve normal akışa göre konumlandıktan sonra bu niteliklere göre yerine kaydırılır).</p>
+</div3>
+</div2>
+
+<div2 id="normal-flow">
+<indexterm><primary>konumlama</primary><secondary>normal akış</secondary></indexterm>
+<head>Normal akış</head>
+
+<p><indexterm><primary>biçimleme bağlamı</primary></indexterm>
+Bir biçimleme bağlamına ait olan normal akıştaki çerçeveler, blok veya satıriçi seviyesinden olabilirler ancak aynı anda iki seviyede birden olamazlar. <termref def="block-box">Blok çerçeveleri</termref>  bir <titleref ref="block-formatting">blok biçimleme</titleref> bağlamında etkili olurken <titleref ref="inline-box">satıriçi çerçeveler</titleref> bir <termref def="inline-formatting">satıriçi biçimleme</termref> bağlamında etkili olurlar.</p>
+
+
+<div3 id="block-formatting">
+<head>Blok biçimleme bağlamı</head>
+
+<p>Blok biçimleme bağlamında, çerçeveler, bir <titleref ref="containing-block">taşıyıcı blok</titleref>un tepesinden başlayarak aşağı doğru birer birer yerleştirilirler. Ardışık iki kardeş blok arasındaki düşey uzaklık <property>margin</property> nitelikleri ile belirlenir. Bir blok biçimleme bağlamında düşey yönde komşu blokların alt ve üst kenar dış boşlukları kendi aralarında <titleref ref="collapsing-margins">örtüşürler</titleref>.</p>
+
+<p>Blok biçimleme bağlamında, her çerçevenin sol dış kenarı taşıyıcı blokun sol kenarına dokunur (sağdan sola biçimlemede sağ kenarlar birbirine dokunur). Yüzen elemanların varlığında bile bu değişmez (sadece, yüzen çerçeveden dolayı bir çerçevenin içeriği biraz küçülebilir).</p>
+
+<p>Sayfalı ortamdaki sayfa kesmeleri hakkında ayrıntılı bilgi için <specref ref="allowed-page-breaks"/> bölümüne bakınız.</p>
+</div3>
+
+<div3 id="inline-formatting">
+<head>Satıriçi biçimleme bağlamı</head>
+
+<p><indexterm><primary>satır çerçevesi</primary></indexterm>
+Satıriçi biçimleme bağlamında, çerçeveler, bir <titleref ref="containing-block">taşıyıcı blok</titleref>un tepesinden başlayarak yatay yönde birer birer yerleştirilirler. Yatay kenar dış boşlukları (margin), kenar çizgileri (border) ve kenar iç boşlukları (padding) bu çerçeveler arasında hesaba katılırlar. Çerçeveler düşey yönde farklı yöntemlerle hizalanabilirler. Ya altları veya üstleri hizalanır ya da metinlerinin taban çizgileri birbirlerine hizalanırlar. <termdef term="satır çerçevesi" id="line-box">Satır biçimindeki çerçeveleri içeren dikdörtgen alana <term>satır çerçevesi</term> denir</termdef>.</p>
+
+<p>Bir satır çerçevesinin genişliği <titleref ref="containing-block">taşıyıcı bloka</titleref> göre belirlenir. Yüksekliğin belirlenmesinde kullanılan kurallar <specref ref="line-height"/> bölümünde açıklanmıştır. Bir satır çerçevesi içerdiği bütün çerçeveler için daima yeterince uzundur. Bununla birlikte, içerdiği en uzun çerçeveden daha uzun olabilir (örn, çerçeveler öyle hizalanır ki, taban çizgileri yan yana alt alta gelir). Bir B çerçevesinin yüksekliği onu içeren satır çerçevesinin yüksekliğinden daha azsa B'nin satır çerçevesi içindeki düşey hizası <property>vertical-align</property> niteliğine göre belirlenir.</p>
+
+<p>Çok sayıda satıriçi çerçeve tek bir satır çerçevesine sığmazsa düşey olarak yığılmış iki veya daha fazla sayıda satır cerçevesine dağıtılır. Bu bakımdan bir paragraf düşey olarak yığılmış satır çerçeveleridir. Satır çerçeveleri aralarında düşey bir ayırıcı olmaksızın yığılırlar ve yığında hiçbir şekilde örtüşmezler.</p>
+
+<p>Genelde, bir satır çerçevesinin sol ve sağ kenarları, kendini taşıyan blok çerçevesinin sol ve sağ kenarlarına dokunur. Bununla birlikte bazan yüzen çerçeveler satır çerçevesinin kenarı ile taşıyan blokun kenarı arasına girebilir. Bu bakımdan, aynı biçimleme bağlamındaki satır çerçevelerinin genişliği ile <titleref ref="containing-block">taşıyıcı blok</titleref> genişliği genelde aynı olsa da, satır çerçevelerinin genişliği <titleref ref="floats">yüzen çerçeveler</titleref>den dolayı yatay alandaki daralma nedeniyle değişebilir. Aynı biçimleme bağlamındaki satır çerçevelerinin genelde yükseklikleri de farklılık gösterir (örneğin, biri yüksekçe bir resim içerirken, diğerleri sadece metin içeriyor olabilir).</p>
+
+<p>Bir satırdaki satıriçi çerçevelerin genişliklerinin toplamı onları içeren satır çerçevesinin genişliğinden azsa satır çerçevesi içindeki yatay dağılım <property>text-align</property> niteliğine göre belirlenir. Eğer bu niteliğin değeri <literal>justify</literal> ise kullanıcı arayüzü satıriçi çerçevelerin genişliklerini az veya çok arttırabilir.</p>
+
+<p>Bir satıriçi çerçeve bir satır çerçevesinin genişliğini aşamayacağından, uzun bir satıriçi çerçeve çok sayıda çerçeveye bölünerek satır çerçevelerine dağıtılır. Bir satıriçi çerçeve çok sayıda çerçeveye bölündüğünde kenar dış ve iç boşluklarının ve kenar çizgilerinin bölünmenin olduğu yerde görsel bir etkileri yoktur. Eğer bu bölünme iki yönlü satırların bir arada bulunduğu bir bağlamda gerçekleşirse kenar iç ve dış boşlukları ile kenar çizgileri tamamen tanımlanmış olmayabilir.</p>
+
+<p>Satıriçi çerçeveler ayrıca <titleref ref="direction">iki yönlü metin işleme</titleref> sebebiyle <emph>aynı satır çerçevesi</emph> içinde çok sayıda çerçeveye bölünebilir.</p>
+
+<example>
+<p>Satıriçi çerçeve oluşumuna bir örnek. Aşağıdaki aralarına <htmltag>em</htmltag> ve <htmltag>strong</htmltag> elemanları serpiştirilmiş bir anonim metin içeren (<termref def="block-level">blok seviyesinden</termref> bir HTML elemanı olan <htmltag>p</htmltag> tarafından üretilen) bir paragraf görülmektedir:</p>
+
+<eg><![CDATA[<p><strong>Bu cümle</strong> bazı
+<em>vurgulanmış sözcükler</em> içermektedir.</p>]]></eg>
+
+<p>Bu <htmltag>p</htmltag> elemanı, ikisi anonim olmak üzere dört satıriçi çerçeve içeren bir blok çerçevesi üretir:</p>
+
+<slist>
+<sitem><htmltag>strong</htmltag>: "Bu cümle"</sitem>
+<sitem>Anonim: "bazı"</sitem>
+<sitem><htmltag>em</htmltag>: "vurgulanmış sözcükler"</sitem>
+<sitem>Anonim: "içermektedir."</sitem>
+</slist>
+
+<p>Paragrafı biçimlemek için kullanıcı arayüzü dört çerçeveyi satır çerçevelerine koyar. Bu örnekte, <htmltag>p</htmltag> elemanı için üretilen çerçeve, satır çerçevelerini taşıyan çerçeveyi oluşturur. Eğer taşıyan blok yeterli genişlikteyse bütün satıriçi çerçeveler tek bir satır çerçevesine sığacaktır:</p>
+
+<eg><kw>Bu cümle</kw> bazı <emph>vurgulanmış sözcükler</emph> içermektedir.</eg>
+
+<p>Aksi takdirde, satıriçi çerçeveler böyle:</p>
+
+<eg><kw>Bu cümle</kw> bazı
+<emph>vurgulanmış sözcükler</emph>
+içermektedir.</eg>
+
+<p>ya da bu şekilde:</p>
+
+<eg><kw>Bu cümle</kw> bazı
+<emph>vurgulanmış</emph>
+<emph>sözcükler</emph>
+içermektedir.</eg>
+
+<p>çok sayıda satır çerçevesine bölünecektir.</p>
+</example>
+
+<p>Yukarıdaki örnekteki son çıktıda <htmltag>em</htmltag> çerçevesi iki <htmltag>em</htmltag> çerçevesine bölünmüştür (bunlara em1 ve em2 diyelim). Kenar dış ve iç boşlukları, kenar çizgileri veya metin süslemelerinin em1'den sonra ve em2'den önce herhangi bir görsel etkiye sahip olmadıkları görülmektedir.</p>
+
+<example>
+<p>Aşağıdaki örneği ele alalım:</p>
+<eg><![CDATA[<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0//EN">
+<html>
+  <head>
+    <title>Çok satırlı satıriçi akış örneği/title>
+<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+    <style type="text/css">
+      EM {
+        padding: 6px;
+        margin: 1em;
+        border-width: medium;
+        border-style: dashed;
+        line-height: 3em;
+      }
+    </style>
+  </head>
+  <body>
+    <p>Bu cümle <EM>vurgulanmış sözcükler</EM> içeriyor.</p>
+  </body>
+</html>]]>
+</eg>
+
+<p>Paragraf genişliğine bağlı olarak çerçeveler şöyle bir dağılım gösterebilir:</p>
+
+<figure id="img-inline-layout">
+<graphic source="images/inline-layout.png" alt="Satır bölündüğünde satır boşluklarının ve çizgilerinin etkilerini gösteren resim" />
+[<loc href="images/longdesc/inline-layout-desc.html" title="Bölünmüş satıriçi çerçeve üzerinde kenar çizgilerinin ve boşluklarının davranışını gösteren resmin geniş açıklaması">Açıklama</loc>]
+</figure>
+
+<slist>
+<sitem>Kenar dış boşlukları "vurgulanmış"'tan önce ve "sözcükler"'den sonra yerleştirilmiştir.</sitem>
+<sitem>Kenar iç boşlukları "vurgulanmış"'ın öncesinde, yukarısında ve aşağısında; "sözcükler"'in sonrasında, yukarısında ve aşağısında yer almakta olup ikisinin de üç tarafına kesintili kenar çizgileri çizilmiştir.</sitem>
+</slist>
+</example>
+</div3>
+
+<div3 id="relative-positioning">
+<indexterm><primary>konumlama</primary><secondary>göreli</secondary></indexterm><indexterm><primary>göreli konumlama</primary></indexterm>
+<head>Göreli konumlama</head>
+
+<p>Bir çerçeve <titleref ref="normal-flow">normal akışa</titleref> göre yerleştirildikten veya bir kenara yüzdürüldükten sonra bu konuma göre kaydırılabilir. Buna <term>göreli konumlama</term> adı verilir. Bir B2 çerçevesi üzerinde etkisi olmaksızın bir B1  çerçevesi  şu şekilde konumlanabilir: B2, B1 hiç kaydırılmamış gibi konumlanır ve B1 kaydırıldıktan sonra B2 yeniden konumlanmaz. Böyle göreli konumlama çerçevelerin kısmen veya tamamen örtüşmesine sebep olabilir.</p>
+
+<p>Göreli olarak konumlanan bir çerçevenin normal akıştaki boyutları, satır kesmeleri ve ona ayrılmış özgün alan korunur.  Bir göreli konumlanmış çerçevenin yeni bir taşıyıcı blok oluşturması <specref ref="containing-block"/> bölümünde incelenmiştir.</p>
+
+<p>Bir göreli konumlanmış çerçeve, bir elemanın <property>position</property> niteliğinin değeri <literal>relative</literal> olduğu takdirde üretilir. Göreli konum <property>top</property>, <property>bottom</property>, <property>left</property> ve <property>right</property> nitelikleri ile belirtilir.</p>
+
+<p>Göreli olarak konumlanmış elemanlar için,  <property>left</property> ve <property>right</property> nitelikleri çerçeveleri boyutları değişmeksizin yatay olarak taşır. <property>left</property> [sol] çerçeveleri sağa taşırken, <property>right</property> [sağ] niteliği çerçeveleri sola taşır. <property>left</property> veya <property>right</property> nitelikleriyle konumlamanın sonucu olarak çerçeveler bölünmediğinden veya genişletilmediğinden hesaplanmış değerleri daima şöyle olacaktır:</p>
+<eg role="layout">left = -right</eg>
+
+<p><property>left</property> ve <property>right</property> niteliklerinin her ikisinin de değeri <literal>auto</literal> ise (ilk değerleridir), hesaplanmış değer '0' olacaktır (yani, çerçeveler normal akıştaki konumlarını koruyacaklardır). </p>
+
+<p>Eğer sadece <property>left</property> değeri <literal>auto</literal> ise hesaplanmış değeri eksi işaretli olarak <property>right</property> değeri olacaktır (yani, çerçeve <property>right</property> değeri kadar sola taşınır).</p>
+
+<p>Eğer sadece <property>right</property> değeri <literal>auto</literal> ise hesaplanmış değeri eksi işaretli olarak <property>left</property>  değeri olacaktır.</p>
+
+<p>Eğer <property>left</property> ve <property>right</property> niteliklerinin ikisi de <literal>auto</literal> değilse, konumlama aşırı kısıtlanmış olur ve biri yok sayılır. Eğer <property>direction</property> niteliğinin değeri <literal>ltr</literal> [soldan sağa] ise <property>left</property> kazanır ve <property>right</property>&nbsp;=&nbsp;-<property>left</property> olur. Eğer <property>direction</property> niteliğinin değeri <literal>rtl</literal> [sağdan sola] ise <property>right</property> kazanır ve <property>left</property> yoksayılır.</p>
+
+<example>
+<p>Aşağıdaki iki biçembent eşdeğerdir:</p>
+
+<eg>div.a8 { position: relative; left: -1em; right: auto }</eg>
+
+<p>ve</p>
+
+<eg>div.a8 { position: relative; left: auto; right: 1em }</eg>
+</example>
+
+<p><property>top</property> ve <property>bottom</property> nitelikleri göreli olarak konumlanan elemanları yukarı veya aşağı taşır. Bunlar da bir diğerinin negatif olmasını gerektirir. Her ikisi de <literal>auto</literal> ise hesaplanmış değerleri '0' olur. Eğer biri <literal>auto</literal> ise diğerinin negatifi haline gelir. İkisi de <literal>auto</literal> değilse <property>bottom</property> yoksayılır (yani, <property>bottom</property>&nbsp;=&nbsp;-<property>top</property> olur).</p>
+
+<p>Göreli olarak konumlanan çerçevelerin özdevimli hareketi betikli ortamlarda canlandırma etkisi üretebilir. (ayrıca <property>visibility</property> niteliğine de bakınız). Satır yüksekliğinin konumlama dikkate alınarak özdevinimli olarak ayarlanmaması dışında göreli konumlama üst ve alt indislemenin genel bir biçimi olarak da kullanılabilir. Daha ayrıntılı bilgi için <specref ref="line-height"/> bölümündeki açıklamaya bakınız.</p>
+
+<p>Göreli konumlama örneklerini <specref ref="comparison"/> bölümünde bulabilirsiniz.</p>
+</div3>
+</div2>
+
+<div2 id="floats">
+<indexterm><primary>konumlama</primary><secondary>yüzen</secondary></indexterm><head>Yüzen çerçeveler</head>
+
+<p>Bir yüzen çerçeve bir satır üzerinde sola veya sağa kaymış bir çerçevedir. Bir yüzen çerçevenin en ilginç özelliği çevresindeki içeriğin etrafını kuşatmasıdır (bunun böyle olması <property>clear</property> niteliği ile engellenebilir). İçerik sola yanaşık çerçevenin sağından aşağı, sağa yanaşık çerçevenin ise solundan aşağı akar. Burada yüzen çerçevelerin konumlanması ve etrafındaki içeriğin davranışına kısaca değinilecektir; bir yüzen çerçevenin ve çevresinin davranışları ile ilgili <termref def="float-rules">kurallar </termref> <property>float</property> niteliğinin açıklamasında incelenecektir.</p>
+
+<p>Bir yüzen çerçevenin belli bir genişliği olmalıdır (ya <property>width</property> niteliği ile atanmıştır ya da bir <termref def="replaced-element">yerleştirilen eleman</termref> olarak bir <termref def="intrinsic">yerleşik</termref> genişliği vardır). Bir yüzen çerçeve, dış kenarı <titleref ref="containing-block">taşıyıcı blok</titleref>un kenarına veya başka bir yüzen çerçevenin kenarına dokunucaya kadar sağa veya sola kaydırıldığında bir <termref def="block-box">blok çerçevesi</termref> haline gelir. Yüzen çerçevenin üst kenarı geçerli satır çerçevesinin üst kenarına (bir satır çerçevesi yoksa önceki blok çerçevesinin alt kenarına) hizalanır. Eğer geçerli satırda yeterli yatay alan yoksa yeterli alan bulununcaya kadar yüzen çerçeve satır satır aşağı kaydırılır.</p>
+
+<p>Bir yüzen çerçeve akışta yer almadığından, kendinden önce ve sonraki konumlanmamış blok çerçeveleri sanki bir yüzen çerçeve yokmuş gibi oluşturulur. Bununla birlikte, bir satır çerçevesi bir yüzen çerçeveye yer açmak için kısaltılacak ve satırın devamı olası ilk satırdan devam edecektir.</p>
+
+<p>Birden fazla yüzen çerçeve yanyana geldiğinde aynı satırdaki yüzen çerçevelere de bu model uygulanır.</p>
+
+<example>
+<p>Aşağıdaki kural <code>class="icon"</code> öznitelikli bütün <htmltag>img</htmltag> çerçevelerini sola yanaştıracaktır (ve sol kenar dış boşluğunu '0' yapacaktır):</p>
+
+<eg>IMG.icon {
+  float: left;
+  margin-left: 0;
+}</eg>
+</example>
+
+<example>
+<p>Şu HTML belgeyi ele alalım:</p>
+
+<eg><![CDATA[<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0//EN">
+<html lang="tr">
+  <head>
+    <title>Yüzen çerçeve örneği/title>
+<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+    <style type="text/css">
+      span { float: left; border: thin solid; margin: 2px }
+      body, p, img { border: thin solid; margin: 2.35em }
+      p { background-color: #eee;  padding: 5px }
+    </style>
+  </head>
+  <body>
+    <p><span><img src=img.png alt="Bu resim bir yüzen çerçeveyi
+    simgeler"></span>Resim çerçevesi sola yanaştırılır. Devamındaki
+    içerik yüzen çerçeveyle aynı satırdan başlayarak yüzen çerçevenin
+    sağında biçimlenir. Yüzen çerçevenin sağındaki satır çerçeveleri
+    yüzen çerçevenin varlığından dolayı daraltılır fakat yüzen
+    çerçeveden sonra normal genişliklerine dönerler.
+  </body>
+</html>]]></eg>
+
+<p><htmltag>img</htmltag> çerçevesi sola yanaştırılır. Devamındaki içerik yüzen çerçeveyle aynı satırdan başlayarak yüzen çerçevenin sağında biçimlenir. Yüzen çerçevenin sağındaki satır çerçeveleri yüzen çerçevenin varlığından dolayı daraltılır fakat yüzen çerçeveden sonra normal genişliklerine dönerler (<titleref ref="containing-block">taşıyıcı blok</titleref> <htmltag>p</htmltag> elemanından oluştuğundan). Bu belge şöyle biçimlenmiş olabilirdi:</p>
+
+<figure id="img-floateg">
+<graphic source="images/floateg.png" alt="Yüzen çerçevelerin kenar dış boşlukları ile etkileşiminin resmidir." />
+[<loc href="images/longdesc/floateg-desc.html" title="Yüzen çerçeve ve metin akış örneğinin geniş açıklaması">Açıklama</loc>]
+</figure>
+
+<p>Belge aşağıdaki gibi de olsaydı biçimleme aynı olacaktı:</p>
+
+<eg><![CDATA[
+<body>Resim çerçevesi sola yanaştırılır. <span>
+<img src=img.png alt="Bu resim bir yüzen çerçeveyi simgeler">
+</span> Devamındaki içerik yüzen çerçeveyle aynı ...
+</body>]]></eg>
+
+<p>Bunun sebebi yüzen çerçevenin solundaki içeriğin de soluna kayacak olmasıdır.</p>
+</example>
+
+<p>Yüzen çerçevelerin kenar dış boşlukları komşu çerçevelerin kenar dış boşlukları ile asla <titleref ref="collapsing-margins">örtüşmez</titleref>. Bu bakımdan, yukarıdaki örnekte, <htmltag>p</htmltag> elemanının kenar boşlukları ile <htmltag>span</htmltag> elemanının kenar dış boşlukları örtüşmemiştir (örtüşseydi, <htmltag>span</htmltag> çerçevesi <htmltag>p</htmltag> kenar dış boşluğunun içinde olurdu).</p>
+
+<p>Bir yüzen çerçeve normal akıştaki diğer çerçevelerle üstüste gelebilir (örneğin, bir yüzen elemandan sonra gelen bir normal akış çerçevesinin yüzen elemana komşu kenarı negatif dış boşluğa sahiptir). Bir satıriçi çerçeve bir yüzen çerçeve ile üstüste geldiğinde satıriçi çerçevenin içeriği, artalanı ve kenar çizgileri yüzen çerçevenin önünde oluşturulur. Bir blok çerçevesi ile bir yüzen çerçeve üstüste geldiğinde ise, blok çerçevesinin artalanı ve kenar çizgileri yüzen çerçevenin arkasında oluşturulur ve sadece çerçeve şeffaf olduğu takdirde görünür. Blok çerçevesinin içeriği yüzen çerçevenin önünde oluşturulur.</p>
+
+<example>
+<p>Buradaki resimde, bir yüzen çerçevenin normal akıştaki çerçevelerin üzerine geldiği zaman neler olduğu gösterilmiştir..</p>
+
+<figure>
+<graphic source="images/float2p.png" alt="İki paragrafın kenar çizgilerinin ve artalan renginin bir yüzen çerçevenin altında kalması: resim altında kalan kenar çizgilerinin ve artalan renginin görünmesini engeller" />
+[<loc href="images/longdesc/float2p-desc.html" title="Normal akıştaki çerçevelerin üzerine bir yüzen çerçevenin gelmesi ile ilgili geniş açıklama" id="img-float2p">Açıklama</loc>]
+<caption>Bir yüzen resim, blok çerçevelerinin üzerine geldiğinde altında kalan çerçeve çizgileri ve artalan rengi görünmez olacaktır.</caption>
+</figure>
+</example>
+
+<p>Aşağıdaki örnekte, içeriğin yüzen elemanın yanından akmasını engellemek için <property>clear</property> niteliğinin kullanımı gösterilmiştir.</p>
+
+<example>
+<p>Biçembende şöyle bir kural eklemekle:</p>
+
+<eg>P { clear: left }</eg>
+
+<p>şuna benzer bir biçimleme elde edilebilir:</p>
+
+<figure id="img-floatclear">
+<graphic source="images/floatclear.png" alt="Bir yüzen resim ve iki paragraf üzerinde 'clear: left' bildiriminin etkisini gösteren resim." />
+[<loc href="images/longdesc/floatclear-desc.html" title="Normal akıştaki çerçevelerin üzerine bir yüzen çerçevenin gelmesinin etkisi ile ilgili geniş açıklama">Açıklama</loc>]
+<caption>Her iki paragraf için de <tt>clear: left</tt> atanmıştır. Böylece ikinci paragraf yüzen çerçevenin aşağısına itilmiştir -- bunu sağlamak için üst kenar dış boşluğu genişlemiştir (ayrıntılar için <property>clear</property> niteliğine bakınız).</caption>
+</figure>
+</example>
+
+<div3 id="float-position">
+<head>Yüzen çerçevenin konumlanması: <property>float</property> niteliği</head>
+
+<indexterm><primary><property>float</property></primary></indexterm>
+<indexterm><primary>nitelikler</primary> <secondary><property>float</property></secondary></indexterm>
+<propinfo>
+  <propname>float</propname>
+  <value><literal>left</literal> | <literal>right</literal> | <literal>none</literal> | <literal>inherit</literal></value>
+  <initial><literal>none</literal></initial>
+  <applies-to><termref def="positioned-element">konumlu elemanlar</termref> ve <titleref ref="generate">üretilen içerik</titleref> hariç bütün elemanlar</applies-to>
+  <inherited>hayır</inherited>
+  <percentages/>
+  <media><termref def="visual-media-group">görsel</termref></media>
+</propinfo>
+
+<p>Bu nitelik bir çerçevenin sola mı, sağa mı yüzdürüleceğini yoksa hiç mi yüzmeyeceğini belirtmek için kullanılır. <termref def="absolutely-positioned">Mutlak olarak konumlanmayan</termref> çerçeveler üreten elemanlar için belirtilebilir. Bu niteliğin değerlerinin anlamları:</p>
+
+<varlist><gitem>
+<label><indexterm><primary><literal>left</literal></primary></indexterm>
+<literal>left</literal></label>
+<def><p>Elemen sola yanaşık bir yüzen <termref def="block-box">blok çerçevesi</termref> üretir. Akışkan içerik çerçevenin sağ üst kenarından başlayarak çerçeveden aşağı akar ve çerçeveyi kuşatır (<property>clear</property> niteliğine konu olan durum). Değer <literal>none</literal> olmadıkça, <property>display</property> niteliği yoksayılır.</p></def>
+</gitem>
+<gitem>
+<label><indexterm><primary><literal>right</literal></primary></indexterm>
+<literal>right</literal></label>
+<def><p><literal>left</literal> gibidir, farklı olarak içerik sağından değil, solundan akar.</p></def>
+</gitem>
+<gitem>
+<label><indexterm><primary><literal>none</literal></primary></indexterm>
+<literal>none</literal></label>
+<def><p>Çerçeve yüzmez.</p></def>
+</gitem>
+</varlist>
+
+<p><indexterm><primary>yüzme kuralları</primary></indexterm>
+<termdef id="float-rules" term="Yüzme kuralları">Yüzen çerçevelerin davranışlarını belirleyen hassas kurallar</termdef>:</p>
+
+<olist>
+<item><p>Sola yanaşık bir yüzer çerçevenin sol <termref def="outer-edge">dış kenarı</termref> kendisini <titleref ref="containing-block">taşıyan blokun</titleref> sol kenarının solu olmayabilir. Benzeri bir kural sağa yanaşık yüzen çerçeveler için de vardır.</p></item>
+
+<item><p>Geçerli sola yanaşık yüzen çerçeveden başka daha önce üretilmiş başka sola yanaşık yüzer çerçeveler de varsa geçerli çerçevenin sol <termref def="outer-edge">dış kenarı</termref> ya önceki çerçevenin sağ <termref def="outer-edge">dış kenarı</termref>nın sağında olmalı ya da geçerli çerçevenin üst kenarı önceki çerçevenin alt kenarının aşağısında kalmalıdır. Benzer şeyler sağa yanaşık yüzen çerçeveler için de geçerlidir.</p></item>
+
+<item><p>Sola yanaşık bir yüzer çerçevenin sol <termref def="outer-edge">dış kenarı</termref>, yanındaki bir sağa yanaşık bir yüzen çerçevenin sol <termref def="outer-edge">dış kenarı</termref>nın sağında olamaz. Benzer şeyler sağa yanaşık yüzen çerçeveler için de geçerlidir.</p></item>
+
+<item><p>Bir yüzer çerçevenin üst <termref def="outer-edge">dış kenarı</termref> kendi <titleref ref="containing-block">taşıyıcı blokunun</titleref> üst kenarından daha yukarıda olamaz.</p></item>
+
+<item><p>Bir yüzer çerçevenin üst <termref def="outer-edge">dış kenarı</termref> bir <termref def="block-box">blok</termref> veya önceki bir yüzer çerçevenin üst dış kenarından daha yukarıda olamaz.</p></item>
+
+<item><p><indexterm><primary>satır çerçevesi</primary></indexterm>
+Bir yüzer çerçevenin üst <termref def="outer-edge">dış kenarı</termref> evvelce üretilmiş bir satır çerçevesinin üst kenarından daha yukarıda olamaz.</p></item>
+
+<item><p>Solunda başka bir sola yanaşık yüzen çerçeve olan bir sola yanaşık yüzen çerçevenin sağ dış kenarı kendi <titleref ref="containing-block">taşıyıcı blok</titleref>unun sağ dış kenarının sağında olamaz. Benzer şeyler sağa yanaşık yüzen çerçeveler için de geçerlidir.</p></item>
+
+<item><p>Bir yüzen çerçeve mümkün olduğunca yukarı yerleştirilmelidir.</p></item>
+
+<item><p>Bir sola yanaşık yüzen çerçeve mümkün olduğu kadar sola ve yukarı, sağa yanaşık bir yüzen çerçeve de mümkün olduğu kadar sağa ve yukarı yanaştırılmalıdır.</p></item>
+</olist>
+</div3>
+
+<div3 id="flow-control">
+<head>Yüzen çerçevelerden sonraki içeriğin denetimi: <property>clear</property> niteliği</head>
+
+<indexterm><primary><property>clear</property></primary></indexterm>
+<indexterm><primary>nitelikler</primary> <secondary><property>clear</property></secondary></indexterm>
+<propinfo>
+  <propname>clear</propname>
+  <value><literal>none</literal> | <literal>left</literal> | <literal>right</literal> | <literal>both</literal> | <literal>inherit</literal></value>
+  <initial><literal>none</literal></initial>
+  <applies-to><termref def="block-level">blok seviyesinden</termref> elemanlar</applies-to>
+  <inherited>hayır</inherited>
+  <percentages/>
+  <media><termref def="visual-media-group">görsel</termref></media>
+</propinfo>
+
+<p>Bu nitelik bir elemanın çerçevelerinin hangi taraflarının önceki bir yüzen elemana komşu olmayacağını belirtir. (Eleman yüzen astsallara sahip olabilir böyle astsal yüzenler için <property>clear</property> niteliği etkisizdir.)</p>
+
+<p>Bu nitelik sadece <termref def="block-level">blok seviyesinden</termref> elemanlar (yüzenler dahil) için belirtilebilir. <titleref ref="compact">Girintide</titleref> ve <titleref ref="run-in">gömme</titleref> başlık çerçeveleri için bu nitelik bu çerçevelerin birleştiği blok çerçevelerine uygulanır.</p>
+
+<p>Yüzmeyen blok çerçevelerine uygulandığında değerlerin anlamları şöyledir:</p>
+
+<varlist>
+<gitem>
+<label><indexterm><primary><literal>left</literal></primary></indexterm>
+<literal>left</literal></label>
+<def><p>Üretilen çerçevenin üst kenar dış boşluğu yeterince arttırılarak üst kenar çizgisinin kendinden önceki bir sola yanaşık bir yüzen çerçevenin alt kenar dış boşluğunun aşağısında kalması sağlanır.</p></def>
+</gitem>
+<gitem>
+<label><indexterm><primary><literal>right</literal></primary></indexterm>
+<literal>right</literal></label>
+<def><p>Üretilen çerçevenin üst kenar dış boşluğu yeterince arttırılarak üst kenar çizgisinin kendinden önceki bir sağa yanaşık bir yüzen çerçevenin alt kenar dış boşluğunun aşağısında kalması sağlanır.</p></def>
+</gitem>
+<gitem>
+<label><indexterm><primary><literal>both</literal></primary></indexterm>
+<literal>both</literal></label>
+<def><p>Üretilen çerçeve kendinden önceki bütün yüzen çerçevelerin aşağısına taşınır.</p></def>
+</gitem>
+<gitem>
+<label><indexterm><primary><literal>none</literal></primary></indexterm>
+<literal>none</literal></label>
+<def><p>Çerçevenin yüzen çerçevelerle ilgili özel bir durumu yoktur.</p></def>
+</gitem>
+</varlist>
+
+<p>Nitelik bir yüzen eleman için belirtildiğinde, yüzen çerçevelerin konumlama <termref def="float-rules">kurallarına</termref> bir ek koşul (10. kural) eklenir:</p>
+
+<ulist>
+<item><p>Yüzen çerçevenin üst <termref def="outer-edge">dış kenarı</termref> <code>clear: left</code> durumunda önceki sola yanaşık bir yüzen çerçevenin, <code>clear: right</code> durumunda önceki sağa yanaşık bir yüzen çerçevenin, <code>clear: both</code> durumunda önceki her iki türden yüzen çerçevenin de alt dış kenarının aşağısında kalmalıdır.</p></item>
+</ulist>
+</div3>
+</div2>
+
+<div2 id="absolute-positioning">
+<indexterm><primary>konumlama</primary><secondary>mutlak</secondary></indexterm>
+<head>Mutlak konumlama</head>
+<p>Mutlak konumlama modelinde, bir çerçeve açıkça taşıyıcı çerçevesine göre konumlanır. Normal akıştan tamamen kaldırılır ve sonraki kardeşlerine bir etkisi kalmaz. Mutlak olarak konumlanmış bir çerçeve akışkan çocukları ve konumlu astsalları için yeni bir <titleref ref="containing-block">taşıyıcı blok</titleref> haline gelir. Bununla birlikte, mutlak olarak konumlanmış bir elemanın içeriği diğer çerçevelerin çevresinden akmaz. Üst üste binen çerçevelerin <termref def="stack-level">yığıt seviyelerine</termref> bağlı olarak başka çerçevelerin içeriklerini belirsizleştirebilir.</p>
+
+<p><indexterm><primary>mutlak olarak konumlanmış eleman</primary></indexterm>
+<termdef id="absolutely-positioned" term="Mutlak olarak konumlanmış eleman">Bu belirtimde <term>mutlak olarak konumlanmış eleman</term> (veya çerçeve) dendiğinde <property>position</property> niteliğinin değeri <literal>absolute</literal> veya <literal>fixed</literal> olan bir elemandan bahsediyor olacağız</termdef>.</p>
+
+
+<div3 id="fixed-positioning">
+<indexterm><primary>konumlama</primary><secondary>sabit</secondary></indexterm>
+<head>Sabit konumlama</head>
+
+<p>Sabit konumlama, mutlak konumlamanın bir alt sınıfıdır. Sabit konumlu bir çerçevenin tek farkı,  <titleref ref="containing-block">taşıyıcı blok</titleref>un <termref def="viewport">görüntü alanı</termref> tarafından oluşturulmasıdır. <termref def="continuous-media-group">Sürekli ortamda</termref>, belge kaydırıldığında sabit çerçeveler yerlerinden kımıldamazlar. Bu bakımdan, <titleref ref="background-properties">sabit artalan resimlerine</titleref> çok benzerler. <titleref ref="page">Sayfalı ortamda</titleref> ise, sabit konumlular her sayfada yinelenirler. Bu özellikleriyle, örneğin, her sayfanın altına bir imza yerleştirmek için yararlıdır.</p>
+
+<example>
+<p>Biçembent yazarları sabit konumlamayı <htmltag>frame</htmltag> benzeri bir yapı oluşturmak için kullanabilirler. Aşağıdaki yerleşimi ele alalım:</p>
+
+<figure id="img-frame">
+<graphic source="images/frame.png" alt="Sabit konumlama ile bölmeli bir yerleşim oluşturma örneği resmi." />
+[<loc href="images/longdesc/frame-desc.html" title="Bölmeli yerleşim örneği için geniş açıklama">Açıklama</loc>]
+</figure>
+
+<p>Bu çıktı aşağıdaki HTML belge ve biçembent kuralları ile elde edilebilir:</p>
+
+<eg><![CDATA[<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0//EN">
+<html>
+  <head>
+    <title>BB2 ile bölmeli belge</title>
+    <style type="text/css">
+      body    { height: 297mm } /* Aşağıda yüzdelik değerler
+                                   için gerekli */
+      #basucu {
+        position: fixed;
+        width: 100%;
+        height: 15%;
+        top: 0;
+        right: 0;
+        bottom: auto;
+        left: 0;
+      }
+      #yancubuk {
+        position: fixed;
+        width: 10em;
+        height: auto;
+        top: 15%;
+        right: auto;
+        bottom: 100px;
+        left: 0;
+      }
+      #anapencere {
+        position: fixed;
+        width: auto;
+        height: auto;
+        top: 15%;
+        right: 0;
+        bottom: 100px;
+        left: 10em;
+      }
+      #ayakucu {
+        position: fixed;
+        width: 100%;
+        height: 100px;
+        top: auto;
+        right: 0;
+        bottom: 0;
+        left: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="basucu"> ...  </div>
+    <div id="yancubuk"> ...  </div>
+    <div id="anapencere"> ...  </div>
+    <div id="basucu"> ...  </div>
+  </body>
+</html>]]></eg>
+</example>
+</div3>
+</div2>
+
+<div2 id="visuren7">
+<head><property>display</property>, <property>position</property> ve <property>float</property> nitelikleri arasındaki ilişki</head>
+
+<p>Çerçeve üretimini ve yerleşimini etkileyen üç nitelik --
+<property>display</property>, <property>position</property> ve <property>float</property> -- şöyle etkileşir:</p>
+
+<olist>
+<item><p><property>display</property> niteliğinin değeri <literal>none</literal> ise kullanıcı arayüzleri <property>position</property> ve <property>float</property> niteliklerini <termref def="ignore">yoksaymalıdırlar</termref>. Bu durumda, eleman hiç çerçeve üretmez.</p></item>
+
+<item><p>Aksi takdirde, eğer <property>position</property> niteliğinin değeri <literal>absolute</literal> veya <literal>fixed</literal> ise <property>display</property> niteliğine <literal>block</literal> ve
+<property>float</property> niteliğine <literal>none</literal> atanır. Çerçevenin konumu çerçevenin <titleref ref="containing-block">taşıyıcı blok</titleref>una ve <property>top</property>, <property>right</property>, <property>bottom</property> ve <property>left</property>niteliklerine göre belirlenir.</p></item>
+
+<item><p>Aksi takdirde, eğer <property>float</property> niteliğinin değeri <literal>none</literal>'dan farklıysa çerçeve yüzdürülür ve <property>display</property> niteliğinin değeri şu tabloya göre atanır:</p>
+
+<table border="1">
+<colgroup><col width="*"/><col width="30%"/></colgroup>
+<tr><th>Belirtilen değer</th><th>Hesaplanan değer</th></tr>
+<tr><td><literal>inline-table</literal></td><td><literal>table</literal></td></tr>
+<tr><td><literal>inline</literal>, <literal>run-in</literal>, <literal>compact</literal>, <literal>table-row-group</literal>, <literal>table-column</literal>, <literal>table-column-group</literal>, <literal>table-header-group</literal>, <literal>table-footer-group</literal>, <literal>table-row</literal>, <literal>table-cell</literal>, <literal>table-caption</literal></td><td><literal>block</literal></td></tr>
+<tr><td>diğerleri</td><td>belirtilenle aynı</td></tr>
+</table>
+</item>
+</olist>
+
+<note><p>Bu niteliklerin değerleri betikler tarafından değiştirildiğinde, BB2 yerleşimin nasıl davranacağını belirtmez. Örneğin, "<tt>width: auto</tt> bildirimli bir eleman yeniden konumlandığında neler olur? İçerik yeniden mi oluşturulur yoksa mevcut biçimleme korunur mu?" sorularının yanıtları bu belirtimin kapsamı dışındadır ve böyle bir davranış BB2'nin ilk gerçekleniminden muhtemelen farklı olacaktır.</p></note>
+</div2>
+
+<div2 id="comparison">
+<head>Normal akış, yüzen çerçeveler ve mutlak konumlama karşılaştırması</head>
+
+<p>Normal akış, <titleref ref="relative-positioning">göreli konumlama</titleref>, yüzen çerçeveler ve mutlak konumlama arasındaki farkları göstermek için aşağıdaki HTML belgeye dayanan bir dizi örnek hazırladık:</p>
+
+<eg><![CDATA[<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0//EN">
+<html>
+  <head>
+    <title>Konumlama şemalarının karşılaştırılması</title>
+<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+    <style type="text/css">
+      body  { display: block; line-height: 30px;
+             width: 240px; height: 240px;
+             background: #eee;
+             border: thin solid gray; }
+      p    { display: block; }
+      span { display: inline }
+    </style>
+  </head>
+  <body>
+    <p>Gövde içeriğinin başlangıcı.
+      <span id="harici"> Harici içeriğin başlangıcı.
+      <span id="dahili"> Dahili içeriğimiz.</span>
+      Harici içerik sonu.</span>
+      Gövde içeriğinin sonu.
+    </p>
+  </body>
+</html>]]></eg>
+
+<p><emph>harici</emph> ve <emph>dahili</emph> ID'li elemanlar tarafından üretilen çerçevelerin son konumları her örnekte değişmektedir. Belge penceresinin solundaki numaralar satırların <titleref ref="normal-flow">normal akıştaki</titleref> konumlarını belirtmektedir (Satır aralıkları normalden geniş tutulmuştur).</p>
+
+<div3 id="visuren81">
+<head>Normal akış</head>
+<p><emph>harici</emph> ve <emph>dahili</emph> ID seçicilerinin aşağıdaki bildirimlerinin çerçevelerin <titleref ref="normal-flow">normal akışını</titleref> değiştirmediğini varsayıyoruz:</p>
+
+<eg>#harici { color: red }
+#dahili { color: blue }</eg>
+
+<p>Bütün satıriçi içeriği <htmltag>p</htmltag> elemanı içerir: <titleref ref="anonymous">anonim satıriçi metin</titleref> ve iki <htmltag>span</htmltag> elemanı. Bundan başka, içeriğin tümü <titleref ref="containing-block">taşıyıcı blok</titleref>unu <htmltag>p</htmltag> elemanının oluşturduğu bir satıriçi biçimleme bağlamına yerleştirilir. Üretilen şöyle birşey olur:</p>
+
+<figure id="img-flow-generic">
+<graphic source="images/flow-generic.png" alt="Ebeveyn ve kardeş çerçeveler arasındaki metnin normal akışını gösteren resim." />
+[<loc href="images/longdesc/flow-generic-desc.html" title="Normal akış örneği resminin geniş açıklaması">Açıklama</loc>]
+</figure>
+</div3>
+
+<div3 id="visuren82">
+<head>Göreli konumlama</head>
+<p><titleref ref="relative-positioning">Göreli konumlamanın</titleref> etkisini görmek için kuralları şöyle değiştiriyoruz:</p>
+
+<eg>
+#harici { position: relative; top: -15px; color: red }
+#dahili { position: relative; top: +15px; color: blue }
+</eg>
+
+<p>Metin <emph>harici</emph> elemanına kadar normal akışını sürdürür. <emph>harici</emph> elemanının metni bundan sonra normal akış konumunda ve boyutlarında 1. satırın sonuna akar. Daha sonra (üç satıra dağılmış) metni içeren satıriçi çerçeveler  '-15px' kadar yukarı kaydırılır.</p>
+
+<p><emph>dahili</emph> elemanının içeriği, <emph>harici</emph> elemanının çocuğu olarak, "içeriğin başlangıcı." dizgesinin ardından normal olarak akışını sürdürecekti. Ancak, <emph>dahili</emph> elemanının içeriği kendini <emph>harici</emph> elemanının içeriğine göre '15px' aşağı kaydırarak 2. satırdaki eski konumuna döner.</p>
+
+<p><emph>harici</emph> elemanından sonraki içeriğin <emph>harici</emph> elemanının göreli konumlamasından etkilenmediğine dikkat ediniz.</p>
+
+<figure id="img-flow-relative">
+<graphic source="images/flow-relative.png" alt="Göreli konumlamanın bir çerçevenin içeriğine etkilerini gösteren resim." />
+[<loc href="images/longdesc/flow-relative-desc.html" title="Göreli konumlama örneği resminin geniş açıklaması">Açıklama</loc>]
+</figure>
+
+<p>Ayrıca, <emph>harici</emph> elemanının göreli konumunun '-30px' oluşuna, <emph>harici</emph> elemanının metninin gövde metni ile üstüste bineceğine de dikkat ediniz.</p>
+</div3>
+
+<div3 id="visuren83">
+<head>Bir çerçevenin yüzmesi</head>
+<p>Şimdi <emph>dahili</emph> elemanının metninin <titleref ref="floats">yüzdürülüp</titleref> sağa yanaştırılmasının etkisini görelim. Yeni kurallarımız şunlar olsun:</p>
+
+<eg>#harici { color: red }
+#dahili { color: blue;
+          width: 60px;
+          border: 1px dashed gray;
+          float: right; }</eg>
+
+<p>Normal akıştan alınıp yüzdürülerek sağa yanaştırılan <emph>dahili</emph> çerçevesine (genişlik <property>width</property> ile belirtilmiştir) kadar metin normal akışını sürdürür. Yüzer çerçevenin solunda kalan satır çerçeveleri kısalır ve belgenin kalan metni akışını bunlar üzerinden sürdürür.</p>
+
+<figure id="img-flow-float">
+<graphic source="images/flow-float.png" alt="Bir çerçevenin yüzdürülmesinin etkisini gösteren resim." />
+[<loc href="images/longdesc/flow-float-desc.html" title="Yüzen çerçeve örneği resminin geniş açıklaması">Açıklama</loc>]
+</figure>
+</div3>
+
+<div3 id="visuren84"><head>Mutlak konumlama</head>
+<p>Son olarak, <titleref ref="absolute-positioning">mutlak konumlamanın</titleref> etkisini ele alacağız. <emph>harici</emph> çerçevesinin tepesinin <titleref ref="containing-block">taşıyıcı blok</titleref>a göre konumlanmasını sağlayan <emph>harici</emph> ve
+<emph>dahili</emph> için BB bildirimleri şöyle olsun:</p>
+
+<eg>#harici {
+    position: absolute;
+    top: 100px; left: 110px;
+    width: 120px;
+    color: red;
+    border: thin dashed gray;
+}
+#dahili { color: blue }</eg>
+
+<p>Konumlu çerçevenin <titleref ref="containing-block">taşıyıcı blok</titleref>u en yakın konumlu üstsel tarafından oluşturulur. <emph>harici</emph> çerçevesinin üst kenarı taşıyıcı blokun üst kenarından 100px aşağıda ve sol kenarı da sol kenardan 110px sağda olacaktır. <emph>harici</emph> çerçevesinin çocuk çerçevesi akışını normal olarak ebeveynine göre sürdürür.</p>
+
+<figure id="img-flow-absolute">
+<graphic source="images/flow-absolute.png" alt="Bir çerçevenin mutlak olarak konumlanmasını gösteren resim" />
+[<loc href="images/longdesc/flow-absolute-desc.html" title="Mutlak konumlama örneği resminin geniş açıklaması">Açıklama</loc>]
+</figure>
+
+<p>Aşağıdaki örnekte <titleref ref="relative-positioning">göreli olarak konumlanmış</titleref> bir çerçevenin çocuk çerçevesi mutlak olarak konumlanmaktadır. Ebeveyn çerçeve olan <emph>harici</emph> çerçevesinin yeri aslında değişmiyor olsa da  <property>position</property> niteliğine <literal>relative</literal> değeri atanmakla konumlu astsallarına <titleref ref="containing-block">taşıyıcı blok</titleref> olmaktadır. <emph>harici</emph> çerçevesi birkaç satıra bölünmüş bir satıriçi çerçeve olup, ilk satıriçi çerçevenin üst ve sol kenarlarının kesim yeri (aşağıdaki resimde yeşil renkle vurgulanmıştır) <property>top</property> ve <property>left</property> nitelikleri için başlangıç noktasını oluştururlar.</p>
+
+<eg>#harici {
+  position: relative;
+  color: red
+}
+#dahili {
+  position: absolute;
+  top: 110px; left: 10px;
+  height: 60px; width: 60px;
+  color: blue;
+}</eg>
+
+<p>Sonuç olarak şöyle bir çıktı elde edilir:</p>
+
+<figure id="img-flow-abs-rel">
+<graphic source="images/flow-abs-rel.png" alt="Bir çerçevenin taşıyıcı blokuna göre mutlak olarak konumlanmasının etkilerini gösteren resim." />
+[<loc href="images/longdesc/flow-abs-rel-desc.html" title="Konumlu bir üstsele göre konumlama örneğinin resminin geniş açıklaması">Açıklama</loc>]
+</figure>
+
+<p><emph>harici</emph> çerçevesini konumlu bir <titleref ref="containing-block">taşıyıcı blok</titleref> haline getirmezsek:</p>
+
+<eg>#harici { color: red }</eg>
+
+<p><emph>dahili</emph> çerçevesinin taşıyıcı bloku <termref def="initial-containing-block">ilk taşıyıcı blok</termref> olur (örneğimiz için böyledir). Aşağıdaki resim böyle bir durumda  <emph>dahili</emph> çerçevesinin yerini göstermektedir:</p>
+
+<figure id="img-flow-static">
+<graphic source="images/flow-static.png" alt="Normal olarak konumlanan bir ebeveyn tarafından oluşturulan bir taşıyıcı çerçeveye göre bir çerçevenin mutlak olarak konumlanmasını gösteren resim." />
+[<loc href="images/longdesc/flow-static-desc.html" title="İlk taşıyıcı bloka göre mutlak konumlamayı gösteren resmin geniş açıklaması">Açıklama</loc>]
+</figure>
+
+<example>
+<p>Göreli ve mutlak konumlama aşağıdaki örnekte görüldüğü gibi metne işaret çizgileri yerleştirmekte kullanılabilir. Şöyle bir belgemiz olduğunu varsayalım:</p>
+
+<eg><![CDATA[<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0//EN">
+<html>
+  <head>
+    <title>Sözcük imleme</title>
+<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+    <style type="text/css">
+      div  { margin:2em; padding: 0 1em 0 3em;
+             border: solid gray; border-width: 0 1px }
+      p    { position: relative; }
+      span { position: absolute; top: auto; left: -2em;
+             color: red; }
+    </style>
+  </head>
+  <body>
+  <div>
+<p>Bir işaretçi yapmak için "=>" dizgesini kullandım.
+BU<span>=></span> sözcüğünün bulunduğu satırı göstermek
+üzere paragrafın solundaki boşlukta "yüzecek".</p>
+  </div>
+  </body>
+</html>]]></eg>
+
+<p>Bu belgenin sonucu şöyle birşey olurdu (Ç.N. - Kodu denemenizi öneririm. Tarayıcının genişliğini azaltıp arttırarak imlecin gezinişini izleyebilirsiniz):</p>
+
+<figure id="img-changebar">
+<graphic source="images/changebar.png" alt="İmleç etkisi oluşturmak için yüzen çerçeve kullanımını gösteren resim." />
+[<loc href="images/longdesc/changebar-desc.html" title="İmleç örneğinin geniş açıklaması">Açıklama</loc>]
+</figure>
+
+<p>Paragrafın sol kenarı <titleref ref="containing-block">taşıyıcı blok</titleref>un sol kenarından '3em' sağa, sağ kenarı da sağ kenardan '1em' sola kaydırılarak paragrafın içeriği oluşturulur. İmleç görevini yapan "=>" dizgesi normal akıştan alınıp geçerli satıra (<tt>top: auto</tt> olduğundan) konumlanır. Sonuçta bir imleç paragrafın solunda "yüzüyormuş" gibi görünür.</p>
+</example>
+</div3>
+</div2>
+
+<div2 id="visuren9">
+<head>Katmanlı sunum</head>
+
+<p><emph>Aşağıdaki bölümlerde "ön" dendiğinde ekranda kullanıcıya en yakın katmandan bahsediliyor olacaktır.</emph></p>
+
+<p>BB2'de her çerçeve üç boyutta konumlanır. Yatay ve düşey konumlara ek olarak çerçeveler "z-ekseni" boyunca da konumlanabilirler ve diğerlerine göre üstte kalan biçimlenir. Z-eksenli konumlar özellikle çerçeveler görsel olarak üstüste bindiği durumlara uygundur. Bu bölümde çerçevelerin z ekseni boyunca nasıl konumlandıkları incelenecektir.</p>
+
+<p><indexterm><primary>yığın bağlamı</primary></indexterm>
+<indexterm><primary>yığıt seviyesi</primary></indexterm>
+Her çerçeve bir <term>yığın bağlamı</term>na aittir. <termdef id="stack-level" term="Yığıt seviyesi">Belli bir yığın bağlamındaki her çerçeve için, bağlamdaki diğer çerçevelere göre z eksenindeki yerini gösteren tamsayı türünde bir <term>yığıt seviyesi</term> vardır. Yığıt seviyesi daha büyük olan çerçeveler daima düşük olanların önünde biçimlenir. Çerçeveler negatif yığıt seviyelerine sahip olabilirler. Bir yığın bağlamında aynı yığıt seviyesine sahip çerçeveler belge ağacındaki sıraya göre aşağıdan yukarıya doğru yığılırlar</termdef>.</p>
+
+<p><indexterm><primary>kök yığın bağlamı</primary></indexterm>
+<indexterm><primary>yerel yığın bağlamı</primary></indexterm>
+<termref def="root">Kök</termref> eleman bir <term>kök yığın bağlamı</term> oluştururken diğer elemanlar <term>yerel yığın bağlamları</term> oluşturabilirler. Yığın bağlamları kalıtsaldır. Bir yerel yığın bağlamı atomsaldır; diğer yığın bağlamlarındaki çerçeveler onun çerçevelerinin arasına girmezler.</p>
+
+<p>Bir yerel yığın bağlamı oluşturan bir eleman, iki yığıt seviyesine sahip bir çerçeve oluşturur: yığıt seviyelerinden biri onu oluşturan yığın bağlamı için (daima '0'dır), diğeri ait olduğu yığın bağlamı içindir (<property>z-index</property> niteliği ile belirtilen bu ikinci seviyedir).</p>
+
+<p><property>z-index</property> niteliği ile farklı bir değer belirtilmedikçe, bir elemanın çerçevesi ebeveyninin çerçevesi ile aynı yığıt seviyesine sahiptir.</p>
+
+
+<div3 id="z-index">
+<head>Yığıt seviyesinin belirtilmesi: <property>z-index</property> niteliği</head>
+
+<indexterm><primary><property>z-index</property></primary></indexterm>
+<indexterm><primary>nitelikler</primary> <secondary><property>z-index</property></secondary></indexterm>
+<propinfo>
+  <propname>z-index</propname>
+  <value><literal>auto</literal> | <valueref>tamsayı</valueref> | <literal>inherit</literal></value>
+  <initial><literal>auto</literal></initial>
+  <applies-to><termref def="positioned-element">konumlu elemanlar</termref></applies-to>
+  <inherited>hayır</inherited>
+  <percentages/>
+  <media><termref def="visual-media-group">görsel</termref></media>
+</propinfo>
+
+<p>Bir konumlu çerçeve için <property>z-index</property> niteliği şunları belirtir:</p>
+
+<olist>
+<item><p>Çerçevenin geçerli yığın bağlamında yığıt seviyesi.</p></item>
+<item><p>Çerçevenin bir yığın bağlamı oluşturup oluşturmadığı.</p></item>
+</olist>
+
+<p>Değerlerin anlamları şunlardır:</p>
+
+<varlist>
+<gitem>
+<label><indexterm><primary><valueref>tamsayı</valueref></primary></indexterm>
+<indexterm><primary><valueref>tamsayı</valueref></primary></indexterm>
+<valueref>tamsayı</valueref></label>
+<def><p>Bu <valueref>tamsayı</valueref> üretilen çerçevenin geçerli yığın bağlamındaki yığıt seviyesini belirtir. Çerçeve ayrıca kendi yığıt seviyesi '0' olan bir yerel yığın bağlamı oluşturur.</p></def>
+</gitem>
+<gitem>
+<label><indexterm><primary><literal>auto</literal></primary></indexterm>
+<literal>auto</literal></label>
+<def><p>Üretilen çerçevenin geçerli yığın bağlamındaki yığıt seviyesi ebeveyninin yığıt seviyesi ile aynıdır. Çerçeve ayrıca bir yerel yığın bağlamı oluşturmaz.</p></def>
+</gitem>
+</varlist>
+
+<example>
+<p>Aşağıdaki örnekte, çerçevelerin yığıt seviyeleri şöyledir ("id" özniteliklerinin isimlerine göre):: "text2"=0, "image"=1, "text3"=2 ve "text1"=3. "text2" yığıt seviyesi kök çerçeveden miras alınmıştır. Diğerlerinin yığıt seviyeleri <property>z-index</property> niteliği ile belirtilmiştir.</p>
+
+<eg><![CDATA[<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0//EN">
+<html>
+  <head>
+    <title>Z-eksenli konumlama</title>
+<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+    <style type="text/css">
+      .pile { position: absolute;
+              left: 2cm;
+              top: 2cm;
+              width: 8cm;
+              height: 8cm; }
+    </style>
+  </head>
+  <body>
+    <p>
+      <img id="image" class="pile"
+           src="butterfly.gif" alt="Bir&#10;kelebek&#10;resmi"
+           style="z-index: 1; font-size: 220%; color:magenta">
+
+    <div id="text1" class="pile"
+      style="z-index: 3; font-size: 250%; color:lime">
+      <p style="position: relative; left: -1.5cm; top: -1.8cm">
+      Bu metin kelebek resminin önünde olacak.</p>
+    </div>
+
+    <div id="text2" class="pile"
+      style="font-size: 180%; color:orange">
+      <p style="position: relative; left: -1cm; top: 0.5cm">
+      Bu metin herşeyin<br>arkasında kalacaktır.</br>
+    </div>
+
+    <div id="text3" class="pile"
+      style="z-index: 2; font-size: 200%; color:cyan">
+      <p style="position: relative; left: -0.5cm; top: -2cm">
+      Bu metin kelebek resminin önünde, yeşil metnin arkasında
+      kalacaktır.</p>
+    </div>
+  </body>
+</html>]]></eg>
+
+<figure id="img-z-index">
+<graphic source="images/z-index.png" alt="Yığıt seviyesinin etkisini gösteren resim" />
+</figure>
+
+<p>Bu örneğin isteneni vermesi şeffaflığın sonucudur. Bir çerçevenin öntanımlı davranışı içeriğindeki şeffaf alanlardan arkasındakilerin görünmesini sağlamaktır. Örnekte her çerçeve şeffaf olarak bir diğerinin önünde yer almaktadır. Bu davranış mevcut <titleref ref="background-properties">artalan nitelikleri</titleref> kullanılarak geçersiz kılınabilir.</p>
+</example>
+</div3>
+</div2>
+
+<div2 id="direction">
+<head>Metin yazma yönü: <property>direction</property> ve <property>unicode-bidi</property> nitelikleri</head>
+
+<p><indexterm><primary>çift yönlülük (bidi)</primary></indexterm>
+Bazı metinlerde karakterler sağdan sola yazılırken bazı belgelerde, özellikle Arapça ve İbranice metinlerde ve bazı karışık dilli bağlamlarda bazı metin bloklarında (görsel olarak) her iki yönde de yazılmış yazılara rastlanır. Buna <term>çift yönlülük</term> (İng: bidirectionality) denir ve uluslararası bilişim bağlamında kısaca <term>bidi</term> denir.</p>
+
+<p>Unicode standardı (<bibref ref="ref-UNICODE"/>, 3.11. bölüm) metnin yönünü düzgün saptamak için karmaşık bir algoritma tanımlar. Algoritmanın örtük kısmı karakter özelliklerine dayanır, açık denetimler iç içelik ve üstün gelmeyle ilgilidir. BB2 çift yönlülüğün gerektiği gibi oluşturulması için bu algoritmaya güvenir. <property>direction</property> ve <property>unicode-bidi</property> nitelikleri yazarlara, bu algoritmayla eşleşmenin nasıl sağlanacağını belgenin eleman ve özniteliklerinde belirtme imkanı verir.</p>
+
+<p>Bir belge sağdan sola yazılmış karakterler içeriyorsa ve kullanıcı arayüzü bunları soru imi, boş kutu, karakter kodu gibi yaklaşımları kullanmaksızın doğrudan harfleri ile gösteriyorsa, kullanıcı arayüzü çift yönlülük algoritmasını uygulamalıdır. Kullanıcı arayüzlerinin sadece soldan sağa yazılmış karakterler içeren metinler için çift yönlülük algoritmasını uygulamaları gerekmez. Bu tek taraflı gereksinim bir olgunun yansımasıdır: her Arapça veya İbranice belge çift yönlü metinleri karışık olarak içermese de, çoğunlukla diğer dillerden alıntılar ve sayılar soldan sağa yazılırlar.</p>
+
+<p>Bir metnin yönü belge dilinin yapısına ve anlambilgisine bağlı olduğundan bu nitelikler çoğunlukla belge türü bildirimleri (DTD'leri) yazarlarınca veya özel belge yazarlarınca kullanılır. Bir öntanımlı biçembent bu nitelikleri belirtiyorsa, yazarların ve kullanıcıların bu kuralları geçersiz kılmaya çalışmamaları önerilir. Bir kullanıcı arayüzünün çift yönlülük davranışını geçersiz kılmanın tek istisnası, kullanıcının Eskenazi dilindeki karakterleri (çoğu İbranice karakterlerdir) latin harfleriyle değiştirerek okuma isteği olurdu.</p>
+
+<p>HTML 4.0 belirtimi (<bibref ref="ref-HTML40"/>, 8.2. bölüm) HTML belgelerdeki çift yönlülük davranışını tanımlamıştır. Bu davranışı elde etmek için kullanılacak biçembent kuralları <bibref ref="ref-HTML40"/> için <termref def="bidi">örnek biçembent</termref>te belirtilmiştir. Çift yönlülük konusunda HTML 4.0 belirtiminde daha fazla bilgi vardır.</p>
+
+<indexterm><primary><property>direction</property></primary></indexterm>
+<indexterm><primary>nitelikler</primary> <secondary><property>direction</property></secondary></indexterm>
+<propinfo>
+  <propname>direction</propname>
+  <value><literal>ltr</literal> | <literal>rtl</literal> | <literal>inherit</literal></value>
+  <initial><literal>ltr</literal></initial>
+  <applies-to>tüm elemanlar, ama metne de bakın</applies-to>
+  <inherited>evet</inherited>
+  <percentages/>
+  <media><termref def="visual-media-group">görsel</termref></media>
+</propinfo>
+
+<p>Bu nitelik temel yazma yönünü ve Unicode çift yönlülük algoritması (<property>unicode-bidi</property>) için iç içelik ve üstün gelme yönünü belirtir. Ek olarak, <titleref ref="tables">tablo</titleref> sütunlarının yerleşim yönünü, yatay <titleref ref="overflow">taşma</titleref> yönünü ve bir blokta <code>text-align: justify</code> durumunda son satırın konumunu  belirtir (böyle bir durumda son satır daima yazma yönünün başlangıç kenarına yanaşık oluşturulur).</p>
+
+<p>Bu niteliğin değerlerinin anlamları:</p>
+<varlist><gitem>
+<label><indexterm><primary><literal>ltr</literal></primary></indexterm>
+<literal>ltr</literal></label>
+<def><p>Yönü soldan sağa olarak belirtir.</p></def>
+</gitem>
+<gitem>
+<label><indexterm><primary><literal>rtl</literal></primary></indexterm>
+<literal>rtl</literal></label>
+<def><p>Yönü sağdan sola olarak belirtir.</p></def>
+</gitem>
+</varlist>
+
+<p><property>direction</property> niteliğinin satıriçi seviyeden elemanlar üzerinde etkili olabilmesi için <property>unicode-bidi</property> niteliğinin değerinin <literal>embed</literal> veya <literal>override</literal> olması gerekir.</p>
+
+<note><p><property>direction</property> niteliği, tabloların sütun elemanlarında belirtildiği takdirde, sütunlar belge ağacında mevcut olmadıklarından dolayı sütundaki gözeler tarafından miras alınmazlar. Bu bakımdan BB, <bibref ref="ref-HTML40"/>, 11.3.2.1. bölümünde açıklanan '<tt>dir</tt>' özniteliğinin miras alınma kurallarını kolayca elde edemez.</p></note>
+
+<indexterm><primary><property>unicode-bidi</property></primary></indexterm>
+<indexterm><primary>nitelikler</primary> <secondary><property>unicode-bidi</property></secondary></indexterm>
+<propinfo>
+  <propname>unicode-bidi</propname>
+  <value><literal>normal</literal> | <literal>embed</literal> | <literal>bidi-override</literal> | <literal>inherit</literal></value>
+  <initial><literal>normal</literal></initial>
+  <applies-to>tüm elemanlar, ama metne de bakın</applies-to>
+  <inherited>hayır</inherited>
+  <percentages/>
+  <media><termref def="visual-media-group">görsel</termref></media>
+</propinfo>
+
+<p>Bu niteliğin değerlerinin anlamları:</p>
+
+<varlist><gitem>
+<label><indexterm><primary><literal>normal</literal></primary></indexterm>
+<literal>normal</literal></label>
+<def><p>Eleman, çift yönlülük algoritması ile ilgili olarak ek bir iç içelik seviyesi açmaz. Satıriçi seviyeden elemanlar için yeniden sıralama eleman sınırları boyunca örtük olarak çalışır.</p></def>
+</gitem>
+<gitem>
+<label><indexterm><primary><literal>embed</literal></primary></indexterm>
+<literal>embed</literal></label>
+<def><p>Eğer eleman bir satıriçi seviyeden elemansa çift yönlülük algoritması ile ilgili olarak ek bir iç içelik seviyesi açılır. Bu iç içelik seviyesinin yönü <property>direction</property> niteliği ile belirtilir. Elemanın içinde yeniden sıralama örtük olarak yapılır. Bu, elemanın başında bir LRE (U+202A; <code>direction: ltr</code> için) veya RLE (U+202B; <code>direction: rtl</code> için) ve sonunda bir PDF (U+202C) eklemeye eşdeğerdir.</p></def>
+</gitem>
+<gitem>
+<label><indexterm><primary><literal>bidi-override</literal></primary></indexterm>
+<literal>bidi-override</literal></label>
+<def><p>Eğer eleman, sadece satıriçi seviyeden elemanlar içeren bir satıriçi veya <termref def="block-level">blok seviyesinden</termref> bir elemansa bu bir üstün gelme durumu oluşturur. Yani, elemanın içindeki yeniden sıralama kesin olarak <property>direction</property> niteliği ile belirtilen yöne göre yapılır; algoritmanın örtük kısmı yoksayılır. Bu, elemanın başlangıcına bir LRO (U+202D; <code>direction: ltr</code> için) veya RLO (U+202E; <code>direction: rtl</code> için) ve elemanın sonuna bir PDF (U+202C) eklemeye eşdeğerdir.</p></def>
+</gitem>
+</varlist>
+
+<p>Her <termref def="block-level">blok seviyesinden</termref> eleman için son sıralama, bidi denetim kodlarının yukarıda açıklandığı gibi eklendiği, imlenimin ayıklandığı ve elde edilen karakter dizisinin biçemli metinle aynı satır kesmeleriyle üretilmiş salt metninin Unicode çift yönlülük algoritmasının bir gerçeklenimine aktarıldığı durumla aynıdır. Bu süreçte, resimler gibi metinsel olmayan öğeler, <literal>normal</literal> değerli bir <property>unicode-bidi</property> niteliğine sahip olmadıkça  yönsüz karakterler olarak ele alınırlar. Aksi takdirde, kesinlikle eleman için belirtilen yönde karakterler olarak ele alınırlar.</p>
+
+<p>Tek yönlü (ya tamamen soldan sağa ya da tamamen sağdan sola) satıriçi çerçevelerde akışı mümkün kılmak için başka satıriçi çerçevelerin (anonim satıriçi çerçeveler dahil) oluşturulması ve bazı satıriçi çerçevelerin de akış gerçekleştirmeden önce ayrılması yeniden sıralanması gerekebilir.</p>
+
+<p>Unicode algoritması azami 15 seviyelik iç içelik seviyesine sahip olduğundan, gerekli olmadıkça <property>unicode-bidi</property> niteliğinin <literal>normal</literal>'den farklı bir  değerle kullanılmaması gerekir. Özellikle <literal>inherit</literal> değerinin azami dikkatle kullanılması gerekir. Bununla birlikte, genelde, blok olarak gösterilmek üzere tasarlanmış elemanlar için gösterimin satıriçine değiştiği durumla birlikte ele almak için <tt>unicode-bidi: embed</tt> ataması tercih edilmelidir (aşağıdaki örneğe bakınız).</p>
+
+<p><indexterm><primary>DTD</primary></indexterm>
+Aşağıdaki örnekte çift yönlü metin içeren bir XML belge gösterilmiştir. Önemli bir tasarım ilkesini görselleştirir: DTD tasarımcıları çift yönlülüğü dile uygun (elemanlar ve öznitelikler) olmaktan başka belgeye eşlik eden biçembende de uygun olarak ele almalıdırlar. Biçembentler, bidi kuralları diğer biçembent kurallarından ayrılabilecek şekilde tasarlanmalıdır. Belge dilinin veya DTD'nin bidi davranışını korumak için bidi kuralları diğer biçembent kuralları tarafından geçersiz kılınmamalıdır.</p>
+
+<example>
+<p>Bu örnekte, temelde soldan sağa yazılmış karakterler küçük harflerle diğerleri büyük harflerle gösterilmiştir:</p>
+
+<eg><![CDATA[<HEBREW>
+  <PAR>HEBREW1 HEBREW2 english3 HEBREW4 HEBREW5</PAR>
+  <PAR>HEBREW6 <EMPH>HEBREW7</EMPH> HEBREW8</PAR>
+</HEBREW>
+<ENGLISH>
+  <PAR>english9 english10 english11 HEBREW12 HEBREW13</PAR>
+  <PAR>english14 english15 english16</PAR>
+  <PAR>english17 <HE-QUO>HEBREW18 english19 HEBREW20</HE-QUO></PAR>
+</ENGLISH>]]></eg>
+
+<p>Bu belge XML olduğundan, yazma yönünün ayarlanmasından sadece biçembent sorumlu olacaktır. Biçembendin şöyle olduğunu varsayıyoruz::</p>
+
+<eg>
+/* Bidi kuralları*/
+HEBREW, HE-QUO  {direction: rtl; unicode-bidi: embed}
+ENGLISH         {direction: ltr; unicode-bidi: embed}
+
+/* Sunum kuralları */
+HEBREW, ENGLISH, PAR  {display: block}
+EMPH                  {font-weight: bold}
+</eg>
+
+<p>HEBREW elemanı temel yazma yönü sağdan sola olan bir blok, ENGLISH elemanı da temel yazma yönü soldan sağa olan bir bloktur. PAR elemanları temel yazma yönlerini ebeveynlerinden miras alan bloklardır. Bu bakından ilk iki PAR üst sağdan başlanarak okunurken son üçü üst soldan başlanarak okunur. Eleman isimleri olarak HEBREW (İbranice) ve ENGLISH (İngilizce) sadece anlaşılırlığı arttırmak için dil isimleriyle aynı seçilmiştir; genelde, eleman isimlerinin eleman içerik dilinin adıyla aynı olmamaları gerekir.</p>
+
+<p>EMPH elemanı satıriçi seviyeden olduğundan ve <property>unicode-bidi</property> niteliğinin değeri <literal>normal</literal> olduğundan (ilk değer), metnin sıralanışında etkili değildir. Diğer taraftan, HE-QUO elemanı bir iç içelik oluşturur.</p>
+
+<p>Satır yeterli uzunlukta olduğu takdirde bu metnin biçimlenmiş hali şöyle olurdu:</p>
+
+<eg role="ascii-art">
+               5WERBEH 4WERBEH english3 2WERBEH 1WERBEH
+
+                                8WERBEH <kw>7WERBEH</kw> 6WERBEH
+
+english9 english10 english11 13WERBEH 12WERBEH
+
+english14 english15 english16
+
+english17 20WERBEH english19 18WERBEH</eg>
+
+<p>HE-QUO iç içeliğinin HEBREW18'in english19'un sağında kalmasına sebep oluşuna dikkat ediniz.</p>
+
+<p>Satırlar yeterince uzun olmadığı takdirde biçimleme şöyle olurdu:</p>
+
+<eg role="ascii-art">
+       2WERBEH 1WERBEH
+  -EH 4WERBEH english3
+                 5WERB
+
+   -EH <kw>7WERBEH</kw> 6WERBEH
+                 8WERB
+
+english9 english10 en-
+glish11 12WERBEH
+13WERBEH
+
+english14 english15
+english16
+
+english17 18WERBEH
+20WERBEH english19
+</eg>
+
+<p>HEBREW18'in english19'dan önce okunması gerektiğinden, HEBREW18, english19'un üst satırında kalır. Satırın bundan daha fazla kısaltılması bu sonucun elde edilmesini sağlamazdı. Ayrıca, english19'un ilk bir kaç harfinin üst satırda kalması sağdan sola yazılan bir bağlamda hece çizgisinin satırın ortasında kalmasına yol açacağından genellikle böyle bir hece çizgisi gösterilmez.</p>
+</example>
+</div2>
+</div1>
+
+
