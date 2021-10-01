@@ -1,0 +1,445 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ********************************************************************
+         htb-qdisc.xml
+     ******************************************************************** -->
+<part xml:id="htb-qdisc" xmlns="http://docbook.org/ns/docbook"
+      xmlns:xlink="http://www.w3.org/1999/xlink" version="5.0" xml:lang="tr">
+ <info>
+  <title>HTB Linux Kuyruklama Düzeni Kullanıcı Kılavuzu</title>
+  <authorgroup>
+   <author>
+    <personname>
+     <firstname>Martin "devik" Devera</firstname>
+    </personname>
+    <contrib>
+     <email>devik@cdi.cz</email>
+    </contrib>
+   </author>
+   <author>
+    <personname>
+     <firstname>Don Cohen</firstname>
+    </personname>
+   </author>
+   <author role="translator">
+    <personname>
+     <firstname>Nilgün Belma Bugüner</firstname>
+    </personname>
+    <contrib>
+     <email>-nilgun@belgeler·gen·tr</email>
+    </contrib>
+   </author>
+  </authorgroup>
+  <pubdate>Ekim 2006</pubdate>
+  <revhistory>
+   <revision>
+    <revnumber>1.0</revnumber>
+    <date>Ekim 2006</date>
+    <authorinitials>NBB</authorinitials>
+    <revremark>İlk çeviri</revremark>
+   </revision>
+   <revision>
+    <revnumber>?</revnumber>
+    <date>5 Mayıs 2002</date>
+    <authorinitials>MD ve DC</authorinitials>
+    <revremark>Özgün sürüm</revremark>
+   </revision>
+  </revhistory>
+  <legalnotice>
+   <para>
+Bu belgenin, "HTB Linux Kuyruklama Düzeni Kullanıcı Kılavuzu" çevirisinin  telif hakkı © 2006 Nilgün Belma Bugüner'e, özgün İngilizce sürümünün telif hakkı © 2002 Martin Devera'ya aittir. Bu belgeyi, Free Software Foundation tarafından yayınlanmış bulunan GNU Genel Kamu Lisansının 2.0 ya da daha sonraki sürümünün koşullarına bağlı kalarak kopyalayabilir, dağıtabilir ve/veya değiştirebilirsiniz. Bu Lisansın bir kopyasını <uri xlink:href="http://www.gnu.org/licenses/gpl.html">http://www.gnu.org/licenses/gpl.html</uri> adresinde bulabilirsiniz.
+</para>
+   <para>
+BU BELGE "ÜCRETSİZ" OLARAK RUHSATLANDIĞI İÇİN, İÇERDİĞİ BİLGİLER İÇİN İLGİLİ KANUNLARIN İZİN VERDİĞİ ÖLÇÜDE HERHANGİ BİR GARANTİ VERİLMEMEKTEDİR. AKSİ YAZILI OLARAK BELİRTİLMEDİĞİ MÜDDETÇE TELİF HAKKI SAHİPLERİ VE/VEYA BAŞKA ŞAHISLAR BELGEYİ "OLDUĞU GİBİ", AŞİKAR VEYA ZIMNEN, SATILABİLİRLİĞİ VEYA HERHANGİ BİR AMACA UYGUNLUĞU DA DAHİL OLMAK ÜZERE HİÇBİR GARANTİ VERMEKSİZİN DAĞITMAKTADIRLAR. BİLGİNİN KALİTESİ İLE İLGİLİ TÜM SORUNLAR SİZE AİTTİR. HERHANGİ BİR HATALI BİLGİDEN DOLAYI DOĞABİLECEK OLAN BÜTÜN SERVİS, TAMİR VEYA DÜZELTME MASRAFLARI SİZE AİTTİR.
+</para>
+   <para>
+İLGİLİ KANUNUN İCBAR ETTİĞİ DURUMLAR VEYA YAZILI ANLAŞMA HARİCİNDE HERHANGİ BİR ŞEKİLDE TELİF HAKKI SAHİBİ VEYA YUKARIDA İZİN VERİLDİĞİ ŞEKİLDE BELGEYİ DEĞİŞTİREN VEYA YENİDEN DAĞITAN HERHANGİ BİR KİŞİ, BİLGİNİN KULLANIMI VEYA KULLANILAMAMASI (VEYA VERİ KAYBI OLUŞMASI, VERİNİN YANLIŞ HALE GELMESİ, SİZİN VEYA ÜÇÜNCÜ ŞAHISLARIN ZARARA UĞRAMASI VEYA BİLGİLERİN BAŞKA BİLGİLERLE UYUMSUZ OLMASI) YÜZÜNDEN OLUŞAN GENEL, ÖZEL, DOĞRUDAN YA DA DOLAYLI HERHANGİ BİR ZARARDAN, BÖYLE BİR TAZMİNAT TALEBİ TELİF HAKKI SAHİBİ VEYA İLGİLİ KİŞİYE BİLDİRİLMİŞ OLSA DAHİ, SORUMLU DEĞİLDİR.
+</para>
+   <para>
+Tüm telif hakları aksi özellikle belirtilmediği sürece sahibine aittir. Belge içinde geçen herhangi bir terim, bir ticari isim ya da kuruma itibar kazandırma olarak algılanmamalıdır. Bir ürün ya da markanın kullanılmış olması ona onay verildiği anlamında görülmemelidir.
+    </para>
+  </legalnotice>
+ </info>
+ <chapter xml:id="htb-qdisc.intro">
+  <info>
+   <title>Giriş</title>
+  </info>
+  <para>
+HTB (Hierarchical Token Buckets - Hiyerarşik Dizgecik Demetleri), Linux'taki CBQ kuyruklama düzeni algoritmasının yerini almak üzere tasarlanmış olup ondan daha hızlı, daha sezgisel ve daha kolay anlaşılır bir kuyruklama düzeni algoritmasıdır. CBQ ve HTB, her ikisi de belli bir bağlantı üzerinde çıkış band genişliği kullanımını denetim altında tutmaya yardımcı olurlar. Her ikisi de tek bir fiziksel bağlantıyı çok sayıda daha yavaş bağlantı şeklinde taklit ederler ve farklı trafik türlerini farklı taklit edilmiş bağlantılardan gönderirler. Her iki düzende de, fiziksel bağlantının nasıl taklit bağlantılara bölüneceğini ve hangi taklit bağlantı üzerinden hangi paketlerin gideceğine nasıl karar verileceğini belirtebilirsiniz.
+</para>
+  <para>
+Bu belge HTB algoritmasını nasıl kullanacağınızı gösterir. Çoğu bölümü örnekler, çizgeler (ölçülmüş verilerle) ve bellibaşlı sorunların incelemelerini içerir.
+</para>
+  <para>
+HTB'nin bu sürümünün daha ölçeklenebilir olması lazım. Karşılaştırma için <link xlink:href="http://luxik.cdi.cz/~devik/qos/htb/">HTB ana sayfasına</link> bakınız.
+</para>
+  <important>
+   <info>
+    <title>Lütfen okuyun:</title>
+   </info>
+   <para><command>tc</command> aracı (sadece HTB değil), hız birimlerin belirtmek için kısaltmaları kullanır. <command>kbps</command>, kilo<command>bayt</command> anlamına ve <command>kbit</command> kilo<command>bit</command> anlamına gelir! Bu, Linux'ta <command>tc</command> ile ilgili olarak en sık sorulan sorudur.
+</para>
+  </important>
+ </chapter>
+ <chapter xml:id="htb-qdisc.sharing">
+  <info>
+   <title>Bağlantı Paylaşımı</title>
+  </info>
+  <inlinemediaobject>
+   <imageobject>
+    <imagedata align="right" fileref="Ag2Leaf3flat.gif" format="GIF"/>
+   </imageobject>
+  </inlinemediaobject>
+  <example>
+   <info>
+    <title>Sorunumuz:</title>
+   </info>
+   <blockquote>
+    <para>
+A ve B diye iki müşterimiz olsun, her ikisi de ağa <literal>eth0</literal> üzerinden bağlanıyor olsun. B'ye 60 kbps, A'ya 40 kbps ayırmak istiyor olalım. Ayrıca, A'nın band genişliğinin 30 kbps'sini WWW için, 10 kbps'sini de kalan herşey için kullanılmak üzere bölmek istiyor olalım. Kullanılmayan band genişlikleri de ihtiyaç olduğunda sınıflar (alt bağlantılar) tarafından (paylarına göre) kullanılsın istiyoruz.
+</para>
+   </blockquote>
+  </example>
+  <para><emphasis role="bold">HTB, her sınıfa, o sınıfa atanmış olan miktarı, talep olduğunda, asgari miktar olarak garanti eder</emphasis>. Bir sınıf kendine adanmış miktardan daha azını isterse, kalan band genişliği hizmet isteyen diğer sınıflara dağıtılır.
+</para>
+  <para>
+Ayrıca, <link xlink:href="http://luxik.cdi.cz/~devik/qos/htb/manual/theory.htm">HTB teorisi</link> ile ilgili belgeye de bakınız; yukarıdaki görevi daha ayrıntılı açıklar.
+</para>
+  <note>
+   <info>
+    <title>"borrowing" hakkında</title>
+   </info>
+   <para>
+Literatürde buna (band genişliğinde fazlalığın ihtiyacı olana verilmesi) "borrowing" (borçlanma/borçlandırma) deniyormuş. Bence "yardımlaşma" amaca daha uygun; çünkü, planlı bir geri ödeme durumu sözkonusu değil. Yazar da bunu belirtmiş ama bir terim önermeyip literatüre bağlı kalmış. Bizim literatür yeni oluştuğu için biz en uygun terimi seçebiliriz.
+</para>
+  </note>
+  <para>
+Trafiğin yukarıdaki farklı çeşitleri HTB'de  sınıflarla ifade edilir. En basit yaklaşım resimle göstermektir. Gelin, kullanılacak komutlara bakalım:
+</para>
+  <screen>
+tc qdisc add dev eth0 root handle 1: htb default 12
+</screen>
+  <para>
+Bu komut, HTB kuyruklama düzenini <literal>eth0</literal> ile ilişkilendirir ve ona bir belirteç (<literal>handle</literal>), <command>1:</command> atar. Bu sadece gerektiğinde ona başvururken kullanılacak bir isimdir. <command>default 12</command> ise başka türlü sınıflanmamış her türlü trafiğin <literal>1:12</literal> sınıfına ait olacağını belirtir.
+</para>
+  <note>
+   <para>
+Genelde (sadece HTB için değil, <command>tc</command>'deki tüm kuyruklama düzenleri ve sınıfları için), belirteçler <literal>x:y</literal> biçiminde yazılırlar; burada <literal>x</literal> bir kuyruklama düzenini<footnote><para>Ç.N. - qdisc, Türkçeye "kuyruklama düzeni" olarak çevrilebilen "queue discipline" kısaltmasıdır; bir disk çeşidi değildir.</para></footnote> tanımlayan bir tamsayı, <literal>y</literal> ise bu kuyruklama düzeninin üyesi olan bir sınıfı tanımlayan bir tamsayıdır. Kuyruklama düzeninin kendisini belirten belirtecin <literal>y</literal> değeri sıfır olmalı, bir sınıfı belirten belirtecin ki ise sıfırdan farklı bir sayı olmalıdır. Yukarıdaki <command>1:</command>, <command>1:0</command> olarak ele alınır.
+</para>
+  </note>
+  <screen>
+tc class add dev eth0 parent 1: classid 1:1 htb rate 100kbps ceil 100kbps
+tc class add dev eth0 parent 1:1 classid 1:10 htb rate 30kbps ceil 100kbps
+tc class add dev eth0 parent 1:1 classid 1:11 htb rate 10kbps ceil 100kbps
+tc class add dev eth0 parent 1:1 classid 1:12 htb rate 60kbps ceil 100kbps
+</screen>
+  <para>
+İlk satır <command>1:</command> kuyruklama düzeni altında bir kök ("root") sınıf, <command>1:1</command> sınıfını oluşturur. Bir kök sınıfın tanımı, atası gibi tek başına bir HTB kuyruklama düzeni olmaktır. Bir kök sınıf, HTB kuyruklama düzeninin altındaki diğer sınıflar gibi kendi çocuklarının aralarında yardımlaşmasına izin verir, fakat bir kök sınıf kendi seviyesindeki bir başka sınıfla yardımlaşamaz. Biz diğer üç sınıfı doğrudan HTB düzeni altında oluşturmuştuk, ancak birinin band genişliğindeki bir fazlalığın bir diğerine yararı olmayacaktı. Halbuki biz yardımlaşma olsun istiyorduk. Bu durumda, kök sınıf olarak hizmet verecek  ek bir sınıf oluşturup, gerçek veriyi taşıyacak sınıfları bunun altına koymalıydık. Bunlar son üç satırda tanımlanmışlardır. <literal>ceil</literal> parametresi aşağıda açıklanacaktır.
+</para>
+  <note>
+   <para>
+Bazan bana soruyorlar, "<literal>dev eth0</literal> neden sürekli tekrarlanıyor, zaten <literal>handle</literal> veya <literal>parent</literal> kullanılıyor." diye. Bunun sebebi belirteçlerin arabirime özgü olmaları, yani, eth0 ve eth1'in her ikisi de kendi 1:1 sınıfına sahip olabilir.
+</para>
+  </note>
+  <para>
+Ayrıca, hangi paketlerin hangi sınıflara ait olacaklarını da tanımlamalıyız. Bu gerçekte HTB düzeni ile ilgili değildir. Ayrıntılar için tc filter belgesine bakınız. Komutlar şöyle görünecektir:
+</para>
+  <screen>
+tc filter add dev eth0 protocol ip parent 1:0 prio 1 u32 \
+   match ip src 1.2.3.4 match ip dport 80 0xffff flowid 1:10
+tc filter add dev eth0 protocol ip parent 1:0 prio 1 u32 \
+   match ip src 1.2.3.4 flowid 1:11
+</screen>
+  <para>
+( A'yı burada IP adresine göre tanımladık; IP adresinin 1.2.3.4 olduğunu varsaydık.)
+</para>
+  <note>
+   <para>
+U32 sınıflayıcının belgelenmemiş bir tasarım hatası var; U32 sınıflayıcıları farklı <literal>prio</literal> (öncelik) değerleri ile kullandığınızda "<command>tc filter show</command>" yinelenmiş girdiler listelenmesine sebep oluyor.
+</para>
+  </note>
+  <para><literal>1:12</literal> sınıfı için bir filtre oluşturmadığımızı söyleyebilirsiniz. Bir filtre oluştursaydık herşey belirginleşirdi belki ama o zaman <literal>default</literal> kullanımını gösteremezdik.  Yukarıdaki iki kural tarafından sınıflanmamış her paket (kaynak adresi 1.2.3.4 olmayan her paket) <literal>1:12</literal> sınıfına konulacaktır.
+</para>
+  <para>
+Artık, kuyruklama düzenlerini istediğimiz gibi uç sınıflarla ilişkilendirebiliriz. Eğer hiçbirşey belirtilmemişse <literal>pfifo</literal> öntanımlıdır.
+</para>
+  <screen>
+tc qdisc add dev eth0 parent 1:10 handle 20: pfifo limit 5
+tc qdisc add dev eth0 parent 1:11 handle 30: pfifo limit 5
+tc qdisc add dev eth0 parent 1:12 handle 40: sfq perturb 10
+</screen>
+  <para>
+İhtiyaç duyduğumuz tüm komutlar bu kadar. Paketleri 90 kbps hızda her sınıfa gönderirsek ve her seferinde bir sınıfın paketlerini göndermeyi durdurursak, ne olur görelim. Çizgenin altında dizilmiş olan "0:90k" benzeri yaftaları görmüşsünüzdür. Yaftaların orta noktaları (9'un yanında, ayrıca kırmızı 1 ile imlenmiş olarak) sınıfın trafik hızının değiştiği zamanları işaret eder. Bu yaftalarda ikinokta iminin solunda kalan sayı sınıfı (1:10 sınıfı için 0, 1:11 sınıfı için 1, 1:12 sınıfı için 2), sağındaki sayı ise yaftanın işaret ettiği zamanda başlatılan trafiğin hızını gösterir. Örneğin, 0 sınıfının hızı 0. zaman noktasında 90k, 3. zaman noktasında 0k ve 6. zaman noktasında tekrar 90k yapılmaktadır.
+</para>
+  <inlinemediaobject>
+   <imageobject>
+    <imagedata align="right" fileref="flatnp.gif" format="GIF"/>
+   </imageobject>
+  </inlinemediaobject>
+  <para>
+İlk olarak tüm sınıflar 90kb üretmektedir. Bu belirtilmiş hızların her birinden büyük olduğundan her sınıf kendi hızını ayarlandığı hızla sınırlar. 3. zaman noktasında 0 sınıfının paketlerini göndermeyi durdurduğumuzda, 0 sınıfı için ayrılan hız diğer iki sınıfa hız oranları nispetinde paylaştırılır; 1 sınıfına 1 pay, 2 sınıfına 6 pay. (1 sınıfındaki hız değişikliğini çizgede görmek zordur, çünkü hızı sadece 4kbps'tir.) Aynı şekilde, 9. zaman noktasında 1 sınıfının trafiği durdurulmakta ve onun band genişliği diğer iki sınıfa pay edilmektedir. (Bu kez de, 0 sınıfındaki artışı gözlemlemek zor olacaktır.) 15. zaman noktasında 2 sınıfının trafiği durdurulunca 0 ve 1 sınıflarındaki artışı gözlemlemek zor olmayacaktır. 18. zaman noktasında 1 ve 2 sınıflarının trafiği durunca, 0 sınıfı tüm trafiği (90kbps) almaktadır.
+</para>
+  <para><emphasis role="bold">Katkıpayı</emphasis>'ndan bahsetmek için tam yeri. Aslında, sınıflar sahipsiz kalan band genişliğinden paylarına düşeni alırken çekiştikleri diğer sınıflara bir miktar bayt verirler. Buna katkıpayı (quantum) adı verilir. Eğer ata sınıfın band genişliği için çok sayıda sınıf çekişiyorsa, bunların paylarını katkıpayları nispetinde aldıklarını görürdünüz.
+İşlemlerinin titizce yürütülebilmesi için katkıpaylarının olabildiğince küçük ama MTU'dan büyük olması gerektiğini bilmek önemlidir.
+</para>
+  <para>
+HTB önceden hesaplanmış değerleri kendi seçtiği için normalde katkıpaylarını sizin belirtmeniz gerekmez. Sınıfın katkıpayı, hızının <literal>r2q</literal> genel parametresine bölünmesi ile bulunur (sınıf ekleme ve değişiklik sırasında). <literal>r2q</literal>'nun öntanımlı değeri 10'dur ve MTU genellikle 1500 olduğundan hız için bu değer 15 kBps (120kbit)'ten iyidir. Kuyruk düzeni oluşturulurken daha küçük asgari hızlar belirtmek için, yeterli olması gereken 12 kbit'ten iyidir (burada, özgün metinde bir belirsizlik var; sanki yazar cümlenin sonunu getirememiş ya da cümle kısmen biçim dönüşümüne kurban gitmiş gibi görünüyor). İsterseniz, sınıf eklerken veya değiştirirken katkıpayını elle kendiniz verebilirsiniz. Eğer önhesaplamalı değer kötü olursa günlük iletileri arasında uyarılara rastlayabilirsiniz. Katkıpayını komut satırında belirttiğinizde, <literal>r2q</literal> sınıf için yoksayılır.
+</para>
+  <para>
+A ve B farklı müşteriler değilse bu çözüm iyi gibi görünebilir. Bununla birlikte, A eğer 40kbps için bir ücret ödüyorsa, kullanmadığı WWW band genişliğinin kendi hizmetine değil de B'ye tahsis edilmesini muhtemelen tercih etmeyecektir. Bu gereksinim HTB'de sınıf hiyerarşisi tarafından karşılanır.
+</para>
+ </chapter>
+ <chapter xml:id="htb-qdisc.hierarchy">
+  <info>
+   <title>Paylaşım Hiyerarşisi</title>
+  </info>
+  <inlinemediaobject>
+   <imageobject>
+    <imagedata align="right" fileref="Ag2Leaf3hier.gif" format="GIF"/>
+   </imageobject>
+  </inlinemediaobject>
+  <example>
+   <info>
+    <title>Sorunumuz:</title>
+   </info>
+   <blockquote>
+    <para>
+Önceki bölümdeki sorun bu resimdeki sınıf hiyerarşisine göre çözümlenecek. Müşteri A, şimdi doğrudan kendi sınıfı ile temsil edilecektir.
+</para>
+   </blockquote>
+  </example>
+  <para>
+Tekrar, <emphasis role="bold">HTB, her uç sınıfa, o sınıfa atanmış olan miktarı, talep olduğunda, asgari miktar olarak garanti eder</emphasis>. Bu başka HTB sınıflarının atası olmayan HTB sınıflarına uygulanır. Bunlara uç sınıflar diyoruz. Başka HTB sınıflarının atası olan HTB sınıflarına ise iç sınıflar diyoruz ve bunlara <emphasis role="bold">HTB, her iç sınıfa, o sınıfın çocuklarına atanmış olan toplam miktarı, talep olduğunda, asgari miktar olarak garanti eder</emphasis> kuralını uyguluyoruz. Bu durumda, 40kbps'i A'ya atarsak, eğer A WWW için ayrılan hızdan azını isterse, artan miktar toplamda 40kbps'i sağlayacak şekilde A'nın başka bir trafiğine (eğer istek varsa) kullanılacaktır.
+</para>
+  <note>
+   <para>
+Paket sınıflandırma kuralları iç düğümlere de atanabilir. Bunun için iç düğümü başka bir filtre listesi ile ilişkilendirmelisiniz. Sonuçta, ya bir uç sınıf ya da özel bir 1:0 sınıfı elde edilmesi gerekir. Bir ata sınıf için sağlanan hız onun çocuklarının hızlarının toplamı olmalıdır.
+</para>
+  </note>
+  <para>
+Yeni komutlarımız şöyle olacaktır:
+</para>
+  <screen>
+tc class add dev eth0 parent 1:  classid 1:1 htb rate 100kbps ceil 100kbps
+tc class add dev eth0 parent 1:1 classid 1:2  htb rate 40kbps ceil 100kbps
+tc class add dev eth0 parent 1:2 classid 1:10 htb rate 30kbps ceil 100kbps
+tc class add dev eth0 parent 1:2 classid 1:11 htb rate 10kbps ceil 100kbps
+tc class add dev eth0 parent 1:1 classid 1:12 htb rate 60kbps ceil 100kbps
+</screen>
+  <inlinemediaobject>
+   <imageobject>
+    <imagedata align="middle" fileref="hiernp.gif" format="GIF"/>
+   </imageobject>
+  </inlinemediaobject>
+  <para>
+Şimdi, hiyerarşik çözümün sonucunu gösteren çizgeye bakalım. A'nın WWW trafiği durduğunda, ona atanan band genişliği A'nın diğer trafiğine tahsis edilir, böylece A'nın toplam band genişliği hala 40kbps olarak kalır. Eğer A toplamda 40kbps'den azını talep ederse artan miktar B'ye tahsis edilir.
+</para>
+ </chapter>
+ <chapter xml:id="htb-qdisc.ceiling">
+  <info>
+   <title>Hız Tavanı</title>
+  </info>
+  <para><literal>ceil</literal> argümanı bir sınıfın kullanabileceği band genişliğinin azamisini belirtir. Bu, sınıfın yardım alarak ulaşabileceği band genişliğinin sınırıdır. Öntanımlı tavan aynı hız gibidir. Biz şimdi 1:2 sınıfları (A) için <literal>ceil 100kbps</literal> ve önceki bölümdeki 1:11 sınıfını (A'nın diğer sınıfı; WWW için olan) <literal>ceil 60kbps</literal> ve diğerini de <literal>ceil 20kbps</literal> yapalım.
+</para>
+  <inlinemediaobject>
+   <imageobject>
+    <imagedata align="right" fileref="hiernpceil.gif" format="GIF"/>
+   </imageobject>
+  </inlinemediaobject>
+  <para>
+Bu çizge önceki çizgeye göre 3. zaman noktasında farklıdır, çünkü A'nın diğer sınıfının hızı 20kbps ile sınırlanmıştır. Bu nedenle müşteri A toplamda sadece 20kbps almış olur ve kalan miktar B'ye tahsis edilir.
+</para>
+  <para>
+İkinci fark 15. zaman noktasında B durduğunda görülür. A için hız tavanı belirtilmemiş olsaydı, B'nin tüm band genişliği A'ya tahsis edilecekti, ama şimdi, A sadece 60kbps kullanabilmekte ve artan 40kbps kullanılmamaktadır.
+</para>
+  <para>
+Bu özellik ISS'ler için yararlıdır, çünkü bir müşterinin alabileceği hizmet miktarını diğer müşteriler hizmet almadıkları zaman bile sınırlamak isterler.
+(Müşterilerinin daha iyi hizmet için daha fazla para ödemelerini istediklerinden olsa gerek.) Kök sınıfların yardımlaşmaya katılmadıklarına, dolayısıyla, onlar için bir tavan belirtilmesinin gerçekte gerekmediğine dikkat ediniz.
+</para>
+  <note>
+   <para>
+Bir sınıf için tavan daima mümkün olan en yüksek hız olmalı, ayrıca daima en azından çocuklarının her birininin tavanı kadar yüksek olmalıdır.
+</para>
+  </note>
+ </chapter>
+ <chapter xml:id="htb-qdisc.burst">
+  <info>
+   <title>Sıçrama</title>
+  </info>
+  <para>
+Ağ donanımı bir seferde sadece bir paket gönderebilir ve bunun da hızı donanımın hızına bağlıdır. Bağlantı paylaşım yazılımı çok sayıda bağlantıyı farklı (daha düşük) hızlarda çalıştırmak amacıyla yaklaşık olarak sadece bu imkanı kullanabilir. Bu nedenle, hız ve tavan gerçekte anlık olarak ölçülen değerler değillerdir, çok sayıda paketin gönderimi sırasında ölçülen değenlerin ortalamalarıdırlar. Gerçekte olan şudur: bir sınıftaki trafik bir kaç paketi bir defada azami hızda gönderdikten sonra diğer sınıflara geçilir. <literal>burst</literal> ve <literal>cburst</literal> parametreleri, başka bir sınıfın hizmet vermesini denemeksizin, azami hızda (donanım hızında) gönderilebilecek veri miktarını denetim altına alır.
+</para>
+  <para><literal>cburst</literal> yeterince küçükse (ideali bir paket boyudur), TBF'deki <literal>peakrate</literal>'in yaptığı gibi, <literal>ceil</literal> hızını aşmayan sıçramalar şekillendirir.
+</para>
+  <para>
+Ata sınıf için bir çocuğununkinden daha küçük <literal>burst</literal> belirttiğinizde, ata sınıfın bazan saplanıp kalacağını beklemelisiniz (çünkü çocuk, atasının elde edebileceğinden fazlasını tüketir). HTB bu negatif <literal>burst</literal> değerlerini 1 dakika süreyle hatırlayacaktır.
+</para>
+  <para><emphasis role="bold">Neden sıçrama istiyormuşum</emphasis> diye sorabilirsiniz. Fazla dolu bir bağlantı üzerinde yanıt verme süresini iyileştirmenin ucuz ve basit bir yoludur da ondan. Örneğin www trafiği sıçramalı bir trafiktir. Sayfa istediğinizde isteğiniz bir sıçramaya sığar ve onu alır okursunuz. Boşta kaldığı sürede sıçrama tekrar "şarj" edilir.
+</para>
+  <note>
+   <para>
+Bir sınıfın <literal>burst</literal> ve <literal>cburst</literal>'ü daima en azından çocuğununki kadar yüksek olmalıdır.
+</para>
+  </note>
+  <inlinemediaobject>
+   <imageobject>
+    <imagedata align="right" fileref="hiernpburst.gif" format="GIF"/>
+   </imageobject>
+  </inlinemediaobject>
+  <para>
+Bu çizgede bir önceki bölümde yer alan örnek durumda <literal>burst</literal>'ün kırmızı ve sarı sınıflar (agency A) için 20 kb yapıldığı durum görülmektedir, <literal>cburst</literal> aynı bırakılmıştır. SMTP sınıfının <literal>burst</literal> değerinden dolayı yeşil çizginin tepe yaptığı zaman noktası 13'tür. 9. zaman noktasından itibaren sınırın altında kalmış ve artarak 20 kb <literal>burst</literal>'e gelmiştir. Tepe noktasında  20 kb'e kadar çıkmıştır (burada tavan değeriyle sınıra ulaşmıştır çünkü <literal>cburst</literal> paket değerine yaklaşmıştır). Dikkatli okuyucular neden 7. zaman noktasında kırmızı ve sarı çizgilerin tepe yapmadığını merak etmiştir. Bunun nedeni sarı çizginin zaten tavan değerine ulaşmış olması ve daha fazla <literal>burst</literal> için yeri kalmamış olmasıdır. Burada en azından bir yerde istenmeyen bir etki oluşmuştur: Mor renkli çizgi 4. zaman noktasında çukur yapmıştır. Bunun nedeni de kök bağlantı (1:1) sınıfı için <literal>burst</literal> eklemeyi "unutmuş" olmamdır. Bu sınıf 1. zaman noktasında tepe yaptığını hatırlamış, 4. zaman noktasında mavi sınıf sarı sınıftan bant genişliği almak istediğinde onu reddetmiş ve kendini buna göre dengelemiştir.
+</para>
+  <important>
+   <info>
+    <title>Sınırlama:</title>
+   </info>
+   <para>
+Düşük çözünürlüklü bir zamanlayıcısı olan bir bilgisayar üzerinde yüksek hızlarla çalıştığınız zaman, tüm sınıflar için size biraz küçük tutulmuş <literal>burst</literal> ve <literal>cburst</literal> gerekir. Zamanlayıcı çözünürlüğü i386 sistemlerinde 10ms, Alfalarda ise 1 ms'dir. Küçükçe bir <literal>burst</literal> değeri <literal>azami_hız*zamanlayıcı_çözünürlüğü</literal> olarak hesaplanabilir. Dolayısıyla, düz i386'da 10Mbit için 12kb'lık bir <literal>burst</literal> değerine ihtiyacınız olur.
+</para>
+  </important>
+  <para>
+Çok küçük bir <literal>burst</literal> belirtirseniz, ayarladığınızdan daha düşük hızla karşılaşırsınız. En son <command>tc</command> sürümü, belirtmediğiniz takdirde olası en düşük <literal>burst</literal> değerini hesaplayacak ve atayacaktır.
+</para>
+ </chapter>
+ <chapter xml:id="htb-qdisc.priorizing">
+  <info>
+   <title>Paylaşımda Öncelik</title>
+  </info>
+  <inlinemediaobject>
+   <imageobject>
+    <imagedata align="right" fileref="hierprio.gif" format="GIF"/>
+   </imageobject>
+  </inlinemediaobject>
+  <para>
+Trafiği öncelikli duruma getirme konusunun iki yüzü vardır. İlki band genişliğindeki fazlalığın kardeşler arasında nasıl dağıtılacağını etkiler. Şimdiye kadar gördüğümüz, band genişliğindeki fazlalığın hız oranlarına göre dağıtıldığı şeklindeydi. Şimdi, <xref linkend="htb-qdisc.hierarchy"/> bölümündeki temel yapılandırmayı (tavan hız ve sıçrama olmaksızın hiyerarşi) kullanıp önceliği SMTP (yeşil) için 0'a (yüksek), diğerleri için 1'e değiştirdim.
+</para>
+  <para>
+Paylaşım bakımından öncelikli sınıfın artan band genişliğinin tamamını aldığını görürsünüz. Burada kural <emphasis role="bold">artan band genişliği, önce daha yüksek öncelikli sınıflara ikram edilir</emphasis> şeklindedir. Ancak garantili hız ve hız tavanı ile ilgili kurallar hala geçerlidir.
+</para>
+  <para>
+Sorunun bir de ikinci yüzü vardır: paketin toplam gecikmesi. Çok hızlı olan ethernette gecikme ölçümü görece zordur (gecikme ihmal edilebilir miktardadır). Fakat küçük bir yardımla bu sorun aşılabilir. Hız sınırı 100 kbps'in altında olan bir sınıfa sahip bir HTB'den başka bunun çocuğu olarak ikinci bir HTB ekleyebiliriz (ölçmeyi bu ikincisinde yapacağız). Böylece, daha büyük gecikmeli daha yavaş bağlantıyı taklit edebiliriz. Basit olması için iki sınıflı bir senaryo kullanacağım:
+</para>
+  <screen>
+# gecikme bireştirici için kuyruklama düzeni
+tc qdisc add dev eth0 root handle 100: htb
+tc class add dev eth0 parent 100: classid 100:1 htb rate 90kbps
+
+# gerçek ölçütlerde kuyruklama düzeni
+tc qdisc add dev eth0 parent 100:1 handle 1: htb
+AC="tc class add dev eth0 parent"
+$AC 1:  classid 1:1 htb rate 100kbps
+$AC 1:2 classid 1:10 htb rate 50kbps ceil 100kbps prio 1
+$AC 1:2 classid 1:11 htb rate 50kbps ceil 100kbps prio 1
+tc qdisc add dev eth0 parent 1:10 handle 20: pfifo limit 2
+tc qdisc add dev eth0 parent 1:11 handle 21: pfifo limit 2
+</screen>
+  <note>
+   <para>
+HTB, başka bir HTB'nin çocuğu olarak, aynı HTB'nin içindeki başka bir sınıfın altındaki sınıfla aynı DEĞİLdir. HTB içindeki sınıf gönderebildiğinde donanımın gönderebileceği kadar erken göndereceği için bu böyledir. Dolayısıyla, sınır altındaki sınıfın gecikmesi sadece donanım tarafından sınırlanır, ata sınıflar tarafından değil.
+</para>
+   <para>
+HTB altında HTB durumunda, dıştaki HTB herşeyiyle yeni donanımı taklit eder (daha büyük gecikmeyle).
+</para>
+  </note>
+  <para>
+Bireştirici her iki sınıf için 50 kbps üretmeye ayarlanır ve 3. zaman noktasında şu komutu çalıştırır:
+</para>
+  <screen>
+tc class change dev eth0 parent 1:2 classid 1:10 htb \
+ rate 50kbps ceil 100kbps burst 2k prio 0
+</screen>
+  <inlinemediaobject>
+   <imageobject>
+    <imagedata align="right" fileref="priotime.gif" format="GIF"/>
+   </imageobject>
+  </inlinemediaobject>
+  <para>
+Gördüğünüz gibi SMTP'nin gecikmesi artarken WWW sınıfının gecikmesi sıfıra yakın değerlere düşmektedir. Gecikmeyi iyileştirmek için önceliği arttırırsanız daima diğer sınıfın gecikmesinin kötüye gitmesine yol açarsınız.
+</para>
+  <para>
+Daha sonra (7. zaman noktasında) bireştirici WWW'yi 60 kbps hızda, SMTP'yi de 40 kbps hızda üretmeye başlar. Bundan sonraki ilginç davranışı gözlemleyebilirsiniz. Sınıf (WWW) sınırı aştığında HTB band genişliği için sınırın altında kalana öncelik verir.
+</para>
+  <para><emphasis role="bold">Hangi sınıfa öncelik vermelisiniz?</emphasis> Genelde bunlar gerçekte düşük gecikme gerektiren yerlerdeki sınıflardır. Örnek, görsel veya işitsel trafik (trafiğin başka bir sınıf tarafından öldürülmemesi için burada gerçekten doğru hız kullanmanız gerekirdi) veya doğasında sıçramalar bulunan etkileşimli bir trafik (telnet, SSH gibi) olabilirdi ve diğer akışları olumsuz etkilemezdi.
+</para>
+  <para>
+Tamamı yararlı bağlantılarda bile hoş ping gecikmeleri almak için bilinen bir yöntem ICMP'ye öncelik vermektir (fakat bağlantılılığı ölçümlerken teknik açıdan istediğimiz bu değildi).
+</para>
+ </chapter>
+ <chapter xml:id="htb-qdisc.statistics">
+  <info>
+   <title>İstatistikleri Yorumlamak</title>
+  </info>
+  <para><command>tc</command> aracı Linux'taki kuyruklama düzenlerinin istatistiklerini toplamayı mümkün kılar. Talihsizliğe bakın ki, istatistik sonuçları yazarlar tarafından açıklanmamıştır (Neyi açıklamışlar ki zaten; tc bir sır küpü) dolayısıyla çoğunlukla onları kullanamazsınız. Burada HTB istatistiklerini anlamanıza yardımcı olmaya çalışacağım. Önce HTB istatistiklerine bir bütün olarak bakalım. Aşağıdaki satırlar <xref linkend="htb-qdisc.hierarchy"/> bölümündeki bireştirim sırasında alınmıştır.
+</para>
+  <screen>
+# <command>tc -s -d qdisc show dev eth0</command>
+ qdisc pfifo 22: limit 5p
+ Sent 0 bytes 0 pkts (dropped 0, overlimits 0)
+
+ qdisc pfifo 21: limit 5p
+ Sent 2891500 bytes 5783 pkts (dropped 820, overlimits 0)
+
+ qdisc pfifo 20: limit 5p
+ Sent 1760000 bytes 3520 pkts (dropped 3320, overlimits 0)
+
+ qdisc htb 1: r2q 10 default 1 direct_packets_stat 0
+ Sent 4651500 bytes 9303 pkts (dropped 4140, overlimits 34251)
+</screen>
+  <para>
+İlk üç düzen HTB'nin çocuklarıdır. PFIFO istatistikleri kendilerini zaten açıkladıkları için onları yoksayabiliriz.
+</para>
+  <para><literal>overlimits</literal>, düzenin bir paketi kaç kere geciktirdiğini söyler.
+</para>
+  <para><literal>direct_packets_stat</literal>,  kaç paketin doğrudan kuyruktan gönderildiğini söyler. Diğer istatistikler kendi kendilerini zaten açıklıyor. Sınıfların istatistiklerine bakalım:
+</para>
+  <screen><command>tc -s -d class show dev eth0</command>
+class htb 1:1 root prio 0 rate 800Kbit ceil 800Kbit burst 2Kb/8 mpu 0b
+    cburst 2Kb/8 mpu 0b quantum 10240 level 3
+ Sent 5914000 bytes 11828 pkts (dropped 0, overlimits 0)
+ rate 70196bps 141pps
+ lended: 6872 borrowed: 0 giants: 0
+
+class htb 1:2 parent 1:1 prio 0 rate 320Kbit ceil 4000Kbit burst 2Kb/8 mpu 0b
+    cburst 2Kb/8 mpu 0b quantum 4096 level 2
+ Sent 5914000 bytes 11828 pkts (dropped 0, overlimits 0)
+ rate 70196bps 141pps
+ lended: 1017 borrowed: 6872 giants: 0
+
+class htb 1:10 parent 1:2 leaf 20: prio 1 rate 224Kbit ceil 800Kbit burst ¬
+2Kb/8 mpu 0b
+    cburst 2Kb/8 mpu 0b quantum 2867 level 0
+ Sent 2269000 bytes 4538 pkts (dropped 4400, overlimits 36358)
+ rate 14635bps 29pps
+ lended: 2939 borrowed: 1599 giants: 0
+</screen>
+  <para>
+Çıktıyı kısaltmak için 1:11 ve 1:12 sınıflarını sildim. Gördüğünüz gibi bizim ayarladığımız parametreler var. Ayrıca <literal>level</literal> (seviye) ve DRR <literal>quantum</literal> (katkıpayı) bilgileri de var.
+</para>
+  <para><literal>overlimits</literal>, sınıfın paketi kaç kere göndermek istediğini fakat hız/tavan sınırlamalarından dolayı yapamadığını gösterir (şu an sadece terkedilenler sayılmış).
+</para>
+  <para><literal>rate</literal> ve <literal>pps</literal> sınıf üzerinden giden güncel hızı (10 saniyelik ortalama) söyler. Bu geçit tarafından kullanılan hızla aynıdır.
+</para>
+  <para><literal>lended</literal>, bu sınıf tarafından (hızından) bağışlanmış paket sayısıdır. <literal>borrowed</literal> sınıfa atadan bağışlanan paket sayısıdır. Başka sınıflara bağışlananlar daima yardımlaşma geçişliyken sınıf için hesaplanır (1:10, 1:2'den bağış alırken 1:2 de 1:1'den bağış alır; 1:10 ve 1:2 bağış sayaçlarının ikisi de arttırımlıdır).
+</para>
+  <para><literal>giants</literal>, <command>tc</command> komutunda ayarlı MTU'dan büyük olan paketlerin sayısıdır. HTB bunlarla çalışır fakat hızlar hepsinde doğru olmayacaktır. <command>tc</command>'nize MTU ekleyin (öntanımlı olarak 1600 bayttır).
+</para>
+ </chapter>
+ <chapter xml:id="htb-qdisc.feedback">
+  <info>
+   <title>Yamama, Hata Ayıklama ve Hata Raporu Gönderme</title>
+  </info>
+  <para>
+2.4.20 veya daha yeni bir çekirdeğe sahipseniz yamamaya ihtiyaç olmaz - herşey pakette mevcuttur. Tek ihtiyacınız <command>tc</command> aracı olacaktır. HTB-3.6 arşiv paketini indirip içindeki <command>tc</command>'yi kullanabilirsiniz (Ç.N. - bu çeviri yapılırken çekirdek 2.6.20'leri bulmuş ve standart <command>tc</command> HTB'yi zaten desteklemekteydi).
+</para>
+  <para>
+Daha eski çekirdeklerle çalışır hale getirmek için çekirdeği yamamalısınız. Çekirdeğin kaynak paketini indirdikten sonra <command>patch -p1 -i htb3_2.X.X.diff</command> komutuyla yamayı uygulayabilirsiniz. Sonra da evvelce yaptığınız gibi <command>make menuconfig;make bzImage</command> komutlarını kullanın. QoS ve HTB'yi etkinleştirmeyi unutmayın.
+</para>
+  <para>
+Ayrıca, yamanmış <command>tc</command> aracına da ihtiyacınız olacak. Bu yamayı ayrı olarak indirebileceğiniz gibi önceden derlenmiş ikiliği de indirebilirsiniz.
+</para>
+  <para>
+Eğer bir hata bulduğunuzu düşünüyorsanız hata raporunuza minnettar kalacağım. Oops'lar için <command>ksymoops</command> çıktısına ihtiyacım var. Tuhaf qdisc davranışı için <command>tc qdisc add .... htb</command> komutunuza <command>debug 3333333</command> parametresini ekleyin. bu parametre sayesinde syslog oluşumuna megabaytlarca günlük yazacaktır. Muhtemelen <filename>/etc/syslog.conf</filename> dosyanıza şöyle bir satır eklemek isteyeceksiniz:<sbr/>
+<command>kern.debug -/var/log/debug</command><sbr/>
+Bunden sonra bu günlük çıktısını bzipleyip sorunu ve zamanını açıklayan bir eposta ekinde bana gönderin (bziplenmiş olarak 10MB'a kadar).
+</para>
+ </chapter>
+</part>

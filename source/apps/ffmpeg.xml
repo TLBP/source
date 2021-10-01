@@ -1,0 +1,2574 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ********************************************************************
+         ffmpeg.xml
+     ******************************************************************** -->
+<part xml:id="ffmpeg" xmlns="http://docbook.org/ns/docbook"
+      xmlns:xlink="http://www.w3.org/1999/xlink" version="5.0"
+      xml:lang="tr" userlevel="longtoc">
+ <?dbhtml dir="../uygulamalar/ffmpeg"?>
+ <info>
+  <title>FFmpeg Belgesi</title>
+  <authorgroup>
+   <author>
+    <personname>
+     <firstname>Fabrice Bellard</firstname>
+    </personname>
+   </author>
+   <author role="translator">
+    <personname>
+     <firstname>Çağatay Oltulu</firstname>
+    </personname>
+   </author>
+  </authorgroup>
+  <pubdate>Kasım 2007</pubdate>
+  <legalnotice>
+   <para>
+Bu belgenin, "FFmpeg Belgesi" çevirisinin  telif hakkı © 2007 Çağatay Oltulu'ya, özgün İngilizce sürümünün telif hakkı © 2007 Fabrice Bellard'a aittir. Bu belgeyi, Free Software Foundation tarafından yayınlanmış bulunan GNU Genel Kamu Lisansının 2.0 ya da daha sonraki sürümünün koşullarına bağlı kalarak kopyalayabilir, dağıtabilir ve/veya değiştirebilirsiniz. Bu Lisansın bir kopyasını <uri xlink:href="http://www.gnu.org/licenses/gpl.html">http://www.gnu.org/licenses/gpl.html</uri> adresinde bulabilirsiniz.
+</para>
+   <para>
+BU BELGE "ÜCRETSİZ" OLARAK RUHSATLANDIĞI İÇİN, İÇERDİĞİ BİLGİLER İÇİN İLGİLİ KANUNLARIN İZİN VERDİĞİ ÖLÇÜDE HERHANGİ BİR GARANTİ VERİLMEMEKTEDİR. AKSİ YAZILI OLARAK BELİRTİLMEDİĞİ MÜDDETÇE TELİF HAKKI SAHİPLERİ VE/VEYA BAŞKA ŞAHISLAR BELGEYİ "OLDUĞU GİBİ", AŞİKAR VEYA ZIMNEN, SATILABİLİRLİĞİ VEYA HERHANGİ BİR AMACA UYGUNLUĞU DA DAHİL OLMAK ÜZERE HİÇBİR GARANTİ VERMEKSİZİN DAĞITMAKTADIRLAR. BİLGİNİN KALİTESİ İLE İLGİLİ TÜM SORUNLAR SİZE AİTTİR. HERHANGİ BİR HATALI BİLGİDEN DOLAYI DOĞABİLECEK OLAN BÜTÜN SERVİS, TAMİR VEYA DÜZELTME MASRAFLARI SİZE AİTTİR.
+</para>
+   <para>
+İLGİLİ KANUNUN İCBAR ETTİĞİ DURUMLAR VEYA YAZILI ANLAŞMA HARİCİNDE HERHANGİ BİR ŞEKİLDE TELİF HAKKI SAHİBİ VEYA YUKARIDA İZİN VERİLDİĞİ ŞEKİLDE BELGEYİ DEĞİŞTİREN VEYA YENİDEN DAĞITAN HERHANGİ BİR KİŞİ, BİLGİNİN KULLANIMI VEYA KULLANILAMAMASI (VEYA VERİ KAYBI OLUŞMASI, VERİNİN YANLIŞ HALE GELMESİ, SİZİN VEYA ÜÇÜNCÜ ŞAHISLARIN ZARARA UĞRAMASI VEYA BİLGİLERİN BAŞKA BİLGİLERLE UYUMSUZ OLMASI) YÜZÜNDEN OLUŞAN GENEL, ÖZEL, DOĞRUDAN YA DA DOLAYLI HERHANGİ BİR ZARARDAN, BÖYLE BİR TAZMİNAT TALEBİ TELİF HAKKI SAHİBİ VEYA İLGİLİ KİŞİYE BİLDİRİLMİŞ OLSA DAHİ, SORUMLU DEĞİLDİR.
+</para>
+   <para>
+Tüm telif hakları aksi özellikle belirtilmediği sürece sahibine aittir. Belge içinde geçen herhangi bir terim, bir ticari isim ya da kuruma itibar kazandırma olarak algılanmamalıdır. Bir ürün ya da markanın kullanılmış olması ona onay verildiği anlamında görülmemelidir.
+    </para>
+  </legalnotice>
+ </info>
+ <chapter xml:id="ffmpeg-intro">
+  <info>
+   <title>Giriş</title>
+  </info>
+  <para>
+FFmpeg çok hızlı bir görsel ve işitsel veri çeviricisidir. Ayrıca canlı ses/görüntü kaynağında (akım) anında işlem yapabilir.
+</para>
+  <para>
+Komut satırı arayüzü sezgi yolu ile anlaşılabilecek şekilde tasarlandı. FFmpeg olası parametreleri hissedebilir. Sadece hedef örnekleme hızını belirtmek zorundasınız.
+</para>
+  <para>
+FFmpeg ayrıca herhangi bir örnekleme oranından diğerine dönüşüm yapabilir ve yüksek kaliteli çok evreli filtresi ile görüntüyü anında boyutlandırır.
+</para>
+ </chapter>
+ <chapter xml:id="ffmpeg-qstart">
+  <info>
+   <title>Hızlı Başlangıç</title>
+  </info>
+  <section xml:id="ffmpeg-Video-and-Audio-grabbing">
+   <info>
+    <title>Görüntünün ve Sesin Yakalanması</title>
+   </info>
+   <para>
+FFmpeg girdi biçemini ve aygıtını belirttiğiniz görüntü ve sesi yakalayabilir.
+</para>
+   <screen>ffmpeg -f oss -i /dev/dsp -f video4linux2 -i /dev/video0 /tmp/out.mpg
+</screen>
+   <para>
+FFmpeg'i Gerd Knorr'un yazdığı xawtv (<uri xlink:href="http://http://linux.bytesex.org/xawtv/">http://http://linux.bytesex.org/xawtv/</uri>) gibi bir TV gösterici ile devreye sokmadan önce doğru görüntü kaynağını ve kanalını etkinleştirmeniz gerektiğini unutmayınız. Ayrıca, standart bir ses karıştırıcısı ile ses kayıt seviyelerini de ayarlamalısınız.
+</para>
+  </section>
+  <section xml:id="ffmpeg-X11-grabbing">
+   <info>
+    <title>X11 Görüntüsünün Yakalanması</title>
+   </info>
+   <para>
+FFmpeg X11 görüntüsünü yakalayabilir.
+</para>
+   <screen>ffmpeg -f x11grab -s cif -i :0.0 /tmp/out.mpg
+</screen>
+   <para><literal>0.0</literal> değeri <literal>DISPLAY</literal> ortam değişkenindeki değerle aynı olan X11 sunucunun uçbirim ekran numarasıdır.
+</para>
+   <screen>ffmpeg -f x11grab -s cif -i :0.0+10,20 /tmp/out.mpg
+</screen>
+   <para><literal>0.0</literal> değeri <literal>DISPLAY</literal> ortam değişkenindeki değerle aynı olan X11 sunucunun uçbirim ekran numarasıdır. 10 değeri yakalanacak görüntünün yataydaki başlangıç konumu, 20 ise düşeydeki başlangıç konumudur (benek sayısı cinsinden).
+</para>
+  </section>
+  <section xml:id="ffmpeg-AV-file-format-conversion">
+   <info>
+    <title>Görsel ve İşitsel Dosyaların Biçim Dönüşümü</title>
+   </info>
+   <itemizedlist>
+    <listitem>
+     <para>
+FFmpeg girdi olarak desteklenen herhangi bir dosya biçimini kullanabilir:
+</para>
+     <para>
+Örnek:
+</para>
+    </listitem>
+    <listitem>
+     <para>
+YUV dosyalarını girdi olarak kullanabilirsiniz:
+</para>
+     <screen>ffmpeg -i /tmp/test%d.Y /tmp/out.mpg
+</screen>
+     <para>
+Bu, şu dosyaları kullanacaktır:
+</para>
+     <screen>/tmp/test0.Y, /tmp/test0.U, /tmp/test0.V,
+/tmp/test1.Y, /tmp/test1.U, /tmp/test1.V, vs...
+</screen>
+     <para>
+Y dosyaları U ve V dosyalarının 2 katı çözünürlük kullanır. Bunlar başlıkları olmayan ham dosyalardır. Bütün yeterli görüntü çözücüler tarafından oluşturulabilirler. Eğer FFmpeg tahmin edemezse, siz resim boyutunu <option>-s</option> seçeneği ile belirleyin.
+</para>
+    </listitem>
+    <listitem>
+     <para>
+Girdi olarak bir ham YUV420P dosyasını kullanabilirsiniz:
+</para>
+     <screen>ffmpeg -i /tmp/test.yuv /tmp/out.avi
+</screen>
+     <para>
+Buradaki <filename>test.yuv</filename> düzlemsel ham YUV verisi içeren bir dosyadır. Her resim karesi ardından yatay ve düşeyde yarım çözünürlüklü U ve V düzlemleri gelen Y düzleminden oluşur.
+</para>
+    </listitem>
+    <listitem>
+     <para>
+Bir ham YUV420P dosyasını çıktı alabilirsiniz:
+</para>
+     <screen>ffmpeg -i mydivx.avi hugefile.yuv
+</screen>
+    </listitem>
+    <listitem>
+     <para>
+Birkaç girdi ve çıktı dosyası belirtebilirsiniz:
+</para>
+     <screen>ffmpeg -i /tmp/a.wav -s 640x480 -i /tmp/a.yuv /tmp/a.mpg
+</screen>
+     <para>
+Bu komut satırı <filename>a.wav</filename> ses dosyasını ve <filename>a.yuv</filename> ham YUV video dosyasını <filename>a.mpg</filename> MPEG dosyasına çevirir.
+</para>
+    </listitem>
+    <listitem>
+     <para>
+Ayrıca görsel ve işitsel dönüşümleri aynı anda yapabilirsiniz:
+</para>
+     <screen>ffmpeg -i /tmp/a.wav -ar 22050 /tmp/a.mp2
+</screen>
+     <para>
+Bu komut satırı <filename>a.wav</filename> ses dosyasını 22050Hz örnekleme hızıyla MPEG ses dosyasına çevirir.
+</para>
+    </listitem>
+    <listitem>
+     <para>
+Duraksız görüntü girişinden duraksız görüntü çıkışına bir yol belirterek birkaç biçimi aynı anda kodlayabilirsiniz:
+</para>
+     <screen>ffmpeg -i /tmp/a.wav -ab 64k /tmp/a.mp2 -ab 128k /tmp/b.mp2 -map 0:0 -map 0:0
+</screen>
+     <para>
+Bu komut, <filename>a.wav</filename> ses dosyasını 64 kilobitlik <filename>a.mp2</filename> dosyasına ve 128 kilobitlik <filename>b.mp2</filename> dosyasına dönüştürür. <literal>-map</literal> <replaceable>dosya:sıra</replaceable> ile duraksız görüntü çıktıları için sırasıyla hangi duraksız görüntü girişlerinin kullanılacağı (akım numarası olarak) belirtilir.
+</para>
+    </listitem>
+    <listitem>
+     <para>
+Çözülmüş VOB'ları dönüştürebilirsiniz:
+</para>
+     <screen>ffmpeg -i snatch_1.vob -f avi -vcodec mpeg4 -b 800k -g 300 -bf 2 -acodec libmp3lame -ab 128k snatch.avi
+</screen>
+     <para>
+Bu bir tipik DVD güzelleştirme örneğidir; giriş bir VOB dosyasıdır, çıkış MP3 sesli ve MPEG-4 görüntülü AVI dosyasıdır. Bu komutta MPEG-4 duraksız görüntüsünün DivX5 uyumlu olması için B-karelerini kullandığımıza ve GOP boyutunu, 29.97 kare/s görüntü girdisi için 10 saniyede bir, bir iç kare anlamına gelen 300 değeriyle belirttiğimize dikkat ediniz. Ek olarak, duraksız ses akışının MP3 olarak kodlanmasını istiyorsanız FFmpeg paketini LAME desteği sağlamak için <option>--enable-libmp3lame</option> seçeneği ile yapılandırarak derlemelisiniz. Eşleme işlemi (<option>-map</option>) DVD kodlarken istediğiniz ses dilini elde etmek için önemlidir.
+</para>
+    </listitem>
+   </itemizedlist>
+   <note>
+    <para>
+Desteklenen girdi biçimlerini ögrenmek için <literal>ffmpeg -formats</literal> komutunu kullanınız.
+</para>
+   </note>
+  </section>
+ </chapter>
+ <chapter xml:id="ffmpeg-Invocation">
+  <info>
+   <title>Komut Satırı</title>
+  </info>
+  <section xml:id="ffmpeg-Syntax">
+   <info>
+    <title>Sözdizimi</title>
+   </info>
+   <para>
+Genel yazım tarzı şöyledir:
+</para>
+   <cmdsynopsis sepchar=" ">
+    <command>ffmpeg</command>
+    <group choice="opt" rep="norepeat">
+     <group choice="opt" rep="norepeat">
+      <arg choice="plain" rep="norepeat">
+       <replaceable class="option">girdi dosyası seçenekleri</replaceable>
+      </arg>
+     </group>
+     <group choice="opt" rep="norepeat">
+      <arg choice="plain" rep="norepeat">
+       <option>-i</option>
+       <replaceable class="option">girdi-dosyası</replaceable>
+      </arg>
+     </group>
+    </group>
+    <arg choice="plain" rep="norepeat">...</arg>
+    <group choice="req" rep="norepeat">
+     <group choice="opt" rep="norepeat">
+      <arg choice="plain" rep="norepeat">
+       <replaceable class="option">çıktı dosyası seçenekleri</replaceable>
+      </arg>
+     </group>
+     <group choice="plain" rep="norepeat">
+      <arg choice="plain" rep="norepeat">
+       <replaceable class="option">çıktı-dosyası</replaceable>
+      </arg>
+     </group>
+    </group>
+    <arg choice="plain" rep="norepeat">...</arg>
+   </cmdsynopsis>
+   <para>
+Eğer giriş dosyası verilmemişse, ses/görüntü yakalama tamamlanmıştır. Genel bir kural olarak, kurallar belirtilen bir sonraki dosyaya uygulanır. Bu yüzden sıra önemlidir ve komut satırında aynı seçenek birden fazla görülebilir. Her oluşum bir sonraki giriş ve çıkış dosyasına uygulanır.
+</para>
+   <itemizedlist>
+    <listitem>
+     <para>
+Görüntü veri hızını 64kbit/s yapmak için:
+</para>
+     <screen>ffmpeg -i input.avi -b 64k output.avi
+</screen>
+    </listitem>
+    <listitem>
+     <para>
+Girdi ve çıktı dosyasında saniyedeki kare sayısının 24 olmasını zorlamak için:
+</para>
+     <screen>ffmpeg -r 24 -i input.avi output.avi
+</screen>
+    </listitem>
+    <listitem>
+     <para>
+Saniyedeki kare sayısının 24 olmasını çıktı dosyasında zorlamak için:
+</para>
+     <screen>ffmpeg -i input.avi -r 24 output.avi
+</screen>
+    </listitem>
+    <listitem>
+     <para>
+Girdi dosyasında saniyedeki kare sayısının 1, çıktı dosyasında ise 24 olmasını zorlamak için:
+</para>
+     <screen>ffmpeg -r 1 -i input.avi -r 24 output.avi
+</screen>
+    </listitem>
+   </itemizedlist>
+   <para>
+Biçim seçeneği ham girdi dosyaları için gerekli olabilir.
+</para>
+   <para>
+Öntanımlı olarak, FFmpeg mümkün olduğunca az kayıplı dönüşüm yapmaya çalışır: çıktılar için girdide belirtilenle aynı ses ve görüntü parametrelerini kullanır.
+</para>
+  </section>
+  <section xml:id="ffmpeg-Main-options">
+   <info>
+    <title>Ana Seçenekler</title>
+   </info>
+   <glosslist>
+    <glossentry>
+     <glossterm>
+      <option>-L</option>
+     </glossterm>
+     <glossdef>
+      <para>
+Lisans bilgileri gösterilir.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-h</option>
+     </glossterm>
+     <glossdef>
+      <para>
+Yardım bilgileri gösterilir.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-version</option>
+     </glossterm>
+     <glossdef>
+      <para>
+Sürüm gösterilir.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-formats</option>
+     </glossterm>
+     <glossdef>
+      <para>
+Mümkün biçimler, kodekler, protokoller, vs. gösterilir.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-f</option>
+      <replaceable>biçim</replaceable>
+     </glossterm>
+     <glossdef>
+      <para><replaceable>biçim</replaceable>'e zorlar.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-i</option>
+      <replaceable>dosyaismi</replaceable>
+     </glossterm>
+     <glossdef>
+      <para><replaceable>dosyaismi</replaceable> girdi olarak alınır.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-y</option>
+     </glossterm>
+     <glossdef>
+      <para>
+Çıktı dosyalarının üzerine yazılır.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-t</option>
+      <replaceable>süre</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Yakalanan/dönüştürülen görüntünün kayıt süresini (saniye cinsinden) sınırlar. hh:mm:ss[.xxx] sözdizimi de desteklenmektedir.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-fs</option>
+      <replaceable>dosyaboyu</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Dosya boyutunu sınırlar.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-ss</option>
+      <replaceable>konum</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Süresi belirtilen konuma gidilir. <replaceable>konum</replaceable> saniye cinsinden belirtilebileceği gibi <literal>hh:mm:ss[.xxx]</literal> sözdizimi de kullanılabilir.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-itsoffset</option>
+      <replaceable>süre</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Girdi başlatma zamanını saniye cinsinden ayarlar. <literal>[-]hh:mm:ss[.xxx]</literal> sözdizimi de desteklenmektedir. Bu seçenek sıradaki girdi dosyalarının tümünü etkiler. Girdi dosyalarının zaman damgasına <replaceable>süre</replaceable> eklenir. Pozitif bir <replaceable>süre</replaceable> belirtimi ilgili veri akımlarının <replaceable>süre</replaceable> saniye geciktirilmesi anlamına gelir.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-title</option>
+      <replaceable>dizge</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Başlık belirtilen <replaceable>dizge</replaceable> olur.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-timestamp</option>
+      <replaceable>zaman</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Zaman damgası ayarlanır.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-author</option>
+      <replaceable>dizge</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Yazar belirtilen <replaceable>dizge</replaceable> olur.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-copyright</option>
+      <replaceable>dizge</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Telif hakkı bilgisi belirtilen <replaceable>dizge</replaceable> olur.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-comment</option>
+      <replaceable>dizge</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Açıklama belirtilen <replaceable>dizge</replaceable> olur.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-album</option>
+      <replaceable>dizge</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Albüm belirtilen <replaceable>dizge</replaceable> olur.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-track</option>
+      <replaceable>sayı</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+İzi ayarlar.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-year</option>
+      <replaceable>sayı</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Yıl belirtilen <replaceable>dizge</replaceable> olur.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-v</option>
+      <replaceable>ayrıntı</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Günlükleme miktarı ayarlanır.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-target</option>
+      <replaceable>hedef-türü</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Hedef dosyası türü ("vcd", "svcd", "dvd", "dv", "dv50", "pal-vcd", "ntsc-svcd", ... ) belirtilir. Bütün biçim seçenekleri (görüntü veri hızı, kodekler, tampon boyutları) özdevinimli olarak ayarlanır. Sadece şunu yazabilirsiniz:
+</para>
+      <screen>ffmpeg -i myfile.avi -target vcd /tmp/vcd.mpg
+</screen>
+      <para>
+Standartla çelişmeyeceğini bildiğiniz sürece kendiniz seçenek ekleyebilirsiniz. Örnek:
+</para>
+      <screen>ffmpeg -i myfile.avi -target vcd -bf 2 /tmp/vcd.mpg
+</screen>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-dframes</option>
+      <replaceable>sayı</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Kaydedilecek veri karelerinin sayısı belirtilir.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-scodec</option>
+      <replaceable>kodek</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Alt yazı kodekini <replaceable>kodek</replaceable>'e zorlamak için kullanılır (kopyalama akımına kopyalar).
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-newsubtitle</option>
+     </glossterm>
+     <glossdef>
+      <para>
+O anki çıktı akımına yeni bir altyazı akımı ekler.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-slang</option>
+      <replaceable>kod</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+O anki altyazı akımına ISO 639 dil kodu belirtilir (3 harfli).
+</para>
+     </glossdef>
+    </glossentry>
+   </glosslist>
+  </section>
+  <section xml:id="ffmpeg-Video-Options">
+   <info>
+    <title>Görüntü Seçenekleri</title>
+   </info>
+   <glosslist>
+    <glossentry>
+     <glossterm>
+      <option>-b</option>
+      <replaceable>bithızı</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Görüntü bithızını bit/s cinsinden ayarlar (öntanımlı = 200 kb/s).
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-vframes</option>
+      <replaceable>sayı</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Kaydedilecek görüntü karelerinin sayısı.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-r</option>
+      <replaceable>sayı</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Kare hızı (öntanımlı = 25) belirtilir (Hz değeri, kesir veya yuvarlatılmış sayı olarak).
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-s</option>
+      <replaceable>boyut</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Kare boyutu <literal>wxh</literal> biçiminde belirtilir (ffserver öntanımlısı = 160x128, ffmpeg öntanımlısı = kaynakla aynı). <replaceable>boyut</replaceable> olarak aşağıdaki kısaltmalar da kullanılabilir:
+</para>
+      <glosslist>
+       <glossentry>
+        <glossterm>
+         <literal>sqcif</literal>
+        </glossterm>
+        <glossdef>
+         <para>
+128x96
+</para>
+        </glossdef>
+       </glossentry>
+       <glossentry>
+        <glossterm>
+         <literal>qcif</literal>
+        </glossterm>
+        <glossdef>
+         <para>
+176x144
+</para>
+        </glossdef>
+       </glossentry>
+       <glossentry>
+        <glossterm>
+         <literal>cif</literal>
+        </glossterm>
+        <glossdef>
+         <para>
+352x288
+</para>
+        </glossdef>
+       </glossentry>
+       <glossentry>
+        <glossterm>
+         <literal>4cif</literal>
+        </glossterm>
+        <glossdef>
+         <para>
+704x576
+</para>
+        </glossdef>
+       </glossentry>
+       <glossentry>
+        <glossterm>
+         <literal>qqvga</literal>
+        </glossterm>
+        <glossdef>
+         <para>
+160x120
+</para>
+        </glossdef>
+       </glossentry>
+       <glossentry>
+        <glossterm>
+         <literal>qvga</literal>
+        </glossterm>
+        <glossdef>
+         <para>
+320x240
+</para>
+        </glossdef>
+       </glossentry>
+       <glossentry>
+        <glossterm>
+         <literal>vga</literal>
+        </glossterm>
+        <glossdef>
+         <para>
+640x480
+</para>
+        </glossdef>
+       </glossentry>
+       <glossentry>
+        <glossterm>
+         <literal>svga</literal>
+        </glossterm>
+        <glossdef>
+         <para>
+800x600
+</para>
+        </glossdef>
+       </glossentry>
+       <glossentry>
+        <glossterm>
+         <literal>xga</literal>
+        </glossterm>
+        <glossdef>
+         <para>
+1024x768
+</para>
+        </glossdef>
+       </glossentry>
+       <glossentry>
+        <glossterm>
+         <literal>uxga</literal>
+        </glossterm>
+        <glossdef>
+         <para>
+1600x1200
+</para>
+        </glossdef>
+       </glossentry>
+       <glossentry>
+        <glossterm>
+         <literal>qxga</literal>
+        </glossterm>
+        <glossdef>
+         <para>
+2048x1536
+</para>
+        </glossdef>
+       </glossentry>
+       <glossentry>
+        <glossterm>
+         <literal>sxga</literal>
+        </glossterm>
+        <glossdef>
+         <para>
+1280x1024
+</para>
+        </glossdef>
+       </glossentry>
+       <glossentry>
+        <glossterm>
+         <literal>qsxga</literal>
+        </glossterm>
+        <glossdef>
+         <para>
+2560x2048
+</para>
+        </glossdef>
+       </glossentry>
+       <glossentry>
+        <glossterm>
+         <literal>hsxga</literal>
+        </glossterm>
+        <glossdef>
+         <para>
+5120x4096
+</para>
+        </glossdef>
+       </glossentry>
+       <glossentry>
+        <glossterm>
+         <literal>wvga</literal>
+        </glossterm>
+        <glossdef>
+         <para>
+852x480
+</para>
+        </glossdef>
+       </glossentry>
+       <glossentry>
+        <glossterm>
+         <literal>wxga</literal>
+        </glossterm>
+        <glossdef>
+         <para>
+1366x768
+</para>
+        </glossdef>
+       </glossentry>
+       <glossentry>
+        <glossterm>
+         <literal>wsxga</literal>
+        </glossterm>
+        <glossdef>
+         <para>
+1600x1024
+</para>
+        </glossdef>
+       </glossentry>
+       <glossentry>
+        <glossterm>
+         <literal>wuxga</literal>
+        </glossterm>
+        <glossdef>
+         <para>
+1920x1200
+</para>
+        </glossdef>
+       </glossentry>
+       <glossentry>
+        <glossterm>
+         <literal>woxga</literal>
+        </glossterm>
+        <glossdef>
+         <para>
+2560x1600
+</para>
+        </glossdef>
+       </glossentry>
+       <glossentry>
+        <glossterm>
+         <literal>wqsxga</literal>
+        </glossterm>
+        <glossdef>
+         <para>
+3200x2048
+</para>
+        </glossdef>
+       </glossentry>
+       <glossentry>
+        <glossterm>
+         <literal>wquxga</literal>
+        </glossterm>
+        <glossdef>
+         <para>
+3840x2400
+</para>
+        </glossdef>
+       </glossentry>
+       <glossentry>
+        <glossterm>
+         <literal>whsxga</literal>
+        </glossterm>
+        <glossdef>
+         <para>
+6400x4096
+</para>
+        </glossdef>
+       </glossentry>
+       <glossentry>
+        <glossterm>
+         <literal>whuxga</literal>
+        </glossterm>
+        <glossdef>
+         <para>
+7680x4800
+</para>
+        </glossdef>
+       </glossentry>
+       <glossentry>
+        <glossterm>
+         <literal>cga</literal>
+        </glossterm>
+        <glossdef>
+         <para>
+320x200
+</para>
+        </glossdef>
+       </glossentry>
+       <glossentry>
+        <glossterm>
+         <literal>ega</literal>
+        </glossterm>
+        <glossdef>
+         <para>
+640x350
+</para>
+        </glossdef>
+       </glossentry>
+       <glossentry>
+        <glossterm>
+         <literal>hd480</literal>
+        </glossterm>
+        <glossdef>
+         <para>
+852x480
+</para>
+        </glossdef>
+       </glossentry>
+       <glossentry>
+        <glossterm>
+         <literal>hd720</literal>
+        </glossterm>
+        <glossdef>
+         <para>
+1280x720
+</para>
+        </glossdef>
+       </glossentry>
+       <glossentry>
+        <glossterm>
+         <literal>hd1080</literal>
+        </glossterm>
+        <glossdef>
+         <para>
+1920x1080
+</para>
+        </glossdef>
+       </glossentry>
+      </glosslist>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-aspect</option>
+      <replaceable>oran</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+En:boy oranı belirtilir (4:3, 16:9 veya 1.3333, 1.7777 gibi).
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-croptop</option>
+      <replaceable>sayı</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Üstten kesilen bant boyutu (benek sayısı olarak) belirtilir.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-cropbottom</option>
+      <replaceable>sayı</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Alttan kesilen bant boyutu (benek sayısı olarak) belirtilir.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-cropleft</option>
+      <replaceable>sayı</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Soldan kesilen bant boyutu (benek sayısı olarak) belirtilir.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-cropright</option>
+      <replaceable>sayı</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Sağdan kesilen bant boyutu (benek sayısı olarak) belirtilir.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-padtop</option>
+      <replaceable>sayı</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Üstteki boşluk bandının boyutu (benek sayısı olarak) belirtilir.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-padbottom</option>
+      <replaceable>sayı</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Alttaki boşluk bandının boyutu (benek sayısı olarak) belirtilir.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-padleft</option>
+      <replaceable>sayı</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Soldaki boşluk bandının boyutu (benek sayısı olarak) belirtilir.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-padright</option>
+      <replaceable>sayı</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Sağdaki boşluk bandının boyutu (benek sayısı olarak) belirtilir.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-padcolor</option>
+      <replaceable>onaltılık-renk</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Boşluk bantlarının rengi belirtilir. Bant rengi onaltılık tabanda 6 basamaklı bir sayısı olarak belirtilir; ilk iki basamak kırmızı, orta iki basamak yeşil ve son iki basamak mavidir.(ön tanımlı = 000000 (siyah)).
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-vn</option>
+     </glossterm>
+     <glossdef>
+      <para>
+Görüntü kaydı kapatılır.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-bt</option>
+      <replaceable>tolerans</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Görüntü veri hızı toleransı (bit/s cinsinden) belirtilir.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-maxrate</option>
+      <replaceable>sayı</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Azami görüntü veri hızı (bit/s cinsinden) belirtilir.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-minrate</option>
+      <replaceable>sayı</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Asgari görüntü veri hızı (bit/s cinsinden) belirtilir.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-bufsize</option>
+      <replaceable>sayı</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Görüntü tamponunu doğrulayıcı tamponun boyutu belirtilir.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-vcodec</option>
+      <replaceable>kodek</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Görüntü kodekinin <replaceable>kodek</replaceable> olması sağlanır. Ham kodekin olduğu gibi kopyalanmasını sağlamak için <literal>copy</literal> özel değerini kullanınız.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-sameq</option>
+     </glossterm>
+     <glossdef>
+      <para>
+Kaynakla aynı görüntü kalitesi kullanılır (VBR uygular).
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-pass</option>
+      <replaceable>tamsayı</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Geçiş sayısı belirtilir (1 veya 2). İki aşamalı kodlama yapmak için yararlıdır. Görüntü istatistikleri ilk aşamada kaydedilir; görüntü ise tam istenen veri hızında ikinci aşamada üretilir.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-passlogfile</option>
+      <replaceable>isim</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+İki geçişli günlükleme dosyası adı belirtilir.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-newvideo</option>
+     </glossterm>
+     <glossdef>
+      <para>
+O anki çıktı akımına yeni bir görüntü akımı ekler.
+</para>
+     </glossdef>
+    </glossentry>
+   </glosslist>
+  </section>
+  <section xml:id="ffmpeg-Advanced-Video-Options">
+   <info>
+    <title>Gelişmiş Görüntü Seçenekleri</title>
+   </info>
+   <glosslist>
+    <glossentry>
+     <glossterm>
+      <option>-pix_fmt</option>
+      <replaceable>biçim</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Benek biçimini ayarlar. Desteklenen benek biçimlerinin tamamını görmek için <replaceable>biçim</replaceable> olarak <literal>list</literal> belirtiniz.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-sws_flags</option>
+      <replaceable>bayraklar</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+SwScaler bayrakları belirtilir (FFmpeg, SwScaler desteğiyle derlenmişse geçerlidir).
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-g</option>
+      <replaceable>sayı</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Resim grubu boyutu belirtilir.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-intra</option>
+     </glossterm>
+     <glossdef>
+      <para>
+Sadece iç kareler kullanılır.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-vdt</option>
+      <replaceable>sayı</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Eşik kaldırılır.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-qscale</option>
+      <replaceable>oran</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Sabit görüntü nicemleyici oranı (VBR) kullanılır.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-qmin</option>
+      <replaceable>oran</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Asgari görüntü nicemleyici oranı (VBR)
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-qmax</option>
+      <replaceable>oran</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Azami görüntü nicemleyici oranı (VBR)
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-qdiff</option>
+      <replaceable>sayı</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Görüntü nicemleyici oranları (VBR) arasındaki azami fark
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-qblur</option>
+      <replaceable>sayı</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Görüntü nicemleyici oranı bulanıklığı (VBR)
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-qcomp</option>
+      <replaceable>sayı</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Görüntü nicemleyici oranı sıkıştırması (VBR)
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-lmin</option>
+      <replaceable>katsayı</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Asgari görüntü lagranj katsayısı (VBR)
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-lmax</option>
+      <replaceable>katsayı</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Azami görüntü lagranj katsayısı (VBR)
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-mblmin</option>
+      <replaceable>katsayı</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Asgari makroblok nicemleyici oranı (VBR)
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-mblmax</option>
+      <replaceable>katsayı</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Azami makroblok nicemleyici oranı (VBR)
+</para>
+      <para>
+Son dört seçenek (<option>lmin, lmax, mblmin, mblmax</option>) <replaceable>katsayı</replaceable> birim kullanır ama siz <replaceable>oran</replaceable> birimlerinden kolayca dönüşüm için <literal>QP2LAMBDA</literal> sabitini kullanabilirsiniz:
+</para>
+      <screen>ffmpeg -i kaynak.uzt -lmax 21*QP2LAMBDA hedef.uzt
+</screen>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-rc_init_cplx</option>
+      <replaceable>güçlük</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Tek geçişli kodlamada başlangıçtaki güçlük.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-b_qfactor</option>
+      <replaceable>çarpan</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+P- ve B-kareler arasındaki qp çarpanı.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-i_qfactor</option>
+      <replaceable>çarpan</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+P- ve I-kareler arasındaki qp çarpanı.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-b_qoffset</option>
+      <replaceable>mesafe</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+P- ve B-kareler arasındaki qp mesafesi.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-i_qoffset</option>
+      <replaceable>mesafe</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+P- ve I-kareler arasındaki qp mesafesi.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-rc_eq</option>
+      <replaceable>ifade</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Hız denetim ifadesi belirtilir (bkz, <xref linkend="ffmpeg-FFmpeg-formula-evaluator"/>) (öntanımlı = <literal>tex^qComp</literal>).
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-rc_override</option>
+      <replaceable>önem</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Belli bir aralık için hız denetimini değiştirir
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-me_method</option>
+      <replaceable>yöntem</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Hareket tahmin yöntemi olarak <replaceable>yöntem</replaceable> kullanılır Az kaliteliden çok kaliteliye doğru yöntemler:
+</para>
+      <glosslist>
+       <glossentry>
+        <glossterm>
+         <literal>zero</literal>
+        </glossterm>
+        <glossdef>
+         <para>
+Sadece (0, 0) vektörünü dener.
+</para>
+        </glossdef>
+       </glossentry>
+       <glossentry>
+        <glossterm>
+         <literal>phods</literal>
+        </glossterm>
+        <glossterm>
+         <literal>log</literal>
+        </glossterm>
+        <glossterm>
+         <literal>x1</literal>
+        </glossterm>
+        <glossterm>
+         <literal>hex</literal>
+        </glossterm>
+        <glossterm>
+         <literal>umh</literal>
+        </glossterm>
+        <glossterm>
+         <literal>epzs</literal>
+        </glossterm>
+        <glossdef>
+         <para>
+(öntanımlı yöntem)
+</para>
+        </glossdef>
+       </glossentry>
+       <glossentry>
+        <glossterm>
+         <literal>full</literal>
+        </glossterm>
+        <glossdef>
+         <para>
+Yorucu arama (yavaş ve <literal>epzs</literal>'den pek az daha iyi)
+</para>
+        </glossdef>
+       </glossentry>
+      </glosslist>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-dct_algo</option>
+      <replaceable>algo</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+DCT algoritması olarak <replaceable>algo</replaceable> belirtilir. Olası değerler:
+</para>
+      <glosslist>
+       <glossentry>
+        <glossterm>
+         <literal>0</literal>
+        </glossterm>
+        <glossdef>
+         <para>
+FF_DCT_AUTO (öntanımlı)
+</para>
+        </glossdef>
+       </glossentry>
+       <glossentry>
+        <glossterm>
+         <literal>1</literal>
+        </glossterm>
+        <glossdef>
+         <para>
+FF_DCT_FASTINT
+</para>
+        </glossdef>
+       </glossentry>
+       <glossentry>
+        <glossterm>
+         <literal>2</literal>
+        </glossterm>
+        <glossdef>
+         <para>
+FF_DCT_INT
+</para>
+        </glossdef>
+       </glossentry>
+       <glossentry>
+        <glossterm>
+         <literal>3</literal>
+        </glossterm>
+        <glossdef>
+         <para>
+FF_DCT_MMX
+</para>
+        </glossdef>
+       </glossentry>
+       <glossentry>
+        <glossterm>
+         <literal>4</literal>
+        </glossterm>
+        <glossdef>
+         <para>
+FF_DCT_MLIB
+</para>
+        </glossdef>
+       </glossentry>
+       <glossentry>
+        <glossterm>
+         <literal>5</literal>
+        </glossterm>
+        <glossdef>
+         <para>
+FF_DCT_ALTIVEC
+</para>
+        </glossdef>
+       </glossentry>
+      </glosslist>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-idct_algo</option>
+      <replaceable>algo</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+IDCT algoritması olarak <replaceable>algo</replaceable> belirtilir. Olası değerler:
+</para>
+      <glosslist>
+       <glossentry>
+        <glossterm>
+         <literal>0</literal>
+        </glossterm>
+        <glossdef>
+         <para>
+FF_IDCT_AUTO (öntanımlı)
+</para>
+        </glossdef>
+       </glossentry>
+       <glossentry>
+        <glossterm>
+         <literal>1</literal>
+        </glossterm>
+        <glossdef>
+         <para>
+FF_IDCT_INT
+</para>
+        </glossdef>
+       </glossentry>
+       <glossentry>
+        <glossterm>
+         <literal>2</literal>
+        </glossterm>
+        <glossdef>
+         <para>
+FF_IDCT_SIMPLE
+</para>
+        </glossdef>
+       </glossentry>
+       <glossentry>
+        <glossterm>
+         <literal>3</literal>
+        </glossterm>
+        <glossdef>
+         <para>
+FF_IDCT_SIMPLEMMX
+</para>
+        </glossdef>
+       </glossentry>
+       <glossentry>
+        <glossterm>
+         <literal>4</literal>
+        </glossterm>
+        <glossdef>
+         <para>
+FF_IDCT_LIBMPEG2MMX
+</para>
+        </glossdef>
+       </glossentry>
+       <glossentry>
+        <glossterm>
+         <literal>5</literal>
+        </glossterm>
+        <glossdef>
+         <para>
+FF_IDCT_PS2
+</para>
+        </glossdef>
+       </glossentry>
+       <glossentry>
+        <glossterm>
+         <literal>6</literal>
+        </glossterm>
+        <glossdef>
+         <para>
+FF_IDCT_MLIB
+</para>
+        </glossdef>
+       </glossentry>
+       <glossentry>
+        <glossterm>
+         <literal>7</literal>
+        </glossterm>
+        <glossdef>
+         <para>
+FF_IDCT_ARM
+</para>
+        </glossdef>
+       </glossentry>
+       <glossentry>
+        <glossterm>
+         <literal>8</literal>
+        </glossterm>
+        <glossdef>
+         <para>
+FF_IDCT_ALTIVEC
+</para>
+        </glossdef>
+       </glossentry>
+       <glossentry>
+        <glossterm>
+         <literal>9</literal>
+        </glossterm>
+        <glossdef>
+         <para>
+FF_IDCT_SH4
+</para>
+        </glossdef>
+       </glossentry>
+       <glossentry>
+        <glossterm>
+         <literal>10</literal>
+        </glossterm>
+        <glossdef>
+         <para>
+FF_IDCT_SIMPLEARM
+</para>
+        </glossdef>
+       </glossentry>
+      </glosslist>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-er</option>
+      <replaceable>n</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Hatalara dayanma gücü <replaceable>n</replaceable> yapılır.
+</para>
+      <glosslist>
+       <glossentry>
+        <glossterm>
+         <literal>1</literal>
+        </glossterm>
+        <glossdef>
+         <para>
+FF_ER_CAREFUL (öntanımlı)
+</para>
+        </glossdef>
+       </glossentry>
+       <glossentry>
+        <glossterm>
+         <literal>2</literal>
+        </glossterm>
+        <glossdef>
+         <para>
+FF_ER_COMPLIANT
+</para>
+        </glossdef>
+       </glossentry>
+       <glossentry>
+        <glossterm>
+         <literal>3</literal>
+        </glossterm>
+        <glossdef>
+         <para>
+FF_ER_AGGRESSIVE
+</para>
+        </glossdef>
+       </glossentry>
+       <glossentry>
+        <glossterm>
+         <literal>4</literal>
+        </glossterm>
+        <glossdef>
+         <para>
+FF_ER_VERY_AGGRESSIVE
+</para>
+        </glossdef>
+       </glossentry>
+      </glosslist>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-ec</option>
+      <replaceable>bit_mask</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Hatalar <replaceable>bit_mask</replaceable>'a göre gizlenir. <replaceable>bit_mask</replaceable> şu değerleri içerebilen bir bit maskesidir:
+</para>
+      <glosslist>
+       <glossentry>
+        <glossterm>
+         <literal>1</literal>
+        </glossterm>
+        <glossdef>
+         <para>
+FF_EC_GUESS_MVS (öntanımlı = etkin)
+</para>
+        </glossdef>
+       </glossentry>
+       <glossentry>
+        <glossterm>
+         <literal>2</literal>
+        </glossterm>
+        <glossdef>
+         <para>
+FF_EC_DEBLOCK (öntanımlı = etkin)
+</para>
+        </glossdef>
+       </glossentry>
+      </glosslist>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-bf</option>
+      <replaceable>sayı</replaceable>
+     </glossterm>
+     <glossdef>
+      <para><replaceable>sayı</replaceable> B-kare kullanılır (MPEG-1, MPEG-2 ve MPEG-4 için desteklenir).
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-mbd</option>
+      <replaceable>kip</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Makroblok kararı
+</para>
+      <glosslist>
+       <glossentry>
+        <glossterm>
+         <literal>0</literal>
+        </glossterm>
+        <glossdef>
+         <para>
+FF_MB_DECISION_SIMPLE: <literal>mb_cmp</literal> kullanılır (FFmpeg için şimdilik değiştirilemiyor).
+</para>
+        </glossdef>
+       </glossentry>
+       <glossentry>
+        <glossterm>
+         <literal>1</literal>
+        </glossterm>
+        <glossdef>
+         <para>
+FF_MB_DECISION_BITS: En az bit gerektiren seçilir.
+</para>
+        </glossdef>
+       </glossentry>
+       <glossentry>
+        <glossterm>
+         <literal>2</literal>
+        </glossterm>
+        <glossdef>
+         <para>
+FF_MB_DECISION_RD: Hız bozulması
+</para>
+        </glossdef>
+       </glossentry>
+      </glosslist>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-4mv</option>
+     </glossterm>
+     <glossdef>
+      <para>
+Makroblok tarafından dört hareket vektörü kullanılır (sadece MPEG-4 için).
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-part</option>
+     </glossterm>
+     <glossdef>
+      <para>
+Veri bölümlemesi kullanılır (sadece MPEG-4 için).
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-bug</option>
+      <replaceable>parametre</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Kendiliğinden saptanmayan kodlayıcı hatalarının etrafından dolaşılır.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-stric</option>
+      <replaceable>kararlılık</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Standartları izlemedeki kararlılık belirtilir.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-aic</option>
+     </glossterm>
+     <glossdef>
+      <para>
+Gelişmiş iç kodlama etkin kılınır (h263+).
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-umv</option>
+     </glossterm>
+     <glossdef>
+      <para>
+Sınırsız hareket vektörü  etkin kılınır (h263+).
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-deinterlace</option>
+     </glossterm>
+     <glossdef>
+      <para>
+Satır araları taranmaz (Resim bir kere taranır, satır araları için bir kere daha taranmaz).
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-ilme</option>
+     </glossterm>
+     <glossdef>
+      <para>
+Kodlayıcıda satır arası tarama desteği için zorlar (sadece MPEG-2 ve MPEG-4).
+Eğer girdi dosyası satır arası taramalıysa ve bu biçimi en az kayıpla korumak istiyorsanız bu seçeneği kullanınız. Tersine, girdi akımında satır arası tarama desteğini <option>-deinterlace</option> ile kaldırabilirsiniz ama bu işlem kayıplara sebep olur.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-psnr</option>
+     </glossterm>
+     <glossdef>
+      <para>
+Sıkıştırılmış karelerin PSNR'si hesaplanır.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-vstats</option>
+     </glossterm>
+     <glossdef>
+      <para>
+Görüntü kodlama istatistikleri <filename>vstats_HHMMSS.log</filename> dosyasına dökümlenir.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-vstats_file</option>
+      <replaceable>dosya</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Görüntü kodlama istatistikleri <replaceable>dosya</replaceable> dosyasına dökümlenir.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-vhook</option>
+      <replaceable>modül</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Görüntü işleme modülü <replaceable>modül</replaceable> devreye sokulur. <replaceable>modül</replaceable> modül ismini ve boşluklarla ayrılmış olarak modül parametrelerini içerir.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-top</option>
+      <replaceable>n</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+top=1/bottom=0/auto=-1 alanı önce gelir.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-dc</option>
+      <replaceable>hassasiyet</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+İç dc hassasiyeti.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-vtag</option>
+      <replaceable>fourcc/tag</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Görüntü <replaceable>fourcc/tag</replaceable>'ı için zorlar.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-qphist</option>
+     </glossterm>
+     <glossdef>
+      <para>
+QP çizgesini gösterir.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-vbsf </option>
+      <replaceable>bitakımı-filtresi</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Olası bit akımı filtreleri: <literal>dump_extra</literal>, <literal>remove_extra</literal>, <literal>noise</literal>.
+</para>
+     </glossdef>
+    </glossentry>
+   </glosslist>
+  </section>
+  <section xml:id="ffmpeg-Audio-Options">
+   <info>
+    <title>Ses Seçenekleri</title>
+   </info>
+   <glosslist>
+    <glossentry>
+     <glossterm>
+      <option>-aframes</option>
+      <replaceable>sayı</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Kayıt edilecek ses karelerinin sayısı.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-ar</option>
+      <replaceable>frekans</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Ses örnekleme frekansı (öntanımlı = 44100 Hz).
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-ab</option>
+      <replaceable>bithızı</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+bit/s cinsinden ses bithızı (öntanımlı = 64kb/s).
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-ac</option>
+      <replaceable>kanalnum</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Ses kanallarının sayısı (öntanımlı = 1).
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-an</option>
+     </glossterm>
+     <glossdef>
+      <para>
+Ses kaydı engellenir.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-acodec</option>
+      <replaceable>kodek</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Ses kayıt kodeki zorla <replaceable>codec</replaceable> yapılır. Ham kodekin olduğu gibi kopyalanmasını sağlamak için <literal>copy</literal> özel değerini kullanınız.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-newaudio</option>
+     </glossterm>
+     <glossdef>
+      <para>
+O anki çıktı akımına yeni bir ses akımı ekler. Aynı zamanda parametre de belirtmek isterseniz şöyle yapın: <literal>-newaudio (-acodec, -ab, ...)</literal>.
+</para>
+      <para>
+Çıktı akımlarının sayısı girdi akımlarının sayısına eşitse eşleme kendiliğinden yapılır, değilse ilk eşleşen alınır. <literal>-map</literal> seçeneğini kullanarak eşlemenin olması gerektiği gibi olmasını sağlayabilirsiniz.
+</para>
+      <para>
+Örnek:
+</para>
+      <screen>ffmpeg -i file.mpg -vcodec copy -acodec ac3 -ab 384k test.mpg -acodec mp2 -ab 192k -newaudio
+</screen>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-alang</option>
+      <replaceable>kod</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+O anki altyazı akımına ISO 639 dil kodu belirtilir (3 harfli).
+</para>
+     </glossdef>
+    </glossentry>
+   </glosslist>
+  </section>
+  <section xml:id="ffmpeg-Advanced-Audio-options">
+   <info>
+    <title>Gelişmiş Ses Seçenekleri</title>
+   </info>
+   <glosslist>
+    <glossentry>
+     <glossterm>
+      <option>-atag</option>
+      <replaceable>fourcc/tag</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Ses <replaceable>fourcc/tag</replaceable>'ı için zorlar.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-absf</option>
+      <replaceable>bitakımı-filtresi</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Olası bitakımı filtreleri: <literal>dump_extra</literal>, <literal>remove_extra</literal>, <literal>noise</literal>, <literal>mp3comp</literal>, <literal>p3decomp</literal>.
+</para>
+     </glossdef>
+    </glossentry>
+   </glosslist>
+  </section>
+  <section xml:id="ffmpeg-Subtitle-options">
+   <info>
+    <title>Altyazı Seçenekleri</title>
+   </info>
+   <glosslist>
+    <glossentry>
+     <glossterm>
+      <option>-scodec</option>
+      <replaceable>kodek</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Alt yazı kodekini kodek'e zorlamak için kullanılır (<literal>copy</literal> akımına kopyalar).
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-newsubtitle</option>
+     </glossterm>
+     <glossdef>
+      <para>
+O anki çıktı akımına yeni bir altyazı akımı ekler.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-slang</option>
+      <replaceable>kod</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+O anki altyazı akımına ISO 639 dil kodu belirtilir (3 harfli).
+</para>
+     </glossdef>
+    </glossentry>
+   </glosslist>
+  </section>
+  <section xml:id="ffmpeg-AV-grab-options">
+   <info>
+    <title>Ses/Görüntü Yakalama Seçenekleri</title>
+   </info>
+   <glosslist>
+    <glossentry>
+     <glossterm>
+      <option>-vc</option>
+      <replaceable>kanal</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Ses yakalama kanalı (sadece DV1394 için).
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-tvstd</option>
+      <replaceable>standart</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Televizyon standardı (NTSC, PAL (SECAM)).
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-isync</option>
+     </glossterm>
+     <glossdef>
+      <para>
+Girdide okuma işlemi eşzamanlanır.
+</para>
+     </glossdef>
+    </glossentry>
+   </glosslist>
+  </section>
+  <section xml:id="ffmpeg-Advanced-options">
+   <info>
+    <title>Gelişmiş Seçenekler</title>
+   </info>
+   <glosslist>
+    <glossentry>
+     <glossterm>
+      <option>-map</option>
+      <replaceable>girdi-akımı-kimliği[:girdi-akımı-kimliği]</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Girdi akımlarının çıktı akımlarına eşlenmesini sağlar. Girdi akımlarını çıktıda olması gereken sırada sıralamanız yeterlidir. Belirtilen <replaceable>[girdi-akımı-kimliği]</replaceable> sync'e uydurulur.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-map_meta_data</option>
+      <replaceable>girdi-dosyası:çıktı-dosyası</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Çıktı dosyasının temel verilerini girdi dosyasındaki temel verilerden oluşturur.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-debug</option>
+     </glossterm>
+     <glossdef>
+      <para>
+Hata ayıklamaya özgü bilgileri basar.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-benchmark</option>
+     </glossterm>
+     <glossdef>
+      <para>
+Karşılaştırmalı değerlendirme için zamanlama bilgileri eklenir.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-dump</option>
+     </glossterm>
+     <glossdef>
+      <para>
+Her girdi paketi dökümlenir.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-hex</option>
+     </glossterm>
+     <glossdef>
+      <para>
+Paketler dökümlenirken yararlı yük de dökümlenir.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-bitexact</option>
+     </glossterm>
+     <glossdef>
+      <para>
+Sadece doğru bit algoritmaları kullanılır (kodek denemesi için).
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-ps</option>
+      <replaceable>sayı</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Paket boyutunu <replaceable>sayı</replaceable> bit yapar.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-re</option>
+     </glossterm>
+     <glossdef>
+      <para>
+Girdiyi doğal kare hızıyla okur. Genelde yakalama aygıtını taklit etmek için kullanılır.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-loop_input</option>
+     </glossterm>
+     <glossdef>
+      <para>
+Girdi akımı üzerinde döngü oluşturur. Şimdilik sadece görüntü akımlarıyla çalışmaktadır. Bu seçenek özdevinimli FFserver denemelerinde kullanılır.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-loop_output</option>
+      <replaceable>döngü-sayısı</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Canlandırılmış GIF gibi döngü destekleyen biçimlerde çıktı döngüsünü yineler (0 değeri çıktının sonsuza kadar yinelenmesini sağlar).
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-threads</option>
+      <replaceable>sayı</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Evre sayısı.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-vsync</option>
+      <replaceable>parametre</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Görüntü eşzamanlama yöntemi. Görüntü, zaman damgalarına uydurmak için  uzatılır/kısaltılır; bu işlem kareler yinelenerek/atlanarak yapılır. <option>-map</option> seçeneğini kullanarak zaman damgalarının hangi akımdan seçileceğini belirtebilirsiniz. Ya görüntüyü ya da sesi değişmeden bırakır, diğerini değişmeden kalana eşzamanlarsınız.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-async</option>
+      <replaceable>saniyede-örnek-sayısı</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Ses eşzamanlama yöntemi. Ses, zaman damgalarına uydurmak için  uzatılır/kısaltılır; parametre, değişmeyen sese göre saniyedeki azami örnek sayısıdır. <option>-async 1</option> özel bir durum olup, ses akımının sonradan tekrar düzeltilmemek üzere düzeltilmiş olarak başlatıldığı yerlerde kullanılır.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-copyts</option>
+     </glossterm>
+     <glossdef>
+      <para>
+Zaman damgaları girdiden çıktıya kopyalanır.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-shortest</option>
+     </glossterm>
+     <glossdef>
+      <para>
+En kısa girdi akımı bittiğinde kodlamayı bitirir.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-dts_delta_threshold</option>
+     </glossterm>
+     <glossdef>
+      <para>
+Zaman damgası süreksizlik fark eşiği.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-muxdelay</option>
+      <replaceable>saniye</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+Azami 'demux-decode' gecikmesi.
+</para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>-muxpreload</option>
+      <replaceable>saniye</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+İlk 'demux-decode' gecikmesi.
+</para>
+     </glossdef>
+    </glossentry>
+   </glosslist>
+  </section>
+  <section xml:id="ffmpeg-FFmpeg-formula-evaluator">
+   <info>
+    <title>FFmpeg Formül Değerlendiricisi</title>
+   </info>
+   <para>
+FFmpeg, bir hız denetim dizgesini değerlendirirken, dahili bir formül değerlendirici kullanır.
+</para>
+   <para>
+Şu iki terimli işleçler kullanılabilir: <literal>+</literal>, <literal>-</literal>, <literal>*</literal>, <literal>/</literal>, <literal>^</literal>.
+</para>
+   <para>
+Şu tek terimli işleçler kullanılabilir: <literal>+</literal>, <literal>-</literal>, <literal>(...)</literal>.
+</para>
+   <para>
+Kullanılabilecek işlevler:
+</para>
+   <glosslist>
+    <glossentry>
+     <glossterm>
+      <replaceable>sinh(x)</replaceable>
+     </glossterm>
+     <glossterm>
+      <replaceable>cosh(x)</replaceable>
+     </glossterm>
+     <glossterm>
+      <replaceable>tanh(x)</replaceable>
+     </glossterm>
+     <glossterm>
+      <replaceable>sin(x)</replaceable>
+     </glossterm>
+     <glossterm>
+      <replaceable>cos(x)</replaceable>
+     </glossterm>
+     <glossterm>
+      <replaceable>tan(x)</replaceable>
+     </glossterm>
+     <glossterm>
+      <replaceable>exp(x)</replaceable>
+     </glossterm>
+     <glossterm>
+      <replaceable>log(x)</replaceable>
+     </glossterm>
+     <glossterm>
+      <replaceable>squish(x)</replaceable>
+     </glossterm>
+     <glossterm>
+      <replaceable>gauss(x)</replaceable>
+     </glossterm>
+     <glossterm>
+      <replaceable>abs(x)</replaceable>
+     </glossterm>
+     <glossterm>
+      <replaceable>max(x, y)</replaceable>
+     </glossterm>
+     <glossterm>
+      <replaceable>min(x, y)</replaceable>
+     </glossterm>
+     <glossterm>
+      <replaceable>gt(x, y)</replaceable>
+     </glossterm>
+     <glossterm>
+      <replaceable>lt(x, y)</replaceable>
+     </glossterm>
+     <glossterm>
+      <replaceable>eq(x, y)</replaceable>
+     </glossterm>
+     <glossterm>
+      <replaceable>bits2qp(bits)</replaceable>
+     </glossterm>
+     <glossterm>
+      <replaceable>qp2bits(qp)</replaceable>
+     </glossterm>
+    </glossentry>
+   </glosslist>
+   <para/>
+   <para>
+Kullanılabilecek sabitler:
+</para>
+   <glosslist>
+    <glossentry>
+     <glossterm>
+      <replaceable>PI</replaceable>
+     </glossterm>
+     <glossterm>
+      <replaceable>E</replaceable>
+     </glossterm>
+     <glossterm>
+      <replaceable>iTex</replaceable>
+     </glossterm>
+     <glossterm>
+      <replaceable>pTex</replaceable>
+     </glossterm>
+     <glossterm>
+      <replaceable>tex</replaceable>
+     </glossterm>
+     <glossterm>
+      <replaceable>mv</replaceable>
+     </glossterm>
+     <glossterm>
+      <replaceable>fCode</replaceable>
+     </glossterm>
+     <glossterm>
+      <replaceable>iCount</replaceable>
+     </glossterm>
+     <glossterm>
+      <replaceable>mcVar</replaceable>
+     </glossterm>
+     <glossterm>
+      <replaceable>var</replaceable>
+     </glossterm>
+     <glossterm>
+      <replaceable>isI</replaceable>
+     </glossterm>
+     <glossterm>
+      <replaceable>isP</replaceable>
+     </glossterm>
+     <glossterm>
+      <replaceable>isB</replaceable>
+     </glossterm>
+     <glossterm>
+      <replaceable>avgQP</replaceable>
+     </glossterm>
+     <glossterm>
+      <replaceable>qComp</replaceable>
+     </glossterm>
+     <glossterm>
+      <replaceable>avgIITex</replaceable>
+     </glossterm>
+     <glossterm>
+      <replaceable>avgPITex</replaceable>
+     </glossterm>
+     <glossterm>
+      <replaceable>avgPPTex</replaceable>
+     </glossterm>
+     <glossterm>
+      <replaceable>avgBPTex</replaceable>
+     </glossterm>
+     <glossterm>
+      <replaceable>avgTex</replaceable>
+     </glossterm>
+    </glossentry>
+   </glosslist>
+  </section>
+  <section xml:id="ffmpeg-Protocols">
+   <info>
+    <title>Protokoller</title>
+   </info>
+   <para>
+Standart girdinin okunması veya standart çıktıya yazılması için dosya ismi olarak <filename>-</filename> belirtilebilir.
+</para>
+   <para>
+FFmpeg ayrıca, URL sözdizimi ile belirtilen protokollerin çoğunu destekler.
+</para>
+   <para>
+Desteklenen protokollerin listesini görmek için <command>ffmpeg -formats</command> yazınız.
+</para>
+   <para><literal>http:</literal> protokolü şimdilik sadece FFserver ile iletişim için kullanılmaktadır (FFserver belgesine bakınız). FFmpeg bir görüntü oynatıcı olacaksa FFserver gerekli akımı sağlayabilir <literal>:-)</literal>
+</para>
+  </section>
+ </chapter>
+ <chapter xml:id="ffmpeg-tips">
+  <info>
+   <title>İpuçları</title>
+  </info>
+  <itemizedlist>
+   <listitem>
+    <para>
+Düşük bithızlı akım uygulamalarında düşük bir kare hızı ve küçük bir görüntü penceresi kullanılır. Bu özellikle, çok hızlıymış gibi görünmeyen, dolayısıyla kare kaybı olabilen Linux oynatıcılarda RealVideo için geçerlidir. Örnek:
+</para>
+    <screen>ffmpeg -g 3 -r 3 -t 10 -b 50k -s qcif -f rv10 /tmp/b.rm
+</screen>
+   </listitem>
+   <listitem>
+    <para><option>q</option> parametresi kodlamanın geçerli nicemleyicisini gösterir. 1 değeri ulaşılabilecek en iyi kaliteyi ifade eder, 31 değeri ise en kötüsünü. Eğer <option>q=31</option> çok sıkça görülüyorsa kodlayıcı, bithızınızın gerektirdiği sıkıştırmayı yapamıyor demektir. Bu durumda ya bithızını arttırmalı ya kare hızını düşürmeli ya da kare boyutunu küçültmelisiniz.
+</para>
+   </listitem>
+   <listitem>
+    <para>
+Eğer bilgisayarınız yeterince hızlı değilse sıkıştırma oranını arttırabilirsiniz. Görüntü hızının tahmin edilmesini sağlamak için <option>-me zero</option> belirtebileceğiniz gibi bu tahmin işlemini tamamen kapatmak için <option>-intra</option> seçeneğini kullanabilirsiniz (sadece, JPEG sıkıştırmasının olabildiğince iyi olmasını sağlayan I-kareleri kullanacaksınız).
+</para>
+   </listitem>
+   <listitem>
+    <para>
+Çok düşük ses bithızları için, örnekleme sıklığını azaltmalısınız (MPEG ses biçimi için 22050 kHz'e, AC3 için 22050 veya 11025).
+</para>
+   </listitem>
+   <listitem>
+    <para>
+Sabit bir kalite (fakat değişken bithızı) istiyorsanız <option>-qscale</option> <replaceable>n</replaceable> seçeneğini kullanınız; burada <replaceable>n</replaceable> 1 (en iyi kalite) ile 31 (en kötü kalite) arasında bir değer olmalıdır.
+</para>
+   </listitem>
+   <listitem>
+    <para>
+Görüntü dosyalarını dönüştürürken, kodlayıcıda kod çözücü ile aynı kalite katsayısını ve kodlamanın hemen hemen kayıpsız olmasını sağlayan <option>-sameq</option> seçeneğini kullanabilirsiniz.
+</para>
+   </listitem>
+  </itemizedlist>
+ </chapter>
+ <chapter xml:id="ffmpeg-terimler">
+  <info>
+   <title>Terim Tanımları</title>
+  </info>
+  <para>Çeviride geçen terimlerin tanımları</para>
+  <glosslist>
+   <glossentry>
+    <glossterm><emphasis role="bold">Bithızı</emphasis> (İng.: Bitrate)</glossterm>
+    <glossdef>
+     <para>Sıkça görüntü ve ses kalitesi hakkında kullanılır. Bir saniyelik ses veya videonun ne kadar fiziksel yer kapladığını bit (bayt değil) olarak tanımlar. Örneğin 3 dakikalık 128kbit/s CBR bithızlı MP3 ses dosyası 2.81 megabayt fiziksel yer kaplar ((1024 * 128) / 1024 / (1024 * 180) / 8)
+    </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm><emphasis role="bold">B-kare</emphasis> (İng.: B-frame - 'bi-directional frame' kısaltması)</glossterm>
+    <glossdef>
+     <para>Çift yönlü kare. MPEG standartı tarafından kullanılan bir sıkıştırma türüdür.</para>
+     <note>
+      <para>Bir B-kare içeriği, sadece bir önceki kareden veya bir sonraki kareden farklı veri olarak alınır. B-kare oluşturmak I veya P-kare oluşturmaktan daha fazla işlem gücü gerektirir. B-kare kullanımı 200:1 sıkıştırma oranına ulaşılmasını sağlar.</para>
+     </note>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm><emphasis role="bold">P-kare</emphasis> (İng.: P-frame - 'predictive frame' kısaltması)</glossterm>
+    <glossdef>
+     <para>Tahmini kare. MPEG standartı tarafından kullanılan bir sıkıştırma türüdür. P-kareler I-kareleri izler ve sadece önceki I-karenin (renk ve içerik değişimleri gibi) değişen verilerini içerir. Bu nedenle P-kareler veri içeriğinin çoğunu sağlamak için I-karelere bağımlıdırlar.
+    </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm><emphasis role="bold">I-kare</emphasis> (İng.: I-frame - 'intraframe' kısaltması)</glossterm>
+    <glossdef>
+     <para>İç kare. MPEG standartı tarafından kullanılan bir sıkıştırma türüdür. 'Anahtar kare' (keyframe) olarak da adlandırılır, genellikle sıkıştırılmış bir görüntüde I-kareler, P-kareler ve B-kareler arasına serpiştirilmiş gibi görünür. Çok I-kare bulunan videolar daha kalitelidir ancak I-kareler çok bit içeririr ve çok yer kaplar.
+    </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm><emphasis role="bold">Makroblok</emphasis> (İng.: Macroblock)</glossterm>
+    <glossdef>
+     <para>Bir resim grubudur. Genelde 4'lüdür (uçtan uca 16 x 16 benek). MPEG kodlaması esnasında çözümlenir ve kareler arasında resimde hareket eden cisimler tahmin edilir. Bu çözümlenen resimlerin içine makrobloklar yerleştirerek hareket vektörleri oluşturulur.
+    </para>
+    </glossdef>
+   </glossentry>
+  </glosslist>
+ </chapter>
+</part>
