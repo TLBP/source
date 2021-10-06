@@ -1,0 +1,320 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ********************************************************************
+         ch15.xml
+     ******************************************************************** -->
+<part xml:id="glibc-Pipes-and-FIFOs">
+ <info>
+  <title>Borular ve FIFOlar</title>
+  <titleabbrev>Basit bir süreçler arası haberleşme mekanizması.</titleabbrev>
+ </info>
+ <partintro>
+  <para><indexterm scope="glibc-cp"><primary>boru</primary></indexterm>
+Bir <wordasword>boru</wordasword> süreçler arası haberleşme mekanizmasıdır; bir süreç tarafından boruya yazılan veri başka bir süreç tarafından okunabilir. Veri ilk giren, ilk çıkar (FIFO) sırasıyla ele alınır. Borunun adı yoktur; bir kullanımlık oluşturulur ve her iki uç, boruyu oluşturan süreç tarafından erişilebilir olmalıdır.
+  </para>
+  <para><indexterm scope="glibc-cp"><primary>FIFO özel dosyası</primary></indexterm>
+Bir <wordasword>FIFO özel dosyası</wordasword>  boru ile aynıdır, fakat anonim, geçici bağlantı olmak yerine, bir FIFO'nun bir adı veya diğer dosyalar gibi isimleri vardır.
+Süreçler FIFO'yu üzerinden haberleşmek için açarlar.
+  </para>
+  <para>
+Boru veya FIFOnun her iki ucu aynı anda açılmalıdır. Eğer herhangi bir sürecin üzerine yazmadığı bir boru veya FIFO dosyasından okuma yapıyorsanız (belki hepsi dosyayı kapatmış veya çıkmış olabilir), okuma sonucunda dosya-sonu (EOF) döner. Üzerinde okuma işlemi olmayan bir boru veya FIFO'ya yazmak hata durumu olarak karşılanır; bir <command>SIGPIPE</command> sinyali üretir ve eğer sinyal yakalanıyor ya da bloklanıyorsa <command>EPIPE</command>  hata koduyla sonlanır.
+  </para>
+  <para>
+Ne borular ne de FIFO özel dosyaları dosya içinde konumlamaya izin vermez. Okuma ve yazma işlemleri sırayla gerçekleşir; dosyanın başından okunur ve sonuna yazılır.
+  </para>
+ </partintro>
+ <chapter xml:id="glibc-Creating-a-Pipe">
+  <info>
+   <title>Bir Borunun Oluşturulması</title>
+   <titleabbrev>Borunun <command>pipe</command> işleviyle yapılması.</titleabbrev>
+  </info>
+  <para><indexterm scope="glibc-cp"><primary>boru</primary><secondary>oluşturulması</secondary></indexterm><indexterm scope="glibc-cp"><primary>boru</primary><secondary> açılması</secondary></indexterm><indexterm scope="glibc-cp"><primary>borular</primary><secondary>süreçler arası haberleşme</secondary></indexterm>
+Boru oluşturmak için en ilkel işlev <command>pipe</command> işlevidir. Bu borunun okuma ve yazma uçlarının her ikisini de oluşturur.  Tek bir sürecin kendisiyle konuşması için boru kullanımı pek kullanışlı değildir. Tipik kullanım şekli, bir işlemin bir veya daha fazla <link linkend="glibc-Creating-a-Process">alt süreci oluşturmadan</link> önce boruyu oluşturmasıdır.  Bundan sonra boru üst ve alt süreç arasında veya iki alt süreç arasında haberleşme için kullanılır.
+   </para>
+  <para><command>pipe</command> işlevi <filename>unistd.h</filename> başlık dosyası içinde tanımlıdır.
+<indexterm scope="glibc-pg"><primary>unistd.h</primary></indexterm>
+   </para>
+  <para xml:id="glibc-pipe">
+   <indexterm scope="glibc-fn">
+    <primary>pipe</primary>
+   </indexterm>
+   <funcsynopsis>
+    <funcprototype role="işlev">
+     <funcdef>int <command>pipe</command></funcdef>
+     <paramdef>(int <varname>dosyatnm</varname>[2])</paramdef>
+    </funcprototype>
+    <funcdescr>
+     <para><command>pipe</command> işlevi boruyu oluşturur ve borunun okuma ve yazma uçları için dosya tanımlayıcıları (sırasıyla) <varname>dosyatnm</varname><literal>[0]</literal> ve <varname>dosyatnm</varname><literal>[1]</literal> içine koyar.
+   </para>
+     <para>
+Girdi ucunun önce geldiğini hatırlamanın kolay bir yolu dosya tanımlayıcı  <command>0</command>'ın standart girdi ve dosya tanımlayıcı <command>1</command>'in standart çıktı olmasıdır.
+   </para>
+     <para>
+Başarı halinde  <command>pipe</command>,  <command>0</command> değerini döndürür.  Başarısızlık halinde ise <command>-1</command> döndürülür.  Aşağıdaki <command>errno</command> hata durumları bu işlev için tanımlanmıştır:
+   </para>
+     <para>
+      <variablelist>
+       <varlistentry>
+        <term>
+         <literal>EMFILE</literal>
+        </term>
+        <listitem>
+         <para>
+Sürecin çok sayıda açık dosyası var.
+      </para>
+        </listitem>
+       </varlistentry>
+       <varlistentry>
+        <term>
+         <literal>ENFILE</literal>
+        </term>
+        <listitem>
+         <para>
+Sistemde çok sayıda açık dosya var.  <command>ENFILE</command> hakkında daha fazla bilgi için <xref linkend="glibc-Error-Codes"/> bölümüne bakınız.  Bu hata GNU sisteminde hiçbir zaman oluşmaz.
+      </para>
+        </listitem>
+       </varlistentry>
+      </variablelist>
+     </para>
+    </funcdescr>
+   </funcsynopsis>
+  </para>
+  <para>
+Burada basit bir boru oluşturma yazılımı görüyoruz. Bu yazılım <command>fork</command> işlevini (<xref linkend="glibc-Creating-a-Process"/>) alt süreç oluşturmak için kullanmıştır. Üst süreç veriyi boruya yazar, alt süreç okur.
+   </para>
+  <para>
+   <screen>
+#include &lt;sys/types.h&gt;
+#include &lt;unistd.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+
+/* Borudan karakterleri oku ve stdout'a yaz. */
+
+void
+read_from_pipe (int dosya)
+{
+  FILE *akim;
+  int c;
+  akim = fdopen (dosya, "r");
+  while ((c = fgetc (akim)) != EOF)
+    putchar (c);
+  fclose (akim);
+}
+
+/* Boruya rastgele birşeyler yaz. */
+
+void
+write_to_pipe (int dosya)
+{
+  FILE *akim;
+  akim = fdopen (dosya, "w");
+  fprintf (akim, "Merhaba!\n");
+  fprintf (akim, "Elveda!\n");
+  fclose (akim);
+}
+
+int
+main (void)
+{
+  pid_t pid;
+  int boru[2];
+
+  /* Boruyu yarat. */
+  if (pipe (boru))
+    {
+      fprintf (stderr, "Boruda hata oluştu.\n");
+      return EXIT_FAILURE;
+    }
+
+  /* Alt süreci oluşturalım. */
+  pid = fork ();
+  if (pid == (pid_t) 0)
+    {
+      /* Bu bir alt süreç.
+         Önce diğer ucu kapatalım. */
+      close (boru[1]);
+      read_from_pipe (boru[0]);
+      return EXIT_SUCCESS;
+    }
+  else if (pid &lt; (pid_t) 0)
+    {
+      /* Alt süreç oluşturulamadı. */
+      fprintf (stderr, "Alt süreç oluşturulamadı.\n");
+      return EXIT_FAILURE;
+    }
+  else
+    {
+      /* Bu bir üst süreç.
+         Önce diğer ucu kapatalım. */
+      close (boru[0]);
+      write_to_pipe (boru[1]);
+      return EXIT_SUCCESS;
+    }
+}
+</screen>
+  </para>
+ </chapter>
+ <chapter xml:id="glibc-Pipe-to-a-Subprocess">
+  <info>
+   <title>Bir Alt Sürece Boru Hattı</title>
+   <titleabbrev>Bir alt süreçle haberleşmek için boru kullanımı.</titleabbrev>
+  </info>
+  <para><indexterm scope="glibc-cp"><primary>alt süreç</primary><secondary>boru oluşturma</secondary></indexterm><indexterm scope="glibc-cp"><primary>boru</primary><secondary>alt sürece</secondary></indexterm><indexterm scope="glibc-cp"><primary>alt süreç</primary><secondary>G/Ç filtreleme</secondary></indexterm>
+Boruların genel kullanım şekli alt süreç olarak çalışan bir yazılım ile veri alışverişidir.
+Bunu yapmanın bir yolu  <command>pipe</command> (boru oluşturmak için), <command>fork</command> (alt süreç oluşturmak için), <command>dup2</command> (bir alt süreci bir boruyu standart girdi veya çıktı kanalı olarak kullanmaya zorlamak için) ve <command>exec</command> (yeni bir yazılımı çalıştırmak için) birleşimini kullanmaktır.  Ya da, <command>popen</command> ve <command>pclose</command> işlevlerini kullanabilirsiniz..
+   </para>
+  <para><command>popen</command> ve <command>pclose</command> kullanmanın yararı arayüzünün daha basit ve kullanımının kolay oluşudur. Ancak düşük seviyeli işlevleri doğrudan kullanma esnekliği yoktur.
+<indexterm scope="glibc-fn"><primary>popen</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev"><funcdef>FILE *<command>popen</command></funcdef><paramdef>(const char *<varname>komut</varname>,
+ const char *<varname>kip</varname>)</paramdef></funcprototype><funcdescr><para><command>popen</command> işlevi <command>system</command> işlevleriyle yakından ilgilidir;  bkz. <xref linkend="glibc-Running-a-Command"/>. <varname>komut</varname> kabuk komutunu alt süreç olarak çalıştırır.  Fakat, komutun bitmesini beklemek yerine, bir alt süreç borusu oluşturur ve boruyla ilişkili bir akım döndürür.
+   </para><para>
+Eğer <varname>kip</varname> argümanı için <command>"r"</command> belirtirseniz, alt sürecin standart çıktı kanalındaki veriyi almak için akımdan okuma yapabilirsiniz. Alt süreç, standart girdi kanalının özelliklerini üst süreçten (miras) alır.
+   </para><para>
+Benzer bir şekilde, <varname>kip</varname> argümanı için <command>"w"</command> belirtirseniz, alt sürecin standart girdi kanalına veri göndermek için akıma yazabilirsiniz. Alt süreç, standart çıktı kanalının özelliklerini üst süreçten alır.
+   </para><para>
+Hata durumunda <command>popen</command> boş gösterici ile döner. Bu boru veya akım oluturulamadığında veya yazılım çalıştırılamadığında olabilir.
+</para></funcdescr></funcsynopsis></para>
+  <para xml:id="glibc-pclose">
+   <indexterm scope="glibc-fn">
+    <primary>pclose</primary>
+   </indexterm>
+   <funcsynopsis>
+    <funcprototype role="işlev">
+     <funcdef>int <command>pclose</command></funcdef>
+     <paramdef>(FILE *<varname>akım</varname>)</paramdef>
+    </funcprototype>
+    <funcdescr>
+     <para><command>pclose</command> işlevi <command>popen</command> tarafından oluşturulan <varname>akım</varname>ı kapatmak için kullanılır. <command>system</command> işlevinin yaptığı gibi, alt sürecin bitmesi için bekler ve onun durum değerini döndürür.
+</para>
+    </funcdescr>
+   </funcsynopsis>
+  </para>
+  <para>
+Burada <command>popen</command> ve <command>pclose</command> işlevlerinin, çıktının <command>more</command> sayfalama yazılımı gibi başka bir yazılımla filtrelenmesi için nasıl kullanıldığını gösteren bir örnek görüyoruz.
+   </para>
+  <para>
+   <screen>
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+
+void
+write_data (FILE * akim)
+{
+  int i;
+  for (i = 0; i &lt; 100; i++)
+    fprintf (akim, "%d\n", i);
+  if (ferror (akim))
+    {
+      fprintf (stderr, "Akıma yazılamadı.\n");
+      exit (EXIT_FAILURE);
+    }
+}
+
+int
+main (void)
+{
+  FILE *cikti;
+
+  cikti = popen ("more", "w");
+  if (!cikti)
+    {
+      fprintf (stderr,
+                "ya parametre yanlis ya da dosya sayisi fazla.\n");
+      return EXIT_FAILURE;
+    }
+  write_data (cikti);
+  if (pclose (cikti) != 0)
+    {
+      fprintf (stderr,
+                "Artik calistirilamiyor veya baska bir hata var.\n");
+    }
+  return EXIT_SUCCESS;
+}
+</screen>
+  </para>
+ </chapter>
+ <chapter xml:id="glibc-FIFO-Special-Files">
+  <info>
+   <title>FIFO Özel Dosyaları</title>
+   <titleabbrev>Bir FIFO özel dosyasının oluşturulması.</titleabbrev>
+  </info>
+  <para><indexterm scope="glibc-cp"><primary>FIFO özel dosyası</primary><secondary>oluşturulması</secondary></indexterm><indexterm scope="glibc-cp"><primary>FIFO ile süreçler arası haberleşme</primary></indexterm>
+Bir FIFO özel dosyası boruya benzer, ancak oluşturulma şekli farklıdır.  Anonim bir haberleşme kanalı olmaktansa, FIFO özel dosyası dosya sistemine <command>mkfifo</command> işlevi çağrılarak girer.
+   </para>
+  <para>
+FIFO özel dosyasını bir kere bu şekilde oluşturduktan sonra, herhangi bir süreç, sıradan bir dosyaya yapıldığı gibi, onu okuma veya yazma için açabilir.
+Fakat, üzerinde her hangi bir girdi veya çıktı işlemi sürdürmeden önce her iki ucun da eş zamanlı açılması gerekir.
+FIFO'yu okumak için açmak, normalde başka bir süreç aynı FIFO'yu yazmak için açana kadar bloke eder (Tam tersi de geçerlidir).
+   </para>
+  <para><command>mkfifo</command> işlevi <filename>sys/stat.h</filename> başlık dosyası içinde tanımlıdır.
+<indexterm scope="glibc-pg"><primary>sys/stat.h</primary></indexterm>
+   </para>
+  <para xml:id="glibc-mkfifo">
+   <indexterm scope="glibc-fn">
+    <primary>mkfifo</primary>
+   </indexterm>
+   <funcsynopsis>
+    <funcprototype role="işlev">
+     <funcdef>int <command>mkfifo</command></funcdef>
+     <paramdef>(const char *<varname>dosyaismi</varname>,
+ mode_t      <varname>kip</varname>)</paramdef>
+    </funcprototype>
+    <funcdescr>
+     <para><command>mkfifo</command> işlevi <varname>dosyaismi</varname> adında bir FIFO özel dosyası oluşturur.  <varname>kip</varname> argümanı dosyanın izinlerini belirlemek için kullanılır; bkz. <xref linkend="glibc-Setting-Permissions"/>.
+   </para>
+     <para><command>mkfifo</command>'nun normal hatasız dönüş değeri <command>0</command>'dır. Hata durumunda, <command>-1</command> döndürülür.  Bildik <link linkend="glibc-File-Name-Errors">dosya ismi hatalarına</link> ek olarak, aşağıdaki <command>errno</command> hata durumları bu işlev için tanımlanmıştır:
+   </para>
+     <para>
+      <variablelist>
+       <varlistentry>
+        <term>
+         <literal>EEXIST</literal>
+        </term>
+        <listitem>
+         <para>
+Bu isimde dosya zaten var.
+      </para>
+        </listitem>
+       </varlistentry>
+       <varlistentry>
+        <term>
+         <literal>ENOSPC</literal>
+        </term>
+        <listitem>
+         <para>
+Dizin veya dosya sistemi genişletilemez.
+      </para>
+        </listitem>
+       </varlistentry>
+       <varlistentry>
+        <term>
+         <literal>EROFS</literal>
+        </term>
+        <listitem>
+         <para>
+Dosyayı içeren dizin salt-okunur bir dosya sisteminde.
+      </para>
+        </listitem>
+       </varlistentry>
+      </variablelist>
+     </para>
+    </funcdescr>
+   </funcsynopsis>
+  </para>
+ </chapter>
+ <chapter xml:id="glibc-Pipe-Atomicity">
+  <info>
+   <title>Borunun G/Ç Bütünlüğü</title>
+   <titleabbrev>Boru (veya FIFO) G/Ç işlemleri ne zaman bütündür.</titleabbrev>
+  </info>
+  <para>
+Yazılan verinin miktarı <command>PIPE_BUF</command> değerinden büyük olmadığı sürece borudan okuma ve yazma işlemi <wordasword>atomik</wordasword> bir işlemdir. Bu veri aktarımının anlık bir birim olarak göründüğü anlamına gelir, bu nedenle sistemdeki hiçbir şey tamamlanmış halini gözlemleyemez. Atomik G/Ç hemen başlayamayabilir (tampon alanı veya veri için beklemesi gerekebilir), fakat başladı mı hemen biter.
+   </para>
+  <para>
+Büyük miktarda veri okumak veya yazmak atomik olmayabilir; örneğin, dosya tanımlayıcısını paylaşan diğer süreçlerin çıktı verisi araya serpiştirilmiş olabilir.
+Aynı zamanda, bir kere <command>PIPE_BUF</command>'a karakterler yazıldığında, okuma yapılıncaya kadar başka yazımlar durdurulur.
+   </para>
+  <para><command>PIPE_BUF</command> parametresi hakkında daha fazla bilgi için <xref linkend="glibc-Limits-for-Files"/> bölümüne bakınız.
+   </para>
+ </chapter>
+</part>

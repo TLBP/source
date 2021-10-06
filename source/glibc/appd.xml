@@ -1,0 +1,409 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ********************************************************************
+         appd.xml
+     ******************************************************************** -->
+<appendix xml:id="glibc-Maintenance" xmlns="http://docbook.org/ns/docbook"
+      version="5.0" xml:lang="tr">
+ <info>
+  <title>Kütüphanenin Sürdürülmesi</title>
+  <titleabbrev>GNU C kütüphanesi nasıl genişletilir ve nasıl uyarlanır?</titleabbrev>
+ </info>
+ <section xml:id="glibc-Source-Layout">
+  <info>
+   <title>Yeni İşlevsellik Eklenmesi</title>
+   <titleabbrev>GNU C kütüphanesine yeni işlevler ve başlık dosyaları nasıl eklenir?</titleabbrev>
+  </info>
+  <para>
+Kütüphanenin kurgulanması GNU <command>make</command>'in özel oluşumlarının ağırlıkla kullanıldığı <filename>Makefile</filename> dosyaları ile yapılır. <filename>Makefile</filename> dosyaları oldukça karmaşıktır ve büyük ihtimalle onları anlamaya çalışmayı istemezsiniz. Fakat, sadece bir kaç değişkeni bile doğru yerde tanımlayabilmeniz için onların ne yaptıklarını anlamanız oldukça önemlidir.
+   </para>
+  <para>
+Kütüphane kaynak kodu konulara göre gruplanmış alt dizinlere bölünmüştür.
+   </para>
+  <para>
+Örneğin, <filename>string</filename> alt dizininde dizge işleme işlevleri, <filename>math</filename> alt dizininde matematiksel işlevler bulunur.
+   </para>
+  <para>
+Her dizinde birer basit <filename>Makefile</filename> dosyası bulunur. İçinde birkaç <command>make</command> değişkeni ve üst dizindeki <filename>Makefile</filename> dosyasından bu dosyaya dahil edilenler bulunur. Örneğin, <command>Rules</command> şöyle bir satırla dahil edilir:
+   </para>
+  <para>
+   <screen>include ../Rules</screen>
+  </para>
+  <para>
+Alt dizinlerde bulunan <filename>Makefile</filename> dosyalarında tanımlanmış temel değişkenler şunlardır:
+   </para>
+  <para>
+   <variablelist>
+    <varlistentry>
+     <term>
+      <command>subdir</command>
+     </term>
+     <listitem>
+      <para>
+Alt dizinin ismi, örneğin <filename>stdio</filename>. Bu değişken tanımlı <emphasis>olmalıdır</emphasis>.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term>
+      <command>headers</command>
+     </term>
+     <listitem>
+      <para>
+Kütüphanenin bu bölümündeki başlık dosyalarının isimleri, örneğin <filename>stdio.h</filename>.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term>
+      <command>routines</command>
+     </term>
+     <term>
+      <command>aux</command>
+     </term>
+     <listitem>
+      <para>
+Kütüphanenin bu bölümündeki modüllerin (kaynak dosyalarının) isimleri. Bunlar <command>strlen</command> gibi basit isimler olmalıdır (<filename>strlen.c</filename> gibi bir dosya ismi değil). Kütüphanede tanımlı işlevlerin modülleri için <command>routines</command>, veri tanımları gibi şeyleri içeren modüller için ise <command>aux</command> kullanın. Fakat,  <command>routines</command> ve <command>aux</command> değerleri birleşik olmalıdır, yani aslında pratik olarak bir farkları yoktur.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term>
+      <command>tests</command>
+     </term>
+     <listitem>
+      <para>
+Kütüphanenin bu bölümündeki sınama yazılımlarının isimleri. Bunlar <command>tester</command> gibi basit isimler olmalıdır (<filename>tester.c</filename> gibi bir dosya ismi değil). <command>make tests</command> tüm sınama yazılımlarını derleyecek ve çalıştıracaktır. Eğer bir sınama yazılımı girdiye ihtiyaç duyuyorsa sınama verisini <varname>sınama-yazılımı</varname><literal>.input</literal> dosyasına koyun; bu dosyanın içindeki veriler yazılıma standart girdi üzerinden verilecektir.
+Eğer bir sınama yazılımının argümanlar alması gerekiyorsa bunları (hepsi tek bir satırda olmak üzere) <varname>sınama-yazılımı</varname><literal>.args</literal> dosyasına koyun. Sınama yazılımları sınamalar başarılı olursa sıfır durumu ile sınama sırasında kütüphanede ya da derlemede bir hata bulmuşsa sıfırdan farklı bir durum ile çıkmalıdır.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term>
+      <command>others</command>
+     </term>
+     <listitem>
+      <para>
+Kütüphanenin bu bölümündeki "diğer" yazılımlarının isimleri. Bunlar sınama yazılımları değildir, ama kütüphane ile bir takım küçük uygulamalar dağıtılabilir. Bunlar <command>make others</command> ile derlenirler.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term>
+      <command>install-lib</command>
+     </term>
+     <term>
+      <command>install-data</command>
+     </term>
+     <term>
+      <command>install</command>
+     </term>
+     <listitem>
+      <para><command>make install</command> ile kurulacak dosyalar.   <command>install-lib</command> ile belirtilen dosyalar <filename>configparms</filename> veya <filename>Makeconfig</filename> içinde  <command>libdir</command> ile belirtilen dizine kurulurlar (bkz. <xref linkend="glibc-Installation"/>).  <command>install-data</command> ile belirtilen dosyalar <filename>configparms</filename> veya <filename>Makeconfig</filename> içinde  <command>datadir</command> ile belirtilen dizine kurulurlar.  <command>install</command> ile belirtilen dosyalar ise <filename>configparms</filename> veya <filename>Makeconfig</filename> içinde  <command>bindir</command> ile belirtilen dizine kurulurlar.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term>
+      <command>distribute</command>
+     </term>
+     <listitem>
+      <para>
+Dağıtılacak bir tar dosyasına bu alt dizinden konacak dosyalar. Burada <filename>Makefile</filename> dosyasını ve diğer standart kütüphanelerin içinde listelenen kaynak ve başlık dosyaları listelenmemelidir.  Sadece dağıtıma bir şekilde girmeyecek dosyaları belirtin.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term>
+      <command>generated</command>
+     </term>
+     <listitem>
+      <para>
+Bu alt dizinde <filename>Makefile</filename> dosyası tarafından üretilecek dosyalar. Bu dosyalar <command>make clean</command> ile silinecek ve bir dağıtıma asla dahil edilmeyecektir.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term>
+      <command>extra-objs</command>
+     </term>
+     <listitem>
+      <para>
+Bu alt dizinde <filename>Makefile</filename> dosyası tarafından derlenecek ek nesne dosyaları. Bunlar <filename>foo.o</filename> gibi dosyalardan oluşan bir listedir. Bu dosyalar derleme sonucunda oluşurlar ve <command>make clean</command> ile silinirler. Bu değişken <command>others</command> veya <command>tests</command> derlemelerinde elde edilecek ikincil nesne dosyaları için kullanılır.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+ </section>
+ <section xml:id="glibc-Porting">
+  <info>
+   <title>GNU C Kütüphanesinin Uyarlanması</title>
+   <titleabbrev>GNU C Kütüphanesi yeni bir makineye ya da işletim sistemine nasıl uyarlanır?</titleabbrev>
+  </info>
+  <para/>
+  <para>
+GNU C Kütüphanesi bir makine ve işletim sistemine kolayca uyarlanabilecek şekilde yazılmıştır. Makine ve işletim sistemi bağımlı işlevler yeni bir makine veya işletim sistemi için gerçeklenimler ayrı dizinler halinde kolayca eklenebilir. Bu bölümde kütüphane kaynak kodu ağacının yerleşimi ile kullanılacak makine bağımlı kodu seçecek mekanizmalar anlatılacaktır.
+   </para>
+  <para>
+Tüm makine ve işletim sistemi bağımlı dosyalar kütüphane kaynak kodunun ana dizini altındaki <filename>sysdeps</filename> dizininde bulunurlar. Bu dizinin kendi alt dizinlerinden oluşan bir hiyerarşisi vardır (bkz.<xref linkend="glibc-Hierarchy-Conventions"/>).
+   </para>
+  <para><filename>sysdeps</filename> dizininin altındaki her dizin belli bir makine veya işletim sistemi için kaynak dosyaları içerir (örneğin, belli bir üreticiye ait sistemler veya IEEE 754 kayan nokta biçimini kullanan tüm makineler). Bir yapılandırma bu alt dizinlerin sıralı bir listesini içerir. Her alt dizin kendi üst dizinini bu listeye dolaylı olarak ekler. Örneğin listeyi <filename>unix/bsd/vax</filename> olarak belirtirseniz bu, <filename>unix/bsd/vax unix/bsd unix</filename> listesine eşdeğerdir. Ayrıca bir alt dizin doğrudan dizin hiyerarşisinde bulunmayan başka bir alt dizine uygulanabilir. Bir alt dizinde <filename>Implies</filename> adında bir dosya varsa ve içinde <filename>sysdeps</filename> dizinindeki <filename>Implies</filename> dosyasını içeren dizinin altındaki dizinlerden oluşan bir liste varsa, bunlar listeye eklenirler. <filename>Implies</filename> dosyasında <command>#</command> ile başlayan satırlar açıklamalar olarak yoksayılırlar. Örneğin, <filename>unix/bsd/Implies</filename> dosyasında şunlar olsun:
+   </para>
+  <para>
+   <screen>
+# BSD has Internet-related things.
+unix/inet
+</screen>
+  </para>
+  <para>
+ve <command>unix/Implies</command> dosyası da şunu içersin:
+   </para>
+  <para>
+   <screen>posix</screen>
+  </para>
+  <para>
+Bu durumda son liste <literal>unix/bsd/vax unix/bsd unix/inet unix posix</literal> olur.
+   </para>
+  <para><filename>sysdeps</filename> dizininde <filename>generic</filename> isminde "özel" bir dizin bulunur. Daima dolaylı olarak altdizin listesine eklenir, böylece onu bir <filename>Implies</filename> dosyasına koymanız gerekmez. Ancak onun altına yeni bir özel kategori olacağını düşünerek bir alt dizin eklememelisiniz. <filename>generic</filename> dizini iki amaca hizmet eder. İlki; <filename>Makefile</filename> dosyaları, <filename>generic</filename> dizininde olmayan bir dosyanın sistem bağımlı bir sürümüne bakma endişesi duymazlar. Yani bir sistem bağımlı kaynak dosyası, diğer platformalarda gerçeklenmeyen yordamlar içeriyorsa bile, <filename>generic</filename> içinde benzeri olmalıdır. İkincisi; <filename>Makefile</filename> dosyaları bir sistem bağımlı dosyanın sisteme özel bir sürümünü derlemek için bulamıyorsa bu dosyanın <filename>generic</filename> sürümü kullanılır.
+   </para>
+  <para>
+Bir <filename>generic</filename> dosyasında makineden bağımsız C yordamlarını sadece kütüphanedeki makineden bağımsız işlevleri kullanarak gerçekleştirebiliyorsanız, öyle yapmalısınız. Aksi takdirde onları içiboş işlevler yapın. Bir <firstterm>içiboş</firstterm> (stub) işlev belli bir makine ya da işletim sistemi için gerçeklenemeyen bir işlevdir (yani adı var kendi yok). İçiboş işlevler daima bir hata döndürür ve <command>errno</command> değişkenine  <command>ENOSYS</command> (İşlev gerçeklenmedi) hatasını atarlar. Bkz. <xref linkend="glibc-Error-Reporting"/>.  Bir içiboş işlev tanımlayacaksanız, işlevin tanımından sonra, <varname>işlev</varname> bu işlevin ismi olmak üzere <literal>stub_warning(<varname>işlev</varname>)</literal> deyimini eklemelisiniz; ayrıca bu dosyaya <filename>stub-tag.h</filename> başlık dosyasını dahil etmelisiniz.  Bu işlem, işlevin <filename>gnu/stubs.h</filename> dosyasında listelenmesini ve bu işlev kullanıldığında GNU ld'nin uyarı vermesini sağlar.
+   </para>
+  <para>
+Nadiren bazı işlevler sadece belli sistemlerde kullanılabilir, diğerlerinde tanımlanmazlar; bunlar sistem bağımsız kaynak kodun bir yerlerinde ya da <filename>Makefile</filename> dosyalarında (<filename>generic</filename> dizini dahil) bulunmazlar, sadece o belli sistemlerin altdizinlerindeki <filename>Makefile</filename> dosyalarında bulunurlar.
+   </para>
+  <para>
+Eğer ana kaynak dizininlerinden birindeki bir dosyanın makine ya da işletim sistemine bağlı sürümünü yazmak isterseniz o dosyayı <filename>sysdeps/generic</filename> içine taşımalı ve kendi gerçeklemenizi sisteme özel altdizinde yazmalısınız. Yalnız, sistem bağımlı bir dosyanın ana kaynak dizinlerinden birinde <emphasis>bulunmaması</emphasis> gerektiğine dikkat edin.
+   </para>
+  <para><filename>sysdeps</filename> altdizinlerinin her birinde mevcut olması gereken bir kaç özel dosya vardır:
+   </para>
+  <para>
+   <variablelist>
+    <varlistentry>
+     <term>
+      <filename>Makefile</filename>
+     </term>
+     <listitem>
+      <para>
+O makine ya da makine sınıfı ve işletim sistemi için bir <command>make</command> dosyası. Bu dosya, ana kaynak dizinindeki ve onun alt dizinlerindeki <filename>Makefile</filename> dosyalarının <command>Makerules</command>'u tarafından içerilir. İçerildiği <filename>Makefile</filename> dosyalarının değişken kümesini değiştirebilir ya da yeni kurallar ekleyebilir. Farklı değişken kümelerinin ve kütüphanenin farklı bölümlerinin kurallarının seçilmesi için <command>subdir</command> değişkenini temel alan GNU <command>make</command> koşullu yönergelerini kullanabilir. Ayrıca, kütüphaneye dahil edilecek ek modülleri <command>make</command> değişkeni <command>sysdep-routines</command>'e atayabilir. Modülleri eklemek için <command>routines</command> değil <command>sysdep-routines</command> değişkenini kullanmalısınız çünkü birincisi ana kaynak dizinindeki alt dizinlerden nelerin dağıtıma gireceğini belirtmek için kullanılır.
+      </para>
+      <para>
+Her alt dizinin <filename>Makefile</filename> dosyası, alt dizin listesinde bulundukları sırayla aranırlar. Birden fazla sistem bağımlı <filename>Makefile</filename> içerileceğinden her birinin basitçe atanması yerine <command>sysdep-routines</command>'e eklenebilir:
+      </para>
+      <para>
+       <screen>sysdep-routines := $(sysdep-routines) foo bar</screen>
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term>
+      <filename>Subdirs</filename>
+     </term>
+     <listitem>
+      <para>
+Bu sistemin dosyaları için ana dizin olan dizinin altındaki tüm dizinlerin isimlerini içeren dosya. Bu altdizinler, kütüphane kaynak ağacındaki sistem bağımsız altdizinler gibi işlem görür.
+      </para>
+      <para>
+Bu <filename>sysdeps</filename> altdizinindeki sistem için gerçeklenen kütüphane tamamen yeni işlevler ve başlık dosyalarından oluşacaksa bunu kullanın. Örneğin, <filename>sysdeps/unix/inet/Subdirs</filename> dosyası <command>inet</command> içerir; <filename>inet</filename> dizininde sadece interneti destekleyen sistemlerdeki kütüphane içinde yer alacak çeşitli ağ yönlenimli işlemler bulunur.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term>
+      <filename>configure</filename>
+     </term>
+     <listitem>
+      <para>
+Bu dosya yapılandırma için kullanılan bir kabuk betiğidir. Ana kaynak dizinindeki <command>configure</command> betiği seçilen her sistem bağımlı dizindeki <command>configure</command> betiğini kabuğun <command>.</command> komutunu kullanarak okur. <command>configure</command> betikleri genelde <filename>configure.in</filename> dosyalarından Autoconf tarafından üretilir.
+      </para>
+      <para>
+Bir sistem bağımlı <command>configure</command> betiği genellikle <command>DEFS</command> ve <command>config_vars</command> kabuk değişkenlerine birşeyler ekler; ayrıntılar için ana kaynak dizinindeki <command>configure</command> betiğine bakınız.  Bu betik, ana kaynak dizinindeki <command>configure</command> betiğinin <command>--with-<varname>paket</varname></command> seçeneğiyle çalıştırılması sonucunda etkin olur.  <literal><command>--with-</command><emphasis>paket</emphasis>=<emphasis>değer</emphasis></literal> gibi bir seçenekle <command>configure</command> betiği <command>with_</command><varname>paket</varname> değişkenine (<varname>paket</varname> ismindeki tire işaretlerini altçizgiye dönüştürülerek)  <varname>değer</varname> değerini atar; eğer seçenek <command>--with-</command><varname>paket</varname> şeklinde argümansız olarak belirtilirse,  <command>with_</command><varname>paket</varname> değişkenine <command>yes</command> değerini atar.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term>
+      <filename>configure.in</filename>
+     </term>
+     <listitem>
+      <para>
+Bu dosya Autoconf tarafından bu dizin içinde <command>configure</command> betiğini oluşturmakta kullanılır. Autoconf ile ilgili açıklamalar için <link linkend="autoconf-Introduction">Autoconf Kılavuzundaki Giriş</link> (Introduction) bölümüne bakınız.  Ya <command>configure</command> betiğini ya da <filename>configure.in</filename> dosyasını yazmalısınız, ikisini birden değil.  <filename>configure.in</filename> dosyasındaki ilk satırda bir <command>m4</command> makrosu olan <command>GLIBC_PROVIDES</command> çağrılmalıdır.  Bu makro ana kaynak dizinindeki <command>configure</command> betiğinin kullandığı Autoconf makroları için çeşitli <command>AC_PROVIDE</command> çağrıları yapar; bunsuz bu makrolar Autoconf tarafınfan yine de gerekmediği halde çağrılabilir.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+  <para>
+Böylece genel sistem, sistem bağımlılıklarından yalıtılır.
+   </para>
+  <section xml:id="glibc-Hierarchy-Conventions" chunkthis="1">
+   <info>
+    <title>Hiyerarşi Uzlaşımları</title>
+    <titleabbrev><literal>sysdeps</literal> dizin hiyerarşisinin yerleşimi</titleabbrev>
+   </info>
+   <para>
+Bir GNU yapılandırma ismi üç parçadan oluşur: İşlemci türü, üretici ismi ve işletim sistemi. <command>configure</command> betiği bunları sistem bağımlı dizinlerin hangilerine bakacağını bilmek için kullanır. Eğer <command>configure</command> betiğine <command>--nfp</command> seçeneği belirtilmemişse, ayrıca, <varname>makine</varname><filename>/fpu</filename> dizini de kullanılır. Bir işletim sisteminin genellikle bir <firstterm>temel işletim sistemi</firstterm> vardır; örneğin, <command>Linux</command> işletim sistemi için bu temel işletim sistemi <command>unix/sysv</command>'dir. Dizinlere bakılmasını sağlayacak algoritma basittir: <command>configure</command> betiği, temel işletim sistemi, üretici, işlemci türü ve işletim sissemi sırasıyla bir liste oluşturur. Bunların aralarına bölü işaretleri yerleştirerek dizinleri elde eder; örneğin, yapılandırma <command>i686-linux-gnu</command> ise bu  <filename>unix/sysv/linux/i386/i686</filename> ile sonuçlanır.  <command>configure</command> betiği sırayla dizinleri kaldırarak diğer dizileri de dener, böylece diğerlerinin yanında <filename>unix/sysv/linux</filename> ve <filename>unix/sysv</filename> dizinleri de ayrıca denenir. İşletim sistemlerinde sürüm numaraları her zaman çok önemli olmaz; örneğin <filename>irix6.2</filename> ve <filename>irix6.3</filename> dizinlerinin isimlerinde <command>configure</command> noktadan sonraki kısımları atarak da deneme yapar.
+    </para>
+   <para>
+Bir örnek olarak, <command>i686-linux-gnu</command> yapılandırmasında denenecek dizinlerin bir listesine yer verilmiştir (<command>crypt</command> ve <command>linuxthreads</command> eklentileriyle):
+    </para>
+   <para>
+    <literallayout class="normal">sysdeps/i386/elf
+crypt/sysdeps/unix
+linuxthreads/sysdeps/unix/sysv/linux
+linuxthreads/sysdeps/pthread
+linuxthreads/sysdeps/unix/sysv
+linuxthreads/sysdeps/unix
+linuxthreads/sysdeps/i386/i686
+linuxthreads/sysdeps/i386
+linuxthreads/sysdeps/pthread/no-cmpxchg
+sysdeps/unix/sysv/linux/i386
+sysdeps/unix/sysv/linux
+sysdeps/gnu
+sysdeps/unix/common
+sysdeps/unix/mman
+sysdeps/unix/inet
+sysdeps/unix/sysv/i386/i686
+sysdeps/unix/sysv/i386
+sysdeps/unix/sysv
+sysdeps/unix/i386
+sysdeps/unix
+sysdeps/posix
+sysdeps/i386/i686
+sysdeps/i386/i486
+sysdeps/libm-i387/i686
+sysdeps/i386/fpu
+sysdeps/libm-i387
+sysdeps/i386
+sysdeps/wordsize-32
+sysdeps/ieee754
+sysdeps/libm-ieee754
+sysdeps/generic
+</literallayout>
+   </para>
+   <para>
+Farklı makine mimarileri teamülen ana kaynak dizinindeki <filename>sydeps</filename> dizin ağacındaki altdizinlerdir. Örneğin, <filename>sysdeps/sparc</filename> ve <filename>sysdeps/m68k</filename>.  Bunlar bu makine mimarilerine özgü dosyaları içerir, bu mimarilerde kullanılan işletim sistemlerine özgü dosyaları içermezler. Bu mimarilerde özelleştirilmiş alt dizinler de olabilir; örneğin, <filename>sysdeps/m68k/68020</filename>. Belli bir makinede kullanılan aritmetik işlemciye özel kod <filename>sysdeps/<varname>makine</varname>/fpu</filename> dizinlerinde bulunur.
+    </para>
+   <para><filename>sysdeps</filename> dizininin altında belli bir makine mimarisine ait olmayan birkaç dizin vardır.
+    </para>
+   <para>
+    <variablelist>
+     <varlistentry>
+      <term>
+       <filename>generic</filename>
+      </term>
+      <listitem>
+       <para>
+Evvelce açıklandığı gibi (<xref linkend="glibc-Porting"/>), bu alt dizindekiler tüm diğerlerinden sonra her yapılandırma tarafından dolaylı olarak kullanılır.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term>
+       <filename>ieee754</filename>
+      </term>
+      <listitem>
+       <para>
+IEEE 754 kayan nokta biçimi (IEEE 754 tek hassasiyetli biçim için <command>float</command> türü ve IEEE 754 çift hassasiyetli biçim için <command>double</command> türü) kullanan kodun bulunduğu dizin. Genellikle bu dizin makine mimarisine özel dizin içindeki <filename>Implies</filename> (<filename>m68k/Implies</filename> gibi) dosyasında belirtilir.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term>
+       <filename>libm-ieee754</filename>
+      </term>
+      <listitem>
+       <para>
+IEEE 754 uyumlu kayan nokta biçimi kullanılan platformların matematik kütüphanesinin gerçeklenimini içerir.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term>
+       <filename>libm-i387</filename>
+      </term>
+      <listitem>
+       <para>
+Bu özel bir durumdur. Aslında kodun ideal yeri <filename>sysdeps/i386/fpu</filename> olmalıydı ama çeşitli sebeplerle ayrı tutulmaktadır.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term>
+       <filename>posix</filename>
+      </term>
+      <listitem>
+       <para>
+Bu dizin POSIX.1 işlevlerine konu olan kütüphanedeki şeylerin gerçeklenimini içerir. Bazı POSIX.1 işlevlerinin kendilerini içerir. Şüphesiz, POSIX.1 kendi kurallarına göre tamamen gerçeklenemez, bu bakımdan sadece <filename>posix</filename> kullanan bir yapılandırma tamam olamayacaktır.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term>
+       <filename>unix</filename>
+      </term>
+      <listitem>
+       <para>
+Bu dizin Unix benzeri şeyler içindir. Bkz. <xref linkend="glibc-Porting-to-Unix"/>. <filename>unix</filename>, <filename>posix</filename>'i uygular.  <filename>unix</filename> dizininin altında özel amaçlı bazı dizinler bulunur:
+       </para>
+       <para>
+        <variablelist>
+         <varlistentry>
+          <term>
+           <filename>unix/common</filename>
+          </term>
+          <listitem>
+           <para>
+Bu dizin hem BSD hem de System V 4. sürümünde ortak olan şeyleri içerir.  <filename>unix/bsd</filename> ve <filename>unix/sysv/sysv4</filename> her ikisi de  <filename>unix/common</filename> uygular.
+          </para>
+          </listitem>
+         </varlistentry>
+         <varlistentry>
+          <term>
+           <filename>unix/inet</filename>
+          </term>
+          <listitem>
+           <para>
+Bu dizin Unix sistemlerindeki <filename>socket</filename> ve ilgili işlevler içindir. <filename>unix/inet/Subdirs</filename> dosyasında <filename>inet</filename> üst seviyeli alt dizindir. <command>unix/common</command>, <filename>unix/inet</filename> uygular.
+          </para>
+          </listitem>
+         </varlistentry>
+        </variablelist>
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term>
+       <filename>mach</filename>
+      </term>
+      <listitem>
+       <para>
+Bu dizin, CMU'daki Mach mikroçekirdeğini (GNU işletim sistemi içerir) temel alan şeyleri içerir. Diğer temel işletim sistemlerinin (örneğin, VMS) <filename>sysdeps</filename> hiyerarşisi içinde <filename>unix</filename> and <filename>mach</filename> ile aynı seviyede kendi dizinleri vardır.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+  </section>
+  <section xml:id="glibc-Porting-to-Unix" chunkthis="1">
+   <info>
+    <title>GNU C Kütüphanesinin Unix Sistemlerine Uyarlanması</title>
+    <titleabbrev>Unix'i andıran bir sisteme kütüphane nasıl uyarlanır?</titleabbrev>
+   </info>
+   <para>
+Unix sistemlerinin çoğu temelde birbirlerine çok benzerler. Farklı makineler için çeşitleri olduğu gibi çekirdek tarafından sağlanan oluşumlara bağlı çeşitleri de vardır. Fakat işletim sistemi oluşumları ile arayüz çoğu parçası bakımında neredeyse tektip ve basittir.
+    </para>
+   <para>
+Unix sistemleri için kod <filename>sysdeps</filename> dizini altındaki <filename>unix</filename> dizininde bulunur. Bu dizin Unix çeşitlemelerine özel alt dizinler hatta alt dizin ağaçları içerir.
+    </para>
+   <para>
+Unix sistemlerindeki sistem çağrılarını oluşturan işlevler <filename>syscalls.list</filename> isimli dosyadaki belirtimlerden özdevinimli üretilen makine kodları şeklinde gerçeklenmiştir. <filename>sysdeps/unix</filename> altında ve bunun alt dizinlerinde böyle çeşitli dosyalar vardır. Bazı sistem çağrıları soneki <command>.S</command> olan dosyalarla gerçeklenmiştir; örneğin, <filename>_exit.S</filename>. <command>.S</command> uzantılı dosyalar makine kodu çeviricisinden geçmeden önce C önişlemcisi tarafından işlenirler.
+    </para>
+   <para>
+Bu dosyaların hepsi <filename>sysdep.h</filename> dosyasında tanımlanmış olan makroları kullanırlar. <filename>sysdeps/unix</filename> içindeki <filename>sysdep.h</filename> bunları kısmen tanımlar; başka bir dizindeki <filename>sysdep.h</filename> dosyası ile belli bir makine ve işletim sistemi çeşidi için olanlar tanımlanarak seri tamamlanmalıdır. <filename>sysdeps/unix/sysdep.h</filename> dosyasına ve makineye özel <command>sysdep.h</command> gerçeklemelerine bakarsanız bu makroları ve ne yaptıklarını görebilirsiniz.
+    </para>
+   <para><filename>unix</filename> dizinindeki sisteme özel <filename>Makefile</filename> dosyası (<filename>sysdeps/unix/Makefile</filename>), kütüphanenin derlenmesini istediğiniz hedef Unix sistemindeki dosyalardan çeşitli dosyaların üretilmesini sağlayan kurallar içerir. Bu şekilde üretilen tüm dosyalar derlenmiş nesne dosyalarının tutulduğu dizinlere konur; yani kaynak ağacını etkilemezler. Üretilen dosyalar <filename>ioctls.h</filename>, <filename>errnos.h</filename>, <filename>sys/param.h</filename> ve <filename>errlist.c</filename>'dir (kütüphanenin <command>stdio</command> bölümü için).
+    </para>
+  </section>
+ </section>
+</appendix>

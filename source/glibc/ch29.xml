@@ -1,0 +1,2746 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ********************************************************************
+         ch29.xml
+     ******************************************************************** -->
+<!--
+persona: aidiyet (olarak çeviriyorum. Bir aletin kişiliğinden değil olsa olsa
+birine aidiyetinden bahsedilebilir.) - NBB
+-->
+<part xml:id="glibc-Users-and-Groups" xmlns="http://docbook.org/ns/docbook"
+      version="5.0" xml:lang="tr">
+ <info>
+  <title>Kullanıcılar ve Gruplar</title>
+  <titleabbrev>Kullanıcılar nasıl kimliklendirilir ve sınıflandırılır.</titleabbrev>
+ </info>
+ <partintro>
+  <para>
+Sistemde bir oturum açan her kullanıcı <wordasword>kullanıcı kimliği</wordasword> adı verilen özel bir numara ile kimliklendirilir. Her sürecin, süreci oluşturan kullanıcının erişim yetkileriyle belirlenen bir etkin kullanıcı kimliği vardır.
+  </para>
+  <para>
+Kullanıcılar erişim denetimi amacıyla <wordasword>gruplar</wordasword> halinde sınıflandırılır. Her sürecin, dosyalara erişimde kullanabildiği gruplar anlamında çok sayıda <wordasword>grup kimliği</wordasword> değeri olabilir.
+  </para>
+  <para>
+Bir sürecin etkin kullanıcı ve grup kimliği onun <wordasword>aidiyet</wordasword>ini şekillendirir. Bu, sürecin hangi dosyalara erişebileceğini belirler. Normalde bir süreç aidiyetini ata sürecinden miras alır, ancak bazı özel durumlarda sürecin aidiyeti erişim yetkilerini yeniden düzenlemek amacıyla değiştirebilir.
+  </para>
+  <para>
+Ayrıca, sistemdeki her dosya bir kullanıcı ve bir grup kimliğine sahiptir. Dosyalara erişim, çalışan sürecin aidiyeti dosyanın kullanıcı ve grup kimlikleri ile karşılaştırılarak denetim altına alınır.
+  </para>
+  <para>
+Sistem kayıtlı kullanıcılar için bir veritabanı, tüm tanımlı gruplar için de ayrı bir veritabanı tutar. Kütüphane, bu veritabanları ile çalışabileceğiniz işlevler içerir.
+  </para>
+ </partintro>
+ <chapter xml:id="glibc-User-and-Group-IDs">
+  <info>
+   <title>Kullanıcı ve Grup Kimlikleri</title>
+   <titleabbrev>Her kullanıcının eşsiz bir sayısal kimliği ve üyesi olduğu gruplar vardır.</titleabbrev>
+  </info>
+  <para><indexterm scope="glibc-cp"><primary>oturum</primary><secondary>oturum açma ismi</secondary></indexterm><indexterm scope="glibc-cp"><primary>kullanıcı ismi</primary></indexterm><indexterm scope="glibc-cp"><primary>kullanıcı kimliği</primary></indexterm>
+Bir bilgisayar sistemindeki her kullanıcı hesabı bir <wordasword>kullanıcı ismi</wordasword> (veya <wordasword>oturum açma ismi</wordasword>) ile <wordasword>kullanıcı kimliği</wordasword> içerir. Normalde her kullanıcının eşsiz bir kullanıcı kimliği vardır, ama bu kullanıcı kimliği ile ilişkili çok sayıda kullanıcı ismi olabilir. Kullanıcı kimlikleri ve onunla ilişkili kullanıcı isimleri <xref linkend="glibc-User-Database"/> bölümünde nasıl erişildiğinin açıklandığı bir veritabanında tutulur.
+   </para>
+  <para><indexterm scope="glibc-cp"><primary>grup ismi</primary></indexterm><indexterm scope="glibc-cp"><primary>grup kimliği</primary></indexterm>
+Kullanıcılar <wordasword>gruplar</wordasword> halinde sınıflandırılır. Her kullanıcı kimliği için bir <wordasword>öntanımlı grup</wordasword> vardır ve her kullanıcı çok sayıda <wordasword>ek grup</wordasword>un üyesi olabilir. Aynı grubun üyeleri olan kullanıcılar, bu grubun üyesi olmayan kullanıcıların erişemediği özkaynakları paylaşırlar. Her grubun bir <wordasword>grup ismi</wordasword> ve bir <wordasword>grup kimliği</wordasword> vardır. Grup ismi ve grup kimliği ile ilgili ayrıntılı bilgiyi  <xref linkend="glibc-Group-Database"/> bölümünde bulabilirsiniz.
+   </para>
+ </chapter>
+ <chapter xml:id="glibc-Process-Persona">
+  <info>
+   <title>Bir Sürecin Aidiyeti</title>
+   <titleabbrev>Bir sürecin kullanıcı ve grup kimlikleri.</titleabbrev>
+  </info>
+  <para><!-- process persona: süreç aidiyeti --><indexterm scope="glibc-cp"><primary>aidiyet</primary></indexterm><indexterm scope="glibc-cp"><primary>etkin kullanıcı kimliği</primary></indexterm><indexterm scope="glibc-cp"><primary>etkin grup kimliği</primary></indexterm><indexterm scope="glibc-cp"><primary>ek grup kimlikleri</primary></indexterm>
+Herhangi bir anda, her sürecin bir <wordasword>etkin kullanıcı kimliği</wordasword>, bir <wordasword>etkin grup kimliği</wordasword> ile çok sayıda <wordasword>ek grup kimliği</wordasword> olabilir. Bu kimlikler sürecin ayrıcalıklarını belirler. Bunlara bir bütün olarak <wordasword>sürecin aidiyeti</wordasword> denir, çünkü bunlar sürecin özkaynaklara kimin adına erişebileceğini belirler.
+   </para>
+  <para>
+Oturum kabuğunuz sizin kullanıcı kimliğiniz, sizin grup kimliğiniz ve eğer çok sayıda ek grubun üyesi iseniz sizin ek grup kimliklerinizle başlatılır. Normalde, kabuğun çalıştırdığı tüm süreçler bu değerleri miras alırlar.
+   </para>
+  <para><indexterm scope="glibc-cp"><primary>gerçek kullanıcı kimliği</primary></indexterm><indexterm scope="glibc-cp"><primary>gerçek grup kimliği</primary></indexterm>
+Bir sürecin ayrıca, süreci oluşturan kullanıcıyı ifade eden bir <wordasword>gerçek kullanıcı kimliği</wordasword> ve kullanıcının öntanımlı grubunu ifade eden bir <wordasword>gerçek grup kimliği</wordasword> vardır. Bu değerler, erişim denetimi ile ilgili bir rol oynamazlar, ama yine de sürecin aidiyeti kapsamında kabul edilirler. Ayrıca önemlidirler.
+   </para>
+  <para>
+Gerçek kullanıcı ve grup kimliği sürecin yaşam süresi içinde değiştirilebilir; bkz.  <xref linkend="glibc-Why-Change-Persona"/>.
+   </para>
+  <para>
+Süreçlerin dosyalara erişim yetkilerini belirleyen etkin kullanıcı ve grup kimlikleri ile daha ayrıntılı bilgiyi <xref linkend="glibc-Access-Permission"/> bölümünde bulabilirsiniz.
+   </para>
+  <para>
+Bir sürecin etkin kullanıcı kimliği ayrıca <command>kill</command> işlevi ile sinyal gönderme yetkilerini denetlemekte de kullanılır. Bkz. <xref linkend="glibc-Signaling-Another-Process"/>.
+   </para>
+  <para>
+Son olarak, bir sürecin etkin kullanıcı kimliğinin sıfır olduğu durumda uygulanabilen bir çok işlem vardır. Bu kullanıcı kimliğine sahip bir sürece <wordasword>ayrıcalıklı süreç</wordasword> denir. Sıfır kullanıcı kimliği ile ilişkili kullanıcının ismi teamülen <command>root</command>'dur. Ancak bu kullanıcı kimliği ile ilişkilendirilmiş başka isimler de olabilir.
+   </para>
+ </chapter>
+ <chapter xml:id="glibc-Why-Change-Persona">
+  <info>
+   <title>Bir Sürecin Aidiyeti Niçin Değiştirilir?</title>
+   <titleabbrev>Bir sürecin kullanıcı ve/veya grup kimliklerinin değiştirilmesi neden gerekir?</titleabbrev>
+  </info>
+  <para>
+Bir sürecin kullanıcı ve/veya grup kimliklerinin değişmesinin gerektiği en belirgin durum <command>login</command> uygulamasıdır. <command>login</command> çalışmaya başladığında kullanıcı kimliği <command>root</command>'tur. Görevi, oturum açan kullanıcının kullanıcı ve grup kimlikleriyle bir kabuk başlatmaktır. (Bunu tamamen yerine getirmek için, <command>login</command> hem kabuğun hem de kendi aidiyetinin gerçek kullanıcı ve grup kimliklerini ayarlamalıdır. Ama bu özel bir durumdur.)
+   </para>
+  <para>
+Aidiyeti değiştirmek içi daha genel bir durum sıradan bir kullanıcının, bir yazılımı çalıştırmadan bazı özkaynaklara erişemeyeceği durumdur.
+   </para>
+  <para>
+Örneğin, bir uygulama ile oluşturulmuş ama başka kullanıcıların okumasını ve değiştirmesini istemediğiniz bir dosyanız olsun. Bir takım kilitleme protokolleri ile bunu sağlamanın yanında, mahremiyet ve bütünlüğünün bozulmaması gibi gerekçelerle dosyanıza erişilememesini de isteyebilirsiniz. Bu çeşit erişim kısıtlamalarını gerçekleştirmek için yazılımın etkin kullanıcı ve grup kimliklerinin dosyanınkilere uygun olması gerekir.
+   </para>
+  <para>
+Farklı bir örnek oyunlardır. Oyunlarda oyuncuların elde ettiği derecelere hiçbir oyuncunun erişememesi, bu dosyaya sadece oyun yazılımının erişebilmesi gerekir. Bu gibi durumlarda oyunlar için bir kullanıcı kimliği ve oturum açma ismi (<command>oyunlar</command> diyelim) oluşturularak bu sağlanabilir. Oyun yazılımı bu dosyayı güncellemek gerektiğinde etkin kullanıcı kimliğini <command>oyunlar</command> olarak değiştirilebilir. Uygulamada, yazılımın aidiyeti <command>oyunlar</command> kullanıcı kimliğine uyarlanmalı, böylece derecelerin bulunduğu dosyaya erişmesi sağlanmalıdır.
+   </para>
+ </chapter>
+ <chapter xml:id="glibc-How-Change-Persona">
+  <info>
+   <title>Bir Sürecin Aidiyeti Nasıl Değiştirilir?</title>
+   <titleabbrev>Kullanıcı ve grup kimliklerinin değiştirilmesi.</titleabbrev>
+  </info>
+  <para><indexterm scope="glibc-cp"><primary><command>setuid</command> yazılımlar</primary></indexterm><indexterm scope="glibc-cp"><primary>kayıtlı kullanıcı kimliği</primary></indexterm><indexterm scope="glibc-cp"><primary>kayıtlı grup kimliği</primary></indexterm><indexterm scope="glibc-cp"><primary sortas="POSIX_SAVED_IDS"><command>_POSIX_SAVED_IDS</command></primary></indexterm>
+Bir sürece aidiyetini değiştirme yeteneği mahremiyetin korunması amacıyla ister istemez verilebileceği gibi kasıtlı olarak da verilebilir. Bazı olası sorunlar sebebiyle aidiyetin değiştirilmesi özel koşullarla sınırlıdır.
+   </para>
+  <para>
+Kendi kullanıcı ve grup kimliklerinizi keyfi olarak belirleyemezsiniz; bunu sadece yetkili süreçler yapabilir. Bir süreç için ise, aidiyeti değiştirmenin normal yolu bunu belli bir kullanıcı ya da gruba önceden ayarlamaktır. Bu bir dosyanın erişim kipinin setuid ve setgid bitleri ile yapılır. Bkz.  <xref linkend="glibc-Permission-Bits"/>.
+   </para>
+  <para>
+Bir çalıştırılabilir dosyanın setuid biti etkinse, bu dosyanın çalıştırılması sürece üçüncü bir kullanıcı kimliği sağlar: <wordasword>dosya kullanıcı kimliği</wordasword>. Bu kimlik dosyanın sahibinin kimliğine ayarlanır. Bundan hareketle, sistem etkin kullanıcı kimliği dosyanın kullanıcı kimliğine değiştirir. Gerçek kullanıcı kimliği ise değişmeden kalır. Benzer şekilde, setgid biti etkinse, dosyanın grup kimliği dosyanın grup kimliğine ayarlanır ve sistem etkin grup kimliğini dosya grup kimliğine değiştirir.
+   </para>
+  <para>
+Bir süreç bir dosya kimliğine (kullanıcı ya da grup) sahipse, herhangi bir anda kendi etkin kimliğini kendi gerçek kimliğine ve geriye kendi dosya kimliğine değiştirebilir. Yazılımlarda bu özellik, gerçekten ihtiyaç duyulması dışında özel ayrıcalıklarını terketmesi için kullanılır. Böylece bir yazılımın ayrıcalıklarının uygunsuz bazı şeyler için kullanılması bir bakıma önlenir.
+   </para>
+  <para>
+   <note>
+    <info>
+     <title>Taşınabilirlik Bilgisi</title>
+    </info>
+    <para>Eski sisitemlerden bazıları dosya kimliklerini içermez. Bir sistem bu özelliğe sahipse derleyicide <command>_POSIX_SAVED_IDS</command> tanımlıdır. (POSIX standardında dosya kimliklerinden "kayıtlı kimlikler" (saved IDs) diye bahsedilir.)</para>
+   </note>
+  </para>
+  <para><xref linkend="glibc-File-Attributes"/> bölümünde dosya kipleri ve erişilebilirlik hakkında daha ayrıntılı bilgi bulabilirsiniz.
+   </para>
+ </chapter>
+ <chapter xml:id="glibc-Reading-Persona">
+  <info>
+   <title>Bir Sürecin Aidiyetinin Okunması</title>
+   <titleabbrev>Kullanıcı ve grup kimlikleri nasıl öğrenilir.</titleabbrev>
+  </info>
+  <para>
+Bu kısımda bir sürecin gerçek ve etkin,kullanıcı ve grup kimliklerinin öğrenilmesinde kullanılan işlevlerin ayrıntılı açıklamalarını bulacaksınız. Bu oluşumları kullanabilmek için <filename>sys/types.h</filename> ve <filename>unistd.h</filename> başlık dosyalarını yazılımınıza dahil etmeniz gerekir.
+<indexterm scope="glibc-pg"><primary>unistd.h</primary></indexterm>
+<indexterm scope="glibc-pg"><primary>sys/types.h</primary></indexterm>
+   </para>
+  <para>
+   <indexterm scope="glibc-tp">
+    <primary>uid_t</primary>
+   </indexterm>
+   <funcsynopsis>
+    <funcprototype role="veri türü" xml:id="glibc-uid_t">
+     <funcdef>
+      <command>uid_t</command>
+     </funcdef>
+     <paramdef/>
+    </funcprototype>
+    <funcdescr>
+     <para>
+Kullanıcı kimliğini ifade etmek için kullaılan bir tamsayı veri türüdür. GNU kütüphanesinde bu veri türü <command>unsigned int</command>'e eşdeğerdir.
+</para>
+    </funcdescr>
+   </funcsynopsis>
+  </para>
+  <para>
+   <indexterm scope="glibc-tp">
+    <primary>gid_t</primary>
+   </indexterm>
+   <funcsynopsis>
+    <funcprototype role="veri türü" xml:id="glibc-gid_t">
+     <funcdef>
+      <command>gid_t</command>
+     </funcdef>
+     <paramdef/>
+    </funcprototype>
+    <funcdescr>
+     <para>
+Grup kimliğini ifade etmek için kullaılan bir tamsayı veri türüdür. GNU kütüphanesinde bu veri türü <command>unsigned int</command>'e eşdeğerdir.
+</para>
+    </funcdescr>
+   </funcsynopsis>
+  </para>
+  <para>
+   <indexterm scope="glibc-fn">
+    <primary>getuid</primary>
+   </indexterm>
+   <funcsynopsis>
+    <funcprototype role="işlev" xml:id="glibc-getuid">
+     <funcdef>uid_t <command>getuid</command></funcdef>
+     <paramdef>(void)</paramdef>
+    </funcprototype>
+    <funcdescr>
+     <para><command>getuid</command> işlevi sürecin gerçek kullanıcı kimliği ile döner.
+</para>
+    </funcdescr>
+   </funcsynopsis>
+  </para>
+  <para>
+   <indexterm scope="glibc-fn">
+    <primary>getgid</primary>
+   </indexterm>
+   <funcsynopsis>
+    <funcprototype role="işlev" xml:id="glibc-getgid">
+     <funcdef>gid_t <command>getgid</command></funcdef>
+     <paramdef>(void)</paramdef>
+    </funcprototype>
+    <funcdescr>
+     <para><command>getgid</command> işlevi sürecin gerçek grup kimliği ile döner.
+</para>
+    </funcdescr>
+   </funcsynopsis>
+  </para>
+  <para>
+   <indexterm scope="glibc-fn">
+    <primary>geteuid</primary>
+   </indexterm>
+   <funcsynopsis>
+    <funcprototype role="işlev" xml:id="glibc-geteuid">
+     <funcdef>uid_t <command>geteuid</command></funcdef>
+     <paramdef>(void)</paramdef>
+    </funcprototype>
+    <funcdescr>
+     <para><command>geteuid</command> işlevi sürecin etkin kullanıcı kimliği ile döner.
+</para>
+    </funcdescr>
+   </funcsynopsis>
+  </para>
+  <para>
+   <indexterm scope="glibc-fn">
+    <primary>getegid</primary>
+   </indexterm>
+   <funcsynopsis>
+    <funcprototype role="işlev" xml:id="glibc-getegid">
+     <funcdef>gid_t <command>getegid</command></funcdef>
+     <paramdef>(void)</paramdef>
+    </funcprototype>
+    <funcdescr>
+     <para><command>getegid</command> işlevi sürecin etkin grup kimliği ile döner.
+</para>
+    </funcdescr>
+   </funcsynopsis>
+  </para>
+  <para>
+   <indexterm scope="glibc-fn">
+    <primary>getgroups</primary>
+   </indexterm>
+   <funcsynopsis>
+    <funcprototype role="işlev" xml:id="glibc-getgroups">
+     <funcdef>int <command>getgroups</command></funcdef>
+     <paramdef>(int    <varname>miktar</varname>,
+ gid_t *<varname>gruplar</varname>)</paramdef>
+    </funcprototype>
+    <funcdescr>
+     <para><command>getgroups</command> işlevi sürecin ek grupları hakkında bilgi almak için kullanılır. Bu grup kimliklerinin en çok <varname>miktar</varname> kadarı <varname>gruplar</varname> dizisine kaydedilir; işlevin dönüş değeri işlev tarafından elde edilebilen grup kimliklerinin sayısı olur. Eğer <varname>miktar</varname> ek grup kimliklerinin sayısından küçükse, işlev <command>-1</command> değeri ile döner ve <command>errno</command> değişkenine <command>EINVAL</command> atanır.
+   </para>
+     <para>
+Eğer <varname>miktar</varname> sıfırsa, <command>getgroups</command> işlevi ek grup kimliklerin toplam sayısı ile döner. Ek grupları desteklemeyen sistemlerde bu daima sıfır olacaktır.
+   </para>
+     <para><command>getgroups</command> işlevinin ek grup kimliklerini öğrenmek için kullanılışına bir örnek:
+   </para>
+     <para>
+      <screen>gid_t *
+read_all_groups (void)
+{
+  int ngroups = getgroups (0, NULL);
+  gid_t *groups
+    = (gid_t *) xmalloc (ngroups * sizeof (gid_t));
+  int val = getgroups (ngroups, groups);
+  if (val &lt; 0)
+    {
+      free (groups);
+      return NULL;
+    }
+  return groups;
+}
+</screen>
+     </para>
+    </funcdescr>
+   </funcsynopsis>
+  </para>
+ </chapter>
+ <chapter xml:id="glibc-Setting-User-ID">
+  <info>
+   <title>Kullanıcı Kimliğinin Belirtilmesi</title>
+   <titleabbrev>Kullanıcı kimliklerini ayarlamakta kullanılan işlevler</titleabbrev>
+  </info>
+  <para>
+Bu kısımda bir sürecin gerçek ve/veya etkin kullanıcı kimliklerini değiştiren işlevlere yer verilmiştir. Bu oluşumları kullanabilmek için <filename>sys/types.h</filename> ve <filename>unistd.h</filename> başlık dosyalarını yazılımınıza dahil etmeniz gerekir.
+<indexterm scope="glibc-pg"><primary>unistd.h</primary></indexterm>
+<indexterm scope="glibc-pg"><primary>sys/types.h</primary></indexterm>
+   </para>
+  <para>
+   <indexterm scope="glibc-fn">
+    <primary>seteuid</primary>
+   </indexterm>
+   <funcsynopsis>
+    <funcprototype role="işlev" xml:id="glibc-seteuid">
+     <funcdef>int <command>seteuid</command></funcdef>
+     <paramdef>(uid_t <varname>etkinkullkim</varname>)</paramdef>
+    </funcprototype>
+    <funcdescr>
+     <para>
+Bu işlev bir sürecin etkin kullanıcı kimliğini, sürecin etkin kullanıcı kimliğini <varname>etkinkullkim</varname> olarak değiştirmesi mümkünse, <varname>etkinkullkim</varname> ile belirtilen kimliğe ayarlar. Bir ayrıcalıklı süreç (etkin kullanıcı kimliği sıfır olan süreç) kendi etkin kullanıcı kimliğini herhangi bir kullanıcı kimliği ile değiştirebilir. Bir ayrıcalıksız süreç ise kendi etkin kullanıcı kimliğini sadece kendi gerçek kullanıcı kimliğine ya da dosya kullanıcı kimliğine değiştirebilir. Aksi takdirde, sürecin etkin kullanıcı kimliği değişmeyecektir.
+   </para>
+     <para><command>seteuid</command> işlevi, kimliği değiştirebilmişse <command>0</command> ile döner. <command>-1</command> dönüş değeri bir hata oluştuğunu gösterir. Aşağıdaki <command>errno</command> hata durumları bu işlev için tanımlanmıştır:
+   </para>
+     <para>
+      <variablelist>
+       <varlistentry>
+        <term>
+         <literal>EINVAL</literal>
+        </term>
+        <listitem>
+         <para><varname>etkinkullkim</varname> argümanının değeri geçersiz
+      </para>
+        </listitem>
+       </varlistentry>
+       <varlistentry>
+        <term>
+         <literal>EPERM</literal>
+        </term>
+        <listitem>
+         <para>
+Süreç aidiyetini belirtilen kimlikle değiştiremez
+      </para>
+        </listitem>
+       </varlistentry>
+      </variablelist>
+     </para>
+     <para><command>_POSIX_SAVED_IDS</command> özelliği olmayan eski sistemlerde bu işlev yoktur.
+</para>
+    </funcdescr>
+   </funcsynopsis>
+  </para>
+  <para>
+   <indexterm scope="glibc-fn">
+    <primary>setuid</primary>
+   </indexterm>
+   <funcsynopsis>
+    <funcprototype role="işlev" xml:id="glibc-setuid">
+     <funcdef>int <command>setuid</command></funcdef>
+     <paramdef>(uid_t <varname>kullkim</varname>)</paramdef>
+    </funcprototype>
+    <funcdescr>
+     <para>
+Bu işlevi çağıran sürecin yetkisi varsa, sürecin gerçek ve etkin kullanıcı kimliği <varname>kullkim</varname> yapılır. İşlev ayrıca sürecin dosya kullanıcı kimliğini varsa siler. <varname>kullkim</varname> sistemde geçerli herhangi bir kullanıcı kimliği olabilir. (İşlev eski etkin kullanıcı kimliği döndürmez, dolayısıyla bir kere değiştikten sonra tekrar eski etkin kullanıcı kimliğe dönmenin bir yolu yoktur.)
+   </para>
+     <para>
+Süreç istenen işlemi yapmaya yetkili değilse ve sistemde <command>_POSIX_SAVED_IDS</command> özelliği yoksa bu işlev <command>seteuid</command> gibi davranır.
+   </para>
+     <para>
+İşlevin dönüş değerleri ve hata durumları <command>seteuid</command> ile aynıdır.
+</para>
+    </funcdescr>
+   </funcsynopsis>
+  </para>
+  <para>
+   <indexterm scope="glibc-fn">
+    <primary>setreuid</primary>
+   </indexterm>
+   <funcsynopsis>
+    <funcprototype role="işlev" xml:id="glibc-setreuid">
+     <funcdef>int <command>setreuid</command></funcdef>
+     <paramdef>(uid_t <varname>gerçekkullkim</varname>,
+ uid_t <varname>etkinkullkim</varname>)</paramdef>
+    </funcprototype>
+    <funcdescr>
+     <para>
+Bu işlev sürecin gerçek kullanıcı kimliğini <varname>gerçekkullkim</varname> ve etkin kullanıcı kimliğini <varname>etkinkullkim</varname> yapar.  Eğer <varname>gerçekkullkim</varname> değeri <command>-1</command> ise bu, gerçek kullanıcı kimliğin değiştirilmeyeceği anlamına gelir. Benzer şekilde <varname>etkinkullkim</varname> değeri <command>-1</command> ise etkin kullanıcı kimliği değiştirilmez.
+   </para>
+     <para><command>setreuid</command> işlevi 4.3 BSD Unix ile uyumluluk adına vardır. Bu işlevi sürecin etkin ve gerçek kullanıcı kimliklerini takaslamak için kullanabilirsiniz. (Ayrıcalıklı süreçler için böyle bir sınırlama yoktur.) Dosya kimlikleri destekleniyorsa, bu işlev bunun için kullanılmaz. Bkz. <xref linkend="glibc-Enable-Disable-Setuid"/>.
+   </para>
+     <para>
+İşlev başarılı ise <command>0</command> değilse <command>-1</command> döner. Aşağıdaki <command>errno</command> hata durumları bu işlev için tanımlanmıştır:
+   </para>
+     <para>
+      <variablelist>
+       <varlistentry>
+        <term>
+         <literal>EPERM</literal>
+        </term>
+        <listitem>
+         <para>
+Sürecin yetkileri işlem için yetersiz; belirtilen kimliğe geçiş için yetkili değilsiniz.
+      </para>
+        </listitem>
+       </varlistentry>
+      </variablelist>
+     </para>
+    </funcdescr>
+   </funcsynopsis>
+  </para>
+ </chapter>
+ <chapter xml:id="glibc-Setting-Groups">
+  <info>
+   <title>Grup Kimliğinin Belirtilmesi</title>
+   <titleabbrev>Grup kimliklerini ayarlamakta kullanılan işlevler</titleabbrev>
+  </info>
+  <para>
+Bu kısımda bir sürecin gerçek ve/veya etkin grup kimliklerini değiştiren işlevlere yer verilmiştir. Bu oluşumları kullanabilmek için <filename>sys/types.h</filename> ve <filename>unistd.h</filename> başlık dosyalarını yazılımınıza dahil etmeniz gerekir.
+<indexterm scope="glibc-pg"><primary>unistd.h</primary></indexterm>
+<indexterm scope="glibc-pg"><primary>sys/types.h</primary></indexterm>
+   </para>
+  <para>
+   <indexterm scope="glibc-fn">
+    <primary>setegid</primary>
+   </indexterm>
+   <funcsynopsis>
+    <funcprototype role="işlev" xml:id="glibc-setegid">
+     <funcdef>int <command>setegid</command></funcdef>
+     <paramdef>(gid_t <varname>grupkim</varname>)</paramdef>
+    </funcprototype>
+    <funcdescr>
+     <para>
+Bu işlev bir sürecin etkin grup kimliğini, sürecin etkin grup kimliğini <varname>grupkim</varname> olarak değiştirmesi mümkünse, <varname>grupkim</varname> ile belirtilen kimliğe ayarlar. <command>seteuid</command> işlevindeki gibi, bir ayrıcalıklı süreç (etkin kullanıcı kimliği sıfır olan süreç) kendi etkin grup kimliğini herhangi bir kullanıcı kimliği ile değiştirebilir. Bir ayrıcalıksız süreç ise dosya grup kimliğine sahipse, etkin grup kimliğini kendi gerçek grup kimliğine veya kendi dosya grup kimliğine değiştirebilir; aksi takdirde etkin grup kimliği değişmez.
+   </para>
+     <para>
+Bir sürecin ayrıcalıklı süreç olması için etkin grup kimliğinin değil, etkin kullanıcı kimliğinin sıfır olması gerektiğini unutmayın. Etkin grup kimliği sadece erişim yetkilerini etkiler.
+   </para>
+     <para><command>setegid</command> işlevinin dönüş değerleri ve hata durumları <command>seteuid</command> ile aynıdır.
+   </para>
+     <para><command>_POSIX_SAVED_IDS</command> özelliği olmayan eski sistemlerde bu işlev yoktur.
+</para>
+    </funcdescr>
+   </funcsynopsis>
+  </para>
+  <para>
+   <indexterm scope="glibc-fn">
+    <primary>setgid</primary>
+   </indexterm>
+   <funcsynopsis>
+    <funcprototype role="işlev" xml:id="glibc-setgid">
+     <funcdef>int <command>setgid</command></funcdef>
+     <paramdef>(gid_t <varname>grupkim</varname>)</paramdef>
+    </funcprototype>
+    <funcdescr>
+     <para>
+Bu işlevi çağıran sürecin yetkisi varsa, sürecin gerçek ve etkin grup kimliği <varname>grupkim</varname> yapılır. İşlev ayrıca sürecin dosya grup kimliğini varsa siler.
+   </para>
+     <para>
+Süreç istenen işlemi yapmaya yetkili değilse, bu işlev <command>setegid</command> gibi davranır.
+   </para>
+     <para>
+İşlevin dönüş değerleri ve hata durumları <command>seteuid</command> ile aynıdır.
+</para>
+    </funcdescr>
+   </funcsynopsis>
+  </para>
+  <para>
+   <indexterm scope="glibc-fn">
+    <primary>setregid</primary>
+   </indexterm>
+   <funcsynopsis>
+    <funcprototype role="işlev" xml:id="glibc-setregid">
+     <funcdef>int <command>setregid</command></funcdef>
+     <paramdef>(gid_t <varname>gerçekgrupkim</varname>,
+ gid_t <varname>etkingrupkim</varname>)</paramdef>
+    </funcprototype>
+    <funcdescr>
+     <para>
+Bu işlev sürecin gerçek grup kimliğini <varname>gerçekgrupkim</varname> ve etkin grup kimliğini <varname>etkingrupkim</varname> yapar.  Eğer <varname>gerçekgrupkim</varname> değeri <command>-1</command> ise bu, gerçek grup kimliğin değiştirilmeyeceği anlamına gelir. Benzer şekilde <varname>etkingrupkim</varname> değeri <command>-1</command> ise etkin grup kimliği değiştirilmez.
+   </para>
+     <para><command>setregid</command>işlevi, dosya kimliklerini desteklemeyen 4.3 BSD Unix ile uyumluluk adına vardır. Bu işlevi sürecin etkin ve gerçek kullanıcı kimliklerini takaslamak için kullanabilirsiniz. (Ayrıcalıklı süreçler için böyle bir sınırlama yoktur.) Dosya kimlikleri destekleniyorsa, bu işlev bunun için kullanılmaz. Bkz. <xref linkend="glibc-Enable-Disable-Setuid"/>.
+   </para>
+     <para>
+İşlevin dönüş değerleri ve hata durumları <command>setreuid</command> ile aynıdır.
+</para>
+    </funcdescr>
+   </funcsynopsis>
+  </para>
+  <para><command>setuid</command> ve <command>setgid</command> işlevleri sürecin etkin kullanıcı kimliğinin sıfır olup olmamasına göre farklı davranırlar. Sıfırdan farklıysa, <command>seteuid</command> ve <command>setegid</command> gibi davranırlar. Bir karışıklıktan kaçınmak için, etkin kullanıcı kimliğinin sıfır olduğunu bilmedikçe ve sürecin aidiyetini kalıcı olarak değiştirmek istemedikçe daima <command>seteuid</command> ve <command>setegid</command> işlevlerini kullanmanızı öneririz. Bu durum yaygındır ve <command>login</command> ve <command>su</command> gibi çoğu uygulama buna ihtiyaç duyar.
+   </para>
+  <para>
+Eğer yazılımınız <command>root</command> dışında bir kullanıcı için setuid ise yetkileri kalıcı olarak değiştirmenin bir yolu yoktur.
+   </para>
+  <para>
+Sistem ayrıca yetkin süreçlerin kendi ek grup kimliklerini değiştirmesini mümkün kılmıştır. <command>setgroups</command> veya <command>initgroups</command> işlevlerini yazılımınızda kullanmak isterseniz, <filename>grp.h</filename> başlık dosyasını yazılımınıza dahil etmelisiniz.
+<indexterm scope="glibc-pg"><primary>grp.h</primary></indexterm>
+   </para>
+  <para>
+   <indexterm scope="glibc-fn">
+    <primary>setgroups</primary>
+   </indexterm>
+   <funcsynopsis>
+    <funcprototype role="işlev" xml:id="glibc-setgroups">
+     <funcdef>int <command>setgroups</command></funcdef>
+     <paramdef>(size_t <varname>miktar</varname>,
+ gid_t *<varname>gruplar</varname>)</paramdef>
+    </funcprototype>
+    <funcdescr>
+     <para>
+Bu işlev sürecin ek grup kimliklerini ayarlar. Sadece yetkin süreçten çağrılabilir. <varname>miktar</varname> argümanı ile <varname>gruplar</varname> dizisindeki grup kimliklerinin sayısı belirtilir.
+   </para>
+     <para>
+İşlev başarılı ise <command>0</command> değilse <command>-1</command> döner. Aşağıdaki <command>errno</command> hata durumları bu işlev için tanımlanmıştır:
+   </para>
+     <para>
+      <variablelist>
+       <varlistentry>
+        <term>
+         <literal>EPERM</literal>
+        </term>
+        <listitem>
+         <para>
+Çağıran süreç yetkisiz.
+      </para>
+        </listitem>
+       </varlistentry>
+      </variablelist>
+     </para>
+    </funcdescr>
+   </funcsynopsis>
+  </para>
+  <para>
+   <indexterm scope="glibc-fn">
+    <primary>initgroups</primary>
+   </indexterm>
+   <funcsynopsis>
+    <funcprototype role="işlev" xml:id="glibc-initgroups">
+     <funcdef>int <command>initgroups</command></funcdef>
+     <paramdef>(const char *<varname>kullanıcı</varname>,
+ gid_t       <varname>grup</varname>)</paramdef>
+    </funcprototype>
+    <funcdescr>
+     <para><command>initgroups</command> işlevi sürecin ek gruplarını <varname>kullanıcı</varname> kullanıcısının ek grupları olarak ayarlar. <varname>grup</varname> grubu bunlara eklenir.
+   </para>
+     <para>
+Bu işlev grup veritabanını <varname>kullanıcı</varname> ile ilgili grupları bulmak için tarar. Oluşturulan liste için <command>setgroups</command> çağrısı yapar.
+   </para>
+     <para>
+İşlevin dönüş değerleri ve hata durumları <command>setgroups</command> ile aynıdır.
+</para>
+    </funcdescr>
+   </funcsynopsis>
+  </para>
+  <para>
+Bir kullanıcının hangi grupların üyesi olduğunu bilmek ama sürecin ek grup kimliklerini değiştirmek istemiyoranız <command>getgrouplist</command> işlevini kullanabilirsiniz.  <command>getgrouplist</command> işlevini kullanabilmek için yazılımınıza <filename>grp.h</filename> başlık dosyasını dahil etmelisiniz.
+<indexterm scope="glibc-pg"><primary>grp.h</primary></indexterm>
+      </para>
+  <para>
+   <indexterm scope="glibc-fn">
+    <primary>getgrouplist</primary>
+   </indexterm>
+   <funcsynopsis>
+    <funcprototype role="işlev" xml:id="glibc-getgrouplist">
+     <funcdef>int <command>getgrouplist</command></funcdef>
+     <paramdef>(const char *<varname>kullanıcı</varname>,
+ gid_t       <varname>grup</varname>,
+ gid_t      *<varname>gruplar</varname>,
+ int        *<varname>grupsayısı</varname>)</paramdef>
+    </funcprototype>
+    <funcdescr>
+     <para><command>getgrouplist</command> işlevi <varname>kullanıcı</varname>'nın üyesi olduğu ek grupları saptamak için grup veritabanını tarar. Bu grup kimliklerinin en çok <varname>miktar</varname> kadarı <varname>gruplar</varname> dizisine kaydedilir; işlevin dönüş değeri işlev tarafından elde edilebilen grup kimliklerinin sayısı olur. Eğer <varname>miktar</varname> ek grup kimliklerinin sayısından küçükse, işlev <command>-1</command> değeri ile döner ve grupların gerçek sayısını *<varname>grupsayısı</varname>'na atar. <varname>grup</varname> grubu bu listeye eklenir.
+   </para>
+     <para><command>getgrouplist</command> işlevinin ek grup kimliklerini öğrenmek için kullanılışına bir örnek:
+   </para>
+     <para>
+      <screen>gid_t *
+supplementary_groups (char *user)
+{
+  int ngroups = 16;
+  gid_t *groups
+    = (gid_t *) xmalloc (ngroups * sizeof (gid_t));
+  struct passwd *pw = getpwnam (user);
+
+  if (pw == NULL)
+    return NULL;
+
+  if (getgrouplist (pw-&gt;pw_name, pw-&gt;pw_gid, groups, &amp;ngroups) &lt; 0)
+    {
+      groups = xrealloc (ngroups * sizeof (gid_t));
+      getgrouplist (pw-&gt;pw_name, pw-&gt;pw_gid, groups, &amp;ngroups);
+    }
+  return groups;
+}
+</screen>
+     </para>
+    </funcdescr>
+   </funcsynopsis>
+  </para>
+ </chapter>
+ <chapter xml:id="glibc-Enable-Disable-Setuid">
+  <info>
+   <title>Setuid Erişiminin Etkinleştirilmesi ve İptali</title>
+   <titleabbrev>Setuid erişimini açma ve kapama.</titleabbrev>
+  </info>
+  <para>
+Genellikle setuid yazılımlarda bu özel erişime her zaman gerek duyulmaz. Gerekmedikçe bu erişimin kapalı tutulması daha iyidir, böylece tasarlanmamış bir erişime imkan verilmemiş olur.
+   </para>
+  <para>
+Sistem <command>_POSIX_SAVED_IDS</command> özelliğini destekliyorsa, bunu <command>seteuid</command> ile yapabilirsiniz. Bir oyunun başlatıldığındaki gerçek kullanıcı kimliği <command>jdoe</command>, etkin kullanıcı kimliği <command>games</command> ise kayıtlı kullanıcı kimliği de <command>games</command> olur.  Bu yazılımın her iki kullanıcı kimliğinin çalıştırıldığında kaydedilmesi şöyle yapılır:
+   </para>
+  <para>
+   <screen>user_user_id = getuid ();game_user_id = geteuid ();
+</screen>
+  </para>
+  <para>
+Bunun ardından oyun dosyasını erişime şöyle kapatabilirsiniz:
+   </para>
+  <para>
+   <screen>seteuid (user_user_id);</screen>
+  </para>
+  <para>
+Oyun dosyasını tekrar erişime açmak isterseniz:
+   </para>
+  <para>
+   <screen>seteuid (game_user_id);</screen>
+  </para>
+  <para>
+Bu işlemler sırasında sürecin gerçek kullanıcı kimliği <command>jdoe</command> ve dosya kullanıcı kimliği <command>games</command> olarak kalır, böylece yazılım etkin kullanıcı kimliğini bunlardan biri yapabilir.
+   </para>
+  <para>
+Dosya kullanıcı kimliklerini desteklemeyen sistemlerde, setuid erişimini <command>setreuid</command> kullanarak etkin ve gerçek kullanıcı kimlikler arasında takas edebilirsiniz:
+   </para>
+  <para>
+   <screen>setreuid (geteuid (), getuid ());</screen>
+  </para>
+  <para>
+Bu daima geçerli bir özel durumdur--hiç başarısız olmaz.
+   </para>
+  <para>
+Setuid erişim, gerçek ve etkin kimliklerin takaslanmasından neden etkilenir? Bir oyunun başlatıldığını ve onun gerçek kullanıcı kimliğinin <command>jdoe</command> iken etkin kullanıcı kimliğinin <command>games</command> olduğunu varsayalım. Bu durumda sürecin puanların tutulduğu dosyaya yazabildiğini varsayalım. Eğer bu iki kullanıcı kimlik aralarında yer değiştirirse gerçek kullanıcı kimlik <command>games</command>, etkin kullanıcı kimlik <command>jdoe</command> olur ve süreç artık sadece <command>jdoe</command> erişimine sahip olur ve puanların tutulduğu dosyaya yazamaz. Tekrar yapılan bir takasla puanların tutulduğu dosyaya tekrar erişim sağlanır.
+   </para>
+  <para>
+Kayıtlı kullanıcı kimlik özelliğinin desteklendiği ve desteklenmediği her iki sistemde de bu özelliği kullanabilmek için önişlemci yordamlarını kullanabilirsiniz:
+   </para>
+  <para>
+   <screen>#ifdef _POSIX_SAVED_IDS
+  seteuid (user_user_id);
+#else
+  setreuid (geteuid (), getuid ());
+#endif
+</screen>
+  </para>
+ </chapter>
+ <chapter xml:id="glibc-Setuid-Program-Example">
+  <info>
+   <title>Setuid Yazılım Örneği</title>
+   <titleabbrev>Bir yazılımdan alınmış uygun bir örnek.</titleabbrev>
+  </info>
+  <para>
+Buradaki örnekte, kendi etkin kullanıcı kimliğini değiştiren bir yazılım gösterilmiştir.
+   </para>
+  <para>
+Örnek, <command>caber-toss</command> diye bilinen bir oyundan alınmıştır. Örnek, sadece oyun sürecinin yazabildiği <filename>scores</filename> dosyasının değiştirilmesi için yapılan işlemleri içerir. Oyunun çalıştırılabilir dosyasının setuid bitinin <filename>scores</filename> dosyasının sahibi olan kullanıcı için etkin olarak kaydedildiğini varsayıyoruz. Genellikle sistem yöneticisinin yaptığı bir işlemin sonucu olarak bu amaçla <command>games</command> kullanıcısının kullanıldığını varsayalım.
+   </para>
+  <para>
+Çalıştırılabilir dosyanın kipinin <command>4755</command> olduğunu varsayarsak, <command>ls -l</command> komutu şöyle bir çıktı üretir:
+   </para>
+  <para>
+   <screen>-rwsr-xr-x   1 games    184422 Jul 30 15:17 caber-toss</screen>
+  </para>
+  <para>
+Setuid biti dosya kiplerinde <command>s</command> olarak gösterilir.
+   </para>
+  <para><filename>scores</filename> dosyasının kipinin ise <command>644</command> olduğunu varsayarak aynı komut şu çıktıyı üretir:
+   </para>
+  <para>
+   <screen>-rw-r--r--  1 games           0 Jul 31 15:33 scores</screen>
+  </para>
+  <para>
+Buradaki yazılım parçası kullanıcı kimliklerin nasıl değiştirildiğini gösterir. Yazılım, dosya kimliği desteği varsa bu özelliği yoksa etkin ve gerçek kullanıcıları takaslamak için <command>setreuid</command> işlevini kullanmak üzere koşullandırılmıştır.
+   </para>
+  <para>
+   <screen>#include &lt;stdio.h&gt;
+#include &lt;sys/types.h&gt;
+#include &lt;unistd.h&gt;
+#include &lt;stdlib.h&gt;
+
+
+/* Etkin ve gerçek kullanıcı kimlikleri hatırlayalım. */
+
+static uid_t euid, ruid;
+
+
+/* Etkin kullanıcı kimliği özgün değerine ayarlayalım. */
+
+void
+do_setuid (void)
+{
+  int status;
+
+#ifdef _POSIX_SAVED_IDS
+  status = seteuid (euid);
+#else
+  status = setreuid (ruid, euid);
+#endif
+  if (status &lt; 0) {
+    fprintf (stderr, "Kullanıcı kimliği etkinleştirilemedi.\n");
+    exit (status);
+    }
+}
+
+
+/* Etkin kullanıcı kimliği gerçek kullanıcı kimliğe ayarlayalım. */
+
+void
+undo_setuid (void)
+{
+  int status;
+
+#ifdef _POSIX_SAVED_IDS
+  status = seteuid (ruid);
+#else
+  status = setreuid (euid, ruid);
+#endif
+  if (status &lt; 0) {
+    fprintf (stderr, "Kullanıcı kimliği etkinleştirilemedi.\n");
+    exit (status);
+    }
+}
+
+/* Asıl kod. */
+
+int
+main (void)
+{
+  /* Etkin ve gerçek kullanıcı kimlikleri hatırlayalım.  */
+  ruid = getuid ();
+  euid = geteuid ();
+  undo_setuid ();
+
+  /* Oynayalım ve puanları kaydedelim.  */
+  ...
+}
+</screen>
+  </para>
+  <para><command>main</command> işlevinin yaptığı ilk işlem etkin kullanıcı kimliğe gerisin geriye gerçek kullanıcı kimliğe ayarlamaktır. Kullanıcı oyunu oynarken bir dosya erişimi yapmak isterse erişim yetkileri gerçek kullanıcı kimliğe göre saptansın diye böyle yapılır. Oyun yazılımı sadece <filename>scores</filename> dosyasına puanı yazacağı zaman etkin kullanıcı kimliğini dosyanın kullanıcı kimliği yapar:
+   </para>
+  <para>
+   <screen>/* Puanı kaydedelim. */
+
+int
+record_score (int score)
+{
+  FILE *stream;
+  char *myname;
+
+  /* scores dosyasını açalım. */
+  do_setuid ();
+  stream = fopen (SCORES_FILE, "a");
+  undo_setuid ();
+
+  /* Puanı dosyaya yazalım. */
+  if (stream)
+    {
+      myname = cuserid (NULL);
+      if (score &lt; 0)
+        fprintf (stream, "%10s: Couldn't lift the caber.\n", myname);
+      else
+        fprintf (stream, "%10s: %d feet.\n", myname, score);
+      fclose (stream);
+      return 0;
+    }
+  else
+    return -1;
+}
+</screen>
+  </para>
+ </chapter>
+ <chapter xml:id="glibc-Tips-for-Setuid">
+  <info>
+   <title>Setuid Yazılımları Geliştirmek için İpuçları</title>
+   <titleabbrev>Sınırsız erişim nasıl engellenir.</titleabbrev>
+  </info>
+  <para>
+Setuid yazılımlarla tasarlanmamış kullanıcı erişimi vermek kolaydır, aslında; bundan kaçınmak için çok dikkatli olmanız gerekir. Burada tasarlanmamış erişimden korunma ve ortaya çıktığında zararlarını en aza indirme ile ilgili bazı ipuçlarına yer verilmiştir:
+   </para>
+  <para>
+   <itemizedlist>
+    <listitem>
+     <para>
+Çok gerekli olmadıkça özellikle <command>root</command> gibi ayrıcalıklı kullanıcı kimliklerle <command>setuid</command> yazılımlar kullanmayın. Özkaynaklara erişim için sadece bu özkaynaklara erişim yetkisi olan yeni bir ayrıcalıksız bir kullanıcı oluşturup bu kullanıcıyla o özkaynaklara erişmek daha iyidir. Yazılımınızı özel bir kullanıcı ve grubun kullanabilmesi için yazmanız daha da iyi olur.
+     </para>
+    </listitem>
+    <listitem>
+     <para><command>exec</command> işlevlerini etkin kullanıcı kimliği değiştirerek kullanırken dikkatli olun. Yazılımınızı kullanarak kullanıcıların değiştirilmiş bir kullanıcı kimlikle keyfi yazılım çalıştırmasına izin vermeyin. Bir kabuğun çalıştırılabilmesi özellikle kötüdür. Daha az belirgin olarak, <command>execlp</command> ve <command>execvp</command> bir potansiyel risk içerir (yazılımlar kullanıcının <command>PATH</command> ortam değişkenine bağlı olarak çalıştırıldığından dolayı).
+     </para>
+     <para>
+Bir yazılımı değiştirilmiş bir kullanıcı kimlikle <command>exec</command> işleviyle çalıştırıyorsanız, çalıştırılabilir olarak <link linkend="glibc-File-Name-Resolution">dosyanın tam ismini</link> belirtin ve  çalıştırılan bu dosyanın bulunduğu ve eriştiği dizinlerde sıradan kullanıcıların bir değişiklik yapamayacağından emin olun (Bu dosya ismine örneğin bir kabuk  yerleştiremesinler ya da yapılandırma dosyasında bir değişiklik yapamasınlar).
+     </para>
+     <para>
+Ayrıca yazılıma aktarılan argümanları umulmadık yan etkilere karşı sınamalısınız. Benzer şekilde, ortam değişkenlerini de incelemelisiniz. Hangi argümanların ve değişkenlerin güvenilir olduğuna karar verdikten sonra tüm diğerlerini reddedin.
+     </para>
+     <para>
+Ayrıcalıklı yazılımlarda <command>system</command> işlevini asla kullanmayın, çünkü bu işlev bir kabuk açar.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+Kullanıcı kimliğini sadece yazılımın kullandığı özkaynaklar erişebilen bir kullanıcı için sadece bu özkaynaklara erişirken kullanın, işi bittiği anda etkin kullanıcı kimliği kullanıcının kendi kimliği ile değiştirin. Bkz. <xref linkend="glibc-Enable-Disable-Setuid"/>.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+Yazılımınızın <command>setuid</command> parçasının denetimindeki özkaynaklar dışında başka dosyalara da erişmesi gerekiyorsa, bu dosyalara yazılımı çalıştıran kullanıcının erişim izni olup olmadığına bakmalısınız. Bunu sınamak için <command>access</command> işlevini kullanabilirsiniz (bkz. <xref linkend="glibc-Access-Permission"/>); bu işlev etkin kullanıcı kimliği değil gerçek kullanıcı ve grup kimliklerini kullanır.
+     </para>
+    </listitem>
+   </itemizedlist>
+  </para>
+ </chapter>
+ <chapter xml:id="glibc-Who-Logged-In">
+  <info>
+   <title>Oturumu Açan Kim?</title>
+   <titleabbrev>Oturumu açanın tespiti ya da çalışan sürecin gerçek kullanıcı kimliğinin saptanması.</titleabbrev>
+  </info>
+  <para><indexterm scope="glibc-cp"><primary>oturum</primary><secondary>oturum açma ismi</secondary><tertiary>saptanması</tertiary></indexterm><indexterm scope="glibc-cp"><primary>kullanıcı kimliği</primary><secondary>saptanması</secondary></indexterm>
+Bu bölümde açıklanan işlevleri bir süreci çalıştıran kullanıcının ismini saptamakta kullanabilirsiniz. Ayrıca,  <link linkend="glibc-Reading-Persona"><command>getuid</command> ailesi işlevlere</link> bakmayı da unutmayın. Bu bilginin sistem tarafından nasıl toplandığı ve artalanda saklanan bu bilgilerin nasıl denetlendiği/eklendiği/silindiği gibi bilgiler ise  <xref linkend="glibc-User-Accounting-Database"/> bölümünde açıklanmıştır.
+   </para>
+  <para><command>getlogin</command> işlevi <filename>unistd.h</filename> başlık dosyasında,  <command>cuserid</command> işlevi ile <command>L_cuserid</command> makrosu ise <filename>stdio.h</filename> başlık dosyasında bildirilmiştir.
+<indexterm scope="glibc-pg"><primary>stdio.h</primary></indexterm>
+<indexterm scope="glibc-pg"><primary>unistd.h</primary></indexterm>
+   </para>
+  <para>
+   <indexterm scope="glibc-fn">
+    <primary>getlogin</primary>
+   </indexterm>
+   <funcsynopsis>
+    <funcprototype role="işlev" xml:id="glibc-getlogin">
+     <funcdef>char *<command>getlogin</command></funcdef>
+     <paramdef>(void)</paramdef>
+    </funcprototype>
+    <funcdescr>
+     <para><command>getlogin</command> işlevi sürecin denetim uçbiriminde oturum açmış olan kullanıcının ismini içeren  bir gösterici ile döner. Bu bilgi saptanamamışsa bir boş gösterici ile döner. Dizge durağan olarak ayrıldığından bu işlevin sonraki çağrılarında veya <command>cuserid</command> işlevinin çağrılmasıyla içeriği değişebilir.
+</para>
+    </funcdescr>
+   </funcsynopsis>
+  </para>
+  <para>
+   <indexterm scope="glibc-fn">
+    <primary>cuserid</primary>
+   </indexterm>
+   <funcsynopsis>
+    <funcprototype role="işlev" xml:id="glibc-cuserid">
+     <funcdef>char *<command>cuserid</command></funcdef>
+     <paramdef>(char *<varname>dizge</varname>)</paramdef>
+    </funcprototype>
+    <funcdescr>
+     <para><command>cuserid</command> işlevi sürecin etkin kullanıcı kimliği ile ilişkili kullanıcı isminini içeren bir dizgeye gösterici ile döner. <varname>dizge</varname> bir boş gösterici değilse en az <command>L_cuserid</command> karakteri tutabilecek bir dizi olmalıdır. Aksi takdirde durağan alanda ayrılmış bir dizgeye gösterici döner. Bu dizge durağan olarak ayrıldığından bu işlevin sonraki çağrılarında veya <command>getlogin</command> işlevinin çağrılmasıyla içeriği değişebilir.
+   </para>
+     <para>
+Bu işlevin kullanılması artık tavsiye edilmemektedir (XPG4.2'de geri çekilmiş olarak imlidir ve POSIX.1'in daha yeni sürümlerinde kaldırılması planlanmıştır.)
+</para>
+    </funcdescr>
+   </funcsynopsis>
+  </para>
+  <para>
+   <indexterm scope="glibc-vr">
+    <primary>L_cuserid</primary>
+   </indexterm>
+   <funcsynopsis>
+    <funcprototype role="makro" xml:id="glibc-L_cuserid">
+     <funcdef>int <command>L_cuserid</command></funcdef>
+     <paramdef/>
+    </funcprototype>
+    <funcdescr>
+     <para>
+Kullanıcı isminin saklanacağı dizinin ne kadar uzun olabileceğini belirten bir tamsayı sabittir.
+</para>
+    </funcdescr>
+   </funcsynopsis>
+  </para>
+  <para>
+Bu işlevler yazılımınızı çalıştıran kullanıcının kim olduğunu ya da o oturumu açan kullanıcının kim olduğunu saptamanıza yarar. (Bunlar setuid yazılımlarla ilgili olarak bahsedilenlerden farklı olabilir.) Bu işlevleri kandırmak için kullanıcı hiçbir şey yapamaz.
+   </para>
+  <para>
+Çoğu amaç için, oturum açan kullanıcıyı saptamak için <command>LOGNAME</command> ortam değişkenine bakmak faydalıdır. Ancak, kullanıcı <command>LOGNAME</command> ortam değişkenini keyfi olarak değiştirebileceğinden bu iyi bir yöntem değildir. Bkz. <xref linkend="glibc-Standard-Environment"/>.
+   </para>
+ </chapter>
+ <chapter xml:id="glibc-User-Accounting-Database">
+  <info>
+   <title>Kullanıcı Hesapları Veritabanı</title>
+   <titleabbrev>Kullanıcı bilgilerinin ve çeşitli eylemlerin veritabanlarında saklanması.</titleabbrev>
+  </info>
+  <para><indexterm scope="glibc-cp"><primary>kullanıcı hesapları veritabanı</primary></indexterm>
+Unix benzeri çoğu işletim sistemi oturum açan kullanıcıların neler yaptıklarını izlemek amacıyla bir kullanıcı hesapları veritabanı tutar. Bu kullanıcı hesapları veritabanında kullanıcının hangi uçbirimden ne zaman oturum açtığı, kullanıcının oturum açtığı uçbirimin süreç kimliği gibi bilgiler yanında, ayrıca sistemin çalışma seviyesi, sistemin yeniden başlatıldığı son tarih ve daha fazlası da saklanabilir.
+   </para>
+  <para>
+Kullanıcı hesapları veritabanı genellikle <command>/etc/utmp</command>, <command>/var/adm/utmp</command> veya <command>/var/run/utmp</command> dosyalarında tutulur.  Sıradan kullanıcının erişemediği dizinlerde tutuluyor olsalar da, bu dosyalara doğrudan erişilmesi <emphasis>asla</emphasis> mümkün olmamalıdır. Kullanıcı hesapları veritabanı ile ilgili okuma va yazma işlemleri bu kısımda açıklanan işlevler ile yapılmalıdır.
+   </para>
+  <section xml:id="glibc-Manipulating-the-Database">
+   <info>
+    <title>Kullanıcı Hesapları Veritabanına Erişim</title>
+    <titleabbrev>Kullanıcı hesapları veritabanını değiştirilmesi ve taranması.</titleabbrev>
+   </info>
+   <para>
+Bu amaçla kullanılan işlevler ve veri yapıları <filename>utmp.h</filename> başlık dosyasında bildirilmiştir.
+<indexterm scope="glibc-pg"><primary>utmp.h</primary></indexterm>
+   </para>
+   <para>
+    <indexterm scope="glibc-tp">
+     <primary sortas="exit_status">struct exit_status</primary>
+    </indexterm>
+    <funcsynopsis>
+     <funcprototype role="veri türü" xml:id="glibc-struct-exit_status">
+      <funcdef>struct <command>exit_status</command></funcdef>
+      <paramdef/>
+     </funcprototype>
+     <funcdescr>
+      <para><command>exit_status</command> veri yapısı, kullanıcı hesapları veritabanında <command>DEAD_PROCESS</command> olarak imlenmiş süreçlerin çıkış durumları ile ilgili bilgileri saklamakta kullanılır.
+    </para>
+      <para>
+       <glosslist>
+        <glossentry>
+         <glossterm>
+          <literal>short int <command>e_termination</command></literal>
+         </glossterm>
+         <glossdef>
+          <para>Sürecin sonlanma durumu.
+    </para>
+         </glossdef>
+        </glossentry>
+        <glossentry>
+         <glossterm>
+          <literal>short int <command>e_exit</command></literal>
+         </glossterm>
+         <glossdef>
+          <para>Sürecin çıkış durumu.
+    </para>
+         </glossdef>
+        </glossentry>
+       </glosslist>
+      </para>
+     </funcdescr>
+    </funcsynopsis>
+   </para>
+   <para>
+    <indexterm scope="glibc-tp">
+     <primary sortas="utmp">struct utmp</primary>
+    </indexterm>
+    <funcsynopsis>
+     <funcprototype role="veri türü" xml:id="glibc-struct-utmp">
+      <funcdef>struct <command>utmp</command></funcdef>
+      <paramdef/>
+     </funcprototype>
+     <funcdescr>
+      <para><command>utmp</command> veri yapısı kullanıcı veritabanındaki girdiler hakkında bilgileri tutar. GNU sisteminde şu üyelere sahiptir:
+    </para>
+      <para>
+       <glosslist>
+        <glossentry>
+         <glossterm>
+          <literal>short int <command>ut_type</command></literal>
+         </glossterm>
+         <glossdef>
+          <para>
+Oturum açma türünü belirtir. <command>EMPTY</command>, <command>RUN_LVL</command>,
+<command>BOOT_TIME</command>, <command>OLD_TIME</command>, <command>NEW_TIME</command>, <command>INIT_PROCESS</command>,
+<command>LOGIN_PROCESS</command>, <command>USER_PROCESS</command>, <command>DEAD_PROCESS</command> ve
+<command>ACCOUNTING</command> sabitlerinden biri olabilir.
+    </para>
+         </glossdef>
+        </glossentry>
+        <glossentry>
+         <glossterm>
+          <literal>pid_t <command>ut_pid</command></literal>
+         </glossterm>
+         <glossdef>
+          <para>Oturumu açan sürecin süreç kimliği numarası.
+    </para>
+         </glossdef>
+        </glossentry>
+        <glossentry>
+         <glossterm>
+          <literal>char <command>ut_line</command>[]</literal>
+         </glossterm>
+         <glossdef>
+          <para>Uçbirimin aygıt ismi (<command>/dev/</command> olmaksızın).
+    </para>
+         </glossdef>
+        </glossentry>
+        <glossentry>
+         <glossterm>
+          <literal>char <command>ut_id</command>[]</literal>
+         </glossterm>
+         <glossdef>
+          <para>Sürecin inittab kimliği.
+    </para>
+         </glossdef>
+        </glossentry>
+        <glossentry>
+         <glossterm>
+          <literal>char <command>ut_user</command>[]</literal>
+         </glossterm>
+         <glossdef>
+          <para>Kullanıcının oturum açma ismi.
+    </para>
+         </glossdef>
+        </glossentry>
+        <glossentry>
+         <glossterm>
+          <literal>char <command>ut_host</command>[]</literal>
+         </glossterm>
+         <glossdef>
+          <para>Kullanıcının kullanarak bağlantı kurduğu konağın ismi.
+    </para>
+         </glossdef>
+        </glossentry>
+        <glossentry>
+         <glossterm>
+          <literal>struct exit_status <command>ut_exit</command></literal>
+         </glossterm>
+         <glossdef>
+          <para><command>DEAD_PROCESS</command> olarak imli sürecin çıkış durumu.
+    </para>
+         </glossdef>
+        </glossentry>
+        <glossentry>
+         <glossterm>
+          <literal>long <command>ut_session</command></literal>
+         </glossterm>
+         <glossdef>
+          <para>
+Pencereleme için kullanılan oturum kimliği.
+    </para>
+         </glossdef>
+        </glossentry>
+        <glossentry>
+         <glossterm>
+          <literal>struct timeval <command>ut_tv</command></literal>
+         </glossterm>
+         <glossdef>
+          <para>
+Girdinin yapıldığı zaman. <command>OLD_TIME</command> türündeki girdiler için sistem zamanı değişmeden önceki zaman, <command>NEW_TIME</command> türündeki girdiler için ise sistem zamanı değiştikten sonraki zamandır.
+    </para>
+         </glossdef>
+        </glossentry>
+        <glossentry>
+         <glossterm>
+          <literal>int32_t <command>ut_addr_v6</command>[4]</literal>
+         </glossterm>
+         <glossdef>
+          <para>Uzak konağın internet adresi.
+    </para>
+         </glossdef>
+        </glossentry>
+       </glosslist>
+      </para>
+     </funcdescr>
+    </funcsynopsis>
+   </para>
+   <para><command>ut_type</command>, <command>ut_pid</command>, <command>ut_id</command>, <command>ut_tv</command> ve <command>ut_host</command> alanları tüm sistemlerde yoktur. Taşınabilir uygulamalar bu duruma hazırlıklı olmalıdır. Bunu yapmaya yardımcı olmak için, <filename>utmp.h</filename> başlık dosyasında ilgili alanın varlığını belirleyen  <command>_HAVE_UT_TYPE</command>, <command>_HAVE_UT_PID</command>, <command>_HAVE_UT_ID</command>, <command>_HAVE_UT_TV</command> ve <command>_HAVE_UT_HOST</command> makroları tanımlanmıştır. Yazılımcı bu durumları yazılımda <command>#ifdef</command>'ler ile sınayabilir.
+    </para>
+   <para>
+Aşağıdaki makrolar <command>utmp</command> yapısının <command>ut_type</command> üyesinde kullanılabilecek değerler olarak tanımlanmıştır. Değerler tamsayı sabitlerdir.
+    </para>
+   <para>
+    <variablelist>
+     <varlistentry>
+      <term>
+       <literal>EMPTY</literal>
+      </term>
+      <listitem>
+       <para><indexterm scope="glibc-vr"><primary>EMPTY</primary></indexterm>
+Bu makro girdinin hiçbir geçerli kullanıcı hesabı bilgisi içermediğini belirtir.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term>
+       <literal>RUN_LVL</literal>
+      </term>
+      <listitem>
+       <para><indexterm scope="glibc-vr"><primary>RUN_LVL</primary></indexterm>
+Bu makro sistem çalışma seviyesi ile ilgilidir.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term>
+       <literal>BOOT_TIME</literal>
+      </term>
+      <listitem>
+       <para><indexterm scope="glibc-vr"><primary>BOOT_TIME</primary></indexterm>
+Bu makro sistemin açıldığı zaman ile ilgilidir.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term>
+       <literal>OLD_TIME</literal>
+      </term>
+      <listitem>
+       <para><indexterm scope="glibc-vr"><primary>OLD_TIME</primary></indexterm>
+Bu makro sistem saatinin değiştiği zaman ile ilgilidir.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term>
+       <literal>NEW_TIME</literal>
+      </term>
+      <listitem>
+       <para><indexterm scope="glibc-vr"><primary>NEW_TIME</primary></indexterm>
+Bu makro sistem değiştikten sonraki zaman ile ilgilidir.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term>
+       <literal>INIT_PROCESS</literal>
+      </term>
+      <listitem>
+       <para><indexterm scope="glibc-vr"><primary>INIT_PROCESS</primary></indexterm>
+Bu makro init süreci ile çatallanan bir süreç ile ilgilidir.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term>
+       <literal>LOGIN_PROCESS</literal>
+      </term>
+      <listitem>
+       <para><indexterm scope="glibc-vr"><primary>LOGIN_PROCESS</primary></indexterm>
+Bu makro kullanıcının oturum açarken kullandığı ilk süreç ile ilgilidir.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term>
+       <literal>USER_PROCESS</literal>
+      </term>
+      <listitem>
+       <para><indexterm scope="glibc-vr"><primary>USER_PROCESS</primary></indexterm>
+Bir kullanıcı süreci ile ilgilidir.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term>
+       <literal>DEAD_PROCESS</literal>
+      </term>
+      <listitem>
+       <para><indexterm scope="glibc-vr"><primary>DEAD_PROCESS</primary></indexterm>
+Sonlandırılmış bir süreç ile ilgilidir.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term>
+       <literal>ACCOUNTING</literal>
+      </term>
+      <listitem>
+       <para><indexterm scope="glibc-vr"><primary>ACCOUNTING</primary></indexterm>
+???
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+   <para><command>ut_line</command>, <command>ut_id</command>, <command>ut_user</command> ve <command>ut_host</command> dizilerinin boyutları <command>sizeof</command> işleci kullanılarak bulunabilir.
+    </para>
+   <para><command>time_t</command> türünde bir üye zamanla ilgili bilgi tutabildiğinden çoğu eski sistemde <command>ut_tv</command> üyesi yerine <command>ut_time</command> üyesi bulunur. Bununa birlikte, sadece geriye uyumluluk adına, <filename>utmp.h</filename> başlık dosyasında <command>ut_time</command>, <command>ut_tv.tv_sec</command> için bir takma ad olarak tanımlanır.
+    </para>
+   <para>
+    <indexterm scope="glibc-fn">
+     <primary>setutent</primary>
+    </indexterm>
+    <funcsynopsis>
+     <funcprototype role="işlev" xml:id="glibc-setutent">
+      <funcdef>void <command>setutent</command></funcdef>
+      <paramdef>(void)</paramdef>
+     </funcprototype>
+     <funcdescr>
+      <para>
+Bu işlev kullanıcı hesapları veritabanını taramaya başlamak için açar. Girdileri okumak için <command>getutent</command>, <command>getutid</command> veya <command>getutline</command> işlevlerini; yazmak için ise  <command>pututline</command> işlevini kullanabilirsiniz.
+    </para>
+      <para>
+Veritabanı zaten açıksa, girişi veritabanının başlangıcına ayarlar.
+</para>
+     </funcdescr>
+    </funcsynopsis>
+   </para>
+   <para>
+    <indexterm scope="glibc-fn">
+     <primary>getutent</primary>
+    </indexterm>
+    <funcsynopsis>
+     <funcprototype role="işlev" xml:id="glibc-getutent">
+      <funcdef>struct utmp *<command>getutent</command></funcdef>
+      <paramdef>(void)</paramdef>
+     </funcprototype>
+     <funcdescr>
+      <para><command>getutent</command> işlevi kullanıcı hesapları veritabanından sonraki girdiği okur. İşlevin sonraki çağrıları ile üzerine yazılabilecek durağan ayrılmış olarak girdiye bir gösterici ile döner. Yapının bir kopyasını saklamak için dönen verinin içeriğini başka bir değişkende saklamalı ya da veriyi kullanıcı tanımlı bir tamponda saklayan <command>getutent_r</command> işlevini kullanmalısınız.
+    </para>
+      <para>
+Sonraki bir girdinin olmaması durumunda işlev bir boş gösterici döndürür.
+</para>
+     </funcdescr>
+    </funcsynopsis>
+   </para>
+   <para>
+    <indexterm scope="glibc-fn">
+     <primary>endutent</primary>
+    </indexterm>
+    <funcsynopsis>
+     <funcprototype role="işlev" xml:id="glibc-endutent">
+      <funcdef>void <command>endutent</command></funcdef>
+      <paramdef>(void)</paramdef>
+     </funcprototype>
+     <funcdescr>
+      <para>
+Kullanıcı hesapları veritabanını kapatır.
+</para>
+     </funcdescr>
+    </funcsynopsis>
+   </para>
+   <para>
+    <indexterm scope="glibc-fn">
+     <primary>getutid</primary>
+    </indexterm>
+    <funcsynopsis>
+     <funcprototype role="işlev" xml:id="glibc-getutid">
+      <funcdef>struct utmp *<command>getutid</command></funcdef>
+      <paramdef>(const struct utmp *<varname>id</varname>)</paramdef>
+     </funcprototype>
+     <funcdescr>
+      <para>
+Bu işlev veritabanında bulunulan noktadan ileri doğru <varname>id</varname> ile eşleşen girdiyi arar. Eğer <varname>id</varname> yapısının <command>ut_type</command> üyesindeki değer <command>RUN_LVL</command>, <command>BOOT_TIME</command>, <command>OLD_TIME</command> veya <command>NEW_TIME</command> ise ve veritabanındaki girdinin <command>ut_type</command> üyesi bunlardan biri ise eşleşme sağlanır. Eğer, <varname>id</varname> yapısının <command>ut_type</command> üyesindeki değer <command>INIT_PROCESS</command>, <command>LOGIN_PROCESS</command>, <command>USER_PROCESS</command> veya <command>DEAD_PROCESS</command> ise ve girdinin <command>ut_type</command> üyesindeki değer bu dördünden biri ise ve <command>ut_id</command> üyeleri aynıysa eşleşme sağlanır. Bununla birlikte  eğer hem <varname>id</varname>'nin hem de okunan girdinin <command>ut_id</command> üyesi boşsa, bunun yerine <command>ut_line</command> üyesi ile eşleşme aranır. Eğer bir eşleşme sağlanırsa, <command>getutid</command> girdiye bir gösterici ile döner. Dönen gösterici durağan ayrılmış olduğundan sonuç sonraki bir <command>getutent</command>, <command>getutid</command> veya <command>getutline</command> çağrısı ile değişebilir. Elde ettiğiniz bilgiyi saklamak isterseniz yapı içeriğini bir değişkene kopyalamalısınız.
+    </para>
+      <para>
+Bir eşleşme sağlanamadan veritabanının sonuna gelinmişse işlev bir boş gösterici ile döner.
+    </para>
+      <para><command>getutid</command> işlevi okunan son girdiyi arabellekleyebilir. Dolayısıyla, işlevi yapıyla eşleşen birden fazla girdiyi bulmak için kullanıyorsanız, her çağrıdan sonra durağan veriyi sıfırlamanız gerekir. Aksi takdirde, işlev her çağrıda aynı girdiye döner.
+</para>
+     </funcdescr>
+    </funcsynopsis>
+   </para>
+   <para>
+    <indexterm scope="glibc-fn">
+     <primary>getutline</primary>
+    </indexterm>
+    <funcsynopsis>
+     <funcprototype role="işlev" xml:id="glibc-getutline">
+      <funcdef>struct utmp *<command>getutline</command></funcdef>
+      <paramdef>(const struct utmp *<varname>satır</varname>)</paramdef>
+     </funcprototype>
+     <funcdescr>
+      <para>
+Bu işlev veritabanında bulunulan noktadan ileri doğru <command>ut_type</command> değeri <command>LOGIN_PROCESS</command> veya <command>USER_PROCESS</command> olan ve hem <varname>satır</varname> hem de veritabanında <command>ut_line</command> üyesi eşleşen girdiyi arar. Eğer bir eşleşme sağlanırsa, <command>getutline</command> girdiye bir gösterici ile döner. Dönen gösterici durağan ayrılmış olduğundan sonuç sonraki bir <command>getutent</command>, <command>getutid</command> veya <command>getutline</command> çağrısı ile değişebilir. Elde ettiğiniz bilgiyi saklamak isterseniz yapı içeriğini bir değişkene kopyalamalısınız.
+    </para>
+      <para>
+Bir eşleşme sağlanamadan veritabanının sonuna gelinmişse işlev bir boş gösterici ile döner.
+    </para>
+      <para><command>getutline</command> işlevi okunan son girdiyi arabellekleyebilir. Dolayısıyla, işlevi yapıyla eşleşen birden fazla girdiyi bulmak için kullanıyorsanız, her çağrıdan sonra durağan veriyi sıfırlamanız gerekir. Aksi takdirde, işlev her çağrıda aynı girdiye döner.
+</para>
+     </funcdescr>
+    </funcsynopsis>
+   </para>
+   <para>
+    <indexterm scope="glibc-fn">
+     <primary>pututline</primary>
+    </indexterm>
+    <funcsynopsis>
+     <funcprototype role="işlev" xml:id="glibc-pututline">
+      <funcdef>struct utmp *<command>pututline</command></funcdef>
+      <paramdef>(const struct utmp *<varname>utmp</varname>)</paramdef>
+     </funcprototype>
+     <funcdescr>
+      <para><command>pututline</command> işlevi kullanıcı hesapları veritabanında uygun yere <varname>*utmp</varname> girdisini yerleştirir. Girdiyi doğru yerde bulamazsa, girdiyi yerleştireceği doğru yeri bulmak için <command>getutid</command> işlevini kullanır. Ancak, bu <command>getutent</command>, <command>getutid</command> ve <command>getutline</command> tarafından döndürülen durağan yapıyı değiştirmeyecektir. Eğer bu arama başarısız olursa girdi veritabanına eklenir.
+    </para>
+      <para><command>pututline</command> işlevi kullanıcı hesapları veritabanına yerleştirilen girdinin bir kopyası ile döner. Girdi veritabanına eklenememişse, bir boş gösterici döner. Aşağıdaki  <command>errno</command> hata durumları bu işlev için tanımlanmıştır:
+    </para>
+      <para>
+       <variablelist>
+        <varlistentry>
+         <term>
+          <literal>EPERM</literal>
+         </term>
+         <listitem>
+          <para>
+Süreç yeterli yetkiye sahip değil; kullanıcı hesapları veritabanını değiştiremezsiniz
+       </para>
+         </listitem>
+        </varlistentry>
+       </variablelist>
+      </para>
+     </funcdescr>
+    </funcsynopsis>
+   </para>
+   <para>
+Bahsi geçen tüm <command>get*</command> işlevleri bilgiyi saklanmadan önce bir durağan tampon içinde döndürür. Döndürülen veri başka bir evre tarafından değiştirilebileceğinden, bu çok evreli yazılımlarda sorun olabilir. Bu gibi durumlarda kullanılmak üzere GNU C kütüphanesi veriyi kullanıcı tanımlı tamponda döndüren üç ek işlev içerir.
+    </para>
+   <para>
+    <indexterm scope="glibc-fn">
+     <primary>getutent_r</primary>
+    </indexterm>
+    <funcsynopsis>
+     <funcprototype role="işlev" xml:id="glibc-getutent_r">
+      <funcdef>int <command>getutent_r</command></funcdef>
+      <paramdef>(struct utmp  *<varname>tampon</varname>,
+ struct utmp **<varname>sonuç</varname>)</paramdef>
+     </funcprototype>
+     <funcdescr>
+      <para><command>getutent_r</command> işlevi <command>getutent</command> işlevi ile aynıdır.  Veritabanındaki sonraki girdi ile döner. Fakat veriyi bir durağan ayrılmış tamponda değil, <varname>tampon</varname> parametresi ile gösterilen tamponda saklar.
+    </para>
+      <para>
+Çağrı başarılı olursa işlev <command>0</command> ile döner ve <varname>sonuç</varname> parametresi ile gösterilen gösterici değişkeni sonucu içeren tampona bir gösterici içerir (çok büyük olasılıkla bu <varname>tampon</varname> değeri olacaktır). Eğer bazı şeyler yanlış giderse işlev <command>-1</command> ile döner.
+    </para>
+      <para>
+Bu işlev bir GNU oluşumudur.
+</para>
+     </funcdescr>
+    </funcsynopsis>
+   </para>
+   <para>
+    <indexterm scope="glibc-fn">
+     <primary>getutid_r</primary>
+    </indexterm>
+    <funcsynopsis>
+     <funcprototype role="işlev" xml:id="glibc-getutid_r">
+      <funcdef>int <command>getutid_r</command></funcdef>
+      <paramdef>(const struct utmp *<varname>id</varname>,
+ struct utmp       *<varname>tampon</varname>,
+ struct utmp      **<varname>sonuç</varname>)</paramdef>
+     </funcprototype>
+     <funcdescr>
+      <para>
+Bu işlev <command>getutid</command> gibi <varname>id</varname> içinde saklanan bilgi ile eşleşen sonraki girdi ile döner. Fakat sonuç, <varname>tampon</varname> parametresi ile gösterilen tamponda saklanır.
+    </para>
+      <para>
+Çağrı başarılı olursa işlev <command>0</command> ile döner ve <varname>sonuç</varname> parametresi ile gösterilen gösterici değişkeni sonucu içeren tampona bir gösterici içerir (çok büyük olasılıkla bu <varname>tampon</varname> değeri olacaktır). Eğer bazı şeyler yanlış giderse işlev <command>-1</command> ile döner.
+    </para>
+      <para>
+Bu işlev bir GNU oluşumudur.
+</para>
+     </funcdescr>
+    </funcsynopsis>
+   </para>
+   <para>
+    <indexterm scope="glibc-fn">
+     <primary>getutline_r</primary>
+    </indexterm>
+    <funcsynopsis>
+     <funcprototype role="işlev" xml:id="glibc-getutline_r">
+      <funcdef>int <command>getutline_r</command></funcdef>
+      <paramdef>(const struct utmp *<varname>satır</varname>,
+ struct utmp       *<varname>tampon</varname>,
+ struct utmp      **<varname>sonuç</varname>)</paramdef>
+     </funcprototype>
+     <funcdescr>
+      <para>
+Bu işlev <command>getutline</command> gibi <varname>satır</varname> içinde saklanan bilgi ile eşleşen sonraki girdi ile döner. Fakat sonuç, <varname>tampon</varname> parametresi ile gösterilen tamponda saklanır.
+    </para>
+      <para>
+Çağrı başarılı olursa işlev <command>0</command> ile döner ve <varname>sonuç</varname> parametresi ile gösterilen gösterici değişkeni sonucu içeren tampona bir gösterici içerir (çok büyük olasılıkla bu <varname>tampon</varname> değeri olacaktır). Eğer bazı şeyler yanlış giderse işlev <command>-1</command> ile döner.
+    </para>
+      <para>
+Bu işlev bir GNU oluşumudur.
+</para>
+     </funcdescr>
+    </funcsynopsis>
+   </para>
+   <para>
+Kullanıcı hesapları veritabanına ek olarak çoğu sistem buna benzer başka veritabanları da içerir. Örneğin çoğu sistem evvelce açılmış oturumları bir günlük dosyasında tutar (genellikle <command>/etc/wtmp</command> veya <command>/var/log/wtmp</command> dosyasında).
+    </para>
+   <para>
+Hangi veritabanını ile çalışılacağını belirtmek için şu işlev kullanılabilir:
+    </para>
+   <para>
+    <indexterm scope="glibc-fn">
+     <primary>utmpname</primary>
+    </indexterm>
+    <funcsynopsis>
+     <funcprototype role="işlev" xml:id="glibc-utmpname">
+      <funcdef>int <command>utmpname</command></funcdef>
+      <paramdef>(const char *<varname>dosya</varname>)</paramdef>
+     </funcprototype>
+     <funcdescr>
+      <para><command>utmpname</command> işlevi çalışılacak veritabanını, ismi <varname>dosya</varname> ile belirtilen veritabanına değiştirir. Öntanımlı olarak, <command>getutent</command>, <command>getutid</command>, <command>getutline</command> ve <command>pututline</command> işlevleri kullanıcı hesapları veritabanı ile çalışır.
+    </para>
+      <para><varname>dosya</varname> argümanında kullanılmak üzere tanımlanmış makrolar:
+    </para>
+      <para>
+       <indexterm scope="glibc-vr">
+        <primary sortas="PATH_UTMP">_PATH_UTMP</primary>
+       </indexterm>
+       <funcsynopsis>
+        <funcprototype role="makro" xml:id="glibc_PATH_UTMP">
+         <funcdef>char *<command>_PATH_UTMP</command></funcdef>
+         <paramdef/>
+        </funcprototype>
+        <funcdescr>
+         <para>
+Bu makro kullanıcı hesapları veritabanını belirtmek için kullanılır.
+</para>
+        </funcdescr>
+       </funcsynopsis>
+      </para>
+      <para>
+       <indexterm scope="glibc-vr">
+        <primary sortas="PATH_WTMP">_PATH_WTMP</primary>
+       </indexterm>
+       <funcsynopsis>
+        <funcprototype role="makro" xml:id="glibc_PATH_WTMP">
+         <funcdef>char *<command>_PATH_WTMP</command></funcdef>
+         <paramdef/>
+        </funcprototype>
+        <funcdescr>
+         <para>
+Bu makro kullanıcı hesapları günlük dosyasını belirtmek için kullanılır.
+</para>
+        </funcdescr>
+       </funcsynopsis>
+      </para>
+      <para><command>utmpname</command> işlevi yeni isim başarıyla saklanmışsa <command>0</command> değeri ile, bir hata oluşmuşsa <command>-1</command> değeri ile döner. <command>utmpname</command> işlevi veritabanını açmayı denemeyeceğinden dönüş değerinin veritabanının başarıyla açıldığına ilişkin bir bilgi vermeyeceğini unutmayın.
+</para>
+     </funcdescr>
+    </funcsynopsis>
+   </para>
+   <para>
+Özellikle günlükleme benzeri veritabanları ile çalışmak için GNU C kütüphanesi şu işlevi içerir:
+    </para>
+   <para>
+    <indexterm scope="glibc-fn">
+     <primary>updwtmp</primary>
+    </indexterm>
+    <funcsynopsis>
+     <funcprototype role="işlev" xml:id="glibc-updwtmp">
+      <funcdef>void <command>updwtmp</command></funcdef>
+      <paramdef>(const char        *<varname>wtmp_dosyası</varname>,
+ const struct utmp *<varname>utmp</varname>)</paramdef>
+     </funcprototype>
+     <funcdescr>
+      <para><command>updwtmp</command> işlevi <varname>*utmp</varname> girdisini <varname>wtmp_dosyası</varname> ile belirtilen veritabanına ekler.  <varname>wtmp_dosyası</varname> argümanında kullanılabilecek değerler için <command>utmpname</command> işlevinin açıklamasına bakınız.
+</para>
+     </funcdescr>
+    </funcsynopsis>
+   </para>
+   <para>
+    <note>
+     <info>
+      <title>Taşınabilirlik Bilgisi</title>
+     </info>
+     <para>Bir çok işletim sistemi bu işlevlerin bir alt kümesini içermekle birlikte, bunlar standartlaşmamıştır. Çoğunlukla dönüş değerleri arasında ince farklar bulunurken, <command>struct utmp</command> tanımları arasında da hatırı sayılır farklar vardır. GNU sistemi için yazılım geliştirirken, şüphesiz en iyisi bu bölümde açıklanan işlevlere sadık kalmaktır. Buna rağmen, yine de, yazılımınızın taşınabilir olmasını istiyorsanız <xref linkend="glibc-XPG-Functions"/> bölümünde bahsedilen XPG işlevlerini kullanmayı ya da <xref linkend="glibc-Logging-In-and-Out"/> bölümündeki BSD uyumlu işlevleri kullanmayı tercih edebilirsiniz..</para>
+    </note>
+   </para>
+  </section>
+  <section xml:id="glibc-XPG-Functions">
+   <info>
+    <title>XPG Kullanıcı Hesapları Veritabanı İşlevleri</title>
+    <titleabbrev>Aynı şeyleri yapmak için standartlaşmış yol.</titleabbrev>
+   </info>
+   <para>
+Bu işlevler X/Open Taşınabilirlik Rehberinde açıklanmış ve <filename>utmpx.h</filename> başlık dosyasında bildirilmiştir.
+<indexterm scope="glibc-pg"><primary>utmpx.h</primary></indexterm>
+       </para>
+   <para>
+    <indexterm scope="glibc-tp">
+     <primary sortas="utmpx">struct utmpx</primary>
+    </indexterm>
+    <funcsynopsis>
+     <funcprototype role="veri türü" xml:id="glibc-struct-utmpx">
+      <funcdef>struct <command>utmpx</command></funcdef>
+      <paramdef/>
+     </funcprototype>
+     <funcdescr>
+      <para><command>utmpx</command> veri yapısı en azından şu üyeleri içerir:
+    </para>
+      <para>
+       <glosslist>
+        <glossentry>
+         <glossterm>
+          <literal>short int <command>ut_type</command></literal>
+         </glossterm>
+         <glossdef>
+          <para>
+Oturum açma türünü belirtir; <command>EMPTY</command>, <command>RUN_LVL</command>, <command>BOOT_TIME</command>, <command>OLD_TIME</command>, <command>NEW_TIME</command>, <command>INIT_PROCESS</command>, <command>LOGIN_PROCESS</command>, <command>USER_PROCESS</command> veya <command>DEAD_PROCESS</command> sabitlerinden biri olabilir.
+    </para>
+         </glossdef>
+        </glossentry>
+        <glossentry>
+         <glossterm>
+          <literal>pid_t <command>ut_pid</command></literal>
+         </glossterm>
+         <glossdef>
+          <para>Oturum açan sürecin süreç kimliği numarası.
+    </para>
+         </glossdef>
+        </glossentry>
+        <glossentry>
+         <glossterm>
+          <literal>char <command>ut_line</command>[]</literal>
+         </glossterm>
+         <glossdef>
+          <para>
+Uçbirimin aygıt ismi (<command>/dev/</command> olmaksızın).
+    </para>
+         </glossdef>
+        </glossentry>
+        <glossentry>
+         <glossterm>
+          <literal>char <command>ut_id</command>[]</literal>
+         </glossterm>
+         <glossdef>
+          <para>Sürecin inittab kimliği.
+    </para>
+         </glossdef>
+        </glossentry>
+        <glossentry>
+         <glossterm>
+          <literal>char <command>ut_user</command>[]</literal>
+         </glossterm>
+         <glossdef>
+          <para>Kullanıcının oturum açma ismi.
+    </para>
+         </glossdef>
+        </glossentry>
+        <glossentry>
+         <glossterm>
+          <literal>struct timeval <command>ut_tv</command></literal>
+         </glossterm>
+         <glossdef>
+          <para>
+Girdinin yapıldığı zaman. <command>OLD_TIME</command> türündeki girdiler için sistem zamanı değişmeden önceki zaman, <command>NEW_TIME</command> türündeki girdiler için ise sistem zamanı değiştikten sonraki zamandır.
+    </para>
+         </glossdef>
+        </glossentry>
+       </glosslist>
+      </para>
+      <para>
+GNU sisteminde, <command>struct utmpx</command> yapısı <command>struct utmp</command> yapısına bir durum dışında eşdeğerdir: <filename>utmpx.h</filename> başlık dosyasının içerilmesi <command>struct exit_status</command> bildirimini görünür yapmaz.
+    </para>
+      <para>
+Aşağıdaki makrolar <command>utmpx</command> yapısının <command>ut_type</command> üyesinde kullanılabilecek değerler olarak tanımlanmıştır. Değerler tamsayı sabitlerdir ve GNU sisteminin <filename>utmp.h</filename> başlık dosyasındaki tanımlarla aynıdır.
+    </para>
+      <para>
+       <variablelist>
+        <varlistentry>
+         <term>
+          <literal>EMPTY</literal>
+         </term>
+         <listitem>
+          <para><indexterm scope="glibc-vr"><primary>EMPTY</primary></indexterm>
+Bu makro girdinin hiçbir geçerli kullanıcı hesabı bilgisi içermediğini belirtir.
+       </para>
+         </listitem>
+        </varlistentry>
+        <varlistentry>
+         <term>
+          <literal>RUN_LVL</literal>
+         </term>
+         <listitem>
+          <para><indexterm scope="glibc-vr"><primary>RUN_LVL</primary></indexterm>
+Bu makro sistem çalışma seviyesi ile ilgilidir.
+       </para>
+         </listitem>
+        </varlistentry>
+        <varlistentry>
+         <term>
+          <literal>BOOT_TIME</literal>
+         </term>
+         <listitem>
+          <para><indexterm scope="glibc-vr"><primary>BOOT_TIME</primary></indexterm>
+Bu makro sistemin açıldığı zaman ile ilgilidir.
+       </para>
+         </listitem>
+        </varlistentry>
+        <varlistentry>
+         <term>
+          <literal>OLD_TIME</literal>
+         </term>
+         <listitem>
+          <para><indexterm scope="glibc-vr"><primary>OLD_TIME</primary></indexterm>
+Bu makro sistem saatinin değiştiği zaman ile ilgilidir.
+       </para>
+         </listitem>
+        </varlistentry>
+        <varlistentry>
+         <term>
+          <literal>NEW_TIME</literal>
+         </term>
+         <listitem>
+          <para><indexterm scope="glibc-vr"><primary>NEW_TIME</primary></indexterm>
+Bu makro sistem değiştikten sonraki zaman ile ilgilidir.
+       </para>
+         </listitem>
+        </varlistentry>
+        <varlistentry>
+         <term>
+          <literal>INIT_PROCESS</literal>
+         </term>
+         <listitem>
+          <para><indexterm scope="glibc-vr"><primary>INIT_PROCESS</primary></indexterm>
+Bu makro init süreci ile çatallanan bir süreç ile ilgilidir.
+       </para>
+         </listitem>
+        </varlistentry>
+        <varlistentry>
+         <term>
+          <literal>LOGIN_PROCESS</literal>
+         </term>
+         <listitem>
+          <para><indexterm scope="glibc-vr"><primary>LOGIN_PROCESS</primary></indexterm>
+Bu makro kullanıcının oturum açarken kullandığı ilk süreç ile ilgilidir.
+       </para>
+         </listitem>
+        </varlistentry>
+        <varlistentry>
+         <term>
+          <literal>USER_PROCESS</literal>
+         </term>
+         <listitem>
+          <para><indexterm scope="glibc-vr"><primary>USER_PROCESS</primary></indexterm>
+Bir kullanıcı süreci ile ilgilidir.
+       </para>
+         </listitem>
+        </varlistentry>
+        <varlistentry>
+         <term>
+          <literal>DEAD_PROCESS</literal>
+         </term>
+         <listitem>
+          <para><indexterm scope="glibc-vr"><primary>DEAD_PROCESS</primary></indexterm>
+Sonlandırılmış bir süreç ile ilgilidir.
+       </para>
+         </listitem>
+        </varlistentry>
+       </variablelist>
+      </para>
+      <para><command>ut_line</command>, <command>ut_id</command> ve <command>ut_user</command> dizilerinin boyutları <command>sizeof</command> işleci kullanılarak bulunabilir.
+</para>
+     </funcdescr>
+    </funcsynopsis>
+   </para>
+   <para>
+    <indexterm scope="glibc-fn">
+     <primary>setutxent</primary>
+    </indexterm>
+    <funcsynopsis>
+     <funcprototype role="işlev" xml:id="glibc-setutxent">
+      <funcdef>void <command>setutxent</command></funcdef>
+      <paramdef>(void)</paramdef>
+     </funcprototype>
+     <funcdescr>
+      <para>
+Bu işlev <command>setutent</command> işlevinin benzeridir.  GNU sisteminde <command>setutent</command> için bir takma addır.
+</para>
+     </funcdescr>
+    </funcsynopsis>
+   </para>
+   <para>
+    <indexterm scope="glibc-fn">
+     <primary>getutxent</primary>
+    </indexterm>
+    <funcsynopsis>
+     <funcprototype role="işlev" xml:id="glibc-getutxent">
+      <funcdef>struct utmpx *<command>getutxent</command></funcdef>
+      <paramdef>(void)</paramdef>
+     </funcprototype>
+     <funcdescr>
+      <para>
+Bu işlev <command>getutent</command> işlevinin bir benzeridir, ancak, <command>struct utmp</command> yerine <command>struct utmpx</command> türünde bir gösterici ile döner. GNU sisteminde <command>getutent</command> için bir takma addır.
+</para>
+     </funcdescr>
+    </funcsynopsis>
+   </para>
+   <para>
+    <indexterm scope="glibc-fn">
+     <primary>endutxent</primary>
+    </indexterm>
+    <funcsynopsis>
+     <funcprototype role="işlev" xml:id="glibc-endutxent">
+      <funcdef>void <command>endutent</command></funcdef>
+      <paramdef>(void)</paramdef>
+     </funcprototype>
+     <funcdescr>
+      <para>
+Bu işlev<command>endutent</command> işlevinin bir benzeridir.  GNU sisteminde <command>endutent</command> için bir takma addır.
+</para>
+     </funcdescr>
+    </funcsynopsis>
+   </para>
+   <para>
+    <indexterm scope="glibc-fn">
+     <primary>getutxid</primary>
+    </indexterm>
+    <funcsynopsis>
+     <funcprototype role="işlev" xml:id="glibc-getutxid">
+      <funcdef>struct utmpx *<command>getutxid</command></funcdef>
+      <paramdef>(const struct utmpx *<varname>id</varname>)</paramdef>
+     </funcprototype>
+     <funcdescr>
+      <para>
+Bu işlev <command>getutid</command> işlevinin bir benzeridir, ancak, <command>struct utmp</command> yerine <command>struct utmpx</command> türünde bir gösterici ile döner. GNU sisteminde <command>getutid</command> için bir takma addır.
+</para>
+     </funcdescr>
+    </funcsynopsis>
+   </para>
+   <para>
+    <indexterm scope="glibc-fn">
+     <primary>getutxline</primary>
+    </indexterm>
+    <funcsynopsis>
+     <funcprototype role="işlev" xml:id="glibc-getutxline">
+      <funcdef>struct utmpx *<command>getutxline</command></funcdef>
+      <paramdef>(const struct utmpx *<varname>satır</varname>)</paramdef>
+     </funcprototype>
+     <funcdescr>
+      <para>
+Bu işlev <command>getutid</command> işlevinin bir benzeridir, ancak, <command>struct utmp</command> yerine <command>struct utmpx</command> türünde bir gösterici ile döner. GNU sisteminde <command>getutid</command> için bir takma addır.
+</para>
+     </funcdescr>
+    </funcsynopsis>
+   </para>
+   <para>
+    <indexterm scope="glibc-fn">
+     <primary>pututxline</primary>
+    </indexterm>
+    <funcsynopsis>
+     <funcprototype role="işlev" xml:id="glibc-pututxline">
+      <funcdef>struct utmpx *<command>pututxline</command></funcdef>
+      <paramdef>(const struct utmpx *<varname>utmp</varname>)</paramdef>
+     </funcprototype>
+     <funcdescr>
+      <para>
+Bu işlev <command>pututline</command> işlevinin bir benzeridir, ancak, <command>struct utmp</command> yerine <command>struct utmpx</command> türünde bir gösterici ile döner. GNU sisteminde <command>pututline</command> için bir takma addır.
+</para>
+     </funcdescr>
+    </funcsynopsis>
+   </para>
+   <para>
+    <indexterm scope="glibc-fn">
+     <primary>utmpxname</primary>
+    </indexterm>
+    <funcsynopsis>
+     <funcprototype role="işlev" xml:id="glibc-utmpxname">
+      <funcdef>int <command>utmpxname</command></funcdef>
+      <paramdef>(const char *<varname>dosya</varname>)</paramdef>
+     </funcprototype>
+     <funcdescr>
+      <para>
+Bu işlev <command>utmpname</command> işlevinin bir benzeridir.  GNU sisteminde <command>utmpname</command> için bir takma addır.
+       </para>
+      <para>
+Bir geleneksel <command>struct utmp</command> yapısı ile bir XPG <command>struct utmpx</command> yapısı arasında aşağıdaki işlevlere dönüşüm yapabilirsiniz. GNU sisteminde bu iki yapı aynı olduğundan bu işlevler sadece  birer kopyadır.
+</para>
+     </funcdescr>
+    </funcsynopsis>
+   </para>
+   <para>
+    <indexterm scope="glibc-fn">
+     <primary>getutmp</primary>
+    </indexterm>
+    <funcsynopsis>
+     <funcprototype role="işlev" xml:id="glibc-getutmp">
+      <funcdef>int <command>getutmp</command></funcdef>
+      <paramdef>(const struct utmpx *<varname>utmpx</varname>,
+ struct utmp        *<varname>utmp</varname>)</paramdef>
+     </funcprototype>
+     <funcdescr>
+      <para><command>getutmp</command> işlevi yapılar mümkün olduğunca uyumlu olacak şekilde  <varname>utmpx</varname> yapısından <varname>utmp</varname> yapısına kopyalama yapar.
+</para>
+     </funcdescr>
+    </funcsynopsis>
+   </para>
+   <para>
+    <indexterm scope="glibc-fn">
+     <primary>getutmpx</primary>
+    </indexterm>
+    <funcsynopsis>
+     <funcprototype role="işlev" xml:id="glibc-getutmpx">
+      <funcdef>int <command>getutmpx</command></funcdef>
+      <paramdef>(const struct utmp *<varname>utmp</varname>,
+ struct utmpx      *<varname>utmpx</varname>)</paramdef>
+     </funcprototype>
+     <funcdescr>
+      <para><command>getutmpx</command> işlevi yapılar mümkün olduğunca uyumlu olacak şekilde  <varname>utmp</varname> yapısından <varname>utmpx</varname> yapısına kopyalama yapar.
+    </para>
+     </funcdescr>
+    </funcsynopsis>
+   </para>
+  </section>
+  <section xml:id="glibc-Logging-In-and-Out">
+   <info>
+    <title>Oturum Açma ve Kapatma</title>
+    <titleabbrev>BSD'deki kullanıcı hesapları veritabanını değiştiren işlevler.</titleabbrev>
+   </info>
+   <para>
+Bu işlevler BSD'den türetilmiştir, ayrı bir kütüphane olarak <command>libutil</command> kütüphanesinde bulunur ve <filename>utmp.h</filename> başlık dosyasında bildirilmişlerdir.
+<indexterm scope="glibc-pg"><primary>utmp.h</primary></indexterm>
+       </para>
+   <para>
+BSD'de <command>struct utmp</command> yapısının <command>ut_user</command> üyesi <command>ut_name</command> ismiyle yeralır. Dolayısıyla, <filename>utmp.h</filename> başlık dosyasında <command>ut_name</command>, <command>ut_user</command> için bir takma addır.
+    </para>
+   <para>
+    <indexterm scope="glibc-fn">
+     <primary>login_tty</primary>
+    </indexterm>
+    <funcsynopsis>
+     <funcprototype role="işlev" xml:id="glibc-login_tty">
+      <funcdef>int <command>login_tty</command></funcdef>
+      <paramdef>(int <varname>dosyatanıtıcı</varname>)</paramdef>
+     </funcprototype>
+     <funcdescr>
+      <para>
+Bu işlev tanıtıcısı <varname>dosyatanıtıcı</varname> olan uçbirimi sürecin denetim uçbirimi yapar. Standart girdi, standart çıktı ve standart hatanın çıktısı bu uçbirime yapılır ve <varname>dosyatanıtıcı</varname> kapatılır.
+    </para>
+      <para>
+İşlem başarıyla yerine geririlmişse <command>0</command> ile bir hata varsa <command>-1</command> ile döner.
+</para>
+     </funcdescr>
+    </funcsynopsis>
+   </para>
+   <para>
+    <indexterm scope="glibc-fn">
+     <primary>login</primary>
+    </indexterm>
+    <funcsynopsis>
+     <funcprototype role="işlev" xml:id="glibc-login">
+      <funcdef>void <command>login</command></funcdef>
+      <paramdef>(const struct utmp *<varname>girdi</varname>)</paramdef>
+     </funcprototype>
+     <funcdescr>
+      <para><command>login</command> işlevi kullanıcı hesapları veritabanına bir girdi yerleştirir. <command>ut_line</command> üyesine standart girdi üzerindeki uçbirimin ismi atanır. Standart girdi bir uçbirim değilse, uçbirimin ismini saptamak için standart çıktı ya da standart hata kullanılır. <command>struct utmp</command> bir <command>ut_type</command> üyesine sahipse ona <command>USER_PROCESS</command> atanır,  <command>ut_pid</command> üyesi varsa değeri sürecin süreç kimliği yapılır. Kalan girdiler <varname>girdi</varname>'den kopyalanır.
+    </para>
+      <para>
+Girdinin bir kopyası da kullanıcı hesapları günlük dosyasına yazılır.
+</para>
+     </funcdescr>
+    </funcsynopsis>
+   </para>
+   <para>
+    <indexterm scope="glibc-fn">
+     <primary>logout</primary>
+    </indexterm>
+    <funcsynopsis>
+     <funcprototype role="işlev" xml:id="glibc-logout">
+      <funcdef>int <command>logout</command></funcdef>
+      <paramdef>(const char *<varname>ut_line</varname>)</paramdef>
+     </funcprototype>
+     <funcdescr>
+      <para>
+Bu işlev kullanıcı hesapları veritabanında <varname>ut_line</varname> satırındaki kullanıcının oturumu kapattığını belirten bir değişiklik yapar.
+    </para>
+      <para><command>logout</command> işlevi girdi veritabanına başaryla yazlımışsa <command>1</command> ile bir hata oluşmuşsa <command>0</command> ile döner.
+</para>
+     </funcdescr>
+    </funcsynopsis>
+   </para>
+   <para>
+    <indexterm scope="glibc-fn">
+     <primary>logwtmp</primary>
+    </indexterm>
+    <funcsynopsis>
+     <funcprototype role="işlev" xml:id="glibc-logwtmp">
+      <funcdef>void <command>logwtmp</command></funcdef>
+      <paramdef>(const char *<varname>ut_line</varname>,
+ const char *<varname>ut_name</varname>,
+ const char *<varname>ut_host</varname>)</paramdef>
+     </funcprototype>
+     <funcdescr>
+      <para><command>logwtmp</command> işlevi kullanıcı hesapları veritabanına o an için ve <varname>ut_line</varname>, <varname>ut_name</varname> ve <varname>ut_host</varname> argümanları ile belirtilen girdiyi ekler.
+</para>
+     </funcdescr>
+    </funcsynopsis>
+   </para>
+   <para>
+    <note>
+     <info>
+      <title>Taşınabilirlik Bilgisi</title>
+     </info>
+     <para>BSD <command>struct utmp</command> yapısı sadece <command>ut_line</command>, <command>ut_name</command>, <command>ut_host</command> ve <command>ut_time</command> üyelerine sahiptir.  Daha eski sistemlerde ise <command>ut_host</command> üyesi yoktur.</para>
+    </note>
+   </para>
+  </section>
+ </chapter>
+ <chapter xml:id="glibc-User-Database">
+  <info>
+   <title>Kullanıcı Veritabanı</title>
+   <titleabbrev>Kullanıcı veritabanına erişim için kullanılan veri yapıları ve işlevler.</titleabbrev>
+  </info>
+  <para><indexterm scope="glibc-cp"><primary>kullanıcı veritabanı</primary></indexterm><indexterm scope="glibc-cp"><primary>parola veritabanı</primary></indexterm><indexterm scope="glibc-pg"><primary sortas="etc/passwd">/etc/passwd</primary></indexterm>
+Bu bölümde kayıtlı kullanıcılar veritabanında nasıl arama tarama yapılacağı açıklanmıştır. Veritabanı çoğu istemde <command>/etc/passwd</command> dosyasında tutulurken bazılarında da özel bir ağ sunucusu üzerinde erişim sağlanır.
+   </para>
+  <section xml:id="glibc-User-Data-Structure">
+   <info>
+    <title>Bir Kullanıcıyı Tanımlayan Veri Yapısı</title>
+    <titleabbrev>Her kullanıcı kaydı neler içerir.</titleabbrev>
+   </info>
+   <para>
+Sistem kullanıcıları vertabanına erişim için kullanılan veri yapıları ve işlevler <filename>pwd.h</filename> başlık dosyasında bildirilmiştir.
+<indexterm scope="glibc-pg"><primary>pwd.h</primary></indexterm>
+       </para>
+   <para>
+    <indexterm scope="glibc-tp">
+     <primary sortas="passwd">struct passwd</primary>
+    </indexterm>
+    <funcsynopsis>
+     <funcprototype role="veri türü" xml:id="glibc-struct-passwd">
+      <funcdef>struct <command>passwd</command></funcdef>
+      <paramdef/>
+     </funcprototype>
+     <funcdescr>
+      <para><command>passwd</command> veri yapısı sistem kullanıcıları veritabanındaki girdiler hakkındaki bilgileri tutar. En azından şu üyelere sahiptir:
+    </para>
+      <para>
+       <glosslist>
+        <glossentry>
+         <glossterm>
+          <literal>char *<command>pw_name</command></literal>
+         </glossterm>
+         <glossdef>
+          <para>
+Kullanıcının oturum açma ismi.
+    </para>
+         </glossdef>
+        </glossentry>
+        <glossentry>
+         <glossterm>
+          <literal>char *<command>pw_passwd</command></literal>
+         </glossterm>
+         <glossdef>
+          <para>
+Şifrelenmiş parola dizgesi.
+    </para>
+         </glossdef>
+        </glossentry>
+        <glossentry>
+         <glossterm>
+          <literal>uid_t <command>pw_uid</command></literal>
+         </glossterm>
+         <glossdef>
+          <para>
+Kullanıcı kimliği numarası.
+    </para>
+         </glossdef>
+        </glossentry>
+        <glossentry>
+         <glossterm>
+          <literal>gid_t <command>pw_gid</command></literal>
+         </glossterm>
+         <glossdef>
+          <para>
+Kullanıcının öntanımlı grup kimliği numarası.
+    </para>
+         </glossdef>
+        </glossentry>
+        <glossentry>
+         <glossterm>
+          <literal>char *<command>pw_gecos</command></literal>
+         </glossterm>
+         <glossdef>
+          <para>
+Dizge genelde kullanıcının isim ve soyadını içermekle birlikte telefon numarası gibi bilgiler için de kullanılabilir.
+    </para>
+         </glossdef>
+        </glossentry>
+        <glossentry>
+         <glossterm>
+          <literal>char *<command>pw_dir</command></literal>
+         </glossterm>
+         <glossdef>
+          <para>
+Kullanıcının ev dizini ya da ilk çalışma dizini. Sistem bağımlı yorumlama durumunda bu bir boş gösterici olabilir.
+    </para>
+         </glossdef>
+        </glossentry>
+        <glossentry>
+         <glossterm>
+          <literal>char *<command>pw_shell</command></literal>
+         </glossterm>
+         <glossdef>
+          <para>
+Kullanıcının öntanımlı kabuğu ya da kullanıcı oturum açtığında çalıştırılacak ilk dosyanın ismi. Sistem öntanımlısının kullanılacağını belirtmek üzere bu üye bir boş gösterici olabilir.
+    </para>
+         </glossdef>
+        </glossentry>
+       </glosslist>
+      </para>
+     </funcdescr>
+    </funcsynopsis>
+   </para>
+  </section>
+  <section xml:id="glibc-Lookup-User">
+   <info>
+    <title>Bir Kullanıcı Hakkında Bilgi Alınması</title>
+    <titleabbrev>Belirli bir kullanıcı ile ilgili bilgilere erişim.</titleabbrev>
+   </info>
+   <para><indexterm scope="glibc-cp"><primary>kullanıcı kimlik ile kullanıcı ismi arasında dönüşüm</primary></indexterm>
+Belirli bir kullanıcı için sistem kullanıcıları veritabanında  <command>getpwuid</command> veya <command>getpwnam</command> işlevini kullanarak arama yapabilirsiniz.  Bu işlevler <filename>pwd.h</filename> başlık dosyasında bildirilmiştir.
+    </para>
+   <para>
+    <indexterm scope="glibc-fn">
+     <primary>getpwuid</primary>
+    </indexterm>
+    <funcsynopsis>
+     <funcprototype role="işlev" xml:id="glibc-getpwuid">
+      <funcdef>struct passwd *<command>getpwuid</command></funcdef>
+      <paramdef>(uid_t <varname>kullkim</varname>)</paramdef>
+     </funcprototype>
+     <funcdescr>
+      <para>
+Bu işlev kullanıcı kimliği <varname>kullkim</varname> olan kullanıcı hakkında bilgi içeren durağan olarak ayrılmış bir gösterici ile döner. Bu yapıya sonraki <command>getpwuid</command> çağrıları yazabilir.
+    </para>
+      <para>
+Dönen bir boş gösterici kullanıcı kimliği  <varname>kullkim</varname> olan bir kullanıcı olmadığını belirtir.
+</para>
+     </funcdescr>
+    </funcsynopsis>
+   </para>
+   <para>
+    <indexterm scope="glibc-fn">
+     <primary>getpwuid_r</primary>
+    </indexterm>
+    <funcsynopsis>
+     <funcprototype role="işlev" xml:id="glibc-getpwuid_r">
+      <funcdef>int <command>getpwuid_r</command></funcdef>
+      <paramdef>(uid_t           <varname>kullkim</varname>,
+ struct passwd  *<varname>sonuç_tamponu</varname>,
+ char           *<varname>tampon</varname>,
+ size_t          <varname>tampon_uzunluğu</varname>,
+ struct passwd **<varname>sonuç</varname>)</paramdef>
+     </funcprototype>
+     <funcdescr>
+      <para>
+Bu işlev kullanıcı kimliği <varname>kullkim</varname> olan kullanıcı hakkında bilgi döndüren <command>getpwuid</command> işlevine benzemekle birlikte, bilgi durağan ayrılmış bir tamponda dönmez, kullanıcı tanımlı <varname>sonuç_tamponu</varname> ile gösterilen tamponda saklanır. <varname>tampon</varname> ile gösterilen ek tamponun ilk <varname>tampon_uzunluğu</varname> baytı normalde sonuç yapının elemanları tarafından gösterilen dizgelerden oluşan ek bilgi içerir.
+    </para>
+      <para>
+Eğer kullanıcı kimliği <varname>kullkim</varname> olan bir kullanıcı varsa, <varname>sonuç</varname> ile dönen gösterici istenen veriyi içeren kaydı gösterir (yani, <varname>sonuç</varname>, <varname>sonuç_tamponu</varname> değerini içerir). Böyle bir kullanıcı yoksa ya da bir hata oluşmuşsa <varname>sonuç</varname> ile boş gösterici döner. İşlev ya sıfır ya da bir hata kodu ile döner. Eğer <varname>tampon</varname> tamponu gereken tüm bilgiyi saklamak için küçükse <command>ERANGE</command> hata kodu döner ve <varname>errno</varname> değişkenine <command>ERANGE</command> atanır.
+</para>
+     </funcdescr>
+    </funcsynopsis>
+   </para>
+   <para>
+    <indexterm scope="glibc-fn">
+     <primary>getpwnam</primary>
+    </indexterm>
+    <funcsynopsis>
+     <funcprototype role="işlev" xml:id="glibc-getpwnam">
+      <funcdef>struct passwd *<command>getpwnam</command></funcdef>
+      <paramdef>(const char *<varname>isim</varname>)</paramdef>
+     </funcprototype>
+     <funcdescr>
+      <para>
+Bu işlev kullanıcı ismi <varname>isim</varname> olan kullanıcı hakkında bilgi içeren durağan olarak ayrılmış bir gösterici ile döner. Bu yapıya sonraki <command>getpwnam</command> çağrıları yazabilir.
+    </para>
+      <para>
+Dönen bir boş gösterici kullanıcı ismi  <varname>isim</varname> olan bir kullanıcı olmadığını belirtir.
+</para>
+     </funcdescr>
+    </funcsynopsis>
+   </para>
+   <para>
+    <indexterm scope="glibc-fn">
+     <primary>getpwnam_r</primary>
+    </indexterm>
+    <funcsynopsis>
+     <funcprototype role="işlev" xml:id="glibc-getpwnam_r">
+      <funcdef>int <command>getpwnam_r</command></funcdef>
+      <paramdef>(const char     *<varname>isim</varname>,
+ struct passwd  *<varname>sonuç_tamponu</varname>,
+ char           *<varname>tampon</varname>,
+ size_t          <varname>tampon_uzunluğu</varname>,
+ struct passwd **<varname>sonuç</varname>)</paramdef>
+     </funcprototype>
+     <funcdescr>
+      <para>
+Bu işlev kullanıcı ismi <varname>isim</varname> olan kullanıcı hakkında bilgi döndüren <command>getpwnam</command> işlevine benzemekle birlikte, bilgi durağan ayrılmış bir tamponda dönmez, kullanıcı tanımlı <varname>sonuç_tamponu</varname> ve <varname>tampon</varname> ile gösterilen tamponlarda saklanır.
+    </para>
+      <para>
+Dönüş değerleri <command>getpwuid_r</command> işlevi ile aynıdır.
+    </para>
+     </funcdescr>
+    </funcsynopsis>
+   </para>
+  </section>
+  <section xml:id="glibc-Scanning-All-Users">
+   <info>
+    <title>Kullanıcı Listesinin Taranması</title>
+    <titleabbrev>Kullanıcı listesindeki kullanıcıların birer birer taranması.</titleabbrev>
+   </info>
+   <para><indexterm scope="glibc-cp"><primary>kullanıcı listesinin taranması</primary></indexterm>
+Bu bölümde bir yazılımın sistemdeki tüm kullanıcılar hakkındaki bilgileri bir kerede bir kullanıcı olarak nasıl okuyabileceği anlatılmıştır. Burada bahsedilen işlevler  <filename>pwd.h</filename> başlık dosyasında bildirilmiştir.
+    </para>
+   <para>
+Belli bir dosyadaki kullanıcı girdilerini okumak için <command>fgetpwent</command> işlevini kullanabilirsiniz.
+    </para>
+   <para>
+    <indexterm scope="glibc-fn">
+     <primary>fgetpwent</primary>
+    </indexterm>
+    <funcsynopsis>
+     <funcprototype role="işlev" xml:id="glibc-fgetpwent">
+      <funcdef>struct passwd *<command>fgetpwent</command></funcdef>
+      <paramdef>(FILE *<varname>akım</varname>)</paramdef>
+     </funcprototype>
+     <funcdescr>
+      <para>
+Bu işlev <varname>akım</varname>'dan sonraki kullanıcı girdisini okur ve girdiye bir gösterici ile döner. Yapı durağan olarak ayrıldığından sonraki <command>fgetpwent</command> çağrıları üzerine yazabilir. Aldığınız bilgiyi saklamak istiyorsanız yapıyı bir değişkene kopyalamalısınız.
+    </para>
+      <para>
+Akım, standart parola veritabanı dosyası ile aynı biçimdeki bir dosyaya karşılık olmalıdır.
+</para>
+     </funcdescr>
+    </funcsynopsis>
+   </para>
+   <para>
+    <indexterm scope="glibc-fn">
+     <primary>fgetpwent_r</primary>
+    </indexterm>
+    <funcsynopsis>
+     <funcprototype role="işlev" xml:id="glibc-fgetpwent_r">
+      <funcdef>int <command>fgetpwent_r</command></funcdef>
+      <paramdef>(FILE           *<varname>akım</varname>,
+ struct passwd  *<varname>sonuç_tamponu</varname>,
+ char           *<varname>tampon</varname>,
+ size_t          <varname>tampon_uzunluğu</varname>,
+ struct passwd **<varname>sonuç</varname>)</paramdef>
+     </funcprototype>
+     <funcdescr>
+      <para>
+Bu işlev <varname>akım</varname>'dan sonraki kullanıcı girdisini okuyan <command>fgetpwent</command> işlevine benzer. Fakat sonuç <varname>sonuç_tamponu</varname> ile gösterilen yapı içinde döner. <varname>tampon</varname> ile gösterilen ek tamponun ilk <varname>tampon_uzunluğu</varname> baytı, normalde sonuç yapının elemanları tarafından gösterilen dizgelerden oluşan ek bilgi içerir.
+    </para>
+      <para>
+Akım, standart parola veritabanı dosyası ile aynı biçimdeki bir dosyaya karşılık olmalıdır.
+    </para>
+      <para>
+İşlev sıfırla dönmüşse <varname>sonuç</varname> istenen veriyi içeren yapıya göstericidir. Bir hata oluşmuşsa <varname>sonuç</varname> bir boş gösterici içerir ve işlev sıfırdan faklı bir değerle döner.
+</para>
+     </funcdescr>
+    </funcsynopsis>
+   </para>
+   <para>
+Kullanıcı veritabanındaki tüm girdiler <command>setpwent</command>, <command>getpwent</command> ve <command>endpwent</command> işlevleri ile taranabilir.
+    </para>
+   <para>
+    <indexterm scope="glibc-fn">
+     <primary>setpwent</primary>
+    </indexterm>
+    <funcsynopsis>
+     <funcprototype role="işlev" xml:id="glibc-setpwent">
+      <funcdef>void <command>setpwent</command></funcdef>
+      <paramdef>(void)</paramdef>
+     </funcprototype>
+     <funcdescr>
+      <para>
+Bu işlev, kullanıcı veritabanını okumakta kullanılan <command>getpwent</command> ve <command>getpwent_r</command> işlevleri için bir akım ilklendirir.
+</para>
+     </funcdescr>
+    </funcsynopsis>
+   </para>
+   <para>
+    <indexterm scope="glibc-fn">
+     <primary>getpwent</primary>
+    </indexterm>
+    <funcsynopsis>
+     <funcprototype role="işlev" xml:id="glibc-getpwent">
+      <funcdef>struct passwd *<command>getpwent</command></funcdef>
+      <paramdef>(void)</paramdef>
+     </funcprototype>
+     <funcdescr>
+      <para><command>getpwent</command> işlevi <command>setpwent</command> işlevi ile ilklendirilen akımdan sonraki girdiyi okur. Yapı durağan olarak ayrıldığından sonraki <command>getpwent</command> çağrıları üzerine yazabilir. Aldığınız bilgiyi saklamak istiyorsanız yapıyı bir değişkene kopyalamalısınız.
+    </para>
+      <para>
+Okunacak başka girdi kalmadığında işlev bir boş gösterici ile döner.
+</para>
+     </funcdescr>
+    </funcsynopsis>
+   </para>
+   <para>
+    <indexterm scope="glibc-fn">
+     <primary>getpwent_r</primary>
+    </indexterm>
+    <funcsynopsis>
+     <funcprototype role="işlev" xml:id="glibc-getpwent_r">
+      <funcdef>int <command>getpwent_r</command></funcdef>
+      <paramdef>(struct passwd  *<varname>sonuç_tamponu</varname>,
+ char           *<varname>tampon</varname>,
+ int             <varname>tampon_uzunluğu</varname>,
+ struct passwd **<varname>sonuç</varname>)</paramdef>
+     </funcprototype>
+     <funcdescr>
+      <para>
+Bu işlev, <command>setpwent</command> işlevi ile ilklendirilen akımdan sonraki girdiyi döndüren <command>getpwent</command> işlevine benzer. İstenen bilgiyi <command>fgetpwent_r</command> işlevi gibi kullanıcı tanımlı <varname>sonuç_tamponu</varname> ve <varname>tampon</varname> tamponları ile döndürür.
+    </para>
+      <para>
+Dönüş değerleri <command>fgetpwent_r</command> ile aynıdır.
+</para>
+     </funcdescr>
+    </funcsynopsis>
+   </para>
+   <para>
+    <indexterm scope="glibc-fn">
+     <primary>endpwent</primary>
+    </indexterm>
+    <funcsynopsis>
+     <funcprototype role="işlev" xml:id="glibc-endpwent">
+      <funcdef>void <command>endpwent</command></funcdef>
+      <paramdef>(void)</paramdef>
+     </funcprototype>
+     <funcdescr>
+      <para><command>getpwent</command> veya
+<command>getpwent_r</command> tarafından kullanılan dahili akımı kapatır.
+    </para>
+     </funcdescr>
+    </funcsynopsis>
+   </para>
+  </section>
+  <section xml:id="glibc-Writing-a-User-Entry">
+   <info>
+    <title>Bir Kullanıcı Girdisinin Yazılması</title>
+    <titleabbrev>Bir yazılım kullanıcının kaydını nasıl yeniden yazabilir.</titleabbrev>
+   </info>
+   <para>
+    <indexterm scope="glibc-fn">
+     <primary>putpwent</primary>
+    </indexterm>
+    <funcsynopsis>
+     <funcprototype role="işlev" xml:id="glibc-putpwent">
+      <funcdef>int <command>putpwent</command></funcdef>
+      <paramdef>(const struct passwd *<varname>p</varname>,
+ FILE *<varname>akım</varname>)</paramdef>
+     </funcprototype>
+     <funcdescr>
+      <para>
+Bu işlev <varname>*p</varname> kullanıcı girdisini <varname>akım</varname> akımına standart kullanıcı veritabanı biçimiyle yazar. İşlev başarılı ise sıfırla aksi takdirde sıfırdan farklı bir değerle döner.
+    </para>
+      <para>
+Bu işlev SVID ile uyumluluk adına vardır. Bu işlevi kullanmaktan kaçınmanızı öneririz, çünkü <command>struct passwd</command> yapısının standart tek üyesi dışında üye içermediği kabulüne duyarlıdır; geleneksel Unix veritabanı ile kullanıcılar hakkındaki diğer genişletilmiş bilgilerin karışık olduğu bir sistem üzerinde bu işlevi kullanarak bir girdinin eklenmesi kaçınılmaz olarak önemli bilginin çoğunu dışarda bırakırdı.
+    </para>
+      <para>
+Grup veya kullanıcı ismi bir - veya + işareti ile başlıyorsa grup ve kullanıcı kimliği alanları boş kalır.
+    </para>
+      <para><command>putpwent</command> işlevi <filename>pwd.h</filename> başlık dosyasında bildirilmiştir.
+  </para>
+     </funcdescr>
+    </funcsynopsis>
+   </para>
+  </section>
+ </chapter>
+ <chapter xml:id="glibc-Group-Database">
+  <info>
+   <title>Grup Veritabanı</title>
+   <titleabbrev>Grup veritabanına erişim için kullanılan işlevler ve veri yapıları.</titleabbrev>
+  </info>
+  <para><indexterm scope="glibc-cp"><primary>grup veritabanı</primary></indexterm><indexterm scope="glibc-pg"><primary sortas="etc/group">/etc/group</primary></indexterm>
+Bu bölümde kayıtlı gruplar veritabanında nasıl arama tarama yapılacağı açıklanmıştır. Veritabanı çoğu istemde <command>/etc/group</command> dosyasında tutulurken bazılarında da özel bir ağ sunucusu üzerinde erişim sağlanır.
+   </para>
+  <section xml:id="glibc-Group-Data-Structure">
+   <info>
+    <title>Grup Veri Yapısı</title>
+    <titleabbrev>Her grup kaydı neler içerir.</titleabbrev>
+   </info>
+   <para>
+Sistem grup veritabanına erişim için kullanılan işlevler ve veri yapıları <filename>grp.h</filename> başlık dosyasında bildirilmiştir.
+<indexterm scope="glibc-pg"><primary>grp.h</primary></indexterm>
+    </para>
+   <para>
+    <indexterm scope="glibc-tp">
+     <primary sortas="group">struct group</primary>
+    </indexterm>
+    <funcsynopsis>
+     <funcprototype role="veri türü" xml:id="glibc-struct-group">
+      <funcdef>struct <command>group</command></funcdef>
+      <paramdef/>
+     </funcprototype>
+     <funcdescr>
+      <para><command>group</command> yapısı sistem grup veritabanındaki bir girdideki bilgileri tutar. En azından şu üyelere sahiptir:
+    </para>
+      <para>
+       <glosslist>
+        <glossentry>
+         <glossterm>
+          <literal>char *<command>gr_name</command></literal>
+         </glossterm>
+         <glossdef>
+          <para>Grubun ismi.
+    </para>
+         </glossdef>
+        </glossentry>
+        <glossentry>
+         <glossterm>
+          <literal>gid_t <command>gr_gid</command></literal>
+         </glossterm>
+         <glossdef>
+          <para>Grubun grup kimliği
+    </para>
+         </glossdef>
+        </glossentry>
+        <glossentry>
+         <glossterm>
+          <literal>char **<command>gr_mem</command></literal>
+         </glossterm>
+         <glossdef>
+          <para>
+Gruptaki kullanıcıların isimlerini içeren bir gösterici vektörüdür. Her kullanıcı ismi bir boş karakter sonlandırmalı dizgedir ve vektörün kendisi de bir boş gösterici ile sonlandırılır.
+    </para>
+         </glossdef>
+        </glossentry>
+       </glosslist>
+      </para>
+     </funcdescr>
+    </funcsynopsis>
+   </para>
+  </section>
+  <section xml:id="glibc-Lookup-Group">
+   <info>
+    <title>Bir Grup Hakkında Bilgi Alınması</title>
+    <titleabbrev>Belirli bir grup ile ilgili bilgilere erişim.</titleabbrev>
+   </info>
+   <para><indexterm scope="glibc-cp"><primary>grup ismi ile grup kimliği arasında dönüşüm</primary></indexterm>
+Belirli bir grup için sistem grup veritabanında bir arama yapmak için <command>getgrgid</command> veya <command>getgrnam</command> işlevini kullanabilirsiniz.  Bu işlevler <filename>grp.h</filename> başlık dosyasında bildirilmiştir.
+    </para>
+   <para>
+    <indexterm scope="glibc-fn">
+     <primary>getgrgid</primary>
+    </indexterm>
+    <funcsynopsis>
+     <funcprototype role="işlev" xml:id="glibc-getgrgid">
+      <funcdef>struct group *<command>getgrgid</command></funcdef>
+      <paramdef>(gid_t <varname>grupkim</varname>)</paramdef>
+     </funcprototype>
+     <funcdescr>
+      <para>
+Bu işlev grup kimliği <varname>grupkim</varname> olan grup hakkında bilgi içeren durağan olarak ayrılmış bir gösterici ile döner. Bu yapıya sonraki <command>getgrgid</command> çağrıları yazabilir.
+    </para>
+      <para>
+Dönen bir boş gösterici grup kimliği  <varname>grupkim</varname> olan bir grup olmadığını belirtir.
+</para>
+     </funcdescr>
+    </funcsynopsis>
+   </para>
+   <para>
+    <indexterm scope="glibc-fn">
+     <primary>getgrgid_r</primary>
+    </indexterm>
+    <funcsynopsis>
+     <funcprototype role="işlev" xml:id="glibc-getgrgid_r">
+      <funcdef>int <command>getgrgid_r</command></funcdef>
+      <paramdef>(gid_t          <varname>grupkim</varname>,
+ struct group  *<varname>sonuç_tamponu</varname>,
+ char          *<varname>tampon</varname>,
+ size_t         <varname>tampon_uzunluğu</varname>,
+ struct group **<varname>sonuç</varname>)</paramdef>
+     </funcprototype>
+     <funcdescr>
+      <para>
+Bu işlev grup kimliği <varname>grupkim</varname> olan grup hakkında bilgi döndüren <command>getgrgid</command> işlevine benzemekle birlikte, bilgi durağan ayrılmış bir tamponda dönmez, kullanıcı tanımlı <varname>sonuç_tamponu</varname> ile gösterilen tamponda saklanır. <varname>tampon</varname> ile gösterilen ek tamponun ilk <varname>tampon_uzunluğu</varname> baytı normalde sonuç yapının elemanları tarafından gösterilen dizgelerden oluşan ek bilgi içerir.
+    </para>
+      <para>
+Eğer grup kimliği <varname>grupkim</varname> olan bir grup varsa, <varname>sonuç</varname> ile dönen gösterici istenen veriyi içeren kaydı gösterir (yani, <varname>sonuç</varname>, <varname>sonuç_tamponu</varname> değerini içerir). Böyle bir grup yoksa ya da bir hata oluşmuşsa <varname>sonuç</varname> ile boş gösterici döner. İşlev ya sıfır ya da bir hata kodu ile döner. Eğer <varname>tampon</varname> tamponu gereken tüm bilgiyi saklamak için küçükse <command>ERANGE</command> hata kodu döner ve <varname>errno</varname> değişkenine <command>ERANGE</command> atanır.
+</para>
+     </funcdescr>
+    </funcsynopsis>
+   </para>
+   <para>
+    <indexterm scope="glibc-fn">
+     <primary>getgrnam</primary>
+    </indexterm>
+    <funcsynopsis>
+     <funcprototype role="işlev" xml:id="glibc-getgrnam">
+      <funcdef>struct group *<command>getgrnam</command></funcdef>
+      <paramdef>(const char *<varname>isim</varname>)</paramdef>
+     </funcprototype>
+     <funcdescr>
+      <para>
+Bu işlev grup ismi <varname>isim</varname> olan grup hakkında bilgi içeren durağan olarak ayrılmış bir gösterici ile döner. Bu yapıya sonraki <command>getgrnam</command> çağrıları yazabilir.
+    </para>
+      <para>
+Dönen bir boş gösterici grup ismi  <varname>isim</varname> olan bir grup olmadığını belirtir.
+</para>
+     </funcdescr>
+    </funcsynopsis>
+   </para>
+   <para>
+    <indexterm scope="glibc-fn">
+     <primary>getgrnam_r</primary>
+    </indexterm>
+    <funcsynopsis>
+     <funcprototype role="işlev" xml:id="glibc-getgrnam_r">
+      <funcdef>int <command>getgrnam_r</command></funcdef>
+      <paramdef>(const char    *<varname>isim</varname>,
+ struct group  *<varname>sonuç_tamponu</varname>,
+ char          *<varname>tampon</varname>,
+ size_t         <varname>tampon_uzunluğu</varname>,
+ struct group **<varname>sonuç</varname>)</paramdef>
+     </funcprototype>
+     <funcdescr>
+      <para>
+Bu işlev grup ismi <varname>isim</varname> olan grup hakkında bilgi döndüren <command>getgrnam</command> işlevine benzemekle birlikte, bilgi durağan ayrılmış bir tamponda dönmez, kullanıcı tanımlı <varname>sonuç_tamponu</varname> ve <varname>tampon</varname> ile gösterilen tamponlarda saklanır.
+    </para>
+      <para>
+Dönüş değerleri <command>getgrgid_r</command> işlevi ile aynıdır.
+    </para>
+     </funcdescr>
+    </funcsynopsis>
+   </para>
+  </section>
+  <section xml:id="glibc-Scanning-All-Groups">
+   <info>
+    <title>Grup Listesinin Taranması</title>
+    <titleabbrev>Grup listesindeki grupların birer birer taranması.</titleabbrev>
+   </info>
+   <para><indexterm scope="glibc-cp"><primary>grup listesinin taranması</primary></indexterm>
+Bu bölümde bir yazılımın sistemdeki tüm gruplar hakkındaki bilgileri bir kerede bir grup olarak nasıl okuyabileceği anlatılmıştır. Burada bahsedilen işlevler  <filename>grp.h</filename> başlık dosyasında bildirilmiştir.
+    </para>
+   <para>
+Belli bir dosyadaki kullanıcı girdilerini okumak için <command>fgetgrent</command> işlevini kullanabilirsiniz.
+    </para>
+   <para>
+    <indexterm scope="glibc-fn">
+     <primary>fgetgrent</primary>
+    </indexterm>
+    <funcsynopsis>
+     <funcprototype role="işlev" xml:id="glibc-fgetgrent">
+      <funcdef>struct group *<command>fgetgrent</command></funcdef>
+      <paramdef>(FILE *<varname>akım</varname>)</paramdef>
+     </funcprototype>
+     <funcdescr>
+      <para>
+Bu işlev <varname>akım</varname>'dan sonraki grup girdisini okur ve girdiye bir gösterici ile döner. Yapı durağan olarak ayrıldığından sonraki <command>fgetgrent</command> çağrıları üzerine yazabilir. Aldığınız bilgiyi saklamak istiyorsanız yapıyı bir değişkene kopyalamalısınız.
+    </para>
+      <para>
+Akım, standart grup veritabanı dosyası ile aynı biçimdeki bir dosyaya karşılık olmalıdır.
+</para>
+     </funcdescr>
+    </funcsynopsis>
+   </para>
+   <para>
+    <indexterm scope="glibc-fn">
+     <primary>fgetgrent_r</primary>
+    </indexterm>
+    <funcsynopsis>
+     <funcprototype role="işlev" xml:id="glibc-fgetgrent_r">
+      <funcdef>int <command>fgetgrent_r</command></funcdef>
+      <paramdef>(FILE          *<varname>akım</varname>,
+ struct group  *<varname>sonuç_tamponu</varname>,
+ char          *<varname>tampon</varname>,
+ size_t         <varname>tampon_uzunluğu</varname>,
+ struct group **<varname>sonuç</varname>)</paramdef>
+     </funcprototype>
+     <funcdescr>
+      <para>
+Bu işlev <varname>akım</varname>'dan sonraki kullanıcı girdisini okuyan <command>fgetgrent</command> işlevine benzer. Fakat sonuç <varname>sonuç_tamponu</varname> ile gösterilen yapı içinde döner. <varname>tampon</varname> ile gösterilen ek tamponun ilk <varname>tampon_uzunluğu</varname> baytı, normalde sonuç yapının elemanları tarafından gösterilen dizgelerden oluşan ek bilgi içerir.
+    </para>
+      <para>
+Akım, standart grup veritabanı dosyası ile aynı biçimdeki bir dosyaya karşılık olmalıdır.
+    </para>
+      <para>
+İşlev sıfırla dönmüşse <varname>sonuç</varname> istenen veriyi içeren yapıya göstericidir. Bir hata oluşmuşsa <varname>sonuç</varname> bir boş gösterici içerir ve işlev sıfırdan faklı bir değerle döner.
+</para>
+     </funcdescr>
+    </funcsynopsis>
+   </para>
+   <para>
+Grup veritabanındaki tüm girdiler <command>setgrent</command>, <command>getgrent</command> ve <command>endgrent</command> işlevleri ile taranabilir.
+    </para>
+   <para>
+    <indexterm scope="glibc-fn">
+     <primary>setgrent</primary>
+    </indexterm>
+    <funcsynopsis>
+     <funcprototype role="işlev" xml:id="glibc-setgrent">
+      <funcdef>void <command>setgrent</command></funcdef>
+      <paramdef>(void)</paramdef>
+     </funcprototype>
+     <funcdescr>
+      <para>
+Bu işlev, grup veritabanını okumakta kullanılan <command>getgrent</command> ve <command>getgrent_r</command> işlevleri için bir akım ilklendirir.
+</para>
+     </funcdescr>
+    </funcsynopsis>
+   </para>
+   <para>
+    <indexterm scope="glibc-fn">
+     <primary>getgrent</primary>
+    </indexterm>
+    <funcsynopsis>
+     <funcprototype role="işlev" xml:id="glibc-getgrent">
+      <funcdef>struct group *<command>getgrent</command></funcdef>
+      <paramdef>(void)</paramdef>
+     </funcprototype>
+     <funcdescr>
+      <para><command>getgrent</command> işlevi <command>setgrent</command> işlevi ile ilklendirilen akımdan sonraki girdiyi okur. Yapı durağan olarak ayrıldığından sonraki <command>getgrent</command> çağrıları üzerine yazabilir. Aldığınız bilgiyi saklamak istiyorsanız yapıyı bir değişkene kopyalamalısınız.
+</para>
+     </funcdescr>
+    </funcsynopsis>
+   </para>
+   <para>
+    <indexterm scope="glibc-fn">
+     <primary>getgrent_r</primary>
+    </indexterm>
+    <funcsynopsis>
+     <funcprototype role="işlev" xml:id="glibc-getgrent_r">
+      <funcdef>int <command>getgrent_r</command></funcdef>
+      <paramdef>(struct group  *<varname>sonuç_tamponu</varname>,
+ char          *<varname>tampon</varname>,
+ size_t         <varname>tampon_uzunluğu</varname>,
+ struct group **<varname>sonuç</varname>)</paramdef>
+     </funcprototype>
+     <funcdescr>
+      <para>
+Bu işlev, <command>setgrent</command> işlevi ile ilklendirilen akımdan sonraki girdiyi döndüren <command>getgrent</command> işlevine benzer. İstenen bilgiyi <command>fgetgrent_r</command> işlevi gibi kullanıcı tanımlı <varname>sonuç_tamponu</varname> ve <varname>tampon</varname> tamponları ile döndürür.
+    </para>
+      <para>
+İşlev sıfırla dönmüşse <varname>sonuç</varname> istenen veriyi içeren yapıya göstericidir (normalde <varname>sonuç_tamponu</varname> ile aynıdır). Bir hata oluşmuşsa <varname>sonuç</varname> bir boş gösterici içerir ve işlev sıfırdan faklı bir değerle döner.
+</para>
+     </funcdescr>
+    </funcsynopsis>
+   </para>
+   <para>
+    <indexterm scope="glibc-fn">
+     <primary>endgrent</primary>
+    </indexterm>
+    <funcsynopsis>
+     <funcprototype role="işlev" xml:id="glibc-endgrent">
+      <funcdef>void <command>endgrent</command></funcdef>
+      <paramdef>(void)</paramdef>
+     </funcprototype>
+     <funcdescr>
+      <para><command>getgrent</command> veya <command>getgrent_r</command> tarafından kullanılan dahili akımı kapatır.
+  </para>
+     </funcdescr>
+    </funcsynopsis>
+   </para>
+  </section>
+ </chapter>
+ <chapter xml:id="glibc-Database-Example">
+  <info>
+   <title>Kullanıcı ve Grup Veritabanı Örneği</title>
+   <titleabbrev>Veritabanları ile çalışan işlevlerin kullanımını gösteren örnek bir yazılım.</titleabbrev>
+  </info>
+  <para>
+Burada veritabanları ile çalışan işlevlerin kullanımını gösteren örnek bir yazılıma yer verilmiştir. Bu yazılım, kendisini çalıştıran kullanıcı hakkında bazı bilgiler basar.
+   </para>
+  <para>
+   <screen>#include &lt;grp.h&gt;
+#include &lt;pwd.h&gt;
+#include &lt;sys/types.h&gt;
+#include &lt;unistd.h&gt;
+#include &lt;stdlib.h&gt;
+
+int
+main (void)
+{
+  uid_t me;
+  struct passwd *my_passwd;
+  struct group *my_group;
+  char **members;
+
+  /* Kullanıcı kimliği hakkında bilgi alalım. */
+  me = getuid ();
+  my_passwd = getpwuid (me);
+  if (!my_passwd)
+    {
+      printf ("%d kullanıcı kimlikli bir kullanıcı bulunamadı.\n", (int) me);
+      exit (EXIT_FAILURE);
+    }
+
+  /* Bilgileri basalım. */
+  printf ("Ben %s.\n", my_passwd-&gt;pw_gecos);
+  printf ("Oturum açma ismim %s.\n", my_passwd-&gt;pw_name);
+  printf ("Kullanıcı kimliğim %d.\n", (int) (my_passwd-&gt;pw_uid));
+  printf ("Ev dizinim %s.\n", my_passwd-&gt;pw_dir);
+  printf ("Öntanımlı kabuğum %s.\n", my_passwd-&gt;pw_shell);
+
+  /* Öntanımlı grup kimliği hakkında bilgi alalım */
+  my_group = getgrgid (my_passwd-&gt;pw_gid);
+  if (!my_group)
+    {
+      printf ("%d grup kimlikli bir grup bulunamadı.\n",
+              (int) my_passwd-&gt;pw_gid);
+      exit (EXIT_FAILURE);
+    }
+
+  /* Bilgileri basalım. */
+  printf ("Öntanımlı grubum %s (%d).\n",
+          my_group-&gt;gr_name, (int) (my_passwd-&gt;pw_gid));
+  printf ("Üyesi olduğum gruplar:\n");
+  members = my_group-&gt;gr_mem;
+  while (*members)
+    {
+      printf ("  %s\n", *(members));
+      members++;
+    }
+
+  return EXIT_SUCCESS;
+}
+</screen>
+  </para>
+  <para>
+Bu yazılımın çıktısı şöyle olurdu:
+   </para>
+  <para>
+   <screen>
+Ben NBB.
+Oturum açma ismim nilgun.
+Kullanıcı kimliğim 502.
+Ev dizinim /home/nilgun.
+Öntanımlı kabuğum /bin/bash.
+Öntanımlı grubum belgeler (526).
+Üyesi olduğum gruplar:
+  nilgun
+</screen>
+  </para>
+ </chapter>
+ <chapter xml:id="glibc-Netgroup-Database">
+  <info>
+   <title>Ağ Grubu Veritabanı</title>
+   <titleabbrev>Ağ grubu veritabanına erişim için kullanılan işlevler.</titleabbrev>
+  </info>
+  <section xml:id="glibc-Netgroup-Data">
+   <info>
+    <title>Ağgrubu Verisi</title>
+    <titleabbrev>Ağgrubu veritabanı verisi ve geliş yeri.</titleabbrev>
+   </info>
+   <para><indexterm scope="glibc-cp"><primary>Ağgrubu</primary></indexterm>
+Kimi zaman kullanıcıları başka kriterlere göre gruplamak faydalı olur (Bkz. <xref linkend="glibc-Group-Database"/>).  Örneğin, belli bir grubu bir makine ile ilişkilendirmek yararlıdır. Diğer yandan konak isimlerinin gruplanması artık desteklenmemektedir.
+    </para>
+   <para>
+Sun Microsystems SunOS üzerinde yeni bir veritabanı çeşidi bulunur, ağgrubu veritabanı.  Konakların, kullanıcıların ve isim alanlarının özgürce her birine bir isim vererek gruplanabilmesini mümkün kılar. Özetle, bir ağgrubu bir konak ismi, bir kullanıcı ismi ve bir alan isminden oluşan üçlülerin listesidir. Girdilerin her biri tüm girdilerle eşleşebilen bir kalıp girdisi olabilir. Son olanak ise, ayrıca diğer ağgruplarının isimlerinin bir ağgrubunu belirten listede verilebilmesidir. Böylece döngü oluşturmadan keyfi hiyerarşiler oluşturulabilmektedir.
+    </para>
+   <para>
+Sun'ın gerçeklemesi ağgruplarına sadece  <command>nis</command> veya <command>nisplus</command> hizmeti için izin verir, bkz. <xref linkend="glibc-Services-in-the-NSS-configuration"/>.  GNU C kütüphanesindeki gerçekleme ise böyle bir sınırlama içermez.  Girdi hizmetlerinin her birinin girdisi aşağıdaki biçimde olmalıdır:
+    </para>
+   <para>
+    <literallayout indent="0" class="normal"><varname>grupismi</varname> ( <varname>grupismi</varname> | (<varname>konakismi</varname>,<varname>kullanıcıismi</varname>,<varname>alanismi</varname>) )+
+</literallayout>
+   </para>
+   <para>
+Üçlüdeki alanların her biri hiçbir şeyle eşleşmediğini belirtmek üzere boş olabilir. İşlevleri açıklarken göreceğiniz gibi tamamen zıddı bir durumda kullanışlıdır. Örneğin, hiçbir girdi ile eşleşmeyen girdiler olabilir. Bunun gibi girdiler için tek bir karakterden oluşan bir isim, <command>-</command> kullanılacaktır.
+    </para>
+  </section>
+  <section xml:id="glibc-Lookup-Netgroup">
+   <info>
+    <title>Bir Ağgrubu Hakkında Bilgi Alınması</title>
+    <titleabbrev>Belirli bir ağgrubu ile ilgili bilgilere erişim.</titleabbrev>
+   </info>
+   <para>
+Ağgrubu erişim işlevleri tüm diğer sistem veritabanı işlevlerinden birazcık farkıdır. Tek bir ağgrubu çok sayıda girdi içerebildiğinden iki adımlık bir işlem gerekir. Önce tek bir ağgrubu seçilir, sonra da bu ağgrubundaki tüm girdiler üzerinde yineleme yapılır. Bu işlevler  <filename>netdb.h</filename> başlık dosyasında bildirilmiştir.
+    </para>
+   <para>
+    <indexterm scope="glibc-fn">
+     <primary>setnetgrent</primary>
+    </indexterm>
+    <funcsynopsis>
+     <funcprototype role="işlev" xml:id="glibc-setnetgrent">
+      <funcdef>int <command>setnetgrent</command></funcdef>
+      <paramdef>(const char *<varname>netgrup</varname>)</paramdef>
+     </funcprototype>
+     <funcdescr>
+      <para>
+Bu işleve yapılan bir çağrı <varname>netgrup</varname> isimli ağgrubundaki tüm girdiler üzerinde yinelenecek <command>getnetgrent</command> çağrılarını mümkün kılmak üzere kütüphanenin dahili durumunu ilklendirir.
+    </para>
+      <para>
+Çağrı başarılı olduğunda (örn, bu isimde bir ağ grubu varsa) <command>1</command> değeri döner. <command>0</command> dönüş değeri ya bu isimde bir ağgrubu olmadığını ya da bir hata oluştuğunu belirtir.
+</para>
+     </funcdescr>
+    </funcsynopsis>
+   </para>
+   <para>
+Ağgruplarının yinelenemesi için sadece tek bir durumun var olduğunu hatırlamak önemlidir. Yazılımcı <command>getnetgrent_r</command> işlevini kullansa bile daima tek bir seferde sadece bir ağgrubu işlenebildiğinden sonuç gerçekte evresel olmayacaktır. Eğer yazılım aynı anda bir ağgrubundan fazlasını işlemeyi gerektiriyorsa, yazılımcı harici kiltleme kullanarak bunu korumalıdır. Bu sorun SunOS'daki özgün ağgrubu gerçeklemesinde vardır ve uyumlu kalmak gerektiğinden bunu değiştirmek mümkün değildir.
+    </para>
+   <para>
+Ağgrupları katmanını başka işlevler de kullanır. Şimdilik bunlar NSS gerçeklemesinin <command>compat</command> hizmeti ile ilgili parçaları ile <command>innetgr</command> işlevidir.
+    </para>
+   <para>
+    <indexterm scope="glibc-fn">
+     <primary>getnetgrent</primary>
+    </indexterm>
+    <funcsynopsis>
+     <funcprototype role="işlev" xml:id="glibc-getnetgrent">
+      <funcdef>int <command>getnetgrent</command></funcdef>
+      <paramdef>(char **<varname>konak</varname>,
+ char **<varname>kullanıcı</varname>,
+ char **<varname>alanadı</varname>)</paramdef>
+     </funcprototype>
+     <funcdescr>
+      <para>
+Bu işlev o an seçili ağgrubunun sonraki işlenmemiş ilk girdisini döndürür. Adresleri <varname>konak</varname>, <varname>kullanıcı</varname> ve <varname>alanadı</varname> argümanlarında aktarılan dizge göstericileri başarılı bir çağrı sonrasında ilgili dizgeleri içerecektir. Eğer sonraki girdide dizge boşsa gösterici <command>NULL</command> değerine sahip olur. Dönen dizge göstericileri sadece çağrılmış bir ağgrubu işlevinin olmaması halinde geçerlidir.
+    </para>
+      <para>
+Sonraki girdi başarıyla okunmuşsa işlev <command>1</command> değeri ile döner. <command>0</command> değeri böyle bir girdinin olmadığını ya da dahili bir hata oluştuğunu gösterir.
+</para>
+     </funcdescr>
+    </funcsynopsis>
+   </para>
+   <para>
+    <indexterm scope="glibc-fn">
+     <primary>getnetgrent_r</primary>
+    </indexterm>
+    <funcsynopsis>
+     <funcprototype role="işlev" xml:id="glibc-getnetgrent_r">
+      <funcdef>int <command>getnetgrent_r</command></funcdef>
+      <paramdef>(char **<varname>konak</varname>,
+ char **<varname>kullanıcı</varname>,
+ char **<varname>alanadı</varname>,
+ char  *<varname>tampon</varname>,
+ int    <varname>tampon_uzunluğu</varname>)</paramdef>
+     </funcprototype>
+     <funcdescr>
+      <para>
+Bu işlev bir şey dışında <command>getnetgrent</command> işlevinin benzeridir: <varname>konak</varname>, <varname>kullanıcı</varname> ve <varname>alanadı</varname> dizge göstericilerinin gösterdiği dizgeler, <varname>tampon</varname> ile başlayan <varname>tampon_uzunluğu</varname> baytlık tampona yerleştirilir. Bunun anlamı, çağrılmış bir ağgrubu işlevinin olması halinde bile dönen değerlerin geçerli olduğudur.
+    </para>
+      <para>
+Sonraki girdi başarıyla okunmuşsa ve tamponda dizgeler için yeterince yer varsa işlevin dönüş değeri <command>1</command>'dir. <command>0</command> dönüş değeri böyle bir girdinin olmadığı, tamponun yetersiz olduğu ya da dahili bir hata oluştuğunu gösterir.
+    </para>
+      <para>
+Bu işlev bir GNU oluşumudur. SunOS'un özgün gerçeklemesi böyle bir işlevi içermemektedir.
+</para>
+     </funcdescr>
+    </funcsynopsis>
+   </para>
+   <para>
+    <indexterm scope="glibc-fn">
+     <primary>endnetgrent</primary>
+    </indexterm>
+    <funcsynopsis>
+     <funcprototype role="işlev" xml:id="glibc-endnetgrent">
+      <funcdef>void <command>endnetgrent</command></funcdef>
+      <paramdef>(void)</paramdef>
+     </funcprototype>
+     <funcdescr>
+      <para>
+Bu işlev, seçilen son ağgrubu ile ilgili olarak ayrılmış tamponları serbest bırakır. Sonuç olarak, bu çağrıdan sonra yapılan <command>getnetgrent</command> çağrılarının döndürdüğü tüm dizge göstericileri geçersizdir.
+    </para>
+     </funcdescr>
+    </funcsynopsis>
+   </para>
+  </section>
+  <section xml:id="glibc-Netgroup-Membership">
+   <info>
+    <title>Ağgrubu Üyeliğinin Sınanması</title>
+    <titleabbrev>Ağgrubu üyeliği nasıl sınanır.</titleabbrev>
+   </info>
+   <para>
+Çoğunlukla ilgilenilen konu, bir girdinin seçili ağgrubunun parçası olup olmadığı, olduğundan tüm ağgrubunun taranması gerekmez.
+    </para>
+   <para>
+    <indexterm scope="glibc-fn">
+     <primary>innetgr</primary>
+    </indexterm>
+    <funcsynopsis>
+     <funcprototype role="işlev" xml:id="glibc-innetgr">
+      <funcdef>int <command>innetgr</command></funcdef>
+      <paramdef>(const char *<varname>netgrup</varname>,
+ const char *<varname>konak</varname>,
+ const char *<varname>kullanıcı</varname>,
+ const char *<varname>alanadı</varname>)</paramdef>
+     </funcprototype>
+     <funcdescr>
+      <para>
+Bu işlev <varname>konak</varname>, <varname>kullanıcı</varname> ve <varname>alanadı</varname> parametreleri ile belirtilen üçlünün <varname>netgrup</varname> ağgrubunun bir parçası olup olmadığına bakar. Bu işlevi kullanmanın bazı getirileri vardır:
+    </para>
+      <para>
+       <orderedlist numeration="arabic" inheritnum="ignore" continuation="restarts">
+        <listitem>
+Dahili kilitleme uygulandığından genel ağgrubu katmanında başka hiç bir ağgrubu işlevi kullanılamaz.
+      </listitem>
+        <listitem>
+İşlev bu işlem için <command>set</command>/<command>get</command>/<command>endnetgrent</command> gibi işlevlerden daha verimli olacak şekilde tasarlanmıştır.
+      </listitem>
+       </orderedlist>
+      </para>
+      <para><varname>konak</varname>, <varname>kullanıcı</varname> ve <varname>alanadı</varname> göstericilerden herhangi biri bu konumda herhangi bir girdinin geçerli olacağını belirtmek üzere <command>NULL</command> olarak verilebilir. Bu herhangi bir ismin <command>-</command> olarak belirtilmesi durumunda da geçerlidir.
+    </para>
+      <para>
+Belirtilen üçlü ağgrubundaki bir girdi ile eşleştirilebilmişse işlevin dönüş değeri <command>1</command>'dir. <command>0</command> dönüş değeri böyle bir ağgrubunun olmadığı, ağgrubunda böyle bir üçlünün olmadığı ya da dahili bir hatanın oluştuğu anlamına gelir.
+    </para>
+     </funcdescr>
+    </funcsynopsis>
+   </para>
+  </section>
+ </chapter>
+</part>
