@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--DOCTYPE article SYSTEM "../../docbook/dtd/belgeler.dtd" [
+<!ENTITY % belgeler.dtd SYSTEM "../../belgeler.dtd">
+]-->
 <!-- ********************************************************************
-       user-auth-howto.xml, v1.0, yazarın özgür lisansı, Aralık 2005
+       howtos/ceviri/user-auth-howto.xml
      ******************************************************************** -->
 <article xml:id="user-auth-howto" xmlns="http://docbook.org/ns/docbook"
  xmlns:xlink="http://www.w3.org/1999/xlink" version="5.0" xml:lang="tr">
@@ -31,8 +34,16 @@
     </affiliation>
    </author>
   </authorgroup>
+  <abstract>
+   <para>
+    Bu belgede kullanıcı ve grup bilgilerinin nasıl saklanıldığı, Linux
+    sisteminde (PAM) kullanıcı kimlik kanıtlamasının nasıl yapıldığı ve
+    nasıl daha güvenli hale getirilebileceği anlatılmaktadır.
+   </para>
+  </abstract>
   <pubdate>Aralık 2005</pubdate>
   <revhistory>
+   <title>Bu çevirinin sürüm bilgileri:</title>
    <revision>
     <revnumber>1.0</revnumber>
     <date>Aralık 2005</date>
@@ -41,6 +52,7 @@
    </revision>
   </revhistory>
   <revhistory>
+   <title>Özgün belgenin sürüm bilgileri:</title>
    <revision>
     <revnumber>0.9</revnumber>
     <date>2004-04-03</date>
@@ -67,268 +79,323 @@
    </revision>
   </revhistory>
  </info>
- <section xml:id="user-auth-howto-intro">
-  <info>
-   <title>Giriş</title>
-  </info>
-  <section>
-   <info>
-    <title>Bu belge nasıl oluştu</title>
-   </info>
+ <sect1 xml:id="user-auth-howto-intro">
+  <title>Giriş</title>
+  <sect2>
+   <title>Bu belge nasıl oluştu</title>
    <para>
-Ev ağıma (çoğu gereksiz <literal>:)</literal>) yeni ağ servisleri eklemeye çalıştığımda bir takım kimlik doğrulama problemleriyle karşılaştığımdan Linux sistemlerinde kimlik doğrulamanın NASIL yapılacağını anlatan bu belgeyi bitirme projem olarak hazırlamaya karar verdim. Umarım bu belge sistem yönetiminin genellikle unutulan ama önemli bu yönünü anlamanıza yardımcı olur.
-  </para>
-  </section>
-  <section>
-   <info>
-    <title>Yeni Sürümler</title>
-   </info>
+    Ev ağıma (çoğu gereksiz <literal>:)</literal>) yeni ağ servisleri
+    eklemeye çalıştığımda bir takım kimlik doğrulama problemleriyle
+    karşılaştığımdan Linux sistemlerinde kimlik doğrulamanın NASIL
+    yapılacağını anlatan bu belgeyi bitirme projem olarak hazırlamaya
+    karar verdim. Umarım bu belge sistem yönetiminin genellikle unutulan
+    ama önemli bu yönünü anlamanıza yardımcı olur.
+   </para>
+  </sect2>
+  <sect2>
+   <title>Yeni Sürümler</title>
    <para>
-Kendime bir alan alıp çalıştırıncaya kadar bu belgenin son sürümüne <uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.tldp.org">http://www.tldp.org</uri> adresinden erişilebilirsiniz.
+    Kendime bir alan alıp çalıştırıncaya kadar bu belgenin son sürümüne
+    <link xlink:href="&tldp.org;"/> adresinden erişilebilirsiniz.
   </para>
-  </section>
-  <section>
-   <info>
-    <title>Geri Bildirim</title>
-   </info>
+  </sect2>
+  <sect2>
+   <title>Geri Bildirim</title>
    <para>
-Yorumları, düzeltmeleri ve önerileri <email>petehern@yahoo.com</email> adresine gönderebilirsiniz.
+    Yorumları, düzeltmeleri ve önerileri <email>petehern@yahoo.com</email>
+    adresine gönderebilirsiniz.
   </para>
-  </section>
-  <section>
-   <info>
-    <title>Lisans</title>
-   </info>
+  </sect2>
+  <sect2>
+   <title>Lisans</title>
    <para>Telif Hakkı © 2000 Peter Hernberg, Özgün Belge</para>
    <para>Telif Hakkı © 2005 Necdet Yücel, Türkçe Çeviri</para>
    <para>
-Aşağıdaki kısıtlamalara uyduğunuz sürece bu belgeyi kısmen ya da tamamen kopyalayabilirsiniz.:
-    </para>
-   <para>
-    <itemizedlist>
-     <listitem>
-      <para>
-Belgenin tamamen veya kısmen kopyalarında yukarıdaki telif hakkı bilgisi ve bu izin notu korunmalıdır.
+    Aşağıdaki kısıtlamalara uyduğunuz sürece bu belgeyi kısmen ya da tamamen
+    kopyalayabilirsiniz.:
    </para>
-     </listitem>
-     <listitem>
-      <para>
-Bu belgeden türetilecek belgeler ve belgenin çevirileri için önceden izin alınmalıdır. Türkçe çeviri yazara bildirilmiştir.
-   </para>
-     </listitem>
-     <listitem>
-      <para>
-Bu çalışmayı kısmen yayınlarsanız tam sürümünü nasıl edinecekleri bilgisini eklemelisiniz.
-   </para>
-     </listitem>
-     <listitem>
-      <para>
-Küçük bölümler nereden alıntılandığının yazılması halinde tanıtım veya eleştiri için izin almadan kullanılabilir. Akademik kullanımlar için istisnalar sağlanabilir: yazara yazın ve sorun. Bu kısıtlamalar öğrencileri ve eğitmenleri kısıtlamak için değil yazarı korumak için getirilmiştir. Bu belgedeki tüm kaynak kodlar (belgenin hazırlandığı SGML hariç) GNU Genel Kamu Lisans'ı ile lisanslanmıştır. Bu lisansa anonim ftp ile GNU arşivlerinden ulaşabilirsiniz.
-   </para>
-     </listitem>
-    </itemizedlist>
-   </para>
-  </section>
-  <section>
-   <info>
-    <title>Teşekkürler</title>
-   </info>
-   <para>
-Beni 18 yaşıma kadar getiren aileme teşekkür ederim. Debian geliştiricilerine hazırladıkları güzel dağıtım için teşekkür ederim. Beni bir guru (geek - yazılım hatalarıyla beslenen kişi) olarak tanımlayarak onurlandıran <link xlink:href="http://www.cgr.org/">CGR</link>'ye teşekkür ederim. Sandy Harris'e yararlı önerileri için teşekkür ederim. Son olarak onsuz nasıl yaşayacağımı bilmediğim ramen noodles'ı yaratanlara teşekkür ederim.
-  </para>
-  </section>
-  <section>
-   <info>
-    <title>Okuyucu Hakkındaki Kabuller</title>
-   </info>
-   <para>
-Bu belgenin hedefine ulaşabilmesi için okuyucunun komut satırından komut çalıştırmakla ve yapılandırma dosyalarını düzenlemekle bir sorunu olmadığı kabul edilmiştir.
-   </para>
-  </section>
- </section>
- <section xml:id="user-auth-howto-userinfo">
-  <info>
-   <title>Sisteminizde Kullanıcı Bilgileri Nasıl Saklanır</title>
-  </info>
-  <section>
-   <info>
-    <title>
-     <filename>/etc/passwd</filename>
-    </title>
-   </info>
-   <para>
-Neredeyse tüm Linux dağıtımlarında (ve ticari *nix'lerde) kullanıcı bilgisi <filename>/etc/passwd</filename> dosyasında saklanır. Bu metin dosyasında kullanıcının kullanıcı adı, şifrelenmiş parolası, benzersiz sayısal kullanıcı kimliği (uid), sayısal grup kimliği (gid), seçimlik yorum alanı (burada genellikle kullanıcının gerçek adı, telefon numarası gibi bilgiler bulunur), ev dizini ve tercih ettiği kabuk bilgileri bulunur. <filename>/etc/passwd</filename> dosyasındaki girdiler aşağıdaki gibidir:
-    </para>
-   <para>
-    <programlisting>
-pete:K3xcO1Qnx8LFN:1000:1000:Peter Hernberg,,,1-800-FOOBAR:/home/pete:/bin/bash
-</programlisting>
-   </para>
-   <para>
-Gördüğünüz gibi anlaşılması oldukça kolaydır. Her girdi için yukarıda anlatılan altı alan vardır ve alanlar birbirinden : ile ayrılırlar. Kullanıcı kimlik denetimi sadece bu kadarcık karışık olsaydı bu NASIL belgesine ihtiyaç olmazdı.
-  </para>
-  </section>
-  <section>
-   <info>
-    <title>Gölgelenmiş Parolalar</title>
-   </info>
-   <para>
-Sisteminizdeki <filename>/etc/passwd</filename> dosyasına bakarsanız aşağıdakine benzer olduğunu görürsünüz :
-    </para>
-   <para>
-    <programlisting>
-pete:x:1000:1000:Peter Hernberg,,,1-800-FOOBAR:/home/pete:/bin/bash
-</programlisting>
-   </para>
-   <para>
-Şifrelenmiş parola nereye gitti? Buna yanıt vermeden önce biraz açıklama yapmak gerekiyor.
-  </para>
-   <para>
-Kullanıcılar hakkındaki, şifrelenmiş parolaları dahil, tüm bilgilerin tutulduğu
-<filename>/etc/passwd</filename> dosyası tüm kullanıcılar tarafından okunabildiğinden herhangi bir kullanıcı sistemdeki tüm kullanıcıların şifrelenmiş parolalarını elde edebilir. Parolalar şifrelenmiş olsalar bile parola-kırma programları yaygın olarak bulunmaktadır. Bu güvenlik tehditiyle mücadele edebilmek için gölgelenmiş parolalar geliştirilmiştir.
-   </para>
-   <para>
-Bir sistemde gölgelenmiş parolalar etkin kılındığında <filename>/etc/passwd</filename> dosyasındaki parola alanına x yazılır ve kullanıcının gerçek şifrelenmiş parolası <filename>/etc/shadow</filename> dosyasında saklanır. <filename>/etc/shadow</filename> dosyası sadece root tarafından okunabildiği için kötü niyetli kullanıcılar başkalarının
-parolalarını kıramazlar. <filename>/etc/shadow</filename> dosyası her girdi için kullanıcı adı, şifrelenmiş parola ve parolanın geçerliliği ile ilgili bir kaç alan içerir. Örnek bir girdi aşağıdaki gibidir:
-    </para>
-   <para>
-    <programlisting>
-pete:/3GJllg1o4152:11009:0:99999:7:::
-</programlisting>
-   </para>
-  </section>
-  <section>
-   <info>
-    <title><filename>/etc/group</filename> ve <filename>/etc/gshadow</filename></title>
-   </info>
-   <para>
-Grup bilgisi <filename>/etc/group</filename> dosyasında saklanır. Dosya biçimi <filename>/etc/passwd</filename>'e benzer. Her girdi için grup adı, parolası, grup numarası (gid) ve birbirinden virgülle ayrılmış grup üyelerinin yeraldığı alanlar bulunur. <filename>/etc/group</filename> içindeki bir girdi aşağıdaki gibidir:
+   <itemizedlist>
+    <listitem>
+     <para>
+      Belgenin tamamen veya kısmen kopyalarında yukarıdaki telif hakkı bilgisi
+      ve bu izin notu korunmalıdır.
      </para>
+    </listitem>
+    <listitem>
+     <para>
+      Bu belgeden türetilecek belgeler ve belgenin çevirileri için önceden
+      izin alınmalıdır. Türkçe çeviri yazara bildirilmiştir.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      Bu çalışmayı kısmen yayınlarsanız tam sürümünü nasıl edinecekleri
+      bilgisini eklemelisiniz.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      Küçük bölümler nereden alıntılandığının yazılması halinde tanıtım veya
+      eleştiri için izin almadan kullanılabilir. Akademik kullanımlar için
+      istisnalar sağlanabilir: yazara yazın ve sorun. Bu kısıtlamalar
+      öğrencileri ve eğitmenleri kısıtlamak için değil yazarı korumak için
+      getirilmiştir. Bu belgedeki tüm kaynak kodlar (belgenin hazırlandığı
+      SGML hariç) GNU Genel Kamu Lisans'ı ile lisanslanmıştır. Bu lisansa
+      anonim ftp ile GNU arşivlerinden ulaşabilirsiniz.
+     </para>
+    </listitem>
+   </itemizedlist>
+  </sect2>
+  <sect2>
+   <title>Teşekkürler</title>
    <para>
-    <programlisting>
-pasta:x:103:spagetti,fettucini,linguine,vermicelli
-</programlisting>
+    Beni 18 yaşıma kadar getiren aileme teşekkür ederim. Debian
+    geliştiricilerine hazırladıkları güzel dağıtım için teşekkür ederim. Beni
+    bir guru (geek - yazılım hatalarıyla beslenen kişi) olarak tanımlayarak
+    onurlandıran <link xlink:href="http://www.cgr.org/">CGR</link>'ye teşekkür
+    ederim. Sandy Harris'e yararlı önerileri için teşekkür ederim. Son olarak
+    onsuz nasıl yaşayacağımı bilmediğim ramen noodles'ı yaratanlara teşekkür
+    ederim.
+  </para>
+  </sect2>
+  <sect2>
+   <title>Okuyucu Hakkındaki Kabuller</title>
+   <para>
+    Bu belgenin hedefine ulaşabilmesi için okuyucunun komut satırından komut
+    çalıştırmakla ve yapılandırma dosyalarını düzenlemekle bir sorunu olmadığı
+    kabul edilmiştir.
+   </para>
+  </sect2>
+ </sect1>
+ <sect1 xml:id="user-auth-howto-userinfo">
+  <title>Sisteminizde Kullanıcı Bilgileri Nasıl Saklanır</title>
+  <sect2>
+   <title><filename>/etc/passwd</filename></title>
+   <para>
+    Neredeyse tüm Linux dağıtımlarında (ve ticari *nix'lerde) kullanıcı
+    bilgisi <filename>/etc/passwd</filename> dosyasında saklanır. Bu metin
+    dosyasında kullanıcının kullanıcı adı, şifrelenmiş parolası, benzersiz
+    sayısal kullanıcı kimliği (uid), sayısal grup kimliği (gid), seçimlik
+    yorum alanı (burada genellikle kullanıcının gerçek adı, telefon numarası
+    gibi bilgiler bulunur), ev dizini ve tercih ettiği kabuk bilgileri
+    bulunur. <filename>/etc/passwd</filename> dosyasındaki girdiler aşağıdaki
+    gibidir:
+   </para>
+<screen>pete:K3xcO1Qnx8LFN:1000:1000:Peter Hernberg,,,1-800-FOOBAR:/home/pete:/bin/bash
+</screen>
+   <para>
+    Gördüğünüz gibi anlaşılması oldukça kolaydır. Her girdi için yukarıda
+    anlatılan altı alan vardır ve alanlar birbirinden : ile ayrılırlar.
+    Kullanıcı kimlik denetimi sadece bu kadarcık karışık olsaydı bu NASIL
+    belgesine ihtiyaç olmazdı.
+   </para>
+  </sect2>
+  <sect2>
+   <title>Gölgelenmiş Parolalar</title>
+   <para>
+    Sisteminizdeki <filename>/etc/passwd</filename> dosyasına bakarsanız
+    aşağıdakine benzer olduğunu görürsünüz :
+   </para>
+<screen>pete:x:1000:1000:Peter Hernberg,,,1-800-FOOBAR:/home/pete:/bin/bash
+</screen>
+   <para>
+    Şifrelenmiş parola nereye gitti? Buna yanıt vermeden önce biraz açıklama
+    yapmak gerekiyor.
+  </para>
+   <para>
+    Kullanıcılar hakkındaki, şifrelenmiş parolaları dahil, tüm bilgilerin
+    tutulduğu <filename>/etc/passwd</filename> dosyası tüm kullanıcılar
+    tarafından okunabildiğinden herhangi bir kullanıcı sistemdeki tüm
+    kullanıcıların şifrelenmiş parolalarını elde edebilir. Parolalar
+    şifrelenmiş olsalar bile parola-kırma yazılımları yaygın olarak
+    bulunmaktadır. Bu güvenlik tehditiyle mücadele edebilmek için gölgelenmiş
+    parolalar geliştirilmiştir.
    </para>
    <para>
-Parola alanındaki <quote>x</quote> ifadesinden anlaşıldığı gibi grup parolaları da gölgelenebilir. Neredeyse hiçbir grubun parolası olmasa da gölgelenmiş grup parolalarının <filename>/etc/gshadow</filename> dosyasında saklandığını hatırlatmakta fayda var.
-  </para>
-  </section>
-  <section>
-   <info>
-    <title>MD5 şifreli parolalar</title>
-   </info>
+    Bir sistemde gölgelenmiş parolalar etkin kılındığında
+    <filename>/etc/passwd</filename> dosyasındaki parola alanına x yazılır ve
+    kullanıcının gerçek şifrelenmiş parolası <filename>/etc/shadow</filename>
+    dosyasında saklanır. <filename>/etc/shadow</filename> dosyası sadece root
+    tarafından okunabildiği için kötü niyetli kullanıcılar başkalarının
+    parolalarını kıramazlar. <filename>/etc/shadow</filename> dosyası her
+    girdi için kullanıcı adı, şifrelenmiş parola ve parolanın geçerliliği ile
+    ilgili bir kaç alan içerir. Örnek bir girdi aşağıdaki gibidir:
+   </para>
+<screen>pete:/3GJllg1o4152:11009:0:99999:7:::
+</screen>
+  </sect2>
+  <sect2>
+   <title><filename>/etc/group</filename> ve
+    <filename>/etc/gshadow</filename></title>
    <para>
-Geleneksel olarak Unix parolaları <command>crypt()</command> işlevi kullanılarak şifrelenir. (<command>crypt()</command> işlevi hakkında daha fazla bilgi almak için <link linkend="tr-man3-crypt"><command>crypt(3)</command></link> kılavuz dosyasını okuyabilirsiniz.) Bilgisayarların hızlı gelişimi bu işlevle şifrelenmiş parolaların kolayca kırılabilir hale gelmesine yol açtı. Internet'in ortaya çıkmasıyla parola-kırma görevini çok sayıda düğüme dağıtabilmek mümkün hale geldi. Bir çok 'güncel' dağıtım parolaların daha güçlü MD5 çırpılama algoritmasıyla şifrelenebilmesi seçeneğiyle gelmektedir (MD5 çırpılama algoritmasıyla ilgili ayrıntılı bilgi <link  xlink:href="http://www.faqs.org/rfcs/rfc1321.html">RFC 1321</link> adresinden alınabilir). MD5 şifreli parolalar kullanarak parola-kırmanın tamamen önüne geçilemese bile oldukça zorlaştırılır.
-  </para>
-  </section>
-  <section>
-   <info>
-    <title>Karışıklığı önlemek</title>
-   </info>
+    Grup bilgisi <filename>/etc/group</filename> dosyasında saklanır. Dosya
+    biçimi <filename>/etc/passwd</filename>'e benzer. Her girdi için grup adı,
+    parolası, grup numarası (gid) ve birbirinden virgülle ayrılmış grup
+    üyelerinin yeraldığı alanlar bulunur. <filename>/etc/group</filename>
+    içindeki bir girdi aşağıdaki gibidir:
+   </para>
+<screen>pasta:x:103:spagetti,fettucini,linguine,vermicelli
+</screen>
    <para>
-Gördüğünüz gibi sisteminizde kullanıcı kimlik kanıtlamasında kullanılacak bilgileri saklamak için farklı yöntemler mevcuttur (MD5 şifrelemesi olmadan gölgelenmiş parolalar, parolaların MD5 ile şifrelenip <filename>/etc/passwd</filename> dosyasında saklanması, vs.). <application>login</application> veya <application>su</application> gibi programlar parolaları nasıl doğrulayacaklarını nereden biliyorlar? Daha kötüsü, sisteminizde parolaların saklanma biçimini değiştirirseniz ne olur? Parolanıza ihtiyaç duyan programlar parolaların artık farklı biçimde saklandığını nasıl bilecekler? Bu soruların yanıtı bizi PAM'e götürür.
+    Parola alanındaki <quote>x</quote> ifadesinden anlaşıldığı gibi grup
+    parolaları da gölgelenebilir. Neredeyse hiçbir grubun parolası olmasa da
+    gölgelenmiş grup parolalarının <filename>/etc/gshadow</filename>
+    dosyasında saklandığını hatırlatmakta fayda var.
+   </para>
+  </sect2>
+  <sect2>
+   <title>MD5 şifreli parolalar</title>
+   <para>
+    Geleneksel olarak Unix parolaları <command>crypt()</command> işlevi
+    kullanılarak şifrelenir. (<command>crypt()</command> işlevi hakkında daha
+    fazla bilgi almak için <link linkend="tr-man3-crypt">
+    <command>crypt(3)</command></link> kılavuz dosyasını okuyabilirsiniz.)
+    Bilgisayarların hızlı gelişimi bu işlevle şifrelenmiş parolaların kolayca
+    kırılabilir hale gelmesine yol açtı. Internet'in ortaya çıkmasıyla parola-
+    kırma görevini çok sayıda düğüme dağıtabilmek mümkün hale geldi. Bir çok
+    'güncel' dağıtım parolaların daha güçlü MD5 aşlama algoritmasıyla
+    şifrelenebilmesi seçeneğiyle gelmektedir (MD5 aşlama algoritmasıyla
+    ilgili ayrıntılı bilgi <link
+    xlink:href="http://www.faqs.org/rfcs/rfc1321.html">RFC 1321</link>
+    adresinden alınabilir). MD5 şifreli parolalar kullanarak parola-kırmanın
+    tamamen önüne geçilemese bile oldukça zorlaştırılır.
+   </para>
+  </sect2>
+  <sect2>
+   <title>Karışıklığı önlemek</title>
+   <para>
+    Gördüğünüz gibi sisteminizde kullanıcı kimlik kanıtlamasında kullanılacak
+    bilgileri saklamak için farklı yöntemler mevcuttur (MD5 şifrelemesi
+    olmadan gölgelenmiş parolalar, parolaların MD5 ile şifrelenip
+    <filename>/etc/passwd</filename> dosyasında saklanması, vs.).
+    <application>login</application> veya <application>su</application> gibi
+    yazılımlar parolaları nasıl doğrulayacaklarını nereden biliyorlar? Daha
+    kötüsü, sisteminizde parolaların saklanma biçimini değiştirirseniz ne
+    olur? Parolanıza ihtiyaç duyan yazılımlar parolaların artık farklı biçimde
+    saklandığını nasıl bilecekler? Bu soruların yanıtı bizi PAM'e götürür.
   </para>
-  </section>
- </section>
- <section xml:id="user-auth-howto-pam">
-  <info>
-   <title>PAM (Eklenebilir Kimlik Kanıtlama Modülleri)</title>
-  </info>
+  </sect2>
+ </sect1>
+ <sect1 xml:id="user-auth-howto-pam">
+  <title>PAM (Eklemlenebilir Kimlik Kanıtlama Modülleri)</title>
   <para>
-Eklenebilir kimlik kanıtlama modülleri günümüzdeki tüm linux dağıtımlarında kimlik kanıtlamanın esasını oluşturur.
+   Eklemlenebilir kimlik kanıtlama modülleri günümüzdeki tüm linux
+   dağıtımlarında kimlik kanıtlamanın esasını oluşturur.
  </para>
-  <section>
-   <info>
-    <title>Neden</title>
-   </info>
+  <sect2>
+   <title>Neden</title>
    <para>
-Linux'un eski güzel günlerinde <application>su</application>, <application>passwd</application>, <application>login</application> ya da <application>xlock</application> gibi bir program bir kullanıcının kimlik doğrulamasını yapmak istediğinde gerekli bilgiyi basitçe <filename>/etc/passwd</filename> dosyasından okurdu. Kullanıcının parolasını değiştirmek için <filename>/etc/passwd</filename> dosyasını düzenlemek yeterliydi. Bu basit ama beceriksiz yöntem sistem yöneticileri ve uygulama geliştiricilerini sorunlarla karşı karşıya bırakıyordu. MD5 şifreli ve gölgelenmiş parolalar popüler oldukça kullanıcı kimlik kanıtlamasına ihtiyaç duyan her programın doğru bilgiyi hangi yöntemle alacağını bilmesi gerekliliği ortaya çıktı. Kullanıcı kimlik kanıtlaması şemanızı değiştirmek isterseniz tüm programları yeniden derlemeniz gerekliydi. PAM bu karmaşayı kullanıcı bilgisinin nasıl saklandığından bağımsız olarak, programların kimlik kanıtlamasını şeffaf bir biçimde yapmalarına izin vererek ortadan kaldırdı.
+    Linux'un eski güzel günlerinde <application>su</application>,
+    <application>passwd</application>, <application>login</application> ya da
+    <application>xlock</application> gibi bir yazılım bir kullanıcının kimlik
+    doğrulamasını yapmak istediğinde gerekli bilgiyi basitçe
+    <filename>/etc/passwd</filename> dosyasından okurdu. Kullanıcının
+    parolasını değiştirmek için <filename>/etc/passwd</filename> dosyasını
+    düzenlemek yeterliydi. Bu basit ama beceriksiz yöntem sistem yöneticileri
+    ve uygulama geliştiricilerini sorunlarla karşı karşıya bırakıyordu. MD5
+    şifreli ve gölgelenmiş parolalar popüler oldukça kullanıcı kimlik
+    kanıtlamasına ihtiyaç duyan her yazılımın doğru bilgiyi hangi yöntemle
+    alacağını bilmesi gerekliliği ortaya çıktı. Kullanıcı kimlik kanıtlaması
+    şemanızı değiştirmek isterseniz tüm yazılımları yeniden derlemeniz
+    gerekliydi. PAM bu karmaşayı kullanıcı bilgisinin nasıl saklandığından
+    bağımsız olarak, yazılımların kimlik kanıtlamasını şeffaf bir biçimde
+    yapmalarına izin vererek ortadan kaldırdı.
   </para>
-  </section>
-  <section>
-   <info>
-    <title>Nedir</title>
-   </info>
-   <para><link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.kernel.org/pub/linux/libs/pam/Linux-PAM-html/pam.html">Linux-PAM Sistem Yöneticisinin Kılavuzu</link>'ndan alıntı:
-  </para>
+  </sect2>
+  <sect2>
+   <title>Nedir</title>
+   <para><link
+    xlink:href="http://www.kernel.org/pub/linux/libs/pam/Linux-PAM-html/pam.html">
+    Linux-PAM Sistem Yöneticisinin Kılavuzu</link>'ndan alıntı:
+   </para>
+   <blockquote>
+    <para>
+     Linux-PAM projesinin amacı, ayrıcalık verme yazılımları ile güvenli ve
+     uygun kimlik kanıtlama şemalarının gelişimini birbirinden ayırmaktır.
+     Uygulamaların kimlik kanıtlamasında kullanabilecekleri işlevler
+     kütüphanesi aracılığıyla bu gerçekleşir.
+    </para>
+   </blockquote>
    <para>
-    <blockquote>
-     <para>Linux-PAM projesinin amacı, ayrıcalık verme yazılımları ile güvenli ve uygun kimlik kanıtlama şemalarının gelişimini birbirinden ayırmaktır. Bu, uygulamaların kimlik kanıtlamasında kullanabilecekleri bir işlevler kütüphanesi sağlanarak gerçekleştirilir.</para>
-    </blockquote>
+    PAM sayesinde parolalarınızı <filename>/etc/passwd</filename> dosyasında
+    veya Hong Kong'daki bir sunucuda tutmanız farketmez. Bir yazılım kullanıcı
+    kimlik kanıtlamasına ihtiyaç duyduğunda, PAM uygun kimlik kanıtlama şeması
+    için gereken işlevleri içeren bir kütüphane sunar. Bu kütüphane dinamik
+    olarak yüklendiği için kimlik kanıtlama şemasını değiştirmek için basitçe
+    yapılandırma dosyasını düzenlemek yeterli olur.
    </para>
    <para>
-PAM sayesinde parolalarınızı <filename>/etc/passwd</filename> dosyasında veya Hong Kong'daki bir sunucuda tutmanız farketmez. Bir program kullanıcı kimlik kanıtlamasına ihtiyaç duyduğunda, PAM uygun kimlik kanıtlama şeması için gereken işlevleri içeren bir kütüphane sunar. Bu kütüphane dinamik olarak yüklendiği için kimlik kanıtlama şemasını değiştirmek için basitçe yapılandırma dosyasını düzenlemek yeterli olur.
-  </para>
+    Esneklik PAM'in en önemli güçlerinden birisidir. PAM belirli yazılımların
+    kullanıcı kimlik kanıtlaması yapamayacağı, sadece belirli kullanıcıların
+    kimlik kanıtlaması yapabileceği, bazı yazılımlar kimlik kanıtlaması yapmak
+    istediğinde uyarı verecek şekilde ve hatta tüm kullanıcıları oturum açma
+    ayrıcalıklarından mahrum bırakacak şekilde yapılandırılabilir. PAM'in
+    modüler tasarımı kimlik denetimi üzerindeki bütün denetimi elinize
+    almanıza izin verir.
+   </para>
+   <sect3>
+    <title>PAM destekleyen dağıtımlar</title>
+    <para>
+     Neredeyse tüm tanınmış dağıtımlar bir süredir PAM destekliyorlar. Aşağıda
+     PAM destekleyen dağıtımların bir kısmının listesi bulunmaktadır:
+    </para>
+    <simplelist>
+     <member>Redhat, 5.0 sürümünden itibaren</member>
+     <member>Mandrake, 5.2 sürümünden itibaren</member>
+     <member>Debian, 2.1 sürümünden itibaren (2.1 sürümde kısmi destek
+      -- 2.2 sürümünde tam destek)</member>
+     <member>Caldera, 1.3 sürümünden itibaren</member>
+     <member>Turbolinux, 3.6 sürümünden itibaren</member>
+     <member>SuSE, 6.2 sürümünden itibaren</member>
+    </simplelist>
+    <para>
+     Bu liste tam olmadığı gibi hatalı da olabilir. Düzeltmelerinizi ve
+     eklemelerinizi <email>petehern@yahoo.com</email> gönderirseniz memnun
+     olurum.
+    </para>
+   </sect3>
+   <sect3>
+    <title>PAM Kurulumu</title>
+    <para>
+     Sıfırdan PAM kurulumu bu NASIL'ın kapsamını aşan uzun bir süreçtir. Eğer
+     sisteminizde PAM kurulu değilse, büyük olasılıkla kullandığınız dağıtımın
+     çok eski bir sürümünü kullanıyorsunuz. Dağıtımınızı güncellemeniz için
+     başka nedenler de bulunmasına rağmen güncel bir dağıtım kullanmak yerine
+     PAM kurulumunu kendiniz yapmak istiyorsanız kesinlikle benim yardımıma
+     ihtiyacı olan birisi değilsiniz. Bu nedenlerle sisteminizde PAM kurulu
+     olduğunu kabul edeceğim.
+    </para>
+   </sect3>
+  </sect2>
+  <sect2>
+   <title>Nasıl</title>
    <para>
-Esneklik PAM'in en önemli güçlerinden birisidir. PAM belirli programların kullanıcı kimlik kanıtlaması yapamayacağı, sadece belirli kullanıcıların kimlik kanıtlaması yapabileceği, bazı programlar kimlik kanıtlaması yapmak istediğinde uyarı verecek şekilde ve hatta tüm kullanıcıları oturum açma ayrıcalıklarından mahrum bırakacak şekilde yapılandırılabilir. PAM'in modüler tasarımı kimlik denetimi üzerindeki bütün kontrolü elinize almanıza izin verir.
+    Yeterince konuştum, çalışma zamanı.
   </para>
-   <section>
-    <info>
-     <title>PAM destekleyen dağıtımlar</title>
-    </info>
+   <sect3>
+    <title>PAM yapılandırma dosyaları</title>
     <para>
-Neredeyse tüm tanınmış dağıtımlar bir süredir PAM destekliyorlar. Aşağıda PAM destekleyen dağıtımların bir kısmının listesi bulunmaktadır:
+     PAM yapılandırma dosyaları <filename>/etc/pam.d/</filename> dizininde
+     bulunur. (Eğer sisteminizde <filename>/etc/pam.d/</filename> dizini yoksa
+     dert etmeyin, sıradaki bölümde ne yapacağınızı anlatacağım) Şimdi bu
+     dizine geçelim ve neler olduğuna bakalım.
     </para>
-    <para>
-     <itemizedlist>
-      <listitem>Redhat, 5.0 sürümünden itibaren
-   </listitem>
-      <listitem>
-Mandrake, 5.2 sürümünden itibaren
-   </listitem>
-      <listitem>
-Debian, 2.1 sürümünden itibaren (2.1 sürümde kısmi destek -- 2.2 sürümünde tam destek)
-   </listitem>
-      <listitem>
-Caldera, 1.3 sürümünden itibaren
-   </listitem>
-      <listitem>
-Turbolinux, 3.6 sürümünden itibaren
-   </listitem>
-      <listitem>
-SuSE, 6.2 sürümünden itibaren
-   </listitem>
-     </itemizedlist>
-    </para>
-    <para>
-Bu liste tam olmadığı gibi hatalı da olabilir. Düzeltmelerinizi ve eklemelerinizi <email>petehern@yahoo.com</email> gönderirseniz memnun olurum.
-  </para>
-   </section>
-   <section>
-    <info>
-     <title>PAM Kurulumu</title>
-    </info>
-    <para>
-Sıfırdan PAM kurulumu bu NASIL'ın kapsamını aşan uzun bir süreçtir. Eğer sisteminizde PAM kurulu değilse, büyük olasılıkla kullandığınız dağıtımın çok eski bir sürümünü kullanıyorsunuz. Dağıtımınızı güncellemeniz için başka nedenler de bulunmasına rağmen güncel bir dağıtım kullanmak yerine PAM kurulumunu kendiniz yapmak istiyorsanız kesinlikle benim yardımıma ihtiyacı olan birisi değilsiniz. Bu nedenlerle sisteminizde PAM kurulu olduğunu kabul edeceğim.
-    </para>
-   </section>
-  </section>
-  <section>
-   <info>
-    <title>Nasıl</title>
-   </info>
-   <para>
-Yeterince konuştum, çalışma zamanı.
-  </para>
-   <section>
-    <info>
-     <title>PAM yapılandırma dosyaları</title>
-    </info>
-    <para>
-PAM yapılandırma dosyaları <filename>/etc/pam.d/</filename> dizininde bulunur.
-(Eğer sisteminizde <filename>/etc/pam.d/</filename> dizini yoksa dert etmeyin, sıradaki bölümde ne yapacağınızı anlatacağım) Şimdi bu dizine geçelim ve neler olduğuna bakalım.
-    </para>
-    <para>
-     <programlisting><prompt>~$ </prompt><userinput>cd /etc/pam.d</userinput><prompt>/etc/pam.d/$ </prompt><userinput>ls</userinput>
+<screen>~$ cd /etc/pam.d
+/etc/pam.d/$ ls
 chfn  chsh    login   other   passwd  su      xlock
-<prompt>/etc/pam.d/$ </prompt>
-</programlisting>
-    </para>
+/etc/pam.d/$
+</screen>
     <para>
-Bu dizinin içerdiği dosyalar sisteminize neler kurduğunuza bağlı olarak üç aşağı beş yukarı böyledir. Ayrıntılar ne olursa olsun, sisteminizde kullanıcı kimlik kanıtlamasına ihtiyaç duyan her program için bir dosya görüyor olmalısınız. Tahmin ettiğiniz gibi her dosya bir program için PAM kimlik kanıtlaması yapılandırmasını içerir (<filename>other</filename> dosyası bir istisnadır, ondan birazdan bahsedeceğiz). Login için PAM yapılandırma dosyasının içeriğine bakalım (dosyanın içeriğini basitleştirdim):
+     Bu dizinin içerdiği dosyalar sisteminize neler kurduğunuza bağlı olarak
+     üç aşağı beş yukarı böyledir. Ayrıntılar ne olursa olsun, sisteminizde
+     kullanıcı kimlik kanıtlamasına ihtiyaç duyan her yazılım için bir dosya
+     görüyor olmalısınız. Tahmin ettiğiniz gibi her dosya bir yazılım için PAM
+     kimlik kanıtlaması yapılandırmasını içerir (<filename>other</filename>
+     dosyası bir istisnadır, ondan birazdan bahsedeceğiz). Login için PAM
+     yapılandırma dosyasının içeriğine bakalım (dosyanın içeriğini
+     basitleştirdim):
     </para>
-    <para>
-     <programlisting><prompt>/etc/pam.d/$ </prompt><userinput>cat login</userinput>
+<screen>/etc/pam.d/$ cat login
 # PAM configuration for login
 auth       requisite  pam_securetty.so
 auth       required   pam_nologin.so
@@ -338,226 +405,259 @@ account    required   pam_unix.so
 session    required   pam_unix.so
 session    optional   pam_lastlog.so
 password   required   pam_unix.so nullok obscure min=4 max=8
-</programlisting>
+</screen>
+    <para>
+     Dosyanın içeriğine geçmeden önce biraz bilgi vermem gerekir.
     </para>
+   </sect3>
+   <sect3>
+    <title>Ek bilgi</title>
     <para>
-Dosyanın içeriğine geçmeden önce biraz bilgi vermem gerekir.
-  </para>
-   </section>
-   <section>
-    <info>
-     <title>Ek bilgi</title>
-    </info>
-    <para>
-Okuyucuların küçük bir kısmı şöyle düşünüyor olmalı; <quote>Olamaz! Sistemimde <filename>/etc/pam.d</filename> dizini yok! Yukarıdaki listenizde dağıtımımın PAM içerdiği söyleniyor ama bulamıyorum. PAM olmadan hayatım boş ve anlamsız! Ne yapabilirim?</quote> Telaşlanmayın, herşey bitmiş değil. Dağıtımınızın PAM içerdiğini bildiğiniz halde <filename>/etc/pam.d/</filename> dizini yoksa PAM yapılandırmanız <filename>/etc/pam.conf</filename> dosyasında saklanıyordur. Birçok dosya kullanmak yerine tüm PAM yapılandırması için tek bir dosya kullanılıyordur. Bu PAM yapılandırmasını biraz karmaşıklaştırır ama uygun ayarlamalar <xref linkend="user-auth-howto-pamconf"/> bölümünde anlatılacaktır.
-  </para>
-   </section>
-   <section>
-    <info>
-     <title>Yapılandırma sözdizimi</title>
-    </info>
-    <para>
-PAM yapılandırma dosyaları aşağıdaki sözdizimine sahiptir:
+     Okuyucuların küçük bir kısmı şöyle düşünüyor olmalı; <quote>Olamaz!
+     Sistemimde <filename>/etc/pam.d</filename> dizini yok! Yukarıdaki
+     listenizde dağıtımımın PAM içerdiği söyleniyor ama bulamıyorum. PAM
+     olmadan hayatım boş ve anlamsız! Ne yapabilirim?</quote> Telaşlanmayın,
+     herşey bitmiş değil. Dağıtımınızın PAM içerdiğini bildiğiniz halde
+     <filename>/etc/pam.d/</filename> dizini yoksa PAM yapılandırmanız
+     <filename>/etc/pam.conf</filename> dosyasında saklanıyordur. Birçok dosya
+     kullanmak yerine tüm PAM yapılandırması için tek bir dosya
+     kullanılıyordur. Bu PAM yapılandırmasını biraz karmaşıklaştırır ama uygun
+     ayarlamalar <xref linkend="user-auth-howto-pamconf"/> bölümünde
+     anlatılacaktır.
     </para>
+   </sect3>
+   <sect3>
+    <title>Yapılandırma sözdizimi</title>
     <para>
-     <literallayout class="normal">
-      <emphasis>tür   denetim   modul-yolu   modul-argümanları</emphasis>
-     </literallayout>
+     PAM yapılandırma dosyaları aşağıdaki sözdizimine sahiptir:
     </para>
+<literallayout><emphasis>tür   denetim   modul-yolu   modul-argümanları</emphasis>
+</literallayout>
     <para>
-Yukarıdaki örnekte <filename>login</filename> dosyası için verilen yapılandırma dosyasını kullanarak PAM yapılandırma sözdizimine bakalım:
+     Yukarıdaki örnekte <filename>login</filename> dosyası için verilen
+     yapılandırma dosyasını kullanarak PAM yapılandırma sözdizimine bakalım:
     </para>
-    <para>
-     <glosslist>
-      <glossentry>
-       <glossterm>
-        <replaceable>tür</replaceable>
-       </glossterm>
-       <glossdef>
-        <para><replaceable>tür</replaceable> özelliği PAM'e bu modül için hangi tür kimlik kanıtlamasının kullanılacağını söyler. Aynı türden modüller <quote>istiflenebilir</quote>. PAM dört farklı <replaceable>tür</replaceable> tanır:
-    </para>
+    <glosslist>
+     <title>PAM yapılandırma özellikleri</title>
+     <glossentry>
+      <glossterm><replaceable>tür</replaceable></glossterm>
+      <glossdef>
+       <para>
+        <replaceable>tür</replaceable> özelliği PAM'e bu modül için hangi tür
+        kimlik kanıtlamasının kullanılacağını söyler. Aynı türden modüller
+        <quote>istiflenebilir</quote>. PAM dört farklı
+        <replaceable>tür</replaceable> tanır:
+       </para>
+       <glosslist>
+        <glossentry>
+         <glossterm><literal>account</literal></glossterm>
+         <glossdef>
+          <para>
+           Kullanıcının servise erişmeye izni olup olmadığını, parolasının
+           süresinin geçip geçmediğini tespit eder.
+          </para>
+         </glossdef>
+        </glossentry>
+        <glossentry>
+         <glossterm><literal>auth</literal></glossterm>
+         <glossdef>
+          <para>
+           Kullanıcının iddia ettiği kişi olup olmadığını denetler, bunu
+           genellikle parola ile yapar ama örneğin biyometri gibi daha
+           karmaşık yöntemler de kullanabilir.
+          </para>
+         </glossdef>
+        </glossentry>
+        <glossentry>
+         <glossterm><literal>password</literal></glossterm>
+         <glossdef>
+          <para>
+           Kullanıcının kimlik kanıtlaması için kullandığı şeyi değiştirmesi
+           için bir mekanizma sağlar. Bu genellikle paroladır.
+          </para>
+         </glossdef>
+        </glossentry>
+        <glossentry>
+         <glossterm><literal>session</literal></glossterm>
+         <glossdef>
+          <para>
+           Kullanıcının kimlik kanıtlaması yapıldıktan sonra ve/veya önce
+           yapılması gerekenler.
+           Bunlar kullanıcının ev dizininin bağlanması/çözülmesi, açıp
+           kapattığı oturumların kaydının tutulması ve kullanıcının
+           kullanabileceği servislerin kısıtlanması gibi şeyler olabilir.
+          </para>
+         </glossdef>
+        </glossentry>
+       </glosslist>
+       <para>
+        <filename>login</filename> yapılandırma dosyasında her
+        <replaceable>tür</replaceable> için en az bir girdi olduğunu gördük.
+        Bu yazılım kullanıcıların oturum açmalarına izin verdiğinden (adından
+        da anlaşıldığı gibi :), kimlik kanıtlamasının her türlüsüne
+        erişebilmesinin gerekmesi anlaşılabilir bir şeydir.
+       </para>
+      </glossdef>
+     </glossentry>
+     <glossentry>
+      <glossterm><replaceable>denetim</replaceable></glossterm>
+      <glossdef>
+       <para>
+        <replaceable>denetim</replaceable> özelliği PAM'e bir modül kimlik
+        kanıtlamasında başarısız olduğunda ne yapması gerektiğini söyler.
+        PAM dört farklı <replaceable>denetim</replaceable> türü tanır:
+       </para>
+       <glosslist>
+        <glossentry>
+         <glossterm><literal>requisite</literal></glossterm>
+         <glossdef>
+          <para>
+           Bu modül yoluyla kimlik kanıtlaması başarısız olursa kimlik
+           kanıtlaması derhal reddedilir.
+          </para>
+         </glossdef>
+        </glossentry>
+        <glossentry>
+         <glossterm><literal>required</literal></glossterm>
+         <glossdef>
+          <para>
+           PAM kimlik kanıtlamasını reddetmeden önce bu servis için
+           listelenmiş diğer modülleri çağırmaya devam etse de başarısızlık
+           yine kimlik kanıtlamasının reddi ile sonuçlanır.
+          </para>
+         </glossdef>
+        </glossentry>
+        <glossentry>
+         <glossterm>
+          <literal>sufficient</literal>
+         </glossterm>
+         <glossdef>
+          <para>
+           Bu modül ile kimlik kanıtlaması başarılı olursa, PAM kimlik
+           doğrulamasını daha önceki gerekli bir modülde başarısız olsa bile
+           kabul edecektir.
+          </para>
+         </glossdef>
+        </glossentry>
+        <glossentry>
+         <glossterm><literal>optional</literal></glossterm>
+         <glossdef>
+          <para>
+           Bu modülün başarılı olması veya olmaması ancak bir servis için
+           kendi türünde tek modül olması halinde önemlidir.
+          </para>
+         </glossdef>
+        </glossentry>
+       </glosslist>
         <para>
-         <glosslist>
-          <glossentry>
-           <glossterm>
-            <literal>account</literal>
-           </glossterm>
-           <glossdef>
-            <para>
-Kullanıcının servise erişmeye izni olup olmadığını, parolasının süresinin geçip geçmediğini tespit eder.
-       </para>
-           </glossdef>
-          </glossentry>
-          <glossentry>
-           <glossterm>
-            <literal>auth</literal>
-           </glossterm>
-           <glossdef>
-            <para>
-Kullanıcının iddia ettiği kişi olup olmadığını denetler, bunu genellikle parola ile yapar ama örneğin biyometri gibi daha karmaşık yöntemler de kullanabilir.
-       </para>
-           </glossdef>
-          </glossentry>
-          <glossentry>
-           <glossterm>
-            <literal>password</literal>
-           </glossterm>
-           <glossdef>
-            <para>
-Kullanıcının kimlik kanıtlaması için kullandığı şeyi değiştirmesi için bir mekanizma sağlar. Bu genellikle paroladır.
-       </para>
-           </glossdef>
-          </glossentry>
-          <glossentry>
-           <glossterm>
-            <literal>session</literal>
-           </glossterm>
-           <glossdef>
-            <para>
-Kullanıcının kimlik kanıtlaması yapıldıktan sonra ve/veya önce yapılması gerekenler.
-Bunlar kullanıcının ev dizininin bağlanması/çözülmesi, açıp kapattığı oturumların kaydının tutulması ve kullanıcının kullanabileceği servislerin kısıtlanması gibi şeyler olabilir.
-       </para>
-           </glossdef>
-          </glossentry>
-         </glosslist>
+         Login için yapılandırma dosyasında neredeyse tüm
+         <replaceable>denetim</replaceable> türlerini gördük. En çok ihtiyaç
+         duyulan modül <filename>pam_unix.so</filename> (temel kimlik
+         kanıtlama modülü), zorunlu tek modül
+         <filename>pam_securetty.so</filename> (kullanıcının güvenli konsola
+         oturum açtığından emin olmayı sağlar) ve seçimlik tek modül
+         <filename>pam_lastlog.so</filename> (kullanıcının en son açtığı
+         oturum ile ilgili bilgileri getiren modül).
         </para>
-        <para><filename>login</filename> yapılandırma dosyasında her <replaceable>tür</replaceable> için en az bir girdi olduğunu gördük. Bu program kullanıcıların oturum açmalarına izin verdiğinden (adından da anlaşıldığı gibi :), kimlik kanıtlamasının her türlüsüne erişebilmesinin gerekmesi anlaşılabilir bir şeydir.
-     </para>
        </glossdef>
       </glossentry>
       <glossentry>
-       <glossterm>
-        <replaceable>denetim</replaceable>
-       </glossterm>
+       <glossterm><replaceable>modül-yolu</replaceable></glossterm>
        <glossdef>
-        <para><replaceable>denetim</replaceable> özelliği PAM'e bir modül kimlik kanıtlamasında başarısız olduğunda ne yapması gerektiğini söyler. PAM dört farklı <replaceable>denetim</replaceable> türü tanır:
-    </para>
         <para>
-         <glosslist>
-          <glossentry>
-           <glossterm>
-            <literal>requisite</literal>
-           </glossterm>
-           <glossdef>
-            <para>
-Bu modül yoluyla kimlik kanıtlaması başarısız olursa kimlik kanıtlaması derhal reddedilir.
-      </para>
-           </glossdef>
-          </glossentry>
-          <glossentry>
-           <glossterm>
-            <literal>required</literal>
-           </glossterm>
-           <glossdef>
-            <para>
-PAM kimlik kanıtlamasını reddetmeden önce bu servis için listelenmiş diğer modülleri çağırmaya devam etse de başarısızlık yine kimlik kanıtlamasının reddi ile sonuçlanır.
-      </para>
-           </glossdef>
-          </glossentry>
-          <glossentry>
-           <glossterm>
-            <literal>sufficient</literal>
-           </glossterm>
-           <glossdef>
-            <para>
-Bu modül ile kimlik kanıtlaması başarılı olursa, PAM kimlik doğrulamasını daha önceki gerekli bir modülde başarısız olsa bile kabul edecektir.
-      </para>
-           </glossdef>
-          </glossentry>
-          <glossentry>
-           <glossterm>
-            <literal>optional</literal>
-           </glossterm>
-           <glossdef>
-            <para>
-Bu modülün başarılı olması veya olmaması ancak bir servis için kendi türünde tek modül olması halinde önemlidir.
-      </para>
-           </glossdef>
-          </glossentry>
-         </glosslist>
+         PAM hangi modülü kullanacağını ve modülleri nerede bulacağını
+         <replaceable>modül-yolu</replaceable> sayesinde bilir. Çoğu
+         yapılandırma <filename>login</filename> örneğinde olduğu gibi sadece
+         modülün adını içerir. Böyle durumlarda, PAM öntanımlı PAM modül
+         dizinine bakar, bu normalde <filename>/usr/lib/security</filename>
+         dizinidir. Bununla birlikte eğer linux dağıtımınız Dosyasistemi
+         Hiyerarşisi Standardına (FHS) uygun ise PAM modülleri
+         <filename>/lib/security</filename> dizininde bulunur.
         </para>
-        <para>
-Login için yapılandırma dosyasında neredeyse tüm <replaceable>denetim</replaceable> türlerini gördük. En çok ihtiyaç duyulan modül <filename>pam_unix.so</filename> (temel kimlik kanıtlama modülü), zorunlu tek modül <filename>pam_securetty.so</filename> (kullanıcının güvenli konsola oturum açtığından emin olmayı sağlar) ve seçimlik tek modül <filename>pam_lastlog.so</filename> (kullanıcının en son açtığı oturum ile ilgili bilgileri getiren modül).
-    </para>
        </glossdef>
       </glossentry>
       <glossentry>
-       <glossterm>
-        <replaceable>modül-yolu</replaceable>
-       </glossterm>
+       <glossterm><replaceable>modüle-argümanları</replaceable></glossterm>
        <glossdef>
         <para>
-PAM hangi modülü kullanacağını ve modülleri nerede bulacağını <replaceable>modül-yolu</replaceable> sayesinde bilir. Çoğu yapılandırma <filename>login</filename> örneğinde olduğu gibi sadece modülün adını içerir. Böyle durumlarda, PAM öntanımlı PAM modül dizinine bakar, bu normalde <filename>/usr/lib/security</filename> dizinidir. Bununla birlikte eğer linux dağıtımınız Dosyasistemi Hiyerarşisi Standardına (FHS) uygun ise PAM modülleri <filename>/lib/security</filename> dizininde bulunur.
-   </para>
-       </glossdef>
-      </glossentry>
-      <glossentry>
-       <glossterm>
-        <replaceable>modüle-argümanları</replaceable>
-       </glossterm>
-       <glossdef>
-        <para><replaceable>modüle-argümanları</replaceable> modüllerin parametreleridir. Her modülün kendi parametresi vardır. Örneğin bizim <filename>login</filename> yapılandırmasında <quote>nulok</quote> (pam_unix.so modülüne <quote>null ok</quote> parametresi gönderilmesi <quote>boş</quote> parolaların <quote>geçerli</quote> olduğu anlamındadır).
-     </para>
+         <replaceable>modüle-argümanları</replaceable> modüllerin
+         parametreleridir. Her modülün kendi parametresi vardır. Örneğin bizim
+         <filename>login</filename> yapılandırmasında <quote>nulok</quote>
+         (pam_unix.so modülüne <quote>null ok</quote> parametresi gönderilmesi
+         <quote>boş</quote> parolaların <quote>geçerli</quote> olduğu
+         anlamındadır).
+        </para>
        </glossdef>
       </glossentry>
      </glosslist>
-    </para>
-   </section>
-   <section xml:id="user-auth-howto-pamconf">
-    <info>
-     <title><filename>pam.conf</filename> yapılandırması</title>
-    </info>
+   </sect3>
+   <sect3 xml:id="user-auth-howto-pamconf">
+    <title><filename>pam.conf</filename> yapılandırması</title>
     <para>
-Eğer PAM yapılandırmanız <filename>/etc/pam.d/</filename> dizini yerine <filename>/etc/pam.conf</filename> dosyasında saklanıyorsa PAM yapılandırma satırları biraz farklıdır. Her servisin kendi yapılandırma dosyası olması yerine tüm yapılandırmalar <filename>/etc/pam.conf</filename> dosyasında servisin adı ile başlayan satırlardan oluşur. Örneğin <filename>/etc/pam.d/login</filename> dosyasındaki aşağıdaki satır:
+     Eğer PAM yapılandırmanız <filename>/etc/pam.d/</filename> dizini yerine
+     <filename>/etc/pam.conf</filename> dosyasında saklanıyorsa PAM
+     yapılandırma satırları biraz farklıdır. Her servisin kendi yapılandırma
+     dosyası olması yerine tüm yapılandırmalar
+     <filename>/etc/pam.conf</filename> dosyasında servisin adı ile başlayan
+     satırlardan oluşur. Örneğin <filename>/etc/pam.d/login</filename>
+     dosyasındaki aşağıdaki satır:
     </para>
+<screen>auth       required   pam_unix.so nulok</screen>
     <para>
-     <programlisting>
-auth       required   pam_unix.so nulok
-</programlisting>
+     <filename>/etc/pam.conf</filename> dosyasında şu hale gelir:
     </para>
-    <para><filename>/etc/pam.conf</filename> dosyasında şu hale gelir:
-    </para>
+<screen>login       auth       required   pam_unix.so nulok</screen>
     <para>
-     <programlisting>
-login       auth       required   pam_unix.so nulok
-</programlisting>
+     Bu basit farklılıkların dışında, yapılandırmanın geri kalanında PAM
+     sözdizimi uygulanır.
     </para>
-    <para>
-Bu basit farklılıkların dışında, yapılandırmanın geri kalanında PAM sözdizimi uygulanır.
-    </para>
-   </section>
-  </section>
-  <section>
-   <info>
-    <title>Daha fazla bilgi edinmek</title>
-   </info>
+   </sect3>
+  </sect2>
+  <sect2>
+   <title>Daha fazla bilgi edinmek</title>
    <para>
-PAM yapılandırması hakkında daha fazla bilgi edinmek ve bütün PAM modüllerinin teknik açıklamalarına ulaşmak için <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.kernel.org/pub/linux/libs/pam/Linux-PAM-html/pam.html">Linux-PAM Sistem Yöneticisinin Kılavuzu</link>'nu kullanabilirsiniz. Bu kılavuz size PAM yapılandırması hakkındaki en güncel bilgileri sağlar.
+    PAM yapılandırması hakkında daha fazla bilgi edinmek ve bütün PAM
+    modüllerinin teknik açıklamalarına ulaşmak için <link
+    xlink:href="http://www.kernel.org/pub/linux/libs/pam/Linux-PAM-html/pam.html">
+    Linux-PAM Sistem Yöneticisinin Kılavuzu</link>'nu kullanabilirsiniz.
+    Bu kılavuz size PAM yapılandırması hakkındaki en güncel bilgileri sağlar.
    </para>
-  </section>
- </section>
- <section xml:id="user-auth-howto-secure">
-  <info>
-   <title>Kullanıcı Kimlik Denetimini Güvenli Hale Getirmek</title>
-  </info>
+  </sect2>
+ </sect1>
+ <sect1 xml:id="user-auth-howto-secure">
+  <title>Kullanıcı Kimlik Denetimini Güvenli Hale Getirmek</title>
   <para>
-Birçok linux dağıtımı kullanıcı kimlik kanıtlamasını yeterince güvenli gerçekleştirmez. Bu bölümde sisteminizde kimlik denetimini nasıl daha güvenli hale getirebileceğinizi tartışacağız. Burada anlatılanları yapmanız sisteminizi daha güvenli hale getirir ama kırılamaz yapmaz.
+   Birçok linux dağıtımı kullanıcı kimlik kanıtlamasını yeterince güvenli
+   gerçekleştirmez. Bu bölümde sisteminizde kimlik denetimini nasıl daha
+   güvenli hale getirebileceğinizi tartışacağız. Burada anlatılanları yapmanız
+   sisteminizi daha güvenli hale getirir ama kırılamaz yapmaz.
   </para>
-  <section>
-   <info>
-    <title>Güçlü <filename>/etc/pam.d/other</filename> dosyası</title>
-   </info>
-   <para><filename>/etc/pam.d/</filename> dizinindeki dosyaların tümü özel bir servis için yapılandırmaları içerir. Bu kuralın tek istisnası <filename>/etc/pam.d/other</filename> dosyasıdır. Bu dosya kendisi için bir yapılandırma dosyası bulunmayan servisler için yapılandırmaları içerir. Örneğin, eğer (hayali) <application>xyz</application> servisi kimlik kanıtlamasına ihtiyaç duyarsa PAM <filename>/etc/pam.d/xyz</filename> dosyasını arar. Bulamayınca <application>xyz</application> uygulaması için kimlik denetiminde <filename>/etc/pam.d/other</filename> dosyasını kullanır. <filename>/etc/pam.d/other</filename> sahipsiz PAM servislerinin yapılandırma dosyası olduğundan onun güvenli olması önemlidir. Burada <filename>/etc/pam.d/other</filename> dosyasının birisi neredeyse paranoyak diğeri biraz daha mantıklı olan iki farklı güvenli yapılandırmasını tartışacağız.
+  <sect2>
+   <title>Güçlü <filename>/etc/pam.d/other</filename> dosyası</title>
+   <para>
+    <filename>/etc/pam.d/</filename> dizinindeki dosyaların tümü özel bir
+    servis için yapılandırmaları içerir. Bu kuralın tek istisnası
+    <filename>/etc/pam.d/other</filename> dosyasıdır. Bu dosya kendisi için
+    bir yapılandırma dosyası bulunmayan servisler için yapılandırmaları
+    içerir. Örneğin, eğer (hayali) <application>xyz</application> servisi
+    kimlik kanıtlamasına ihtiyaç duyarsa PAM
+    <filename>/etc/pam.d/xyz</filename> dosyasını arar. Bulamayınca
+    <application>xyz</application> uygulaması için kimlik denetiminde
+    <filename>/etc/pam.d/other</filename> dosyasını kullanır.
+    <filename>/etc/pam.d/other</filename> sahipsiz PAM servislerinin
+    yapılandırma dosyası olduğundan onun güvenli olması önemlidir. Burada
+    <filename>/etc/pam.d/other</filename> dosyasının birisi neredeyse
+    paranoyak diğeri biraz daha mantıklı olan iki farklı güvenli
+    yapılandırmasını tartışacağız.
    </para>
-   <section>
-    <info>
-     <title>Paronayak Yapılandırma</title>
-    </info>
-    <para><filename>/etc/pam.d/other</filename> dosyasının paronayak yapılandırması aşağıdaki gibidir:
+   <sect3>
+    <title>Paronayak Yapılandırma</title>
+    <para>
+     <filename>/etc/pam.d/other</filename> dosyasının paronayak yapılandırması
+     aşağıdaki gibidir:
     </para>
     <para>
-     <programlisting>
-auth        required        pam_deny.so
+<screen>auth        required        pam_deny.so
 auth        required        pam_warn.so
 account     required        pam_deny.so
 account     required        pam_warn.so
@@ -565,22 +665,25 @@ password    required        pam_deny.so
 password    required        pam_warn.so
 session     required        pam_deny.so
 session     required        pam_warn.so
-</programlisting>
+</screen>
     </para>
     <para>
-Bu yapılandırma ile bilinmeyen bir servis dört yapılandırma türünden birine erişmeye çalışırsa PAM kimlik denetimini reddeder (<filename>pam_deny.so</filename> modülü ile) ve sistem günlüklerine bir uyarı mesajı (<filename>pam_warn.so</filename> modülü ile) kaydeder. Bu yapılandırma ile PAM kabaca güvenlidir. Bu kabalık ile ilgili tek problem eğer bir servisin yapılandırma dosyasını silerseniz ortaya çıkar. Örneğin eğer <filename>/etc/pam.d/login</filename> dosyasını kazara silerseniz kimse oturum açamaz!
+     Bu yapılandırma ile bilinmeyen bir servis dört yapılandırma türünden
+     birine erişmeye çalışırsa PAM kimlik denetimini reddeder
+     (<filename>pam_deny.so</filename> modülü ile) ve sistem günlüklerine bir
+     uyarı mesajı (<filename>pam_warn.so</filename> modülü ile) kaydeder. Bu
+     yapılandırma ile PAM kabaca güvenlidir. Bu kabalık ile ilgili tek problem
+     eğer bir servisin yapılandırma dosyasını silerseniz ortaya çıkar. Örneğin
+     eğer <filename>/etc/pam.d/login</filename> dosyasını kazara silerseniz
+     kimse oturum açamaz!
     </para>
-   </section>
-   <section>
-    <info>
-     <title>Daha nazik yapılandırma</title>
-    </info>
+   </sect3>
+   <sect3>
+    <title>Daha nazik yapılandırma</title>
     <para>
-O kadar da kaba olmayan bir yapılandırma aşağıdaki gibidir:
+     O kadar da kaba olmayan bir yapılandırma aşağıdaki gibidir:
     </para>
-    <para>
-     <programlisting>
-auth        required        pam_unix.so
+<screen>auth        required        pam_unix.so
 auth        required        pam_warn.so
 account     required        pam_unix.so
 account     required        pam_warn.so
@@ -588,233 +691,288 @@ password    required        pam_deny.so
 password    required        pam_warn.so
 session     required        pam_unix.so
 session     required        pam_warn.so
-</programlisting>
-    </para>
+</screen>
     <para>
-Bu yapılandırma ile bilinmeyen bir servis için kullanıcı kimlik kanıtlamasına (<filename>pam_unix.so</filename> modülü ile) izin verilir ama parolasını değiştirmesine izin verilmez. Bilinmeyen servislerin kimlik kanıtlaması yapmalarına izin verilse bile sistem günlüklerine bir uyarı mesajı kaydeder.
+     Bu yapılandırma ile bilinmeyen bir servis için kullanıcı kimlik
+     kanıtlamasına (<filename>pam_unix.so</filename> modülü ile) izin verilir
+     ama parolasını değiştirmesine izin verilmez. Bilinmeyen servislerin
+     kimlik kanıtlaması yapmalarına izin verilse bile sistem günlüklerine bir
+     uyarı mesajı kaydeder.
     </para>
-   </section>
-   <section>
-    <info>
-     <title><filename>/etc/pam.d/other</filename> dosyalarından birini seçmek</title>
-    </info>
+   </sect3>
+   <sect3>
+    <title><filename>/etc/pam.d/other</filename> dosyalarından birini seçmek</title>
     <para>
-Aksi yönde çok iyi bir nedeniniz olmadıkça yukarıdaki <filename>/etc/pam.d/other</filename> dosyalarından ilkini seçmenizi kuvvetle öneririm. 'Öntanımlı olarak güvenli' olmak her zaman iyi fikirdir. Eğer yeni bir servis için kimlik kanıtlamasına izin vermeniz gerekirse bunu basitçe o servis için bir PAM yapılandırma dosyası oluşturarak yapabilirsiniz.
+     Aksi yönde çok iyi bir nedeniniz olmadıkça yukarıdaki
+     <filename>/etc/pam.d/other</filename> dosyalarından ilkini seçmenizi
+     kuvvetle öneririm. 'Öntanımlı olarak güvenli' olmak her zaman iyi
+     fikirdir. Eğer yeni bir servis için kimlik kanıtlamasına izin vermeniz
+     gerekirse bunu basitçe o servis için bir PAM yapılandırma dosyası
+     oluşturarak yapabilirsiniz.
     </para>
-   </section>
-  </section>
-  <section>
-   <info>
-    <title>Kullanıcıların boş parolalarla oturum açmasını engellemek</title>
-   </info>
+   </sect3>
+  </sect2>
+  <sect2>
+   <title>Kullanıcıların boş parolalarla oturum açmasını engellemek</title>
    <para>
-Linux sistemlerinin çoğunda ftp, web sunucusu ve mail gibi sistem servislerine ayrıcalıklar tanıyabilmek için bir takım <quote>sözde</quote> kullanıcı hesapları bulunur. Bu hesapların bulunması sisteminizi daha güvenli hale getirir. Çünkü bir servisin açığından faydalanan saldırgan sınırsız root yetkilerini değil sadece kısıtlı ayrıcalıkları olan sözde hesabın yetkilerini kazanacaktır. Bununla birlikte bu sözde hesapların bulunması genellikle boş (null) parolaları olduğundan bir güvenlik açığıdır. Boş parolaların kabul edilmesine <quote>nullok</quote> yapılandırma seçeneği izin verir. Bu seçeneği oturum açmasına izin verilen '<literal>auth</literal>' <replaceable>tür</replaceable>ündeki tüm servislerden kaldırmak isteyebilirsiniz. Bu genellikle <filename>login</filename> servisidir ama <filename>rlogin</filename> ve <filename>ssh</filename> gibi servisleri de kapsayabilir. Bu yüzden <filename>/etc/pam.d/login</filename> dosyasının aşağıdaki satırı:
-    </para>
-   <para>
-    <programlisting>
-auth         required        pam_unix.so     nullok
-</programlisting>
+    Linux sistemlerinin çoğunda ftp, web sunucusu ve mail gibi sistem
+    servislerine ayrıcalıklar tanıyabilmek için bir takım <quote>sözde</quote>
+    kullanıcı hesapları bulunur. Bu hesapların bulunması sisteminizi daha
+    güvenli hale getirir. Çünkü bir servisin açığından faydalanan saldırgan
+    sınırsız root yetkilerini değil sadece kısıtlı ayrıcalıkları olan sözde
+    hesabın yetkilerini kazanacaktır. Bununla birlikte bu sözde hesapların
+    bulunması genellikle boş (null) parolaları olduğundan bir güvenlik
+    açığıdır. Boş parolaların kabul edilmesine <quote>nullok</quote>
+    yapılandırma seçeneği izin verir. Bu seçeneği oturum açmasına izin verilen
+    '<literal>auth</literal>' <replaceable>tür</replaceable>ündeki tüm
+    servislerden kaldırmak isteyebilirsiniz. Bu genellikle
+    <filename>login</filename> servisidir ama <filename>rlogin</filename> ve
+    <filename>ssh</filename> gibi servisleri de kapsayabilir. Bu yüzden
+    <filename>/etc/pam.d/login</filename> dosyasının aşağıdaki satırı:
    </para>
+<screen>auth         required        pam_unix.so     nullok</screen>
    <para>yerine</para>
-   <para>
-    <programlisting>
-auth         required        pam_unix.so
-</programlisting>
-   </para>
+<screen>auth         required        pam_unix.so</screen>
    <para>haline getirilmelidir.</para>
-  </section>
-  <section>
-   <info>
-    <title>Kullanılmayan servislerin iptal edilmesi</title>
-   </info>
-   <para><filename>/etc/pam.d/</filename> dizinindeki dosyalara baktığınızda kullanmadığınız hatta bazılarının adını bile duymadığınız programlar için yapılandırma dosyaları olduğunu göreceksiniz. Bu servislerin kimlik denetimi yapmasına izin vermek sisteminizde büyük güvenlik açıkları oluşturmasa da kimlik denetiminden reddedilmeleri daha iyidir.
-Bu programlar için PAM kimlik denetimine izin vermemenin en iyi yolu dosyalarını yeniden adlandırmaktır. PAM kimlik kanıtlama talebinde bulunan servis için gerekli dosyayı bulamadığında çok güvenli olan <filename>/etc/pam.d/other</filename> dosyasını kullanacaktır. Eğer ilerde bu programlardan birine ihtiyacınız olduğunu farkederseniz dosyanın adını eski haline getirmeniz her şeyin gerektiği gibi çalışması için yeterli olacaktır.
-   </para>
-  </section>
-  <section>
-   <info>
-    <title>Parola-kırma araçları</title>
-   </info>
+  </sect2>
+  <sect2>
+   <title>Kullanılmayan servislerin iptal edilmesi</title>
    <para>
-Parola-kırma araçları saldırganlar tarafından sistemi ele geçirmek için kullanılabilecekleri gibi sistem yöneticileri tarafından sistemlerinde güçlü parolalar kullanıldığından emin olmak için de kullanılırlar. En yaygın kullanılan parola-kırma araçları <quote>crack</quote> ve <quote>John the Ripper</quote>'dır. Crack büyük ihtimalle kullandığınız dağıtıma dahil edilmiştir. John the Ripper ise <uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.openwall.com/john/">http://www.openwall.com/john/</uri> adresinden edinilebilir. Bu araçları parola veri tabanınızda çalıştırdığınızda sonuçlar büyük ihtimalle sizi şaşırtacaktır.
+    <filename>/etc/pam.d/</filename> dizinindeki dosyalara baktığınızda
+    kullanmadığınız hatta bazılarının adını bile duymadığınız yazılımlar için
+    yapılandırma dosyaları olduğunu göreceksiniz. Bu servislerin kimlik
+    denetimi yapmasına izin vermek sisteminizde büyük güvenlik açıkları
+    oluşturmasa da kimlik denetiminden reddedilmeleri daha iyidir. Bu
+    yazılımlar için PAM kimlik denetimine izin vermemenin en iyi yolu
+    dosyalarını yeniden adlandırmaktır. PAM kimlik kanıtlama talebinde bulunan
+    servis için gerekli dosyayı bulamadığında çok güvenli olan
+    <filename>/etc/pam.d/other</filename> dosyasını kullanacaktır. Eğer ilerde
+    bu yazılımlardan birine ihtiyacınız olduğunu farkederseniz dosyanın adını
+    eski haline getirmeniz her şeyin gerektiği gibi çalışması için yeterli
+    olacaktır.
+   </para>
+  </sect2>
+  <sect2>
+   <title>Parola-kırma araçları</title>
+   <para>
+    Parola-kırma araçları saldırganlar tarafından sistemi ele geçirmek için
+    kullanılabilecekleri gibi sistem yöneticileri tarafından sistemlerinde
+    güçlü parolalar kullanıldığından emin olmak için de kullanılırlar. En
+    yaygın kullanılan parola-kırma araçları <quote>crack</quote> ve
+    <quote>John the Ripper</quote>'dır. Crack büyük ihtimalle kullandığınız
+    dağıtıma dahil edilmiştir. John the Ripper ise <link
+    xlink:href="http://www.openwall.com/john/"/> adresinden edinilebilir.
+    Bu araçları parola veri tabanınızda çalıştırdığınızda sonuçlar büyük
+    ihtimalle sizi şaşırtacaktır.
    </para>
    <para>
-Bunlara ilave olarak, kullanıcılar parolalarını değiştirirken parolaların dayanıklılıklarını ölçen bir PAM modülü de mevcuttur. Bu modül yüklendiğinde kullanıcılar parolalarını ancak minimum dayanıklılığa sahip parolalar ile değiştirebilirler.
+    Bunlara ilave olarak, kullanıcılar parolalarını değiştirirken parolaların
+    dayanıklılıklarını ölçen bir PAM modülü de mevcuttur. Bu modül
+    yüklendiğinde kullanıcılar parolalarını ancak minimum dayanıklılığa sahip
+    parolalar ile değiştirebilirler.
    </para>
-  </section>
-  <section>
-   <info>
-    <title>Gölgelenmiş ve MD5 parolalar</title>
-   </info>
+  </sect2>
+  <sect2>
+   <title>Gölgelenmiş ve MD5 parolalar</title>
    <para>
-Bu belgenin ilk bölümünde bahsettiğimiz gibi gölgelenmiş ve MD5 parolalar sisteminizi daha güvenli hale getirir. Günümüzdeki dağıtımların çoğu kurulum aşamasında gölgelenmiş ve/veya MD5 parolaları kullanmak isteyip istemediğinizi sorar. Aksi için çok iyi bir nedeniniz yoksa onları etkin kılın. Gölgelenmemiş/MD5-lenmemiş parolaların dönüştürülmesi karmaşık bir süreçtir ve bu belgenin kapsamının dışındadır. <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.tldp.org/HOWTO/Shadow-Password-HOWTO.html">Gölgelenmiş Parola NASIL</link> belgesi eskimiş olsa da yardımcı olabilir.
+    Bu belgenin ilk bölümünde bahsettiğimiz gibi gölgelenmiş ve MD5 parolalar
+    sisteminizi daha güvenli hale getirir. Günümüzdeki dağıtımların çoğu
+    kurulum aşamasında gölgelenmiş ve/veya MD5 parolaları kullanmak isteyip
+    istemediğinizi sorar. Aksi için çok iyi bir nedeniniz yoksa onları etkin
+    kılın. Gölgelenmemiş/MD5-lenmemiş parolaların dönüştürülmesi karmaşık bir
+    süreçtir ve bu belgenin kapsamının dışındadır. <link
+    xlink:href="http://www.tldp.org/HOWTO/Shadow-Password-HOWTO.html">
+    Gölgelenmiş Parola NASIL</link> belgesi eskimiş olsa da yardımcı
+    olabilir.
    </para>
-  </section>
- </section>
- <section xml:id="user-auth-howto-sample">
-  <info>
-   <title>Tümünü birden denemek</title>
-  </info>
+  </sect2>
+ </sect1>
+ <sect1 xml:id="user-auth-howto-sample">
+  <title>Tümünü birden denemek</title>
   <para>
-Bu bölümde bir önceki bölümde anlatılanların anlaşılmasına yardımcı olacak basit bir örnek vereceğim.
+   Bu bölümde bir önceki bölümde anlatılanların anlaşılmasına yardımcı olacak
+   basit bir örnek vereceğim.
   </para>
-  <section>
-   <info>
-    <title>Apache + <filename>mod_auth_pam</filename></title>
-   </info>
+  <sect2>
+   <title>Apache + <filename>mod_auth_pam</filename></title>
    <para>
-Örneğimizde PAM kullanarak web sunucunuzun kullanıcılarının kimlik denetimini yapmak üzere bir Apache modülü olan <filename>mod_auth_pam</filename>'i kurup yapılandıracağız. Örneğin hedefine ulaşabilmesi için kurulu bir Apache'niz olduğunu kabul edeceğim. Eğer kurulu değilse dağıtımınızın kurulum paketlerinden yararlanabilirsiniz.
+    Örneğimizde PAM kullanarak web sunucunuzun kullanıcılarının kimlik
+    denetimini yapmak üzere bir Apache modülü olan
+    <filename>mod_auth_pam</filename>'i kurup yapılandıracağız. Örneğin
+    hedefine ulaşabilmesi için kurulu bir Apache'niz olduğunu kabul edeceğim.
+    Eğer kurulu değilse dağıtımınızın kurulum paketlerinden
+    yararlanabilirsiniz.
    </para>
-  </section>
-  <section>
-   <info>
-    <title>Örnek</title>
-   </info>
+  </sect2>
+  <sect2>
+   <title>Örnek</title>
    <para>
-Kullanıcılarımızın kimlik denetimini PAM ile yapabilmek için hedefimiz web sunucumuzda kısıtlı bir <filename>aile/</filename> dizini yapılandırmak olacak. Bu dizin özel aile bilgileri içerecek ve sadece <quote>aile</quote> grubunun üyeleri tarafından erişilebilir olacak.
+    Kullanıcılarımızın kimlik denetimini PAM ile yapabilmek için hedefimiz web
+    sunucumuzda kısıtlı bir <filename>aile/</filename> dizini yapılandırmak
+    olacak. Bu dizin özel aile bilgileri içerecek ve sadece
+    <quote>aile</quote> grubunun üyeleri tarafından erişilebilir olacak.
    </para>
-  </section>
-  <section>
-   <info>
-    <title><filename>mod_auth_pam</filename> kurulumu</title>
-   </info>
+  </sect2>
+  <sect2>
+   <title><filename>mod_auth_pam</filename> kurulumu</title>
    <para>
-İlk olarak <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://pam.sourceforge.net/mod_auth_pam/">mod_auth_pam</link> paketini indirmek isteyeceksiniz. Aşağıdaki komutlarla (root olarak) <filename>mod_auth_pam</filename> derlenebilir:
-    </para>
-   <para>
-    <programlisting>
-     <prompt>~#</prompt>
-     <userinput>tar xzf mod_auth_pam.tar.gz</userinput>
-     <prompt>~#</prompt>
-     <userinput>cd mod_auth_pam-1.0a</userinput>
-     <prompt>~/mod_auth_pam-1.0a#</prompt>
-     <userinput>make</userinput>
-     <prompt>~/mod_auth_pam-1.0a#</prompt>
-     <userinput>make install</userinput>
-    </programlisting>
+    İlk olarak <link
+    xlink:href="http://pam.sourceforge.net/mod_auth_pam/">mod_auth_pam</link>
+    paketini indirmek isteyeceksiniz. Aşağıdaki komutlarla (root olarak)
+    <filename>mod_auth_pam</filename> derlenebilir:
    </para>
-   <para><filename>mod_auth_pam</filename> modülünü yüklerken bir hata ile karşılaşırsanız dağıtımınızın <filename>apache-dev</filename> paketini kurup kurmadığınızı kontrol edin. <filename>mod_auth_pam</filename> kurulduktan sonra apache'yi yeniden başlatmanız gerekir. Bunu aşağıdaki komutla (yine root olarak) yapabilirsiniz:
-    </para>
+<screen>~# tar xzf mod_auth_pam.tar.gz
+~# cd mod_auth_pam-1.0a
+~/mod_auth_pam-1.0a# make
+~/mod_auth_pam-1.0a# make install
+</screen>
    <para>
-    <programlisting>
-     <prompt>~#</prompt>
-     <userinput>/etc/init.d/apache restart</userinput>
-    </programlisting>
+    <filename>mod_auth_pam</filename> modülünü yüklerken bir hata ile
+    karşılaşırsanız dağıtımınızın <filename>apache-dev</filename> paketini
+    kurup kurmadığınızı kontrol edin. <filename>mod_auth_pam</filename>
+    kurulduktan sonra apache'yi yeniden başlatmanız gerekir. Bunu aşağıdaki
+    komutla (yine root olarak) yapabilirsiniz:
    </para>
-  </section>
-  <section>
-   <info>
-    <title>PAM Yapılandırması</title>
-   </info>
+<screen>~# /etc/init.d/apache restart</screen>
+  </sect2>
+  <sect2>
+   <title>PAM Yapılandırması</title>
    <para>
-Apache için PAM yapılandırması <filename>/etc/pam.d/httpd</filename> dizininde saklanır.
-Öntanımlı yapılandırma (<filename>mod_auth_pam</filename> kurulumunda yapılan yapılandırma) güvenlidir ama birçok sistemde kurulu olmayabilen <filename>pam_pwdb.so</filename> modülünü kullanır. (Ayrıca, sıfırdan yapılandırmak eğlencelidir!) Bu nedenle <filename>/etc/pam.d/httpd</filename> dosyasını silin ve yeni bir tanesiyle başlayın.
+    Apache için PAM yapılandırması <filename>/etc/pam.d/httpd</filename>
+    dizininde saklanır. Öntanımlı yapılandırma
+    (<filename>mod_auth_pam</filename> kurulumunda yapılan yapılandırma)
+    güvenlidir ama birçok sistemde kurulu olmayabilen
+    <filename>pam_pwdb.so</filename> modülünü kullanır. (Ayrıca, sıfırdan
+    yapılandırmak eğlencelidir!) Bu nedenle
+    <filename>/etc/pam.d/httpd</filename> dosyasını silin ve yeni bir
+    tanesiyle başlayın.
     </para>
-   <section>
-    <info>
-     <title>PAM'in nasıl yapılandırılacağına karar vermek</title>
-    </info>
+   <sect3>
+    <title>PAM'in nasıl yapılandırılacağına karar vermek</title>
     <para>
-Eğer PAM Apache'nin kimlik kanıtlama isteklerine yanıt verecek şekilde yapılandırılacaksa
-PAM'in tam olarak neyi denetlemesine ihtiyacımız olduğunu bilmeliyiz. İlk olarak PAM kullanıcının parolasının standart unix parola veritabanındaki parola ile aynı olup olmadığına bakmalıdır. Bu '<literal>auth</literal>' <replaceable>tür</replaceable>üne ve <filename>pam_unix.so</filename> modülüne benzer. Modülün <replaceable>denetim</replaceable> türünü '<literal>required</literal>' olarak atayacağız. Bu sayede doğru parola girilmez ise kimlik denetimi başarısız olacaktır.
-<filename>/etc/pam.d/httpd</filename> dosyamızın ilk satırı aşağıdaki gibi olmalıdır:
+     Eğer PAM Apache'nin kimlik kanıtlama isteklerine yanıt verecek şekilde
+     yapılandırılacaksa PAM'in tam olarak neyi denetlemesine ihtiyacımız
+     olduğunu bilmeliyiz. İlk olarak PAM kullanıcının parolasının standart
+     unix parola veritabanındaki parola ile aynı olup olmadığına bakmalıdır.
+     Bu '<literal>auth</literal>' <replaceable>tür</replaceable>üne ve
+     <filename>pam_unix.so</filename> modülüne benzer. Modülün
+     <replaceable>denetim</replaceable> türünü '<literal>required</literal>'
+     olarak atayacağız. Bu sayede doğru parola girilmez ise kimlik denetimi
+     başarısız olacaktır. <filename>/etc/pam.d/httpd</filename> dosyamızın ilk
+     satırı aşağıdaki gibi olmalıdır:
     </para>
+<screen>auth       required        pam_unix.so</screen>
     <para>
-     <programlisting>
-auth       required        pam_unix.so
-</programlisting>
+     İkinci olarak, kullanıcı hesabının geçerli olduğundan (yani parolasının
+     süresinin geçmediğinden veya bunun gibi bir uyumsuzluk olmadığından) emin
+     olmalıyız. Bu '<literal>account</literal>'
+     <replaceable>tür</replaceable>üdür ve <filename>pam_unix.so</filename>
+     modülü ile sağlanır. Yine bu modülün <replaceable>denetim</replaceable>
+     türünü '<literal>required</literal>' olarak atayacağız. Bu satırı da
+     ekledikten sonra <filename>/etc/pam.d/httpd</filename> yapılandırma
+     dosyamız aşağıdaki hale gelir:
     </para>
-    <para>
-İkinci olarak, kullanıcı hesabının geçerli olduğundan (yani parolasının süresinin geçmediğinden veya bunun gibi bir uyumsuzluk olmadığından) emin olmalıyız.
-Bu '<literal>account</literal>' <replaceable>tür</replaceable>üdür ve <filename>pam_unix.so</filename> modülü ile sağlanır. Yine bu modülün <replaceable>denetim</replaceable> türünü '<literal>required</literal>' olarak atayacağız. Bu satırı da ekledikten sonra <filename>/etc/pam.d/httpd</filename> yapılandırma dosyamız aşağıdaki hale gelir:
-    </para>
-    <para>
-     <programlisting>
-auth       required        pam_unix.so
+<screen>auth       required        pam_unix.so
 account    required        pam_unix.so
-</programlisting>
-    </para>
+</screen>
     <para>
-Çok karışık değildir ama görevini yapar. PAM servislerini nasıl yapılandıracağınızı öğrenmek için iyi bir başlangıç olabilir.
-     </para>
-   </section>
-  </section>
-  <section>
-   <info>
-    <title>Apache'nin Yapılandırılması</title>
-   </info>
-   <para>
-Artık PAM, apache isteklerinin kimlik denetimini yapacak şekilde yapılandırıldı. Bundan sonra apache'yi <filename>aile/</filename> dizinine erişimi kısıtlaması için PAM kimlik kanıtlamasını kullanacak şekilde yapılandıracağız. Bunu yapabilmek için, aşağıdaki satırları <filename>httpd.conf</filename> dosyanıza (genellikle <filename>/etc/apache/</filename> ya da <filename>/etc/httpd</filename> dizininde bulunur) ekleyin:
+     Çok karışık değildir ama görevini yapar. PAM servislerini nasıl
+     yapılandıracağınızı öğrenmek için iyi bir başlangıç olabilir.
     </para>
+   </sect3>
+  </sect2>
+  <sect2>
+   <title>Apache'nin Yapılandırılması</title>
    <para>
-    <programlisting>
-&lt;Directory /var/www/family&gt;
+    Artık PAM, apache isteklerinin kimlik denetimini yapacak şekilde
+    yapılandırıldı. Bundan sonra apache'yi <filename>aile/</filename> dizinine
+    erişimi kısıtlaması için PAM kimlik kanıtlamasını kullanacak şekilde
+    yapılandıracağız. Bunu yapabilmek için, aşağıdaki satırları
+    <filename>httpd.conf</filename> dosyanıza (genellikle
+    <filename>/etc/apache/</filename> ya da <filename>/etc/httpd</filename>
+    dizininde bulunur) ekleyin:
+   </para>
+<screen>&lt;Directory /var/www/family&gt;
   AuthPAM_Enabled on
   AllowOverride None
   AuthName "Aile Sirlari"
   AuthType "basic"
   require group aile
 &lt;/Directory&gt;
-</programlisting>
+</screen>
+   <para>
+    <filename>/var/www/</filename> ifadesini web sunucunuzun kök dizini ile
+    değiştirmelisiniz. Bu dizin bazen <filename>/home/httpd/</filename>
+    olabilmektedir. Her nerede olursa olsun, içinde <filename>aile</filename>
+    dizinini oluşturmalısınız.
    </para>
-   <para><filename>/var/www/</filename> ifadesini web sunucunuzun kök dizini ile değiştirmelisiniz. Bu dizin bazen <filename>/home/httpd/</filename> olabilmektedir. Her nerede olursa olsun, içinde <filename>aile</filename> dizinini oluşturmalısınız.
-    </para>
    <para>
-Kurulumu denetlemeden önce Apache yapılandırmasına yukarıda eklediklerinizi açıklayayım.
-<literal>&lt;Directory&gt;</literal> ifadesi yapılandırmanın sadece bu dizin için geçerli olması için kullanılır. Bu ifadenin içinde PAM kimlik denetimini etkinleştirdik (<literal>AuthPAM_enabled on</literal>), başka bir yapılandırmanın önceliği olmasını engelledik (<literal>AllowOverride none</literal>), bu kimlik denetim alanını <quote>Aile Sirlari</quote> olarak adlandırdık (<literal>AuthName <quote>Aile Sirlari</quote></literal>), http kimlik kanıtlamasını (PAM değil) öntanımlı olarak atadık (<literal>AuthType <quote>basic</quote></literal>) ve gerekli kullanıcı grubu olarak aile'yi atadık (<literal>require group aile</literal>).
-     </para>
-  </section>
-  <section>
-   <info>
-    <title>Kurulumun Denetlenmesi</title>
-   </info>
+    Kurulumu denetlemeden önce Apache yapılandırmasına yukarıda
+    eklediklerinizi açıklayayım. <literal>&lt;Directory&gt;</literal>
+    ifadesi yapılandırmanın sadece bu dizin için geçerli olması için
+    kullanılır. Bu ifadenin içinde PAM kimlik denetimini etkinleştirdik
+    (<literal>AuthPAM_enabled on</literal>), başka bir yapılandırmanın
+    önceliği olmasını engelledik (<literal>AllowOverride none</literal>),
+    bu kimlik denetim alanını <quote>Aile Sirlari</quote> olarak adlandırdık
+    (<literal>AuthName</literal> <quote>Aile Sirlari</quote>), http kimlik
+    kanıtlamasını (PAM değil) öntanımlı olarak atadık
+    (<literal>AuthType</literal> <quote>basic</quote>) ve gerekli kullanıcı
+    grubu olarak aile'yi atadık (<literal>require group aile</literal>).
+   </para>
+  </sect2>
+  <sect2>
+   <title>Kurulumun Denetlenmesi</title>
    <para>
-Herşeyi gerektiği gibi kurduk, artık kutlama zamanıdır. Tercih ettiğiniz web tarayıcısını çalıştırın ve <literal>http://</literal><replaceable>sizin-alaniniz</replaceable><literal>/aile/</literal> adresini (<replaceable>sizin-alaniniz</replaceable> yerine kendi alanınızın adını yazın) açın. Tebrikler, başardınız!
-    </para>
-  </section>
- </section>
- <section xml:id="user-auth-howto-res">
-  <info>
-   <title>Kaynaklar</title>
-  </info>
+    Herşeyi gerektiği gibi kurduk, artık kutlama zamanıdır. Tercih ettiğiniz
+    web tarayıcısını çalıştırın ve
+    <literal>http://</literal>example.com<literal>/aile/</literal> adresini
+    (<replaceable>example.com</replaceable> yerine kendi alanınızın adını
+    yazın) açın. Tebrikler, başardınız!
+   </para>
+  </sect2>
+ </sect1>
+ <sect1 xml:id="user-auth-howto-res">
+  <title>Kaynaklar</title>
   <para>
-Kullanıcı kimlik kanıtlaması ile ilgili bilgi bulabileceğiniz çevrimiçi ve çevrim dışı pek çok kaynak bulunmaktadır. Aşağıdaki listeye eklenebilecek bildiğiniz kaynaklar varsa <email>petehern@yahoo.com</email> adresine gönderebilirsiniz.
+   Kullanıcı kimlik kanıtlaması ile ilgili bilgi bulabileceğiniz çevrimiçi ve
+   çevrim dışı pek çok kaynak bulunmaktadır. Aşağıdaki listeye eklenebilecek
+   bildiğiniz kaynaklar varsa <email>petehern@yahoo.com</email> adresine
+   gönderebilirsiniz.
   </para>
-  <section>
-   <info>
-    <title>PAM</title>
-   </info>
+  <sect2>
+   <title>PAM</title>
    <itemizedlist>
     <listitem>
-     <simpara>
-      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.kernel.org/pub/linux/libs/pam/Linux-PAM-html/pam.html">Linux-PAM Sistem Yöneticisinin Kılavuzu</link>
+     <simpara><link
+      xlink:href="http://www.kernel.org/pub/linux/libs/pam/Linux-PAM-html/pam.html">
+      Linux-PAM Sistem Yöneticisinin Kılavuzu</link>
      </simpara>
     </listitem>
     <listitem>
-     <simpara>
-      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.kernel.org/pub/linux/libs/pam/Linux-PAM-html/pam_modules.html">Linux-PAM Modül Yazıcısının Kılavuzu</link>
+     <simpara><link
+      xlink:href="http://www.kernel.org/pub/linux/libs/pam/Linux-PAM-html/pam_modules.html">
+      Linux-PAM Modül Yazıcısının Kılavuzu</link>
      </simpara>
     </listitem>
     <listitem>
-     <simpara>
-      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.kernel.org/pub/linux/libs/pam/Linux-PAM-html/pam_appl.html">Linux-PAM Uygulama Geliştiricisinin Kılavuzu</link>
+     <simpara><link
+      xlink:href="http://www.kernel.org/pub/linux/libs/pam/Linux-PAM-html/pam_appl.html">
+      Linux-PAM Uygulama Geliştiricisinin Kılavuzu</link>
      </simpara>
     </listitem>
    </itemizedlist>
-  </section>
-  <section>
-   <info>
-    <title>Genel Güvenlik</title>
-   </info>
+  </sect2>
+  <sect2>
+   <title>Genel Güvenlik</title>
    <itemizedlist>
     <listitem>
      <simpara>
-      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.linuxsecurity.com/">linuxsecurity.com</link>
+      <link xlink:href="http://www.linuxsecurity.com/">linuxsecurity.com</link>
      </simpara>
     </listitem>
     <listitem>
      <simpara>
-      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.securitywatch.com">securitywatch.com</link>
+      <link xlink:href="http://www.securitywatch.com">securitywatch.com</link>
      </simpara>
     </listitem>
     <listitem>
@@ -824,66 +982,55 @@ Kullanıcı kimlik kanıtlaması ile ilgili bilgi bulabileceğiniz çevrimiçi v
     </listitem>
     <listitem>
      <simpara>
-      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.packetstormsecurify.org">Packetstorm</link>
+      <link xlink:href="http://www.packetstormsecurify.org">Packetstorm</link>
      </simpara>
     </listitem>
    </itemizedlist>
-  </section>
-  <section>
-   <info>
-    <title>Çevrimdışı Belgeler</title>
-   </info>
+  </sect2>
+  <sect2>
+   <title>Çevrimdışı Belgeler</title>
    <para>
-Sisteminizdeki kılavuz sayfalarından çokça bilgi edinebilirsiniz. Aşağıda kullanıcı kimlik kanıtlaması ile ilgili kılavuz dosyalarının bir listesi bulunmaktadır.
-Parantez içindeki sayılar kılavuz sayfalarının bölümlerini göstermektedir. <literal>passwd(5)</literal> kılavuz sayfasını görüntülemek için konsoldan <userinput>man 5 passwd</userinput> komutunu çalıştırmalısınız.
+    Sisteminizdeki kılavuz sayfalarından çokça bilgi edinebilirsiniz. Aşağıda
+    kullanıcı kimlik kanıtlaması ile ilgili kılavuz dosyalarının bir listesi
+    bulunmaktadır. Parantez içindeki sayılar kılavuz sayfalarının bölümlerini
+    göstermektedir. <literal>passwd(5)</literal> kılavuz sayfasını
+    görüntülemek için konsoldan <userinput>man 5 passwd</userinput> komutunu
+    çalıştırmalısınız.
    </para>
-   <para>
-    <itemizedlist>
-     <listitem>
-      <simpara>
-       <link linkend="tr-man5-passwd">
-        <command>passwd(5)</command>
-       </link>
-      </simpara>
-     </listitem>
-     <listitem>
-      <simpara>
-       <link linkend="tr-man3-crypt">
-        <command>crypt(3)</command>
-       </link>
-      </simpara>
-     </listitem>
-     <listitem>
-      <simpara>
-       <link linkend="tr-man5-pam.d">
-        <command>pam.d(5)</command>
-       </link>
-      </simpara>
-     </listitem>
-     <listitem>
-      <simpara>
-       <link linkend="tr-man5-group">
-        <command>group(5)</command>
-       </link>
-      </simpara>
-     </listitem>
-     <listitem>
-      <simpara>
-       <link linkend="tr-man5-shadow">
-        <command>shadow(5)</command>
-       </link>
-      </simpara>
-     </listitem>
-    </itemizedlist>
-   </para>
-  </section>
- </section>
- <section xml:id="user-auth-howto-conc">
-  <info>
-   <title>Sonuç</title>
-  </info>
+   <itemizedlist>
+    <listitem>
+     <simpara>
+      <link linkend="tr-man5-passwd"><command>passwd(5)</command></link>
+     </simpara>
+    </listitem>
+    <listitem>
+     <simpara>
+      <link linkend="tr-man3-crypt"><command>crypt(3)</command></link>
+     </simpara>
+    </listitem>
+    <listitem>
+     <simpara>
+      <link linkend="tr-man5-pam.d"><command>pam.d(5)</command></link>
+     </simpara>
+    </listitem>
+    <listitem>
+     <simpara>
+      <link linkend="tr-man5-group"><command>group(5)</command></link>
+     </simpara>
+    </listitem>
+    <listitem>
+     <simpara>
+      <link linkend="tr-man5-shadow"><command>shadow(5)</command></link>
+     </simpara>
+    </listitem>
+   </itemizedlist>
+  </sect2>
+ </sect1>
+ <sect1 xml:id="user-auth-howto-conc">
+  <title>Sonuç</title>
   <para>
-Umarım bu NASIL yardımcı olmuştur. Sorularınızı, yorumlarınızı ve önerilerinizi <email>petehern@yahoo.com</email> adresine gönderebilirsiniz.
+   Umarım bu NASIL yardımcı olmuştur. Sorularınızı, yorumlarınızı ve
+   önerilerinizi <email>petehern@yahoo.com</email> adresine gönderebilirsiniz.
   </para>
- </section>
+ </sect1>
 </article>
