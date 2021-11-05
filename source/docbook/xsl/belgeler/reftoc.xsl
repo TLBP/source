@@ -1,21 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- ********************************************************************
-     $Id: reftoc.xsl,v 1.10 2003/07/10 20:27:40 nilgun Exp $
+      docbooc/xsl/belgeler/reftoc.xsl
      ******************************************************************** -->
-<!-- Copyright ©  2004  Nilgün Belma Bugüner <nilgun@superonline.com> -->
-<!-- This program is free software; you can redistribute it and/or modify -->
-<!-- it under the terms of the GNU General Public License as published by -->
-<!-- the Free Software Foundation; either version 2 of the License, or -->
-<!-- (at your option) any later version.-->
-<!--  -->
-<!-- This program is distributed in the hope that it will be useful,-->
-<!-- but WITHOUT ANY WARRANTY; without even the implied warranty of -->
-<!-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the -->
-<!-- GNU General Public License for more details.-->
-<!-- -->
-<!-- You should have received a copy of the GNU General Public License -->
-<!-- along with this program; if not, write to the Free Software -->
-<!-- Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA -->
+<!--
+   Copyright © 2002-2021 Nilgün Belma Bugüner <nilgun@tlbp·gen·tr>
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Affero General Public License as published
+   by the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program. If not, see &lt;https://www.gnu.org/licenses/&gt;.
+-->
 <!DOCTYPE xsl:stylesheet [
 
 <!ENTITY lowercase "'abcdefghijklmnopqrstuvwxyz'">
@@ -27,19 +28,20 @@
 
 ]>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-                version="1.0">
+ xmlns:d="http://docbook.org/ns/docbook"
+ exclude-result-prefixes="d" version='1.0'>
 
 <xsl:key name="ref-letter"
-         match="refnamediv"
+         match="d:refnamediv"
          use="translate(substring(&refname;, 1, 1),&lowercase;,&uppercase;)"/>
 
 <xsl:key name="refname"
-         match="refnamediv"
+         match="d:refnamediv"
          use="&refname;"/>
 
 <xsl:key name="manvolnum"
-         match="refnamediv"
-         use="../refmeta/manvolnum"/>
+         match="d:refnamediv"
+         use="../d:refmeta/d:manvolnum"/>
 
 <xsl:template name="refentry.toc">
   <xsl:param name="volnum" select="none"/>
@@ -68,11 +70,11 @@
   </xsl:if>
 </xsl:template>
 
-<xsl:template match="refnamediv" mode="reftoc">
+<xsl:template match="d:refnamediv" mode="reftoc">
   <xsl:apply-templates mode="reftoc"/>
 </xsl:template>
 
-<xsl:template match="refname" mode="reftoc">
+<xsl:template match="d:refname" mode="reftoc">
   <xsl:variable name="pos" select="position()"/>
   <xsl:variable name="title">
     <xsl:apply-templates select="." mode="title"/>

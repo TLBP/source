@@ -21,7 +21,7 @@
 <!-- Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA -->
 
 <xsl:output method="html"
-            encoding="ISO-8859-9"
+            encoding="utf-8"
             indent="no"/>
 <xsl:include href="../common/common.xsl"/>
 <xsl:include href="../common/titles.xsl"/>

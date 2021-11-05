@@ -18,11 +18,28 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 -->
+<xsl:stylesheet
+  xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+  xmlns:d="http://docbook.org/ns/docbook"
+  xmlns:exsl="http://exslt.org/common"
+  xmlns="http://www.w3.org/1999/xhtml"
+  exclude-result-prefixes="exsl d"
+  version="1.0">
 
-<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version='1.0'>
 
 <!-- html dosyalar bölümlere göre ayrı dosyalara ayrılarak oluşturulsun -->
-<xsl:import href="../html/chunk.xsl"/>
+<!--xsl:import href="../docbook5/xhtml5/chunk.xsl"/>
+Bu dosyanı içeriğini buraya aktarıyor ve -->
+<xsl:import href="../docbook5/xhtml5/docbook.xsl"/>
+<!-- sayfa ana hatlarını özelleştiriyoruz -->
+<xsl:import href="body.xsl"/>
+<!-- chunk.xsl içeriğinin kalanı burada: -->
+<xsl:include href="../xhtml/chunk-code.xsl"/>
+<xsl:include href="html5-chunk-mods.xsl"/>
+<!-- Diğer özelleştirmeler -->
 <xsl:import href="common.xsl"/>
+
+<!-- Bu burada kalacak - encoding kazalara gelmesin -->
+<xsl:output method="xml" encoding="UTF-8" />
 
 </xsl:stylesheet>

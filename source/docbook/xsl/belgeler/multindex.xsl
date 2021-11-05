@@ -6,76 +6,81 @@
 <!ENTITY allcases  "'abcçdefgğhıijklmnoöpqrsştuüvwxyzABCÇDEFGĞHIİJKLMNOÖPQRSŞTUÜVWXYZ'">
 <!ENTITY sortcases "'ABCCDEFGGHIIJKLMNOOPQRSSTUUVWXYZABCCDEFGGHIIJKLMNOOPQRSSTUUVWXYZ'">
 
-<!ENTITY primary   'concat(primary/@sortas, primary, see/@sortas, see)'>
-<!ENTITY scope     'concat($target, primary/@sortas, primary, see/@sortas, see)'>
-<!ENTITY secondary 'concat(secondary/@sortas, secondary)'>
-<!ENTITY tertiary  'concat(tertiary/@sortas, tertiary)'>
-<!ENTITY fourth    'concat(fourth/@sortas, fourth)'>
+<!ENTITY primary   'concat(d:primary/@sortas, d:primary, d:see/@sortas, d:see)'>
+<!ENTITY scope     'concat($target, d:primary/@sortas, d:primary, d:see/@sortas, d:see)'>
+<!ENTITY secondary 'concat(d:secondary/@sortas, d:secondary)'>
+<!ENTITY tertiary  'concat(d:tertiary/@sortas, d:tertiary)'>
+<!ENTITY fourth    'concat(d:fourth/@sortas, d:fourth)'>
 
 <!-- Ayrı bir dosya oluşturabilenler -->
-<!ENTITY section   '(ancestor-or-self::set
-                     |ancestor-or-self::book
-                     |ancestor-or-self::part
-                     |ancestor-or-self::reference
-                     |ancestor-or-self::chapter
-                     |ancestor-or-self::appendix
-                     |ancestor-or-self::preface
-                     |ancestor-or-self::sect1
-                     |ancestor-or-self::sect2[@chunkthis="1"]
-                     |ancestor-or-self::refentry
-                     |ancestor-or-self::bibliography
-                     |ancestor-or-self::glossary
-                     |ancestor-or-self::index)[last()]'>
+<!ENTITY section   '(ancestor-or-self::d:set
+                     |ancestor-or-self::d:book
+                     |ancestor-or-self::d:part
+                     |ancestor-or-self::d:reference
+                     |ancestor-or-self::d:chapter
+                     |ancestor-or-self::d:appendix
+                     |ancestor-or-self::d:preface
+                     |ancestor-or-self::d:sect1
+                     |ancestor-or-self::d:sect2[@userlevel="chunkthis"]
+                     |ancestor-or-self::d:refentry
+                     |ancestor-or-self::d:bibliography
+                     |ancestor-or-self::d:glossary
+                     |ancestor-or-self::d:index)[last()]'>
 
 <!-- Bir title'ı olanlar -->
-<!ENTITY section.t  '(ancestor-or-self::set
-                     |ancestor-or-self::book
-                     |ancestor-or-self::part
-                     |ancestor-or-self::reference
-                     |ancestor-or-self::chapter
-                     |ancestor-or-self::appendix
-                     |ancestor-or-self::preface
-                     |ancestor-or-self::section
-                     |ancestor-or-self::sect1
-                     |ancestor-or-self::sect2
-                     |ancestor-or-self::sect3
-                     |ancestor-or-self::sect4
-                     |ancestor-or-self::sect5
-                     |ancestor-or-self::refsect1
-                     |ancestor-or-self::refsect2
-                     |ancestor-or-self::refsect3
-                     |ancestor-or-self::simplesect
-                     |ancestor-or-self::bibliography
-                     |ancestor-or-self::glossary
-                     |ancestor-or-self::index)[last()]'>
+<!ENTITY section.t  '(ancestor-or-self::d:set
+                     |ancestor-or-self::d:book
+                     |ancestor-or-self::d:part
+                     |ancestor-or-self::d:reference
+                     |ancestor-or-self::d:chapter
+                     |ancestor-or-self::d:appendix
+                     |ancestor-or-self::d:preface
+                     |ancestor-or-self::d:section
+                     |ancestor-or-self::d:sect1
+                     |ancestor-or-self::d:sect2
+                     |ancestor-or-self::d:sect3
+                     |ancestor-or-self::d:sect4
+                     |ancestor-or-self::d:sect5
+                     |ancestor-or-self::d:refsect1
+                     |ancestor-or-self::d:refsect2
+                     |ancestor-or-self::d:refsect3
+                     |ancestor-or-self::d:simplesect
+                     |ancestor-or-self::d:bibliography
+                     |ancestor-or-self::d:glossary
+                     |ancestor-or-self::d:index)[last()]'>
 
 <!ENTITY sep '" "'>
 ]>
-<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-                version="1.0">
+<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:d="http://docbook.org/ns/docbook"
+xmlns:exslt="http://exslt.org/common"
+xmlns:xlink="http://www.w3.org/1999/xlink"
+xmlns="http://www.w3.org/1999/xhtml"
+extension-element-prefixes="exslt"
+exclude-result-prefixes="xlink exslt d"
+version="1.0">
 
 <!-- ==================================================================== -->
 <!-- Jeni Tennison gets all the credit for what follows.
      I think I understand it :-) Anyway, I've hacked it a bit, so the
      bugs are mine. -->
 <xsl:key name="term"
-         match="indexterm"
-         use="@scope"/>
+         match="d:indexterm"
+         use="@linkend"/>
 
 <xsl:key name="letter"
-         match="indexterm"
+         match="d:indexterm"
          use="translate(substring(&primary;, 1, 1),&lowercase;,&uppercase;)"/>
 
 <xsl:key name="scope"
-         match="indexterm"
-         use="concat(@scope, &primary;)"/>
+         match="d:indexterm"
+         use="concat(@linkend, &primary;)"/>
 
 <xsl:key name="primary"
-         match="indexterm"
+         match="d:indexterm"
          use="&primary;"/>
 
 <xsl:key name="secondary"
-         match="indexterm"
+         match="d:indexterm"
          use="concat(&primary;, &sep;, &secondary;)"/>
 
 <xsl:key name="tertiary"
@@ -83,30 +88,30 @@
          use="concat(&primary;, &sep;, &secondary;, &sep;, &tertiary;)"/>
 
 <xsl:key name="fourth"
-         match="indexterm"
+         match="d:indexterm"
          use="concat(&primary;, &sep;, &secondary;, &sep;, &tertiary;, &sep;, &fourth;)"/>
 
 <xsl:key name="primary-section"
-         match="indexterm[not(secondary) and not(see)]"
-         use="concat(&primary;, &sep;, &section;/@id)"/>
+         match="d:indexterm[not(d:secondary) and not(d:see)]"
+         use="concat(&primary;, &sep;, &section;/@xml:id)"/>
 
 <xsl:key name="secondary-section"
-         match="indexterm[not(tertiary) and not(see)]"
-         use="concat(&primary;, &sep;, &secondary;, &sep;, &section;/@id)"/>
+         match="d:indexterm[not(d:tertiary) and not(d:see)]"
+         use="concat(&primary;, &sep;, &secondary;, &sep;, &section;/@xml:id)"/>
 
 <xsl:key name="tertiary-section"
-         match="indexterm[not(fourth) and not(see)]"
-         use="concat(&primary;, &sep;, &secondary;, &sep;, &tertiary;, &sep;, &section;/@id)"/>
+         match="d:indexterm[not(d:fourth) and not(d:see)]"
+         use="concat(&primary;, &sep;, &secondary;, &sep;, &tertiary;, &sep;, &section;/@xml:id)"/>
 
 <xsl:key name="fourth-section"
-         match="indexterm[not(see)]"
-         use="concat(&primary;, &sep;, &secondary;, &sep;, &tertiary;, &sep;, &fourth;, &sep;, &section;/@id)"/>
+         match="d:indexterm[not(d:see)]"
+         use="concat(&primary;, &sep;, &secondary;, &sep;, &tertiary;, &sep;, &fourth;, &sep;, &section;/@xml:id)"/>
 
 <xsl:key name="see-also"
-         match="indexterm[seealso]"
-         use="concat(&primary;, &sep;, &secondary;, &sep;, &tertiary;, &sep;, &fourth;, &sep;, seealso)"/>
+         match="d:indexterm[d:seealso]"
+         use="concat(&primary;, &sep;, &secondary;, &sep;, &tertiary;, &sep;, &fourth;, &sep;, d:seealso)"/>
 
-<xsl:key name="sections" match="*[@id]" use="@id"/>
+<xsl:key name="sections" match="*[@id or @xml:id]" use="@id|@xml:id"/>
 
 
 <xsl:template name="generate-multi-index">
@@ -174,11 +179,11 @@
 </xsl:template>
 
 
-<xsl:template match="indexterm" mode="index-primary">
+<xsl:template match="d:indexterm" mode="index-primary">
   <xsl:param name="is.first" select="0"/>
   <xsl:param name="target"/>
 
-  <xsl:if test="@scope = $target">
+  <xsl:if test="@linkend = $target">
 
     <!--xsl:message>
       <xsl:value-of select="primary"/>; <xsl:value-of select="&section.t;/title"/>
@@ -196,7 +201,7 @@
     <xsl:apply-templates mode="alphabetic-index"/>
 
     <xsl:for-each select="$refs">
-      <xsl:if test="not(./secondary) and not(see)">
+      <xsl:if test="not(./d:secondary) and not(d:see)">
         <xsl:if test="position()=1">
           <xsl:text>:   </xsl:text>
         </xsl:if>
@@ -207,7 +212,7 @@
             <xsl:with-param name="target" select="$target"/>
           </xsl:apply-templates>
       </xsl:if>
-      <xsl:if test="not(primary)">
+      <xsl:if test="not(d:primary)">
         <xsl:if test="position()=1">
           <xsl:text> - Bakınız: </xsl:text>
         </xsl:if>
@@ -220,18 +225,18 @@
       </xsl:if>
     </xsl:for-each>
   </dt>
-  <xsl:if test="$refs/secondary or $refs[not(secondary)]/*[self::see or self::seealso]">
+  <xsl:if test="$refs/d:secondary or $refs[not(d:secondary)]/*[self::d:see or self::d:seealso]">
     <dd>
       <dl>
-        <xsl:apply-templates select="$refs[generate-id() = generate-id(key('see', concat(&primary;, &sep;, &sep;, &sep;, see))[1])]"
+        <xsl:apply-templates select="$refs[generate-id() = generate-id(key('see', concat(&primary;, &sep;, &sep;, &sep;, d:see))[1])]"
                              mode="index-see">
-          <xsl:sort select="see"/>
+          <xsl:sort select="d:see"/>
         </xsl:apply-templates>
-        <xsl:apply-templates select="$refs[generate-id() = generate-id(key('see-also', concat(&primary;, &sep;, &sep;, &sep;, seealso))[1])]"
+        <xsl:apply-templates select="$refs[generate-id() = generate-id(key('see-also', concat(&primary;, &sep;, &sep;, &sep;, d:seealso))[1])]"
                              mode="index-seealso">
-          <xsl:sort select="seealso"/>
+          <xsl:sort select="d:seealso"/>
         </xsl:apply-templates>
-        <xsl:apply-templates select="$refs[secondary and count(.|key('secondary', concat(&primary;, &sep;, &secondary;))[1]) = 1]"
+        <xsl:apply-templates select="$refs[d:secondary and count(.|key('secondary', concat(&primary;, &sep;, &secondary;))[1]) = 1]"
                              mode="index-secondary">
           <xsl:with-param name="target" select="$target"/>
           <xsl:sort select="translate(&secondary;,&allcases;,&sortcases;)"/>
@@ -247,39 +252,39 @@
 <xsl:template match="*" mode="alphabetic-index-t"/>
 <xsl:template match="*" mode="alphabetic-index-f"/>
 
-<xsl:template match="primary|see" mode="alphabetic-index">
+<xsl:template match="d:primary|d:see" mode="alphabetic-index">
   <a name="{.}"/><span class="indexterm">
     <xsl:apply-templates/>
   </span>
 </xsl:template>
 
-<xsl:template match="secondary" mode="alphabetic-index-s">
+<xsl:template match="d:secondary" mode="alphabetic-index-s">
   <span class="indexterm">
     <xsl:apply-templates/>
   </span>
 </xsl:template>
 
-<xsl:template match="tertiary" mode="alphabetic-index-t">
+<xsl:template match="d:tertiary" mode="alphabetic-index-t">
   <span class="indexterm">
     <xsl:apply-templates/>
   </span>
 </xsl:template>
 
-<xsl:template match="fourth" mode="alphabetic-index-f">
+<xsl:template match="d:fourth" mode="alphabetic-index-f">
   <span class="indexterm">
     <xsl:apply-templates/>
   </span>
 </xsl:template>
 
-<xsl:template match="indexterm" mode="index-secondary">
+<xsl:template match="d:indexterm" mode="index-secondary">
   <xsl:param name="target"/>
-  <xsl:if test="@scope = $target">
+  <xsl:if test="@linkend = $target">
     <xsl:variable name="key" select="concat(&primary;, &sep;, &secondary;)"/>
     <xsl:variable name="refs" select="key('secondary', $key)"/>
     <dt>
       <xsl:apply-templates mode="alphabetic-index-s"/>
       <xsl:for-each select="$refs">
-        <xsl:if test="not (./tertiary)">
+        <xsl:if test="not (./d:tertiary)">
           <xsl:if test="position()=1">
             <xsl:text>:   </xsl:text>
           </xsl:if>
@@ -292,18 +297,18 @@
         </xsl:if>
       </xsl:for-each>
    </dt>
-   <xsl:if test="$refs/tertiary or $refs[not(tertiary)]/*[self::see or self::seealso]">
+   <xsl:if test="$refs/d:tertiary or $refs[not(d:tertiary)]/*[self::d:see or self::d:seealso]">
     <dd>
       <dl>
-        <xsl:apply-templates select="$refs[generate-id() = generate-id(key('see', concat(&primary;, &sep;, &secondary;, &sep;, &sep;, see))[1])]"
+        <xsl:apply-templates select="$refs[generate-id() = generate-id(key('see', concat(&primary;, &sep;, &secondary;, &sep;, &sep;, d:see))[1])]"
                              mode="index-see">
-          <xsl:sort select="see"/>
+          <xsl:sort select="d:see"/>
         </xsl:apply-templates>
-        <xsl:apply-templates select="$refs[generate-id() = generate-id(key('see-also', concat(&primary;, &sep;, &secondary;, &sep;, &sep;, seealso))[1])]"
+        <xsl:apply-templates select="$refs[generate-id() = generate-id(key('see-also', concat(&primary;, &sep;, &secondary;, &sep;, &sep;, d:seealso))[1])]"
                              mode="index-seealso">
-          <xsl:sort select="seealso"/>
+          <xsl:sort select="d:seealso"/>
         </xsl:apply-templates>
-        <xsl:apply-templates select="$refs[tertiary and count(.|key('tertiary', concat($key, &sep;, &tertiary;))[1]) = 1]"
+        <xsl:apply-templates select="$refs[d:tertiary and count(.|key('tertiary', concat($key, &sep;, &tertiary;))[1]) = 1]"
                              mode="index-tertiary">
           <xsl:with-param name="target" select="$target"/>
           <xsl:sort select="translate(&tertiary;,&allcases;,&sortcases;)"/>
@@ -314,15 +319,15 @@
   </xsl:if>
 </xsl:template>
 
-<xsl:template match="indexterm" mode="index-tertiary">
+<xsl:template match="d:indexterm" mode="index-tertiary">
   <xsl:param name="target"/>
-  <xsl:if test="@scope = $target">
+  <xsl:if test="@linkend = $target">
     <xsl:variable name="key" select="concat(&primary;, &sep;, &secondary;, &sep;, &tertiary;)"/>
     <xsl:variable name="refs" select="key('tertiary', $key)"/>
     <dt>
       <xsl:apply-templates mode="alphabetic-index-t"/>
       <xsl:for-each select="$refs">
-        <xsl:if test="not (./fourth)">
+        <xsl:if test="not (./d:fourth)">
           <xsl:if test="position()=1">
             <xsl:text>:   </xsl:text>
           </xsl:if>
@@ -335,19 +340,19 @@
         </xsl:if>
       </xsl:for-each>
   </dt>
-  <xsl:variable name="see" select="$refs/see | $refs/seealso"/>
-  <xsl:if test="$refs/fourth or $refs[not(fourth)]/*[self::see or self::seealso]">
+  <xsl:variable name="see" select="$refs/d:see | $refs/d:seealso"/>
+  <xsl:if test="$refs/d:fourth or $refs[not(d:fourth)]/*[self::d:see or self::d:seealso]">
     <dd>
       <dl>
-        <xsl:apply-templates select="$refs[generate-id() = generate-id(key('see', concat(&primary;, &sep;, &secondary;, &sep;, &tertiary;, &sep;, see))[1])]"
+        <xsl:apply-templates select="$refs[generate-id() = generate-id(key('see', concat(&primary;, &sep;, &secondary;, &sep;, &tertiary;, &sep;, d:see))[1])]"
                              mode="index-see">
-          <xsl:sort select="see"/>
+          <xsl:sort select="d:see"/>
         </xsl:apply-templates>
-        <xsl:apply-templates select="$refs[generate-id() = generate-id(key('see-also', concat(&primary;, &sep;, &secondary;, &sep;, &tertiary;, &sep;, seealso))[1])]"
+        <xsl:apply-templates select="$refs[generate-id() = generate-id(key('see-also', concat(&primary;, &sep;, &secondary;, &sep;, &tertiary;, &sep;, d:seealso))[1])]"
                              mode="index-seealso">
-          <xsl:sort select="seealso"/>
+          <xsl:sort select="d:seealso"/>
         </xsl:apply-templates>
-        <xsl:apply-templates select="$refs[fourth and count(.|key('fourth', concat($key, &sep;, &fourth;))[1]) = 1]"
+        <xsl:apply-templates select="$refs[d:fourth and count(.|key('fourth', concat($key, &sep;, &fourth;))[1]) = 1]"
                              mode="index-fourth">
           <xsl:with-param name="target" select="$target"/>
           <xsl:sort select="translate(&fourth;,&allcases;,&sortcases;)"/>
@@ -358,9 +363,9 @@
   </xsl:if>
 </xsl:template>
 
-<xsl:template match="indexterm" mode="index-fourth">
+<xsl:template match="d:indexterm" mode="index-fourth">
   <xsl:param name="target"/>
-  <xsl:if test="@scope = $target">
+  <xsl:if test="@linkend = $target">
     <xsl:variable name="key" select="concat(&primary;, &sep;, &secondary;, &sep;, &tertiary;, &sep;, &fourth;)"/>
     <xsl:variable name="refs" select="key('fourth', $key)"/>
     <dt>
@@ -377,16 +382,16 @@
           </xsl:apply-templates>
       </xsl:for-each>
  </dt>
-  <xsl:if test="$refs/see or $refs/seealso">
+  <xsl:if test="$refs/d:see or $refs/d:seealso">
     <dd>
       <dl>
-        <xsl:apply-templates select="$refs[generate-id() = generate-id(key('see', concat(&primary;, &sep;, &secondary;, &sep;, &tertiary;, &sep;, &fourth;, &sep;, see))[1])]"
+        <xsl:apply-templates select="$refs[generate-id() = generate-id(key('see', concat(&primary;, &sep;, &secondary;, &sep;, &tertiary;, &sep;, &fourth;, &sep;, d:see))[1])]"
                              mode="index-see">
-          <xsl:sort select="see"/>
+          <xsl:sort select="d:see"/>
         </xsl:apply-templates>
-        <xsl:apply-templates select="$refs[generate-id() = generate-id(key('see-also', concat(&primary;, &sep;, &secondary;, &sep;, &tertiary;, &sep;, &fourth;, &sep;, seealso))[1])]"
+        <xsl:apply-templates select="$refs[generate-id() = generate-id(key('see-also', concat(&primary;, &sep;, &secondary;, &sep;, &tertiary;, &sep;, &fourth;, &sep;, d:seealso))[1])]"
                              mode="index-seealso">
-          <xsl:sort select="seealso"/>
+          <xsl:sort select="d:seealso"/>
         </xsl:apply-templates>
       </dl>
     </dd>
@@ -395,27 +400,25 @@
 </xsl:template>
 
 
-<xsl:template match="indexterm" mode="reference-b">
+<xsl:template match="d:indexterm" mode="reference-b">
   <xsl:param name="target"/>
-  <xsl:if test="@scope = $target">
-  <xsl:variable name="targets" select="key('id',@scope)"/>
+  <xsl:if test="@linkend = $target">
+  <xsl:variable name="targets" select="key('id',@linkend)"/>
   <xsl:variable name="this" select="$targets[1]"/>
   <xsl:variable name="title">
     <xsl:apply-templates select="&section.t;" mode="title.markup"/>
   </xsl:variable>
 
   <xsl:variable name="basename">
-    <xsl:call-template name="href.target">
-      <xsl:with-param name="object" select="&section;"/>
-      <xsl:with-param name="ownerobject" select="$this"/>
-      <xsl:with-param name="owner" select="'indexterm'"/>
-    </xsl:call-template>
+    <xsl:apply-templates mode="chunk-filename" select="&section;"/>
   </xsl:variable>
 
   <a>
     <xsl:attribute name="href">
       <xsl:value-of select="concat($basename, '#')"/>
-      <xsl:call-template name="indexterm.id"/>
+      <xsl:call-template name="object.id">
+        <xsl:with-param name="object" select="."/>
+      </xsl:call-template>
     </xsl:attribute>
     <xsl:value-of select="$title"/> <!-- text only -->
   </a>
@@ -474,12 +477,12 @@
   </xsl:choose>
 </xsl:template>
 -->
-<xsl:template match="indexterm" mode="index-see">
-   <dt><xsl:value-of select="see"/></dt>
+<xsl:template match="d:indexterm" mode="index-see">
+   <dt><xsl:value-of select="d:see"/></dt>
 </xsl:template>
 
-<xsl:template match="indexterm" mode="index-seealso">
-   <dt><xsl:value-of select="seealso"/></dt>
+<xsl:template match="d:indexterm" mode="index-seealso">
+   <dt><xsl:value-of select="d:seealso"/></dt>
 </xsl:template>
 
 <xsl:template match="*" mode="index-title-content">

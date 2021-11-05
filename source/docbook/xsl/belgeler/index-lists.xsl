@@ -19,10 +19,11 @@
 
 ]>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-                version="1.0">
+ xmlns:d="http://docbook.org/ns/docbook"
+ exclude-result-prefixes="d" version='1.0'>
 
 <xsl:key name="item"
-         match="itemizedlist"
+         match="d:itemizedlist"
          use="@role"/>
 
 <xsl:template name="generate-item-index">
@@ -36,7 +37,7 @@
   </xsl:apply-templates>
 </xsl:template>
 
-<xsl:template match="itemizedlist" mode="index-list">
+<xsl:template match="d:itemizedlist" mode="index-list">
   <xsl:param name="target"/>
   <xsl:if test="@role = $target">
     <!--xsl:variable name="targets" select="key('id',@role)"/>
@@ -64,10 +65,15 @@
 
 <xsl:template name="generate-abstract-index">
   <xsl:choose>
-    <xsl:when test="name(..)='book' or name(..)='part' or name(..)='reference'">
-      <xsl:variable name="nodes" select="../part|../reference|../preface|../chapter
-                                           |../article|../bibliography|../glossary
-                                           |../bridgehead"/>
+    <xsl:when test="name(..)='d:book' or name(..)='d:part' or name(..)='d:reference'">
+      <xsl:variable name="nodes" select="../d:part
+                                        |../d:reference
+                                        |../d:preface
+                                        |../d:chapter
+                                        |../d:article
+                                        |../d:bibliography
+                                        |../d:glossary
+                                        |../d:bridgehead"/>
       <xsl:if test="$nodes">
         <div class="toc">
           <xsl:element name="dt">
@@ -81,7 +87,7 @@
       </xsl:if>
     </xsl:when>
     <!-- Bundan sonrakiler lazım olursa yazılacak -->
-    <xsl:when test="name(..)='chapter' or name(..)='article'">
+    <xsl:when test="name(..)='d:chapter' or name(..)='d:article'">
       <xsl:call-template name="component.toc">
         <xsl:with-param name="role" select="'abstracts'"/>
       </xsl:call-template>
@@ -96,10 +102,15 @@
 
 <xsl:template name="generate-tip-index">
   <xsl:choose>
-    <xsl:when test="name(..)='book' or name(..)='part' or name(..)='reference'">
-      <xsl:variable name="nodes" select="../part|../reference|../preface|../chapter
-                                           |../article|../bibliography|../glossary
-                                           |../bridgehead"/>
+    <xsl:when test="name(..)='d:book' or name(..)='d:part' or name(..)='d:reference'">
+      <xsl:variable name="nodes" select="../d:part
+                                        |../d:reference
+                                        |../d:preface
+                                        |../d:chapter
+                                        |../d:article
+                                        |../d:bibliography
+                                        |../d:glossary
+                                        |../d:bridgehead"/>
       <xsl:if test="$nodes">
         <div class="toc">
           <xsl:element name="dt">
@@ -113,7 +124,7 @@
       </xsl:if>
     </xsl:when>
     <!-- Bundan sonrakiler lazım olursa yazılacak -->
-    <xsl:when test="name(..)='chapter' or name(..)='article'">
+    <xsl:when test="name(..)='d:chapter' or name(..)='d:article'">
       <xsl:call-template name="component.toc">
         <xsl:with-param name="role" select="'tips'"/>
       </xsl:call-template>
@@ -127,7 +138,7 @@
 </xsl:template>
 
 <xsl:template name="generate-example-index">
-  <xsl:variable name="subjects" select="..//example"/>
+  <xsl:variable name="subjects" select="..//d:example"/>
   <!--xsl:message>
     <xsl:value-of select="$target"/>;<xsl:value-of select="count($subjects)"/>
   </xsl:message-->
@@ -138,13 +149,13 @@
   </dl>
 </xsl:template>
 
-<xsl:template match="example" mode="index-list">
+<xsl:template match="d:example" mode="index-list">
   <xsl:param name="this"/>
   <xsl:variable name="sect.url">
     <xsl:call-template name="href.target">
       <xsl:with-param name="object" select="&section;"/>
       <xsl:with-param name="ownerobject" select="$this"/>
-      <xsl:with-param name="owner" select="'indexterm'"/>
+      <xsl:with-param name="owner" select="'d:indexterm'"/>
     </xsl:call-template>
   </xsl:variable>
   <dt><a>
@@ -160,7 +171,7 @@
 
 <xsl:template match="*" mode="subtoc.abstracts"/>
 
-<xsl:template match="abstract" mode="subtoc.abstracts">
+<xsl:template match="d:abstract" mode="subtoc.abstracts">
   <xsl:apply-templates/>
 </xsl:template>
 
