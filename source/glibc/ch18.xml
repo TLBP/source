@@ -1,674 +1,330 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- ********************************************************************
-         ch18.xml
+     $Id: ch18.xml,v 1.2 2002/12/20 22:29:48 nilgun Exp $
 ******************************************************************** -->
-<part xml:id="glibc-Syslog" xmlns="http://docbook.org/ns/docbook"
-      version="5.0" xml:lang="tr">
- <info>
+<part xml:id="glibc-Syslog">
   <title>Syslog</title>
   <titleabbrev>Sistem Günlükleme ve İletileşme.</titleabbrev>
- </info>
- <partintro>
-  <para>
+  <partintro><para>
 Bu oylumda sistem yönetimini ilgilendiren iletilerin günlüklenmesi ve çıktılanması ile ilgili oluşumlardan bahsedilecektir. Bu oylumda bahsedilen oluşumlar yazılımların kullanıcılarına ileti çıktılaması ve özel günlükler tutması ile ilgili hiçbir şey yapmazlar (Bunları yapan oluşumlar <xref linkend="glibc-I-O-on-Streams"/> bölümünde açıklanmıştır).
-  </para>
-  <para>
-Çoğu sistemde "Syslog" diye bilinen bir oluşum vardır; yazılımların sistem yöneticisini ilgilendiren iletileri teslim edeceği ve bu iletileri aktarmak için konsola çıktılama, belli bir şahsa postalama ya da ileride başvurulmak üzere bir günlük dosyasına kaydetme gibi çeşitli yolları yapılandırabileceği bir oluşumdur.
-  </para>
-  <para>
+  </para><para>
+Çoğu sistemde &quot;Syslog&quot; diye bilinen bir oluşum vardır; yazılımların sistem yöneticisini ilgilendiren iletileri teslim edeceği ve bu iletileri aktarmak için konsola çıktılama, belli bir şahsa postalama ya da ileride başvurulmak üzere bir günlük dosyasına kaydetme gibi çeşitli yolları yapılandırabileceği bir oluşumdur.
+  </para><para>
 Bir yazılım bu oylumdaki oluşumları böyle iletileri teslim etmek için kullanır.
-  </para>
- </partintro>
- <chapter xml:id="glibc-Overview-of-Syslog">
-  <info>
-   <title>Syslog'a Bir Bakış</title>
-   <titleabbrev>Bir sistemin Syslog oluşumuna bir bakış.</titleabbrev>
-  </info>
-  <para>
+  </para></partintro>
+  <chapter xml:id="glibc-Overview-of-Syslog">
+    <title>Syslog'a Bir Bakış</title>
+    <titleabbrev>Bir sistemin Syslog oluşumuna bir bakış.</titleabbrev>
+    <para>
 Sistem yöneticileri her sistemin içindeki bir yığın alt sistemden ve bazı başka sistemlerden gelen farklı çeşitte iletiyle uğraşmak zorunda kalır. Örneğin, bir FTP sunucu aldığı her bağlantıyı raporlayabilir. Çekirdek bir disk sürücüdeki donanımsal hataları raporlayabilir. Bir DNS sunucu düzenli aralıklarla istatistikleri raporlayabilir.
-   </para>
-  <para>
+   </para><para>
 Bu iletilerden bazıları bir sistem yöneticisinin dikkatinin hemen çekilmesini gerektirebilir. Ve o sadece herhangi bir sistem yöneticisi olmayabilir - belli ileti çeşitleri ile uğraşan belli sistem yöneticileri olabilir. Diğer iletilerin sadece ileride gerektiğinde bakılmak üzere sadece kaydedilmesi gerekebilir. Kalan diğerlerinin aylık raporlar üreten kendiliğinden çalışan süreçler tarafından çıkarılan bilgiler olması gerekebilir.
-   </para>
-  <para>
-Bu iletilerle uğraşmak için çoğu Unix sisteminde "Syslog" diye bilinen bir oluşum vardır ve genellikle "Syslogd" diye bilinen bir ardalan süreci olarak çalışır. Syslogd iletiler için, <command>/dev/log</command> isminde bir Unix alan soketini dinler. İletilerdeki sınıflama bilgisine ve yapılandırma dosyasına (genellikle <command>/etc/syslog.conf</command>) bağlı olarak Syslogd onları çeşitli yollara yönlendirir. Çok bilinen bazı yöntemler:
-   </para>
-  <itemizedlist>
-   <listitem>Sistem konsoluna yazma
-     </listitem>
-   <listitem>Belli bir kullanıcıya ileti postalama
-     </listitem>
-   <listitem>Bir günlük dosyasına yazma
-     </listitem>
-   <listitem>Başka bir ardalan sürecine aktarma
-     </listitem>
-   <listitem>İptal etme
-     </listitem>
-  </itemizedlist>
-  <para>
+   </para><para>
+Bu iletilerle uğraşmak için çoğu Unix sisteminde &quot;Syslog&quot; diye bilinen bir oluşum vardır ve genellikle &quot;Syslogd&quot; diye bilinen bir ardalan süreci olarak çalışır. Syslogd iletiler için, <command>/dev/log</command> isminde bir Unix alan soketini dinler. İletilerdeki sınıflama bilgisine ve yapılandırma dosyasına (genellikle <command>/etc/syslog.conf</command>) bağlı olarak Syslogd onları çeşitli yollara yönlendirir. Çok bilinen bazı yöntemler:
+   </para><itemizedlist><listitem>Sistem konsoluna yazma
+     </listitem><listitem>Belli bir kullanıcıya ileti postalama
+     </listitem><listitem>Bir günlük dosyasına yazma
+     </listitem><listitem>Başka bir ardalan sürecine aktarma
+     </listitem><listitem>İptal etme
+     </listitem></itemizedlist><para>
 Syslogd ayrıca başka sistemlerdeki iletileri de işleyebilir. İletiler için hem  <command>syslog</command> UDP portunu hem de yerel soketi dinler.
-   </para>
-  <para>
-Syslog çekirdeğin kendisinden gelen iletileri de işleyebilir. Fakat çekirdek <command>/dev/log</command>'a yazmaz; onun yerine başka bir artalan süreci (kimi zaman "Klogd" denir) çekirdekten iletileri çıkarır ve  onları herhangi bir başka sürecin yaptığı gibi Syslog'a aktarır (ve iletilerin çekirdekten geldiğini belirtir).
-   </para>
-  <para>
+   </para><para>
+Syslog çekirdeğin kendisinden gelen iletileri de işleyebilir. Fakat çekirdek <command>/dev/log</command>'a yazmaz; onun yerine başka bir artalan süreci (kimi zaman &quot;Klogd&quot; denir) çekirdekten iletileri çıkarır ve  onları herhangi bir başka sürecin yaptığı gibi Syslog'a aktarır (ve iletilerin çekirdekten geldiğini belirtir).
+   </para><para>
 Syslog çekirdeğin Syslogd ve Klogd çalıştırılmadan önce çıktıladığı iletileri de işleyebilir. Örneğin Linux çekirdeği başlatma iletilerini bir çekirdek ileti zincirinde saklar ve daha sonra Klogd başlatıldığında onlar normal olarak hala orada duruyor olur. Klogd başlatıldığında Syslogd'nin de başlatılmış olduğu varsayımıyla ileti zincirindeki herşeyi ona aktarır.
-   </para>
-  <para>
+   </para><para>
 Düzenlemek amacıyla iletilerin sınıflanması için, Syslogd her sürecin bir iletiyi teslim ederken iki parçalı sınıflama bilgisini iletiyle birlikte sağlamasını gerektirir:
-   </para>
-  <para>
-   <variablelist>
-    <varlistentry>
-     <term>oluşum</term>
-     <listitem>
-      <para>
+   </para><para><variablelist><varlistentry>
+     <term>oluşum</term><listitem><para>
 İletiyi kimin teslim ettiğini belirtir. Tanımlı çok az sayıda oluşum vardır. Çekirdek, posta altsistemi ve FTP sunucusu tanınan oluşumlara birer örnektir. Tam bir liste için <xref linkend="glibc-syslog--vsyslog"/> bölümüne bakınız. Bunların tamamen keyfi bir sınıflama olduğunu unutmayın. "Posta altsistemi" denince sistem yöneticisinin ona verdiğinden daha fazla bir anlam içermez.
-      </para>
-     </listitem>
-    </varlistentry>
-    <varlistentry>
-     <term>öncelik</term>
-     <listitem>
-      <para>
+      </para></listitem></varlistentry><varlistentry>
+        <term>öncelik</term><listitem><para>
 Bu teslim edilen iletinin ne kadar önemli olduğunu gösterir. Tanımlı önceliklere örnekler: hata ayıklama, bilgilendirme, uyarı, ölümcül. Tam bir liste için  <xref linkend="glibc-syslog--vsyslog"/> bölümüne bakınız.  Önceliklerin tanımlı bir sıralamasının dışında bu önceliklerin anlamları sistem yöneticisi tarafından belirlenir.
-      </para>
-     </listitem>
-    </varlistentry>
-   </variablelist>
-  </para>
-  <para>
-Bir "oluşum/öncelik" çifti hem oluşumu hem de önceliği belirten bir sayıdır.
-   </para>
-  <para>
-   <warning>
-    <para>Bu terminoloji evrensel değildir. Bazıları önceliğe "seviye", öncelikle oluşumun oluşturduğu birleşime "öncelik" der. Linux çekirdeğinde ise bir iletinin seviyesi hem Syslog önceliği hem de Syslog oluşum/öncelik çiftine karşılık gelir (oluşum kodu çekirdek için sıfır olduğundan her ikisi de aslında aynı değere sahip olur).</para>
-   </warning>
-  </para>
-  <para>
+      </para></listitem></varlistentry></variablelist></para><para>
+Bir &quot;oluşum/öncelik&quot; çifti hem oluşumu hem de önceliği belirten bir sayıdır.
+   </para><para>
+<warning><para>Bu terminoloji evrensel değildir. Bazıları önceliğe "seviye", öncelikle oluşumun oluşturduğu birleşime "öncelik" der. Linux çekirdeğinde ise bir iletinin seviyesi hem Syslog önceliği hem de Syslog oluşum/öncelik çiftine karşılık gelir (oluşum kodu çekirdek için sıfır olduğundan her ikisi de aslında aynı değere sahip olur).</para></warning>
+   </para><para>
 GNU C kütüphanesi iletileri Syslog'a teslim etmek için işlevler içerir. Bu işlemi <command>/dev/log</command> soketine yazarak yaparlar. Bkz. <xref linkend="glibc-Submitting-Syslog-Messages"/>.
-   </para>
-  <para>
+   </para><para>
 GNU C kütüphanesi işlevleri iletileri sadece aynı sistemdeki Syslog oluşumuna teslim ederler. Syslog iletilerini başka bir sistemdeki Syslog oluşumuna teslim etmek için sistemdeki <command>syslog</command> UDP portuna bir UDP datagramı yazan soket G/Ç işlevleri kullanılır. Bkz. <xref linkend="glibc-Sockets"/>.
-   </para>
- </chapter>
- <chapter xml:id="glibc-Submitting-Syslog-Messages">
-  <info>
-   <title>Syslog İletilerinin Teslim Edilmesi</title>
-   <titleabbrev>Syslog'a iletileri teslim eden işlevler.</titleabbrev>
-  </info>
-  <para>
+   </para></chapter>
+  <chapter xml:id="glibc-Submitting-Syslog-Messages">
+    <title>Syslog İletilerinin Teslim Edilmesi</title>
+    <titleabbrev>Syslog'a iletileri teslim eden işlevler.</titleabbrev>
+    <para>
 GNU C kütüphanesi iletileri Syslog'a teslim etmek için işlevler içerir:
-   </para>
-  <para>
+   </para><para>
 Bu işlevler iletileri sadece aynı sistemdeki Syslog oluşumuna teslim ederler. Syslog iletilerini başka bir sistemdeki Syslog oluşumuna teslim etmek için sistemdeki <command>syslog</command> UDP portuna bir UDP datagramı yazan soket G/Ç işlevleri kullanılır. Bkz. <xref linkend="glibc-Sockets"/>.
    </para>
-  <section xml:id="glibc-openlog">
-   <info>
-    <title>openlog</title>
-    <titleabbrev>Syslog'a bağlantı açılması.</titleabbrev>
-   </info>
-   <para>
+    <sect1 xml:id="glibc-openlog">
+      <title>openlog</title>
+      <titleabbrev>Syslog'a bağlantı açılması.</titleabbrev>
+      <para>
 Bu böümdeki semboller  <filename>syslog.h</filename> dosyasında bildirilmiştir.
 <indexterm scope="glibc-pg"><primary>syslog.h</primary></indexterm>
-    </para>
-   <para>
-    <indexterm scope="glibc-fn">
-     <primary>openlog</primary>
-    </indexterm>
-    <funcsynopsis>
-     <funcprototype role="işlev" xml:id="glibc-func-openlog">
-      <funcdef>void <command>openlog</command></funcdef>
-      <paramdef>(const char *<varname>kimlik</varname>,
+    </para><para>
+<indexterm scope="glibc-fn"><primary>openlog</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev" xml:id="glibc-func-openlog">
+<funcdef>void <command>openlog</command></funcdef>
+<paramdef>(const char *<varname>kimlik</varname>,
  int         <varname>seçenek</varname>,
  int         <varname>oluşum</varname>)</paramdef>
-     </funcprototype>
-     <funcdescr>
-      <para><command>openlog</command> işlevi iletileri teslim etmek için Syslog'a bir bağlantı açar ya da bir bağlantıyı yeniden açar.
-    </para>
-      <para><varname>kimlik</varname> ileride yapılacak <command>syslog</command> çağrılarında iletinin başına eklenecek keyfi bir kimliklendirme dizgesidir. Bu iletinin kaynağını belirtmek için düşünülmüştür ve teamülen iletileri teslim edecek yazılımın ismidir.
-    </para>
-      <para>
+</funcprototype><funcdescr><para>
+<command>openlog</command> işlevi iletileri teslim etmek için Syslog'a bir bağlantı açar ya da bir bağlantıyı yeniden açar.
+    </para><para>
+<varname>kimlik</varname> ileride yapılacak <command>syslog</command> çağrılarında iletinin başına eklenecek keyfi bir kimliklendirme dizgesidir. Bu iletinin kaynağını belirtmek için düşünülmüştür ve teamülen iletileri teslim edecek yazılımın ismidir.
+    </para><para>
 Eğer <varname>kimlik</varname> bir boş gösterici ise ya da <command>openlog</command> çağrısı yapılmazsa, ön tanımlı kimliklendirme dizgesi <literal>argv[0]</literal>'dan alınan yazılım ismi olacaktır.
-    </para>
-      <para><varname>kimlik</varname> dizge göstericisinin Syslog yordamları tarafından dahili olarak saklanacağını lütfen hatırlayın. <varname>kimlik</varname> ile gösterilen belleği serbest bırakmamalısınız. Etki alanından çıkmak değişkenin yaşamının sonu demek olduğundan dizgeyi bir özdevinimli değişkende saklamak ayrıca tehlikelidir de. <varname>kimlik</varname> dizgesini değiştirmek isterseniz <command>openlog</command> işlevini tekrar çağırmalısınız; <varname>kimlik</varname> ile gösterilen dizgeye yazma işlemi evresel değildir.
-    </para>
-      <para>
+    </para><para>
+<varname>kimlik</varname> dizge göstericisinin Syslog yordamları tarafından dahili olarak saklanacağını lütfen hatırlayın. <varname>kimlik</varname> ile gösterilen belleği serbest bırakmamalısınız. Etki alanından çıkmak değişkenin yaşamının sonu demek olduğundan dizgeyi bir özdevinimli değişkende saklamak ayrıca tehlikelidir de. <varname>kimlik</varname> dizgesini değiştirmek isterseniz <command>openlog</command> işlevini tekrar çağırmalısınız; <varname>kimlik</varname> ile gösterilen dizgeye yazma işlemi evresel değildir.
+    </para><para>
 Syslog yordamlarının <varname>kimlik</varname> başvurusunu bırakmasını sağlayabilir ve <command>closelog</command> çağrısı ile öntanımlı dizgeye (<literal>argv[0]</literal>'dan alınan yazılım ismi) geri dönebilirsiniz: <xref linkend="glibc-closelog"/>.
-    </para>
-      <para>
+    </para><para>
 Kodu, yüklenebilen bir paylaşımlı kütüphane (örn, bir PAM modülü) için yazıyorsanız ve <command>openlog</command> kullanıyorsanız, kütüphaneyi yüklenmemiş duruma getirmeden önce bir noktada <command>closelog</command> çağrısı yapmalısınız. Bir örnek:
-    </para>
-      <para>
-       <screen>#include &lt;syslog.h&gt;
+    </para><para>
+<screen>#include &lt;syslog.h>
 
 void
 shared_library_function (void)
 {
-  openlog ("mylibrary", option, priority);
+  openlog (&quot;mylibrary&quot;, option, priority);
 
-  syslog (LOG_INFO, "shared library has been invoked");
+  syslog (LOG_INFO, &quot;shared library has been invoked&quot;);
 
   closelog ();
 }
-</screen>
-      </para>
-      <para><command>closelog</command> çağrılmaksızın kütüphane yüklenmemiş duruma getirilip <command>"mylibrary"</command> dizgesini içeren bellek anlamsız hale getirilirse, kütüphaneyi kullanan yazılım tarafından ileride yapılacak bir <command>syslog</command> çağrısı bir çökmeye sebep olabilir. Bu BSD syslog arayüzünün bir sınırlamasıdır.
-    </para>
-      <para><command>openlog</command> işlevi <varname>seçenek</varname> değerine bağlı olarak <command>/dev/log</command> soketini açabilir de açmayabilir de. Eğer açması gerekiyorsa, onu açmayı dener ve bir datagram soketi olarak ona bağlanır. Soket, "Close on Exec" özniteliğine sahiptir, bu bakımdan eğer süreç bir <command>exec</command> çağrısı yaparsa çekirdek onu kapatacaktır.
-    </para>
-      <para><command>openlog</command> kullanmak zorunda değilsiniz. Eğer <command>openlog</command> çağrısı yapmaksızın bir  <command>syslog</command> çağrısı yaprsanız, <varname>kimlik</varname> ve
+</screen></para><para>
+<command>closelog</command> çağrılmaksızın kütüphane yüklenmemiş duruma getirilip <command>&quot;mylibrary&quot;</command> dizgesini içeren bellek anlamsız hale getirilirse, kütüphaneyi kullanan yazılım tarafından ileride yapılacak bir <command>syslog</command> çağrısı bir çökmeye sebep olabilir. Bu BSD syslog arayüzünün bir sınırlamasıdır.
+    </para><para>
+<command>openlog</command> işlevi <varname>seçenek</varname> değerine bağlı olarak <command>/dev/log</command> soketini açabilir de açmayabilir de. Eğer açması gerekiyorsa, onu açmayı dener ve bir datagram soketi olarak ona bağlanır. Soket, &quot;Close on Exec&quot; özniteliğine sahiptir, bu bakımdan eğer süreç bir <command>exec</command> çağrısı yaparsa çekirdek onu kapatacaktır.
+    </para><para>
+<command>openlog</command> kullanmak zorunda değilsiniz. Eğer <command>openlog</command> çağrısı yapmaksızın bir  <command>syslog</command> çağrısı yaprsanız, <varname>kimlik</varname> ve
 <varname>options</varname> için öntanımlı değerler kullanılarak bağlantı anında açılır.
-    </para>
-      <para><varname>options</varname> bir bit dizgesidir. Bitler aşağıdaki tek bitlik maskelerle tanımlanmıştır:
-    </para>
-      <para>
-       <variablelist>
-        <varlistentry>
-         <term>
-          <literal>LOG_PERROR</literal>
-         </term>
-         <listitem>
-          <para>
+    </para><para>
+<varname>options</varname> bir bit dizgesidir. Bitler aşağıdaki tek bitlik maskelerle tanımlanmıştır:
+    </para><para><variablelist><varlistentry>
+    <term><literal>LOG_PERROR</literal></term><listitem><para>
 Bit varsa, <command>openlog</command> bağlantıyı öyle ayarlar ki, bu bağlantı üzerinden yapılan herhangi bir <command>syslog</command> çağrısı iletiyi Syslog'a teslim ederken ek olarak iletiyi sürecin standart hata akımına yazar. Aksi takdirde, <command>syslog</command> iletiyi standart hataya yazmaz.
-       </para>
-         </listitem>
-        </varlistentry>
-        <varlistentry>
-         <term>
-          <literal>LOG_CONS</literal>
-         </term>
-         <listitem>
-          <para>
+       </para></listitem></varlistentry><varlistentry>
+       <term><literal>LOG_CONS</literal></term><listitem><para>
 Bit varsa, <command>openlog</command> bağlantıyı öyle ayarlar ki, bu bağlantı üzerinden yapılan herhangi bir <command>syslog</command> çağrısında bir ileti Syslog'a teslim edilemezse ileti sistem konsoluna yazılır. Aksi takdirde,  <command>syslog</command> çağrısı sistem konsoluna yazmaz (ama şüphesiz kendi konsoluna yazabilir).
-       </para>
-         </listitem>
-        </varlistentry>
-        <varlistentry>
-         <term>
-          <literal>LOG_PID</literal>
-         </term>
-         <listitem>
-          <para>
+       </para></listitem></varlistentry><varlistentry>
+       <term><literal>LOG_PID</literal></term><listitem><para>
 Bit varsa, <command>openlog</command> bağlantıyı öyle ayarlar ki, bu bağlantı üzerinden yapılan herhangi bir <command>syslog</command> çağrısında, çağrıldığı sürecin süreç kimliğini (PID) iletiye yerleştirir. Aksi takdirde, <command>openlog</command> PID'i yerleştirmez.
-       </para>
-         </listitem>
-        </varlistentry>
-        <varlistentry>
-         <term>
-          <literal>LOG_NDELAY</literal>
-         </term>
-         <listitem>
-          <para>
+       </para></listitem></varlistentry><varlistentry>
+       <term><literal>LOG_NDELAY</literal></term><listitem><para>
 Bit varsa, <command>openlog</command>, <command>/dev/log</command> soketini açar ve bağlanır. Aksi tadirde, ileride yapılacak bir <command>syslog</command> çağrısı soketi açmalı ve bağlanmalıdır.
-       </para>
-          <para>
-           <note>
-            <info>
-             <title>Taşınabilirlik Bilgisi</title>
-            </info>
-            <para>Erken dönemdeki sistemlerde, bu bit tamamen ters çalışırdı.</para>
-           </note>
-          </para>
-         </listitem>
-        </varlistentry>
-        <varlistentry>
-         <term>
-          <literal>LOG_ODELAY</literal>
-         </term>
-         <listitem>
-          <para>
+       </para><para>
+<note><title>Taşınabilirlik Bilgisi</title><para>Erken dönemdeki sistemlerde, bu bit tamamen ters çalışırdı.</para></note>
+       </para></listitem></varlistentry><varlistentry>
+       <term><literal>LOG_ODELAY</literal></term><listitem><para>
 Bu bit hiçbir şey yapmaz. Sadece geriye uyumluluk adına vardır.
-       </para>
-         </listitem>
-        </varlistentry>
-       </variablelist>
-      </para>
-      <para><varname>options</varname> içindeki diğer bitler birse sonuç belirsizdir.
-    </para>
-      <para><varname>oluşum</varname> bu bağlantı için öntanımlı oluşum kodudur. Bu bağlantı üzerinden öntanımlı oluşum belirten bir <command>syslog</command> çağrısı, iletinin bu oluşumla ilişkilendirilmesine sebep olur. Olası değerler için <command>syslog</command> işlevinin açıklamasına bakın. Belirtilen bir sıfır değeri öntanımlı olan <command>LOG_USER</command>'ı öntanımlı oluşum yapar.
-    </para>
-      <para><command>openlog</command> çağrısı yaptığınızda, eğer bir Syslog bağlantısı zaten açıksa, <command>openlog</command> bağlantıyı "yeniden" açar. Yeniden açma öntanımlı oluşum kodu için sıfır belirtilmesi dışında açma gibidir, öntanımlı kod basitçe değişmeden kalır ve <command>LOG_NDELAY</command> belirtilmişse, soket zaten açık ve bağlı olduğundan <command>openlog</command> onu olduğu gibi bırakır.
-    </para>
-     </funcdescr>
-    </funcsynopsis>
-   </para>
-  </section>
-  <section xml:id="glibc-syslog--vsyslog">
-   <info>
-    <title>syslog, vsyslog</title>
-    <titleabbrev>İletinin Syslog'a teslim edilmesi.</titleabbrev>
-   </info>
-   <para>
+       </para></listitem></varlistentry></variablelist></para><para>
+<varname>options</varname> içindeki diğer bitler birse sonuç belirsizdir.
+    </para><para>
+<varname>oluşum</varname> bu bağlantı için öntanımlı oluşum kodudur. Bu bağlantı üzerinden öntanımlı oluşum belirten bir <command>syslog</command> çağrısı, iletinin bu oluşumla ilişkilendirilmesine sebep olur. Olası değerler için <command>syslog</command> işlevinin açıklamasına bakın. Belirtilen bir sıfır değeri öntanımlı olan <command>LOG_USER</command>'ı öntanımlı oluşum yapar.
+    </para><para>
+<command>openlog</command> çağrısı yaptığınızda, eğer bir Syslog bağlantısı zaten açıksa, <command>openlog</command> bağlantıyı "yeniden" açar. Yeniden açma öntanımlı oluşum kodu için sıfır belirtilmesi dışında açma gibidir, öntanımlı kod basitçe değişmeden kalır ve <command>LOG_NDELAY</command> belirtilmişse, soket zaten açık ve bağlı olduğundan <command>openlog</command> onu olduğu gibi bırakır.
+    </para></funcdescr></funcsynopsis></para></sect1>
+    <sect1 xml:id="glibc-syslog--vsyslog">
+      <title>syslog, vsyslog</title>
+      <titleabbrev>İletinin Syslog'a teslim edilmesi.</titleabbrev>
+      <para>
 Bu bölümdeki semboller <filename>syslog.h</filename> dosyasında bildirilmiştir.
 <indexterm scope="glibc-pg"><primary>syslog.h</primary></indexterm>
-    </para>
-   <para xml:id="glibc-func-syslog">
-    <indexterm scope="glibc-fn">
-     <primary>syslog</primary>
-    </indexterm>
-    <funcsynopsis>
-     <funcprototype role="işlev">
-      <funcdef>void <command>syslog</command></funcdef>
-      <paramdef>(int   <varname>oluşum_öncelik</varname>,
+    </para><para xml:id="glibc-func-syslog">
+<indexterm scope="glibc-fn"><primary>syslog</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>void <command>syslog</command></funcdef>
+<paramdef>(int   <varname>oluşum_öncelik</varname>,
  char *<varname>biçim</varname>,
  ...)</paramdef>
-     </funcprototype>
-     <funcdescr>
-      <para><command>syslog</command> bir iletiyi Syslog'a teslim eder. Bunu Unix alan soketi olan <command>/dev/log</command>'a yazarak yapar.
-    </para>
-      <para><command>syslog</command> iletiyi <varname>oluşum_öncelik</varname> ile belirtilen oluşum ve öncelikle teslim eder. Bir oluşum ve öncelikten bir oluşum/öncelik değeri <command>LOG_MAKEPRI</command> makrosu ile şöyle üretilir:
-    </para>
-      <para>
-       <screen>LOG_MAKEPRI(LOG_USER, LOG_WARNING)</screen>
-      </para>
-      <para>
+</funcprototype><funcdescr><para>
+<command>syslog</command> bir iletiyi Syslog'a teslim eder. Bunu Unix alan soketi olan <command>/dev/log</command>'a yazarak yapar.
+    </para><para>
+<command>syslog</command> iletiyi <varname>oluşum_öncelik</varname> ile belirtilen oluşum ve öncelikle teslim eder. Bir oluşum ve öncelikten bir oluşum/öncelik değeri <command>LOG_MAKEPRI</command> makrosu ile şöyle üretilir:
+    </para><para>
+<screen>LOG_MAKEPRI(LOG_USER, LOG_WARNING)</screen>
+    </para><para>
 Oluşum kodu için olası değerler (makrolar):
-    </para>
-      <para>
-       <variablelist>
-        <varlistentry>
-         <term>
-          <literal>LOG_USER</literal>
-         </term>
-         <listitem>
-          <para>
+    </para><para><variablelist><varlistentry>
+    <term><literal>LOG_USER</literal></term><listitem><para>
 Bir kullanıcı süreci
-       </para>
-         </listitem>
-        </varlistentry>
-        <varlistentry>
-         <term>
-          <literal>LOG_MAIL</literal>
-         </term>
-         <listitem>
-          <para>
+       </para></listitem></varlistentry><varlistentry>
+       <term><literal>LOG_MAIL</literal></term><listitem><para>
 Posta
-       </para>
-         </listitem>
-        </varlistentry>
-        <varlistentry>
-         <term>
-          <literal>LOG_DAEMON</literal>
-         </term>
-         <listitem>
-          <para>
+       </para></listitem></varlistentry><varlistentry>
+       <term><literal>LOG_DAEMON</literal></term><listitem><para>
 Bir sistem artalan süreci
-       </para>
-         </listitem>
-        </varlistentry>
-        <varlistentry>
-         <term>
-          <literal>LOG_AUTH</literal>
-         </term>
-         <listitem>
-          <para>
+       </para></listitem></varlistentry><varlistentry>
+       <term><literal>LOG_AUTH</literal></term><listitem><para>
 Güvenlik (kimlik denetimi)
-       </para>
-         </listitem>
-        </varlistentry>
-        <varlistentry>
-         <term>
-          <literal>LOG_SYSLOG</literal>
-         </term>
-         <listitem>
-          <para>
+       </para></listitem></varlistentry><varlistentry>
+       <term><literal>LOG_SYSLOG</literal></term><listitem><para>
 Syslog
-       </para>
-         </listitem>
-        </varlistentry>
-        <varlistentry>
-         <term>
-          <literal>LOG_LPR</literal>
-         </term>
-         <listitem>
-          <para>
+       </para></listitem></varlistentry><varlistentry>
+       <term><literal>LOG_LPR</literal></term><listitem><para>
 Merkezi yazıcı
-       </para>
-         </listitem>
-        </varlistentry>
-        <varlistentry>
-         <term>
-          <literal>LOG_NEWS</literal>
-         </term>
-         <listitem>
-          <para>
+       </para></listitem></varlistentry><varlistentry>
+       <term><literal>LOG_NEWS</literal></term><listitem><para>
 Ağ haberleri (yani, Usenet)
-       </para>
-         </listitem>
-        </varlistentry>
-        <varlistentry>
-         <term>
-          <literal>LOG_UUCP</literal>
-         </term>
-         <listitem>
-          <para>
+       </para></listitem></varlistentry><varlistentry>
+       <term><literal>LOG_UUCP</literal></term><listitem><para>
 UUCP
-       </para>
-         </listitem>
-        </varlistentry>
-        <varlistentry>
-         <term>
-          <literal>LOG_CRON</literal>
-         </term>
-         <listitem>
-          <para>
+       </para></listitem></varlistentry><varlistentry>
+       <term><literal>LOG_CRON</literal></term><listitem><para>
 Cron ve At
-       </para>
-         </listitem>
-        </varlistentry>
-        <varlistentry>
-         <term>
-          <literal>LOG_AUTHPRIV</literal>
-         </term>
-         <listitem>
-          <para>
+       </para></listitem></varlistentry><varlistentry>
+       <term><literal>LOG_AUTHPRIV</literal></term><listitem><para>
 Özel güvenlik (kimlik denetimi)
-       </para>
-         </listitem>
-        </varlistentry>
-        <varlistentry>
-         <term>
-          <literal>LOG_FTP</literal>
-         </term>
-         <listitem>
-          <para>
+       </para></listitem></varlistentry><varlistentry>
+       <term><literal>LOG_FTP</literal></term><listitem><para>
 Ftp sunucu
-       </para>
-         </listitem>
-        </varlistentry>
-        <varlistentry>
-         <term>
-          <literal>LOG_LOCAL0</literal>
-         </term>
-        </varlistentry>
-        <varlistentry>
-         <term>
-          <literal>LOG_LOCAL1</literal>
-         </term>
-        </varlistentry>
-        <varlistentry>
-         <term>
-          <literal>LOG_LOCAL2</literal>
-         </term>
-        </varlistentry>
-        <varlistentry>
-         <term>
-          <literal>LOG_LOCAL3</literal>
-         </term>
-        </varlistentry>
-        <varlistentry>
-         <term>
-          <literal>LOG_LOCAL4</literal>
-         </term>
-        </varlistentry>
-        <varlistentry>
-         <term>
-          <literal>LOG_LOCAL5</literal>
-         </term>
-        </varlistentry>
-        <varlistentry>
-         <term>
-          <literal>LOG_LOCAL6</literal>
-         </term>
-        </varlistentry>
-        <varlistentry>
-         <term>
-          <literal>LOG_LOCAL7</literal>
-         </term>
-         <listitem>
-          <para>
+       </para></listitem></varlistentry><varlistentry>
+       <term><literal>LOG_LOCAL0</literal></term>
+       </varlistentry><varlistentry>
+       <term><literal>LOG_LOCAL1</literal></term>
+       </varlistentry><varlistentry>
+       <term><literal>LOG_LOCAL2</literal></term>
+       </varlistentry><varlistentry>
+       <term><literal>LOG_LOCAL3</literal></term>
+       </varlistentry><varlistentry>
+       <term><literal>LOG_LOCAL4</literal></term>
+       </varlistentry><varlistentry>
+       <term><literal>LOG_LOCAL5</literal></term>
+       </varlistentry><varlistentry>
+       <term><literal>LOG_LOCAL6</literal></term>
+       </varlistentry><varlistentry>
+       <term><literal>LOG_LOCAL7</literal></term><listitem><para>
 Yerel olarak tanımlı
-       </para>
-         </listitem>
-        </varlistentry>
-       </variablelist>
-      </para>
-      <para>
+       </para></listitem></varlistentry></variablelist></para><para>
 Oluşum kodu bunların dışında bir değerse sonuç tanımsızdır.
-    </para>
-      <para>
-       <note>
-        <para><command>syslog</command> başka bir oluşum kodunu daha tanır: bu çekirdektir. Ama onun oluşum kodunu bu işlevlerle belirtemezsiniz. Eğer denerseniz <command>syslog</command> öntanımlı oluşum isteği yapılmış gibi davranır. Fakat bunu hiçbir şekilde denememelisiniz, çünkü çekirdek GNU C kütüphanesini kullanan bir yazılım değildir.</para>
-       </note>
-      </para>
-      <para><varname>oluşum_öncelik</varname> olarak bir öncelik kodu da belrtebilirsiniz. Bu durumda, <command>syslog</command> çağrısı Syslog bağlantısı açıldığında öntanımlı oluşum kurulmuş kabul eder. Bkz.  <xref linkend="glibc-Syslog-Example"/>.
-    </para>
-      <para>
+    </para><para>
+<note><para><command>syslog</command> başka bir oluşum kodunu daha tanır: bu çekirdektir. Ama onun oluşum kodunu bu işlevlerle belirtemezsiniz. Eğer denerseniz <command>syslog</command> öntanımlı oluşum isteği yapılmış gibi davranır. Fakat bunu hiçbir şekilde denememelisiniz, çünkü çekirdek GNU C kütüphanesini kullanan bir yazılım değildir.</para></note>
+    </para><para>
+<varname>oluşum_öncelik</varname> olarak bir öncelik kodu da belrtebilirsiniz. Bu durumda, <command>syslog</command> çağrısı Syslog bağlantısı açıldığında öntanımlı oluşum kurulmuş kabul eder. Bkz.  <xref linkend="glibc-Syslog-Example"/>.
+    </para><para>
 Öncelik kodu için olası değerler (makrolar):
-    </para>
-      <para>
-       <variablelist>
-        <varlistentry>
-         <term>
-          <literal>LOG_EMERG</literal>
-         </term>
-         <listitem>
-          <para>
+    </para><para><variablelist><varlistentry>
+    <term><literal>LOG_EMERG</literal></term><listitem><para>
 İleti, sistem işe yaramaz diyor.
-       </para>
-         </listitem>
-        </varlistentry>
-        <varlistentry>
-         <term>
-          <literal>LOG_ALERT</literal>
-         </term>
-         <listitem>
-          <para>
+       </para></listitem></varlistentry><varlistentry>
+       <term><literal>LOG_ALERT</literal></term><listitem><para>
 İleti hemen birşeyler yapılmasını istiyor.
-       </para>
-         </listitem>
-        </varlistentry>
-        <varlistentry>
-         <term>
-          <literal>LOG_CRIT</literal>
-         </term>
-         <listitem>
-          <para>
+       </para></listitem></varlistentry><varlistentry>
+       <term><literal>LOG_CRIT</literal></term><listitem><para>
 İleti ölümcül bir durumu belirtiyor.
-       </para>
-         </listitem>
-        </varlistentry>
-        <varlistentry>
-         <term>
-          <literal>LOG_ERR</literal>
-         </term>
-         <listitem>
-          <para>
+       </para></listitem></varlistentry><varlistentry>
+       <term><literal>LOG_ERR</literal></term><listitem><para>
 İleti, bir hatanın açıklaması
-       </para>
-         </listitem>
-        </varlistentry>
-        <varlistentry>
-         <term>
-          <literal>LOG_WARNING</literal>
-         </term>
-         <listitem>
-          <para>
+       </para></listitem></varlistentry><varlistentry>
+       <term><literal>LOG_WARNING</literal></term><listitem><para>
 İleti, bir uyarı.
-       </para>
-         </listitem>
-        </varlistentry>
-        <varlistentry>
-         <term>
-          <literal>LOG_NOTICE</literal>
-         </term>
-         <listitem>
-          <para>
+       </para></listitem></varlistentry><varlistentry>
+       <term><literal>LOG_NOTICE</literal></term><listitem><para>
 İleti, bir normal ama önamli bir olayı bildiriyor.
-       </para>
-         </listitem>
-        </varlistentry>
-        <varlistentry>
-         <term>
-          <literal>LOG_INFO</literal>
-         </term>
-         <listitem>
-          <para>
+       </para></listitem></varlistentry><varlistentry>
+       <term><literal>LOG_INFO</literal></term><listitem><para>
 İleti sadece bilgilendirme amaçlı.
-       </para>
-         </listitem>
-        </varlistentry>
-        <varlistentry>
-         <term>
-          <literal>LOG_DEBUG</literal>
-         </term>
-         <listitem>
-          <para>
+       </para></listitem></varlistentry><varlistentry>
+       <term><literal>LOG_DEBUG</literal></term><listitem><para>
 İleti sadece hata ayıklama ile ilgili.
-       </para>
-         </listitem>
-        </varlistentry>
-       </variablelist>
-      </para>
-      <para>
+       </para></listitem></varlistentry></variablelist></para><para>
 Öncelik kodu bunların dışında bir değerse sonuç tanımsızdır.
-    </para>
-      <para>
+    </para><para>
 Eğer süreç açık bir Syslog bağlantısına sahip değilse (yani <command>openlog</command> çağrısı yapılmamışsa), <command>syslog</command> işlevi <command>openlog</command>'un yaptığı gibi hemen bağlantıyı açar. Bağlantıyı açarken, aksi sadece bir <command>openlog</command> çağrısı ile belirtilebilecek bilgi için şu öntanımlıları kullanır: Öntanımlı kimliklendirme dizgesi yazılımın ismidir. Öntanımlı oluşum <command>LOG_USER</command>'dır. <varname>seçenek</varname> ile belirtilen bitlerin hepsi sıfırdır. <command>syslog</command> bağlantıyı açık bırakır.
-    </para>
-      <para>
+    </para><para>
 Eğer <command>dev/log</command> soketi açık ve bağlı değilse, <command>syslog</command>, <command>openlog</command> işlevinin <command>LOG_NDELAY</command> seçeneğiyle yaptığı gibi onu açar ve bağlanır.
-    </para>
-      <para><command>syslog</command> iletiyi göndermeye çalışırkan başarısız olmazsa, <command>/dev/log</command>'u açık ve bağlı bırakır, aksi takdirde  <command>syslog</command> onu kapatır (ileride bir örtük açılışın Syslog bağlantısını kullanışlı bir durumda açacağını umarak).
-    </para>
-      <para>
+    </para><para>
+<command>syslog</command> iletiyi göndermeye çalışırkan başarısız olmazsa, <command>/dev/log</command>'u açık ve bağlı bırakır, aksi takdirde  <command>syslog</command> onu kapatır (ileride bir örtük açılışın Syslog bağlantısını kullanışlı bir durumda açacağını umarak).
+    </para><para>
 Örnek:
-    </para>
-      <para>
-       <screen>
-#include &lt;syslog.h&gt;
+    </para><para>
+<screen>
+#include &lt;syslog.h>
   syslog (LOG_MAKEPRI(LOG_LOCAL1, LOG_ERROR),
           "Unable to make network connection to %s.  Error=%m", host);
-</screen>
-      </para>
-     </funcdescr>
-    </funcsynopsis>
-   </para>
-   <para xml:id="glibc-func-vsyslog">
-    <indexterm scope="glibc-fn">
-     <primary>vsyslog</primary>
-    </indexterm>
-    <funcsynopsis>
-     <funcprototype role="işlev">
-      <funcdef>void <command>vsyslog</command></funcdef>
-      <paramdef>(int     <varname>oluşum_öncelik</varname>,
+</screen></para></funcdescr></funcsynopsis></para><para xml:id="glibc-func-vsyslog">
+<indexterm scope="glibc-fn"><primary>vsyslog</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>void <command>vsyslog</command></funcdef>
+<paramdef>(int     <varname>oluşum_öncelik</varname>,
  char   *<varname>biçim</varname>,
  va_list <varname>arglist</varname>)</paramdef>
-     </funcprototype>
-     <funcdescr>
-      <para>
+</funcprototype><funcdescr><para>
 BSD tarzı değişken sayıda argümanlı olarak <command>syslog</command>'un benzeridir.
-    </para>
-     </funcdescr>
-    </funcsynopsis>
-   </para>
-  </section>
-  <section xml:id="glibc-closelog">
-   <info>
-    <title>closelog</title>
-    <titleabbrev>Syslog bağlantısının kapatılması</titleabbrev>
-   </info>
-   <para>
-Bu bölümdeki semboller <filename>syslog.h</filename> dosyasında bildirilmiştir.
-<indexterm scope="glibc-pg"><primary>syslog.h</primary></indexterm>
-    </para>
-   <para xml:id="glibc-func-closelog">
-    <indexterm scope="glibc-fn">
-     <primary>closelog</primary>
-    </indexterm>
-    <funcsynopsis>
-     <funcprototype role="işlev">
-      <funcdef>void <command>closelog</command></funcdef>
-      <paramdef>(void)</paramdef>
-     </funcprototype>
-     <funcdescr>
-      <para><command>closelog</command> var olan Syslog bağlantısını kapatır. Bu işlem açıksa <command>/dev/log</command> soketini de kapatır. İşlev ayrıca Syslog iletilerininin kimliklendirme dizgesini, eğer <command>openlog</command> bağlantıyı boş olmayan bir <varname>kimlik</varname> argümanı ile açmışsa, geriye öntanımlı değerine ayarlar. Öntanımlı kimliklendirme dizgesi <literal>argv[0]</literal>'dan alınan yazılım ismidir.
-    </para>
-      <para><command>openlog</command> işlevini özelleştirilmiş syslog çıktısı üretmek için kullanan bir paylaşımlı kütüphane kodu yazıyorsanız, işiniz bittiğinde, GNU C kütüphanesinin <varname>kimlik</varname> göstericisi ile ilişkisini kesmek için <command>closelog</command> kullanmalısınız. Daha fazla bilgi için <xref linkend="glibc-openlog"/> bölümünü okuyun.
-    </para>
-      <para><command>closelog</command> tamponları boşaltmaz. Bir Syslog bağlantısını <command>openlog</command> ile yeniden açmadan önce <command>closelog</command> çağrısı yapmak zorunda değilsiniz. Syslog bağlantıları <command>exec</command> veya <command>exit</command> çağrıları ile özdevinimli olarak kapanır.
-    </para>
-     </funcdescr>
-    </funcsynopsis>
-   </para>
-  </section>
-  <section xml:id="glibc-setlogmask">
-   <info>
-    <title>setlogmask</title>
-    <titleabbrev>Belli iletilerin yoksayılmasının sağlanması.</titleabbrev>
-   </info>
-   <para>
-Bu bölümdeki semboller <filename>syslog.h</filename> dosyasında bildirilmiştir.
-<indexterm scope="glibc-pg"><primary>syslog.h</primary></indexterm>
-    </para>
-   <para xml:id="glibc-func-setlogmask">
-    <indexterm scope="glibc-fn">
-     <primary>setlogmask</primary>
-    </indexterm>
-    <funcsynopsis>
-     <funcprototype role="işlev">
-      <funcdef>int <command>setlogmask</command></funcdef>
-      <paramdef>(int <varname>mask</varname>)</paramdef>
-     </funcprototype>
-     <funcdescr>
-      <para><command>setlogmask</command> işlevi ileride hangi <command>syslog</command> çağrılarının yoksayılacağını belirleyen bir maske ("logmask") tanımlar. Eğer bir yazılım <command>setlogmask</command> çağrısı yapmazsa, hiçbir <command>syslog</command> çağrısı yoksayılmaz. <command>setlogmask</command> işlevini hangi öncelikteki iletilerin ileride yoksayılacağını belirtmek için kullanabilirsiniz.
-    </para>
+    </para></funcdescr></funcsynopsis></para></sect1>
+    <sect1 xml:id="glibc-closelog">
+      <title>closelog</title>
+      <titleabbrev>Syslog bağlantısının kapatılması</titleabbrev>
       <para>
+Bu bölümdeki semboller <filename>syslog.h</filename> dosyasında bildirilmiştir.
+<indexterm scope="glibc-pg"><primary>syslog.h</primary></indexterm>
+    </para><para xml:id="glibc-func-closelog">
+<indexterm scope="glibc-fn"><primary>closelog</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>void <command>closelog</command></funcdef>
+<paramdef>(void)</paramdef>
+</funcprototype><funcdescr><para>
+<command>closelog</command> var olan Syslog bağlantısını kapatır. Bu işlem açıksa <command>/dev/log</command> soketini de kapatır. İşlev ayrıca Syslog iletilerininin kimliklendirme dizgesini, eğer <command>openlog</command> bağlantıyı boş olmayan bir <varname>kimlik</varname> argümanı ile açmışsa, geriye öntanımlı değerine ayarlar. Öntanımlı kimliklendirme dizgesi <literal>argv[0]</literal>'dan alınan yazılım ismidir.
+    </para><para>
+<command>openlog</command> işlevini özelleştirilmiş syslog çıktısı üretmek için kullanan bir paylaşımlı kütüphane kodu yazıyorsanız, işiniz bittiğinde, GNU C kütüphanesinin <varname>kimlik</varname> göstericisi ile ilişkisini kesmek için <command>closelog</command> kullanmalısınız. Daha fazla bilgi için <xref linkend="glibc-openlog"/> bölümünü okuyun.
+    </para><para>
+<command>closelog</command> tamponları boşaltmaz. Bir Syslog bağlantısını <command>openlog</command> ile yeniden açmadan önce <command>closelog</command> çağrısı yapmak zorunda değilsiniz. Syslog bağlantıları <command>exec</command> veya <command>exit</command> çağrıları ile özdevinimli olarak kapanır.
+    </para></funcdescr></funcsynopsis></para></sect1>
+    <sect1 xml:id="glibc-setlogmask">
+      <title>setlogmask</title>
+      <titleabbrev>Belli iletilerin yoksayılmasının sağlanması.</titleabbrev>
+      <para>
+Bu bölümdeki semboller <filename>syslog.h</filename> dosyasında bildirilmiştir.
+<indexterm scope="glibc-pg"><primary>syslog.h</primary></indexterm>
+    </para><para xml:id="glibc-func-setlogmask">
+<indexterm scope="glibc-fn"><primary>setlogmask</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>int <command>setlogmask</command></funcdef>
+<paramdef>(int <varname>mask</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+<command>setlogmask</command> işlevi ileride hangi <command>syslog</command> çağrılarının yoksayılacağını belirleyen bir maske (&quot;logmask&quot;) tanımlar. Eğer bir yazılım <command>setlogmask</command> çağrısı yapmazsa, hiçbir <command>syslog</command> çağrısı yoksayılmaz. <command>setlogmask</command> işlevini hangi öncelikteki iletilerin ileride yoksayılacağını belirtmek için kullanabilirsiniz.
+    </para><para>
 Her <command>setlogmask</command> çağrısı daha önceki bir <command>setlogmask</command> çağrısının etkisini ortadan kaldırır.
-    </para>
-      <para>
+    </para><para>
 Logmask, Syslog bağlantılarının açılması ya da kapanmasından bağımsız olarak mevcut olabilir.
-    </para>
-      <para>
+    </para><para>
 Logmaskın atanması, Syslog'un yapılandırmasına benzer bir etki oluşturmasına rağmen tamamen aynı değildir. Syslog yapılandırması, alınacak belli iletilerin tamamen yoksayılasına sebep olabilir, ama logmaskta belirterek yapılandırma ile yoksayılan iletilerin teslim edilmesini sağlayamazsınız.
-    </para>
-      <para><varname>mask</varname> her biti olası ileti önceliklerine karşılık düşen bir bit maskesidir. Eğer bu bitlerden biri birse, <command>syslog</command> o bitle ilgili öncelikteki iletileri iptal eder. Kullanılan ileti öncelik makroları  <xref linkend="glibc-syslog--vsyslog"/> bölümünde açıklanmıştır.  <command>LOG_MASK</command> kullanım örnekleri:
-    </para>
-      <para>
-       <screen>LOG_MASK(LOG_EMERG) | LOG_MASK(LOG_ERROR)</screen>
-      </para>
-      <para>veya</para>
-      <para>
-       <screen>~(LOG_MASK(LOG_INFO))</screen>
-      </para>
-      <para>
+    </para><para>
+<varname>mask</varname> her biti olası ileti önceliklerine karşılık düşen bir bit maskesidir. Eğer bu bitlerden biri birse, <command>syslog</command> o bitle ilgili öncelikteki iletileri iptal eder. Kullanılan ileti öncelik makroları  <xref linkend="glibc-syslog--vsyslog"/> bölümünde açıklanmıştır.  <command>LOG_MASK</command> kullanım örnekleri:
+    </para><para>
+<screen>LOG_MASK(LOG_EMERG) | LOG_MASK(LOG_ERROR)</screen>
+    </para><para>veya</para><para>
+<screen>~(LOG_MASK(LOG_INFO))</screen>
+    </para><para>
 Ayrıca, bu makroya benzer bir <command>LOG_UPTO</command> makrosu vardır:
-    </para>
-      <para>
-       <screen>LOG_UPTO(LOG_ERROR)</screen>
-      </para>
-      <para>
+    </para><para>
+<screen>LOG_UPTO(LOG_ERROR)</screen>
+    </para><para>
 Makro isminin tahmin edilmesindeki zorluk nedeniyle bu makro dahili olarak düşük ileti öncelikleri için daha fazla kullanılır.
-    </para>
-     </funcdescr>
-    </funcsynopsis>
-   </para>
-  </section>
-  <section xml:id="glibc-Syslog-Example">
-   <info>
-    <title>Syslog Örneği</title>
-    <titleabbrev>Buraya kadar bahsedilenlere toplu bir örnek.</titleabbrev>
-   </info>
-   <para>
+    </para></funcdescr></funcsynopsis></para></sect1>
+    <sect1 xml:id="glibc-Syslog-Example">
+      <title>Syslog Örneği</title>
+      <titleabbrev>Buraya kadar bahsedilenlere toplu bir örnek.</titleabbrev>
+      <para>
 Burada <command>openlog</command>, <command>syslog</command> ve <command>closelog</command> işlevlerinin kullanımı örneklenmiştir:
-    </para>
-   <para>
+    </para><para>
 Bu örnekte hata ayıklama ve bilgilendirme iletileri logmaskta belirtilerek daha Syslog'a ulaşmadan iptal edilmektedir. Böylece örnekteki ikinci <command>syslog</command> hiçbir şey yapmamaktadır.
-    </para>
-   <para>
-    <screen>#include &lt;syslog.h&gt;
+    </para><para>
+<screen>#include &lt;syslog.h>
 
 setlogmask (LOG_UPTO (LOG_NOTICE));
 
-openlog ("exampleprog", LOG_CONS | LOG_PID | LOG_NDELAY, LOG_LOCAL1);
+openlog (&quot;exampleprog&quot;, LOG_CONS | LOG_PID | LOG_NDELAY, LOG_LOCAL1);
 
-syslog (LOG_NOTICE, "Program started by User %d", getuid ());
-syslog (LOG_INFO, "A tree falls in a forest");
+syslog (LOG_NOTICE, &quot;Program started by User %d&quot;, getuid ());
+syslog (LOG_INFO, &quot;A tree falls in a forest&quot;);
 
 closelog ();
 </screen>
-   </para>
-  </section>
- </chapter>
+</para>
+</sect1>
+</chapter>
 </part>

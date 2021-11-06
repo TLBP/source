@@ -1,1539 +1,606 @@
 <?xml version="1.0" encoding="UTF-8"?>
+
 <!-- ********************************************************************
-         ch02.xml
-     ******************************************************************** -->
-<part xml:id="glibc-Error-Reporting" xmlns="http://docbook.org/ns/docbook"
-      version="5.0" xml:lang="tr">
- <info>
+     $Id: ch02.xml,v 1.2 2002/12/20 22:29:48 nilgun Exp $
+******************************************************************** -->
+<part xml:id="glibc-Error-Reporting">
   <title>Hata Bildirme</title>
   <titleabbrev>Kütüphane işlevleri hataları nasıl bildirir.</titleabbrev>
- </info>
- <partintro>
-  <para><indexterm scope="glibc-cp"><primary>hata</primary><secondary>bildirme</secondary></indexterm><indexterm scope="glibc-cp"><primary>hataların bildirilmesi</primary></indexterm><indexterm scope="glibc-cp"><primary>hata</primary><secondary>hata kodları</secondary></indexterm><indexterm scope="glibc-cp"><primary>durum kodları</primary></indexterm>
+  <partintro>
+    <para>
+<indexterm scope="glibc-cp"><primary>hata</primary><secondary>bildirme</secondary></indexterm>
+<indexterm scope="glibc-cp"><primary>hataların bildirilmesi</primary></indexterm>
+<indexterm scope="glibc-cp"><primary>hata</primary><secondary>hata kodları</secondary></indexterm>
+<indexterm scope="glibc-cp"><primary>durum kodları</primary></indexterm>
 GNU C kütüphanesindeki çoğu işlev hata durumlarını saptar ve bildirir, siz de bu hata durumlarına göre yazılımınızın davranışlarını düzenleyebilirsiniz. Örneğin, bir girdi dosyasını açarken, dosyanın gerçekte açılıp açılmadığına bakmalı ve eğer kütüphane işlevinin çağrısı başarısız olmuşsa bir hata iletisi basmalı başarılı ise sıradaki eylemi gerçekleştirmelisiniz.
-    </para>
-  <para>
+    </para><para>
 Bu kısımda hata bildirme mekanizmasının nasıl çalıştığı anlatılmıştır. Bu mekanizmayı kullanabilmek için yazılımınız <filename><link xlink:href="file:/usr/include/errno.h">errno.h</link></filename> dosyasını içermelidir.
 <indexterm scope="glibc-pg"><primary>errno.h</primary></indexterm>
     </para>
- </partintro>
- <chapter xml:id="glibc-Checking-for-Errors">
-  <info>
-   <title>Hata Denetimi</title>
-   <titleabbrev>Kütüphane işlevleri tarafından hatalar nasıl bildirilir.</titleabbrev>
-  </info>
-  <para/>
-  <para>
+  </partintro>
+  <chapter xml:id="glibc-Checking-for-Errors">
+    <title>Hata Denetimi</title>
+    <titleabbrev>Kütüphane işlevleri tarafından hatalar nasıl bildirilir.</titleabbrev>
+    <para/><para>
+<dicterm><english>null pointer</english><turkish>boş gösterici</turkish></dicterm>
+<dicterm><english>return value</english><turkish>geridönüş değeri</turkish></dicterm>
 Kütüphane işlevlerinin çoğu başarısız olduğu durumlarda özel bir değer döndürür. Bu özel değer genellikle ya <command>-1</command> veya bir boş gösterici ya da bu amaç için tanımlanmış <command>EOF</command> gibi bir sabitttir. Bu geridönüş değeri size sadece bir hatanın oluştuğu bilgisini verir.  Hatanın çeşidini bulmak için <command>errno</command> değişkeninde saklanan hata koduna bakmanız gerekir. Bu değişken <filename>errno.h</filename> başlık dosyasında bildirilmiştir.
 <indexterm scope="glibc-pg"><primary>errno.h</primary></indexterm>
-    </para>
-  <para xml:id="glibc-errno">
-   <indexterm scope="glibc-vr">
-    <primary>errno</primary>
-   </indexterm>
-   <funcsynopsis>
-    <funcprototype role="değişken">
-     <funcdef>volatile int <command>errno</command></funcdef>
-     <paramdef/>
-    </funcprototype>
-    <funcdescr>
-     <para><command>errno</command> değişkeni sistem hata numarasını içerir. Siz <command>errno</command> değişkeninin değerini değiştirebilirsiniz.
-    </para>
-     <para><command>errno</command> değişkeni <command>volatile</command> olarak bildirildiğinden bir <link linkend="glibc-Defining-Handlers">sinyal işleyici</link> tarafından herhangi bir anda değiştirilebilir. Doğru yazılmış bir sinyal işleyici <command>errno</command> değişkeninin değerini saklayabildiğinden ya da eski değerine döndürebildiğinden, sinyal işleyicileri yazmak dışında bu konuda kaygılanmanız gerekmez.
-    </para>
-     <para><command>errno</command> değişkeni yazılım ilklendirildiğinde sıfır değerine sahiptir. Birçok kütüphane işlevi bir hata oluştuğunda sıfırdan farklı bir değerle dönmeyi garanti eder. Bu hata durumları her işlev için listelenmiştir. Bu işlevler başarılı olduklarında <command>errno</command> değişkeninin değerini değiştirmezler. Bu nedenle, başarılı bir işlev çağrısı sonucunda <command>errno</command> değişkeninin değeri sıfır olmayabileceğinden, bir işlev çağrısının başarılı olup olmadığını <command>errno</command> değişkeninin değerine bakarak saptamaya çalışmamalısınız. Bunu yapmanın doğru yolu her işlev için belgelendirilmiştir. <varname>Eğer</varname> çağrı başarısızsa <command>errno</command> değişkeninin değerine bakabilirsiniz.
-    </para>
-     <para>
+    </para><para xml:id="glibc-errno">
+<indexterm scope="glibc-vr"><primary>errno</primary></indexterm>
+<funcsynopsis><funcprototype role="değişken">
+<funcdef>volatile int <command>errno</command></funcdef>
+<paramdef></paramdef>
+</funcprototype><funcdescr><para>
+<command>errno</command> değişkeni sistem hata numarasını içerir. Siz <command>errno</command> değişkeninin değerini değiştirebilirsiniz.
+    </para><para>
+<dicterm><english>signal handler</english><turkish>sinyal tuzağı</turkish></dicterm>
+<dicterm><english>nonzero</english><turkish>sıfırdan farklı</turkish></dicterm>
+<command>errno</command> değişkeni <command>volatile</command> olarak bildirildiğinden bir <link linkend="glibc-Defining-Handlers">sinyal tuzağı</link> tarafından herhangi bir anda değiştirilebilir. Doğru yazılmış bir sinyal tuzağı <command>errno</command> değişkeninin değerini saklayabildiğinden ya da eski değerine döndürebildiğinden, sinyal tuzaklarını yazmak dışında bu konuda kaygılanmanız gerekmez.
+    </para><para>
+<command>errno</command> değişkeni yazılım ilklendirildiğinde sıfır değerine sahiptir. Birçok kütüphane işlevi bir hata oluştuğunda sıfırdan farklı bir değerle dönmeyi garanti eder. Bu hata durumları her işlev için listelenmiştir. Bu işlevler başarılı olduklarında <command>errno</command> değişkeninin değerini değiştirmezler. Bu nedenle, başarılı bir işlev çağrısı sonucunda <command>errno</command> değişkeninin değeri sıfır olmayabileceğinden, bir işlev çağrısının başarılı olup olmadığını <command>errno</command> değişkeninin değerine bakarak saptamaya çalışmamalısınız. Bunu yapmanın doğru yolu her işlev için belgelendirilmiştir. <varname>Eğer</varname> çağrı başarısızsa <command>errno</command> değişkeninin değerine bakabilirsiniz.
+    </para><para>
 Birçok kütüphane işlevi, çağırdığı bir başka kütüphane işlevinin başarısızlığı durumunda <command>errno</command> değişkeninin değerini sıfırdan farklı bir değere ayarlayabilir. Kütüphane işlevlerinin, işlev bir hata geri döndürdüğünde <command>errno</command> değişkeninin değerini değiştirdiği kabulune göre hareket etmelisiniz.
-    </para>
-     <para>
-      <note>
-       <info>
-        <title>Uyumluluk bilgisi</title>
-       </info>
-       <para> ISO C, bir makro olarak gerçekleştirilebileceğinden <command>errno</command>'nun bir değişken değil bir "değiştirilebilir sol taraf değeri" olduğunu belirtir. Örneğin, GNU sisteminde olduğu gibi <command>*_errno ()</command> benzeri bir işlev çağrısı ile ilişkilendirilmiş olabilir. Bu nedenle GNU kütüphanesi, GNU dışı sistemlerde de doğru sonuçlar verir.</para>
-      </note>
-     </para>
-     <para><command>sqrt</command> ve <command>atan</command> gibi bazı kütüphane işlevleri bir hata durumunda <command>errno</command> değerini de ayarladıklarından kusursuz doğrulukta bir değer döndürürler. Bu gibi işlevler için, işlev çağrısından önce <command>errno</command> değişkenine sıfır değerini atamalı ve sonrasında <command>errno</command> değişkeninin değerine bakmalısınız.
-    </para>
-    </funcdescr>
-   </funcsynopsis>
-  </para>
-  <para>
-Tüm hata kodları için <filename><link xlink:href="file:/usr/include/errno.h">errno.h</link></filename> başlık dosyasında birer makro olarak tanımlanmış birer sembolik isim  vardır. Bu isimler daima bir <command>E</command> harfi ile başlar ve bir rakam ya da büyük harf ile devam eder. Bu isimleri birer <link linkend="glibc-Reserved-Names">anahtar sözcük</link> gibi ele almalısınız.
-    </para>
-  <para>
+    </para><para>
+<dicterm><english>lvalue</english><turkish>sol taraf değeri</turkish></dicterm>
+<dicterm><english>function call</english><turkish>işlev çağrısı</turkish></dicterm>
+<note><title>Uyumluluk bilgisi</title><para> ISO C, bir makro olarak gerçekleştirilebileceğinden <command>errno</command>'nun bir değişken değil bir "değiştirilebilir sol taraf değeri" olduğunu belirtir. Örneğin, GNU sisteminde olduğu gibi <command>*_errno ()</command> benzeri bir işlev çağrısı ile ilişkilendirilmiş olabilir. Bu nedenle GNU kütüphanesi, GNU dışı sistemlerde de doğru sonuçlar verir.</para></note>
+    </para><para>
+<command>sqrt</command> ve <command>atan</command> gibi bazı kütüphane işlevleri bir hata durumunda <command>errno</command> değerini de ayarladıklarından kusursuz doğrulukta bir değer döndürürler. Bu gibi işlevler için, işlev çağrısından önce <command>errno</command> değişkenine sıfır değerini atamalı ve sonrasında <command>errno</command> değişkeninin değerine bakmalısınız.
+    </para></funcdescr></funcsynopsis>
+    </para><para>
+Tüm hata kodları için <filename><link xlink:href="file:/usr/include/errno.h">errno.h</link> </filename> başlık dosyasında birer makro olarak tanımlanmış birer sembolik isim  vardır. Bu isimler daima bir <command>E</command> harfi ile başlar ve bir rakam ya da büyük harf ile devam eder. Bu isimleri birer <link linkend="glibc-Reserved-Names">anahtar sözcük</link> gibi ele almalısınız.
+    </para><para>
+<dicterm><english>symbolic constant</english><turkish>sembolik sabit</turkish></dicterm>
 Hata kodu değerlerinin hepsi pozitif tamsayılardır ve tamamı farklı değerlere sahiptir; bu ikisi dışında: <command>EWOULDBLOCK</command> ve <command>EAGAIN</command> aynı değere sahiptir. Değerleri farklı olduğundan hata kodlarını <command>switch</command> deyiminde etiket olarak kullanabilirsiniz; ama <command>EWOULDBLOCK</command> ve <command>EAGAIN</command> isimlerinden sadece birini kullanmalısınız. Yazılımınız bu sembolik sabitlerin özel değerleri dışında bir kabulde bulunmamalıdır.
-    </para>
-  <para><command>errno</command> değeri herzaman bu makroların değerlerine karşılık değildir; bazı kütüphane işlevleri kendi özel durumlarına özgü hata kodları döndürebilir. Belli bir kütüphane işlevi için anlamlı olabilen bu değerleri içeren işlevler kılavuzda belirtilmiştir.
-    </para>
-  <para>
+    </para><para>
+<command>errno</command> değeri herzaman bu makroların değerlerine karşılık değildir; bazı kütüphane işlevleri kendi özel durumlarına özgü hata kodları döndürebilir. Belli bir kütüphane işlevi için anlamlı olabilen bu değerleri içeren işlevler kılavuzda belirtilmiştir.
+    </para><para>
+<dicterm><english>pointer</english><turkish>gösterici</turkish></dicterm>
 GNU dışı sistemlerin hemen hepsinde bir sistem çağrısı, argüman olarak bir geçersiz gösterici ile çağrılmışsa <command>EFAULT</command> ile dönebilir. Bu sadece yazılımınızdaki bir yazılım hatasının sonucu olarak görülebileceğinden ve "GNU sistemlerinde asla bu hatayı göremeyeceğinizden" işlevlerin açıklamalarında <command>EFAULT</command> hatasına hiç yer verilmemiş ama bu değer kütüphaneye konmuştur.
-    </para>
-  <para>
+    </para><para>
+<dicterm><english>kernel</english><turkish>çekirdek</turkish></dicterm>
+<dicterm><english>dynamically allocated memory</english><turkish>özdevimli bellek</turkish></dicterm>
+<dicterm><english>statically allocated memory</english><turkish>durağan bellek</turkish></dicterm>
+<dicterm><english>stack memory</english><turkish>yığıt belleği</turkish></dicterm>
 Bazı Unix sistemlerinde birçok sistem çağrısı, bir argüman olarak verilmiş yığıt ya da çekirdek içindeki bir göstericinin, yığıtı genişletmeye çalışmak gibi anlaşılmaz bir sebeple başarısız olması durumunda <command>EFAULT</command> ile dönebilir. Bu gibi durumların oluşmaması için sistemdeki yığıt belleği yerine durağan ya da özdevimli bellek ayırmaya çalışmalısınız.
     </para>
- </chapter>
- <chapter xml:id="glibc-Error-Codes">
-  <info>
-   <title>Hata Kodları</title>
-   <titleabbrev>Hata kodu makroları; hepsi tamsayı sabitlerle sonuçlanır.</titleabbrev>
-  </info>
-  <para/>
-  <para><indexterm scope="glibc-pg"><primary>errno.h</primary></indexterm>
+  </chapter>
+  <chapter xml:id="glibc-Error-Codes">
+    <title>Hata Kodları</title>
+    <titleabbrev>Hata kodu makroları; hepsi tamsayı sabitlerle sonuçlanır.</titleabbrev>
+    <para/><para>
+<indexterm scope="glibc-pg"><primary>errno.h</primary></indexterm>
 Hata kodu makroları <filename>errno.h</filename> başlık dosyasında tanımlıdır. Hepsi tamsayı sabitlerle sonuçlanır. Bu hata kodlarının GNU sisteminde oluşmayanları için yani GNU sistemi dışındaki sistemler için olanları GNU kütüphanesinde bulunmaktadır.
-    </para>
-  <para>
-   <glosslist>
-    <glossentry>
-     <glossterm xml:id="glibc-EPERM">
-      <literal>int </literal>
-      <command>EPERM</command>
-      <indexterm scope="glibc-vr">
-       <primary>EPERM</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+    </para><para>
+      <glosslist><glossentry><glossterm xml:id="glibc-EPERM">
+       <literal>int </literal><command>EPERM</command>
+       <indexterm scope="glibc-vr"><primary>EPERM</primary></indexterm>
+      </glossterm><glossdef><para>
 İşleme izin verilmedi; sadece dosyanın (ya da diğer özkaynağın) ya da süreçlerin sahibinin yapabileceği işlemler.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-ENOENT">
-      <literal>int </literal>
-      <command>ENOENT</command>
-      <indexterm scope="glibc-vr">
-       <primary>ENOENT</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-ENOENT">
+       <literal>int </literal><command>ENOENT</command>
+       <indexterm scope="glibc-vr"><primary>ENOENT</primary></indexterm>
+      </glossterm><glossdef><para>
 Böyle bir dosya ya da dizin yok. Sistemde bulunacağı varsayılmış bir dosya ya da dizinin bulunamadığı durum.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-ESRCH">
-      <literal>int </literal>
-      <command>ESRCH</command>
-      <indexterm scope="glibc-vr">
-       <primary>ESRCH</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-ESRCH">
+       <literal>int </literal><command>ESRCH</command>
+       <indexterm scope="glibc-vr"><primary>ESRCH</primary></indexterm>
+      </glossterm><glossdef><para>
+<dicterm><english>process ID (PID)</english><turkish>süreç kimliği</turkish></dicterm>
 Belirtilen süreç kimliği ile eşleşen bir süreç yok.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-EINTR">
-      <literal>int </literal>
-      <command>EINTR</command>
-      <indexterm scope="glibc-vr">
-       <primary>EINTR</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-EINTR">
+       <literal>int </literal><command>EINTR</command>
+       <indexterm scope="glibc-vr"><primary>EINTR</primary></indexterm>
+      </glossterm><glossdef><para>
 İşlev çağrısı engellendi; herhangi bir anda çağrının tamamlanmasını engelleyen bir sinyalin oluştuğu durum. Bu durum oluştuğunda çağrıyı tekrarlamalısınız.
-      </para>
-      <para><command>EINTR</command>  ile başarısızlık dışında yakalanan tüm sinyaller  için işlevlerin tekrar devreye girmesini sağlayabilirsiniz. Bkz. <xref linkend="glibc-Interrupted-Primitives"/>.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-EIO">
-      <literal>int </literal>
-      <command>EIO</command>
-      <indexterm scope="glibc-vr">
-       <primary>EIO</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+      </para><para>
+<command>EINTR</command>  ile başarısızlık dışında yakalanan tüm sinyaller  için işlevlerin tekrar devreye girmesini sağlayabilirsiniz. Bkz. <xref linkend="glibc-Interrupted-Primitives"/>.
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-EIO">
+       <literal>int </literal><command>EIO</command>
+       <indexterm scope="glibc-vr"><primary>EIO</primary></indexterm>
+      </glossterm><glossdef><para>
 Giriş/Çıkış hatası; genellikle fiziksel okuma ve yazma hataları için kullanılır.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-ENXIO">
-      <literal>int </literal>
-      <command>ENXIO</command>
-      <indexterm scope="glibc-vr">
-       <primary>ENXIO</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-ENXIO">
+       <literal>int </literal><command>ENXIO</command>
+       <indexterm scope="glibc-vr"><primary>ENXIO</primary></indexterm>
+      </glossterm><glossdef><para>
+<dicterm><english>device</english><turkish>aygıt</turkish></dicterm>
+<dicterm><english>driver</english><turkish>aygıt sürücü</turkish></dicterm>
 Böyle bir adres ya da aygıt yok. Sistem bir dosya olarak belirttiğiniz bir aygıtı kullanmaya çalışır ve aygıtı bulamazsa bu hata oluşur. Bu hatayı alıyorsanız ya aygıt dosyası doğru olarak oluşturulmamış veya  fiziksel aygıt bulunamamış ya da makineye doğru bağlanmamıştır.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-E2BIG">
-      <literal>int </literal>
-      <command>E2BIG</command>
-      <indexterm scope="glibc-vr">
-       <primary>E2BIG</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-E2BIG">
+       <literal>int </literal><command>E2BIG</command>
+       <indexterm scope="glibc-vr"><primary>E2BIG</primary></indexterm>
+      </glossterm><glossdef><para>
 Argüman listesi çok uzun; <function><link linkend="glibc-Executing-a-File">exec</link></function> işlevlerinden biri ile çalıştırılan yeni bir  uygulama argümanlarla çağrıldığında çok fazla bellek alanı ayrılmaya  çalışılırsa oluşur. GNU sistemlerinde bu durum asla oluşmaz.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-ENOEXEC">
-      <literal>int </literal>
-      <command>ENOEXEC</command>
-      <indexterm scope="glibc-vr">
-       <primary>ENOEXEC</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-ENOEXEC">
+       <literal>int </literal><command>ENOEXEC</command>
+       <indexterm scope="glibc-vr"><primary>ENOEXEC</primary></indexterm>
+      </glossterm><glossdef><para>
+<dicterm><english>executable</english><turkish>çalıştırılabilir</turkish></dicterm>
 Çalıştırılabilir dosya biçimi geçersiz. Bu durum <function><link linkend="glibc-Executing-a-File">exec</link></function> işlevleriyle saptanır.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-EBADF">
-      <literal>int </literal>
-      <command>EBADF</command>
-      <indexterm scope="glibc-vr">
-       <primary>EBADF</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-EBADF">
+       <literal>int </literal><command>EBADF</command>
+       <indexterm scope="glibc-vr"><primary>EBADF</primary></indexterm>
+      </glossterm><glossdef><para>
 Dosya tanımlayıcı hatalı; örneğin dosya tanımlayıcının açılmamış olduğu ya da sadece yazmak için açılmış bir tanımlayıcıdan okuma yapıldığı gibi durumlarda oluşur.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-ECHILD">
-      <literal>int </literal>
-      <command>ECHILD</command>
-      <indexterm scope="glibc-vr">
-       <primary>ECHILD</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-ECHILD">
+       <literal>int </literal><command>ECHILD</command>
+       <indexterm scope="glibc-vr"><primary>ECHILD</primary></indexterm>
+      </glossterm><glossdef><para>
+<dicterm><english>child process</english><turkish>alt süreç</turkish></dicterm>
 Hiç alt süreç yok. Alt süreçlerle çalışılması durumunda, üzerinde çalışılacak bir alt süreç yoksa oluşur.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-EDEADLK">
-      <literal>int </literal>
-      <command>EDEADLK</command>
-      <indexterm scope="glibc-vr">
-       <primary>EDEADLK</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-EDEADLK">
+       <literal>int </literal><command>EDEADLK</command>
+       <indexterm scope="glibc-vr"><primary>EDEADLK</primary></indexterm>
+      </glossterm><glossdef><para>
+<dicterm><english>deadlock</english><turkish>kısırdöngü</turkish></dicterm>
 Kısırdöngü önlendi. Bir sistem özkaynağının ayrılması sırasında bu özkaynağın başka bir özkaynağın varlığına bağlı olması ve o özkaynağında ayrılacak özkaynağa bağlı olması gibi bir durumda her iki özkaynağın bir diğerini beklemesi gibi bir durumdur. Sistem bu gibi durumlarda durumu bildirmeyi garanti etmez. Eğer bu hatayı almışsanız, sistem tam çökeceği sırada sizi uyarabilmiş ve  size bir şans verebilmiş demektir... Örnekler için <xref linkend="glibc-File-Locks"/> kısmına bakınız.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-ENOMEM">
-      <literal>int </literal>
-      <command>ENOMEM</command>
-      <indexterm scope="glibc-vr">
-       <primary>ENOMEM</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-ENOMEM">
+       <literal>int </literal><command>ENOMEM</command>
+       <indexterm scope="glibc-vr"><primary>ENOMEM</primary></indexterm>
+      </glossterm><glossdef><para>
 Yeterli bellek yok. Sistem kapasitesini doldurduğu için sanal bellek ayıramıyordur.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-EACCES">
-      <literal>int </literal>
-      <command>EACCES</command>
-      <indexterm scope="glibc-vr">
-       <primary>EACCES</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-EACCES">
+       <literal>int </literal><command>EACCES</command>
+       <indexterm scope="glibc-vr"><primary>EACCES</primary></indexterm>
+      </glossterm><glossdef><para>
 İzinler yetersiz; dosya izinlerinin yapılmaya çalışılan işlem için yetersiz olduğu durum.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-EFAULT">
-      <literal>int </literal>
-      <command>EFAULT</command>
-      <indexterm scope="glibc-vr">
-       <primary>EFAULT</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-EFAULT">
+       <literal>int </literal><command>EFAULT</command>
+       <indexterm scope="glibc-vr"><primary>EFAULT</primary></indexterm>
+      </glossterm><glossdef><para>
 Hatalı adres; geçersiz bir göstericinin saptandığı durum. GNU sistemlerinde bu hatayı asla almazsınız, onun yerine bir sinyal alırsınız.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-ENOTBLK">
-      <literal>int </literal>
-      <command>ENOTBLK</command>
-      <indexterm scope="glibc-vr">
-       <primary>ENOTBLK</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-ENOTBLK">
+       <literal>int </literal><command>ENOTBLK</command>
+       <indexterm scope="glibc-vr"><primary>ENOTBLK</primary></indexterm>
+      </glossterm><glossdef><para>
 Bir blok özellikli dosya gereken yerde verilen dosya uygun değilse oluşur. Örneğin, Unix sistemlerinde normal bir dosyayı bir dosya sistemi olarak sisteme  bağlamaya çalışırsanız bu hatayı alırsınız.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-EBUSY">
-      <literal>int </literal>
-      <command>EBUSY</command>
-      <indexterm scope="glibc-vr">
-       <primary>EBUSY</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-EBUSY">
+       <literal>int </literal><command>EBUSY</command>
+       <indexterm scope="glibc-vr"><primary>EBUSY</primary></indexterm>
+      </glossterm><glossdef><para>
 Aygıt ya da özkaynak meşgul; bir sistem kaynağının kullanımda olduğu için paylaşılamadığında oluşur. Örneğin, bir bağlı dosya sisteminin kökünü bir dosya olarak silmeye  çalışırsanız bu hatayı alırsınız.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-EEXIST">
-      <literal>int </literal>
-      <command>EEXIST</command>
-      <indexterm scope="glibc-vr">
-       <primary>EEXIST</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-EEXIST">
+       <literal>int </literal><command>EEXIST</command>
+       <indexterm scope="glibc-vr"><primary>EEXIST</primary></indexterm>
+      </glossterm><glossdef><para>
 Dosya var. Mevcut bir dosyanın yeni bir dosya olarak belirtildiği durum.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-EXDEV">
-      <literal>int </literal>
-      <command>EXDEV</command>
-      <indexterm scope="glibc-vr">
-       <primary>EXDEV</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-EXDEV">
+       <literal>int </literal><command>EXDEV</command>
+       <indexterm scope="glibc-vr"><primary>EXDEV</primary></indexterm>
+      </glossterm><glossdef><para>
 Dosya sistemlerine uygunsuz bir bağ oluşturulmaya çalışıldığı saptandı. Bu durum sadece <function><link linkend="glibc-Hard-Links">link</link></function>  kullanıldığında bir yandan da <function><link linkend="glibc-Renaming-Files">rename</link></function> ile dosyanın ismi değiştirilmeye çalışıldığında oluşur.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-ENODEV">
-      <literal>int </literal>
-      <command>ENODEV</command>
-      <indexterm scope="glibc-vr">
-       <primary>ENODEV</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-ENODEV">
+       <literal>int </literal><command>ENODEV</command>
+       <indexterm scope="glibc-vr"><primary>ENODEV</primary></indexterm>
+      </glossterm><glossdef><para>
 Belli bir sıraya uygun bir aygıtın verilmesi umulan bir işleve yanlış aygıt türü verildi.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-ENOTDIR">
-      <literal>int </literal>
-      <command>ENOTDIR</command>
-      <indexterm scope="glibc-vr">
-       <primary>ENOTDIR</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-ENOTDIR">
+       <literal>int </literal><command>ENOTDIR</command>
+       <indexterm scope="glibc-vr"><primary>ENOTDIR</primary></indexterm>
+      </glossterm><glossdef><para>
 Bir dizin gerekliyken belirtilen dosya bir dizin değil.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-EISDIR">
-      <literal>int </literal>
-      <command>EISDIR</command>
-      <indexterm scope="glibc-vr">
-       <primary>EISDIR</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-EISDIR">
+       <literal>int </literal><command>EISDIR</command>
+       <indexterm scope="glibc-vr"><primary>EISDIR</primary></indexterm>
+      </glossterm><glossdef><para>
 Dosya bir dizin; bir dizini yazmak için açamaz veya bir dizin belirten  bir sabit bağı silemezsiniz.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-EINVAL">
-      <literal>int </literal>
-      <command>EINVAL</command>
-      <indexterm scope="glibc-vr">
-       <primary>EINVAL</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-EINVAL">
+       <literal>int </literal><command>EINVAL</command>
+       <indexterm scope="glibc-vr"><primary>EINVAL</primary></indexterm>
+      </glossterm><glossdef><para>
 Geçersiz argüman. Bir kütüphane işlevi yanlış argümanla çağrıldığında oluşan çeşitli sorunlara dikkat çekmek için kullanılır.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-EMFILE">
-      <literal>int </literal>
-      <command>EMFILE</command>
-      <indexterm scope="glibc-vr">
-       <primary>EMFILE</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-EMFILE">
+       <literal>int </literal><command>EMFILE</command>
+       <indexterm scope="glibc-vr"><primary>EMFILE</primary></indexterm>
+      </glossterm><glossdef><para>
 Mevcut süreç çok fazla dosya açmış ve daha fazlasını açamaz. Tanımlayıcıların tekrarlanması bu sınıra yaklaşılmasına sebep olur.
-      </para>
-      <para>
+      </para><para>
 BSD ve GNU sistemlerinde açık dosyaların sayısı gerektiğinde arttırılabilmesini sağlayan bir özkaynak sınırıyla denetlenir. Bu hatayı alırsanız ya <command>RLIMIT_NOFILE</command> sınırını arttırın ya da sınırsız yapın. Bkz. <xref linkend="glibc-Limits-on-Resources"/>.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-ENFILE">
-      <literal>int </literal>
-      <command>ENFILE</command>
-      <indexterm scope="glibc-vr">
-       <primary>ENFILE</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-ENFILE">
+       <literal>int </literal><command>ENFILE</command>
+       <indexterm scope="glibc-vr"><primary>ENFILE</primary></indexterm>
+      </glossterm><glossdef><para>
 Sistemin bütününde çok fazla farklı dosya açılışı var. Bilgi: Birbirlerine bağlı kanallar tek bir dosya açılışı sayılır; bkz.  <xref linkend="glibc-Linked-Channels"/>. Bu hata GNU sistemlerinde hiçbir zaman oluşmaz.
-       </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-ENOTTY">
-      <literal>int </literal>
-      <command>ENOTTY</command>
-      <indexterm scope="glibc-vr">
-       <primary>ENOTTY</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+       </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-ENOTTY">
+       <literal>int </literal><command>ENOTTY</command>
+       <indexterm scope="glibc-vr"><primary>ENOTTY</primary></indexterm>
+      </glossterm><glossdef><para>
+<dicterm><english>mode</english><turkish>kip</turkish></dicterm>
 İlgisiz G/Ç denetimi işlemi. Örneğin, uçbirim kiplerinin normal bir dosya için kullanılmaya çalışılması.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-ETXTBSY">
-      <literal>int </literal>
-      <command>ETXTBSY</command>
-      <indexterm scope="glibc-vr">
-       <primary>ETXTBSY</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
-Çalışmakta olan bir dosyaya yazma denemesi ya da yazmak için açılmış bir dosyanın çalıştırılmasının denenmesi. Çoğunlukla bir hata ayıklama uygulaması ile çalışmakta olan bir yazılımın dosyasının yazmak için açılmaya çalışılması bu hatanın ortaya çıkmasına sebep olur. Sembolik sabitin ismi "text file busy" (metin dosyası meşgul) tümcesinden kısaltılmıştır. Bu hata GNU sistemlerinde oluşmaz çünkü gerekirse metin kopyalanır.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-EFBIG">
-      <literal>int </literal>
-      <command>EFBIG</command>
-      <indexterm scope="glibc-vr">
-       <primary>EFBIG</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-ETXTBSY">
+       <literal>int </literal><command>ETXTBSY</command>
+       <indexterm scope="glibc-vr"><primary>ETXTBSY</primary></indexterm>
+      </glossterm><glossdef><para>
+Çalışmakta olan bir dosyaya yazma denemesi ya da yazmak için açılmış bir dosyanın çalıştırılmasının denenmesi. Çoğunlukla bir hata ayıklama uygulaması ile çalışmakta olan bir yazılımın dosyasının yazmak için açılmaya çalışılması bu hatanın ortaya çıkmasına sebep olur. Sembolik sabitin ismi &quot;text file busy&quot; (metin dosyası meşgul) tümcesinden kısaltılmıştır. Bu hata GNU sistemlerinde oluşmaz çünkü gerekirse metin kopyalanır.
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-EFBIG">
+       <literal>int </literal><command>EFBIG</command>
+       <indexterm scope="glibc-vr"><primary>EFBIG</primary></indexterm>
+      </glossterm><glossdef><para>
 Dosya çok büyük; dosyanın uzunluğunun sistemde mümkün olan dosya uzunluğundan büyük olduğu durum.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-ENOSPC">
-      <literal>int </literal>
-      <command>ENOSPC</command>
-      <indexterm scope="glibc-vr">
-       <primary>ENOSPC</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-ENOSPC">
+       <literal>int </literal><command>ENOSPC</command>
+       <indexterm scope="glibc-vr"><primary>ENOSPC</primary></indexterm>
+      </glossterm><glossdef><para>
 Aygıt üzerinde yer yok; disk doluyken üzerine bir dosyanın yazılmaya çalışılması durumu.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-ESPIPE">
-      <literal>int </literal>
-      <command>ESPIPE</command>
-      <indexterm scope="glibc-vr">
-       <primary>ESPIPE</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-ESPIPE">
+       <literal>int </literal><command>ESPIPE</command>
+       <indexterm scope="glibc-vr"><primary>ESPIPE</primary></indexterm>
+      </glossterm><glossdef><para>
+<dicterm><english>seek</english><turkish>konumlama</turkish></dicterm>
 Konumlama işlemi geçersiz (örneğin bir boruhattında).
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-EROFS">
-      <literal>int </literal>
-      <command>EROFS</command>
-      <indexterm scope="glibc-vr">
-       <primary>EROFS</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-EROFS">
+       <literal>int </literal><command>EROFS</command>
+       <indexterm scope="glibc-vr"><primary>EROFS</primary></indexterm>
+      </glossterm><glossdef><para>
+<dicterm><english>read-only</english><turkish>salt okunur</turkish></dicterm>
 Salt okunur dosya sisteminde birşeyler değiştirilmeye çalışıldı.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-EMLINK">
-      <literal>int </literal>
-      <command>EMLINK</command>
-      <indexterm scope="glibc-vr">
-       <primary>EMLINK</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-EMLINK">
+       <literal>int </literal><command>EMLINK</command>
+       <indexterm scope="glibc-vr"><primary>EMLINK</primary></indexterm>
+      </glossterm><glossdef><para>
+<dicterm><english>link</english><turkish>bağ</turkish></dicterm>
 Çok fazla bağ var; tek bir dosyaya çok sayıda bağ varsa, dosyanın ismi bağlarla zaten değiştirilmişse ve <function>rename</function> ile dosyanın ismi değiştirilmeye çalışılırsa bu durum ortaya çıkabilir. Bkz. <xref linkend="glibc-Renaming-Files"/>.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-EPIPE">
-      <literal>int </literal>
-      <command>EPIPE</command>
-      <indexterm scope="glibc-vr">
-       <primary>EPIPE</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-EPIPE">
+       <literal>int </literal><command>EPIPE</command>
+       <indexterm scope="glibc-vr"><primary>EPIPE</primary></indexterm>
+      </glossterm><glossdef><para>
+<dicterm><english>broken pipe</english><turkish>kırık boruhattı</turkish></dicterm>
 Kırık boruhattı; bir boruhattının diğer ucunda okuyacak bir sürecin olmaması durumu. Her kütüphane işlevi bu hatayla dönebilir ve ayrıca bir <command>SIGPIPE</command> sinyali üretir. Bu sinyal yazılım tarafından yakalanmıyor ya da engellenmiyorsa yazılımı sonlandıracaktır. Bu yüzden eğer yazılımınız <command>SIGPIPE</command> sinyalini yakalamıyor ya da engellemiyorsa yazılımınız bu hatayı asla almayacak ama sonlanacaktır.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-EDOM">
-      <literal>int </literal>
-      <command>EDOM</command>
-      <indexterm scope="glibc-vr">
-       <primary>EDOM</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-EDOM">
+       <literal>int </literal><command>EDOM</command>
+       <indexterm scope="glibc-vr"><primary>EDOM</primary></indexterm>
+      </glossterm><glossdef><para>
 Sayısal argüman alan dışı; matematik işlevlerinde bir argüman işlev tarafından tanımlanmış alandan taşarsa bu hata oluşur.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-ERANGE">
-      <literal>int </literal>
-      <command>ERANGE</command>
-      <indexterm scope="glibc-vr">
-       <primary>ERANGE</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-ERANGE">
+       <literal>int </literal><command>ERANGE</command>
+       <indexterm scope="glibc-vr"><primary>ERANGE</primary></indexterm>
+      </glossterm><glossdef><para>
+<dicterm><english>range</english><turkish>aralık</turkish></dicterm>
 Kapsama hatası; matematik işlevleri tarafından kullanılır. Sonuç, olması gereken değer aralığının altında ya da üstünde ise bu hata oluşur.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-EAGAIN">
-      <literal>int </literal>
-      <command>EAGAIN</command>
-      <indexterm scope="glibc-vr">
-       <primary>EAGAIN</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-EAGAIN">
+       <literal>int </literal><command>EAGAIN</command>
+       <indexterm scope="glibc-vr"><primary>EAGAIN</primary></indexterm>
+      </glossterm><glossdef><para>
 Özkaynak geçici olarak kullanımdışı; daha sonra tekrar denerseniz çağrı çalışacaktır. <command>EWOULDBLOCK</command> makrosu ile aynıdır ve GNU C kütüphanesinde bu ikisi aynıdır.
-      </para>
-      <para>
+      </para><para>
 Bu hata bir kaç farklı durumda ortaya çıkabilir:
-      </para>
-      <para>
-       <itemizedlist>
-        <listitem>
-         <para>
+      </para><para><itemizedlist><listitem><para>
+<dicterm><english>non-blocking mode</english><turkish>engellenememe kipi</turkish></dicterm>
 Engellenmemesi öngörülmüş bir nesne üzerinde nesneyi engelleyecek bir işlem yürütülmeye çalışılırsa bu hata alınabilir.  Bir işlemin tekrarlanması, bazı dış koşullar nesnenin okuma, yazma veya bağlanma için hazır hale gelmesini sağlayana dek engellenecektir. İşlemin mümkün olacağı zamanı <function><link linkend="glibc-Waiting-for-I-O">select</link></function>  işlevini kullanarak bulabilirsiniz.
-      </para>
-         <para>
-          <note>
-           <info>
-            <title>Taşınabilirlik Bilgisi:</title>
-           </info>
-           <para>Eski Unix sistemlerinin çoğunda, bu durum <command>EWOULDBLOCK</command> ile <command>EAGAIN</command> hata kodundan farklı bir durum olarak ele alınmıştır. Yazılımınızın taşınabilirliği açısından her iki hata koduna da bakmalı ve onları aynı olarak değerlendirmelisiniz.</para>
-          </note>
-         </para>
-        </listitem>
-        <listitem>
-         <para>
+      </para><para>
+<note><title>Taşınabilirlik Bilgisi:</title><para>Eski Unix sistemlerinin çoğunda, bu durum <command>EWOULDBLOCK</command> ile <command>EAGAIN</command> hata kodundan farklı bir durum olarak ele alınmıştır. Yazılımınızın taşınabilirliği açısından her iki hata koduna da bakmalı ve onları aynı olarak değerlendirmelisiniz.</para></note>
+      </para></listitem><listitem><para>
 Bir geçici özkaynak yokluğu bir işlemi imkansız yapabilir. <function>fork</function> işlevi bu hatayı döndürebilir. Varlığı umulanın geçici olarak yokluğunu ifade eder. Bu durumda yazılımınız işlemi tekrarlayabilir ve işlemi gerçekleştirebilir. Şüphesiz tekrar denemeden önce bir kaç saniye beklemek ve az bulunan özkaynakları diğer süreçlerin serbest bırakmasına izin vermek daha iyidir. Bu tür kıtlık durumlarına sıkça rastlanır ve tüm sistemi etkiler. Böyle bir durumda etkileşimli bir yazılım kullanıcıya bilgi verip kendi komut döngüsüne geri dönmelidir.
-     </para>
-        </listitem>
-       </itemizedlist>
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-EWOULDBLOCK">
-      <literal>int </literal>
-      <command>EWOULDBLOCK</command>
-      <indexterm scope="glibc-vr">
-       <primary>EWOULDBLOCK</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+     </para></listitem></itemizedlist>
+     </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-EWOULDBLOCK">
+       <literal>int </literal><command>EWOULDBLOCK</command>
+       <indexterm scope="glibc-vr"><primary>EWOULDBLOCK</primary></indexterm>
+      </glossterm><glossdef><para>
 GNU C kütüphanesinde bu hata <command>EAGAIN</command> (yukarıda) ile aynıdır. Değerler bütün işletim sistemlerinde daima aynıdır.
-      </para>
-      <para>
+      </para><para>
 Eski Unix sistemlerinin çoğunda, C kütüphanelerinde <command>EWOULDBLOCK</command>, <command>EAGAIN</command> hata kodundan farklıdır.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-EINPROGRESS">
-      <literal>int </literal>
-      <command>EINPROGRESS</command>
-      <indexterm scope="glibc-vr">
-       <primary>EINPROGRESS</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
-Engellenmemesi öngörülmüş bir nesne üzerinde başlatılmış bir işlem tamamlanmadı. Daima bloklanması gereken bazı işlevler (örn, <function><link linkend="glibc-Connecting">connect</link></function>) hiçbir zaman <command>EAGAIN</command> hatası vermez. Onun yerine, bir işlemin başlamış olduğunu ve tamamlanmasının biraz vakit alacağını belirten <command>EINPROGRESS</command> hatası döner. Çağrı tamamlanmadan önce nesneyi değiştirmeye çalışmak ise <command>EALREADY</command> hatasına yolaçar. Kuyruktaki işlemin ne zaman tamamlanacağını bulmak için <function><link linkend="glibc-Waiting-for-I-O">select</link></function> işlevini kullanabilirsiniz.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-EALREADY">
-      <literal>int </literal>
-      <command>EALREADY</command>
-      <indexterm scope="glibc-vr">
-       <primary>EALREADY</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-EINPROGRESS">
+       <literal>int </literal><command>EINPROGRESS</command>
+       <indexterm scope="glibc-vr"><primary>EINPROGRESS</primary></indexterm>
+      </glossterm><glossdef><para>
+Engellenmemesi öngörülmüş bir nesne üzerinde başlatılmış bir işlem tamamlanmadı. Daima bloklanması gereken bazı işlevler (örn, <function><link  linkend="glibc-Connecting">connect</link></function>) hiçbir zaman <command>EAGAIN</command> hatası vermez. Onun yerine, bir işlemin başlamış olduğunu ve tamamlanmasının biraz vakit alacağını belirten <command>EINPROGRESS</command> hatası döner. Çağrı tamamlanmadan önce nesneyi değiştirmeye çalışmak ise <command>EALREADY</command> hatasına yolaçar. Kuyruktaki işlemin ne zaman tamamlanacağını bulmak için <function><link  linkend="glibc-Waiting-for-I-O">select</link></function> işlevini kullanabilirsiniz.
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-EALREADY">
+       <literal>int </literal><command>EALREADY</command>
+       <indexterm scope="glibc-vr"><primary>EALREADY</primary></indexterm>
+      </glossterm><glossdef><para>
 Engellenmemesi öngörülmüş bir nesne üzerindeki işlem hala sürüyor.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-ENOTSOCK">
-      <literal>int </literal>
-      <command>ENOTSOCK</command>
-      <indexterm scope="glibc-vr">
-       <primary>ENOTSOCK</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-ENOTSOCK">
+       <literal>int </literal><command>ENOTSOCK</command>
+       <indexterm scope="glibc-vr"><primary>ENOTSOCK</primary></indexterm>
+      </glossterm><glossdef><para>
 Bir soket gerektiği halde belirtilen dosya bir soket değil.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-EMSGSIZE">
-      <literal>int </literal>
-      <command>EMSGSIZE</command>
-      <indexterm scope="glibc-vr">
-       <primary>EMSGSIZE</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-EMSGSIZE">
+       <literal>int </literal><command>EMSGSIZE</command>
+       <indexterm scope="glibc-vr"><primary>EMSGSIZE</primary></indexterm>
+      </glossterm><glossdef><para>
 Bir sokete gönderilen iletinin uzunluğu desteklenenden fazla.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-EPROTOTYPE">
-      <literal>int </literal>
-      <command>EPROTOTYPE</command>
-      <indexterm scope="glibc-vr">
-       <primary>EPROTOTYPE</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-EPROTOTYPE">
+       <literal>int </literal><command>EPROTOTYPE</command>
+       <indexterm scope="glibc-vr"><primary>EPROTOTYPE</primary></indexterm>
+      </glossterm><glossdef><para>
 İstenen protokol bu soket türünü desteklemiyor.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-ENOPROTOOPT">
-      <literal>int </literal>
-      <command>ENOPROTOOPT</command>
-      <indexterm scope="glibc-vr">
-       <primary>ENOPROTOOPT</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-ENOPROTOOPT">
+       <literal>int </literal><command>ENOPROTOOPT</command>
+       <indexterm scope="glibc-vr"><primary>ENOPROTOOPT</primary></indexterm>
+      </glossterm><glossdef><para>
 Belirttiğiniz <link linkend="glibc-Socket-Options">soket seçeneği</link>  soket tarafından kullanılmakta olan protokol için uygun değil.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-EPROTONOSUPPORT">
-      <literal>int </literal>
-      <command>EPROTONOSUPPORT</command>
-      <indexterm scope="glibc-vr">
-       <primary>EPROTONOSUPPORT</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-EPROTONOSUPPORT">
+       <literal>int </literal><command>EPROTONOSUPPORT</command>
+       <indexterm scope="glibc-vr"><primary>EPROTONOSUPPORT</primary></indexterm>
+      </glossterm><glossdef><para>
 Soket istenen iletişim protokolünü desteklemiyor (istenen protokolün tamamiyle geçersiz olduğu durumda). Bkz. <xref linkend="glibc-Creating-a-Socket"/>.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-ESOCKTNOSUPPORT">
-      <literal>int </literal>
-      <command>ESOCKTNOSUPPORT</command>
-      <indexterm scope="glibc-vr">
-       <primary>ESOCKTNOSUPPORT</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>Soket türü desteklenmiyor.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-EOPNOTSUPP">
-      <literal>int </literal>
-      <command>EOPNOTSUPP</command>
-      <indexterm scope="glibc-vr">
-       <primary>EOPNOTSUPP</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-ESOCKTNOSUPPORT">
+       <literal>int </literal><command>ESOCKTNOSUPPORT</command>
+       <indexterm scope="glibc-vr"><primary>ESOCKTNOSUPPORT</primary></indexterm>
+      </glossterm><glossdef><para>Soket türü desteklenmiyor.
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-EOPNOTSUPP">
+       <literal>int </literal><command>EOPNOTSUPP</command>
+       <indexterm scope="glibc-vr"><primary>EOPNOTSUPP</primary></indexterm>
+      </glossterm><glossdef><para>
+<dicterm><english>communications protocol</english><turkish>iletişim protokolü</turkish></dicterm>
 İstediğiniz işlem desteklenmiyor. Bazı soket işlevleri tüm soket türleri için uygun değildir ve bunlar tüm iletişim protokolleri için  gerçekleştirilmemiş olabilirler. GNU sisteminde bir nesne istenen işlemi desteklemiyorsa birçok çağrı bu hatayı verebilir. Sunucunun bu çağrı için hiçbir şey yapamayacağı genel bir durumu belirtir.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-EPFNOSUPPORT">
-      <literal>int </literal>
-      <command>EPFNOSUPPORT</command>
-      <indexterm scope="glibc-vr">
-       <primary>EPFNOSUPPORT</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-EPFNOSUPPORT">
+       <literal>int </literal><command>EPFNOSUPPORT</command>
+       <indexterm scope="glibc-vr"><primary>EPFNOSUPPORT</primary></indexterm>
+      </glossterm><glossdef><para>
 İstediğiniz soket iletişim protokolü ailesi desteklenmiyor.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-EAFNOSUPPORT">
-      <literal>int </literal>
-      <command>EAFNOSUPPORT</command>
-      <indexterm scope="glibc-vr">
-       <primary>EAFNOSUPPORT</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-EAFNOSUPPORT">
+       <literal>int </literal><command>EAFNOSUPPORT</command>
+       <indexterm scope="glibc-vr"><primary>EAFNOSUPPORT</primary></indexterm>
+      </glossterm><glossdef><para>
 Bir soket için belirtilmiş adres ailesi desteklenmiyor;  adres ailesinin soket üzerinde kullanılan protokolle bağdaşmadığını belirtir. Bkz. <xref linkend="glibc-Sockets"/>.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-EADDRINUSE">
-      <literal>int </literal>
-      <command>EADDRINUSE</command>
-      <indexterm scope="glibc-vr">
-       <primary>EADDRINUSE</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-EADDRINUSE">
+       <literal>int </literal><command>EADDRINUSE</command>
+       <indexterm scope="glibc-vr"><primary>EADDRINUSE</primary></indexterm>
+      </glossterm><glossdef><para>
 İstenen <link linkend="glibc-Socket-Addresses">soket adresi</link> kullanımda.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-EADDRNOTAVAIL">
-      <literal>int </literal>
-      <command>EADDRNOTAVAIL</command>
-      <indexterm scope="glibc-vr">
-       <primary>EADDRNOTAVAIL</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-EADDRNOTAVAIL">
+       <literal>int </literal><command>EADDRNOTAVAIL</command>
+       <indexterm scope="glibc-vr"><primary>EADDRNOTAVAIL</primary></indexterm>
+      </glossterm><glossdef><para>
 İstenen soket adresi kullanıma uygun değil; örneğin, yerel konak ismi ile eşleşmeyen bir soket ismi verilmeye çalışılması. Bkz. <xref linkend="glibc-Socket-Addresses"/>.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-ENETDOWN">
-      <literal>int </literal>
-      <command>ENETDOWN</command>
-      <indexterm scope="glibc-vr">
-       <primary>ENETDOWN</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-ENETDOWN">
+       <literal>int </literal><command>ENETDOWN</command>
+       <indexterm scope="glibc-vr"><primary>ENETDOWN</primary></indexterm>
+      </glossterm><glossdef><para>
 Ağ çökük olduğundan soket işlemi başarısız oldu.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-ENETUNREACH">
-      <literal>int </literal>
-      <command>ENETUNREACH</command>
-      <indexterm scope="glibc-vr">
-       <primary>ENETUNREACH</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-ENETUNREACH">
+       <literal>int </literal><command>ENETUNREACH</command>
+       <indexterm scope="glibc-vr"><primary>ENETUNREACH</primary></indexterm>
+      </glossterm><glossdef><para>
 Uzak konağı içeren alt ağ erişilemez olduğundan soket işlemi başarısız oldu.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-ENETRESET">
-      <literal>int </literal>
-      <command>ENETRESET</command>
-      <indexterm scope="glibc-vr">
-       <primary>ENETRESET</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-ENETRESET">
+       <literal>int </literal><command>ENETRESET</command>
+       <indexterm scope="glibc-vr"><primary>ENETRESET</primary></indexterm>
+      </glossterm><glossdef><para>
 Uzak konak çöktüğünden ağ bağlantısı sıfırlandı.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-ECONNABORTED">
-      <literal>int </literal>
-      <command>ECONNABORTED</command>
-      <indexterm scope="glibc-vr">
-       <primary>ECONNABORTED</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-ECONNABORTED">
+       <literal>int </literal><command>ECONNABORTED</command>
+       <indexterm scope="glibc-vr"><primary>ECONNABORTED</primary></indexterm>
+      </glossterm><glossdef><para>
 Ağ bağlantısı yerel olarak sonlandırıldı.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-ECONNRESET">
-      <literal>int </literal>
-      <command>ECONNRESET</command>
-      <indexterm scope="glibc-vr">
-       <primary>ECONNRESET</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-ECONNRESET">
+       <literal>int </literal><command>ECONNRESET</command>
+       <indexterm scope="glibc-vr"><primary>ECONNRESET</primary></indexterm>
+      </glossterm><glossdef><para>
 Ağ bağlantısı yerel konağın denetimi dışında kapandı. Örneğin, uzak makinenin yeniden başlatılıyor olması veya önlenemeyen bir protokol saldırısı bu hataya sebep olabilir.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-ENOBUFS">
-      <literal>int </literal>
-      <command>ENOBUFS</command>
-      <indexterm scope="glibc-vr">
-       <primary>ENOBUFS</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-ENOBUFS">
+       <literal>int </literal><command>ENOBUFS</command>
+       <indexterm scope="glibc-vr"><primary>ENOBUFS</primary></indexterm>
+      </glossterm><glossdef><para>
 Çekirdeğin G/Ç tamponlarının hepsi kullanımda. GNU'da bu hata daima <command>ENOMEM</command> ile eşanlamlıdır. Ağ işlemlerinin birinden ya da diğerinden alabilirsiniz.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-EISCONN">
-      <literal>int </literal>
-      <command>EISCONN</command>
-      <indexterm scope="glibc-vr">
-       <primary>EISCONN</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-EISCONN">
+       <literal>int </literal><command>EISCONN</command>
+       <indexterm scope="glibc-vr"><primary>EISCONN</primary></indexterm>
+      </glossterm><glossdef><para>
 Zaten bağlı olan bir sokete bağlanmayı denediniz. Bkz. <xref linkend="glibc-Connecting"/>.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-ENOTCONN">
-      <literal>int </literal>
-      <command>ENOTCONN</command>
-      <indexterm scope="glibc-vr">
-       <primary>ENOTCONN</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-ENOTCONN">
+       <literal>int </literal><command>ENOTCONN</command>
+       <indexterm scope="glibc-vr"><primary>ENOTCONN</primary></indexterm>
+      </glossterm><glossdef><para>
 Soket hiçbir şeye bağlı değil. Veriyi hedefini belirtmeksizin bir soket üzerinden aktarmaya çalışırsanız bu hatayı alırsınız. Bağlantısız soketlerde (örneğin UDP) bu hata yerine <command>EDESTADDRREQ</command> hatası alınır.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-EDESTADDRREQ">
-      <literal>int </literal>
-      <command>EDESTADDRREQ</command>
-      <indexterm scope="glibc-vr">
-       <primary>EDESTADDRREQ</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-EDESTADDRREQ">
+       <literal>int </literal><command>EDESTADDRREQ</command>
+       <indexterm scope="glibc-vr"><primary>EDESTADDRREQ</primary></indexterm>
+      </glossterm><glossdef><para>
 Sokete öntanımlı hedef adresi belirtilmemiş. Veriyi hedefini belirtmeksizin  <function>connect</function> ile bir bağlantısız soket üzerinden aktarmaya çalışırsanız bu hatayı alırsınız.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-ESHUTDOWN">
-      <literal>int </literal>
-      <command>ESHUTDOWN</command>
-      <indexterm scope="glibc-vr">
-       <primary>ESHUTDOWN</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>Soket zaten kapatılmış.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-ETOOMANYREFS">
-      <literal>int </literal>
-      <command>ETOOMANYREFS</command>
-      <indexterm scope="glibc-vr">
-       <primary>ETOOMANYREFS</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>Çok fazla başvuru: uçlar birbirine bağlanamıyor
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-ETIMEDOUT">
-      <literal>int </literal>
-      <command>ETIMEDOUT</command>
-      <indexterm scope="glibc-vr">
-       <primary>ETIMEDOUT</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-ESHUTDOWN">
+       <literal>int </literal><command>ESHUTDOWN</command>
+       <indexterm scope="glibc-vr"><primary>ESHUTDOWN</primary></indexterm>
+      </glossterm><glossdef><para>Soket zaten kapatılmış.
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-ETOOMANYREFS">
+       <literal>int </literal><command>ETOOMANYREFS</command>
+       <indexterm scope="glibc-vr"><primary>ETOOMANYREFS</primary></indexterm>
+      </glossterm><glossdef><para>Çok fazla başvuru: uçlar birbirine bağlanamıyor
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-ETIMEDOUT">
+       <literal>int </literal><command>ETIMEDOUT</command>
+       <indexterm scope="glibc-vr"><primary>ETIMEDOUT</primary></indexterm>
+      </glossterm><glossdef><para>
+<dicterm><english>timeout</english><turkish>zamanaşımı</turkish></dicterm>
 Bir zamanaşımı belirtilmiş bir soket işlemine zamanaşımı süresinde bir yanıt gelmedi.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-ECONNREFUSED">
-      <literal>int </literal>
-      <command>ECONNREFUSED</command>
-      <indexterm scope="glibc-vr">
-       <primary>ECONNREFUSED</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-ECONNREFUSED">
+       <literal>int </literal><command>ECONNREFUSED</command>
+       <indexterm scope="glibc-vr"><primary>ECONNREFUSED</primary></indexterm>
+      </glossterm><glossdef><para>
 Bir uzak konak ağ bağlantısına izin vermedi (genelde uzak konağın istenen  hizmeti sunmadığı durumlarda oluşur).
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-ELOOP">
-      <literal>int </literal>
-      <command>ELOOP</command>
-      <indexterm scope="glibc-vr">
-       <primary>ELOOP</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-ELOOP">
+       <literal>int </literal><command>ELOOP</command>
+       <indexterm scope="glibc-vr"><primary>ELOOP</primary></indexterm>
+      </glossterm><glossdef><para>
 Bir dosya ismine bakılırken çok seviyeli sembolik bağlar saptandı. Bu durum çoğunlukla kapalı bir çevrim oluşturan sembolik bağları belirtir.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-ENAMETOOLONG">
-      <literal>int </literal>
-      <command>ENAMETOOLONG</command>
-      <indexterm scope="glibc-vr">
-       <primary>ENAMETOOLONG</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-ENAMETOOLONG">
+       <literal>int </literal><command>ENAMETOOLONG</command>
+       <indexterm scope="glibc-vr"><primary>ENAMETOOLONG</primary></indexterm>
+      </glossterm><glossdef><para>
 Dosya ismi çok uzun (<command>PATH_MAX</command>'dan daha uzun; bkz. <xref linkend="glibc-Limits-for-Files"/>) veya konak ismi çok uzun  (<function>gethostname</function> veya <function>sethostname</function> işlevlerinden döner; bkz. <xref linkend="glibc-Host-Identification"/>).
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-EHOSTDOWN">
-      <literal>int </literal>
-      <command>EHOSTDOWN</command>
-      <indexterm scope="glibc-vr">
-       <primary>EHOSTDOWN</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-EHOSTDOWN">
+       <literal>int </literal><command>EHOSTDOWN</command>
+       <indexterm scope="glibc-vr"><primary>EHOSTDOWN</primary></indexterm>
+      </glossterm><glossdef><para>
+<dicterm><english>remote host</english><turkish>uzak konak</turkish></dicterm>
 İstenen ağ bağlantısındaki uzak konak çökük.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-EHOSTUNREACH">
-      <literal>int </literal>
-      <command>EHOSTUNREACH</command>
-      <indexterm scope="glibc-vr">
-       <primary>EHOSTUNREACH</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-EHOSTUNREACH">
+       <literal>int </literal><command>EHOSTUNREACH</command>
+       <indexterm scope="glibc-vr"><primary>EHOSTUNREACH</primary></indexterm>
+      </glossterm><glossdef><para>
 İstenen ağ bağlantısındaki uzak konak erişilebilir değil.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-ENOTEMPTY">
-      <literal>int </literal>
-      <command>ENOTEMPTY</command>
-      <indexterm scope="glibc-vr">
-       <primary>ENOTEMPTY</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-ENOTEMPTY">
+       <literal>int </literal><command>ENOTEMPTY</command>
+       <indexterm scope="glibc-vr"><primary>ENOTEMPTY</primary></indexterm>
+      </glossterm><glossdef><para>
 Dizin boş değil, işlem için dizin boş olmalı. Bu hata genelde boş olmayan bir dizini silmeye kalkınca oluşur.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-EPROCLIM">
-      <literal>int </literal>
-      <command>EPROCLIM</command>
-      <indexterm scope="glibc-vr">
-       <primary>EPROCLIM</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-EPROCLIM">
+       <literal>int </literal><command>EPROCLIM</command>
+       <indexterm scope="glibc-vr"><primary>EPROCLIM</primary></indexterm>
+      </glossterm><glossdef><para>
 Bu hata, yeni bir süreç üzerinde kullanıcı başına sınır <function>fork</function> ile aşıldığında oluşur. <command>RLIMIT_NPROC</command> sınırı hakkında daha ayrıntılı bilgiyi <xref linkend="glibc-Limits-on-Resources"/> bölümünde bulabilirsiniz.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-EUSERS">
-      <literal>int </literal>
-      <command>EUSERS</command>
-      <indexterm scope="glibc-vr">
-       <primary>EUSERS</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-EUSERS">
+       <literal>int </literal><command>EUSERS</command>
+       <indexterm scope="glibc-vr"><primary>EUSERS</primary></indexterm>
+      </glossterm><glossdef><para>
 Çok fazla kullanıcı olduğundan dosya kotası sistemi bozuldu.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-EDQUOT">
-      <literal>int </literal>
-      <command>EDQUOT</command>
-      <indexterm scope="glibc-vr">
-       <primary>EDQUOT</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>Kullanıcının disk kotası aşıldı.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-ESTALE">
-      <literal>int </literal>
-      <command>ESTALE</command>
-      <indexterm scope="glibc-vr">
-       <primary>ESTALE</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-EDQUOT">
+       <literal>int </literal><command>EDQUOT</command>
+       <indexterm scope="glibc-vr"><primary>EDQUOT</primary></indexterm>
+      </glossterm><glossdef><para>Kullanıcının disk kotası aşıldı.
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-ESTALE">
+       <literal>int </literal><command>ESTALE</command>
+       <indexterm scope="glibc-vr"><primary>ESTALE</primary></indexterm>
+      </glossterm><glossdef><para>
 Eskimiş NFS dosya kaydı. Sunucu konak üzerindeki dosya sisteminin yeniden düzenlenmesi nedeniyle NFS sisteminin iç bozulmasını belirtir. Bu bozulmanın giderilmesi için yerel konak üzerinde NFS dosya sisteminin önce ayrılıp sonra tekrar bağlanması gerekir.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-EREMOTE">
-      <literal>int </literal>
-      <command>EREMOTE</command>
-      <indexterm scope="glibc-vr">
-       <primary>EREMOTE</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-EREMOTE">
+       <literal>int </literal><command>EREMOTE</command>
+       <indexterm scope="glibc-vr"><primary>EREMOTE</primary></indexterm>
+      </glossterm><glossdef><para>
 Bir uzak dosya sistemi zaten kullanımda olan NFS bağlama dosyası ismi ile sisteme bağlanmaya çalışıldı. (Bu bazı işletim sistemlerinde bir hatadır, ancak GNU sistemlerinde bu hata kodunu imkansız yaparak onun çalışacağını umuyoruz.)
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-EBADRPC">
-      <literal>int </literal>
-      <command>EBADRPC</command>
-      <indexterm scope="glibc-vr">
-       <primary>EBADRPC</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>RPC yapısı hatalı
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-ERPCMISMATCH">
-      <literal>int </literal>
-      <command>ERPCMISMATCH</command>
-      <indexterm scope="glibc-vr">
-       <primary>ERPCMISMATCH</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>RPC sürümü yanlış
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-EPROGUNAVAIL">
-      <literal>int </literal>
-      <command>EPROGUNAVAIL</command>
-      <indexterm scope="glibc-vr">
-       <primary>EPROGUNAVAIL</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>RPC uygulaması kullanılabilir değil
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-EPROGMISMATCH">
-      <literal>int </literal>
-      <command>EPROGMISMATCH</command>
-      <indexterm scope="glibc-vr">
-       <primary>EPROGMISMATCH</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>RPC uygulaması sürümü yanlış
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-EPROCUNAVAIL">
-      <literal>int </literal>
-      <command>EPROCUNAVAIL</command>
-      <indexterm scope="glibc-vr">
-       <primary>EPROCUNAVAIL</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>RPC, uygulama için hatalı yordam yürüttü
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-ENOLCK">
-      <literal>int </literal>
-      <command>ENOLCK</command>
-      <indexterm scope="glibc-vr">
-       <primary>ENOLCK</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-EBADRPC">
+       <literal>int </literal><command>EBADRPC</command>
+       <indexterm scope="glibc-vr"><primary>EBADRPC</primary></indexterm>
+      </glossterm><glossdef><para>RPC yapısı hatalı
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-ERPCMISMATCH">
+       <literal>int </literal><command>ERPCMISMATCH</command>
+       <indexterm scope="glibc-vr"><primary>ERPCMISMATCH</primary></indexterm>
+      </glossterm><glossdef><para>RPC sürümü yanlış
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-EPROGUNAVAIL">
+       <literal>int </literal><command>EPROGUNAVAIL</command>
+       <indexterm scope="glibc-vr"><primary>EPROGUNAVAIL</primary></indexterm>
+      </glossterm><glossdef><para>RPC uygulaması kullanılabilir değil
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-EPROGMISMATCH">
+       <literal>int </literal><command>EPROGMISMATCH</command>
+       <indexterm scope="glibc-vr"><primary>EPROGMISMATCH</primary></indexterm>
+      </glossterm><glossdef><para>RPC uygulaması sürümü yanlış
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-EPROCUNAVAIL">
+       <literal>int </literal><command>EPROCUNAVAIL</command>
+       <indexterm scope="glibc-vr"><primary>EPROCUNAVAIL</primary></indexterm>
+      </glossterm><glossdef><para>RPC, uygulama için hatalı yordam yürüttü
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-ENOLCK">
+       <literal>int </literal><command>ENOLCK</command>
+       <indexterm scope="glibc-vr"><primary>ENOLCK</primary></indexterm>
+      </glossterm><glossdef><para>
 Kullanılabilir bir kilit yok. Bu hata dosya kilitleme oluşumları tarafından kullanılır. Bilgi için <xref linkend="glibc-File-Locks"/> bölümüne bakınız. Bu hata GNU sistemlerinde hiçbir zaman üretilmez, ancak NFS sunucusunun çalıştığı başka bir işletim işletim sistemindeki bir işlemden kaynaklanabilir.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-EFTYPE">
-      <literal>int </literal>
-      <command>EFTYPE</command>
-      <indexterm scope="glibc-vr">
-       <primary>EFTYPE</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-EFTYPE">
+       <literal>int </literal><command>EFTYPE</command>
+       <indexterm scope="glibc-vr"><primary>EFTYPE</primary></indexterm>
+      </glossterm><glossdef><para>
 İlgisiz dosya türü ya da biçimi. Dosya işlem için yanlış türdendir ya da bir veri dosyası yanlış biçimlidir.
-      </para>
-      <para>
+      </para><para>
+<dicterm><english>sticky bit</english><turkish>yapışkan bit</turkish></dicterm>
 Bazı sistemlerde, <command>chmod</command> ile bir dizin olmayan dosyaya yapışkan bit belirtilmeye çalışılırsa bu hata oluşur. Bkz.  <xref linkend="glibc-Setting-Permissions"/>.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-EAUTH">
-      <literal>int </literal>
-      <command>EAUTH</command>
-      <indexterm scope="glibc-vr">
-       <primary>EAUTH</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>Kimlik kanıtlama hatası.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-ENEEDAUTH">
-      <literal>int </literal>
-      <command>ENEEDAUTH</command>
-      <indexterm scope="glibc-vr">
-       <primary>ENEEDAUTH</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>Kimlik kanıtlayıcı gerekli
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-ENOSYS">
-      <literal>int </literal>
-      <command>ENOSYS</command>
-      <indexterm scope="glibc-vr">
-       <primary>ENOSYS</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-EAUTH">
+       <literal>int </literal><command>EAUTH</command>
+       <indexterm scope="glibc-vr"><primary>EAUTH</primary></indexterm>
+      </glossterm><glossdef><para>Kimlik kanıtlama hatası.
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-ENEEDAUTH">
+       <literal>int </literal><command>ENEEDAUTH</command>
+       <indexterm scope="glibc-vr"><primary>ENEEDAUTH</primary></indexterm>
+      </glossterm><glossdef><para>Kimlik kanıtlayıcı gerekli
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-ENOSYS">
+       <literal>int </literal><command>ENOSYS</command>
+       <indexterm scope="glibc-vr"><primary>ENOSYS</primary></indexterm>
+      </glossterm><glossdef><para>
 İşlev henüz gerçeklenmedi. Bu hata çağrılan işlevin C kütüphanesinde ya da işletim sisteminde henüz mevcut olmadığını belirtir. Bu hatayı alıyorsanız, C kütüphanesinin ya da işletim sisteminin yeni bir sürümünü sisteminize kurmadığınız sürece aynı işlev için bu hatayı almaya devam edeceksiniz demektir.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-ENOTSUP">
-      <literal>int </literal>
-      <command>ENOTSUP</command>
-      <indexterm scope="glibc-vr">
-       <primary>ENOTSUP</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-ENOTSUP">
+       <literal>int </literal><command>ENOTSUP</command>
+       <indexterm scope="glibc-vr"><primary>ENOTSUP</primary></indexterm>
+      </glossterm><glossdef><para>
 Desteklenmiyor. Bir işlev bu hatayı döndürüyorsa, ona verilen bir parametrenin geçerli olduğunu ancak istenen işlevselliğin bulunmadığı anlaşılır. İşlevin henüz bir komutu, bir seçeneği ya da bir bayrak bitini gerçekleştirmediği anlamına gelebilir. Bir işleve bir parametre içinde verilen bazı nesneler, örneğin bir dosya tanıtıcısı ya da port, verilen diğer parametrelerle desteği sağlayamadığı anlamına da gelebilir. Farklı bir dosya tanıtıcısı ya da farklı bir parametre değerleri aralığı ile destek sağlanmış olabilir.
-      </para>
-      <para>
+      </para><para>
 İşlevin tamamı gerçeklenmemişse bu hata değil <command>ENOSYS</command> döner.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-EILSEQ">
-      <literal>int </literal>
-      <command>EILSEQ</command>
-      <indexterm scope="glibc-vr">
-       <primary>EILSEQ</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-EILSEQ">
+       <literal>int </literal><command>EILSEQ</command>
+       <indexterm scope="glibc-vr"><primary>EILSEQ</primary></indexterm>
+      </glossterm><glossdef><para>
+<dicterm><english>multibyte character</english><turkish>çokbaytlı karakter</turkish></dicterm>
+<dicterm><english>wide character</english><turkish>geniş karakter</turkish></dicterm>
 Bir çokbaytlı karakter çözümlemesinde, işlev bir geçersizlik saptadı ya da bayt sırası tamamlanmamış veya verilen geniş karakter geçersiz.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-EBACKGROUND">
-      <literal>int </literal>
-      <command>EBACKGROUND</command>
-      <indexterm scope="glibc-vr">
-       <primary>EBACKGROUND</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-EBACKGROUND">
+       <literal>int </literal><command>EBACKGROUND</command>
+       <indexterm scope="glibc-vr"><primary>EBACKGROUND</primary></indexterm>
+      </glossterm><glossdef><para>
 GNU sisteminde, <command>term</command> protokolünü destekleyen sunucular, çağrıcı uçbrimin önalan işlem grubunda değilse bazı işlemler için bu hatayı döndürebilir. Aslında kullanıcılar bu hatayı görmezler. Çünkü örneğin <function>read</function> ve <function>write</function> gibi işlevler hatayı <command>SIGTTIN</command> eya <command>SIGTTOU</command> sinyaline dönüştürürler. İşlem grupları ve bu sinyaller hakkında daha fazla bilgi edinmek için <xref linkend="glibc-Job-Control"/> bölümüne bakınız.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-EDIED">
-      <literal>int </literal>
-      <command>EDIED</command>
-      <indexterm scope="glibc-vr">
-       <primary>EDIED</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-EDIED">
+       <literal>int </literal><command>EDIED</command>
+       <indexterm scope="glibc-vr"><primary>EDIED</primary></indexterm>
+      </glossterm><glossdef><para>
 GNU sisteminde, açılan bir dosya bir uygulama tarafından dönüştürüldüğünde veya çevirici uygulama dosyaya bağlanmadan önce başlatılırken ölürse bu hata oluşur.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-ED">
-      <literal>int </literal>
-      <command>ED</command>
-      <indexterm scope="glibc-vr">
-       <primary>ED</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-ED">
+       <literal>int </literal><command>ED</command>
+       <indexterm scope="glibc-vr"><primary>ED</primary></indexterm>
+      </glossterm><glossdef><para>
 Deneyimli kullanıcı neyi yanlış yaptığını bilir.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-EGREGIOUS">
-      <literal>int </literal>
-      <command>EGREGIOUS</command>
-      <indexterm scope="glibc-vr">
-       <primary>EGREGIOUS</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para><varname>Ne</varname> yaptınız?
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-EIEIO">
-      <literal>int </literal>
-      <command>EIEIO</command>
-      <indexterm scope="glibc-vr">
-       <primary>EIEIO</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>Evine dön ve sütünü iç.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-EGRATUITOUS">
-      <literal>int </literal>
-      <command>EGRATUITOUS</command>
-      <indexterm scope="glibc-vr">
-       <primary>EGRATUITOUS</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>Bu hata kodunun bir kullanım amacı yok.
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-EBADMSG">
-      <literal>int </literal>
-      <command>EBADMSG</command>
-      <indexterm scope="glibc-vr">
-       <primary>EBADMSG</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>Hatalı ileti
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-EIDRM">
-      <literal>int </literal>
-      <command>EIDRM</command>
-      <indexterm scope="glibc-vr">
-       <primary>EIDRM</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>Belirteç kaldırıldı
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-EMULTIHOP">
-      <literal>int </literal>
-      <command>EMULTIHOP</command>
-      <indexterm scope="glibc-vr">
-       <primary>EMULTIHOP</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>Çoklu sıçrama denendi
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-ENODATA">
-      <literal>int </literal>
-      <command>ENODATA</command>
-      <indexterm scope="glibc-vr">
-       <primary>ENODATA</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>Kullanılabilir veri yok
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-ENOLINK">
-      <literal>int </literal>
-      <command>ENOLINK</command>
-      <indexterm scope="glibc-vr">
-       <primary>ENOLINK</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>Bağ kopmuştu
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-ENOMSG">
-      <literal>int </literal>
-      <command>ENOMSG</command>
-      <indexterm scope="glibc-vr">
-       <primary>ENOMSG</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>İstenen türde ileti yok
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-ENOSR">
-      <literal>int </literal>
-      <command>ENOSR</command>
-      <indexterm scope="glibc-vr">
-       <primary>ENOSR</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>Akımdışı özkaynaklar
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-ENOSTR">
-      <literal>int </literal>
-      <command>ENOSTR</command>
-      <indexterm scope="glibc-vr">
-       <primary>ENOSTR</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>Aygıt bir akım değil
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-EOVERFLOW">
-      <literal>int </literal>
-      <command>EOVERFLOW</command>
-      <indexterm scope="glibc-vr">
-       <primary>EOVERFLOW</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>Tanımlı veri türü için değer çok büyük
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-EPROTO">
-      <literal>int </literal>
-      <command>EPROTO</command>
-      <indexterm scope="glibc-vr">
-       <primary>EPROTO</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>Protokol hatası
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-ETIME">
-      <literal>int </literal>
-      <command>ETIME</command>
-      <indexterm scope="glibc-vr">
-       <primary>ETIME</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>Zamanlayıcı zamanaşımına uğradı
-      </para>
-     </glossdef>
-    </glossentry>
-    <glossentry>
-     <glossterm xml:id="glibc-ECANCELED">
-      <literal>int </literal>
-      <command>ECANCELED</command>
-      <indexterm scope="glibc-vr">
-       <primary>ECANCELED</primary>
-      </indexterm>
-     </glossterm>
-     <glossdef>
-      <para>
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-EGREGIOUS">
+       <literal>int </literal><command>EGREGIOUS</command>
+       <indexterm scope="glibc-vr"><primary>EGREGIOUS</primary></indexterm>
+      </glossterm><glossdef><para><varname>Ne</varname> yaptınız?
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-EIEIO">
+       <literal>int </literal><command>EIEIO</command>
+       <indexterm scope="glibc-vr"><primary>EIEIO</primary></indexterm>
+      </glossterm><glossdef><para>Evine dön ve sütünü iç.
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-EGRATUITOUS">
+       <literal>int </literal><command>EGRATUITOUS</command>
+       <indexterm scope="glibc-vr"><primary>EGRATUITOUS</primary></indexterm>
+      </glossterm><glossdef><para>Bu hata kodunun bir kullanım amacı yok.
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-EBADMSG">
+       <literal>int </literal><command>EBADMSG</command>
+       <indexterm scope="glibc-vr"><primary>EBADMSG</primary></indexterm>
+      </glossterm><glossdef><para>Hatalı ileti
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-EIDRM">
+       <literal>int </literal><command>EIDRM</command>
+       <indexterm scope="glibc-vr"><primary>EIDRM</primary></indexterm>
+      </glossterm><glossdef><para>Belirteç kaldırıldı
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-EMULTIHOP">
+       <literal>int </literal><command>EMULTIHOP</command>
+       <indexterm scope="glibc-vr"><primary>EMULTIHOP</primary></indexterm>
+      </glossterm><glossdef><para>Çoklu sıçrama denendi
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-ENODATA">
+       <literal>int </literal><command>ENODATA</command>
+       <indexterm scope="glibc-vr"><primary>ENODATA</primary></indexterm>
+      </glossterm><glossdef><para>Kullanılabilir veri yok
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-ENOLINK">
+       <literal>int </literal><command>ENOLINK</command>
+       <indexterm scope="glibc-vr"><primary>ENOLINK</primary></indexterm>
+      </glossterm><glossdef><para>Bağ kopmuştu
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-ENOMSG">
+       <literal>int </literal><command>ENOMSG</command>
+       <indexterm scope="glibc-vr"><primary>ENOMSG</primary></indexterm>
+      </glossterm><glossdef><para>İstenen türde ileti yok
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-ENOSR">
+       <literal>int </literal><command>ENOSR</command>
+       <indexterm scope="glibc-vr"><primary>ENOSR</primary></indexterm>
+      </glossterm><glossdef><para>Akımdışı özkaynaklar
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-ENOSTR">
+       <literal>int </literal><command>ENOSTR</command>
+       <indexterm scope="glibc-vr"><primary>ENOSTR</primary></indexterm>
+      </glossterm><glossdef><para>Aygıt bir akım değil
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-EOVERFLOW">
+       <literal>int </literal><command>EOVERFLOW</command>
+       <indexterm scope="glibc-vr"><primary>EOVERFLOW</primary></indexterm>
+      </glossterm><glossdef><para>Tanımlı veri türü için değer çok büyük
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-EPROTO">
+       <literal>int </literal><command>EPROTO</command>
+       <indexterm scope="glibc-vr"><primary>EPROTO</primary></indexterm>
+      </glossterm><glossdef><para>Protokol hatası
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-ETIME">
+       <literal>int </literal><command>ETIME</command>
+       <indexterm scope="glibc-vr"><primary>ETIME</primary></indexterm>
+      </glossterm><glossdef><para>Zamanlayıcı zamanaşımına uğradı
+      </para></glossdef></glossentry><glossentry><glossterm xml:id="glibc-ECANCELED">
+       <literal>int </literal><command>ECANCELED</command>
+       <indexterm scope="glibc-vr"><primary>ECANCELED</primary></indexterm>
+      </glossterm><glossdef><para>
 İşlem iptal edildi. Bir işlem daha tamamlanmadan herhangi bir anda iptal edilmiş. Bkz. <xref linkend="glibc-Asynchronous-I-O"/>. <function>aio_cancel</function> işlevini çağırdığınızda normal sonuç olarak işlemin tamamlanması bu hata ile etkilenir. Bkz.
  <xref linkend="glibc-Cancel-AIO-Operations"/>.
-      </para>
-     </glossdef>
-    </glossentry>
-   </glosslist>
-  </para>
-  <para><varname>Aşağıdaki hata kodları Linux/i386 çekirdeğinde tanımlıdır ve henüz belgelendirilmemiştir.</varname> (Ç.N: Hata iletileri özgün belgede yoktur, onları ben ekledim.)
-      </para>
-  <para xml:id="glibc-kernel-errors">
-   <literallayout class="normal">
+      </para></glossdef></glossentry></glosslist></para><para>
+<varname>Aşağıdaki hata kodları Linux/i386 çekirdeğinde tanımlıdır ve henüz belgelendirilmemiştir.</varname> (Ç.N: Hata iletileri özgün belgede yoktur, onları ben ekledim.)
+      </para><para xml:id="glibc-kernel-errors">
+<literallayout>
 int <command>ERESTART</command>  Engellenen sistem çağrısı yeniden başlatılmalı<indexterm scope="glibc-vr"><primary>ERESTART</primary></indexterm>
 int <command>ECHRNG</command>    Kanal numarası aralık dışında<indexterm scope="glibc-vr"><primary>ECHRNG</primary></indexterm>
 int <command>EL2NSYNC</command>  2. seviye eşzamanlı değil<indexterm scope="glibc-vr"><primary>EL2NSYNC</primary></indexterm>
@@ -1580,150 +647,97 @@ int <command>EKEYREJECTED</command><indexterm role="glibc-vr"><primary>EKEYREJEC
 int <command>EOWNERDEAD</command><indexterm role="glibc-vr"><primary>EOWNERDEAD</primary></indexterm>
 int <command>ENOTRECOVERABLE</command><indexterm role="glibc-vr"><primary>ENOTRECOVERABLE</primary></indexterm>
 </literallayout>
-  </para>
- </chapter>
- <chapter xml:id="glibc-Error-Messages">
-  <info>
-   <title>Hata İletileri</title>
-   <titleabbrev>Hata kodlarının iletilerle eşlenmesi.</titleabbrev>
-  </info>
-  <para/>
-  <para>
-Kütüphane, bir kütüphane çağrısının başarısız olması durumunda yazılımınızda özelleştirilebilir biçimde bilgilendirici hata iletileri oluşturabilmenizi kolaylaştıran işlevler ve değişkenler içerir. <function>strerror</function> ve <function>perror</function> işlevleri belirtilen bir hata kodu için standart hata iletisini verirler. <literal>program_invocation_short_name</literal> değişkeni ise hatanın saptandığı yazılımın ismine erişebilmenizi sağlar.
     </para>
-  <para xml:id="glibc-strerror">
-   <indexterm scope="glibc-fn">
-    <primary>strerror</primary>
-   </indexterm>
-   <funcsynopsis>
-    <funcprototype role="işlev">
-     <funcdef>char *<command>strerror</command></funcdef>
-     <paramdef>(int <varname>hatanum</varname>)</paramdef>
-    </funcprototype>
-    <funcdescr>
-     <para><command>strerror</command> işlevi <varname>hatanum</varname> ile belirtilen <link linkend="glibc-Checking-for-Errors">hata kodunu</link> bir açıklayıcı  hata iletisi dizgesi ile eşleştirir ve bu dizgeye bir gösterici ile döner.
-      </para>
-     <para><varname>hatanum</varname> normalde <command>errno</command> değişkeninden alınır.
-      </para>
-     <para><command>strerror</command> ile döndürülen dizgeyi değiştirmemelisiniz. Ayrıca, <command>strerror</command> işlevine daha sonra yapacağınız çağrılar, dizgenin üzerine yazılması ile de sonuçlanabilir. (<command>strerror</command> bir kütüphane işlevi tarafından da çağrılabileceğinden döndürdüğü hata iletisinin sizin istediğiniz hata iletisi olacağının hiçbir garantisi yoktur.)
-      </para>
-     <para><command>strerror</command> işlevi <filename><link xlink:href="file:/usr/include/string.h">string.h</link></filename> başlık dosyasında
+  </chapter><chapter xml:id="glibc-Error-Messages">
+    <title>Hata İletileri</title>
+    <titleabbrev>Hata kodlarının iletilerle eşlenmesi.</titleabbrev>
+    <para/><para>
+Kütüphane, bir kütüphane çağrısının başarısız olması durumunda yazılımınızda özelleştirilebilir biçimde bilgilendirici hata iletileri oluşturabilmenizi kolaylaştıran işlevler ve değişkenler içerir. <function>strerror</function> ve <function>perror</function> işlevleri belirtilen bir hata kodu için standart hata iletisini verirler. <literal>program_invocation_short_name</literal> değişkeni ise hatanın saptandığı yazılımın ismine erişebilmenizi sağlar.
+    </para><para xml:id="glibc-strerror">
+<indexterm scope="glibc-fn"><primary>strerror</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>char *<command>strerror</command></funcdef>
+<paramdef>(int <varname>hatanum</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+<command>strerror</command> işlevi <varname>hatanum</varname> ile belirtilen <link linkend="glibc-Checking-for-Errors">hata kodunu</link> bir açıklayıcı  hata iletisi dizgesi ile eşleştirir ve bu dizgeye bir gösterici ile döner.
+      </para><para>
+<varname>hatanum</varname> normalde <command>errno</command> değişkeninden alınır.
+      </para><para>
+<command>strerror</command> ile döndürülen dizgeyi değiştirmemelisiniz. Ayrıca, <command>strerror</command> işlevine daha sonra yapacağınız çağrılar, dizgenin üzerine yazılması ile de sonuçlanabilir. (<command>strerror</command> bir kütüphane işlevi tarafından da çağrılabileceğinden döndürdüğü hata iletisinin sizin istediğiniz hata iletisi olacağının hiçbir garantisi yoktur.)
+      </para><para>
+<command>strerror</command> işlevi <filename><ulink  url="file:/usr/include/string.h">string.h</link></filename> başlık dosyasında
  bildirilmiştir.
-      </para>
-    </funcdescr>
-   </funcsynopsis>
-  </para>
-  <para xml:id="glibc-strerror_r">
-   <indexterm scope="glibc-fn">
-    <primary>strerror_r</primary>
-   </indexterm>
-   <funcsynopsis>
-    <funcprototype role="işlev">
-     <funcdef>char *<command>strerror_r</command></funcdef>
-     <paramdef>(int    <varname>hatanum</varname>,
+      </para></funcdescr></funcsynopsis>
+    </para><para xml:id="glibc-strerror_r">
+<indexterm scope="glibc-fn"><primary>strerror_r</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>char *<command>strerror_r</command></funcdef>
+<paramdef>(int    <varname>hatanum</varname>,
  char  *<varname>tampon</varname>,
  size_t <varname>n</varname>)</paramdef>
-    </funcprototype>
-    <funcdescr>
-     <para><command>strerror_r</command> işlevi süreçteki tüm evreler (threads) tarafından paylaşılan süreç için ayrılmış durağan bellek içindeki evreye özel hata iletisini  döndürmek dışında <command>strerror</command> işlevi gibi çalışır. Hata iletisini tutacak bellek bölgesi kullanıcı tarafından belirlenen ve <varname>tampon</varname> ile başlayan <varname>n</varname> bayt uzunlukta bir tampondur.
-      </para>
-     <para>
+</funcprototype><funcdescr><para>
+<dicterm><english>thread</english><turkish>evre</turkish></dicterm>
+<command>strerror_r</command> işlevi süreçteki tüm evreler (threads) tarafından paylaşılan süreç için ayrılmış durağan bellek içindeki evreye özel hata iletisini  döndürmek dışında <command>strerror</command> işlevi gibi çalışır. Hata iletisini tutacak bellek bölgesi kullanıcı tarafından belirlenen ve <varname>tampon</varname> ile başlayan <varname>n</varname> bayt uzunlukta bir tampondur.
+      </para><para>
 Bu tampona NULL karakteri de dahil olmak üzere en fazla <varname>n</varname>  karakter yazılabileceğinden yazılımcı bu alanın büyüklüğünü yeterince büyük seçmelidir.
-      </para>
-     <para><command>strerror</command> tarafından döndürülen dizgenin gerçekten o anki evrenin son çağrısına karşılık olacağının hiçbir garantisi olmadığından çok evreli (multi-threaded) yazılımlarda daima <command>strerror_r</command> işlevi kullanılmalıdır.
-      </para>
-     <para><command>strerror_r</command> işlevi bir GNU oluşumu olup <filename><link xlink:href="file:/usr/include/string.h">string.h</link></filename> başlık dosyasında bildirilmiştir.
-      </para>
-    </funcdescr>
-   </funcsynopsis>
-  </para>
-  <para xml:id="glibc-perror">
-   <indexterm scope="glibc-fn">
-    <primary>perror</primary>
-   </indexterm>
-   <funcsynopsis>
-    <funcprototype role="işlev">
-     <funcdef>void <command>perror</command></funcdef>
-     <paramdef>(const char *<varname>ileti</varname>)</paramdef>
-    </funcprototype>
-    <funcdescr>
-     <para>
+      </para><para>
+<dicterm><english>multi-threaded</english><turkish>çok evreli</turkish></dicterm>
+<command>strerror</command> tarafından döndürülen dizgenin gerçekten o anki evrenin son çağrısına karşılık olacağının hiçbir garantisi olmadığından çok evreli (multi-threaded) yazılımlarda daima <command>strerror_r</command> işlevi kullanılmalıdır.
+      </para><para>
+<command>strerror_r</command> işlevi bir GNU oluşumu olup <filename><ulink  url="file:/usr/include/string.h">string.h</link></filename> başlık dosyasında bildirilmiştir.
+      </para></funcdescr></funcsynopsis>
+    </para><para xml:id="glibc-perror">
+<indexterm scope="glibc-fn"><primary>perror</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>void <command>perror</command></funcdef>
+<paramdef>(const char *<varname>ileti</varname>)</paramdef>
+</funcprototype><funcdescr><para>
 Bu işlev standart hataya (<command><link linkend="glibc-Standard-Streams">stderr</link></command>) bir hata iletisi basar. Standart hatanın yönünü değiştirmez.
-      </para>
-     <para><command>perror</command> işlevini <varname>ileti</varname> argümanına değer  olarak bir boş gösterici ya da bir boş dizge belirterek çağırırsanız o andaki  <command>errno</command> değerine karşılık gelen hata iletisini sonuna bir  satırsonu karakteri ekleyerek basar.
-      </para>
-     <para><varname>ileti</varname> argümanı boş değilse, <command>perror</command> bu dizgeyi çıktısına önek olarak alır ve arkasına bir iki nokta imi ile boşluk ekledikten sonra <command>errno</command> değerine karşılık gelen hata iletisini sonuna bir satırsonu karakteri ekleyerek basar.
-      </para>
-     <para><command>perror</command> işlevi <filename><link xlink:href="file:/usr/include/stdio.h">stdio.h</link></filename> başlık dosyasında bildirilmiştir.
-      </para>
-    </funcdescr>
-   </funcsynopsis>
-  </para>
-  <para><command>strerror</command> ve <command>perror</command> belirtilen hata kodu için tamamen aynı hata iletisini üretir, ancak üretilen ileti sistemden sisteme farklı olabilir. GNU sisteminde iletiler oldukça kısadır; çok satırlı hata iletileri yoktur (Ç.N: çeviriler bu kurala uymayabilir). Her hata iletisi büyük harfle başlar ve sonunda herhangi bir noktalama işareti bulunmaz.
-    </para>
-  <para>
-   <note>
-    <info>
-     <title>Uyumluluk Bilgisi:</title>
-    </info>
-    <para><command>strerror</command> işlevi ISO C89 ile gelmiştir. Eski C sistemlerinin çoğu hala bu işlevi desteklememektedir. </para>
-   </note>
-  </para>
-  <para><indexterm scope="glibc-cp"><primary>yazılımın ismi</primary></indexterm><indexterm scope="glibc-cp"><primary>çalışan yazılımın ismi</primary></indexterm>
+      </para><para>
+<dicterm><english>newline</english><turkish>satırsonu karakteri</turkish></dicterm>
+<command>perror</command> işlevini <varname>ileti</varname> argümanına değer  olarak bir boş gösterici ya da bir boş dizge belirterek çağırırsanız o andaki  <command>errno</command> değerine karşılık gelen hata iletisini sonuna bir  satırsonu karakteri ekleyerek basar.
+      </para><para>
+<varname>ileti</varname> argümanı boş değilse, <command>perror</command> bu dizgeyi çıktısına önek olarak alır ve arkasına bir iki nokta imi ile boşluk ekledikten sonra <command>errno</command> değerine karşılık gelen hata iletisini sonuna bir satırsonu karakteri ekleyerek basar.
+      </para><para>
+<command>perror</command> işlevi <filename><ulink  url="file:/usr/include/stdio.h">stdio.h</link></filename> başlık dosyasında bildirilmiştir.
+      </para></funcdescr></funcsynopsis>
+    </para><para>
+<command>strerror</command> ve <command>perror</command> belirtilen hata kodu için tamamen aynı hata iletisini üretir, ancak üretilen ileti sistemden sisteme farklı olabilir. GNU sisteminde iletiler oldukça kısadır; çok satırlı hata iletileri yoktur (Ç.N: çeviriler bu kurala uymayabilir). Her hata iletisi büyük harfle başlar ve sonunda herhangi bir noktalama işareti bulunmaz.
+    </para><para>
+<note><title>Uyumluluk Bilgisi:</title><para><command>strerror</command> işlevi ISO C89 ile gelmiştir. Eski C sistemlerinin çoğu hala bu işlevi desteklememektedir. </para></note>
+    </para><para>
+<indexterm scope="glibc-cp"><primary>yazılımın ismi</primary></indexterm>
+<indexterm scope="glibc-cp"><primary>çalışan yazılımın ismi</primary></indexterm>
 Uçbirimden girdi okumayan yazılımların çoğu bir sistem çağrısı başarısız olduğunda kendini sonlandıracak şekilde tasarlanır. Teamül olarak, böyle bir yazılımın verdiği hata iletileri dizin ismi içermeden yazılımın ismi ile başlamalıdır. Bu isim <command>program_invocation_short_name</command> değişkeninde bulunur. Dizini de içeren tam dosya ismi ise <command>program_invocation_name</command> değişkeninde saklanır.
-    </para>
-  <para xml:id="glibc-program_invocation_name">
-   <indexterm scope="glibc-vr">
-    <primary>program_invocation_name</primary>
-   </indexterm>
-   <funcsynopsis>
-    <funcprototype role="değişken">
-     <funcdef>char *<command>program_invocation_name</command></funcdef>
-     <paramdef/>
-    </funcprototype>
-    <funcdescr>
-     <para>
+    </para><para xml:id="glibc-program_invocation_name">
+<indexterm scope="glibc-vr"><primary>program_invocation_name</primary></indexterm>
+<funcsynopsis><funcprototype role="değişken">
+<funcdef>char *<command>program_invocation_name</command></funcdef>
+<paramdef></paramdef>
+</funcprototype><funcdescr><para>
 Bu değişkenin değeri o anda çalışmakta olan sürecin çağrıldığı yazılım ismidir. <link linkend="glibc-Program-Arguments"><command>argv[0]</command></link> ile aynıdır. Bu bir dosya ismi olmak zorunda da değildir. Çoğunlukla da dizin bilgisi içermez.
-      </para>
-    </funcdescr>
-   </funcsynopsis>
-  </para>
-  <para xml:id="glibc-program_invocation_short_name">
-   <indexterm scope="glibc-vr">
-    <primary>program_invocation_short_name</primary>
-   </indexterm>
-   <funcsynopsis>
-    <funcprototype role="değişken">
-     <funcdef>char *<command>program_invocation_short_name</command></funcdef>
-     <paramdef/>
-    </funcprototype>
-    <funcdescr>
-     <para>
+      </para></funcdescr></funcsynopsis>
+    </para><para xml:id="glibc-program_invocation_short_name">
+<indexterm scope="glibc-vr"><primary>program_invocation_short_name</primary></indexterm>
+<funcsynopsis><funcprototype role="değişken">
+<funcdef>char *<command>program_invocation_short_name</command></funcdef>
+<paramdef></paramdef>
+</funcprototype><funcdescr><para>
 Bu değişkenin değeri, dizin isimleri kaldırıldığında o anda çalışmakta olan süreci çağırmakta kullanılan isimdir. Yani <command>program_invocation_name</command> değişkenin değeri olan dizgedeki son bölü çizgisi ve onun solundaki herşey kaldırıldığında kalan isim bu değişkenin değeridir diyebiliriz.
-      </para>
-    </funcdescr>
-   </funcsynopsis>
-  </para>
-  <para>
+      </para></funcdescr></funcsynopsis>
+    </para><para>
+<dicterm><english>initialization</english><turkish>ilklendirme</turkish></dicterm>
 Kütüphane ilklendirme kodu <function>main</function> işlevi çağrılmadan önce bu değişkenlerin her ikisine de değerlerini atar.
-    </para>
-  <para>
-   <note>
-    <info>
-     <title>Taşınabilirlik Bilgisi:</title>
-    </info>
-    <para>Bu iki değişken GNU oluşumudur. Yazılımınızın GNU dışı sistemlerde çalışmasını istiyorsanız yazılımın ismini <function>main</function> işlevinin <command>argv[0]</command> argümanının  değerinden dizin isimlerini ayıklayarak elde etmelisiniz. <function>main</function> işlevi ile hiç etkileşime girmeden hata bildirme yordamlarında yazılım ismi içeren iletileri kolayca üretmek için bu değişkenleri kütüphaneye koyduk.</para>
-   </note>
-  </para>
-  <para>
+    </para><para>
+<note><title>Taşınabilirlik Bilgisi:</title><para>Bu iki değişken GNU oluşumudur. Yazılımınızın GNU dışı sistemlerde çalışmasını istiyorsanız yazılımın ismini <function>main</function> işlevinin <command>argv[0]</command> argümanının  değerinden dizin isimlerini ayıklayarak elde etmelisiniz. <function>main</function> işlevi ile hiç etkileşime girmeden hata bildirme yordamlarında yazılım ismi içeren iletileri kolayca üretmek için bu değişkenleri kütüphaneye koyduk.</para></note>
+    </para><para>
 Aşağıdaki bir dosya açılamadığında hatayı gösteren bir örnek yeralmaktadır. <function>acil_susam_acil</function> işlevi <varname>isim</varname> isimli dosyayı okumak için açmayı dener, dosya sorunsuz olarak açılırsa bir akım ile döner. <function>fopen</function> kütüphane işlevi bir sebeple dosyayı açamazsa bir boş gösterici ile döner. Bu durumda <function>acil_susam_acil</function> işlevi <function>strerror</function> işlevini kullanarak bir hata iletisi oluşturur ve süreci sonlandırır. Hata kodunu <function>strerror</function> işlevine aktarmadan önce başka kütüphane çağrıları yapacaksak, onu bir değişkene kaydetmeliyiz, çünkü arada çağırdığımız diğer işlevler  <command>errno</command> değerini değiştirebilir.
-   </para>
-  <para>
-   <screen>
-#include &lt;errno.h&gt;
-#include &lt;stdio.h&gt;
-#include &lt;stdlib.h&gt;
-#include &lt;string.h&gt;
+   </para><para>
+<screen>
+#include &lt;errno.h>
+#include &lt;stdio.h>
+#include &lt;stdlib.h>
+#include &lt;string.h>
 
 FILE *acil_susam_acil (char *isim)
 {
@@ -1740,128 +754,87 @@ FILE *acil_susam_acil (char *isim)
   else
     return stream;
 }
-</screen>
-  </para>
-  <para><command>perror</command> işlevi ISO C standardına uyumlu tüm sistemlerde geçerli olduğundan daha taşınabilirdir. Ancak <command>perror</command> işlevinin ürettiği hata iletisi tam isteneni sağlamaz ve yaptığı işlemi değiştirmek ya da geliştirmek için bir yol yoktur. Örneğin, GNU kodlama standardı, hata iletilerinin yazılımın ismi ile başlamasını ve bazı girdi dosyalarını okuyan yazılımların girdi dosyasının ismi ile dosya okunurken hata oluşturan satırın numarası gibi bilgilerinde hata iletisinde içerilmesini gerektirir. Bu gibi durumlar için GNU projelerinde geniş çapta kullanılan iki işlev vardır. Bu işlevler <filename>error.h</filename> başlık dosyasında bildirilmiştir.
-    </para>
-  <para xml:id="glibc-error">
-   <indexterm scope="glibc-fn">
-    <primary>error</primary>
-   </indexterm>
-   <funcsynopsis>
-    <funcprototype role="işlev">
-     <funcdef>void <command>error</command></funcdef>
-     <paramdef>
+</screen></para><para>
+<command>perror</command> işlevi ISO C standardına uyumlu tüm sistemlerde geçerli olduğundan daha taşınabilirdir. Ancak <command>perror</command> işlevinin ürettiği hata iletisi tam isteneni sağlamaz ve yaptığı işlemi değiştirmek ya da geliştirmek için bir yol yoktur. Örneğin, GNU kodlama standardı, hata iletilerinin yazılımın ismi ile başlamasını ve bazı girdi dosyalarını okuyan yazılımların girdi dosyasının ismi ile dosya okunurken hata oluşturan satırın numarası gibi bilgilerinde hata iletisinde içerilmesini gerektirir. Bu gibi durumlar için GNU projelerinde geniş çapta kullanılan iki işlev vardır. Bu işlevler <filename>error.h</filename> başlık dosyasında bildirilmiştir.
+    </para><para xml:id="glibc-error">
+<indexterm scope="glibc-fn"><primary>error</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>void <command>error</command></funcdef>
+<paramdef>
 (int         <varname>durum</varname>,
  int         <varname>hatanum</varname>,
  const char *<varname>biçim</varname>,
  …)</paramdef>
-    </funcprototype>
-    <funcdescr>
-     <para><command>error</command> işlevi yazılımın çalışması sırasında oluşan genel sorunları bildirmek amacıyla kullanılır. <varname>bicim</varname> argümanı, <function>printf</function> ailesi işlevlerde olduğu gibi dizgeyi biçimlemekte kullanılır. <command>perror</command> gibi <command>error</command> işlevi de bir hata kodunu metin şeklinde basmak için kullanılabilir. <command>perror</command> işlevinden farklı olarak <varname>hatanum</varname> argümanıyla işleve hata numarası açıkça belirtilir. İşlevin bu özelliği, yukarıda bahsedilen, arada çağrılan başka işlevlerin <command>errno</command> değerini değiştirebilmesi sorununu ortadan kaldırır.
-      </para>
-     <para><command>error</command> işlevi önce yazılımın ismini basar.  Eğer yazılım, <command>error_print_progname</command> isimli bir genel değişken tanımlamış ve onu işleve göstermişse, bu işlev yazılımın ismini basmak için çağrılacaktır. Aksi takdirde, <command>program_name</command> kütüphane değişkenindeki dizge kullanılır. Yazılımın isminden sonra iki nokta imi ve bir boşluk gelir. Onun ardına da <varname>bicim</varname> argümanı ile hazırlanan dizge basılır. <varname>hatanum</varname> argümanı sıfırdan farklı bir değere sahipse, biçim dizgesinden sonra iki nokta imi ve bir boşluk konduktan sonra bu değere karşılık olan hata iletisi basılır. Her durumda çıktı bir satırsonu karakteri ile sonlandırılır.
-      </para>
-     <para>
+</funcprototype><funcdescr><para>
+<dicterm><english>format</english><turkish>biçim</turkish></dicterm>
+<dicterm><english>style</english><turkish>tarz</turkish></dicterm>
+<command>error</command> işlevi yazılımın çalışması sırasında oluşan genel sorunları bildirmek amacıyla kullanılır. <varname>bicim</varname> argümanı, <function>printf</function> ailesi işlevlerde olduğu gibi dizgeyi biçimlemekte kullanılır. <command>perror</command> gibi <command>error</command> işlevi de bir hata kodunu metin şeklinde basmak için kullanılabilir. <command>perror</command> işlevinden farklı olarak <varname>hatanum</varname> argümanıyla işleve hata numarası açıkça belirtilir. İşlevin bu özelliği, yukarıda bahsedilen, arada çağrılan başka işlevlerin <command>errno</command> değerini değiştirebilmesi sorununu ortadan kaldırır.
+      </para><para>
+<command>error</command> işlevi önce yazılımın ismini basar.  Eğer yazılım, <command>error_print_progname</command> isimli bir genel değişken tanımlamış ve onu işleve göstermişse, bu işlev yazılımın ismini basmak için çağrılacaktır. Aksi takdirde, <command>program_name</command> kütüphane değişkenindeki dizge kullanılır. Yazılımın isminden sonra iki nokta imi ve bir boşluk gelir. Onun ardına da <varname>bicim</varname> argümanı ile hazırlanan dizge basılır. <varname>hatanum</varname> argümanı sıfırdan farklı bir değere sahipse, biçim dizgesinden sonra iki nokta imi ve bir boşluk konduktan sonra bu değere karşılık olan hata iletisi basılır. Her durumda çıktı bir satırsonu karakteri ile sonlandırılır.
+      </para><para>
+<dicterm><english>narrow-oriented</english><turkish>dar yönlenimli</turkish></dicterm>
+<dicterm><english>stderr</english><turkish>standart hata</turkish></dicterm>
 Çıktı standart hataya (<command>stderr</command>) yönlendirilir. Eğer standart çıktı çağrı öncesi yönlenimli değilse çağrı sonrası dar yönlenimli (narrow-oriented) olacaktır.
-      </para>
-     <para>
+      </para><para>
 İşlev <varname>durum</varname> parametresi sıfırdan farklı bir değere sahip olmadıkça bir geridönüş değeri ile dönecektir. Bu durumda işlev <command>exit</command> işlevini parametre olarak <varname>durum</varname>  değerini vererek çağıracak ve bu durumda asla dönmeyecektir. <command>error</command> işlevi bir geridönüş değerine sahipse, bu
  <command>error_message_count</command> kütüphane değişkeninin değerinin bir arttırılması ile elde edilen o ana kadar bildirilmiş hata iletilerinin  sayısına karşılık gelen bir sayı olacaktır.
-      </para>
-    </funcdescr>
-   </funcsynopsis>
-  </para>
-  <para xml:id="glibc-error_at_line">
-   <indexterm scope="glibc-fn">
-    <primary>error_at_line</primary>
-   </indexterm>
-   <funcsynopsis>
-    <funcprototype role="işlev">
-     <funcdef>void <command>error_at_line</command></funcdef>
-     <paramdef>
+      </para></funcdescr></funcsynopsis>
+    </para><para xml:id="glibc-error_at_line">
+<indexterm scope="glibc-fn"><primary>error_at_line</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>void <command>error_at_line</command></funcdef>
+<paramdef>
 (int          <varname>durum</varname>,
  int          <varname>hatanum</varname>,
  const char  *<varname>dosyaismi</varname>,
  unsigned int <varname>satırno</varname>,
  const char  *<varname>biçim</varname>,
  …)</paramdef>
-    </funcprototype>
-    <funcdescr>
-     <para><command>error_at_line</command> işlevi <command>error</command> işlevine çok benzer. Ek olarak <varname>dosyaismi</varname> ve <varname>satırno</varname>  parametrelerini içerir. Yazılımın ismi ile <varname>bicim</varname> ile üretilen dizge arasına giren ek bilgiler dışında diğer parametrelerin yorumlanması  <command>error</command> işlevindeki gibidir.
-      </para>
-     <para>
+</funcprototype><funcdescr><para>
+<command>error_at_line</command> işlevi <command>error</command> işlevine çok benzer. Ek olarak <varname>dosyaismi</varname> ve <varname>satırno</varname>  parametrelerini içerir. Yazılımın ismi ile <varname>bicim</varname> ile üretilen dizge arasına giren ek bilgiler dışında diğer parametrelerin yorumlanması  <command>error</command> işlevindeki gibidir.
+      </para><para>
 Yazılımın isminden sonraki iki nokta iminden sonra <varname>dosyaismi</varname> ile verilen dosya ismi tekrar bir iki nokta imi ve ardından <varname>satırno</varname> ile verilen satır numarası ve bir iki nokta imi basılır.
-      </para>
-     <para>
+      </para><para>
 Bu ek çıktı, bir girdi dosyasındaki hatanın yerini belirtmekte kullanılır.
-      </para>
-     <para><command>error_one_per_line</command> genel değişkenine sıfırdan farklı bir değer verilirse <command>error_at_line</command>, aynı dosya ve satır için başka hatalar varsa onları basmayacaktır. Hata bir ardardalık arzediyorsa ardarda olmayan tekrarlar yakalanmaz.
-      </para>
-     <para><command>error</command> işlevi gibi bu işlevde <varname>durum</varname> sıfır olduğunda döner. Sıfırdan faklı ise <command>exit</command> çağrılır. İşlev bir geridönüş değerine sahipse, bu <command>error_message_count</command> kütüphane değişkeninin değerinin bir arttırılması ile elde edilen o ana kadar bildirilmiş hata iletilerinin sayısına karşılık gelen bir sayı olacaktır.
-      </para>
-    </funcdescr>
-   </funcsynopsis>
-  </para>
-  <para>
+      </para><para>
+<command>error_one_per_line</command> genel değişkenine sıfırdan farklı bir değer verilirse <command>error_at_line</command>, aynı dosya ve satır için başka hatalar varsa onları basmayacaktır. Hata bir ardardalık arzediyorsa ardarda olmayan tekrarlar yakalanmaz.
+      </para><para>
+<command>error</command> işlevi gibi bu işlevde <varname>durum</varname> sıfır olduğunda döner. Sıfırdan faklı ise <command>exit</command> çağrılır. İşlev bir geridönüş değerine sahipse, bu <command>error_message_count</command> kütüphane değişkeninin değerinin bir arttırılması ile elde edilen o ana kadar bildirilmiş hata iletilerinin sayısına karşılık gelen bir sayı olacaktır.
+      </para></funcdescr></funcsynopsis>
+    </para><para>
 Yukarıda değinildiği gibi <command>error</command> ve <command>error_at_line</command> işlevleri <command>error_print_progname</command> isimli bir değişken tanımlanarak özelleştirilebilir.
-    </para>
-  <para xml:id="glibc-error_print_progname">
-   <indexterm scope="glibc-vr">
-    <primary>error_print_progname</primary>
-   </indexterm>
-   <funcsynopsis>
-    <funcprototype role="değişken">
-     <funcdef>void (*<command>error_print_progname</command>)</funcdef>
-     <paramdef>(void)</paramdef>
-    </funcprototype>
-    <funcdescr>
-     <para><command>error_print_progname</command> değişkenine sıfırdan farklı bir değer atanmışsa, bu değerin gösterdiği yazılım veya işlev <command>error</command> veya <command>error_at_line</command> işlevleri tarafından çağrılır.
-      </para>
-     <para>
+    </para><para xml:id="glibc-error_print_progname">
+<indexterm scope="glibc-vr"><primary>error_print_progname</primary></indexterm>
+<funcsynopsis><funcprototype role="değişken">
+<funcdef>void (*<command>error_print_progname</command>)</funcdef>
+<paramdef>(void)</paramdef>
+</funcprototype><funcdescr><para>
+<command>error_print_progname</command> değişkenine sıfırdan farklı bir değer atanmışsa, bu değerin gösterdiği yazılım veya işlev <command>error</command> veya <command>error_at_line</command> işlevleri tarafından çağrılır.
+      </para><para>
 İşlevin hatayı standart çıktıya basacağı ve akımın yönünü saptayabileceği umulur.
-      </para>
-     <para>
+      </para><para>
 Değişken geneldir ve tüm evrelerce paylaşılır.
-      </para>
-    </funcdescr>
-   </funcsynopsis>
-  </para>
-  <para xml:id="glibc-error_message_count">
-   <indexterm scope="glibc-vr">
-    <primary>error_message_count</primary>
-   </indexterm>
-   <funcsynopsis>
-    <funcprototype role="değişken">
-     <funcdef>unsigned int <command>error_message_count</command></funcdef>
-     <paramdef/>
-    </funcprototype>
-    <funcdescr>
-     <para><command>error_message_count</command> değişkeninin değeri <command>error</command>  veya <command>error_at_line</command> işlevlerinin her geri dönüşünde bir arttırılır. Değişken geneldir ve tüm evrelerce paylaşılır.
-      </para>
-    </funcdescr>
-   </funcsynopsis>
-  </para>
-  <para xml:id="glibc-error_one_per_line">
-   <indexterm scope="glibc-vr">
-    <primary>error_one_per_line</primary>
-   </indexterm>
-   <funcsynopsis>
-    <funcprototype role="değişken">
-     <funcdef>int <command>error_one_per_line</command></funcdef>
-     <paramdef/>
-    </funcprototype>
-    <funcdescr>
-     <para><command>error_one_per_line</command> değişkeni sadece <command>error_at_line</command> işlevi ile etkilidir. Normalde <command>error_at_line</command> işlevi her çağrı için bir çıktı oluşturur. <command>error_one_per_line</command> değişkenine sıfırdan farklı bir değer atanırsa, <command>error_at_line</command> işlevi aynı dosyanın aynı satırındaki diğer hataların iletilerini basmaz. Değişken geneldir ve tüm evrelerce paylaşılır.
-      </para>
-    </funcdescr>
-   </funcsynopsis>
-  </para>
-  <para>
+      </para></funcdescr></funcsynopsis>
+    </para><para xml:id="glibc-error_message_count">
+<indexterm scope="glibc-vr"><primary>error_message_count</primary></indexterm>
+<funcsynopsis><funcprototype role="değişken">
+<funcdef>unsigned int <command>error_message_count</command></funcdef>
+<paramdef></paramdef>
+</funcprototype><funcdescr><para>
+<command>error_message_count</command> değişkeninin değeri <command>error</command>  veya <command>error_at_line</command> işlevlerinin her geri dönüşünde bir arttırılır. Değişken geneldir ve tüm evrelerce paylaşılır.
+      </para></funcdescr></funcsynopsis>
+    </para><para xml:id="glibc-error_one_per_line">
+<indexterm scope="glibc-vr"><primary>error_one_per_line</primary></indexterm>
+<funcsynopsis><funcprototype role="değişken">
+<funcdef>int <command>error_one_per_line</command></funcdef>
+<paramdef></paramdef>
+</funcprototype><funcdescr><para>
+<command>error_one_per_line</command> değişkeni sadece <command>error_at_line</command> işlevi ile etkilidir. Normalde <command>error_at_line</command> işlevi her çağrı için bir çıktı oluşturur. <command>error_one_per_line</command> değişkenine sıfırdan farklı bir değer atanırsa, <command>error_at_line</command> işlevi aynı dosyanın aynı satırındaki diğer hataların iletilerini basmaz. Değişken geneldir ve tüm evrelerce paylaşılır.
+      </para></funcdescr></funcsynopsis>
+    </para><para>
 Bir girdi dosyasını okuyan ve hataları bildiren bir yazılım aşağıdakine benzer:
-   </para>
-  <para>
-   <screen>
+   </para><para>
+<screen>
 {
   char *satir = NULL;
   size_t boyu = 0;
@@ -1881,169 +854,105 @@ Bir girdi dosyasını okuyan ve hataları bildiren bir yazılım aşağıdakine 
 
       if (Satırdaki hata saptandı)
         error_at_line (0, hatanum, dosyaismi, satirno,
-                       "hata iletisi metni %s", bir_degisken);
+                       &quot;hata iletisi metni %s&quot;, bir_degisken);
     }
 
   if (error_message_count != 0)
-    error (EXIT_FAILURE, 0, "%u hata bulundu", error_message_count);
+    error (EXIT_FAILURE, 0, &quot;%u hata bulundu&quot;, error_message_count);
 }
-</screen>
-  </para>
-  <para><command>error</command> ve <command>error_at_line</command> işlevleri GNU kodlama standardına göre uygulama geliştirmek isteyen yazılımcıların seçimi olmalıdır. GNU libc aynı amaçlar için BSD'de kullanılan işlevleri de içerir. Bu işlevler <command>err.h</command> başlık dosyasında bildirilmiştir. Uyumluluk amacıyla kütüphaneye dahil edildiklerinden, genelde kullanılmamaları önerilir.
-    </para>
-  <para xml:id="glibc-warn">
-   <indexterm scope="glibc-fn">
-    <primary>warn</primary>
-   </indexterm>
-   <funcsynopsis>
-    <funcprototype role="işlev">
-     <funcdef>void <command>warn</command></funcdef>
-     <paramdef>(const char *<varname>biçim</varname>, …)</paramdef>
-    </funcprototype>
-    <funcdescr>
-     <para><command>warn</command> işlevi, <command>error</command> işlevinin birlikte çalıştığı genel değişkenleri kullanmaması dışında
-      </para>
-     <para>
-      <screen>  error (0, hatanum, biçim, parametreler)</screen>
-     </para>
-     <para>
+</screen></para><para>
+<command>error</command> ve <command>error_at_line</command> işlevleri GNU kodlama standardına göre uygulama geliştirmek isteyen yazılımcıların seçimi olmalıdır. GNU libc aynı amaçlar için BSD'de kullanılan işlevleri de içerir. Bu işlevler <command>err.h</command> başlık dosyasında bildirilmiştir. Uyumluluk amacıyla kütüphaneye dahil edildiklerinden, genelde kullanılmamaları önerilir.
+    </para><para xml:id="glibc-warn">
+<indexterm scope="glibc-fn"><primary>warn</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>void <command>warn</command></funcdef>
+<paramdef>(const char *<varname>biçim</varname>, …)</paramdef>
+</funcprototype><funcdescr><para>
+<command>warn</command> işlevi, <command>error</command> işlevinin birlikte çalıştığı genel değişkenleri kullanmaması dışında
+      </para><para>
+<screen>  error (0, hatanum, biçim, parametreler)</screen>
+      </para><para>
 çağrısına eşdeğerdir.
-      </para>
-    </funcdescr>
-   </funcsynopsis>
-  </para>
-  <para xml:id="glibc-vwarn">
-   <indexterm scope="glibc-fn">
-    <primary>vwarn</primary>
-   </indexterm>
-   <funcsynopsis>
-    <funcprototype role="işlev">
-     <funcdef>void <command>vwarn</command></funcdef>
-     <paramdef>(const char *<varname>biçim</varname>,
+      </para></funcdescr></funcsynopsis>
+    </para><para xml:id="glibc-vwarn">
+<indexterm scope="glibc-fn"><primary>vwarn</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>void <command>vwarn</command></funcdef>
+<paramdef>(const char *<varname>biçim</varname>,
              <varname>va_list</varname>)</paramdef>
-    </funcprototype>
-    <funcdescr>
-     <para><command>vwarn</command> işlevi, <command>warn</command> gibidir, farklı olarak <varname>biçim</varname> ile belirtilen biçim dizgesinin <link linkend="glibc-Variadic-Functions"><varname>va_list</varname></link> türünde  verilen parametrelerle düzenlenmesini sağlar.
-      </para>
-    </funcdescr>
-   </funcsynopsis>
-  </para>
-  <para xml:id="glibc-warnx">
-   <indexterm scope="glibc-fn">
-    <primary>warnx</primary>
-   </indexterm>
-   <funcsynopsis>
-    <funcprototype role="işlev">
-     <funcdef>void <command>warnx</command></funcdef>
-     <paramdef>(const char *<varname>biçim</varname>, …)</paramdef>
-    </funcprototype>
-    <funcdescr>
-     <para><command>warnx</command>  işlevi, <command>error</command> işlevinin birlikte çalıştığı genel değişkenleri kullanmaması dışında
-     </para>
-     <para>
-      <screen>  error (0, 0, biçim, parametreler)</screen>
-     </para>
-     <para>
+</funcprototype><funcdescr><para>
+<command>vwarn</command> işlevi, <command>warn</command> gibidir, farklı olarak <varname>biçim</varname> ile belirtilen biçim dizgesinin <link linkend="glibc-Variadic-Functions"><varname>va_list</varname></link> türünde  verilen parametrelerle düzenlenmesini sağlar.
+      </para></funcdescr></funcsynopsis>
+    </para><para xml:id="glibc-warnx">
+<indexterm scope="glibc-fn"><primary>warnx</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>void <command>warnx</command></funcdef>
+<paramdef>(const char *<varname>biçim</varname>, …)</paramdef>
+</funcprototype><funcdescr><para>
+<command>warnx</command>  işlevi, <command>error</command> işlevinin birlikte çalıştığı genel değişkenleri kullanmaması dışında
+     </para><para>
+<screen>  error (0, 0, biçim, parametreler)</screen>
+     </para><para>
 çağrısına eşdeğerdir. <command>warn</command> işlevinden farkı ise, hata numarası dizgesinin basılmamasıdır.
-      </para>
-    </funcdescr>
-   </funcsynopsis>
-  </para>
-  <para xml:id="glibc-vwarnx">
-   <indexterm scope="glibc-fn">
-    <primary>vwarnx</primary>
-   </indexterm>
-   <funcsynopsis>
-    <funcprototype role="işlev">
-     <funcdef>void <command>vwarnx</command></funcdef>
-     <paramdef>(const char *<varname>biçim</varname>,
+      </para></funcdescr></funcsynopsis>
+    </para><para xml:id="glibc-vwarnx">
+<indexterm scope="glibc-fn"><primary>vwarnx</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>void <command>vwarnx</command></funcdef>
+<paramdef>(const char *<varname>biçim</varname>,
              <varname>va_list</varname>)</paramdef>
-    </funcprototype>
-    <funcdescr>
-     <para><command>vwarnx</command> işlevi, <command>warnx</command> gibidir, farklı  olarak <varname>biçim</varname> ile belirtilen biçim dizgesinin  <link linkend="glibc-Variadic-Functions"><varname>va_list</varname></link> türünde verilen parametrelerle düzenlenmesini sağlar.
-      </para>
-    </funcdescr>
-   </funcsynopsis>
-  </para>
-  <para xml:id="glibc-err">
-   <indexterm scope="glibc-fn">
-    <primary>err</primary>
-   </indexterm>
-   <funcsynopsis>
-    <funcprototype role="işlev">
-     <funcdef>void <command>err</command></funcdef>
-     <paramdef>(int         <varname>durum</varname>,
+</funcprototype><funcdescr><para>
+<command>vwarnx</command> işlevi, <command>warnx</command> gibidir, farklı  olarak <varname>biçim</varname> ile belirtilen biçim dizgesinin  <link linkend="glibc-Variadic-Functions"><varname>va_list</varname></link> türünde verilen parametrelerle düzenlenmesini sağlar.
+      </para></funcdescr></funcsynopsis>
+    </para><para xml:id="glibc-err">
+<indexterm scope="glibc-fn"><primary>err</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>void <command>err</command></funcdef>
+<paramdef>(int         <varname>durum</varname>,
  const char *<varname>biçim</varname>,
  …)</paramdef>
-    </funcprototype>
-    <funcdescr>
-     <para><command>err</command>  işlevi,
-      </para>
-     <para>
-      <screen>  error (durum, hatanum, biçim, parametreler)</screen>
-     </para>
-     <para>
+</funcprototype><funcdescr><para>
+<command>err</command>  işlevi,
+      </para><para>
+<screen>  error (durum, hatanum, biçim, parametreler)</screen>
+      </para><para>
 çağrısı ile <command>error</command> işlevinin birlikte çalıştığı genel değişkenleri kullanmaması ve <varname>durum</varname> değişkenine sıfır verildiğinde bile yazılımın çıkması dışında aynıdır.
-      </para>
-    </funcdescr>
-   </funcsynopsis>
-  </para>
-  <para xml:id="glibc-verr">
-   <indexterm scope="glibc-fn">
-    <primary>verr</primary>
-   </indexterm>
-   <funcsynopsis>
-    <funcprototype role="işlev">
-     <funcdef>void <command>verr</command></funcdef>
-     <paramdef>(int         <varname>durum</varname>,
+      </para></funcdescr></funcsynopsis>
+    </para><para xml:id="glibc-verr">
+<indexterm scope="glibc-fn"><primary>verr</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>void <command>verr</command></funcdef>
+<paramdef>(int         <varname>durum</varname>,
  const char *<varname>biçim</varname>,
              <varname>va_list</varname>)</paramdef>
-    </funcprototype>
-    <funcdescr>
-     <para><command>verr</command>  işlevi, <command>err</command> gibidir, farklı olarak <varname>biçim</varname> ile belirtilen biçim dizgesinin <link linkend="glibc-Variadic-Functions"><varname>va_list</varname></link> türünde verilen parametrelerle düzenlenmesini sağlar.
-      </para>
-    </funcdescr>
-   </funcsynopsis>
-  </para>
-  <para xml:id="glibc-errx">
-   <indexterm scope="glibc-fn">
-    <primary>errx</primary>
-   </indexterm>
-   <funcsynopsis>
-    <funcprototype role="işlev">
-     <funcdef>void <command>errx</command></funcdef>
-     <paramdef>(int         <varname>durum</varname>,
+</funcprototype><funcdescr><para>
+<command>verr</command>  işlevi, <command>err</command> gibidir, farklı olarak <varname>biçim</varname> ile belirtilen biçim dizgesinin <link linkend="glibc-Variadic-Functions"><varname>va_list</varname></link> türünde verilen parametrelerle düzenlenmesini sağlar.
+      </para></funcdescr></funcsynopsis>
+    </para><para xml:id="glibc-errx">
+<indexterm scope="glibc-fn"><primary>errx</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>void <command>errx</command></funcdef>
+<paramdef>(int         <varname>durum</varname>,
  const char *<varname>biçim</varname>,
  …)</paramdef>
-    </funcprototype>
-    <funcdescr>
-     <para><command>errx</command> işlevi,
-      </para>
-     <para>
-      <screen>  error (durum, 0, biçim, parametreler)</screen>
-     </para>
-     <para>
+</funcprototype><funcdescr><para>
+<command>errx</command> işlevi,
+      </para><para>
+<screen>  error (durum, 0, biçim, parametreler)</screen>
+      </para><para>
 çağrısı ile <command>error</command> işlevinin birlikte çalıştığı genel değişkenleri kullanmaması ve <varname>durum</varname> değişkenine sıfır verildiğinde bile yazılımın çıkması dışında aynıdır. <command>err</command> işlevinden farkı ise, hata numarası dizgesinin basılmamasıdır.
-      </para>
-    </funcdescr>
-   </funcsynopsis>
-  </para>
-  <para xml:id="glibc-verrx">
-   <indexterm scope="glibc-fn">
-    <primary>verrx</primary>
-   </indexterm>
-   <funcsynopsis>
-    <funcprototype role="işlev">
-     <funcdef>void <command>verrx</command></funcdef>
-     <paramdef>(int         <varname>durum</varname>,
+      </para></funcdescr></funcsynopsis>
+    </para><para xml:id="glibc-verrx">
+<indexterm scope="glibc-fn"><primary>verrx</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev">
+<funcdef>void <command>verrx</command></funcdef>
+<paramdef>(int         <varname>durum</varname>,
  const char *<varname>biçim</varname>,
              <varname>va_list</varname>)</paramdef>
-    </funcprototype>
-    <funcdescr>
-     <para><command>verrx</command>  işlevi, <command>errx</command> gibidir, farklı olarak <varname>biçim</varname> ile belirtilen biçim dizgesinin <link linkend="glibc-Variadic-Functions"><varname>va_list</varname></link> türünde verilen parametrelerle düzenlenmesini sağlar.
-      </para>
-    </funcdescr>
-   </funcsynopsis>
-  </para>
- </chapter>
+</funcprototype><funcdescr><para>
+<command>verrx</command>  işlevi, <command>errx</command> gibidir, farklı olarak <varname>biçim</varname> ile belirtilen biçim dizgesinin <link linkend="glibc-Variadic-Functions"><varname>va_list</varname></link> türünde verilen parametrelerle düzenlenmesini sağlar.
+      </para></funcdescr></funcsynopsis>
+    </para>
+  </chapter>
 </part>
+

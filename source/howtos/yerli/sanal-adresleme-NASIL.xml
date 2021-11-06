@@ -1,43 +1,50 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--DOCTYPE article SYSTEM "../../docbook/dtd/docbookx.dtd"-->
 <!-- ********************************************************************
-      sanal-adresleme-NASIL.xml, v 0.1,  GFDLv1.1, Ekim 2000
+     $Id: sanal-adresleme-NASIL.xml,v 1.5 2002/09/30 18:21:14 nilgun Exp $
      ******************************************************************** -->
-<article xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="sanal-adresleme-nasil" xml:lang="tr">
- <info>
-  <title>Apache Web Sunucusunda Sanal Adresleme ve Dizin Erişiminin Kısıtlanması NASIL</title>
-  <author>
-   <personname>
-    <firstname>İsmail</firstname>
-    <surname>YENİGÜL</surname>
-   </personname>
-   <affiliation>
-    <address>
-     <email>yenigul@rt.net.tr</email>
-    </address>
-   </affiliation>
-  </author>
-  <pubdate>16 Ekim 2000</pubdate>
-  <pubdate> </pubdate>
-  <!-- Most recent revision goes at the top; list in descending order -->
-  <revhistory>
-   <revision>
-    <revnumber>0.1</revnumber>
-    <date>16 Ekim 2000</date>
-    <authorinitials>İsmail Yenigül <email>yenigul@rt.net.tr</email></authorinitials>
-   </revision>
-  </revhistory>
- </info>
- <!-- Content follows...include introduction, license information, feedback -->
- <para role="only.html">Ek - <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="fdl.html">GNU Free Documentation License</link></para>
- <section xml:id="sanal-adresleme-nasil_vh">
+
+<article xml:id="sanal-adresleme-nasil" lang="tr">
   <info>
-   <title>Sanal Adresleme (Virtual Hosting)</title>
+
+    <!-- Use "HOWTO", "mini HOWTO", "FAQ" in title, if appropriate -->
+    <title>Apache Web Sunucusunda  Sanal Adresleme ve Dizin Erişiminin Kısıtlanması NASIL</title>
+
+    <author>
+      <personname><firstname>İsmail</firstname>
+       <surname>YENİGÜL</surname></personname>
+     </author>
+     <pubdate>16 Ekim 2000</pubdate>
+     <pubdate> </pubdate>
+
+     <!-- Most recent revision goes at the top; list in descending order -->
+     <revhistory>
+       <revision>
+          <revnumber>0.1</revnumber>
+          <date>16 Ekim 2000</date>
+          <authorinitials>İsmail Yenigül </authorinitials>
+       </revision>
+    </revhistory>
+    <abstract>
+      <para>
+        Bu belgede, APACHE web sunucusunda sanal adreslemenin ve htaccess ile dizin
+        erişimi kısıtlamasının NASIL yapılandırılacağı anlatılacaktır.
+      </para>
+      <para>
+        Virtual Hosting işlemi tek fiziksel web sunucusu ile farklı web adresleri
+        kullanımını sağladığından, tam çevirisi olan sanal ev sahipliği yerine
+        işlemi daha iyi ifade ettiğinden sanal adresleme denmesi uygun görülmüştür.
+      </para>
+    </abstract>
+
   </info>
-  <section>
-   <info>
-    <title>Sanal Adresleme Nedir?</title>
-   </info>
-   <para>
+<!-- Content follows...include introduction, license information, feedback -->
+<para role="only.html">Ek - <link xlink:href="fdl.html">GNU Free Documentation License</link></para>
+  <sect1 xml:id="sanal-adresleme-nasil_vh">
+    <title>Sanal Adresleme (Virtual Hosting)</title>
+    <sect2>
+      <title>Sanal Adresleme Nedir?</title>
+      <para>
         Apache web sunucusunda  Sanal Adresleme (Virtual Hosting), tek bir Apache web
         sunucusu üzerinde birden fazla web alanı için hizmet vermek amacı ile
         kullanılır. Bu belgede isme göre sanal adresleme yapılandırması anlatılacaktır.
@@ -46,395 +53,384 @@
         adresi tanımlanmalıdır. Bu durumda isme göre yapılandırma yapmak daha mantıklıdır
         (en azından ben öyle düşünüyorum :)) ).
       </para>
-  </section>
-  <section>
-   <info>
-    <title>Sanal Adres Yapılandırması</title>
-   </info>
-   <para>
+    </sect2>
+    <sect2>
+      <title>Sanal Adres Yapılandırması</title>
+      <para>
         İlk önce Apache web sunucusunu kurmuş olmanız gerekiyor!!
       </para>
-   <para>
-        Eğer apache yi kurmadıysanız <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://apache.bilkent.edu.tr/">http://apache.bilkent.edu.tr</link> adresinden apache'nin en son
+      <para>
+        Eğer apache yi kurmadıysanız <link xlink:href="http://apache.bilkent.edu.tr/"
+        >http://apache.bilkent.edu.tr</link> adresinden apache'nin en son
         sürümünü indiriniz (Şu anki son sürüm apache-1.3.12). Apache derlemek
         için aşagıdaki komutları sıra ile veriniz:
-</para>
-   <para>
-    <screen>
+</para><para>
+<screen>
 # tar -zxvf apache_1.3.12.tar.gz
 # cd apache_1.3.12
 # mkdir /www
 # ./configure --prefix=/www  &amp;&amp; make &amp;&amp; make install
 </screen>
-   </para>
-   <para><literal>--prefix=/www</literal> ifadesi apache ile ilgili tüm dosyaların
+</para><para>
+<literal>--prefix=/www</literal> ifadesi apache ile ilgili tüm dosyaların
         <literal>/www</literal> dizini altına atılmasını sağlayacaktır. Bu
         parametreyi vermezseniz ön tanımlı olarak <literal>/usr/local/apache</literal>
         dizini altına atılacaktır.
       </para>
-   <para>
+      <para>
         Apache sunucusunu başlatmak için:
-</para>
-   <para>
-    <screen>
+</para><para>
+<screen>
 # /www/bin/apachectl start
 </screen>
-   </para>
-   <para>
+</para><para>
 komutunu vermeniz yeterlidir.
       </para>
-   <para>
+      <para>
         Daha sonra sevdiginiz bir metin düzenleyici ile <literal>httpd.conf</literal>
         dosyasını açınız.
-</para>
-   <para>
-    <screen>
+</para><para>
+<screen>
 # vi /www/conf/httpd.conf
 </screen>
-   </para>
-   <para>
+      </para>
+      <para>
         Diyelimki <literal>www.linux.org.tr</literal>, <literal>www.rt.net.tr</literal>,
         <literal>www.bsdlive.org</literal> için sanal adresleme yapacağız. İlk önce
         tüm bu alanlar için dns kaydı yapılması lazım ve dns sunucuda bu alanların IP
         adresi olarak apache web suncusunun IP adresi verilmelidir.
       </para>
-   <para>
+      <para>
         Burada apache web sunucusun IP adresi olarak <literal>195.1.2.4</literal>
         verilecektir.
       </para>
-   <para>
+      <para>
         Sırası ile <literal>linux.org.tr</literal> ve <literal>www.bsdlive.org</literal>
         için sanal adresleme bilgilerini yazalım:
-</para>
-   <para><screen>
+</para><para>
+<screen>
 NameVirtualHost 195.1.2.4:80
 
 # www.linux.org.tr  12 Ekim 2000 de olusturuldu (yenigul)
 
-&lt;VirtualHost 195.1.2.4&gt;
+&lt;VirtualHost 195.1.2.4>
   ServerAdmin yenigul@rt.net.tr
   DocumentRoot /www/htdocs/domains/linux
   ServerName www.linux.org.tr
   ErrorLog logs/error_linux.org.tr
   TransferLog logs/access_log_linux.org.tr
-&lt;/VirtualHost&gt;
+&lt;/VirtualHost>
 
 # www.bsdlive web alanı 16 Ekim 2000 de olusturuldu (yenigul)
 
-&lt;VirtualHost 195.1.2.4&gt;
+&lt;VirtualHost 195.1.2.4>
   ServerAdmin yenigul@rt.net.tr
   DocumentRoot /www/htdocs/domains/bsdlive
   ServerName www.bsdlive.org
   ErrorLog logs/error_bsdlive
   TransferLog logs/access_log_bsdlive
-&lt;/VirtualHost&gt;
+&lt;/VirtualHost>
 </screen>Şimdi yukarıdaki ifadelerin ne demek olduğunu açıklayalım.
       </para>
-   <para><literal>NameVirtualHost  195.1.2.4:80</literal> İfadesindeki
+      <para>
+        <literal>NameVirtualHost  195.1.2.4:80</literal> İfadesindeki
         <literal>195.1.2.4</literal> Apache web sunucusunun IP adresi (IP Gerçek değil,
         öylesine bir IP verdim) ve <literal>80</literal> ile de httpd port'u
         belirtilmiştir.
       </para>
-   <para><literal>#</literal> ile başlayan kısımlar sadece açıklama kısmıdır.
+      <para>
+        <literal>#</literal> ile başlayan kısımlar sadece açıklama kısmıdır.
         Olup olmaması yapılandırmayı etkilemez.
       </para>
-   <para><literal>&lt;VirtualHost 195.1.2.4&gt;</literal> ifadesindeki IP adresi
+      <para>
+        <literal>&lt;VirtualHost 195.1.2.4></literal> ifadesindeki IP adresi
         web sunucusunun IP adresi  olmalı.
       </para>
-   <para><literal>ServerAdmin yenigul@rt.net.tr</literal>
+      <para>
+        <literal>ServerAdmin yenigul@rt.net.tr</literal>
         ifadesi ile  bu web alanının yetkili kişisinin eposta adresi belirtilir.
       </para>
-   <para><literal>DocumentRoot  /www/htdocs/domains/linux</literal> ifadesi ile
+      <para>
+        <literal>DocumentRoot  /www/htdocs/domains/linux</literal> ifadesi ile
         <literal>www.linux.org.tr</literal> adresinin dosyalarının bulunduğu
         yeri belirttik.
       </para>
-   <para><literal>ServerName  www.linux.org.tr</literal> ifadesiyle adından da
+      <para>
+        <literal>ServerName  www.linux.org.tr</literal> ifadesiyle adından da
         anlaşılacağı gibi Web alanı adı belirtildi.
       </para>
-   <para><literal>ErrorLog logs/error_linux.org.tr</literal> ifadesi ile de bu web
+      <para>
+        <literal>ErrorLog logs/error_linux.org.tr</literal> ifadesi ile de bu web
         alanında oluşacak hatalar (dosyaların bulunamaması, CGI hataları)
         <literal>logs</literal> dizini altındaki (bizim kurulumda
         <literal>/www/logs</literal>) <literal>error_rt.net.tr</literal>
         dosyasına yazılır.
       </para>
-   <para><literal>TransferLog  logs/access_log_linux.org.tr</literal> ifadesi ile de
+      <para>
+        <literal>TransferLog  logs/access_log_linux.org.tr</literal> ifadesi ile de
         bu web alanına hangi IP'lerden erişildiği hangi dosyalara bakıldığı gibi
         bilgiler <literal>logs</literal> dizini altindaki (bizim kurulumda
         <literal>/www/logs</literal>) <literal>access_log.linux.org.tr</literal>
         dosyasına yazılır.
       </para>
-   <para><literal>&lt;/VirtulHost&gt;</literal> ifadesi ile bu alan için gerekli
+      <para>
+        <literal>&lt;/VirtulHost></literal> ifadesi ile bu alan için gerekli
         yapılandırmanın bittiğini belirttik.
       </para>
-   <para>
+      <para>
         Evet sanal adreslememizin sonuna geldik sayılır ama bir sorun var!!!
       </para>
-   <para>
+      <para>
         Bizim Apache Sunucumuzun IP adresi <literal>195.1.2.4</literal> idi.
         Diyelimki bu IP <literal>www.rt.net.tr</literal> isimli makinaya ait
         ve bu  adress <literal>RT.NET</literal> web sunucu.
       </para>
-   <para>
+      <para>
         Şu anki yapılandırmada  <literal>http://www.rt.net.tr</literal>
         adresine girmek isteyen birisi <literal>www.rt.net.tr</literal> yerine
         <literal>httpd.conf</literal> dosyasında en üstte bulunan web alanına
         gidecektir. Yani <literal>www.linux.org.tr</literal> adresine
         erişecektir.
       </para>
-   <para>
+      <para>
         Bu sorunu çözmek için <literal>www.rt.net.tr</literal> sunucunun adı
         olmasına rağmen, bu alan içinde sanal adresleme kaydı yapılmalıdır.
       </para>
-   <para>
+      <para>
         Aşağıdaki ifadeler yazılırsa bu sorun giderilmiş olur.
-</para>
-   <para>
-    <screen>
+</para><para>
+<screen>
 # www.rt.net.tr Web alanı kaydı
 
-&lt;VirtualHost 195.1.2.4&gt;
+&lt;VirtualHost 195.1.2.4>
   ServerAdmin yenigul@rt.net.tr
   DocumentRoot /www/htdocs
   ServerName www.rt.net.tr
   ErrorLog logs/error_rt.net.tr
   TransferLog logs/access_log_rt.net.tr
-&lt;/VirtualHost&gt;
+&lt;/VirtualHost>
 </screen>
-   </para>
-   <para>En son olarak</para>
-   <para>
-    <screen>
+</para><para>En son olarak</para><para>
+<screen>
 # /www/bin/apachectl restart
 </screen>
-   </para>
-   <para>
+</para><para>
         komutu ile değişiklikler etkin hale getirilir.
       </para>
-   <para>
+      <para>
         Eğer daha onceden apache'yi kurmuşsanız  (Red Hat da)
-</para>
-   <para>
-    <screen>
+</para><para>
+<screen>
 # /etc/rc.d/init.d/httpd restart
 </screen>
-   </para>
-   <para>
+</para><para>
         komutu ile  değişikliği  etkinleştirebilirsiniz.
       </para>
-   <para>
+      <para>
         Bu komut <literal>httpd.conf</literal>'da yapılan her değişiklikten sonra
         çalıştırılmalıdır yoksa yapılanlar etkin olmaz.!
       </para>
-   <para>
+      <para>
         Ve apache web sunucusunun her açılışta çalışması için
         <literal>/etc/rc.d/rc.local</literal> (Red Hat Linux için) dosyasının en sonuna
-</para>
-   <para>
-    <screen>
+</para><para>
+<screen>
 /www/bin/apachectl start
 </screen>
-   </para>
-   <para>
+</para><para>
         yazıyoruz.
       </para>
-   <para>Kolay gelsin artık sanal adresleme yapılıyor :)</para>
-  </section>
- </section>
- <section xml:id="sanal-adresleme-nasil_constraint">
-  <info>
-   <title>Dizin Erişimini Kısıtlama</title>
-  </info>
-  <section>
-   <info>
-    <title>Htaccess ile Kullanıcılara Kısıtlama</title>
-   </info>
-   <para>
+      <para>Kolay gelsin artık sanal adresleme yapılıyor :)</para>
+    </sect2>
+  </sect1>
+  <sect1 xml:id="sanal-adresleme-nasil_constraint">
+    <title>Dizin Erişimini Kısıtlama</title>
+    <sect2>
+      <title>Htaccess ile Kullanıcılara Kısıtlama</title>
+      <para>
         Htaccess Apache Web sunucusu ile birlikte gelen ve Apache Web sunucu
         üzerindeki belirli dizinlere erişim için kullanıcı adı ve parola sorgulaması
         yapmaya yarayan bir  uygulamadır. Bu sayede özel dizinlere sadece sizin
         belirlediğiniz kullanıcılar erişebilir.
       </para>
-   <para>
+      <para>
         Bir Örnek verelim, <literal>http://www.rt.net.tr/cok_ozel</literal> adresine
         htaccess uygulayalım.
       </para>
-   <para>
+      <para>
         Bu dizin dosya sistemimizde <literal>/www/htdocs/cok_ozel</literal> olsun.
         <literal>httpd.conf</literal> dosyasını bir metin düzenleyicide açalım ve
         şu ifadeleri yazalım:
-</para>
-   <para>
-    <screen>
-&lt;Directory /www/htdocs/cok_ozel&gt;
+</para><para>
+<screen>
+&lt;Directory /www/htdocs/cok_ozel>
  AllowOverride AuthConfig
-&lt;/Directory&gt;
+&lt;/Directory>
 </screen>
-   </para>
-   <para><literal>AllowOverride AuthConfig</literal> ifadesi ile bu dizine erişim
+</para><para>
+<literal>AllowOverride AuthConfig</literal> ifadesi ile bu dizine erişim
         için httaccess kullanılması gerektigini belirtiyoruz.
       </para>
-   <para>
+      <para>
         htaccess nerede mi olacak? Tabiki <literal>/www/htdocs/cok_ozel</literal>
         dizini altında! Evet <literal>/www/htdocs/cok_ozel/</literal> dizini
         altında <literal>.htaccess</literal> dosyasını oluşturun (Evet Nokta var!
         .htaccess) ve içine:
-</para>
-   <para><screen>
+</para><para>
+<screen>
 AuthName "RT.NET Ozel Erisim Bolgesi !!!"
 AuthType Basic
 AuthUserFile /www/htdocs/cok_ozel/.htpasswd
 require valid-user
 </screen>yazınız...
       </para>
-   <para>Biraz Açıklayalım.</para>
-   <para><literal>AuthName "RT.NET Ozel Erisim Bolgesi !!!"</literal> ifadesi ile
+      <para>Biraz Açıklayalım.</para>
+      <para>
+        <literal>AuthName "RT.NET Ozel Erisim Bolgesi !!!"</literal> ifadesi ile
         <literal>http://www.rt.net.tr/cok_ozel</literal> yazıldığında karşınıza
         çıkan kullanıcı adı ve parola diyaloğundaki açıklayıcı bilgidir.  Buraya
         istediğinizi yazabilirsiniz.
       </para>
-   <para><literal>AuthType Basic</literal> ifadesini değiştirmeyin. Burada
+      <para>
+        <literal>AuthType Basic</literal> ifadesini değiştirmeyin. Burada
         kimlik kanıtlama türü belirtiliyor.
       </para>
-   <para><literal>AuthUserFile /www/htdocs/cok_ozel/.htpasswd</literal>, yukarıdaki
+      <para>
+        <literal>AuthUserFile /www/htdocs/cok_ozel/.htpasswd</literal>, yukarıdaki
         ifade ile de kullanıcı adı ve parolaların saklandığı dosyanın TAM! yeri
         belirtiliyor. Evet Tam olarak dosyanın yeri belirtilmelidir.
       </para>
-   <para><literal>require valid-user</literal>, bu en son ile bu dizine .htpasswd
+      <para>
+        <literal>require valid-user</literal>, bu en son ile bu dizine .htpasswd
         dosyasındaki kullanıcıların erişebiliceği belirtiliyor.
       </para>
-   <para><literal>.htaccess</literal> dosyası tamam. Sıra <literal>.htpasswd</literal>
+      <para>
+        <literal>.htaccess</literal> dosyası tamam. Sıra <literal>.htpasswd</literal>
         dosyasını  oluşturmaya geldi:
-</para>
-   <para>
-    <screen>
+</para><para>
+<screen>
 # /www/bin/htpasswd  -c  /www/htdocs/cok_ozel/.htpasswd yenigul
 </screen>
-   </para>
-   <para>
+      </para>
+      <para>
         Yukarıdaki komut ile  <literal>/www/htdocs/cok_ozel/</literal> dizini altında
         <literal>.httpasswd</literal> oluşturulur ve <literal>yenigul</literal>
         kullanıcısı eklenir.
       </para>
-   <para><literal>-c</literal> (creat) parametresi ile <literal>.htpasswd</literal>
+      <para>
+        <literal>-c</literal> (creat) parametresi ile <literal>.htpasswd</literal>
         dosyası hiç yoktan oluşturulur. İkinci bir kullanıcı eklemek için bu ifadeyi
         kullanmayınız. İkinci kullanıcının eklenmesi,
-</para>
-   <para>
-    <screen>
+</para><para>
+<screen>
 # /www/bin/htpasswd    /www/htdocs/cok_ozel/.htpasswd yakup
 </screen>
-   </para>
-   <para>
+</para><para>
         şeklinde olmalıdır.
       </para>
-   <para><literal>.htaccess</literal>'i de bitirdik!</para>
-  </section>
-  <section>
-   <info>
-    <title>Dizinleri IP Adresine veya Alan Adına Göre Kısıtlama</title>
-   </info>
-   <para>
+      <para><literal>.htaccess</literal>'i de bitirdik!</para>
+    </sect2>
+    <sect2>
+      <title>Dizinleri IP Adresine veya Alan Adına Göre Kısıtlama</title>
+      <para>
          Bu kısımda kısıtlama yapılacak adresimiz
          <literal>http://www.rt.net.tr/intranet</literal> olsun ve dosyalar
          <literal>/www/htdocs/intranet</literal> altında bulunsun.
        </para>
-   <para>
+       <para>
          Sadece belirli IP'lere erişimi verip diğerlerine yasak koymak için, örneğin
          <literal>212.65.128</literal> uzayındaki IP'lere erişim verelim:
-</para>
-   <para>
-    <screen>
-&lt;Directory  /www/htdocs/intranet&gt;
+</para><para>
+<screen>
+&lt;Directory  /www/htdocs/intranet>
   Order deny,allow
   Allow from 212.65.128
   Deny from All
-%lt;/Directory&gt;
+%lt;/Directory>
 </screen>
-   </para>
-   <para>
+      </para>
+      <para>
         Sadece belirli alan isimlerine erişim verip diğerlerine yasak koymak için, örnegin
         <literal>linux.org.tr</literal> alanına erişim verelim:
-</para>
-   <para>
-    <screen>
-&lt;Directory  /www/htdocs/intranet&gt;
+</para><para>
+<screen>
+&lt;Directory  /www/htdocs/intranet>
   Order deny,allow
   Allow from linux.org.tr
   Deny from All
-&lt;/Directory&gt;
+&lt;/Directory>
 </screen>
-   </para>
-   <para>
+      </para>
+      <para>
         Sadece belirli IP'lere yasak koyup diğerlerine izin vermek için, örnegin
         <literal>195.1.2</literal>  uzayındaki IP'lere yasak koyalım:
-</para>
-   <para>
-    <screen>
-&lt;Directory  /www/htdocs/intranet&gt;
+</para><para>
+<screen>
+&lt;Directory  /www/htdocs/intranet>
   Order allow,allow
   Allow from All
   Deny from  195.1.2
-&lt;/Directory&gt;
+&lt;/Directory>
 </screen>
-   </para>
-   <para>
+      </para>
+      <para>
         Sadece belirli alan isimlerine yasak koyup diğerlerine izin vermek için,
         örnegin <literal>lamer.com</literal> alanına yasak koyalım:
-</para>
-   <para>
-    <screen>
-&lt;Directory  /www/htdocs/intranet&gt;
+</para><para>
+<screen>
+&lt;Directory  /www/htdocs/intranet>
   Order allow,deny
   Allow from All
   Deny from lamer.com
-&lt;/Directory&gt;
+&lt;/Directory>
 </screen>
-   </para>
-   <para>
+      </para>
+      <para>
         Yapılan değişikliklerin etkin olması için
         <screen># /www/bin/apachectl restart</screen> komutunu veriniz..
       </para>
-   <para>Belgemizin sonuna geldik.</para>
-   <para>
+      <para>Belgemizin sonuna geldik.</para>
+      <para>
         Sorunlarınızı ve önerilerinizi yukarıda belirttiğim e-posta adresimden bana
         ulaştırabilirsiniz.
       </para>
-   <para>Happy Linuxing<sbr/>İSMAİL YENİGÜL</para>
-  </section>
- </section>
- <appendix xml:id="sanal-adresleme-nasil_copyright">
-  <info>
-   <title>Telif Hakkı ve Lisans</title>
-  </info>
-  <!-- The LDP recommends, but doesn't require, the GFDL -->
-  <para>
+      <para>Happy Linuxing İSMAİL YENİGÜL</para>
+    </sect2>
+  </sect1>
+  <appendix xml:id="sanal-adresleme-nasil_copyright">
+    <title>Telif Hakkı ve Lisans</title>
+    <!-- The LDP recommends, but doesn't require, the GFDL -->
+    <para>
      Bu belgenin, <emphasis>Apache Web Sunucusunda Sanal Adresleme ve Dizin
-     Erişiminin Kısıtlanması NASIL</emphasis>,<sbr/>
+     Erişiminin Kısıtlanması NASIL</emphasis>, 
      0.1 sürümünün telif hakkı © 2000  <emphasis>İsmail Yenigül</emphasis>'e
      aittir. Bu belgeyi, Free Software Foundation tarafından yayınlanmış
      bulunan GNU Özgür Belgeleme Lisansının 1.1 ya da daha sonraki sürümünün
      koşullarına bağlı kalarak kopyalayabilir, dağıtabilir ve/veya
-     değiştirebilirsiniz. Bu Lisansın bir kopyasını <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="fdl.html">GNU Free Documentation License</link> başlıklı bölümde bulabilirsiniz.
+     değiştirebilirsiniz. Bu Lisansın bir kopyasını <link xlink:href="fdl.html">GNU Free Documentation License</link> başlıklı bölümde bulabilirsiniz.
     </para>
-  <para>
+
+    <para>
      Linux, Linus Torvalds adına kayıtlı bir ticarî isimdir.
     </para>
- </appendix>
- <appendix xml:id="sanal-adresleme-nasil_disclaimer">
-  <info>
-   <title>Feragatname</title>
-  </info>
-  <para>
+  </appendix>
+
+  <appendix xml:id="sanal-adresleme-nasil_disclaimer">
+    <title>Feragatname</title>
+
+    <para>
       Bu belgedeki bilgilerin kullanımından doğacak sorumluluklar,
       ve olası zararlardan belge yazarı sorumlu tutulamaz.
       Bu belgedeki bilgileri uygulama sorumluluğu uygulayan aittir.
     </para>
-  <para>
+
+    <para>
       Tüm telif hakları aksi özellikle belirtilmediği sürece sahibine
       aittir. Belge içinde geçen herhangi bir terim bir ticarî isim
       yada kuruma itibar kazandırma olarak algılanmamalıdır. Bir ürün
       ya da markanın kullanılmış olması ona onay verildiği anlamında
       görülmemelidir.
     </para>
- </appendix>
+  </appendix>
+
 </article>

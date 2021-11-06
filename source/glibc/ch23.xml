@@ -1,43 +1,33 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- ********************************************************************
-         ch23.xml
+     $Id: ch23.xml,v 1.2 2002/12/20 22:29:48 nilgun Exp $
 ******************************************************************** -->
-<part xml:id="glibc-Non-Local-Exits" xmlns="http://docbook.org/ns/docbook"
-      version="5.0" xml:lang="tr">
- <info>
+<part xml:id="glibc-Non-Local-Exits">
   <title>Yerel Olmayan Çıkışlar</title>
   <titleabbrev>İç işlev çağrılarından yazılımda bir noktaya atlamak.</titleabbrev>
- </info>
- <partintro>
-  <para><indexterm scope="glibc-cp"><primary>yerel olmayan çıkışlar</primary></indexterm><indexterm scope="glibc-cp"><primary>uzun atlama</primary></indexterm>
+  <partintro><para>
+<indexterm scope="glibc-cp"><primary>yerel olmayan çıkışlar</primary></indexterm>
+<indexterm scope="glibc-cp"><primary>uzun atlama</primary></indexterm>
 Kimi zaman yazılımınızda çok iç içe işlev çağrıları yaptığınızda ve derinlerde bir yerde olumsuz bir durum oluştuğunda denetimi daha dış bir düzeye aktarmak ihtiyacı duyarsınız. Bu oylumda <command>setjmp</command> ve <command>longjmp</command> çağrılarıyla böyle <wordasword>yerel olmayan çıkışlar</wordasword>ın nasıl yapılacağından bahsedilecektir.
-  </para>
- </partintro>
- <chapter xml:id="glibc-Non-Local-Intro">
-  <info>
-   <title>Yerel Olmayan Çıkışlar Hakkında</title>
-   <titleabbrev>Bu oluşumlar ne zaman ve nasıl kullanılır.</titleabbrev>
-  </info>
-  <para>
+  </para></partintro>
+  <chapter xml:id="glibc-Non-Local-Intro">
+    <title>Yerel Olmayan Çıkışlar Hakkında</title>
+    <titleabbrev>Bu oluşumlar ne zaman ve nasıl kullanılır.</titleabbrev>
+    <para>
 Yerel olmayan çıkışların ne zaman faydalı olabileceğini bir örnekle açıklamaya çalışmak daha iyi olacak. Bir ana döngüyle kullanıcıdan komutları alıp bunları çalıştıran etkileşimli bir yazılımımız olduğunu varsayalım. Komutları bir dosyadaki girdilerden okuduğunu ve girdideki komutu işleme sokmadan önce bazı metin çözümleme işlemleriyle girdiyi analiz ettiğini farzedelim. Bir düşük seviyeli hata saptandığında, metin çözümleme, ayrımsama ve işleme fazlarının her yapılışında iç içe çağrılarda saptanan hatalarla yerinde uğraşmaktansa hemen ana döngüye dönebilmek iyi olurdu.
-   </para>
-  <para>
+   </para><para>
 (Diğer taraftan, her fazdan çıkışta önemli miktarda temizlik işlemleri yapılması gerekli olabilir--örneğin, dosyaların kapatılması, tamponların ve veri yapılarının serbest bırakılması ve benzerleri--ancak bundan sonra normal dönüş yapmak daha uygun olabilir. Bir yerel olmayan çıkış ara fazların ve onlarla ilgili temizlik kodunun atlanmasına neden olacağından her fazın kendine özgü temizlik kodu olması da daha uygun olabilir. Bundan başka, temizliği ana döngüye dönmeden önce ya da döndükten sonra yapacak şekilde de bir yerel olmayan çıkış kullanabilirdiniz.)
-   </para>
-  <para>
+   </para><para>
 Bazı bakımlardan, bir yerel olmayan çıkış, bir işlevden çıkış deyimi olan <command>return</command> kullanımına benzer. Fakat <command>return</command> sadece tek bir işlev çağrısından çıkıp denetimi geriye işlev çağrısının yapıldığı noktaya taşırken, bir yerel olmayan çıkış denetimin potansiyel olarak çok iç içe pek çok işlev çağrısının dışındaki bir noktaya taşınmasını sağlar.
-   </para>
-  <para>
+   </para><para>
 Yerel olmayan çıkışlarda denetimin döndürüleceği noktayı <command>setjmp</command> işlevini çağırarak belirtebilirsiniz. Bu işlev,  <command>setjmp</command> işlev çağrısının göründüğü icra ortamı hakkındaki bilgiyi <command>jmp_buf</command> türündeki bir nesneye kaydeder. Yazılımın çalışması <command>setjmp</command> çağrısından sonra normal olarak devam eder, fakat daha sonra bu dönüş noktası için kaydedilen <command>jmp_buf</command> türündeki nesne ile yapılan bir <command>longjmp</command> çağrısı ile bu dönüş noktasına bir çıkış yapılırsa, denetim <command>setjmp</command> çağrısının yapıldığı noktaya aktarılmış olur. <command>setjmp</command> çağrısından dönen değer ile sıradan bir dönüş ve <command>longjmp</command> çağrısı tarafından yapılan bir dönüş arasında ayrım yapılabilmesi için <command>setjmp</command> çağrısının bir <command>if</command> deyimi içinde görünmesi gerekir.
-   </para>
-  <para>
+   </para><para>
 Bunun nasıl yapıldığına bir örnek:
-   </para>
-  <para>
-   <screen>
-#include &lt;setjmp.h&gt;
-#include &lt;stdlib.h&gt;
-#include &lt;stdio.h&gt;
+   </para><para>
+<screen>
+#include &lt;setjmp.h>
+#include &lt;stdlib.h>
+#include &lt;stdio.h>
 
 jmp_buf main_loop;
 
@@ -67,16 +57,14 @@ do_command (void)
   else
     exit (EXIT_SUCCESS);
 }
-</screen>
-  </para>
-  <para><command>abort_to_main_loop</command> işlevi nereden çağrıldığına bakılmaksızın, denetimin, yazılımın ana döngüsüne geri dönmesine sebep olur.
-   </para>
-  <para><command>main</command> işlevinin içindeki akış denetimi başta biraz esrarlı görünebilir. Bir normal <command>setjmp</command> çağrısı sıfırla döner, böylece "else" sözcüğündeki kod çalışır. <command>do_command</command> içinde bir yerlerde <command>abort_to_main_loop</command> yapılırsa, hemen ardından <command>main</command> içinde <command>-1</command> değeri döndüren ikici bir <command>setjmp</command> çağrısı yapılmış gibi görünür.
-   </para>
-  <para><command>setjmp</command> kullanımını genel kalıbı şöyle görünür:
-   </para>
-  <para>
-   <screen>
+</screen></para><para>
+<command>abort_to_main_loop</command> işlevi nereden çağrıldığına bakılmaksızın, denetimin, yazılımın ana döngüsüne geri dönmesine sebep olur.
+   </para><para>
+<command>main</command> işlevinin içindeki akış denetimi başta biraz esrarlı görünebilir. Bir normal <command>setjmp</command> çağrısı sıfırla döner, böylece &quot;else&quot; sözcüğündeki kod çalışır. <command>do_command</command> içinde bir yerlerde <command>abort_to_main_loop</command> yapılırsa, hemen ardından <command>main</command> içinde <command>-1</command> değeri döndüren ikici bir <command>setjmp</command> çağrısı yapılmış gibi görünür.
+   </para><para>
+<command>setjmp</command> kullanımını genel kalıbı şöyle görünür:
+   </para><para>
+<screen>
 if (setjmp (<varname>tampon</varname>))
   /* Erken dönüş sonrası temizleme kodu. */
   …
@@ -84,355 +72,191 @@ else
   /* Dönüş noktası ayarlandıktan sonra
      normal olarak çalıştırılacak kod. */
   …
-</screen>
-  </para>
- </chapter>
- <chapter xml:id="glibc-Non-Local-Details">
-  <info>
-   <title>Yerel Olmayan Çıkışların Ayrıntıları</title>
-   <titleabbrev>Yerel olmayan çıkışlarla ilgili işlevler.</titleabbrev>
-  </info>
-  <para>
+</screen></para></chapter>
+  <chapter xml:id="glibc-Non-Local-Details">
+    <title>Yerel Olmayan Çıkışların Ayrıntıları</title>
+    <titleabbrev>Yerel olmayan çıkışlarla ilgili işlevler.</titleabbrev>
+    <para>
 Burada yerel olmayan çıkışları gerçekleştirmekte kullanılan veri yapıları ve işlevler ayrıntılı olarak incelenecektir. Bu oluşumlar <filename>setjmp.h</filename> dosyasında bildirilmiştir.
 <indexterm scope="glibc-pg"><primary>setjmp.h</primary></indexterm>
-   </para>
-  <para>
-   <indexterm scope="glibc-tp">
-    <primary>jmp_buf</primary>
-   </indexterm>
-   <funcsynopsis>
-    <funcprototype role="veri türü" xml:id="glibc-jmp_buf">
-     <funcdef>
-      <command>jmp_buf</command>
-     </funcdef>
-     <paramdef/>
-    </funcprototype>
-    <funcdescr>
-     <para><command>jmp_buf</command> türündeki nesneler bir yerel olmayan çıkış tarafından eski durumuna getirilecek durum bilgisini tutar. Bir <command>jmp_buf</command> içeriği dönülecek yeri belirtir.
-</para>
-    </funcdescr>
-   </funcsynopsis>
-  </para>
-  <para>
-   <indexterm scope="glibc-fn">
-    <primary>setjmp</primary>
-   </indexterm>
-   <funcsynopsis>
-    <funcprototype role="makro" xml:id="glibc-setjmp">
-     <funcdef>int <command>setjmp</command></funcdef>
-     <paramdef>(jmp_buf <varname>durum</varname>)</paramdef>
-    </funcprototype>
-    <funcdescr>
-     <para>
+   </para><para>
+<indexterm scope="glibc-tp"><primary>jmp_buf</primary></indexterm>
+<funcsynopsis><funcprototype role="veri türü" xml:id="glibc-jmp_buf">
+<funcdef><command>jmp_buf</command></funcdef>
+<paramdef></paramdef>
+</funcprototype><funcdescr><para>
+<command>jmp_buf</command> türündeki nesneler bir yerel olmayan çıkış tarafından eski durumuna getirilecek durum bilgisini tutar. Bir <command>jmp_buf</command> içeriği dönülecek yeri belirtir.
+</para></funcdescr></funcsynopsis></para><para>
+<indexterm scope="glibc-fn"><primary>setjmp</primary></indexterm>
+<funcsynopsis><funcprototype role="makro" xml:id="glibc-setjmp">
+<funcdef>int <command>setjmp</command></funcdef>
+<paramdef>(jmp_buf <varname>durum</varname>)</paramdef>
+</funcprototype><funcdescr><para>
 Normal olarak çağrıldığında, <command>setjmp</command> işlevi yazılımın icra durumu hakkında bilgiyi <varname>durum</varname> nesnesine kaydeder ve sıfırla döner. Daha sonra bir yerel olmayan çıkış gerçekleştirmek için bu <varname>durum</varname> bilgisi ile bir <command>longjmp</command> çağrısı yapılırsa, <command>setjmp</command> sıfırdan farklı bir değerle döner.
-</para>
-    </funcdescr>
-   </funcsynopsis>
-  </para>
-  <para>
-   <indexterm scope="glibc-fn">
-    <primary>longjmp</primary>
-   </indexterm>
-   <funcsynopsis>
-    <funcprototype role="işlev" xml:id="glibc-longjmp">
-     <funcdef>void <command>longjmp</command></funcdef>
-     <paramdef>(jmp_buf <varname>durum</varname>,
+</para></funcdescr></funcsynopsis></para><para>
+<indexterm scope="glibc-fn"><primary>longjmp</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev" xml:id="glibc-longjmp">
+<funcdef>void <command>longjmp</command></funcdef>
+<paramdef>(jmp_buf <varname>durum</varname>,
  int     <varname>değer</varname>)</paramdef>
-    </funcprototype>
-    <funcdescr>
-     <para>
+</funcprototype><funcdescr><para>
 Bu işlev o anki çalışma durumunu <varname>durum</varname> nesnesinde kayıtlı durum ile değiştirerek icranın dönüş noktasını oluşturan <command>setjmp</command> çağrısından devam etmesini sağlar. <command>setjmp</command>'ın dönüş durumu <command>0</command> yerine, <command>longjmp</command> çağrısının <varname>değer</varname> argümanında belirtilen değer olur. (Ancak, eğer <varname>değer</varname> olarak sıfır verilmişse, <command>setjmp</command> işlevi <command>1</command> ile döner).
-</para>
-    </funcdescr>
-   </funcsynopsis>
-  </para>
-  <para><command>setjmp</command> ve <command>longjmp</command> kullanımında önemli sınırlamalar getirmeyen bazı karanlık noktalar vardır. Bu sınırlamaların çoğu hala vardır, çünkü yerel olmayan çıkışlar C derleyicisinin bir kısmının biraz sihirli olmasını ve dilin diğer parçaları ile tuhaf bir şekilde etkileşmesini gerektirir.
-   </para>
-  <para><command>setjmp</command> işlevi aslında bir işlev tanımı olmaksızın bir makrodur, yani onu <command>#undef</command> yapamazsınız ve adresini alamazsınız. Ek olarak, <command>setjmp</command> çağrıları sadece aşağıdaki bağlamla güvenlidir.
-   </para>
-  <para>
-   <itemizedlist>
-    <listitem>
+</para></funcdescr></funcsynopsis></para><para>
+<command>setjmp</command> ve <command>longjmp</command> kullanımında önemli sınırlamalar getirmeyen bazı karanlık noktalar vardır. Bu sınırlamaların çoğu hala vardır, çünkü yerel olmayan çıkışlar C derleyicisinin bir kısmının biraz sihirli olmasını ve dilin diğer parçaları ile tuhaf bir şekilde etkileşmesini gerektirir.
+   </para><para>
+<command>setjmp</command> işlevi aslında bir işlev tanımı olmaksızın bir makrodur, yani onu <command>#undef</command> yapamazsınız ve adresini alamazsınız. Ek olarak, <command>setjmp</command> çağrıları sadece aşağıdaki bağlamla güvenlidir.
+   </para><para><itemizedlist><listitem>
 Bir seçim ya da yineleme deyiminin sınama ifadesi olarak. (örneğin, <command>if</command>, <command>switch</command> veya <command>while</command>).
-     </listitem>
-    <listitem>
+     </listitem><listitem>
 Bir seçim ya da yineleme deyiminin sınama ifadesinde görünen bir eşitlik ya da karşılaştırma işlecinin terimi olarak. Diğer terim bir tamsayı sabit ifadesi olmalıdır.
-     </listitem>
-    <listitem>
+     </listitem><listitem>
 Bir seçim ya da yineleme deyiminin sınama ifadesinde görünen bir tek terimli <command>!</command> işlecinin terimi olarak.
-     </listitem>
-    <listitem>
+     </listitem><listitem>
 Bir ifade deyimi olarak kendisi tarafından.
-     </listitem>
-   </itemizedlist>
-  </para>
-  <para>
+     </listitem></itemizedlist></para><para>
 Geri dönüş noktaları, sadece bu dönüş noktalarını oluşturan <command>setjmp</command>'ı çağıran işlevin (örnekteki, <command>main</command> işlevi) çalışması boyunca geçerlidirler. Eğer zaten dönmüş bir işlevde kurulu bir dönüş noktasına <command>longjmp</command> yapılırsa bunun sonuçları öngörülemez ve yıkıcı etkileri olabilir.
-   </para>
-  <para><command>longjmp</command> çağrısında <varname>değer</varname> argümanına sıfırdan farklı bir değer belirtmelisiniz.  <command>longjmp</command>'ın, <command>setjmp</command>'dan dönecek değer olarak, <command>setjmp</command>'a sıfır değerini aktarmayı reddetmesi, aslında kaza ile oluşacak bir kötü kullanıma karşı oluşturulmuş bir güvencedir.
-   </para>
-  <para>
+   </para><para>
+<command>longjmp</command> çağrısında <varname>değer</varname> argümanına sıfırdan farklı bir değer belirtmelisiniz.  <command>longjmp</command>'ın, <command>setjmp</command>'dan dönecek değer olarak, <command>setjmp</command>'a sıfır değerini aktarmayı reddetmesi, aslında kaza ile oluşacak bir kötü kullanıma karşı oluşturulmuş bir güvencedir.
+   </para><para>
 Bir yerel olmayan çıkış yaptığınızda, erişilebilir nesneler genellikle <command>longjmp</command> çağrısı yapıldığı sıradaki değerlerinde kalırlar. Bunun istisnası, <command>setjmp</command> çağrısını içeren işlevin yerel özdevinimli değişkenlerinin değerlerinin, <command>setjmp</command> çağrısının belirsizliğinden dolayı değişmesidir. Bunun olmaması için onları <command>volatile</command> olarak bildirebilirsiniz.
-   </para>
- </chapter>
- <chapter xml:id="glibc-Non-Local-Exits-and-Signals">
-  <info>
-   <title>Yerel Olmayan Çıkışlarda Sinyaller</title>
-   <titleabbrev>Taşınabilirlik bilgileri.</titleabbrev>
-  </info>
-  <para>
+   </para></chapter>
+  <chapter xml:id="glibc-Non-Local-Exits-and-Signals">
+    <title>Yerel Olmayan Çıkışlarda Sinyaller</title>
+    <titleabbrev>Taşınabilirlik bilgileri.</titleabbrev>
+    <para>
 BSD Unix sistemlerinde, <command>setjmp</command> ve <command>longjmp</command> işlevleri <link linkend="glibc-Blocking-Signals">engellenen sinyalleri</link> kaydedebilir ve daha sonra onları eski durumuna getirebilir.  Ancak, POSIX.1 standardı <command>setjmp</command> ve <command>longjmp</command> gerçeklemesinin engellenen sinyalleri değiştirmemesini gerektirir ve BSD davranışını elde etmek için ek bir işlev çifti (<command>sigsetjmp</command> ve <command>siglongjmp</command>) sağlar.
-   </para>
-  <para><command>setjmp</command> ve <command>longjmp</command> işlevlerinin davranışı GNU C kütüphanesinde <link linkend="glibc-Feature-Test-Macros">özellik sınama makroları</link> ile denetlenir. GNU sisteminde öntanımlı olan BSD davranışı değil POSIX.1 davranışıdır.
-   </para>
-  <para>
+   </para><para>
+<command>setjmp</command> ve <command>longjmp</command> işlevlerinin davranışı GNU C kütüphanesinde <link linkend="glibc-Feature-Test-Macros">özellik sınama makroları</link> ile denetlenir. GNU sisteminde öntanımlı olan BSD davranışı değil POSIX.1 davranışıdır.
+   </para><para>
 Bu kısımdaki oluşumlar <filename>setjmp.h</filename> başlık dosyasında bildirilmiştir.
 <indexterm scope="glibc-pg"><primary>setjmp.h</primary></indexterm>
-   </para>
-  <para>
-   <indexterm scope="glibc-tp">
-    <primary>sigjmp_buf</primary>
-   </indexterm>
-   <funcsynopsis>
-    <funcprototype role="veri türü" xml:id="glibc-sigjmp_buf">
-     <funcdef>
-      <command>sigjmp_buf</command>
-     </funcdef>
-     <paramdef/>
-    </funcprototype>
-    <funcdescr>
-     <para>
+   </para><para>
+<indexterm scope="glibc-tp"><primary>sigjmp_buf</primary></indexterm>
+<funcsynopsis><funcprototype role="veri türü" xml:id="glibc-sigjmp_buf">
+<funcdef><command>sigjmp_buf</command></funcdef>
+<paramdef></paramdef>
+</funcprototype><funcdescr><para>
 Bu veri türü, ayrıca engellenen sinyallerin durum bilgilerinin de kaydedilmesini sağlaması dışında <command>jmp_buf</command>'a benzer.
-</para>
-    </funcdescr>
-   </funcsynopsis>
-  </para>
-  <para>
-   <indexterm scope="glibc-fn">
-    <primary>sigsetjmp</primary>
-   </indexterm>
-   <funcsynopsis>
-    <funcprototype role="işlev" xml:id="glibc-sigsetjmp">
-     <funcdef>int <command>sigsetjmp</command></funcdef>
-     <paramdef>(sigjmp_buf <varname>durum</varname>,
+</para></funcdescr></funcsynopsis></para><para>
+<indexterm scope="glibc-fn"><primary>sigsetjmp</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev" xml:id="glibc-sigsetjmp">
+<funcdef>int <command>sigsetjmp</command></funcdef>
+<paramdef>(sigjmp_buf <varname>durum</varname>,
  int        <varname>sinyal_kaydet</varname>)</paramdef>
-    </funcprototype>
-    <funcdescr>
-     <para><command>setjmp</command> işlevine benzer.  Eğer <varname>sinyal_kaydet</varname> argümanının değeri sıfırdan farklıysa, engellenen sinyaller daha sonraki bir <command>siglongjmp</command> çağrısı ile yerine konmak üzere <varname>durum</varname> nesnesine kaydedilir.
-      </para>
-     <para>
-</para>
-    </funcdescr>
-   </funcsynopsis>
-  </para>
-  <para>
-   <indexterm scope="glibc-fn">
-    <primary>siglongjmp</primary>
-   </indexterm>
-   <funcsynopsis>
-    <funcprototype role="işlev" xml:id="glibc-siglongjmp">
-     <funcdef>void <command>siglongjmp</command></funcdef>
-     <paramdef>(sigjmp_buf <varname>durum</varname>,
+</funcprototype><funcdescr><para>
+<command>setjmp</command> işlevine benzer.  Eğer <varname>sinyal_kaydet</varname> argümanının değeri sıfırdan farklıysa, engellenen sinyaller daha sonraki bir <command>siglongjmp</command> çağrısı ile yerine konmak üzere <varname>durum</varname> nesnesine kaydedilir.
+      </para><para>
+</para></funcdescr></funcsynopsis></para><para>
+<indexterm scope="glibc-fn"><primary>siglongjmp</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev" xml:id="glibc-siglongjmp">
+<funcdef>void <command>siglongjmp</command></funcdef>
+<paramdef>(sigjmp_buf <varname>durum</varname>,
  int        <varname>değer</varname>)</paramdef>
-    </funcprototype>
-    <funcdescr>
-     <para><varname>durum</varname> argümanının türü dışında <command>longjmp</command> işlevine benzer. Eğer <command>sigsetjmp</command> çağrısında sıfırdan farklı bir <varname>sinyal_kaydet</varname> argümanı belirtilerek engellenen sinyaller bu <varname>durum</varname> nesnesine kaydedilmişse, bu çağrı ayrıca onları da eski durumlarına getirir.
-  </para>
-    </funcdescr>
-   </funcsynopsis>
-  </para>
- </chapter>
- <chapter xml:id="glibc-System-V-contexts">
-  <info>
-   <title>Bütünsel Bağlam Denetimi</title>
-   <titleabbrev>System V usulü bütünsel bağlam denetimi.</titleabbrev>
-  </info>
-  <para>
+</funcprototype><funcdescr><para>
+<varname>durum</varname> argümanının türü dışında <command>longjmp</command> işlevine benzer. Eğer <command>sigsetjmp</command> çağrısında sıfırdan farklı bir <varname>sinyal_kaydet</varname> argümanı belirtilerek engellenen sinyaller bu <varname>durum</varname> nesnesine kaydedilmişse, bu çağrı ayrıca onları da eski durumlarına getirir.
+  </para></funcdescr></funcsynopsis></para></chapter>
+  <chapter xml:id="glibc-System-V-contexts">
+    <title>Bütünsel Bağlam Denetimi</title>
+    <titleabbrev>System V usulü bütünsel bağlam denetimi.</titleabbrev>
+    <para>
 Unix standardında var olan, yürütme yolunu denetleyen bir diğer işlev grubu. Bu işlevler bu bölümde buraya kadar anlatılanlardan daha güçlü olup en baştan beri System V API içinde bulunmaktadırlar ve buradan Unix API'sine aktarılmışlardır. Markalı Unix gerçekleştirimleri dışında bu arabirimlere fazla rastlanmaz. GNU C'nin bulunduğu bütün platformlar ve mimarilerde de yer almazlar. Var olup olmadıklarını <command>configure</command> kullanarak anlayabilirsiniz.
-   </para>
-  <para><command>longjmp</command> işlevinin durumunu içeren değişkenler için kullanılan <command>jmp_buf</command> ve <command>sigjmp_buf</command> türlerine benzer şekilde, burada anlatılacak olan arabirimler için de uygun türler tanımlanmıştır. Bu türteki nesneler daha fazla bilgi içerdiklerinden dolayı daha büyüktürler. Bu tür ileride göreceğimiz birkaç yerde daha kullanılmıştır. Bu bölümde anlatılan veri türleri ve işlevlerin tümü <filename>ucontext.h</filename> başlık dosyasında tanımlanmış ve bildirilmiştir.
-   </para>
-  <para>
-   <indexterm scope="glibc-tp">
-    <primary>ucontext_t</primary>
-   </indexterm>
-   <funcsynopsis>
-    <funcprototype role="veri türü" xml:id="ucontext_t">
-     <funcdef>
-      <command>ucontext_t</command>
-     </funcdef>
-     <paramdef/>
-    </funcprototype>
-    <funcdescr>
-     <para><command>ucontext_t</command> yapısı en azından aşağıdaki üyeleri içermelidir:
-   </para>
-     <para>
-      <glosslist>
-       <glossentry>
-        <glossterm>
-         <literal>ucontext_t *<command>uc_link</command></literal>
-        </glossterm>
-        <glossdef>
-         <para>
+   </para><para>
+<command>longjmp</command> işlevinin durumunu içeren değişkenler için kullanılan <command>jmp_buf</command> ve <command>sigjmp_buf</command> türlerine benzer şekilde, burada anlatılacak olan arabirimler için de uygun türler tanımlanmıştır. Bu türteki nesneler daha fazla bilgi içerdiklerinden dolayı daha büyüktürler. Bu tür ileride göreceğimiz birkaç yerde daha kullanılmıştır. Bu bölümde anlatılan veri türleri ve işlevlerin tümü <filename>ucontext.h</filename> başlık dosyasında tanımlanmış ve bildirilmiştir.
+   </para><para>
+<indexterm scope="glibc-tp"><primary>ucontext_t</primary></indexterm>
+<funcsynopsis><funcprototype role="veri türü" xml:id="ucontext_t">
+<funcdef><command>ucontext_t</command></funcdef>
+<paramdef></paramdef>
+</funcprototype><funcdescr><para>
+<command>ucontext_t</command> yapısı en azından aşağıdaki üyeleri içermelidir:
+   </para><para><glosslist><glossentry><glossterm>
+   <literal>ucontext_t *<command>uc_link</command></literal>
+   </glossterm><glossdef><para>
 Sonraki bağlam yapısına göstericidir. Eğer mevcut yapıda tanımlanan bağlamdan çıkılmışsa kullanılır.
-   </para>
-        </glossdef>
-       </glossentry>
-       <glossentry>
-        <glossterm>
-         <literal>sigset_t <command>uc_sigmask</command></literal>
-        </glossterm>
-        <glossdef>
-         <para>
+   </para></glossdef></glossentry><glossentry><glossterm>
+   <literal>sigset_t <command>uc_sigmask</command></literal>
+   </glossterm><glossdef><para>
 Bu bağlam kullanıldığında engellenen sinyalleri içerir.
-   </para>
-        </glossdef>
-       </glossentry>
-       <glossentry>
-        <glossterm>
-         <literal>stack_t <command>uc_stack</command></literal>
-        </glossterm>
-        <glossdef>
-         <para>
+   </para></glossdef></glossentry><glossentry><glossterm>
+   <literal>stack_t <command>uc_stack</command></literal>
+   </glossterm><glossdef><para>
 Bu bağlam için kullanılan yığıt. Değeri bir yığıt göstericisi olmak zorunda değildir ve normalde de değildir. Bkz. <xref linkend="glibc-Signal-Stack"/>.
-   </para>
-        </glossdef>
-       </glossentry>
-       <glossentry>
-        <glossterm>
-         <literal>mcontext_t <command>uc_mcontext</command></literal>
-        </glossterm>
-        <glossdef>
-         <para>
+   </para></glossdef></glossentry><glossentry><glossterm>
+   <literal>mcontext_t <command>uc_mcontext</command></literal>
+   </glossterm><glossdef><para>
 Bu üye sürecin mevcut durumunu içerir. <command>mcontext_t</command> türü de bu başlıkta tanımlanır fakat bu tanımın geçirimsiz olduğu düşünülmelidir. Bu
 tür bilinerek geliştirilmiş uygulamaların taşınırlığı daha düşüktür.
-   </para>
-        </glossdef>
-       </glossentry>
-      </glosslist>
-     </para>
-    </funcdescr>
-   </funcsynopsis>
-  </para>
-  <para>
+   </para></glossdef></glossentry></glosslist>
+</para></funcdescr></funcsynopsis></para><para>
 Bu türden nesneler kullanıcı tarafından oluşturulmalıdır. İlklendirme ve değişiklik işlemleri için aşağıdaki işlevlerden biri kullanılır:
-   </para>
-  <para>
-   <indexterm scope="glibc-fn">
-    <primary>getcontext</primary>
-   </indexterm>
-   <funcsynopsis>
-    <funcprototype role="işlev" xml:id="glibc-getcontext">
-     <funcdef>int <command>getcontext</command></funcdef>
-     <paramdef>(ucontext_t *<varname>bağlam</varname>)</paramdef>
-    </funcprototype>
-    <funcdescr>
-     <para><command>getcontext</command> işlevi, kendisini çağıran evre bağlamında <varname>bağlam</varname> ile gösterilen nesneyi ilklendirir. Buradaki bağlam, yazmaçlar, sinyal maskesi ve mevcut yığıta ait içerikleri barındırır. İçeriklerin icrası <command>getcontext</command> çağrısı döndüğü anda başlar.
-   </para>
-     <para>
+   </para><para>
+<indexterm scope="glibc-fn"><primary>getcontext</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev" xml:id="glibc-getcontext">
+<funcdef>int <command>getcontext</command></funcdef>
+<paramdef>(ucontext_t *<varname>bağlam</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+<command>getcontext</command> işlevi, kendisini çağıran evre bağlamında <varname>bağlam</varname> ile gösterilen nesneyi ilklendirir. Buradaki bağlam, yazmaçlar, sinyal maskesi ve mevcut yığıta ait içerikleri barındırır. İçeriklerin icrası <command>getcontext</command> çağrısı döndüğü anda başlar.
+   </para><para>
 İşlev eğer başarılıysa <command>0</command> değerini döndürür. Değilse <command>-1</command> döndürür ve <varname>errno</varname>'ya uygun değeri atar.
-      </para>
-     <para><command>getcontext</command> işlevi <command>setjmp</command>'a benzer ancak işlevin ilk kez mi döndüğü yoksa ilklendirilmiş bağlam kullanılıp
+      </para><para>
+<command>getcontext</command> işlevi <command>setjmp</command>'a benzer ancak işlevin ilk kez mi döndüğü yoksa ilklendirilmiş bağlam kullanılıp
 yürütmeye o noktadan mı geri dönüldüğü konusunda bilgi vermez.  Eğer bu ayrımın yapılması gerekliyse, bunu kullanıcı kendisi ortaya çıkarmalıdır. Ancak bunu dikkatlice yapmak gerekir çünkü bağlam içerisinde yazmaç değişkenlerini içeren yazmaçlar bulunabilir. Bu durumda değişkenleri <command>volatile</command> olarak tanımlamak iyi olur.
-</para>
-    </funcdescr>
-   </funcsynopsis>
-  </para>
-  <para><varname>bağlam</varname> nesnesine bir kez ilk değer atandıktan sonra ya olduğu gibi  ya da değiştirilerek kullanılır. Değiştirme normal olarak eş-yordamları veya benzeri yapıları gerçekleştirmek için yapılır.  <command>makecontext</command> bunu yapmak kullanılır.
-   </para>
-  <para>
-   <indexterm scope="glibc-fn">
-    <primary>makecontext</primary>
-   </indexterm>
-   <funcsynopsis>
-    <funcprototype role="işlev" xml:id="glibc-makecontext">
-     <funcdef>void <command>makecontext</command></funcdef>
-     <paramdef>(ucontext_t *<varname>bağlam</varname>,
+</para></funcdescr></funcsynopsis></para><para>
+<varname>bağlam</varname> nesnesine bir kez ilk değer atandıktan sonra ya olduğu gibi  ya da değiştirilerek kullanılır. Değiştirme normal olarak eş-yordamları veya benzeri yapıları gerçekleştirmek için yapılır.  <command>makecontext</command> bunu yapmak kullanılır.
+   </para><para>
+<indexterm scope="glibc-fn"><primary>makecontext</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev" xml:id="glibc-makecontext">
+<funcdef>void <command>makecontext</command></funcdef>
+<paramdef>(ucontext_t *<varname>bağlam</varname>,
  void      (*<varname>işlev</varname>) (void),
  int         <varname>argc</varname>,
  …)</paramdef>
-    </funcprototype>
-    <funcdescr>
-     <para>
+</funcprototype><funcdescr><para>
 İşleve aktarılan <varname>bağlam</varname> parametresi <command>getcontext</command> tarafından ilklendirilmiş olmalıdır. Sonuçta elde edilen bağlama geri dönüldüğünde yapılan ilk işlem, <varname>argc</varname> tane tamsayı argüman ile <varname>işlev</varname> işlevinin çağrılmasıdır. <command>makecontext</command> çağrısında tamsayı argümanlar <varname>argc</varname> parametresinden sonra verilmelidir.
-   </para>
-     <para>
+   </para><para>
 Bu işlev çağrılmadan önce <varname>bağlam</varname> yapısına ait <command>uc_stack</command> ve <command>uc_link</command> üyeleri ilklendirilmelidir. <command>uc_link</command> üyesi bu bağlam
 için kullanılan yığıtı tanımlar. Aynı anda kullanılan bağlamların her biri yığıt için ayrı bellek bölgeleri kullanmalıdır.
-   </para>
-     <para><varname>bağlam</varname>'ın gösterdiği nesnenin <command>uc_link</command> üyesi, <varname>işlev</varname> işlevinin geri dönüş noktasında yürütülecek bağlamı göstermeli veya bir boş gösterici olmalıdır. Kullanımı hakkında daha fazla bilgi için <command>setcontext</command>'e bakınız.
-</para>
-    </funcdescr>
-   </funcsynopsis>
-  </para>
-  <para>
+   </para><para>
+<varname>bağlam</varname>'ın gösterdiği nesnenin <command>uc_link</command> üyesi, <varname>işlev</varname> işlevinin geri dönüş noktasında yürütülecek bağlamı göstermeli veya bir boş gösterici olmalıdır. Kullanımı hakkında daha fazla bilgi için <command>setcontext</command>'e bakınız.
+</para></funcdescr></funcsynopsis></para><para>
 Yığıt için bellek ayırırken dikkatli olunmalıdır. Günümüzde işlemcilerin çoğunluğu bir bellek bölgesinin çalıştırılabilir kod içerip içeremeyeceği konusunda ayrım yapar. Veri bölütleri ve özdevimli ayırma yapılan bellekte bu tür bir yaftalama yoktur. Sonuçta yazılımlar başarısız olur. Bu tür çalıştırılabilir koda bir örnek, iç içe işlev çağrıları için GNU C derleyicisinin ürettiği çağrı dizilimleridir. Yığıtlar için güvenli bir şekilde bellek ayırmak için örneğin özgün evre yığıtı üzerindeki bellek kullanılabilir veya çalıştırılmaya uygun şekilde yaftalanmış bir bellek bölgesi ayırılabilir (bkz. <xref linkend="glibc-Memory-mapped-I-O"/>).
-   </para>
-  <para>
-   <note>
-    <info>
-     <title>Uyumluluk Bilgisi</title>
-    </info>
-    <para>Mevcut Unix standardı yığıt için bellek ayırma konusunda hemen hemen hiç belirleyici değildir. Bütün gerçekleştirimler <command>uc_stack</command> üyesinin kullanımında anlaşmıştır ama <command>stack_t</command> değerinin üyelerinin içerebileceği değerler konusunu açık bırakmıştır. GNU C kütüphanesi ve diğer Unix gerçekleştirimlerinin çoğunluğunda <command>uc_stack</command> üyesinin <command>ss_sp</command> değeri, yığıt için ayrılmış bellek bölgesinin tabanını göstermelir ve <command>ss_size</command> değeri de bu bölgenin büyüklüğünü içermelidir. Bazı gerçekleştirimlerde ise <command>ss_sp</command> değeri yığıt göstericisinin değerini içerir (yığıtın gelişme yönüne göre bu değer farklıdır). Bu farklılık <command>makecontext</command> işlevinin kullanımını zorlaştırır ve derleme sırasında platformn bilgisinin elde edilip kullanılmasını zorunlu kılar.</para>
-   </note>
-  </para>
-  <para>
-   <indexterm scope="glibc-fn">
-    <primary>setcontext</primary>
-   </indexterm>
-   <funcsynopsis>
-    <funcprototype role="işlev" xml:id="glibc-setcontext">
-     <funcdef>int <command>setcontext</command></funcdef>
-     <paramdef>(const ucontext_t *<varname>bağlam</varname>)</paramdef>
-    </funcprototype>
-    <funcdescr>
-     <para><command>setcontext</command> işlevi, <varname>bağlam</varname> tarafından tanımlanmış bağlamı yeniden geçerli kılar. Bağlamda değişiklik yapılmaz ve istendiği kadar sık yeniden kullanılabilir.
-   </para>
-     <para>
+   </para><para>
+<note><title>Uyumluluk Bilgisi</title><para>Mevcut Unix standardı yığıt için bellek ayırma konusunda hemen hemen hiç belirleyici değildir. Bütün gerçekleştirimler <command>uc_stack</command> üyesinin kullanımında anlaşmıştır ama <command>stack_t</command> değerinin üyelerinin içerebileceği değerler konusunu açık bırakmıştır. GNU C kütüphanesi ve diğer Unix gerçekleştirimlerinin çoğunluğunda <command>uc_stack</command> üyesinin <command>ss_sp</command> değeri, yığıt için ayrılmış bellek bölgesinin tabanını göstermelir ve <command>ss_size</command> değeri de bu bölgenin büyüklüğünü içermelidir. Bazı gerçekleştirimlerde ise <command>ss_sp</command> değeri yığıt göstericisinin değerini içerir (yığıtın gelişme yönüne göre bu değer farklıdır). Bu farklılık <command>makecontext</command> işlevinin kullanımını zorlaştırır ve derleme sırasında platformn bilgisinin elde edilip kullanılmasını zorunlu kılar.</para></note>
+   </para><para>
+<indexterm scope="glibc-fn"><primary>setcontext</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev" xml:id="glibc-setcontext">
+<funcdef>int <command>setcontext</command></funcdef>
+<paramdef>(const ucontext_t *<varname>bağlam</varname>)</paramdef>
+</funcprototype><funcdescr><para>
+<command>setcontext</command> işlevi, <varname>bağlam</varname> tarafından tanımlanmış bağlamı yeniden geçerli kılar. Bağlamda değişiklik yapılmaz ve istendiği kadar sık yeniden kullanılabilir.
+   </para><para>
 Eğer bağlam <command>setcontext</command> ile oluşturulmuşsa yürütme sonunda yazmaçlar, <command>setcontext</command> sanki şimdi geri dönüş yapmış gibi aynı değerleri içerir.
-   </para>
-     <para>
+   </para><para>
 Eğer <command>makecontext</command>'in çağrılmasıyla bağlamda değişiklik yapılmışsa <command>makecontext</command>'in çağrıldığı işlevle yürütmeye devam edilir ve bu işleve aynı çağrı sırasında verilen paramatreler aktarılır. Bu işlev geri dönüş yaptığında <command>makecontext</command> çağrılırken verilen bağlam
 yapısının <command>uc_link</command> üyesi tarafından gösterilen bağlamla yürütmeye devam edilir. Eğer <command>uc_link</command> bir boş gösterici ise, bu durumda uygulama sonlanır.
-   </para>
-     <para>
+   </para><para>
 Bağlam yığıt hakkında bilgi içerdiğinden aynı bağlamı aynı anda iki evre kullanmamalıdır. Aksi takdirde, sonuç çoğu durumda felaket olurdu.
-    </para>
-     <para><command>setcontext</command> işlevi bir hata oluşmadıkça dönmeyecekir, hata oluşmuşsa <command>-1</command> değeri ile döner.
-      </para>
-     <para><command>setcontext</command> işlevi mevcut bağlamı basitçe <varname>bağlam</varname> parametresi ile tanımlayarak değiştirir. Mevcut bağlamın korunmasını gerektiren durumlar da olmasına rağmen bu çoğunlukla kullanışlıdır.
-</para>
-    </funcdescr>
-   </funcsynopsis>
-  </para>
-  <para>
-   <indexterm scope="glibc-fn">
-    <primary>swapcontext</primary>
-   </indexterm>
-   <funcsynopsis>
-    <funcprototype role="işlev" xml:id="glibc-swapcontext">
-     <funcdef>int <command>swapcontext</command></funcdef>
-     <paramdef>(ucontext_t *restrict       <varname>diğer-bağlam</varname>,
+    </para><para>
+<command>setcontext</command> işlevi bir hata oluşmadıkça dönmeyecekir, hata oluşmuşsa <command>-1</command> değeri ile döner.
+      </para><para>
+<command>setcontext</command> işlevi mevcut bağlamı basitçe <varname>bağlam</varname> parametresi ile tanımlayarak değiştirir. Mevcut bağlamın korunmasını gerektiren durumlar da olmasına rağmen bu çoğunlukla kullanışlıdır.
+</para></funcdescr></funcsynopsis></para><para>
+<indexterm scope="glibc-fn"><primary>swapcontext</primary></indexterm>
+<funcsynopsis><funcprototype role="işlev" xml:id="glibc-swapcontext">
+<funcdef>int <command>swapcontext</command></funcdef>
+<paramdef>(ucontext_t *restrict       <varname>diğer-bağlam</varname>,
  const ucontext_t *restrict <varname>bağlam</varname>)</paramdef>
-    </funcprototype>
-    <funcdescr>
-     <para><command>swapcontext</command> işlevi <command>setcontext</command> işlevine benzer, fakat geçerli bağlam olan <varname>bağlam</varname> bağlamını bir <command>getcontext</command> çağrısından dönmüş olan <varname>diğer-bağlam</varname> ile değiştirir. <command>swapcontext</command> çağrısında sonra yürütme bu bağlamla devam eder.
-   </para>
-     <para>
+</funcprototype><funcdescr><para>
+<command>swapcontext</command> işlevi <command>setcontext</command> işlevine benzer, fakat geçerli bağlam olan <varname>bağlam</varname> bağlamını bir <command>getcontext</command> çağrısından dönmüş olan <varname>diğer-bağlam</varname> ile değiştirir. <command>swapcontext</command> çağrısında sonra yürütme bu bağlamla devam eder.
+   </para><para>
 Eğer <command>swapcontext</command> başarılıysa işlev dönmez. <varname>diğer-bağlam</varname> bağlamı evvelki bir <command>makecontext</command> çağrısı ile değişiklik yapılmaksızın kullanışmışsa  dönüş değeri <command>0</command>'dır. Eğer işlev başarısız olmuşsa <command>-1</command> döner ve <varname>errno</varname> değişkenine hata durumu atanır.
-    </para>
-    </funcdescr>
-   </funcsynopsis>
-  </para>
-  <section xml:id="glibc-Example-SVID">
-   <info>
-    <title>SVID Bağlam Denetimi Örneği</title>
-   </info>
-   <para>
+    </para></funcdescr></funcsynopsis></para>
+    <sect1 xml:id="glibc-Example-SVID">
+      <title>SVID Bağlam Denetimi Örneği</title>
+      <para>
 Bağlam işleme işlevlerini kullanmanın en kolay yolu <command>setjmp</command> ve <command>longjmp</command> işlevlerinin yerine bunları kullanmaktır.Bağlamın çoğu platformda daha az sürprizle sonuçlanan daha fazla bilgi içermesine rağmen bu işlevlerin kullanımı daha masraflıdır (daha az taşınabilir olması cabası).
-   </para>
-   <para>
-    <screen>int
+   </para><para>
+<screen>int
 random_search (int n, int (*fp) (int, ucontext_t *))
 {
   volatile int cnt = 0;
@@ -452,20 +276,16 @@ random_search (int n, int (*fp) (int, ucontext_t *))
   /* Bulamadık.  */
   return 0;
 }
-</screen>
-   </para>
-   <para>
+</screen></para><para>
 Bağlamların böyle bir yolla kullanımı olağandışılıkların elde edilme benzeşimini etkinleştirir. <varname>fp</varname> parametresi ile aktarılan arama işlevleri çok büyük, iç içe ve çağrıcıya aktarılan bir hata değeri ile işlevin bırakılması onu karmaşıklaştıracağından (veya en azından biraz daha kod gerekeceğinden), çok karmaşık olabilir. Bağlamı kullanarak arama işlevini tek bir adımda bırakmak ve ayrıca belirgin biçimde daha hızlı olabilen bir yan etkiyle aramanın yeniden başlatılmasına izin vermek mümkündür.
-   </para>
-   <para>
+   </para><para>
 Geçici olarak farklı bir yürütme noktasına geçmek ve sonra yürütmenin durduğu yerden devam etmek gibi bazı şeylerin <command>setjmp</command> ve <command>longjmp</command> ile gerçeklenmesi daha zordur.
-   </para>
-   <para>
-    <screen>#include &lt;signal.h&gt;
-#include &lt;stdio.h&gt;
-#include &lt;stdlib.h&gt;
-#include &lt;ucontext.h&gt;
-#include &lt;sys/time.h&gt;
+   </para><para>
+<screen>#include &lt;signal.h>
+#include &lt;stdio.h>
+#include &lt;stdlib.h>
+#include &lt;ucontext.h>
+#include &lt;sys/time.h>
 
 /* Buna sinyal eylemci atama yapacak. */
 static volatile int expired;
@@ -560,12 +380,9 @@ main (void)
 
   return 0;
 }
-</screen>
-   </para>
-   <para>
+</screen></para><para>
 Bu kod, bağlam işlevlerinin eş-yordamları veya çok evreli işbirliğini gerçekleştirmekte kullanılabilirliğine bir örnektir. Burada yapılan <command>swapcontext</command> kullanarak yürütmenin her seferinde farklı bir bağlamdan devam ettirilmesidir. Sinyal eylemci içinden ne <command>setcontext</command> ne de <command>swapcontext</command> çağrısı yapıldığından, bağlam değiştirme doğrudan sinyal eylemci tarafından yapılmamaktadır.
 Bunun yerine sinyal eylemci içinde bir değişkene değer atanıp, işlev içinden bu değişkene bakarak bu işlem gerçekleştirilmektedir. <command>swapcontext</command> geçerli bağlamı kaydettiğinden kod içinde farklı zamanlama noktaları olabilir. Yürütme daima kaldığı yerden devam edecektir.
-   </para>
-  </section>
+   </para></sect1>
  </chapter>
 </part>
