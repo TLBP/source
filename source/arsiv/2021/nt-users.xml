@@ -1,0 +1,308 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--DOCTYPE article SYSTEM "docbook/dtd/docbookx.dtd"-->
+<!-- ********************************************************************
+     $Id: nt-users.xml,v 1.1 2002/12/20 22:51:00 nilgun Exp $
+     ******************************************************************** -->
+<article xml:id="nt-users" lang="tr">
+  <info>
+    <title>Linux üzerinde Windows NT kullanıcıları</title>
+    <subtitle>WINBIND, SAMBA, PAM ile Linux'da Windows NT Kullanıcı Veritabanından Faydalanmak</subtitle>
+    <author><firstname>Deniz Akkuş</firstname></author>
+    <pubdate>Nisan 2004</pubdate>
+    <releaseinfo>v1.0</releaseinfo>
+    <abstract>
+      <para>
+Çoğu şirkette halen kullanımda olan bir Windows ağı ve bu ağ (Domain) üzerinde tanımlanmış olan kullanıcılar mevcuttur. Bu yazıda, bu kullanıcı bilgisini Linux üzerinde nasıl kullanabileceğimizi göreceğiz.
+      </para>
+    </abstract>
+     <legalnotice><title>Yasal Uyarı</title><para>
+Bu belgenin, <emphasis>Linux üzerinde Windows NT kullanıcıları</emphasis> 1.0 sürümünün <emphasis role="bold"> telif hakkı © 2004 <emphasis>Deniz Akkuş</emphasis></emphasis>'a aittir. &notice.gpl;</para>
+      &notice.disc;
+    </legalnotice>
+  </info>
+  <sect1 xml:id="nt-users_intro"><title>Giriş</title>
+    <sect2><title>Sağladığı Kolaylıklar</title>
+    <variablelist><varlistentry><term>Kullanıcı açısından kolaylık</term>
+    <listitem><para>
+Tek kullanıcı ismi ve parolası ile mümkün olduğu kadar çok hizmeti kullanabilmek kullanıcı için büyük bir kolaylıktır. Parolasını bir yerde değiştirdiği zaman diğer servisler için değiştirmek veya "posta kullanıcım neydi?" diye hatırlamak zorunda kalmaz. Tek kullanıcı kimliği ve bu kimliğe erişimi sağlayan bir parolası olur, bir tek bunu hatırlamak zorundakalır.
+    </para><para>
+Çoğu şirkette, kullanıcı, Windows ağı için başka, posta için başka, muhasebe sistemi için başka, ... her biri birbirinden az farklı bir sürü isim ve parola ile uğraşmak zorunda kalıyor. Ondan sonra da sistem yöneticileri kullanıcıların ad ve/veya parolalarını sürekli unutmasından veya bir kağıda yazıp ekranının yanına yapıştırmasından şikayet ediyor. :-) Bir ağda sağlanan hizmetlere ulaşmak için birden fazla ad ve parola kullanmak zorunda kalan kullanıcıların bu yöntemlere başvurmalarını çok da haksız görmek mümkün değil.
+    </para></listitem></varlistentry><varlistentry>
+    <term>Sistem yöneticisi açısından kolaylık</term>
+    <listitem><para>
+Sisteme eklenen her kullanıcı için on tane hesap açmak zevkli olmasa gerek. Üstelik de biriken bu yazılım kalabalığının hepsinde bir kullanıcı eklemek için ne yapmak gerektiği farklı.
+    </para></listitem></varlistentry></variablelist>
+    </sect2>
+    <sect2><title>Uygulama Sahaları</title><para/><para>
+Benim aklıma gelmeyen pek çok uygulama sahası muhakkak mevcuttur. Ben iki kullanımdan bahsedeceğim -- Linux üzerinde posta sunucusu ve vekil sunucusunda Windows NT kullanıcılarını tanımak.
+    </para><variablelist><varlistentry>
+    <term>Linux posta sunucusunda Windows kullanıcı ad ve parolalarını kullanabilmek</term>
+    <listitem><para>
+Bu yöntemi kullanarak, posta sunucumuzun, Windows ağında kullanılan kullanıcı adı ve parolalarını kabul etmesini sağlayabiliriz. Üstelik, eğer Cyrus kullanıyor isek, posta sistemine ilk giriş esnasında, kullanıcının henüz var olmayan posta kutusunun da özdevinimli oluşturulmasını sağlayabiliriz. Dolayısıyla bir kullanıcıyı Windows sistemine eklediğimiz zaman posta erişimini sağlamak için başka herhangi bir şey yapmamıza gerek kalmaz. Benim kullandığım posta sunucusu, SMTP için <link xlink:href="http://www.postfix.org">Postfix</link>, IMAP/POP için <link xlink:href="http://asg.web.cmu.edu/cyrus/imapd/">Cyrus</link>. Fakat bu yöntem, Windows kullanıcılarını Linux'da yerel kullanıcı imiş gibi gösterdiğinden dolayı, yerel kullanıcı kabul eden bütün sunucularda uygulamak mümkün. Dikkat çekmek istediğim nokta, posta kutusunun otomatik oluşturulmasına izin veren bir IMAP/POP sunucusu olmak zorunda olduğu. Bu özellik <link xlink:href="http://asg.web.cmu.edu/cyrus/imapd/">Cyrus</link>'da mevcut, diğerlerini bilmiyorum.
+    </para></listitem></varlistentry><varlistentry>
+    <term>Vekil sunucuda Windows kullanıcı ve parolasını kullanmak</term>
+    <listitem><para>
+Linux üzerinde <link xlink:href="http://www.squid-cache.org/">squid</link> kullanıyor isek, NTLM izinlendirme yöntemini kullanmasını sağlamak mümkün. Dolayısıyla, hem erişimi kullanıcı bazında takip edebiliriz hem de kullanıcı bazında izinlendirme uygulayabiliriz. Bu, IP numaralarını takip etmekten çok daha verimli bir yöntem. Eğer kullanıcı Internet Explorer kullanmaya devam ediyor ise, kendisine parola bile sormadan bu izinlendirmeyi arka planda yapıyor.
+    </para></listitem></varlistentry></variablelist>
+    </sect2>
+    <sect2><title>Kullanılan Yazılımlar</title>
+    <variablelist><varlistentry><term>Samba 3.X serisi</term>
+    <listitem><para>
+<link xlink:href="http://www.samba.org"/> adresinden bulabileceğiniz Samba yazılımı aynı zamanda bütün dağıtımların içerisinde de mevcut. Önemli olan 3.X serisi olması.
+    </para></listitem></varlistentry><varlistentry><term>Ldap sunucusu</term>
+    <listitem><para>
+<link xlink:href="http://www.openldap.org"/> adresinden <userinput>slapd</userinput> sunucusunu indirebilirsiniz. Gene bütün dağıtımlarda LDAP sunucusu mevcuttur.
+    </para><warning><para>
+LDAP sunucusu gerekmeyebilir. Eğer Windows NT kullanıcılarını birden fazla Linux makina üzerinde kullanmak isterseniz, o zaman gerekecektir.
+    </para></warning>
+    </listitem></varlistentry></variablelist>
+    </sect2>
+    <sect2><title>Yapılacak İşlem</title><para>
+Linux makinasını, Windows NT ağına bir sunucu olarak tanıtacağız. Winbind servisini çalıştırarak, Windows NT üzerinde mevcut olan kullanıcıların Linux üzerinde sanki yerel kullanıcı imiş gibi görülmesini sağlayacağız. Winbind bunu yaparken, her Windows NT kullanıcısına bir sanal Linux kullanıcı kimliği veriyor. Eğer birden fazla Linux makinası kullanacak isek, o zaman bu sanal Linux kullanıcı kimliklerinin hep aynı olmasını sağlamakta fayda var, LDAP sunucusunu o zaman kullanıyorlar -- yeni bir Windows NT kullanıcısı ile ilk defa karşılaşan Linux makinası, <emphasis>sanal kimlik-Windows NT</emphasis> eşlemesini LDAP'e kaydediyor, diğer Linux makinaları da aynı eşlemeyi kullanıyorlar.</para>
+    </sect2></sect1><sect1 xml:id="nt-users_linux-nt">
+    <title>Linux Makinasını Windows NT Ağına Tanıtmak</title>
+    <para>
+Orjinal Samba belgesi: <link xlink:href="http://us1.samba.org/samba/docs/man/domain-member.html#id2899503"/>
+  </para><para>
+  <informaltable frame="none" style=";background:#999999;">
+  <tgroup cols='2'><tbody>
+    <row style="background:#ffffee;">
+      <entry>NetBIOS adı</entry><entry>SERV1</entry>
+    </row><row style="background:#ffffee;">
+      <entry>Windows 200x/NT alan adı</entry><entry>MIDEARTH</entry>
+    </row><row style="background:#ffffee;">
+      <entry>Alan PDC'nin NetBIOS adı</entry><entry>DOMPDC</entry>
+    </row><row style="background:#ffffee;">
+      <entry>Alan BDC NetBIOS adları</entry><entry>DOMBDC1 ve DOMBDC2</entry>
+    </row></tbody></tgroup></informaltable>
+  </para><para>
+İlk önce <filename>smb.conf</filename> dosyanızı değiştirerek Samba'da alan güvenliği kullanılır hale getirmelisiniz. <filename>smb.conf</filename> dosyanızın <userinput>[global]</userinput> bölümünün içindeki güvenlik satırını aşağıdaki hale getirin:
+  </para>
+<screen>security = domain</screen>
+  <para>
+Bundan sonra yine <userinput>[global]</userinput> bölümünde yer alan grup bilgisini değiştirin:
+  </para>
+<screen>workgroup = MIDEARTH</screen>
+  <para>
+Bu isim, katılacağımız alanın adıdır. Kullanıcılarınızın NT PDC'den kimlik kontrolü yaptırabilmesi için parolaların şifreli olduğuna dair parametre de aşağıdaki şekilde belirtilmelidir. Bu parametrenin öntanımlı değeri "yes"/evet olduğundan dolayı ayrıca <filename>smb.conf</filename> içine yazmanız gerekli değildir. Fakat eğer <filename>smb.conf</filename> dosyanızda bu parametre yer alıyor ise, değeri "yes" olmalıdır:
+  </para>
+<screen>encrypt passwords = yes</screen>
+  <para>
+Son olarak <userinput>[global]</userinput> bölümünde parola sunucusu satırını değiştirin (veya ilave edin):
+  </para>
+<screen>password server = DOMPDC DOMBDC1 DOMBDC2</screen>
+  <para>
+Bu sunucular, Samba'nın kullanıcı yetkinleştirmek için başvuracağı birincil ve yedek alan sunucularının isimleridir. Samba bu sunucuları verilen sırayla arayacaktır, dolayısıyla yük paylaştırmak amacı ile burada vereceğiniz sıralamada değişiklik yapabilirsiniz.
+  </para><para>
+Veya, <userinput>smbd</userinput>'nin Alan Sunucusu listesini otomatik olarak elde etmesini isterseniz, bu satırı aşağıdaki şekilde de uygulayabilirsiniz:
+  </para>
+<screen>password server = *</screen>
+  <para>
+Bu yöntem, Samba'nın tamamen NT'nin kullandığı mekanizmayı kullanmasını sağlar. Bu yöntemde ya broadcast (genel yayın) bazlı isim çözümlemesi yapılır ve bir WINS veritabanına bakılarak yetkinleştirme için başvurulacak Alan Sunucusu bulunur ya da DNS isim çözümlemesi kullanılarak Alan Sunucusu bulunur.
+  </para><para>
+Alana üye olmak için bu komutu çalıştırın:
+  </para>
+<screen>
+<prompt>root# </prompt><userinput>net rpc join -S DOMPDC -U<emphasis>yönetici%parola</emphasis></userinput>
+</screen>
+  <para>
+Eğer <userinput>-S DOMPDC</userinput> argümanı verilmezse, alan adı, <filename>smb.conf</filename> ayarlarından bulunur.
+  </para><para>
+Samba makinası, <literal>DOM</literal> adındaki alana üye oluyor ve bu alanın birincil alan sunucusu (PDC), <literal>DOMPDC</literal> adında bir makina, bu sebeple <userinput>-S</userinput> seçeneği kullanılıyor.
+  </para><para>
+<varname>yönetici%parola</varname> ise <literal>DOMPDC</literal> üzerinde, alana makina eklemeye yetkisi olan bir hesabın adı ve parolası. Eğer bu komut başarılı olur ise, aşağıda gösterilen iletiyi alacaksınız. NT4 alan mimarisinin kullanıldığı durumlarda:
+  </para><para>
+<screen>Joined domain DOM.</screen>
+  </para><para>
+Active Directory mimarisi kullanılıyor ise:
+  </para>
+<screen>Joined SERV1 to realm MYREALM.</screen>
+  <para>
+Daha fazla bilgi için <userinput>net</userinput> kılavuz sayfasına bakın.
+  </para><para>
+Bu komut, Samba sunucusunu, alana, PDC üzerinde daha önceden bir makina hesabı açmak zorunda kalmaksızın üye yapar.
+  </para><para>
+Komut, makina hesabı parola değiştirme protokolünü uygular ve oluşturduğu (rasgele) yeni makina hesap parolasını normalde <filename>smbpasswd</filename> dosyasının tutulduğu dizinde bir dosyaya kaydeder:
+  </para><para>
+<filename>/usr/local/samba/private/secrets.tdb</filename> veya <filename>/etc/samba/secrets.tdb</filename>
+  </para><para>
+Bu dosya <literal>root</literal>'a aittir ve başka bir kullanıcı tarafından okunamaz. Bu dosya sisteminiz için Alan seviyesinde güvenliğin anahtarıdır ve herhangi bir parola dosyası kadar dikkatle muhafaza edilmelidir.
+  </para><para>
+Son olarak Samba sunucunuzu tekrar başlatın. Samba'yı yeniden başlatma şekli dağıtımınıza göre farklı olabilir fakat genelde aşağıdaki komut işinizi görecektir:
+  </para>
+<screen>
+<prompt>root# </prompt><userinput>/etc/init.d/samba restart</userinput>
+</screen>
+  </sect1><sect1 xml:id="nt-users_winbind">
+  <title>Linux Makinasında Windows Kullanıcılarını Görmek - Winbind</title>
+  <sect2><title>Winbind'ın Getirdikleri</title>
+  <para>
+Orjinal belge: <link xlink:href="http://us1.samba.org/samba/docs/man/winbind.html#id2955823"/>
+  </para><para>
+Winbind, UNIX ve Windows NT hesap yönetimini, bir UNIX makinasının tam anlamıyla bir NT alanına üye olmasını sağlayarak birleştirir. Bu gerçekleştirildikten sonra UNIX makinası, NT kullanıcılarını ve gruplarını sanki UNIX "yerel" kullanıcı ve gruplarıymış gibi görecek ve NT alanını tıpkı tamamen UNIX olan ortamlarda NIS'in kullanıldığı gibi kullanmaya imkan verecektir.
+  </para><para>
+Sonuç olarak, UNIX makinasında herhangi bir yazılım bir kullanıcı veya grup adı hakkında işletim sisteminden bilgi istediği zaman, bu istem, ilgili alanın NT Alan Sunucusu'na sorularak çözümlenir. Winbind işletim sistemine alt seviyede (C kitaplığındaki NSS isim çözümleme modülleri vasıtası ile) bütünleşik olduğundan dolayı, NT Alan Sunucusu'na yapılan bu yönlendirme tamamen şeffaftır.
+  </para><para>
+UNIX makinasındaki kullanıcılar bu şekilde NT kullanıcı ve grup isimlerini tıpkı "yerel" UNIX isimlerini kullandıkları gibi kullanabilirler. Dosyaların NT alan kullanıcılarına ait olması için <userinput>chown</userinput> komutunu kullanabilir, hatta NT kullanıcı adlarını kullanarak bir UNIX makinasına giriş yapabilirler.
+  </para><para>
+Winbind'ın kullanıldığına dair tek işaret, kullanıcı ve grup isimlerinin <literal>DOMAIN\kullanıcı</literal> ve <literal>DOMAIN\grup</literal> şeklinde olmasıdır.
+  </para><para>
+Ek olarak, Winbind, Pluggable Authentication Modules (PAM) sistemine bağlanan bir yetkinleştirme mekanizması sağlar. Bu yol ile UNIX sistemleri, PAM kullanan bütün uygulamaların kullanıcı yetkinleştirmesinde NT alan bilgilerini kullanabilirler. Bu mekanizma, sistemler arası parolaların eşzamanlı tutulması sorununu çözer, çünkü bütün parolalar tek bir yerde tutulur (Alan Sunucusu'nda).
+  </para></sect2><sect2>
+  <title><literal>nsswitch.conf</literal> Ayarları</title><para>
+İlgili orjinal belge: <link xlink:href="http://us1.samba.org/samba/docs/man/winbind.html#id2956484"/> (Bu bölümdeki bilgiler bu belgenin bir çevirisi değildir.)
+  </para><para>
+<literal>root</literal> kullanıcı olarak <filename>/etc/nsswitch.conf</filename> dosyanızı düzenleyerek kullanıcı ve grup girdilerinin <userinput>winbindd</userinput> sunucusundan alınmasını sağlamanız gerekli. Bu düzenleme sonrası <filename>/etc/nsswitch.conf</filename> dosyanız aşağıdaki gibi olacaktır:
+  </para>
+<screen>
+passwd: files winbind
+shadow: files
+group: files winbind
+</screen>
+  <para>
+<userinput>winbindd</userinput> sunucusu tarafından gereken kitaplıklar sisteminiz yeniden başlatıldığı zaman özdevinimli olarak <userinput>ldconfig</userinput> önbelleğine alınacaktır, fakat elle bu işlemi yapmanız daha hızlı olacaktır (üstelik de sistemi yeniden başlatmanıza gerek kalmaz.)
+  </para>
+<screen>
+<prompt>root# </prompt><userinput>/sbin/ldconfig -v | grep winbind</userinput>
+</screen>
+  <para>
+Bu komut, <userinput>libnss_winbind</userinput> kitaplığı hakkında size bilgi verir.
+  </para></sect2><sect2>
+  <title><filename>smb.conf</filename> Ayarları</title>
+  <para>
+<filename>smb.conf</filename> dosyanızın <userinput>[global]</userinput> bölümüne <userinput>winbind</userinput> ile ilgili aşağıdaki parametreleri girin:
+  </para>
+<screen>
+[global]
+<emphasis># alan adı ve kullanıcı kimliği arasında kullanılan ayraç</emphasis>
+winbind separator = +
+<emphasis># 10000 ile 20000 arasındaki uid no'larını alan kullanıcıları için ayırın</emphasis>
+idmap uid = 10000-20000
+<emphasis># 10000 ile 20000 arasındaki gid no'larını alan grupları için ayırın</emphasis>
+idmap gid = 10000-20000
+<emphasis># winbind kullanıcı ve gruplarının listelenmesine izin verin</emphasis>
+winbind enum users = yes
+winbind enum groups = yes
+<emphasis># eğer winbind kullanıcıları Linux makinasında kabuk girişine izinli olacaklar ise</emphasis>
+<emphasis># (telnet yapabilmek gibi) onların ev dizinleri ve kabuk bilgileri</emphasis>
+template homedir = /home/winnt/%D/%U
+template shell = /bin/bash
+</screen>
+</sect2><sect2><title>Winbind Sunucusunun Başlatılması</title>
+  <para>
+<screen><prompt>root# </prompt><userinput>/etc/rc.d/init.d/winbind start</userinput></screen>
+  </para></sect2><sect2><title>Sınama</title>
+  <para>
+Bu komut, mevcut NT alanınızdaki kullanıcıları listelemelidir:
+  </para>
+<screen>
+<prompt>root# </prompt><userinput>wbinfo -u</userinput>
+</screen>
+  <para>
+Bu komut, mevcut NT alanınızdaki grupları listelemelidir:
+  </para>
+<screen>
+<prompt>root# </prompt><userinput>wbinfo -g</userinput>
+</screen>
+  <para>
+Bu komut, hem UNIX'de yerel olarak tanımlı kullanıcıları, hem de NT alanından gelen kullanıcıların tamamını bir arada verir. Çıktı, <filename>passwd</filename> dosyasının görüntüsünebenzer:
+  </para>
+<screen>
+<prompt>root# </prompt><userinput>getent passwd</userinput>
+<prompt>root# </prompt><userinput>getent group</userinput>
+</screen>
+  </sect2></sect1><sect1 xml:id="nt-users_ldap">
+  <title>Birden Fazla Linux Makinasında Winbind Çalıştırmak -- Arada LDAP</title>
+  <para>
+İlgili belgeler: <link xlink:href="http://us1.samba.org/samba/docs/man/domain-member.html#id2901054"/>  <link xlink:href="http://us1.samba.org/samba/docs/man/passdb.html#idmapbackend"/> (Bu bölümdeki bilgiler bu belgelerin çevirisi değildir.)
+  </para><para>
+Yukarıda anlatılan mekanizma, NT'de var olan bir kullanıcı için, Samba/Winbind vasıtası ile sanal bir Linux kullanıcısı oluşturulması mekanizmasıdır. Eğer ağda birden fazla Linux makinası var ise, şöyle bir problemle karşılaşabilirsiniz: İki Linux makinasının sanal kullanıcı listesi birbirini tutmaz. Dolayısıyla özellikle bu iki makina arasında NFS gibi UNIX bazlı dosya paylaşım gibi mekanizmalar kullanır iseniz, birinde <literal>ahmet</literal>'e ait olarak görülen dosyanın diğerinde hiç kimseye, veya, daha kötüsü <literal>mehmet</literal>'e ait olarak görüldüğünü farkedebilirsiniz. Ağda birden fazla Linux makinasında winbind çalıştıracak iseniz, arada bir LDAP sunucusu çalıştırarak bu sorunu bertaraf edebilirsiniz. LDAP sunucusundaki bilgileri siz hiç bir zaman doğrudan kullanmayacaksınız, Linux makinaları, ne zaman bir NT kullanıcısını bir UNİX hesabı ile eşleşirse LDAP'e kaydedecekler ve kayıtlarını oradan kontrol ederek kendi aralarındaki NT->UNIX eşlemesinde eşzamanlı kalacaklar.LDAP sunucusunun kurulmasını ve ayarlarını burada anlatmayacağım. Çalışan bir LDAP sunucusuna ve bu sunucu üzerinde yazma yetkisi olan bir kullanıcıya ihtiyaç var.
+  </para><para>
+Bu sunucunun adı: <userinput>ldap.bizimfirma.com.tr</userinput> 
+Kullanıcının adı: <userinput>smbadmin</userinput> 
+Kullanıcının DN'i: <userinput>uid=smbadmin,ou=Local,dc=bizimfirma,dc=com,dc=tr</userinput>
+  </para><para>
+LDAP sunucusuna, <userinput>idmap</userinput> şemasını yüklemeniz gerekli. Bu şema, samba dağıtımınızda gelebileceği gibi, <link xlink:href="http://www.padl.com/download/xad_oss_plugins.tar.gz">PADL</link> 'den de indirilebilir. <filename>smb.conf</filename> dosyanıza:
+  </para>
+<screen>
+idmap backend = ldap:ldap://ldap.bizimfirma.com.tr
+ldap admin dn = uid=smbadmin,ou=Local,dc=bizimfirma,dc=com,dc=tr
+ldap user suffix = ou=Local,dc=bizimfirma,dc=com,dc=tr
+ldap group suffix = ou=Local,dc=bizimfirma,dc=com,dc=tr
+ldap idmap suffix = ou=Idmap,dc=bizimfirma,dc=com,dc=tr
+</screen>
+ <para>
+Şimdi LDAP kullanıcısının parolasını Samba'ya tanıtalım:
+  </para>
+<screen>
+<prompt>root# </prompt><userinput>smbpasswd -w<emphasis>parola</emphasis></userinput>
+</screen>
+  <note><title>Tavsiye</title><para>
+Bu adım, hele hele mevcut bir LDAP sunucunuz yok ise, gereksiz gibi görünebilir. Bu adımı en başta, tek Linux makinasına winbind kuruyor olsanız bile uygulamanızı tavsiye ediyorum. Birincisi, ileride ikinci bir Linux makinası ilave eder ve kullanıcı eşlemesini eşzamanlamaz iseniz bir sürü hataya meydan verecek bir ortam oluşturacaksınız. O zaman LDAP sunucusu ilave ettiğiniz zaman ise, bütün mevcut eşlemeleri silip sıfırdan tekrar başlatacaksınız. Linux'daki mevcut dosyaların (posta kutusu vs. de dahil) sahiplik bilgileri karman çorman olacak. İkincisi ise, bütün bu yazı, kullanıcı veritabanını NT üzerinde tutup Linux'da ondan faydalanmak üzerine kurulu. Halbuki tam tersini yapmak da mümkün. Yani LDAP üzerinde kullanıcılarınızı tutup, Samba PDC çalıştırıp hem Linux, hem NT makinalarınızı buradan beslemek mümkün. Bu aşamada bir LDAP düzeneği kurmak, ileride buna geçiş için gerekli altyapıyı da hazırlıyor.
+  </para></note></sect1><sect1 xml:id="nt-users_postfix">
+  <title>Posta Sunucusunu Bu Düzenekle Bütünleştirmek</title><para>
+Şimdiye kadar doğrudan bir faydasını görmediğimiz bir sürü işlem yaptık. Şimdi ise sıra kurmuş olduğumuz altyapının meyvelerini toplamaya geldi.
+  </para><para>SMTP Sunucusu olarak Postfix kullanıyoruz.
+  </para><sect2>
+  <title>NT Kullanıcılarını Yerel Kullanıcı Olarak Kabul Etme</title><para>
+Postfix kullanıcısı ön tanımlı olarak yerel kullanıcıları kabul eder. Bu ayar, <filename>main.cf</filename> içerisinde <userinput>local_recipient_maps</userinput> parametresi ile yapılır. Bu parametre, öntanımlı değer olarak bütün yerel kullanıcıları ve Postfix'in <literal>alias</literal> tablolarını kabul eder.
+  </para><para>
+Dolayısıyla NT kullanıcılarınızı Postfix'in yerel kullanıcı olarak kabul etmesi için gereken herşeyi zaten yapmış bulunuyoruz. Ek bir şey yapmanıza gerek yok. Bir sorun çıkarsa, <userinput>local_recipient_maps</userinput> parametresinin değerini öntanımlı değerinde bırakıp bırakmamış olduğunuzu kontrol edin.
+  </para></sect2><sect2><title>SMTP-AUTH için NT Kullanıcıları</title><para>
+Faydalı bir kaynak: <link xlink:href="http://postfix.state-of-mind.de/patrick.koetter/smtpauth/"/> 
+Önce <userinput>cyrus-sasl</userinput> paketini kurun. Bunun içinde gelen <userinput>saslauthd</userinput> sunucusunu, <literal>-a pam</literal> seçeneği ile çalıştırın. Ondan sonra <filename>/etc/pam.d/smtp</filename> dosyasını düzenleyin:
+  </para>
+<screen>
+auth sufficient /lib/security/pam_winbind.so
+account sufficient /lib/security/pam_permit.so
+password sufficient /lib/security/pam_smbpass.so
+</screen>
+  <para>
+<filename>/etc/postfix/master.cf</filename> içine:
+  </para>
+<screen>
+smtpd_sasl_auth_enable = yes
+smtpd_sasl_security_options = noanonymous
+</screen>
+  <para>
+Bu tanımlarla, Windows kullanıcı adı ve parolası kullanarak SMTP-AUTH sınamalarını gerçekleştirebilirsiniz.
+  </para><para>
+IMAP/POP Sunucusu olarak kullandığımız <userinput>cyrus</userinput> için de pek fazla bir şey yapmamız gerekli değil. <filename>/etc/imapd.conf</filename>içerisine:
+  </para>
+<screen>
+sasl_pwcheck_method: saslauthd
+sasl_mech_list: PLAIN LOGIN
+</screen>
+  <para>
+yazarak kimlik sınamasını <userinput>saslauthd</userinput> ile yapmasını sağlıyoruz. Bunu, Postfix için daha önce kurmuştuk ve PAM kullanmaya ayarlamıştık (<literal>-a pam</literal> seçeneği). <filename>/etc/pam.d/imap</filename> dosyası ile IMAP kontrollerinde ne yapması gerektiğini belirtelim:
+  </para>
+<screen>
+auth        sufficient    /lib/security/pam_winbind.so
+account sufficient /lib/security/pam_permit.so
+password sufficient /lib/security/pam_smbpass.so
+</screen>
+  <para>
+Bu ayarlarla çalıştırdığımız Cyrus sunucusu, bir kullanıcının var olup olmadığı ve şifresinin kontrolü için NT kullanıcılarına erişecek. Fakat bir tek sorun kaldı, o da kullanıcı posta kutusunun oluşturulması. Onu da özdevinimli duruma getirelim. <filename>/etc/imapd.conf</filename> dosyası içerisine:
+  </para>
+<screen>
+# Cyrus, eğer:# 1. Kullanıcı kontrolü başarılı ise
+# 2. Aşağıdaki kota ayarı var ve sıfır değil ise
+# 3. Kullanıcıya ait bir posta kutusu yok ise,
+# Kullanıcı için özdevinimli olarak ilk girişte posta kutusu oluşturuyor.
+
+# Özdevinimli oluşturulan posta kutularına kota koymuyoruz.
+# Kota koymak isterseniz pozitif kota değerini belirtin.
+<command>autocreatequota: -1</command>
+
+# Şöyle bir senaryo düşünün. Kullanıcı henüz sisteme giriş yapmadı,
+# dolayısıyla posta kutusu yok. Fakat kendisine bir posta gönderiliyor.
+# Bunu kabul edebilmek için, henüz bir posta kutusu olmaksızın kendisine
+# posta gönderilen biri için de posta kutusunun oluşmasını sağlayalım:
+<command>createonpost: yes</command>
+
+# Bu özdevinimli oluşturulan posta kutularında bazı dizinler de
+# özdevinimli oluşsun:
+<command>autocreateinboxfolders: Sent | Drafts | Templates | Trash</command>
+<command>autosubscribeinboxfolders: Sent | Drafts | Templates | Trash</command>
+</screen></sect2></sect1>
+</article>
