@@ -93,12 +93,12 @@ http://docbook.sourceforge.net/release/images/annot-close.png</xsl:param>
 <xsl:param name="callout.defaultcolumn">60</xsl:param>
 <xsl:param name="callout.graphics.extension">.png</xsl:param>
 
-<xsl:param name="callout.graphics" select="1"/>
+<xsl:param name="callout.graphics" select="0"/>
 <xsl:param name="callout.graphics.number.limit">15</xsl:param>
 
 <xsl:param name="callout.graphics.path">images/callouts/</xsl:param>
 <xsl:param name="callout.list.table" select="1"/>
-<xsl:param name="callout.unicode" select="0"/>
+<xsl:param name="callout.unicode" select="1"/>
 <xsl:param name="callout.unicode.number.limit">10</xsl:param>
 <xsl:param name="callout.unicode.start.character">10102</xsl:param>
 <xsl:param name="callouts.extension" select="1"/>
@@ -148,7 +148,7 @@ http://docbook.sourceforge.net/release/images/annot-close.png</xsl:param>
 <xsl:param name="email.delimiters.enabled" select="1"/>
 <xsl:param name="emphasis.propagates.style" select="1"/>
 <xsl:param name="entry.propagates.style" select="1"/>
-<xsl:param name="exsl.node.set.available"> 
+<xsl:param name="exsl.node.set.available">
   <xsl:choose>
     <xsl:when xmlns:exsl="http://exslt.org/common" exsl:foo="" test="function-available('exsl:node-set') or                        contains(system-property('xsl:vendor'),                          'Apache Software Foundation')">1</xsl:when>
     <xsl:otherwise>0</xsl:otherwise>
@@ -309,7 +309,7 @@ set       toc,title
 <xsl:param name="make.valid.html" select="1"/>
 <xsl:param name="make.year.ranges" select="0"/>
     <xsl:param name="manifest">HTML.manifest</xsl:param>
-    
+
 <xsl:param name="manifest.in.base.dir" select="0"/>
 <xsl:param name="manual.toc"/>
 <xsl:param name="menuchoice.menu.separator"> &#8594; </xsl:param>
@@ -323,7 +323,7 @@ set       toc,title
 <xsl:param name="nominal.table.width">6in</xsl:param>
 <xsl:param name="olink.base.uri"/>
 <xsl:param name="olink.debug" select="0"/>
-<xsl:param name="olink.doctitle">no</xsl:param> 
+<xsl:param name="olink.doctitle">no</xsl:param>
 <xsl:param name="olink.lang.fallback.sequence"/>
 <xsl:attribute-set name="olink.properties">
   <xsl:attribute name="show-destination">replace</xsl:attribute>
@@ -426,7 +426,7 @@ set       toc,title
 <xsl:param name="use.embed.for.svg" select="0"/>
 <xsl:param name="use.extensions" select="0"/>
 <xsl:param name="use.id.as.filename" select="0"/>
-<xsl:param name="use.local.olink.style" select="0"/> 
+<xsl:param name="use.local.olink.style" select="0"/>
 <xsl:param name="use.role.as.xrefstyle" select="1"/>
 <xsl:param name="use.role.for.mediaobject" select="1"/>
 <xsl:param name="use.svg" select="1"/>

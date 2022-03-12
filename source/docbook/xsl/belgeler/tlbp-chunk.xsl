@@ -25,6 +25,6 @@ includes all the components that it needs. -->
      It contains match templates with priority="1" attributes,
      and named templates.  These override any templates that
      handle chunking behavior -->
-<xsl:include href="../docbook5/xhtml5/html5-chunk-mods.xsl"/>
+<xsl:include href="tlbp-html5-chunk-mods.xsl"/>
 
 </xsl:stylesheet>

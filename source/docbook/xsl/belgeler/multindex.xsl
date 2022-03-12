@@ -253,7 +253,7 @@ version="1.0">
 <xsl:template match="*" mode="alphabetic-index-f"/>
 
 <xsl:template match="d:primary|d:see" mode="alphabetic-index">
-  <a name="{.}"/><span class="indexterm">
+  <span name="{.}" class="indexterm">
     <xsl:apply-templates/>
   </span>
 </xsl:template>

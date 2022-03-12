@@ -1,262 +1,276 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--DOCTYPE article SYSTEM "../../docbook/dtd/docbookx.dtd"-->
 <!-- ********************************************************************
-     $Id: djbdns-kurulumu-NASIL.xml,v 1.1 2002/10/17 23:07:55 nilgun Exp $
+       yerli/djbdns-kurulumu-NASIL.xml
      ******************************************************************** -->
-
-<article xml:id="djbdns-kurulumu-nasil" lang="tr">
-  <info>
-    <!-- Use "HOWTO", "mini HOWTO", "FAQ" in title, if appropriate -->
-    <title>djbDNS Kurulumu NASIL</title>
-
-    <author>
-      <personname><firstname>Ömer Faruk</firstname>
-       <surname>Şen</surname></personname>
-     </author>
-     <pubdate>2 Ağustos 2001</pubdate>
-
-     <!-- Most recent revision goes at the top; list in descending order -->
-     <revhistory>
-       <revision>
-          <revnumber>1.0</revnumber>
-          <date>2 Ağustos 2001</date>
-          <authorinitials>ÖFŞ</authorinitials>
-       </revision>
-    </revhistory>
-    <abstract>
+<article xml:id="djbdns-kurulumu-nasil" xmlns="http://docbook.org/ns/docbook"
+ xmlns:xlink="http://www.w3.org/1999/xlink" version="5.0" xml:lang="tr">
+ <info>
+  <title>djbDNS Kurulumu NASIL</title>
+  <author>
+   <personname>
+    <firstname>Ömer Faruk</firstname>
+    <surname>Şen</surname>
+   </personname>
+  </author>
+  <pubdate>2 Ağustos 2001</pubdate>
+  <revhistory>
+   <revision>
+    <revnumber>1.0</revnumber>
+    <date>2 Ağustos 2001</date>
+    <authorinitials>ÖFŞ</authorinitials>
+   </revision>
+  </revhistory>
+  <abstract>
+   <para>
+    Bu belgede şu an Unix dünyasında bulunan en güvenli DNS sunucusu olan
+    djbDNS ve kurulumu anlatılacaktır.
+   </para>
+  </abstract>
+ </info>
+ <sect1 xml:id="djbdns-kurulumu-nasil_giris">
+  <title>Giriş</title>
+  <blockquote>
+   <attribution>D.J.Bernstein
+    (<link xlink:href="http://cr.yp.to/djbdns/ad/unbind.html"/>)
+   </attribution>
+   <para>
+    BIND, the Buggy Internet Name Daemon is like Microsoft Windows. The damn
+    thing doesn't work. Every version has been brimming with bugs.
+   </para>
+  </blockquote>
+  <para>
+   Bu belgede şu an Unix dünyasında bulunan en güvenli DNS sunucusu olan
+   djbDNS ve kurulumu anlatılacaktır.
+  </para>
+  <para>
+   DjbDNS D.J.Bernstein tarafından yazılmıştır. Kendisi aynı zamanda
+   <literal>qmail</literal>, <literal>tcpserver</literal>,
+   <literal>publicfile</literal>, <literal>daemontools</literal> gibi çeşitli
+   sistem yazılımları yazmıştır. Sanırım üstteki ifadeye katılmamak mümkün
+   değil. DjbDNS gerek üniversite gerekse ticari şirketler tarafından rahatça
+   kullanılabilir.
+  </para>
+  <para>
+   Bind tek başına SPOI (Single Point of InSecuritness) lakabını yeterince
+   haketmektedir. Ayrıca djbDNS DNS sistemi için yeni istemci kitaplıklarını
+   da sunmaktadır.
+   <link xlink:href="http://cr.yp.to/djbdns/ad/library.html"/> adresinden gerekli bilgiler edinebilir.
+  </para>
+  <para>
+   OpenBSD üzerine kurulacak basit bir makinada djbdns 2-3 sene kesintisiz
+   hizmet verebilir.
+  </para>
+  <para>
+   Bilindiği üzere şu anda dünya üzerinde en çok kullanılan DNS sunucu
+   yazılımı olan <literal>bind</literal> paketinde bir çok güvenlik açığı
+   bulunmaktadır. Bunların ortaya çıkması sadece zaman meselesidir. Nitekim şu
+   an kullanılan <literal>bind</literal> sürümünde bile birkaç açığın var
+   olduğu ve bunun internette istismar edildiği konuşulmaktadır.
+   Söylenti bile olsa <literal>bind</literal>'i kullanmak zorunda olan
+   sistem yöneticileri ne demek istediğimi anlayacaklardır. Securityfocus.com
+   adresinde de djbdns kurulumu anlatılmaktadır. Zaten djbdns ile biz boyle
+   tanıştık. Sendmail'den Qmail'e çekilen zorlukları bind'tan djbdns'e
+   geçerken yaşamayacaksınız. Bind ile djbdns'nin karşılaştırmasını
+   <link xlink:href="http://cr.yp.to/djbdns/ad/easeofuse.html"/> adresinde
+   bulabilirsiniz.
+  </para>
+ </sect1>
+ <sect1 xml:id="djbdns-kurulumu-nasil_dns">
+  <title>DNS Nedir?</title>
+  <para>
+   Domain Name System [DNS] (Alan Adı Sistemi) dağıtık yapıda bir
+   veritabanıdır. Bu sistem makina isimlerini IPv4 (ya da ipv6) adreslere ya
+   da IPv4 adresleri makina isimlerine çevirmeye yarar. Ayrıca bir alan için
+   gerekli eposta sunucusunun adreslerini ya da alan adı sunucularının hangi
+   IP adreslerinde bulunduğunu daha teknik bir ifade ile RR'ları (Resource
+   Records - Özkaynak Kayıtları) tutar. DNS yapısı gereği hızlı olmalıdır. Bu
+   yüzden yapılan sorgulamalar eğer 512 bayttan küçük ise ya da yapılan işlem
+   asıl DNS sunucusu ile yardımcı DNS sunucusu arasında bölge aktarımı
+   değilse UDP üzerinden yapılacaktır. DNS sisteminin yazarları DNS için
+   gerekli bilgileri diğer Internet araçlarında olduğu gibi RFC'lerde
+   tanımlamışlardır (RFC 1034 ve 1035). Bu belgelere bakarsanız, bölge
+   kayıtlarının nasıl yazılacağını bulursunuz.
+  </para>
+  <para>
+   BIND'de (Berkeley Internet Name Daemon) yazılırken bu kriterler dikkate
+   alınmıştır. Fakat bu sistemde gereksiz karmaşıklıkta kodlar ve bunun
+   getirdiği güvenlik sorunları vardır. Fakat djbdns bu karmaşadan uzak ve
+   güvenli bir yazılımdır. Hatta bizce bind 9.1.X ve sonraki
+   sürümlerinde kullanılan "Dns-sec sistemi" bile bind için bir çözüm
+   olmaktan çok uzaktır. Sonuçta internetin ilk zamanlarından kalmıştır.
+   Şu an IPv4'te yaşanılan güvenlik sorunları da aynı sebepten oluşmaktadır.
+  </para>
+  <para>
+   Bu yüzden köklü bir değişim olması gerekliliği savunulmuş ve IPv6 ortaya
+   atılmıştır. Bind içinde benzer model söz konusu olmadıkça djbdns'ye rağbet
+   artacaktır.
+  </para>
+  <para>
+   Genel olarak DNS yazılımlarının yaptığı iki görev vardır. Bind kullananlar
+   eğer çok profesyonel değillerse ya da bu konu ile alakalı kitap
+   okunmamışsa bu iki olguyu karıştırabilmektedirler. Bunlar:
+  </para>
+  <sect2>
+   <title>Çözümleme: Aranılan bir kaydı bulma işlemi</title>
+   <para>
+    Mesela <literal>http://www.yildiz.edu.tr/</literal> adresine karşılık
+    gelen IPv4 adresinin <literal>193.140.1.1</literal> olmasının bulunması.
+    Çözümleme yapan yazılımlar iki çeşit işlem yaparlar; ardışık çözümeme ve
+    ardışık olmayan çözümleme. Sorgularda gönderilen RD (recursion required -
+    ardışıklık gerekli) bitlerine göre sorgunun türü belirlenir. Ardışık
+    olmayan sorgulara yanıt veren sunucular yanıt olarak ardışık isim
+    sunucuları verirler.
+   </para>
+   <para>
+    Sonuç olarak yapılan bir sorgu ardışık ise
+    <literal>http://www.yildiz.edu.tr/</literal> için doğrudan
+    <literal>193.140.1.1</literal> IP'si ya da "makina bulunamadı"
+    cevabı verilebilir. Fakat ardışık olmayan bir sorguda cevabı bulmak için
+    başka bir isim sunucusunun IP'sini verebilir. Ardışık olmayan sorgular
+    aynı zamanda yinelemeli sorgular olarak da bilinirler.
+   </para>
+  </sect2>
+  <sect2>
+   <title>Yetkili İsim Sunucusu</title>
+   <para>
+    Bir alan hakkında bilgi bulunduran sunucudur. Mesela
+    <literal>yildiz.edu.tr</literal> alanının MX, NS, A (Bunlar - Resource
+    Record - Özkaynak Kaydı olarak bilinir) kayıtlarının tutulduğu isim
+    sunucusudur.
+   </para>
+   <variablelist>
+    <varlistentry>
+     <term>CANLI BIR ÖRNEK</term>
+     <listitem>
       <para>
-        Bu belgede şu an Unix dünyasında bulunan en güvenli dns sunucusu olan djbDNS
-        ve kurulumu anlatılacaktır.
+       Bir sorgu nasıl yapılır. Mesela
+       <literal>http://www.yildiz.edu.tr/</literal> adresinin IPv4 karşılığı
+       nedir? Bunun için çözümleyici ya da sizin bilgisayarınız Internet'te
+       birkaç yetkili isim sunucusunu gezmek zorundadır. İlk başta " . "
+       sunucularından  <literal>tr</literal> TLD'si için yetkili isim sunucu
+       IP'si bulunur. Bunun IP'si (ki bu IP'nin makina ismi ülkemiz için
+       ns1.metu.edu.tr ya da ns2.metu.edu.tr'dir) alındıktan sonra bu yetkili
+       isim sunucuya "edu.tr." i barındıran yetkili isim sunucu IP'si
+       sorulacak ve bu işlem böylece devam edecektir ve sonuç olarak
+       <literal>193.140.1.1</literal> adresini sizin makinanız ya da
+       <literal>/etc/resolv.conf</literal> dosyanızda bulunan çözümleyicinin
+       <literal>yildiz.edu.tr</literal>'nin yetkili isim sunucusundan aldığı
+       bilgilere göre belleğinde belli bir müddet tutacaktır. Bu süreye TTL
+       (time to live - yaşam süresi) denir. Bu süre boyunca çözümleyici
+       gerekli bilgileri belleğinde saklayacaktır. DjbDNS için aksi
+       belirtilmezse bu süre 42 dakikadır. Kuruluma göre bu süre 5 saniye de
+       yapılabilir. (Nitekim birden fazla www sunucunuz var ve bunlar
+       arasında döner turnuva kullanarak yük dengelemesi yapmak istersek bu
+       saniye değeri kullanılacaktır).
       </para>
-      <para>
-        Bu belgenin özgün sürümüne
-        <link xlink:href="http://www.enderunix.org/docs/djbdns_installation.html"/>
-        adresinden erişebilirsiniz.
-      </para>
-    </abstract>
-
-  </info>
-<!-- Content follows...include introduction, license information, feedback -->
-  <sect1 xml:id="djbdns-kurulumu-nasil_giris">
-    <title>Giriş</title>
-    <blockquote><para>
-BIND, the Buggy Internet Name Daemon is like Microsoft Windows. The damn thing doesn't work. Every version has been brimming with bugs.
-    </para><attribution>D.J.Bernstein (<link xlink:href="http://cr.yp.to/djbdns/ad/unbind.html"/>)</attribution>
-    </blockquote><para>
-Bu belgede şu an Unix dünyasında bulunan en güvenli dns sunucusu olan djbDNS
-ve kurulumu anlatılacaktır.
-    </para><para>
-DjbDNS D.J.Bernstein tarafından yazılmıştır. Kendisi aynı zamanda qmail,
-tcpserver, publicfile, daemontools gibi çeşitli sistem yazılımları yazmıştır.
-Sanırım üstteki ifadeye katılmamak mümkün değil. DjbDNS gerek üniversite
-gerekse ticari şirketler tarafından rahatça kullanılabilir. Bind tek başına
-SPOI (Single Point of InSecuritness ) lakabını yeterince haketmektedir.
-Ayrıca djbdns dns sistemi için yeni istemci kitaplıklarını da sunmaktadır.
-<link xlink:href="http://cr.yp.to/djbdns/ad/library.html"/> adresinden gerekli
-bilgiler edinebilir.
-    </para><para>
-OpenBSD üzerine kurulacak basit bir makinada djbdns 2-3 sene kesintisiz
-hizmet verebilir. OpenBSD'yi merak ediyorsanız <ulink
-url="http://www.enderunix.org/documents/openbsd_installation.html"/>
-adresinde TÜRKÇE kurulum kılavuzundan yaralanarak bu işletim sistemine bir
-giriş yapabilirsiniz.
-    </para><para>
-Bilindiği üzere şu anda dünya üzerinde en çok kullanılan dns sunucu yazılımı
-olan Bind paketinde bir çok güvenlik açığı bulunmaktadır. Bunların ortaya
-çıkması sadece zaman meselesidir. Nitekim şu an kullanılan bind sürümünde
-bile birkaç açığın var olduğu ve bunun Internet'te istismar edildiği
-konuşulmaktadır. Söylenti bile olsa bind'i kullanmak zorunda olan sistem
-yöneticileri ne demek istediğimi anlayacaklardır. Securityfocus.com adresinde
-de djbdns kurulumu anlatılmaktadır. Zaten djbdns ile biz boyle tanıştık.
-Sendmail'den Qmail'e çekilen zorlukları bind'tan djbdns'e geçerken
-yaşamayacaksınız. Bind ile djbdns'nin karşılaştırmasını
-<link xlink:href="http://cr.yp.to/djbdns/ad/easeofuse.html"/> adresinde bulabilirsiniz.
-    </para>
-  </sect1>
-  <sect1 xml:id="djbdns-kurulumu-nasil_dns">
-    <title>DNS Nedir?</title>
-    <para>
-Domain Name System [DNS] (Alan Adı Sistemi) dağıtık yapıda bir veritabanıdır.
-Bu sistem makina isimlerini IPv4 (ya da ipv6) adreslere ya da IPv4 adresleri
-makina isimlerine çevirmeye yarar. Ayrıca bir alan için gerekli eposta
-sunucusunun adreslerini ya da alanadı sunucularının hangi IP adreslerinde
-bulunduğunu daha teknik bir ifade ile RR'ları (Resource Records - Özkaynak Kayıtları) tutar.
-DNS yapısı gereği hızlı olmalıdır. Bu yüzden yapılan sorgulamalar eğer 512
-bayttan küçük ise ya da yapılan işlem asıl DNS sunucusu ile yardımcı DNS
-sunucusu arasında bölge transferi değilse UDP üzerinden yapılacaktır.
-DNS sisteminin yazarları DNS için gerekli bilgileri diğer Internet araçlarında
-olduğu gibi RFC'lerde tanımlamışlardır (RFC 1034 ve 1035). Bu belgelere
-bakarsanız içinde bir kaç kod ve bölge soayalarının nasıl yazılacağını
-bulursunuz.
-    </para><para>
-BIND'de (Berkeley Internet Name Daemon) yazılırken bu kriterler dikkate
-alınmıştır. Fakat bu sistemde gereksiz karmaşıklıkta kodlar ve bunun getirdiği
-güvenlik problemleri vardır. Fakat djbdns bu karmaşadan uzak ve güvenli bir
-yazılımdır. Bunun sonucu olarakta "two-thumbs-up bir daemon" olmaya bizce hak
-kazanmıştır. Hatta bizce bind 9.1.X ve ileriki sürümlerinde kullanılan
-"Dns-sec sistemi" bile bind için bir çözüm olmaktan çok uzaktır. Sonuçta temel
-yani "daemon Internet"in ilk zamanlarından kalmıştır. Şu an IPv4'te yaşanılan
-güvenlik sorunları da aynı sebepten oluşmaktadır.
-    </para><para>
-Bu yüzden köklü bir değişim olması gerekliliği savunulmuş ve IPv6 ortaya
-atılmıştır. Bind içinde benzer model söz konusu olmadıkçca djbdns popüleritesini
-sürdürecektir. (Haklı bir popülerite !!!).
-    </para><para>
-Genel olarak dns yazılımlarının yaptığı iki vazife vardır. Bind kullananlar
-eğer çok profesyenel değillerse ya da bu konu ile alakalı kitap okunmamışsa
-bu iki olguyu karıştırabilmektedirler. Bunlar:
-    </para>
-    <sect2>
-      <title>Resolving (Çözümleme): Aranılan bir kaydı bulma işlemi</title>
-      <para>
-Mesela <literal>http://www.yildiz.edu.tr/</literal> adresine karşılık gelen
-IPv4 adresinin <literal>193.140.1.1</literal> olmasının bulunması. Çözümleme
-yapan yazılımlar iki çeşit işlem yaparlar; ardışık çözümeme ve ardışık
-olmayan çözümleme. Sorgularda gönderilen RD (recursion required - ardışık gerekli)
-bitlerine göre sorgunun türü belirlenir. Ardışık olmayan sorgulara cevap
-veren sunucular cevap olarak ardışık isim sunucuları verirler.
-      </para><para>
-Sonuç olarak yapılan bir sorgu ardışık ise <literal>http://www.yildiz.edu.tr/</literal>
-için doğrudan <literal>193.140.1.1</literal> IP'si ya da "makina bulunamadı"
-cevabı verilebilir. Fakat ardışık olmayan bir sorguda cevabı bulmak için
-başka bir isim sunucusunun IP'sini verebilir. Ardışık olmayan sorgular aynı
-zamanda yinelemeli sorgular olarak daa bilinirler.
-      </para>
-    </sect2>
-    <sect2>
-      <title>Authoritive Nameserving (Yetkili İsim Sunumu)</title>
-      <para>
-Bir alan hakkında bilgi bulunduran sunucudur. Mesela <literal>yildiz.edu.tr</literal>
-alanının MX, NS, A (Bunlar - Resource Record - Özkaynak Kaydı olarak bilinir)
-kayıtlarının tutulduğu isim sunucusudur.
-      </para><para>
-        <variablelist>
-          <varlistentry>
-            <term>CANLI BIR ÖRNEK</term>
-            <listitem>
-              <para>
-Bir sorgu nasıl yapılır. Mesela <literal>http://www.yildiz.edu.tr/</literal>
-adresinin IPv4 karşılığı nedir? Bunun için çözümleyici ya da sizin bilgisayarınız
-Internet'te birkaç yetkili isim sunucusunu gezmek zorundadır. İlk başta " . "
-sunucularından  <literal>tr</literal> TLD'si için yetkili isim sunucu IP'si
-bulunur. Bunun IP'si (ki bu IP'nin makina ismi ülkemiz için ns1.metu.edu.tr
-ya da ns2.metu.edu.tr'dir) alındıktan sonra bu yetkili isim sunucuya "edu.tr." i
-barındıran yetkili isim sunucu IP'si sorulacak ve bu işlem böylece devam
-edecektir ve sonuç olarak <literal>193.140.1.1</literal> adresini sizin
-makinanız ya da <literal>/etc/resolv.conf</literal> dosyanızda bulunan
-çözümleyicinin <literal>yildiz.edu.tr</literal>'nin yetkili isim sunucusundan
-aldığı bilgilere göre belleğinde belli bir müddet tutacaktır. Bu süreye TTL
-(time to live - yaşam süresi) denir. Bu süre boyunca çözümleyici gerekli
-bilgileri belleğinde saklayacaktır. DjbDNS için aksi belirtilmezse bu süre
-42 dakikadır. Kurulacak göre bu süre 5 saniye de yapılabilir. (Nitekim birden
-fazla www sunucunuz var ve bunlar arasında döner turnuva kullanarak yük dengelemesi
-yapmak istersek bu  saniye değeri kullanılacaktır).
-              </para>
-            </listitem>
-          </varlistentry>
-        </variablelist>
-      </para>
-    </sect2>
-  </sect1>
-  <sect1 xml:id="djbdns-kurulumu-nasil_bagimlilik">
-    <title>Önceden Kurulması Gerekli Yazılımlar</title>
-    <para>
-DjbDNS'i kullanmak için önceden kurulması gereken birkaç yazılım vardır. Bunlar
-yine D.J. Bernstein tarafından yazılmışlardır. Bunlar kullanılması istenen
-sisteme göre değişir. Genel olarak sistem eğer sadece asıl sunucu olacaksa
-<literal>daemontools</literal> kurulması yeterli olacaktır. Daemontools
-sisteminizde çalışan servisleri gözetleyen bir yazılımdır. Fakat sadece
-gözetlemekle kalmaz eğer yapılandırma dizininde bulunan bir servis çalışmıyor
-ise bunları tekrar başlatır. Bu yazılım ile benzer vazifeleri yapan birkaç
-yazılım daha vardır. Mesela "mon" örnek verilebilir.
-    </para><para>
-Kurulumu:</para><para>
-<screen>
-$ wget daemontools-0.70.tar.gz
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </sect2>
+ </sect1>
+ <sect1 xml:id="djbdns-kurulumu-nasil_bagimlilik">
+  <title>Önceden Kurulması Gerekli Yazılımlar</title>
+  <para>
+   DjbDNS'i kullanmak için önceden kurulması gereken birkaç yazılım vardır.
+   Bunlar yine D.J. Bernstein tarafından yazılmışlardır. Bunlar kullanılması
+   istenen sisteme göre değişir. Genel olarak sistem eğer sadece asıl sunucu
+   olacaksa <literal>daemontools</literal> kurulması yeterli olacaktır.
+   Daemontools sisteminizde çalışan hizmetleri gözetleyen bir yazılımdır.
+   Fakat sadece gözetlemekle kalmaz eğer yapılandırma dizininde bulunan bir
+   hizmet çalışmıyor ise bunları tekrar başlatır. Bu yazılım ile benzer
+   görevleri yapan birkaç yazılım daha vardır. Mesela "mon" örnek
+   verilebilir.
+  </para>
+  <para>Kurulumu:</para>
+<screen>$ wget https://cr.yp.to/daemontools/daemontools-0.76.tar.gz
 $ tar zxvf daemontools-0.70.tar.gz
 $ cd daemontools-0.70
 # make setup check
 # mkdir /service
 # svscan /service &amp;
-</screen></para><para>
-Bundan sonra asıl yazılımımız olan djbdns sisteme kurulur.
-</para><para><screen>
-$ wget djbdns-1.05.tar.gz
+</screen>
+  <para>Bundan sonra asıl yazılımımız olan djbdns sisteme kurulur.</para>
+<screen>$ wget http://cr.yp.to/djbdns/djbdns-1.05.tar.gz
 $ tar zxvf djbdns-1.05.tar.gz
 $ cd djbdns-1.05
 # make setup check
-</screen></para><para>
-Eğer kurulacak olan sistemde ikinci bir sunucu; yani bir yardımcı sunucu
-olacaksa bölge transferi gerekecektir. Bunun için gerekli olan yazılımlar
-<literal>Ucspi</literal> (tcpserver ) ve <literal>axfrdns</literal> olacaktır.
-Bu yazılımlarda üstte anlatıldığı şekilde kurulabilir.
-    </para>
-  </sect1>
-  <sect1 xml:id="djbdns-kurulumu-nasil_dnscache">
-    <title>Dnscache Programının Kurulması</title>
-    <para>
-<literal>Dnscache</literal> yukarıda anlatılan yazılımlardan çözümleyici
-kısmına girmektedir. Yani <literal>/etc/resolv.conf</literal> dosyasına
-yazılacak IP şimdi kuracağımız yazılımın çalıştığı bir makinaya ait olmalıdır.
-Burada kuracağımız <literal>dnscache</literal> aslında dnscache'in kurulması
-olası iki çeşidinden birisi olacaktır.
-Bunlar "harici dnscache" ve "dahili dnscache" olarak adlandırılır. Biz burada
-Internet'de ya da ağımızda bulunan başka bir makinanın sorgularını işleme
-yetisine sahip olan "harici dnscache" kuracağız. Eğer evinizden dial-up bağlanan
-bir kullanıcı iseniz sisteminizde dahili bir dnscache kuracabilir ve
-<literal>/etc/resolv.conf</literal> dosyanıza <literal>127.0.0.1</literal>
-adresini yazabilirsiniz. Dahili denmesinin sebebi 127.0.0.1 arayüzüne
-kurulması ve dnscache'in kendini o ip'nin 53. portuna bağlamasıdır.
-Haricinin farkı ise sadece dnscache'in 127.0.0.1'den farklı ve diğer makinaların
-ulaşabileceği bir IP olmasıdır.
-    </para><para>
-Ek olarak <literal>dnscache</literal> kurulmadan önce hangi kullanıcı olarak
-çalışacağı ve hangi kullanıcı olarak günlük kayıtlarının tutulacağı
-belirtilmelidir. Genel olarak sisteminize giriş yapması ihtimali olmayan
-(kabuğu /bin/false olan) iki kullanıcı ekleyin. Bunlardan biri <literal>dnscache</literal>
-diğeride günlük kayıtlarını hesap olan <literal>dnslog</literal> olabilir. Bir de programımızın
-çalışacağı dizin belirlenmelidir. Genel olarak <literal>/etc/dnscachex</literal>
-(x = external -> harici) kullanılmaktadır. Şimdi yazılımı kurabiliriz.
-    </para><para>
-      <variablelist>
-        <varlistentry>
-          <term>Harici dnscache</term>
-          <listitem>
-            <para>
-<screen>
-# dnscache-conf dnscache dnslog /etc/dnscachex 192.168.1.1
+</screen>
+  <para>
+   Eğer kurulacak olan sistemde ikinci bir sunucu; yani bir yardımcı sunucu
+   olacaksa bölge aktarımı gerekecektir. Bunun için gerekli olan yazılımlar
+   <literal>Ucspi</literal> (tcpserver ) ve <literal>axfrdns</literal>
+   olacaktır. Bu yazılımlarda üstte anlatıldığı şekilde kurulabilir.
+  </para>
+ </sect1>
+ <sect1 xml:id="djbdns-kurulumu-nasil_dnscache">
+  <title>Dnscache Programının Kurulması</title>
+  <para>
+   <literal>Dnscache</literal> yukarıda anlatılan yazılımlardan çözümleyici
+   kısmına girmektedir. Yani <literal>/etc/resolv.conf</literal> dosyasına
+   yazılacak IP şimdi kuracağımız yazılımın çalıştığı bir makinaya ait
+   olmalıdır. Burada kuracağımız <literal>dnscache</literal> aslında
+   dns arabelleğinin kurulması olası iki çeşidinden birisi olacaktır.
+   Bunlar "harici dns arabelleği" ve "dahili dns arabelleği" olarak
+   adlandırılır. Biz burada internette ya da ağımızda bulunan başka bir
+   makinanın sorgularını işleme yetisine sahip olan "harici dns arabelleği"
+   kuracağız. Eğer evinizden bir hizmet sağlayıcıya bağlanan bir kullanıcı
+   iseniz sisteminizde dahili bir dns arabelleği kuralabilir ve
+   <literal>/etc/resolv.conf</literal> dosyanıza <literal>127.0.0.1</literal>
+   adresini yazabilirsiniz. Dahili denmesinin sebebi 127.0.0.1 arayüzüne
+   kurulması ve dnscache'in kendini o ip'nin 53. portuna bağlamasıdır.
+   Haricinin farkı ise sadece dnscache'in 127.0.0.1'den farklı ve diğer
+   makinaların ulaşabileceği bir IP'ye sahip olmasıdır.
+  </para>
+  <para>
+   Ek olarak <literal>dnscache</literal> kurulmadan önce hangi kullanıcı
+   olarak çalışacağı ve hangi kullanıcı olarak günlük kayıtlarının tutulacağı
+   belirtilmelidir. Genel olarak sisteminize giriş yapması ihtimali olmayan
+   (kabuğu /bin/false olan) iki kullanıcı ekleyin. Bunlardan biri
+   <literal>dnscache</literal> diğeride günlük kayıtları hesabı olan
+   <literal>dnslog</literal> olabilir. Bir de yazılımımızın çalışacağı dizin
+   belirlenmelidir. Genel olarak <literal>/etc/dnscachex</literal>
+   (x = external -&gt; harici) kullanılmaktadır. Şimdi yazılımı kurabiliriz.
+  </para>
+  <variablelist>
+   <varlistentry>
+    <term>Harici dns arabelleği</term>
+    <listitem>
+<screen># dnscache-conf dnscache dnslog /etc/dnscachex 192.168.1.1
 # ln -s /etc/dnscachex /service
-# echo "192.168.1.1" > /etc/resolv.conf
-</screen></para><para>
-            İlk satırın açılımı:
-</para><para><literallayout>
-dnscache-conf <emphasis>çalıştırma-kullanıcısı günlük-kaydı-kullanıcısı ip-adresi</emphasis>
-</literallayout></para><para>
-şeklindedir. İkinci satır ise <literal>dnscache</literal>'i açılışta
-çalıştırmak içindir.
-            </para>
-          </listitem>
-        </varlistentry>
-        <varlistentry>
-          <term>Dahili dnscache</term>
-          <listitem>
-            <para>
-<screen>
-# dnscache-conf dnscache dnslog /etc/dnscache
+# echo "192.168.1.1" &gt; /etc/resolv.conf
+</screen>
+     <para>İlk satırın açılımı:</para>
+<literallayout>dnscache-conf <emphasis>çalıştırma-kullanıcısı günlük-kaydı-kullanıcısı ip-adresi</emphasis>
+</literallayout>
+     <para>
+      şeklindedir. İkinci satır ise <literal>dnscache</literal>'i açılışta
+      çalıştırmak içindir.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry>
+    <term>Dahili dns arabelleği</term>
+    <listitem>
+<screen># dnscache-conf dnscache dnslog /etc/dnscache
 # ln -s /etc/dnscache /service
-# echo "127.0.0.1" > /etc/resolv.conf
+# echo "127.0.0.1" &gt; /etc/resolv.conf
 # touch /etc/dnscachex/root/ip/193.140.1
-</screen></para><para>
-Dikkat ederseniz ilk satırda IP belirtmedik. Öntanımlı değeri 127.0.0.1'dir
-            </para><para>
-Öntanımlı olarak <literal>dnscache</literal> bütün sorguları reddeder.
-Son satırda 193.140.1 dosyası ile ağ için sorgu yapılmasına izin veriyoruz.
-            </para><para>
-<literal>dnscache</literal>'in çalışıp çalışmadığını sorgulamak için
-<literal>dnsqr</literal> komutu kullanılabilir. Yapılan sorgularda
-önemli olan satır  <literal>answer</literal> satırıdır.
-</para><para><screen>
-# dnsqr a yildiz.edu.tr
+</screen>
+     <para>
+      Dikkat ederseniz ilk satırda IP belirtmedik.
+      Öntanımlı değer 127.0.0.1'dir.
+     </para>
+     <para>
+      Öntanımlı olarak <literal>dnscache</literal> bütün sorguları reddeder.
+      Son satırda 193.140.1 dosyası ile ağ için sorgu yapılmasına izin
+      veriyoruz.
+     </para>
+     <para>
+      <literal>dnscache</literal>'in çalışıp çalışmadığını sorgulamak için
+      <literal>dnsqr</literal> komutu kullanılabilir. Yapılan sorgularda
+      önemli olan satır  <literal>answer</literal> satırıdır.
+     </para>
+<screen># dnsqr a yildiz.edu.tr
 1 yildiz.edu.tr:
 166 bytes, 1+1+3+3 records, response, noerror
 query: 1 yildiz.edu.tr
@@ -267,70 +281,79 @@ authority: yildiz.edu.tr 86391 NS vm4381.ce.yildiz.edu.tr
 additional: ana.cc.yildiz.edu.tr 86391 A 193.140.1.1
 additional: ns.ulak.net.tr 62760 A 193.140.83.251
 additional: vm4381.ce.yildiz.edu.tr 86391 A 193.140.2.1
-</screen></para><calloutlist>
-      <callout arearefs="djbdns-kurulumu-nasil-co2"><para>
-<literal>answer</literal> ile başlayan kısım bizim aradığımız cevaptır.
-      </para></callout></calloutlist>
-          </listitem>
-        </varlistentry>
-      </variablelist>
-    </para><para>
-Artık elimizde çalışan bir çözümleyici var. Ek olarak istersek bellek
-büyüklüğünü 100MB ram harcayacak şekilde ayarlayabiliriz. Bunun için:
-    </para><para>
-<screen>
-# echo 100000000 > /etc/dnscachex/env/CACHESIZE
-# echo 104857600 > /etc/dnscachex/env/DATALIMIT
 </screen>
-    </para><para>
-yapılması gerekir. Tabii bundan sonra <literal>svc -t /service/dnscache</literal>
-ile programımızı yeniden başlatmak gerekecektir.
-    </para><para>
-Şimdi sıra alanımız için yetkili isim sunucu olacak olan  <literal>tiny-dns</literal> programını kurmaya geldi.
-    </para>
-  </sect1>
-  <sect1 xml:id="djbdns-kurulumu-nasil_tinydns">
-    <title>Tiny-dns Kurulumu</title>
-    <para>
-<literal>Tiny-dns</literal> yukarıda da anlatıldığı üzere bizim alanımız için
-yetkili isim sunucu olacak. (Aynı zamanda yetkili tersinir isim sunucumuz olacak
-- ipv4-->hostname...)
-    </para><para>
-Önce sistemimize <literal>tiny-dns</literal> kullanıcısını
-(<literal>tinydns</literal>) ekleyelim. Ayrıca sistem günlük kayıtlarını
-tutması için <literal>dnslog</literal> kullanıcısı da eğer daha önce
-<literal>dnscache</literal> kurulmadıysa eklenmelidir.
-    </para>
-    <caution>
-      <para>
-Dikkat edilmesi gereken bir nokta, <literal>dnscache</literal> ile
-<literal>tinydns</literal> aynı IP'yi dinleyemez. Bu yüzden tiny-dns'i
-192.168.1.2'nin 53. portuna bağlayacağız. (IP-ALIASING artık bütün
-*NIX'lerde vardır). Eğer elinizde sadece bir Internet IP adresi varsa
-bu IP'yi tiny-dns için kullanın ve yerel 192.168.1.1 IP'sini de dnscache
-için kullanın.
-      </para>
-    </caution>
-    <para>Tiny-dns yapılandırması
-</para><para><screen>
-# tinydns-conf tinydns dnslog /etc/tinydns 192.168.1.2  {<emphasis>ya da bir Internet IP'si</emphasis>}
+     <calloutlist>
+      <callout arearefs="djbdns-kurulumu-nasil-co2">
+       <para>
+        <literal>answer</literal> ile başlayan kısım bizim aradığımız
+        yanıttır.
+       </para>
+      </callout>
+     </calloutlist>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+  <para>
+   Artık elimizde çalışan bir çözümleyici var. Ek olarak istersek bellek büyüklüğünü 100MB ram harcayacak şekilde ayarlayabiliriz. Bunun için:
+  </para>
+<screen># echo 100000000 &gt; /etc/dnscachex/env/CACHESIZE
+# echo 104857600 &gt; /etc/dnscachex/env/DATALIMIT
+</screen>
+  <para>
+   yapılması gerekir. Tabii bundan sonra
+   <literal>svc -t /service/dnscache</literal>
+   ile yazılımımızı yeniden başlatmak gerekecektir.
+  </para>
+  <para>
+   Şimdi sıra alanımız için yetkili isim sunucu olacak olan
+   <literal>tiny-dns</literal> yazılımını kurmaya geldi.
+  </para>
+ </sect1>
+ <sect1 xml:id="djbdns-kurulumu-nasil_tinydns">
+  <title>Tiny-dns Kurulumu</title>
+  <para>
+   <literal>Tiny-dns</literal> yukarıda da anlatıldığı üzere bizim alanımız
+   için yetkili isim sunucu olacak. (Aynı zamanda yetkili tersinir isim
+   sunucumuz olacak - ipv4 --&gt; alan_adı)
+  </para>
+  <para>
+   Önce sistemimize <literal>tiny-dns</literal> kullanıcısını
+   (<literal>tinydns</literal>) ekleyelim. Ayrıca sistem günlük kayıtlarını
+   tutması için <literal>dnslog</literal> kullanıcısı da eğer daha önce
+   <literal>dnscache</literal> kurulmadıysa eklenmelidir.
+  </para>
+  <caution>
+   <para>
+    Dikkat edilmesi gereken bir nokta, <literal>dnscache</literal> ile
+    <literal>tinydns</literal> aynı IP'yi dinleyemez. Bu yüzden tiny-dns'yi
+    192.168.1.2'nin 53. portuna bağlayacağız. (IP-ALIASING artık bütün
+    *NIX'lerde vardır). Eğer elinizde sadece bir internet adresi varsa
+    bu IP'yi tiny-dns için kullanın ve yerel 192.168.1.1 IP'sini de dnscache
+    için kullanın.
+   </para>
+  </caution>
+  <para>Tiny-dns yapılandırması</para>
+<screen># tinydns-conf tinydns dnslog /etc/tinydns 192.168.1.2  {<emphasis>ya da bir Internet IP'si</emphasis>}
 # ln -s /etc/tinydns /service                           {<emphasis>5 saniye sonra çalışır olacak</emphasis>}
-</screen></para><para>
-Sıra <literal>tinydns</literal>'e makina ismi ve tersinir kayıtların
-girilmesine geldi. Bu aşamada iki seçeneğiniz var. Ya <literal>data</literal> dosyasını elle
-düzenleyeceksiniz ya da <literal>/etc/tinydns/root</literal> dizini altında
-bulunan <literal>add*</literal> betiklerini kullanacaksınız. Burada bizim
-tavsiyemiz <literal>data</literal> dosyasına girdilerin <literal>add*</literal>
-betikleri yardımıyla girilmesi yönünde olacaktır. Böylece her ne kadar
-<literal>data</literal> dosyasının yapılandırması bind'a göre son derece
-kolay ve anlaşılır olsa da ufak hatalar yapılabilme olasılığının olmasıdır.
-Fakat <literal>add*</literal> betikleri ile bu baş ağrıtıcı hataların oluşturduğu
-problemlerden kurtulmuş olursunuz.
-    </para><para>
-Sırasıyla <literal>yildiz.edu.tr</literal> için dns kayıtlarını girelim ve
-yetkili isim sunucumuzu kuralım.
- </para><para><screen>
-# cd /etc/tinydns/root
+</screen>
+  <para>
+   Sıra <literal>tinydns</literal>'ye makina ismi ve tersinir kayıtların
+   girilmesine geldi. Bu aşamada iki seçeneğiniz var. Ya
+   <literal>data</literal> dosyasını elle düzenleyeceksiniz ya da
+   <literal>/etc/tinydns/root</literal> dizini altında bulunan
+   <literal>add*</literal> betiklerini kullanacaksınız. Burada bizim
+   tavsiyemiz <literal>data</literal> dosyasına girdilerin
+   <literal>add*</literal> betikleri yardımıyla girilmesi yönünde olacaktır.
+   Böylece her ne kadar <literal>data</literal> dosyasının yapılandırması
+   bind'a göre son derece kolay ve anlaşılır olsa da ufak hatalar yapılabilme
+   olasılığının olmasıdır. Fakat <literal>add*</literal> betikleri ile bu baş
+   ağrıtıcı hataların oluşturduğu problemlerden kurtulmuş olursunuz.
+  </para>
+  <para>
+   Sırasıyla <literal>yildiz.edu.tr</literal> için dns kayıtlarını girelim
+   ve yetkili isim sunucumuzu kuralım.
+  </para>
+<screen># cd /etc/tinydns/root
 # ./add-ns yildiz.edu.tr 193.140.1.1              <co xml:id="djbdns-kurulumu-nasil.r1"/>
 # ./add-ns 1.140.193.in-addr.arpa 193.140.1.1     <co xml:id="djbdns-kurulumu-nasil.r2"/>
 # ./add-host ogis.yildiz.edu.tr 193.140.1.3       <co xml:id="djbdns-kurulumu-nasil.r3"/>
@@ -339,63 +362,93 @@ yetkili isim sunucumuzu kuralım.
 # ./add-mx yildiz.edu.tr 193.140.1.5              <co xml:id="djbdns-kurulumu-nasil.r6"/>
 # ./add-childdns ece.yildiz.edu.tr 193.140.1.15   <co xml:id="djbdns-kurulumu-nasil.r7"/>
 # make                                            <co xml:id="djbdns-kurulumu-nasil.r8"/>
-</screen> </para><para>
-    <calloutlist>
-      <callout arearefs="djbdns-kurulumu-nasil.r1">
-        <para><literal>*.yildiz.edu.tr</literal> için yetkili isim sunucusu 193.140.1.1 olacak; SOA</para>
-      </callout><callout arearefs="djbdns-kurulumu-nasil.r2">
-        <para>tersinir yetkili isim sunucusu 193.140.1.1 olacak</para>
-      </callout><callout arearefs="djbdns-kurulumu-nasil.r3">
-        <para>Sanırım bayağı zor anlaşılacak birşey :)</para>
-      </callout><callout arearefs="djbdns-kurulumu-nasil.r4">
-        <para>DAHA ÖNCEDEN TANIMLANMIŞ bir IP'ye takma isim ekliyoruz</para>
-      </callout><callout arearefs="djbdns-kurulumu-nasil.r5">
-        <para>bir numaralı mx (eposta sunucusu) olarak 193.140.1.1 ekleniyor</para>
-      </callout><callout arearefs="djbdns-kurulumu-nasil.r6">
-        <para>ikinci sırada gelen yildiz.edu.tr eposta sunucusu</para>
-      </callout><callout arearefs="djbdns-kurulumu-nasil.r7">
-        <para>alt alanlar için isim sunucusu</para>
-      </callout><callout arearefs="djbdns-kurulumu-nasil.r8">
-        <para><literal>tindns-data</literal> komutu çalıştırılır</para>
-      </callout>
-    </calloutlist></para><para>
-Bu noktada önemli birşey var. <literal>add-ns</literal> ve <literal>add-mx</literal>
-betiklerini kullanırken dikkat ederseniz isim sunucuların makina isimlerini
-vermedik.
-Bu iki betik öntanımlı olarak <literal>a.ns ... b.ns</literal> makina isimlerini
-atarlar. Eğer Internic'te ya da daha doğru ifadesiyle <literal>registrar</literal>'ınızda
-isim sunucusu makina ismi olarak farklı bir isim olabilir. İşte bu noktada iki
-makina ismi de aynı olmalıdır.<literal>add-ns</literal> ve <literal>add-mx</literal>
-yine aynı dizinde, <literal>/etc/tinydns/root/</literal> dizini altında bulunan
-<literal>data</literal> dosyasını düzenler. Burada metin düzenleyicinizle bu
-dosyayı açıp gerekli değişiklikleri yapmalısınız. Örnek olarak
-<literal>ulak.net.tr</literal>'de <literal>yildiz.edu.tr</literal> isim
-sunucusunun makina ismi <literal>ana.cc.yildiz.edu.tr</literal> olarak tanımlıdır.
-<literal>data</literal> dosyasında bu değişiklik yapılmalıdır.
-    </para><para>
-Sıra geldi <literal>data</literal> dosyasındaki bilgileri <literal>data.cdb</literal>
-olarak yani<literal>tinydns</literal>'in yapılandırma dosyası olarak kaydetmeye.
-Yine ayni dizinde dikkat ederseniz bir <literal>Makefile</literal> vardır.
-Yapılması gereken tek şey bu dizinde <literal>make</literal> komutunu
-çalıştırmaktır. Make komutunun yazılması ile birlikte <literal>tiny-dns</literal>
-hizmet vermeye hazır olacaktır. Make komutu Makefile dosyasından da anlaşılacağı
-üzere <literal>tinydns-data</literal> programını kullanarak <literal>data.cdb</literal>'yi
-oluşturur. Kısacası <literal>tinydns-data</literal>, <literal>data</literal>
-dosyasını okur ve <literal>tinydns</literal>'in hızlı bir şekilde ulaşabileceği
-<literal>data.cdb</literal> dosyasını oluştururr. Ayrıca <literal>tinydns-data</literal>
-otomatik olarak <literal>data.cdb</literal>'yi günceller. Böylece data dosyasında
-yapılan bir değişiklik <literal>tinydns</literal>'i bir daha başlatmadan doğrudan
-<literal>data.cdb</literal> dosyasını günceller. <literal>data.cdb</literal>
-güncellenirken sistem çökse bile sistem yeniden başladığında
-<literal>data.cdb</literal> dosyasında bir problem yaşamaz. Tam bir ya hep ya hiç
-mantığıyla ya da veri aktarımı mantığı ile çalışır.
-    </para><para>
-Aşağıda <literal>data</literal> dosyasının içeriği verilmiştir. Bu dosyayı üstte
-<literal>add-*</literal> betikleri ile yapılandırabileceğiniz gibi elle de
-yapılandırabilirsiniz.
-   </para><para>
-<screen>
-.yildiz.edu.tr:193.140.1.1:a:259200            <co xml:id="djbdns-kurulumu-nasil.s1"/>
+</screen>
+  <calloutlist>
+   <callout arearefs="djbdns-kurulumu-nasil.r1">
+    <para>
+     <literal>*.yildiz.edu.tr</literal> için yetkili isim sunucusu 193.140.1.1
+     olacak; SOA
+    </para>
+   </callout>
+   <callout arearefs="djbdns-kurulumu-nasil.r2">
+    <para>
+     tersinir yetkili isim sunucusu 193.140.1.1 olacak
+    </para>
+   </callout>
+   <callout arearefs="djbdns-kurulumu-nasil.r3">
+    <para>
+     Sanırım bayağı zor anlaşılacak birşey :)
+    </para>
+   </callout>
+   <callout arearefs="djbdns-kurulumu-nasil.r4">
+    <para>
+     DAHA ÖNCEDEN TANIMLANMIŞ bir IP'ye takma isim ekliyoruz
+    </para>
+   </callout>
+   <callout arearefs="djbdns-kurulumu-nasil.r5">
+    <para>
+     bir numaralı mx (eposta sunucusu) olarak 193.140.1.1 ekleniyor
+    </para>
+   </callout>
+   <callout arearefs="djbdns-kurulumu-nasil.r6">
+    <para>
+     ikinci sırada gelen yildiz.edu.tr eposta sunucusu
+    </para>
+   </callout>
+   <callout arearefs="djbdns-kurulumu-nasil.r7">
+    <para>
+     alt alanlar için isim sunucusu
+    </para>
+   </callout>
+   <callout arearefs="djbdns-kurulumu-nasil.r8">
+    <para>
+     <literal>tindns-data</literal> komutu çalıştırılır
+    </para>
+   </callout>
+  </calloutlist>
+  <para>
+   Bu noktada önemli birşey var. <literal>add-ns</literal> ve
+   <literal>add-mx</literal> betiklerini kullanırken dikkat ederseniz isim
+   sunucuların makina isimlerini vermedik. Bu iki betik öntanımlı olarak
+   <literal>a.ns ... b.ns</literal> makina isimlerini atarlar. Eğer
+   Internic'te ya da daha doğru ifadesiyle <literal>registrar</literal>'ınızda
+   isim sunucusu makina ismi olarak farklı bir isim olabilir. İşte bu noktada
+   iki makina ismi de aynı olmalıdır.<literal>add-ns</literal> ve
+   <literal>add-mx</literal> yine aynı dizinde,
+   <literal>/etc/tinydns/root/</literal> dizini altında bulunan
+   <literal>data</literal> dosyasını düzenler. Burada metin düzenleyicinizle
+   bu dosyayı açıp gerekli değişiklikleri yapmalısınız. Örnek olarak
+   <literal>ulak.net.tr</literal>'de <literal>yildiz.edu.tr</literal> isim
+   sunucusunun makina ismi <literal>ana.cc.yildiz.edu.tr</literal> olarak
+   tanımlıdır. <literal>data</literal> dosyasında bu değişiklik yapılmalıdır.
+  </para>
+  <para>
+   Sıra geldi <literal>data</literal> dosyasındaki bilgileri
+   <literal>data.cdb</literal> olarak yani<literal>tinydns</literal>'nin
+   yapılandırma dosyası olarak kaydetmeye. Yine aynı dizinde dikkat ederseniz
+   bir <literal>Makefile</literal> vardır. Yapılması gereken tek şey bu
+   dizinde <literal>make</literal> komutunu çalıştırmaktır. Make komutunun
+   girilmesi ile birlikte <literal>tiny-dns</literal> hizmet vermeye hazır
+   olacaktır. Make komutu Makefile dosyasından da anlaşılacağı üzere
+   <literal>tinydns-data</literal> yazılımını kullanarak
+   <literal>data.cdb</literal>'yi oluşturur. Kısacası
+   <literal>tinydns-data</literal>, <literal>data</literal> dosyasını okur ve
+   <literal>tinydns</literal>'nin hızlı bir şekilde ulaşabileceği
+   <literal>data.cdb</literal> dosyasını oluşturur. Ayrıca
+   <literal>tinydns-data</literal> otomatik olarak
+   <literal>data.cdb</literal>'yi günceller. Böylece veri dosyasında yapılan
+   bir değişiklik <literal>tinydns</literal>'yi bir daha başlatmadan doğrudan
+   <literal>data.cdb</literal> dosyasını günceller.
+   <literal>data.cdb</literal> güncellenirken sistem çökse bile sistem yeniden
+   başladığında <literal>data.cdb</literal> dosyasında bir sorun yaşanmaz.
+   Tam bir ya-hep-ya-hiç mantığıyla ya da veri aktarımı mantığı ile çalışır.
+  </para>
+  <para>
+   Aşağıda <literal>data</literal> dosyasının içeriği verilmiştir. Bu dosyayı
+   üstte <literal>add-*</literal> betikleri ile yapılandırabileceğiniz gibi
+   elle de yapılandırabilirsiniz.
+  </para>
+<screen>.yildiz.edu.tr:193.140.1.1:a:259200            <co xml:id="djbdns-kurulumu-nasil.s1"/>
 .1.140.193.in-addr.arpa:193.140.1.1:a:259200
 =www.yildiz.edu.tr:193.140.1.1:86400           <co xml:id="djbdns-kurulumu-nasil.s2"/>
 .1.140.193.in-addr.arpa:193.140.1.1:a:259200   <co xml:id="djbdns-kurulumu-nasil.s3"/>
@@ -404,42 +457,58 @@ yapılandırabilirsiniz.
 @yildiz.edu.tr:193.140.1.3:a::86400            <co xml:id="djbdns-kurulumu-nasil.s6"/>
 @yildiz.edu.tr:193.140.1.5:b::86400            <co xml:id="djbdns-kurulumu-nasil.s7"/>
 &amp;ece.yildiz.edu.tr:193.140.1.15:86400          <co xml:id="djbdns-kurulumu-nasil.s8"/>
-</screen> </para><para>
-    <calloutlist>
-      <callout arearefs="djbdns-kurulumu-nasil.s1">
-        <para><literal>yildiz.edu.tr</literal> için yetkili isim sunucusu nokta ile başlıyor</para>
-      </callout><callout arearefs="djbdns-kurulumu-nasil.s2">
-        <para>www.yildiz.edu.tr için host kaydı</para>
-      </callout><callout arearefs="djbdns-kurulumu-nasil.s3">
-        <para><literal>*.1.140.193</literal> için yetkili isim sunucusu</para>
-      </callout><callout arearefs="djbdns-kurulumu-nasil.s4">
-        <para>ogis.yildiz.edu.tr için makina kaydı</para>
-      </callout><callout arearefs="djbdns-kurulumu-nasil.s5">
-        <para> Bir takma ad (alias) kaydı. Takma ad kayıtları <literal>+</literal> ile başlar.</para>
-      </callout><callout arearefs="djbdns-kurulumu-nasil.s6">
-        <para>yildiz.edu.tr için mx kaydı. Öncelikler harflerle ifade ediliyor.</para>
-      </callout><callout arearefs="djbdns-kurulumu-nasil.s7">
-        <para>yildiz.edu.tr için ikinci mx kaydı. <literal>@</literal> ile başlıyor.</para>
-      </callout><callout arearefs="djbdns-kurulumu-nasil.s8">
-        <para>ece.yildiz.edu.tr için gelen sorguları 193.140.1.15 IP'sine yönlendir.</para>
-      </callout>
-    </calloutlist></para><para>
-Bu arada istenirse <literal>daemontools</literal> paketi ile gelen <literal>svstat</literal>
-ile <literal>tinydns</literal> çalışıyor mu çalışmıyor mu kontrol edilebilir.
-</para><para><screen>
-# svstat /service/tinydns
-</screen></para><para>
-Ya da günlük kayıt dosyalarına bakabiliriz.
-</para><para><screen>
-# tail -f /service/tinydns/log/current
-</screen></para><para>ile gerçek zamanlı olarak işlemler gözlenebilir.
-    </para><para>
-Bir de <literal>tinydns</literal>'in verisini kontrol edelim. Bunun için
-<literal>dnscache</literal> için kullandığımız komuta benzer bir komut olan
-<literal>dnsq</literal> komutunu kullanacağız.
-    </para><para>
-<screen>
-# dnsq a yildiz.edu.tr 193.140.1.1
+</screen>
+  <calloutlist>
+   <callout arearefs="djbdns-kurulumu-nasil.s1">
+    <para>
+     <literal>yildiz.edu.tr</literal> için yetkili isim sunucusu nokta ile
+     başlıyor
+    </para>
+   </callout>
+   <callout arearefs="djbdns-kurulumu-nasil.s2">
+    <para>www.yildiz.edu.tr için konak kaydı</para>
+   </callout>
+   <callout arearefs="djbdns-kurulumu-nasil.s3">
+    <para><literal>*.1.140.193</literal> için yetkili isim sunucusu</para>
+   </callout>
+   <callout arearefs="djbdns-kurulumu-nasil.s4">
+    <para>ogis.yildiz.edu.tr için makina kaydı</para>
+   </callout>
+   <callout arearefs="djbdns-kurulumu-nasil.s5">
+    <para>
+     Bir takma ad (alias) kaydı. Takma ad kayıtları <literal>+</literal> ile
+     başlar.
+    </para>
+   </callout>
+   <callout arearefs="djbdns-kurulumu-nasil.s6">
+    <para>
+     yildiz.edu.tr için mx kaydı. Öncelikler harflerle ifade ediliyor.
+    </para>
+   </callout>
+   <callout arearefs="djbdns-kurulumu-nasil.s7">
+    <para>yildiz.edu.tr için ikinci mx kaydı. <literal>@</literal> ile başlıyor.</para>
+   </callout>
+   <callout arearefs="djbdns-kurulumu-nasil.s8">
+    <para>
+     ece.yildiz.edu.tr için gelen sorguları 193.140.1.15 IP'sine yönlendir.
+    </para>
+   </callout>
+  </calloutlist>
+  <para>
+   Bu arada istenirse <literal>daemontools</literal> paketi ile gelen
+   <literal>svstat</literal> ile <literal>tinydns</literal> çalışıyor mu
+   çalışmıyor mu diye bakılabilir.
+  </para>
+<screen># svstat /service/tinydns</screen>
+  <para>Ya da günlük kayıt dosyalarına bakabiliriz.</para>
+<screen># tail -f /service/tinydns/log/current</screen>
+  <para>ile gerçek zamanlı olarak işlemler gözlenebilir.</para>
+  <para>
+   Bir de <literal>tinydns</literal>'in verisini kontrol edelim. Bunun için
+   <literal>dnscache</literal> için kullandığımız komuta benzer bir komut olan
+   <literal>dnsq</literal> komutunu kullanacağız.
+  </para>
+<screen># dnsq a yildiz.edu.tr 193.140.1.1
 1 yildiz.edu.tr:
 127 bytes, 1+1+2+2 records, response, authoritative, weird ra, noerror
 query: 1 yildiz.edu.tr
@@ -448,509 +517,573 @@ authority: yildiz.edu.tr 86400 NS smurf.cc.yildiz.edu.tr
 authority: yildiz.edu.tr 86400 NS bigblue.ce.yildiz.edu.tr
 additional: smurf.cc.yildiz.edu.tr 86400 A 193.140.1.1
 additional: bigblue.ce.yildiz.edu.tr 86400 A 193.140.2.1
-</screen></para>
-      <caution>
-        <para>
-<literal>tinydns</literal>'i sorgulamak için <literal>dnsq</literal>
-        </para><para>
-<literal>dnscache</literal>'i sorgulamak için <literal>dnsqr</literal> kullanılır.
-      </para>
-    </caution>
-  </sect1>
-  <sect1 xml:id="djbdns-kurulumu-nasil_data">
-    <title><filename>/service/tinydns/root/data</filename> Dosyasının Biçemi </title>
-    <para>
-Yukarıda da belirtildiği gibi <literal>data</literal> dosyasından
-<literal>tinydns</literal>'in okuyabileceği biçeme (data.cdb) dönüştürülür.
-Peki <literal>data</literal> dosyasının biçemi nasıldır:
-    </para><para>
-<screen>
-.fqdn:ip:x:ttl:timestamp:lo
 </screen>
-    </para><para>
-      Teker teker yukarıdaki ifadenin ne anlamlara geldiğini açıklayayım.
-      </para><variablelist>
-        <varlistentry>
-          <term>.fqdn</term>
-          <listitem>
-            <para>
-Girdiyi simgeler. Bu girdi yetkili bir isim sunucusunun başlangıçı
-(SOA = Start Of Authority) olabilir. Nitekim data dosyasinda "." ile
-başlayanlar SOA kaydını belirtir. Üstteki örneğimize bakarsak en üst
-iki satir "." ile başlamaktadır. Bunlar SOA'ları oluşturur. "." dan
-başka karakterler de vardır:
-              </para><itemizedlist>
-                <listitem>
-<literal>.</literal> ile başlayanlar SOA'yı belirtir.Mutlaka
-olmalıdır.
-                </listitem><listitem>
-<literal>@</literal> ile başlayan satır bunun bir mx girdisi
-olduğunu gösterir.
-                </listitem><listitem>
-<literal>=</literal> ile başlayanlar A kayıtları için kullanilir. Aynı
-zamanda tinydns-data ters kayıtlarından olan PTR girdisi içindir.
-                </listitem><listitem>
-<literal>+</literal> ile başlayanlar add-alias betiği oluşturulur.
-Yine bu işaret tinydns-data'ya A kaydı oluşturmasını soyler, fakat PTR
-kaydı girilmez. Eğer aynı IP için iki tane <literal>=</literal>
-kullanırsanız hata alırsınız (data dosyasını elle değiştirerek ya da
-add-host ile).
-                </listitem><listitem>
-<literal>&amp;</literal> ile başlayan satırlar alt dns sunucusu girmek
-içindir. Mesela elek.yildiz.edu.tr 'nin kendi dns sunucusunun olmasını
-istiyorsunuz. Bunun için <literal>add-childdns</literal> komutunu
-kullanırız.
-                </listitem>
-              </itemizedlist>
-          </listitem>
-        </varlistentry>
-        <varlistentry>
-          <term>ip</term>
-          <listitem>
-            <para>
-Girdisi yapılacak fqdn'nin çözümleneceği IP'yi belirler. Mesela:
-</para><para><screen>
- &amp;ece.yildiz.edu.tr:193.140.1.15:86400
-</screen></para><para>
-ifadesindeki ikinci segman IP'dir ve kendisinden önce gelen ifadenin
-(&amp;ece.yildiz.edu.tr)  IP'sini belirler.
-            </para>
-          </listitem>
-        </varlistentry>
-        <varlistentry>
-          <term>x</term>
-          <listitem>
-            <para>
-mx ve ns kayıtlarında işe yaramaktadır. Bu önceliği belirlemek için
-kullanılır ve sorgulara  buna göre verilir. Şöyleki eğer buraya "a" ya
-da "b" girerseniz dnsq ile size dönecek cevap eğer ns kaydı sözkonusu
-ise a.ns.yildiz.edu.tr olur. Eğer girilen değer b ise bu ikincil
-isim sunucusunu gösterir ve b.ns.yildiz.edu.tr olarak gösterilir.
-Yine mx kayıtları içinde a.mx.yildiz.edu.tr ve b.mx.yildiz.edu.tr
-kullanılır. Eğer bu tarz gösterim yapmak istemiyorsanız. Bu kısma
-doğrudan "dns1.yildiz.edu.tr" ya da "dns2.yildiz.edu.tr" girebilirsiniz.
-Ya da aynı şekilde "mx1.yildiz.edu.tr" ve de  "mx2.yildiz.edu.tr".
-            </para><para>
-Aklınıza şu soru gelebilir. Eğer bu kısma ben kendim makina isimlerimi
-girersem öncelik sırası ne olacak. Burada ilk giren ilk sunulur ilkesi
-esas alınır. Yani dosyada hangisi üstte ise önceliğe o sahiptir.
-            </para>
-          </listitem>
-        </varlistentry>
-        <varlistentry>
-          <term>ttl</term>
-          <listitem>
-            <para>
-Kurduğumuz yetkili isim sunucuyu sorgulayan sunucuların belleklerinde bu
-girdiyi kaç saniye(**) tutacağını belirler. ns  ve mx sunucular için
-burada öntanımlı değer 3 gün (259200 saniye) iken diğer girdiler
-için 1 gündür (86400 saniye).
-            </para>
-          </listitem>
-        </varlistentry>
-        <varlistentry>
-          <term>timestamp</term>
-          <listitem>
-            <para>
-Adındanda anlaşılacağı üzere dosyanın ne zaman değiştirildiğini gösterir.
-" add-* " scriptleri bu kısma dokunmazlar.
-            </para>
-          </listitem>
-        </varlistentry>
-        <varlistentry>
-          <term>lo</term>
-          <listitem>
-            <para>
-Bu kısım aşağıda da anlatıldığı üzere "Değişik istemcileri değişik sunuculara
-nasıl yönlendirebilirim? " sorusunun cevabı olmaktadır.
-            </para>
-          </listitem>
-        </varlistentry>
-      </variablelist><para>
-EK: 3 kısımda anlatılanları somutlaştırmak için  örnek bir data dosyasından
-alıntı yapayım:
-</para><para><screen>
-.yildiz.edu.tr:193.140.1.1:dns1.yildiz.edu.tr:259200
-</screen></para><para>
-Böyle bir girdide tinydns-data komutu iki şey yapar. İlk başta
-dns1.yildiz.edu.tr için 193.140.1.1'i gösteren A kaydı oluşturulur. Daha
-sonra  bunun SOA olduğunu belirtilen kısım data.cdb'ye yazılır.
-</para><para><screen>
-@yildiz.edu.tr:193.140.1.3:mx1.yildiz.edu.tr::86400
-</screen></para><para>
-Bu örnekte ise ilk başta A kaydı sonra da mx kaydı oluşturulur.
-    </para>
-  </sect1>
-  <sect1 xml:id="djbdns-kurulumu-nasil_zone">
-    <title>Bölge (zone) Transferi</title>
-    <para>
-Bölge (Zone) Transferi Nedir?
-    </para><para>
-Asıl ya da birincil DNS sunucunuzda yaptığınız değişiklikleri ikincil ya da
-yardımcı sunucularınıza kopyalamanız gerekmektedir. Aslında bunun için bir
-çok değişik araç mevcuttur. Bunun için öntanımlı kabuğu ssh olan rsync bile
-kullanılabilir. Böylece dosyanın tamamının kopyalanması yerine artan
-dosyaların sondaki ekleri kopyalanabilir. Ya da isterseniz doğrudan data.cdb
-dosyasını elle kopyalayabilirsiniz.
-    </para><para>
-Fakat bu iş için en aklı başında çözüm axfrdns kullanmaktır. Bunun için
-öncellikle:
-      </para><orderedlist>
-        <listitem>
-DNS sunucusunun hesap ismi: "axfrdns". Diğer bütün djbdns programlarında
-olduğu gibi program kendini bu hesap adı altında belirtilen dizine chroot
-yapar. İşte bu djbdns programını güvenli kılan en önemli etkenlerden biridir.
-        </listitem><listitem>
-DNS günlük kaydı kullanıcısı: dnslog
-        </listitem><listitem>
-axfrdns'in çalışacağı dizin /etc/axfrdns
-        </listitem><listitem>
-tinydns dizini: /etc/tinydns
-        </listitem>
-      </orderedlist><para>
-Sonra sırasıyla:
-</para><para><screen>
-# axfrdns-conf axfrdns dnslog /etc/axfrdns /etc/tinydns 193.140.1.1  <co xml:id="djbdns-kurulumu-nasil_zone.r1"/>
+  <caution>
+   <para>
+    <literal>tinydns</literal>'yi sorgulamak için <literal>dnsq</literal>
+   </para>
+   <para>
+    <literal>dnscache</literal>'yi sorgulamak için <literal>dnsqr</literal>
+    kullanılır.
+   </para>
+  </caution>
+ </sect1>
+ <sect1 xml:id="djbdns-kurulumu-nasil_data">
+  <title><filename>/service/tinydns/root/data</filename> Dosyasının Biçemi </title>
+  <para>
+   Yukarıda da belirtildiği gibi <literal>data</literal> dosyasından
+   <literal>tinydns</literal>'in okuyabileceği biçeme (data.cdb) dönüştürülür.
+   Peki <literal>data</literal> dosyasının biçemi nasıldır:
+  </para>
+<screen>.fqdn:ip:x:ttl:timestamp:lo</screen>
+  <para>
+   Teker teker yukarıdaki ifadenin ne anlamlara geldiğini açıklayayım.
+  </para>
+  <variablelist>
+   <varlistentry>
+    <term>.fqdn</term>
+    <listitem>
+     <para>
+      Girdiyi simgeler. Bu girdi yetkili bir isim sunucusunun başlangıçı
+      (SOA = Start Of Authority) olabilir. Nitekim data dosyasinda "." ile
+      başlayanlar SOA kaydını belirtir. Üstteki örneğimize bakarsak en üst
+      iki satir "." ile başlamaktadır. Bunlar SOA'ları oluşturur. "." dan
+      başka karakterler de vardır:
+     </para>
+     <simplelist>
+      <member>
+       <literal>.</literal> ile başlayanlar SOA'yı belirtir. Mutlaka
+       olmalıdır.
+      </member>
+      <member>
+       <literal>@</literal> ile başlayan satır bunun bir mx girdisi
+       olduğunu gösterir.
+      </member>
+      <member>
+       <literal>=</literal> ile başlayanlar A kayıtları için kullanılır.
+       Aynı zamanda tinydns-data ters kayıtlarından olan PTR girdisi içindir.
+      </member>
+      <member>
+       <literal>+</literal> ile başlayanları add-alias betiği oluşturulur.
+       Yine bu işaret tinydns-data'ya A kaydı oluşturmasını soyler, fakat PTR
+       kaydı girilmez. Eğer aynı IP için iki tane <literal>=</literal>
+       kullanırsanız hata alırsınız (data dosyasını elle değiştirerek ya da
+       add-host ile).
+      </member>
+      <member>
+       <literal>&amp;</literal> ile başlayan satırlar alt dns sunucusu girmek
+       içindir. Mesela elek.yildiz.edu.tr'nin kendi dns sunucusunun olmasını
+       istiyorsunuz. Bunun için <literal>add-childdns</literal> komutunu
+       kullanırız.
+      </member>
+     </simplelist>
+    </listitem>
+   </varlistentry>
+   <varlistentry>
+    <term>ip</term>
+    <listitem>
+     <para>
+      Girdisi yapılacak fqdn'nin çözümleneceği IP'yi belirler. Mesela:
+     </para>
+<screen>&amp;ece.yildiz.edu.tr:193.140.1.15:86400</screen>
+     <para>
+      ifadesindeki ikinci bölüm IP'dir ve kendisinden önce gelen ifadenin
+      (&amp;ece.yildiz.edu.tr)  IP'sini belirler.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry>
+    <term>x</term>
+    <listitem>
+     <para>
+      mx ve ns kayıtlarında işe yaramaktadır. Bu önceliği belirlemek için
+      kullanılır ve sorgulara buna göre yanıt verilir. Şöyleki eğer buraya
+      "a" ya da "b" girerseniz dnsq ile size dönecek yanıt eğer ns kaydı
+      sözkonusu ise a.ns.yildiz.edu.tr olur. Eğer girilen değer b ise bu
+      ikincil isim sunucusunu gösterir ve b.ns.yildiz.edu.tr olarak
+      gösterilir. Yine mx kayıtları içinde a.mx.yildiz.edu.tr ve
+      b.mx.yildiz.edu.tr kullanılır. Eğer bu tarz gösterim yapmak
+      istemiyorsanız. Bu kısma doğrudan "dns1.yildiz.edu.tr" ya da
+      "dns2.yildiz.edu.tr" girebilirsiniz. Ya da aynı şekilde
+      "mx1.yildiz.edu.tr" ve de  "mx2.yildiz.edu.tr".
+     </para>
+     <para>
+      Aklınıza şu soru gelebilir. Eğer bu kısma ben kendim makina isimlerimi
+      girersem öncelik sırası ne olacak. Burada ilk giren ilk sunulur ilkesi
+      esas alınır. Yani dosyada hangisi üstte ise önceliğe o sahiptir.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry>
+    <term>ttl</term>
+    <listitem>
+     <para>
+      Kurduğumuz yetkili isim sunucuyu sorgulayan sunucuların belleklerinde bu
+      girdiyi kaç saniye(**) tutacağını belirler. ns ve mx sunucular için
+      burada öntanımlı değer 3 gün (259200 saniye) iken diğer girdiler
+      için 1 gündür (86400 saniye).
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry>
+    <term>timestamp</term>
+    <listitem>
+     <para>
+      Adındanda anlaşılacağı üzere dosyanın ne zaman değiştirildiğini
+      gösterir. " add-* " scriptleri bu kısma dokunmazlar.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry>
+    <term>lo</term>
+    <listitem>
+     <para>
+      Bu kısım aşağıda da anlatıldığı üzere "Değişik istemcileri değişik
+      sunuculara nasıl yönlendirebilirim? " sorusunun cevabı olmaktadır.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+  <para>
+   EK: 3 kısmında anlatılanları somutlaştırmak için  örnek bir veri
+   dosyasından alıntı yapayım:
+  </para>
+<screen>.yildiz.edu.tr:193.140.1.1:dns1.yildiz.edu.tr:259200</screen>
+  <para>
+   Böyle bir girdide tinydns-data komutu iki şey yapar. İlk başta
+   dns1.yildiz.edu.tr için 193.140.1.1'i gösteren A kaydı oluşturulur. Daha
+   sonra  bunun SOA olduğunu belirtilen kısım data.cdb'ye yazılır.
+  </para>
+<screen>@yildiz.edu.tr:193.140.1.3:mx1.yildiz.edu.tr::86400</screen>
+  <para>
+   Bu örnekte ise ilk başta A kaydı sonra da mx kaydı oluşturulur.
+  </para>
+ </sect1>
+ <sect1 xml:id="djbdns-kurulumu-nasil_zone">
+  <title>Bölge (zone) Aktarımı</title>
+  <para>Bölge (Zone) Aktarımı Nedir?</para>
+  <para>
+   Asıl ya da birincil DNS sunucunuzda yaptığınız değişiklikleri ikincil
+   ya da yardımcı sunucularınıza kopyalamanız gerekmektedir. Aslında bunun
+   için bir çok değişik araç mevcuttur. Bunun için öntanımlı kabuğu ssh olan
+   rsync bile kullanılabilir. Böylece dosyanın tamamının kopyalanması yerine
+   artan dosyaların sondaki ekleri kopyalanabilir. Ya da isterseniz doğrudan
+   data.cdb dosyasını elle kopyalayabilirsiniz.
+  </para>
+  <para>
+   Fakat bu iş için en aklı başında çözüm axfrdns kullanmaktır.
+   Bunun için öncellikle:
+  </para>
+  <simplelist>
+   <member>
+    DNS sunucusunun hesap ismi: "axfrdns". Diğer bütün djbdns yazılımlarında
+    olduğu gibi yazılım kendini bu hesap adı altında belirtilen dizine chroot
+    yapar. İşte bu djbdns yazılımını güvenli kılan en önemli etkenlerden
+    biridir.
+   </member>
+   <member>DNS günlük kaydı kullanıcısı: dnslog</member>
+   <member>axfrdns'in çalışacağı dizin /etc/axfrdns</member>
+   <member>tinydns dizini: /etc/tinydns</member>
+  </simplelist>
+  <para>Sonra sırasıyla:</para>
+<screen># axfrdns-conf axfrdns dnslog /etc/axfrdns /etc/tinydns 193.140.1.1  <co xml:id="djbdns-kurulumu-nasil_zone.r1"/>
 # cd /etc/axfrdns
-# echo "193.140.1.:allow,AXFR="yildiz.edu.tr/1.140.193.in-addr.arpa" > \
+# echo "193.140.1.:allow,AXFR="yildiz.edu.tr/1.140.193.in-addr.arpa" &gt; \
  /etc/axfrdns/tcp               <co xml:id="djbdns-kurulumu-nasil_zone.r2"/>
 # make
 # ln -s /etc/axfrnds /service   <co xml:id="djbdns-kurulumu-nasil_zone.r3"/>
 </screen>
-    </para><calloutlist>
-    <callout arearefs="djbdns-kurulumu-nasil_zone.r1"><para>
-Bu ip tinydns ip'si ile aynı olabilir.Çünkü axfrdns zone transferi için 512 bytetan büyük dosyları transfer eder bu yüzden tcp kullanılır fakat tinydns udp kullanır.
-    </para></callout><callout arearefs="djbdns-kurulumu-nasil_zone.r2"><para>
-193.140.1'deki makinalara reverse ve normal zone'larının transferine izin ver.
-    </para></callout><callout arearefs="djbdns-kurulumu-nasil_zone.r3"><para>
-<command>axfrdns</command>'i çalıştıralım.
-    </para></callout>
-    </calloutlist>
-  </sect1>
-  <sect1 xml:id="djbdns-kurulumu-nasil_axfrdns">
-    <title>axfrdns-get (Bölge Transfer İstemcisi)</title>
+  <calloutlist>
+   <callout arearefs="djbdns-kurulumu-nasil_zone.r1">
     <para>
+     Bu ip tinydns ip'si ile aynı olabilir.Çünkü axfrdns bölge aktarımında
+     512 bayttan büyük dosyaları aktardığından tcp kullanılır, fakat tinydns
+     udp kullanır.
+    </para>
+   </callout>
+   <callout arearefs="djbdns-kurulumu-nasil_zone.r2">
+    <para>
+     193.140.1'deki makinaların ters ve normal bölgelerinin aktarımına izin ver.
+    </para>
+   </callout>
+   <callout arearefs="djbdns-kurulumu-nasil_zone.r3">
+    <para><command>axfrdns</command>'i çalıştıralım.
+    </para>
+   </callout>
+  </calloutlist>
+ </sect1>
+ <sect1 xml:id="djbdns-kurulumu-nasil_axfrdns">
+  <title>axfrdns-get (Bölge Aktarım İstemcisi)</title>
+  <para>
 Eğer birincil sunucu olarak bir BIND sunucu kullanacaksanız ikincil isim
-sunucu olarak axfr-get programını kullanmalısınız. Ya da diğer bir
-birincil tinydns sunucusundan bölge transferinde bulunmak için kullanılabilir.
+sunucu olarak axfr-get yazılımını kullanmalısınız. Ya da diğer bir
+birincil tinydns sunucusundan bölge aktarımında bulunmak için kullanılabilir.
 Eğer iki sunucu da (birincil ve ikincil) tinydns ise scp ya da rsync ile
 doğrudan ana sunucudan data.cdb'yi ikincil sunucunun
 <literal>/etc/tinydns/root/</literal> dizinine kopyalayabilirsiniz. Eğer
-rsync hususunda bir bilgi almak isterseniz <link xlink:href="http://www.freebsddiary.org/"/>
-adresini ziyaret edebilir ya da "man rsync" ile kılavuz sayfasından bilgi
-alabilirsiniz.
-    </para><para>
+rsync hususunda bir bilgi almak isterseniz "man rsync" ile kılavuz sayfasından bilgi alabilirsiniz.
+    </para>
+  <para>
 Axfrdns-get kısaca şöyle çalışır:
-    </para><para>
-<screen>
-# tcpclient yetkili-isim-sunucu-IP 53 axfrdns-get yildiz.edu.tr fn fn.tmp
-</screen></para><para>
-Burada eğer axfrdns-get çeşitli sorguları yaparak alan için birincil
-sunucuyu bulacak ve eğer birincil sunucuda bölge transferi için axfrdns-get
+    </para>
+<screen># tcpclient yetkili-isim-sunucu-IP 53 axfrdns-get yildiz.edu.tr fn fn.tmp</screen>
+  <para>
+Burada axfrdns-get çeşitli sorguları yaparak alan için birincil
+sunucuyu bulacak ve eğer birincil sunucuda bölge aktarımı için axfrdns-get
 komutunun çalıştığı sunucuya izin verilmişse birincil sunucudan çektiği
 yildiz.edu.tr hakkındaki bilgileri fn.tmp olarak yazacaktır. Eğer bölge
-transfer işlemi başarı ile tamamlanırsa dosya adı otamatik olarak fn
+aktarım işlemi başarı ile tamamlanırsa dosya adı otamatik olarak fn
 olarak değiştirilecektir. Bu fn dosyası da  tinydns-data biçeminde
 olacaktır. Yani daha önce gördüğümüz data dosyası ile aynı biçemde olacaktır.
-    </para><para>
-Genel olarak axfrdns-get programının getirdiği dosyalarda aynı kayda ait
+    </para>
+  <para>
+Genel olarak axfrdns-get yazılımının getirdiği dosyalarda aynı kayda ait
 birden fazla girdi olacaktır. Dosyayı "sort -u" komutu ile sıralayabilirsiniz.
     </para>
-    <warning>
-      <para>
-axfrdns-get için daha önceden tcpclient programını kurmuş olmanız gerekmektedir.
-Zaten sisteminiz tcpserver  kurulu ise tcpclient otomatik gelecektir.
+  <warning>
+   <para>
+axfrdns-get için daha önceden tcpclient yazılımını kurmuş olmanız gerekmektedir.
+Zaten sisteminiz tcpserver kurulu ise tcpclient yanında gelecektir.
       </para>
-    </warning>
-  </sect1>
-  <sect1 xml:id="djbdns-kurulumu-nasil_komutlar">
-    <title>DjbDNS Komutları</title>
-    <para>
+  </warning>
+ </sect1>
+ <sect1 xml:id="djbdns-kurulumu-nasil_komutlar">
+  <title>DjbDNS Komutları</title>
+  <para>
 Şu an kadar anlatılanlar neyin nasıl yapılacağı hususunda genel bir bilgi vermek
-içindi. Bu bölümde anlatılacak olanlar djbdns ile gelen programların (hepsinin)
+içindi. Bu bölümde anlatılacak olanlar djbdns ile gelen yazılımların (hepsinin)
 teker teker kısaca bir açıklaması olacak. DjbDNS ile gelen bir çok komut var.
 Bunların aklınızda biraz daha kolay yer etmesi ve bu belgenin bir başvuru
 belgesi kabul edilmesi için bu tarz bir uygulama yapıyorum.
     </para>
-    <sect2>
-      <title>dnscache</title>
-      <para>
+  <sect2>
+   <title>dnscache</title>
+   <para>
 Kısaca çözümleyici olarak kullanılmaktadır. Çözülen her isteği aynı zamanda
-bellekleyerek cevap verme süresinin azalmasını sağlar. Ağ ortamından gelen
-isteklere cevap verecek şekilde ayarlanabileceği gibi yerel çözümleyici
-olarakta kullanılabilir.
+bellekleyerek yanıt verme süresinin azalmasını sağlar. Ağ ortamından gelen
+isteklere yanıt verecek şekilde ayarlanabileceği gibi yerel çözümleyici
+olarak da kullanılabilir.
       </para>
-    </sect2>
-    <sect2>
-      <title>tinydns</title>
-      <para>
+  </sect2>
+  <sect2>
+   <title>tinydns</title>
+   <para>
 Yetkili bir isim sunucusudur. UDP altında çalışır. Örnek vermek gerekirse
-yildiz.edu.tr alanı için gelebilecek tüm sorgulara cevap verecek şekilde
-ayarlanabilir. 512 byte ve üzeri isteklere cevap vermez. Bunun sebebi
+yildiz.edu.tr alanı için gelebilecek tüm sorgulara yanıt verecek şekilde
+ayarlanabilir. 512 bayt ve üzeri isteklere yanıt vermez. Bunun sebebi
 sadece UDP altında çalışması ve DNS yapılandırmasının bu şekilde olmasıdır.
       </para>
-    </sect2>
-    <sect2>
-      <title>walldns</title>
-      <para>
+  </sect2>
+  <sect2>
+   <title>walldns</title>
+   <para>
 WallDNS tersinir bir DNS duvarıdır. Yani sisteminiz gerisindeki Internet IP'ye
 sahip makinaların isimlerini saklamakta kullanılabilir. Güvenlik duvarı mantığı
 ile örtüşür. Bazı ftp sunucuları kendine gelen istekleri kabul etmek için
 mutlaka ters kaydın o makina için tanımlı olmasını isterler. Bu durumlar için
 walldns kullanılabilir.
       </para>
-    </sect2>
-    <sect2>
-      <title>dnsq</title>
-      <para>
+  </sect2>
+  <sect2>
+   <title>dnsq</title>
+   <para>
 tinydns gibi yetkili isim sunucularını sorgulamak için kullanılır.
-</para><para><screen>
-# dnsq type FQDN server
+</para>
+<screen># dnsq type FQDN server
 # dnsq MX yildiz.edu.tr 193.140.1.1
-</screen></para><para>
-193.140.1.1 sunucusuna yildiz.edu.tr için kayıtlı mx kayıdını sorar.
+</screen>
+   <para>
+193.140.1.1 sunucusuna yildiz.edu.tr için kayıtlı mx kaydını sorar.
       </para>
-    </sect2>
-    <sect2>
-      <title>dnsqr</title>
-      <para>
+  </sect2>
+  <sect2>
+   <title>dnsqr</title>
+   <para>
 Bu komut dnsq'ya benzer fakat yetkili isim sunucusu sorgulaması yerine
 dnscache gibi depoları sorgulamaya yarar.
-</para><para><screen>
-#dnqr ns http://www.yildiz.edu.tr/
-</screen></para><para>
-Depoya yildiz.edu.tr'nin ns kaydını sorar.
+</para>
+<screen>#dnqr ns http://www.yildiz.edu.tr/</screen>
+   <para>
+Depoya yildiz.edu.tr'nin NS kaydını sorar.
       </para>
-    </sect2>
-    <sect2>
-      <title>dnsfilter</title>
-      <para>
+  </sect2>
+  <sect2>
+   <title>dnsfilter</title>
+   <para>
 Bu komut dnsname gibidir. Fakat aynı anda çoklu sorgulama yapabilir.
 dnsname sadece bulduğu ilk girdiyi listeler.
-</para><para><screen>
+</para>
+   <para>
+    <screen>
 # dnsfilter
 193.140.1.1                                     {Bizim girdimiz}
 193.140.1.1=smurf.cc.yildiz.edu.tr
 193.140.1.3                                     {Bizim girdimiz}
 193.140.1.3=ogis.cc.yildiz.edu.tr
 </screen>
-      </para>
-    </sect2>
-    <sect2>
-      <title>axfrdns</title>
-      <para>
-Bölge transferi için kullanılır. Çeşitli ikincil isim sunucular için bölge
-transfer sunucusu olarak vazife yapar. Tinydns'in çalıştığı IP'de çalışabilir.
+   </para>
+  </sect2>
+  <sect2>
+   <title>axfrdns</title>
+   <para>
+Bölge aktarımı için kullanılır. Çeşitli ikincil isim sunucular için bölge
+aktarım sunucusu olarak görev yapar. Tinydns'in çalıştığı IP'de çalışabilir.
 TCP kullanır.
       </para>
-    </sect2>
-    <sect2>
-      <title>dnstrace</title>
-      <para>
+  </sect2>
+  <sect2>
+   <title>dnstrace</title>
+   <para>
 Belirtilen kök isim sunucusundan başlayarak ( r ) bir alan altında ( fqdn )
 istenenen tipte ( t ) sorguları bulur ve ilişki kurduğu bütün sunucuları
 standart çıktıya yazar. Fakat karmaşık bir biçemde.
-</para><para><screen>
+</para>
+   <para>
+    <screen>
 # dnstrace t fqdn r
-# dnstrace any www.yildiz.edu.tr  a.root-servers.net > yildiz &amp;
+# dnstrace any www.yildiz.edu.tr  a.root-servers.net &gt; yildiz &amp;
 </screen>
-      </para>
-    </sect2>
-    <sect2>
-      <title>dnstracesort</title>
-      <para>
-dnstrace komutunun çıktısını okuyabilieceğimiz şekilde listeler.
-</para><para><screen>
+   </para>
+  </sect2>
+  <sect2>
+   <title>dnstracesort</title>
+   <para>
+dnstrace komutunun çıktısını okuyabileceğimiz şekilde listeler.
+</para>
+   <para>
+    <screen>
 # dnstracesort &lt; yildiz | less
-</screen></para><para>
+</screen>
+   </para>
+   <para>
 Ya da doğrudan:
-</para><para><screen>
+</para>
+   <para>
+    <screen>
 # dnstrace any www.yildiz.edu.tr  a.root-servers.net | dnstracesort | less
 </screen>
-      </para>
-    </sect2>
-    <sect2>
-      <title>axfr-get</title>
-      <para>
+   </para>
+  </sect2>
+  <sect2>
+   <title>axfr-get</title>
+   <para>
 İkincil sunucularda kullanılmak üzere tasarlanmıştır. Birincil sunucudan
-bölge transferinde kullanılır.
-      </para><para>
+bölge aktarımında kullanılır.
+      </para>
+   <para>
 Ayrıca birkaç da betik vardır: dnsmx, dnsip, dnsname
       </para>
-    </sect2>
-  </sect1>
-  <sect1 xml:id="djbdns-kurulumu-nasil_ekbilgi">
-    <title>Yardımcı Bilgiler</title>
-    <para>
-Bu bölümde şahsımın ilgisini çeken birkaç noktayı anlatacağım:
+  </sect2>
+ </sect1>
+ <sect1 xml:id="djbdns-kurulumu-nasil_ekbilgi">
+  <title>Yardımcı Bilgiler</title>
+  <para>
+Bu bölümde şahsen ilgimi çeken birkaç noktayı anlatacağım:
     </para>
-    <sect2><title>Aynı veriyi içeren 5 web sunucusu için yük dengelemesini nasıl yaparım?</title>
-      <para>
+  <sect2>
+   <title>Aynı veriyi içeren 5 sunucu için yük dengelemesini nasıl yaparım?</title>
+   <para>
 Aslında dns tabanlı yük dengelemesine tam manasıyla sıcak bakmasam da djbdns
 ile yük dengelemesi yapılabiliyor. Eğer Linux altında gerçek bir yük dengelemesi
 ya da Yüksek Kullanılabilirlik arıyorsanız <link xlink:href="http://www.linux-vs.org/"/>
-ya da <ulink urel="http://www.linux-ha.org/"/> adreslerine bakın derim. Neyse
+ya da <link xlink:href="http://www.linux-ha.org/"/> adreslerine bakın derim. Neyse
 biz konumuza dönelim. Amacımıza ulaşmak için TTL ile oynayacağız. Her bir www
 sunucumuzun girdisi için 5 saniye bir TTL tanımlayacağız. Böylece karşı tarafta
 depolanan sorguların yaşam süresi 5 saniye olacak. Gelen her bir istek için
 djbdns'te döner turnuva yaparak bu 5 sunucu arasında tercihini yaparak karşı
 taraftaki çözümleyiciye bildirecektir.  <literal>/etc/tinydns/root/data</literal>
 dosyasına
-</para><para><screen>
-+www.yildiz.edu.tr:193.140.1.1:5
+</para>
+<screen>+www.yildiz.edu.tr:193.140.1.1:5
 +www.yildiz.edu.tr:193.140.1.2:5
 +www.yildiz.edu.tr:193.140.1.1:5
 ......
-</screen></para><para>
+</screen>
+   <para>
 yazılır. <literal>/etc/tinydns/root/</literal> dizininde <literal>make</literal>
 komutu çalıştırarak tinydns-data komutunun data dosyasındaki bilgileri data.cdb
 gibi cdb biçeminde saklaması sağlanır.
       </para>
-    </sect2>
-    <sect2>
-      <title>Değişik istemcileri değişik sunuculara nasıl yönlendirebilirim?</title>
-      <para>
+  </sect2>
+  <sect2>
+   <title>Değişik istemcileri değişik sunuculara nasıl yönlendirebilirim?</title>
+   <para>
 Diyelim ki üniversiteniz ya da şirketiniz içinden gelen sorgulara yani
 intranetinizden gelen sorgulara http://www.yildiz.edu.tr/ için 193.140.1.1
 Internet'ten gelen http://www.yildiz.edu.tr/ sorguları için 192.193.140.1.2...5
-arası cevapların verilmesini istiyorsunuz. Bunun için
+arası yanıtların verilmesini istiyorsunuz. Bunun için
 <literal>/etc/tinydns/root/data</literal> dosyasına farklı iki konum
 tanımlarız. IN ve EX gibi 1 ya da 2 byte uzunluğunda (maximum  2 byte
 uzunluğunda) tanımlamalar yaparız. Şöyleki:
-</para><para><screen>
+</para>
+   <para>
+    <screen>
 %IN:193.140.1
 %EX
 +www.yildiz.edu.tr:193.140.1.1:5::IN
 +www.yildiz.edu.tr:193.140.1.2:5::EX
 +www.yildiz.edu.tr:193.140.1.3:5::EX
 ...
-</screen></para><para>
+</screen>
+   </para>
+   <para>
       </para>
-    </sect2>
-    <sect2>
-      <title>Aynı ağda bulunun bir dnscache o ağ için tanımlı yetkili isim sunucusunu nasıl bulacak?</title>
-      <para>
+  </sect2>
+  <sect2>
+   <title>Aynı ağda bulunun bir dnscache o ağ için tanımlı yetkili isim sunucusunu nasıl bulacak?</title>
+   <para>
 Normalde aşağıdaki bir düzenleme yapılmazsa yerel olarak bulunabilecek bir
-cevap için bütün Internet'i gezmesi gerekecektir. Bu durumu önlemek için:
-</para><para><screen>
+yanıt için bütün Internet'i gezmesi gerekecektir. Bu durumu önlemek için:
+</para>
+   <para>
+    <screen>
 # cd /etc/dnscachex/root/servers
-# echo "193.140.1.1" > yildiz.edu.tr
-# echo "193.140.1.1" > 1.140.193.in-addr.arpa
-</screen></para><para>
+# echo "193.140.1.1" &gt; yildiz.edu.tr
+# echo "193.140.1.1" &gt; 1.140.193.in-addr.arpa
+</screen>
+   </para>
+   <para>
         ile bu sorunu çözebilirsiniz.
       </para>
-    </sect2>
-    <sect2>
-      <title>djbDNS çalışmadı...</title>
-      <para>
+  </sect2>
+  <sect2>
+   <title>djbDNS çalışmadı...</title>
+   <para>
 Bu kısım çok önemli (!!!). Diyelimki djbdns'i kurdunuz ve herşeyin tam olarak
 çalışıp çalışmadığından emin olmak için sisteminizi yeniden başlattınız.
 Fakat o ne... Djbdns çalışmadı!!! ve şu şekil bir hata veriyor:
-</para><para><screen>
+</para>
+   <para>
+    <screen>
 svscan: warning: unable to start supervise dnscache: file does not exist
-</screen></para><para>
+</screen>
+   </para>
+   <para>
 Burada bulunamayan ve svscan'in dnscache'i çalışmamasını sağlayan
 <literal>/usr/local/bin</literal> altında <literal>daemontools</literal>
 komutlarının bulunmaması.
-      </para><para>
+      </para>
+   <para>
 Buradaki çözüm: <literal>/usr/local/etc/rc.d/djbdns.sh</literal> gibi bir
 dosya oluşturup, <literal>chmod 755 djbdns.sh</literal> ile çalıştırılabilir
 hale getirip şu satırları djbdns.sh'a eklemektir.
-    </para><para>
-<screen>
+    </para>
+   <para>
+    <screen>
 #!/bin/sh
  export PATH="$PATH:/usr/local/bin"
  svscan /service &amp;
 </screen>
+   </para>
+  </sect2>
+ </sect1>
+ <sect1 xml:id="djbdns-kurulumu-nasil_biblio">
+  <title>Kaynaklar</title>
+  <para>
+   <variablelist>
+    <varlistentry>
+     <term>DJBDNS SOURCE</term>
+     <listitem>
+      <para>
+       <link xlink:href="http://cr.yp.to/"/>
       </para>
-    </sect2>
-  </sect1>
-  <sect1 xml:id="djbdns-kurulumu-nasil_biblio">
-    <title>Kaynaklar</title>
-    <para>
-      <variablelist>
-        <varlistentry>
-          <term>DJBDNS SOURCE</term>
-          <listitem><para><link xlink:href="http://cr.yp.to/"/></para></listitem>
-        </varlistentry>
-        <varlistentry>
-          <term>DJBDNS HOMEPAGE</term>
-          <listitem>
-            <para><link xlink:href="http://www.djbdns.org/"/></para>
-            <para><link xlink:href="http://djbdns.enderunix.org/"/> (Resmi olarak
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term>DJBDNS HOMEPAGE</term>
+     <listitem>
+      <para>
+       <link xlink:href="http://www.djbdns.org/"/>
+      </para>
+      <para><link xlink:href="http://djbdns.enderunix.org/"/> (Resmi olarak
 djbdns.org'un yansısını tutmaktayız.)</para>
-            <para>
+      <para>
 Ayrıca bu sayfalarda djbdns için yapılmış birkaç yama bulabilirsiniz.
 Örnek olarak bir deponun dnscache ile birden çok IP'ye bağlanması
 verilebilir.
             </para>
-          </listitem>
-        </varlistentry>
-        <varlistentry>
-          <term>DJBDNS FAQ</term>
-          <listitem><para><link xlink:href="http://cr.yp.to/djbdns/faq/"/></para></listitem>
-        </varlistentry>
-        <varlistentry>
-          <term>DjbDNS ve BIND Karşılaştırması</term>
-          <listitem>
-            <para><link xlink:href="http://cr.yp.to/djbdns/ad/easeofuse.html"/></para>
-            <para>Bu belgeye resmi djb sitesi vasıtasıyla da ulaşabilirsiniz:
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term>DJBDNS FAQ</term>
+     <listitem>
+      <para>
+       <link xlink:href="http://cr.yp.to/djbdns/faq/"/>
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term>DjbDNS ve BIND Karşılaştırması</term>
+     <listitem>
+      <para>
+       <link xlink:href="http://cr.yp.to/djbdns/ad/easeofuse.html"/>
+      </para>
+      <para>Bu belgeye resmi djb sitesi vasıtasıyla da ulaşabilirsiniz:
             <link xlink:href="http://www.djbdns.org"/></para>
-          </listitem>
-        </varlistentry>
-        <varlistentry>
-          <term>DjbDNS'in tinydns paketini web'den yönetmek için python ile yazılmış bir araç</term>
-          <listitem><para><link xlink:href="http://www.linuxis.net/twa"/></para></listitem>
-        </varlistentry>
-        <varlistentry>
-          <term>Gerrit Pape'in yazdığı djbdns kılavuz sayfaları</term>
-          <listitem>
-            <para>Djbdns ile manual page gelmemektedir:
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term>DjbDNS'in tinydns paketini web'den yönetmek için python ile yazılmış bir araç</term>
+     <listitem>
+      <para>
+       <link xlink:href="http://www.linuxis.net/twa"/>
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term>Gerrit Pape'in yazdığı djbdns kılavuz sayfaları</term>
+     <listitem>
+      <para>Djbdns ile manual page gelmemektedir:
               <link xlink:href="ftp://ftp.innominate.org/gpa/djb/"/>
             </para>
-          </listitem>
-        </varlistentry>
-        <varlistentry>
-          <term>dnscache için döner turnuva yamasi</term>
-          <listitem>
-            <para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term>dnscache için döner turnuva yamasi</term>
+     <listitem>
+      <para>
 Bu yama dnscache içindir. tinydns için döner turnuva desteği paketle
 gelmektedir.</para>
-            <para><link xlink:href="http://www.legend.co.uk/djb/dns/round-robin.patch"/></para>
-          </listitem>
-        </varlistentry>
-      </variablelist>
-    </para>
-  </sect1>
-  <sect1 xml:id="djbdns-kurulumu-nasil_yasal">
-    <title>Yasal Açıklamalar</title>
-    <sect2>
-      <title>Telif Hakkı ve Lisans</title>
-
-    <!-- The LDP recommends, but doesn't require, the GFDL -->
-    <para>
-Bu belgenin, <emphasis>djbDNS Kurulumu NASIL</emphasis>
-1.0 sürümünün <emphasis role="bold">
-telif hakkı © 2001 <emphasis>Ömer Faruk Şen</emphasis></emphasis>'e
-aittir. Bu belgeyi, Free Software Foundation tarafından yayınlanmış bulunan <link linkend="gpl">GNU Genel Kamu Lisansı</link>nın 2. ya da daha sonraki sürümünün koşullarına bağlı kalarak kopyalayabilir, dağıtabilir ve/veya değiştirebilirsiniz. Bu Lisansın özgün kopyasını <link xlink:href="http://www.gnu.org/copyleft/gpl.html"/> adresinde bulabilirsiniz.
-    </para><para>
-Linux, Linus Torvalds adına kayıtlı bir ticarî isimdir.
-    </para>
-  </sect2>
-
+      <para>
+       <link xlink:href="http://www.legend.co.uk/djb/dns/round-robin.patch"/>
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+ </sect1>
+ <sect1 xml:id="djbdns-kurulumu-nasil_yasal">
+  <title>Yasal Açıklamalar</title>
   <sect2>
-    <title>Feragatname</title>
-    <para>
-Bu belgedeki bilgilerin kullanımından doğacak sorumluluklar,
-ve olası zararlardan belge yazarı sorumlu tutulamaz.
-Bu belgedeki bilgileri uygulama sorumluluğu uygulayana aittir.
-    </para><para>
-Tüm telif hakları aksi özellikle belirtilmediği sürece sahibine
-aittir. Belge içinde geçen herhangi bir terim bir ticarî isim
-yada kuruma itibar kazandırma olarak algılanmamalıdır. Bir ürün
-ya da markanın kullanılmış olması ona onay verildiği anlamında
-görülmemelidir.
-    </para>
+   <title>Telif Hakkı ve Lisans</title>
+   <para>
+    Bu belgenin, <emphasis>djbDNS Kurulumu NASIL</emphasis>
+    1.0 sürümünün <emphasis role="bold">telif hakkı © 2001
+    <emphasis>Ömer Faruk Şen</emphasis></emphasis>'e
+    aittir. Bu belgeyi, Free Software Foundation tarafından yayınlanmış
+    bulunan <link xlink:href="&gpl;">GNU Genel Kamu Lisansı</link>nın 2.
+    ya da daha sonraki sürümünün koşullarına bağlı kalarak kopyalayabilir,
+    dağıtabilir ve/veya değiştirebilirsiniz. Bu Lisansın özgün kopyasını
+    <link xlink:href="&gnu-licences;"/> adresinde bulabilirsiniz.
+   </para>
+   <para>
+    Linux, Linus Torvalds adına kayıtlı bir ticarî isimdir.
+   </para>
   </sect2>
-  </sect1>
+  <sect2>
+   <title>Feragatname</title>
+   <para>
+    Bu belgedeki bilgilerin kullanımından doğacak sorumluluklar,
+    ve olası zararlardan belge yazarı sorumlu tutulamaz.
+    Bu belgedeki bilgileri uygulama sorumluluğu uygulayana aittir.
+   </para>
+   <para>
+    Tüm telif hakları aksi özellikle belirtilmediği sürece sahibine
+    aittir. Belge içinde geçen herhangi bir terim bir ticarî isim
+    yada kuruma itibar kazandırma olarak algılanmamalıdır. Bir ürün
+    ya da markanın kullanılmış olması ona onay verildiği anlamında
+    görülmemelidir.
+   </para>
+  </sect2>
+ </sect1>
 </article>

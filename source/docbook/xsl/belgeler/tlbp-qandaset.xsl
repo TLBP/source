@@ -212,7 +212,7 @@ xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" xmlns="http://www.w3.org/199
 <xsl:template name="process.qanda.toc">
   <!-- * if user wants nested qandaset and qandaentry in main Qandaset TOC, -->
   <!-- * then don't also include the nested stuff in the sub TOCs -->
-  <ol>
+  <ol class="qandatoc">
     <xsl:apply-templates select="d:qandadiv" mode="qandatoc.mode"/>
     <xsl:apply-templates select="d:qandaset|d:qandaentry" mode="qandatoc.mode"/>
   </ol>

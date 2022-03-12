@@ -35,81 +35,71 @@
 <xsl:import href="index-lists.xsl"/>
 <xsl:import href="tlbp-qandaset.xsl"/>
 
-<!-- özelleştirilmiş parametreler -->
+<!-- özelleştirilmiş değiştirgeler -->
+<xsl:param name="html.ext">.html</xsl:param>
 <xsl:param name="VERSION">-special(derived from DocBook XSL v1.79.1 for Turkish Linux Documentation Project by Nilgün Belma Bugüner - nilgun (at) tlbp.gen.tr)</xsl:param>
 <xsl:param name="chunker.output.encoding">UTF-8</xsl:param>
 <!-- hata ayıklama/geliştirme için "yes" sunumda "no" olmalı" -->
 <xsl:param name="chunker.output.indent">yes</xsl:param>
 <xsl:param name="l10n.xml" select="document('y11e.xml')"/>
-<xsl:param name="refentry.generate.name">0</xsl:param>
+<xsl:param name="refentry.generate.name">1</xsl:param>
 <xsl:param name="refentry.generate.title">1</xsl:param>
+<xsl:param name="chunk.base.dir">../../htdocs/dnm/</xsl:param>
+<xsl:param name="docbook.css.link">0</xsl:param>
+<xsl:param name="callout.list.table">0</xsl:param>
+<xsl:param name="section.autolabel">1</xsl:param>
+<xsl:param name="formal.object.break.after">0</xsl:param>
 <!-- eskiler -->
 <xsl:param name="chunk.sections">1</xsl:param>
 <xsl:param name="chunk.first.sections">1</xsl:param>
 <xsl:param name="chunk.section.depth">1</xsl:param>
-<xsl:param name="toc.section.depth">2</xsl:param>
+<xsl:param name="toc.section.depth">3</xsl:param>
 <xsl:param name="toc.list.type">dl</xsl:param>
 <xsl:param name="root.filename"/>
 <xsl:param name="use.id.as.filename">1</xsl:param>
-<xsl:param name="html.stylesheet">belgeler.css</xsl:param>
 <xsl:param name="admon.graphics.path">images/xsl/</xsl:param>
 <xsl:param name="callout.graphics.path">images/xsl/callouts/</xsl:param>
 <xsl:param name="navig.graphics.path">images/xsl/</xsl:param>
-<xsl:param name="html.root.dir">../../htdocs/</xsl:param>
+<!--xsl:param name="generate.section.toc.level">2</xsl:param-->
 <xsl:param name="generate.toc">
-appendix  toc,title
-article/appendix  toc,title
-article   toc,title
+appendix  toc,title,titleabbrev
+article/appendix  toc,title,titleabbrev
+article   toc,title,titleabbrev
 book      toc,title,figure,table,example,equation
-chapter   toc,title
-part      toc,title
-preface   toc,title
+chapter   toc,title,titleabbrev
+part      toc,title,titleabbrev
+preface   toc,title,titleabbrev
 qandadiv  toc
 qandaset  toc
 reference toc,title,refpurpose
-sect1     toc
-sect2     toc
-sect3     toc
-sect4     toc
-sect5     toc
-section   toc
-set       toc,title
+sect1     toc,title,titleabbrev
+sect2     toc,title,titleabbrev
+sect3     toc,title,titleabbrev
+sect4     toc,title,titleabbrev
+sect5     toc,title,titleabbrev
+section   toc,title,titleabbrev
+set       toc,title,titleabbrev
 </xsl:param>
 
 <xsl:template name="user.head.content">
+ <meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+ <link rel="stylesheet" type="text/css" href="belgeler.css"/>
+ <link rel="stylesheet" type="text/css" href="nav.css"/>
 </xsl:template>
 
+<xsl:template name="root.attributes">
+ <xsl:attribute name="lang">tr</xsl:attribute>
+ <xsl:attribute name="xml:lang">tr</xsl:attribute>
+</xsl:template>
+
+<!-- Belgelerdeki tüm eposta adresleri kaldırıldı (Şubat 2022) -->
 <xsl:template match="d:email">
-  <xsl:variable name="addr">
-    <xsl:call-template name="nospam">
-      <xsl:with-param name="p" select="text()"/>
-    </xsl:call-template>
-  </xsl:variable>
-
-  <span class="email">
-   <xsl:text>&lt;</xsl:text>
-   <xsl:value-of select="$addr"/>
-   <xsl:text>&gt;</xsl:text>
-  </span>
+ <xsl:text>&lt;eposta adresi gizlendi&gt;</xsl:text>
 </xsl:template>
 
-<xsl:template name="nospam">
-  <xsl:param name="p"></xsl:param>
-
-  <xsl:variable name="q" select="normalize-space($p)"/>
-  <xsl:choose>
-    <xsl:when test="contains($p,'@')">
-      <xsl:call-template name="string.replace">
-        <xsl:with-param name="string" select="$q"/>
-        <xsl:with-param name="target" select="'@'"/>
-        <xsl:with-param name="replace" select="' (at) '"/>
-      </xsl:call-template>
-    </xsl:when>
-    <xsl:otherwise>
-      <xsl:value-of select="$q"/>
-    </xsl:otherwise>
-  </xsl:choose>
+<xsl:template match="d:struct">
+ <xsl:call-template name="inline.monoseq"/>
 </xsl:template>
 
 <xsl:template match="d:revhistory" mode="titlepage.mode"/>
@@ -145,7 +135,9 @@ set       toc,title
 </xsl:template>
 
 <xsl:template match="d:legalnotice/d:title" mode="titlepage.mode">
-  <div class="legalnotice-title"><strong xmlns:xslo="http://www.w3.org/1999/XSL/Transform"><xsl:apply-templates/></strong></div>
+  <div class="legalnotice-title">
+    <xsl:apply-templates/>
+  </div>
 </xsl:template>
 
 <xsl:template match="d:abstract" mode="titlepage.mode">
@@ -165,11 +157,57 @@ set       toc,title
   </div>
 </xsl:template>
 
-<xsl:template match="d:literallayout">
-  <div class="para">
-    <pre class="literallayout">
+<xsl:template match="d:indexterm">
+  <!-- this one must have a name, even if it doesn't have an ID -->
+  <xsl:variable name="id">
+    <xsl:call-template name="object.id"/>
+  </xsl:variable>
+
+  <span id="{$id}" class="indexterm"/>
+</xsl:template>
+
+<xsl:template match="d:blockquote">
+  <div class="{name(.)}">
+    <xsl:call-template name="common.html.attributes"/>
+    <xsl:call-template name="id.attribute"/>
+    <xsl:call-template name="anchor"/>
+    <blockquote>
+      <xsl:call-template name="common.html.attributes"/>
+      <xsl:apply-templates select="child::*[local-name(.)!='attribution']"/>
+      <xsl:apply-templates select="d:attribution"/>
+     </blockquote>
+  </div>
+</xsl:template>
+
+<xsl:template match="d:attribution">
+  <div>
+    <xsl:call-template name="common.html.attributes"/>
+    <xsl:call-template name="id.attribute"/>
+    <xsl:apply-templates/>
+  </div>
+</xsl:template>
+
+<xsl:template name="nongraphical.admonition">
+  <div>
+    <xsl:call-template name="common.html.attributes">
+      <xsl:with-param name="inherit" select="1"/>
+    </xsl:call-template>
+    <xsl:call-template name="id.attribute"/>
+    <xsl:if test="$admon.style != '' and $make.clean.html = 0">
+      <xsl:attribute name="style">
+        <xsl:value-of select="$admon.style"/>
+      </xsl:attribute>
+    </xsl:if>
+
+    <xsl:if test="$admon.textlabel != 0 or d:title or d:info/d:title">
+      <h3 class="title">
+        <xsl:call-template name="anchor"/>
+        <xsl:apply-templates select="." mode="object.title.markup"/>
+      </h3>
+    </xsl:if>
+    <div class="admon-contents">
       <xsl:apply-templates/>
-    </pre>
+    </div>
   </div>
 </xsl:template>
 
@@ -204,7 +242,7 @@ set       toc,title
         </td>
       </xsl:when>
       <xsl:when test="$numcols &gt; 2">
-        <td>&#160;</td>
+        <td></td>
       </xsl:when>
       <xsl:otherwise/>
     </xsl:choose>
@@ -218,9 +256,7 @@ set       toc,title
   </xsl:if>
   <xsl:if test="position() != last()">
    <tr>
-     <td align="{$direction.align.start}" colspan="{$numcols}">
-       &#160;
-     </td>
+     <td align="{$direction.align.start}" colspan="{$numcols}"></td>
    </tr>
   </xsl:if>
 </xsl:template>
@@ -233,7 +269,7 @@ set       toc,title
   </div>
 </xsl:template>
 
-<xsl:template match="d:programlisting|d:screen|d:synopsis">
+<xsl:template match="d:screen|d:programlisting|d:synopsis">
   <xsl:param name="suppress-numbers" select="'0'"/>
   <xsl:variable name="vendor" select="system-property('xsl:vendor')"/>
   <xsl:variable name="id"><xsl:call-template name="object.id"/></xsl:variable>
@@ -251,22 +287,10 @@ set       toc,title
     </xsl:choose>
   </xsl:variable>
 
-  <xsl:variable name="align">
-    <xsl:choose>
-      <xsl:when test="name(.) = 'synopsis'">
-        <xsl:text>left</xsl:text>
-      </xsl:when>
-      <xsl:otherwise>
-        <xsl:text>right</xsl:text>
-      </xsl:otherwise>
-    </xsl:choose>
-  </xsl:variable>
-
   <xsl:if test="@xml:id">
     <a href="{$xml:id}"/>
   </xsl:if>
 
-  <div class="para"><div align="{$align}">
     <xsl:choose>
       <xsl:when test="@linenumbering = 'numbered'">
 
@@ -297,7 +321,6 @@ set       toc,title
         </pre>
     </xsl:otherwise>
   </xsl:choose>
-  </div></div>
 </xsl:template>
 
 <xsl:template name="numbered.lines">
@@ -313,7 +336,6 @@ set       toc,title
       <xsl:with-param name="rtf" select="substring-after($rtf,'&#10;')"/>
       <xsl:with-param name="num" select="$num + 1"/>
     </xsl:call-template>
-
   </xsl:if>
 </xsl:template>
 
@@ -412,6 +434,93 @@ set       toc,title
   </xsl:choose>
 </xsl:template>
 
+<xsl:template name="paragraph">
+  <xsl:param name="class" select="''"/>
+  <xsl:param name="content"/>
+
+  <xsl:variable name="p">
+    <p>
+      <xsl:call-template name="id.attribute"/>
+      <xsl:choose>
+        <xsl:when test="$class != ''">
+          <xsl:call-template name="common.html.attributes">
+            <xsl:with-param name="class" select="$class"/>
+          </xsl:call-template>
+        </xsl:when><!--
+        <xsl:when test="d:link">
+          <xsl:attribute name="class">linkedpara</xsl:attribute>
+        </xsl:when> -->
+        <xsl:otherwise>
+          <xsl:call-template name="common.html.attributes">
+            <xsl:with-param name="class" select="''"/>
+          </xsl:call-template>
+        </xsl:otherwise>
+      </xsl:choose>
+
+      <xsl:if test="d:footnote">
+       <xsl:for-each select="d:footnote">
+        <span class="notfoot">
+         <xsl:call-template name="id.attribute">
+          <xsl:with-param name="node" select="."/>
+          <xsl:with-param name="conditional" select="0"/>
+         </xsl:call-template>
+        </span>
+       </xsl:for-each>
+      </xsl:if>
+
+      <xsl:copy-of select="$content"/>
+    </p>
+  </xsl:variable>
+
+  <xsl:choose>
+    <xsl:when test="$html.cleanup != 0">
+      <xsl:call-template name="unwrap.p">
+        <xsl:with-param name="p" select="$p"/>
+      </xsl:call-template>
+    </xsl:when>
+    <xsl:otherwise>
+      <xsl:copy-of select="$p"/>
+    </xsl:otherwise>
+  </xsl:choose>
+</xsl:template>
+
+<!-- This template generates just the footnote marker inline.
+The footnote text is handled in name="process.footnote".
+The footnote marker gets an id of @id, while the
+footnote text gets an id of #ftn.@id. They cross link to each other. -->
+<xsl:template match="d:footnote">
+  <xsl:variable name="name">
+    <xsl:call-template name="object.id">
+      <xsl:with-param name="conditional" select="0"/>
+    </xsl:call-template>
+  </xsl:variable>
+  <xsl:variable name="href">
+    <xsl:text>#ftn.</xsl:text>
+    <xsl:value-of select="$name"/>
+  </xsl:variable>
+
+  <a href="{$href}">
+    <xsl:apply-templates select="." mode="class.attribute"/>
+    <xsl:if test="$generate.id.attributes = 0">
+      <xsl:attribute name="id">
+        <xsl:value-of select="$name"/>
+      </xsl:attribute>
+    </xsl:if>
+
+    <sup>
+      <xsl:apply-templates select="." mode="class.attribute"/>
+      <xsl:if test="not(parent::d:para)">
+       <xsl:call-template name="id.attribute">
+         <xsl:with-param name="conditional" select="0"/>
+       </xsl:call-template>
+      </xsl:if>
+      <xsl:text>[</xsl:text>
+      <xsl:apply-templates select="." mode="footnote.number"/>
+      <xsl:text>]</xsl:text>
+    </sup>
+  </a>
+</xsl:template>
+
 <xsl:template match="d:formalpara/d:title">
   <br/><b><xsl:apply-templates/></b><br/>
 </xsl:template>
@@ -497,6 +606,53 @@ set       toc,title
 
 <xsl:template match="d:superset">
   <xsl:apply-templates/>
+</xsl:template>
+
+
+<xsl:template name="refentry.header">
+<div class="refentry-header">
+  <table cellspacing="3" cellpadding="3" width="100%" border="0">
+    <tr>
+      <td class="mheadfoot" align="left" width="25%">
+        <xsl:value-of select="./d:refmeta/d:refentrytitle"/>
+        <xsl:apply-templates select="./d:refmeta/d:manvolnum"/>
+      </td>
+      <td class="mheadfoot" align="center" width="50%">
+        <xsl:if test="(./d:refmeta/d:refmiscinfo[@otherclass='header'])">
+          <xsl:value-of select="./d:refmeta/d:refmiscinfo[@otherclass='header']"/>
+        </xsl:if>
+        <xsl:text> </xsl:text>
+      </td>
+      <td class="mheadfoot" align="right" width="25%">
+        <xsl:value-of select="./d:refmeta/d:refentrytitle"/>
+        <xsl:apply-templates select="./d:refmeta/d:manvolnum"/>
+      </td>
+    </tr>
+  </table>
+</div><p/>
+</xsl:template>
+
+<xsl:template name="refentry.footer">
+<div class="refentry-footer">
+  <table cellspacing="3" cellpadding="3" width="100%" border="0">
+    <tr>
+      <td class="mheadfoot" align="left" width="30%">
+        <xsl:if test="(./d:refmeta/d:refmiscinfo[@otherclass='domain'])">
+          <xsl:value-of select="./d:refmeta/d:refmiscinfo[@otherclass='domain']"/>
+        </xsl:if>
+      </td>
+      <td class="mheadfoot" align="center" width="40%">
+        <xsl:if test="(./d:refmeta/d:refmiscinfo[@otherclass='date'])">
+        <xsl:value-of select="./d:refmeta/d:refmiscinfo[@otherclass='date']"/>
+        </xsl:if>
+      </td>
+      <td class="mheadfoot" align="right" width="30%">
+        <xsl:value-of select="./d:refmeta/d:refentrytitle"/>
+        <xsl:apply-templates select="./d:refmeta/d:manvolnum"/>
+      </td>
+    </tr>
+  </table>
+</div>
 </xsl:template>
 
 <xsl:template match="d:uri[(ancestor::d:refentry) and not (child::node())]">

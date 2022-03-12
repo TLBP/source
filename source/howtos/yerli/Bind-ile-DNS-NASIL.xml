@@ -1,461 +1,460 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--DOCTYPE article SYSTEM "../../docbook/dtd/docbookx.dtd"-->
 <!-- ********************************************************************
-     $Id: Bind-ile-DNS-NASIL.xml,v 1.5 2002/12/20 22:51:00 nilgun Exp $
+       yerli/Bind-ile-DNS-NASIL.xml
      ******************************************************************** -->
-
-<article xml:id="bind-ile-dns-howto" lang="tr">
-
-  <info>
-
-    <!-- Use "HOWTO", "mini HOWTO", "FAQ" in title, if appropriate -->
-    <title>BIND 8 ile DNS NASIL</title>
-    <author>
-     <personname><firstname>İlker Temir</firstname>
-    </author>
-
-     <pubdate>Nisan 2000</pubdate>
-     <pubdate> </pubdate>
-
-     <!-- Most recent revision goes at the top; list in descending order -->
-     <revhistory>
-       <revision>
-          <revnumber>1.0</revnumber>
-          <date>Nisan 2000</date>
-          <authorinitials>
-            İlker Temir
-          </authorinitials>
-          <revremark>
-             İlk sürüm - Belgenin özgün sürümü <link xlink:href="http://www.ilkertemir.com/document/dns.html"
-             >http://www.ilkertemir.com/document/dns.html</link> adresinde bulunabilir.
-
-
-          </revremark>
-       </revision>
-     </revhistory>
-
-     <!-- Provide a good abstract; a couple of sentences is sufficient -->
-     <abstract>
-        <para>
-          Bu belgede DNS hakkında bir önbilgi verilmiş ve Internet'e bağlı
-          bir DNS sunucusunun BIND 8 ile nasıl yapılandırılacağı ve
-          sorgulanacağı örneklenerek anlatılmıştır.
-        </para>
-     </abstract>
-
-  </info>
-<!-- Content follows...include introduction, license information, feedback -->
-  <sect1 xml:id="bind-ile-dns-howto_dns">
-    <title>DNS</title>
-    <para>
-      Bilindiği üzere bir IP ağı üzerinde çeşitli servislere ulaşmak için bu
-      servislerin çalıştığı sistemlerin IP adresi adı verilen ve 4 sayıdan oluşan
-      akılda kalması zor ve son kullanıcılar için hemen hiçbir şey ifade etmeyen
-      adreslerinin bilinmesi gerekmektedir. DNS servisi bu sorunu ortadan
-      kaldırmak amacıyla tasarlanmıştır.
-    </para>
-
-    <sect2>
-      <title>DNS'nin Tarihçesi</title>
-      <para>
-        Yukarıda bahsedilen isimlendirme sorunu ilk olarak Internetin babası
-        sayılan ArpaNet zamanında ortaya çıkmıştır. 1970'lerde ArpaNet günümüz
-        ağları ile karşılaştırılamayacak kadar küçük durumdaydı ve yalnızca
-        birkaç yüz ile ifade edilebilen sisteme hizmet veriyordu. Bu tarihlerde
-        isimlendirme için tek noktada tutulan bir dosyanın bulunması ve diğer
-        tüm sistemlerin bu dosyayı belli aralıklarla kendi taraflarında
-        güncellemesi isimlendirme sorununu çözmüştü.
-      </para>
-      <para>
-        Adres-isim tanımlamalarını içeren <literal>HOSTS.TXT</literal> dosyası
-        SRI tarafından SRI-NIC adında bir bilgisayar üzerinde tutulmaktaydı.
-        Bu dosya her adrese bir isim karşılık gelecek şekilde düzenlenmişti.
-        ArpaNet üzerindeki yeni isim tanımlamaları ve değişiklikleri SRI'ya
-        gönderilen e-postalar aracılığı ile yapılıyor ve
-        <literal>HOSTS.TXT</literal>'in kopyası ftp ile alınıyordu.
-      </para>
-      <para>
-        ArpaNet üzerinde TCP/IP kullanımına paralel olarak ortaya çıkan
-        bağlantı patlaması, isim çözümü için bir çok sorunu da beraberinde
-        getirdi. Öncelikle isim çakışmaları ortaya çıktı, sayı artmakta ve
-        her bilgisayara özgün bir isim atanmasında problemler yaşanmaktaydı.
-        Ayrıca yalnızca isim çözümlenmesi için oldukça yüksek miktarda bant
-        genişliği harcanmakta ve buna rağmen kullanılan isim veritabanlarının
-        uyumlu olması her zaman sağlanamamaktaydı.
-      </para>
-      <para>
-        Bu durumun ortaya çıkmasından sonra ArpaNet daha ölçeklenebilir bir
-        isim çözümleme yapısı için araştırmalara başladı. Paul Mockapetris bu
-        işle görevlendirildi. Mockapetris 1984 yılında Domain Name System (DNS)'i
-        (Alan İsimlendirme Sistemi) tanımlayan RFC 882 ve 883'ü yayınladı.
-        Bunlar daha sonra halen geçerli olan RFC 1034 ve 1035 tarafından
-        güncellendiler.
-      </para>
-    </sect2>
-
-    <sect2>
-      <title> DNS'nin Yapısı</title>
-      <para>
-        ArpaNet döneminde ortaya çıkan güçlükler nedeniyle DNS tasarlanırken
-        uçlardaki sistemlerin kendi bilgilerini kendilerinin güncelleyebileceği
-        bir yapı üzerinde durulmuştur. Ortaya çıkan yapı ise en üstten başlayarak
-        hiyerarşik bir şekilde uçlara doğru açılan dağıtık bir varitabanı
-        mimarisidir. Uçlar birbirleri ile istemci sunucu yöntemiyle konuşurlar.
-      </para>
-      <para>
-        Farklı tablolar ile tek veritabanında tanımlanmış bir alan adı
-        sistemini incelenirse yapısının hiyerarşik olduğu görülür. Her alan adı
-        bir başka alan adının altında tanımlanmıştır. En üst seviyede bulunan
-        bir tablo en üst seviye alan adları olan <literal>.com</literal>,
-        <literal>net</literal> vb içerir ve bu
-        alan adlarının ayrıntılarını içeren tabloları işaret eder. Aynı şekilde
-        bu tablolar da  kendi altlarında bulunan alan adlarını içerir ve
-        ayrıntılarını gösteren tablolara işaret eder.
-      </para>
-      <para>
-        Açıklanan tablo yapısı Şekil-1 üzerinde gösterilmiştir.
-      </para><figure><inlinemediaobject>
-          <imageobject>
-            <imagedata fileref="bindwdns/sekil1.gif" format="GIF"/>
-          </imageobject>
-       </inlinemediaobject></figure><para>
-        İlk tabloda en üst seviye alan adları tanımlanmış ve bu tabloda bulunan
-        alt alan adlarının bilgileri ilgili tablolara işaret edilmiştir. Bu tek
-        bir veritabanında gösterilmiş bir yapılanmadır. Bu yapıda tablolar
-        farklı veritabanları üzerinde tutularak yönetim kolaylaştırılabilir.
-        Bu durumda oldukça dinamik ve etkin bir mekanizma kurulmuş olur.
-      </para>
-      <para>
-        Dağıtık veritabanları arasında istemci-sunucu yöntemi ile bağlantı
-        kurulur.
-      </para>
-      <para>
-        Az önce belirtilen en üst seviye alan adları arasında <literal>com</literal>,
-        <literal>net</literal>, <literal>gov</literal> vb yanında ülkelerin
-        ISO tarafından belirlenen sembolleri de tanımlanmıştır (tr, uk, fr, gr
-        gibi).
-      </para>
-      <para>
-        Yukarıdaki açıklamaların paralelinde oluşan hiyerarşik alan adı ağacı
-        Şekil 2'de gösterilmiştir.
-      </para><figure><inlinemediaobject>
-          <imageobject>
-            <imagedata fileref="bindwdns/sekil2.gif" format="GIF"/>
-          </imageobject>
-       </inlinemediaobject></figure><para>
-        Alan adı dağılımı en üst seviyeden başlar ve alt dallara doğru bölünür.
-        Bir alan adının okunuşu en alttan başlayarak en üste doğru yapılır.
-        Ağacın en altında bulunan alan adı <literal>ankara.ulak.net.tr</literal>
-        şeklinde okunacaktır.
-      </para>
-      <para>
-        En üst seviye alan adlarının yönetimi <literal>InterNIC</literal> tarafından
-        yapılmaktadır. ISO kodları ile tanımlanmış ülke adlarının yönetimi
-        ülkelere göre değişiklik göstermektedir. Türkiye'nin ISO kodu olan <literal>tr</literal>
-        üst seviye alan adının yönetimi Orta Doğu Teknik Üniversitesi (<literal>ODTÜ</literal>)
-        tarafından yapılmaktadır. Dolayısıyla <literal>com</literal>,
-        <literal>net</literal>, <literal>gov</literal> gibi alan adlarına
-        kayıt <literal>InterNIC</literal> tarafından; <literal>com.tr</literal>,
-        <literal>net.tr</literal>, <literal>gov.tr</literal> gibi alan
-        adlarına kayıt <literal>ODTÜ</literal> tarafından yapılmaktadır. Alan
-        adı kayıtlarıyla ilgili daha fazla bilgi için
-        <link xlink:href="http://www.internic.net">http://www.internic.net</link> ve
-        <link xlink:href="http://dns.metu.edu.tr">http://dns.metu.edu.tr</link>
-        adresleri incelenebilir.
-      </para>
-      <para>
-        <literal>ankara.ulak.net.tr</literal> örneğinde,
-        <literal>ankara.ulak.net.tr</literal> alan adı UlakNet sunucuları
-        üzerinde, <literal>ulak.net.tr</literal> alan adı ODTÜ sunucuları
-        üzerinde, <literal>net.tr</literal> alan adı yine ODTÜ sunucuları
-        üzerinde, <literal>tr</literal> alan adı ise <literal>root server</literal>
-        (kök sunucusu)adı verilen en üst seviye alan adı sunucuları üzerinde tanımlanmış
-        durumdadır. Kök sunucular, <literal>tr</literal> alan adını içeren alan
-        adlarını çözümlemez, çözümü ODTÜ sunucularından ister. Dikkat edilmesi
-        gereken nokta alan adları alındıktan sonra bu
-        alan adındaki isimlendirmenin yerel olarak yapıldığıdır. Bu daha önce
-        de değinilen yönetimin dağıtık olarak yapılabilmesini sağlar.
-      </para>
-      <para>
-        Bu bilgiler ışığında <literal>xxx.ankara.ulak.net.tr</literal> ya da
-        <literal>yyy.ulak.net.tr</literal> şeklindeki bir tanımlama <literal>UlakNet</literal>'in
-        kontrolünde, benzer şekilde <literal>abc.com.tr</literal> ya da
-        <literal>xyz.net.tr</literal> şeklindeki bir tanımlama ise
-        <literal>ODTÜ</literal>'nün kontrolündedir.
-      </para>
-      <para>
-        İncelenen alan adı ağacı maksimum 127 basamaktan oluşabilir ki bu da
-        pratikte ulaşılması imkansıza yakın bir değerdir.
-      </para>
-    </sect2>
-    <sect2 xml:id="bind-ile-dns-howto_resolv">
-      <title>DNS Çözümlemesi</title>
-      <para>
-        DNS'nin yapısı anlatılırken dağıtık bir veritabanı şeklinde
-        oluşturulduğu ve uçların birbirbirleriyle istemci sunucu mantığı ile
-        konuştuğunu söylenmişti. Bu işlevi yerine getiren programlara alan adı
-        sunucu adı verilir (name server). Alan adı sunucuları alan adı ağacı
-        üzerinde nokta ile gösterilirler.
-      </para>
-      <para>
-        Her alan adı sunucu bir veya birkaç alan adı bilgisini tutar ve bu alan
-        adları için en yetkili alan adı sunucudur. Diğer alan adları için sorgularda
-        bu alan adları için en yetkili alan adı sunucularını bulmaya çalışır.
-      </para>
-      <para>
-        Alan adı sunucular yerine getirdikleri kritik işlev nedeniyle genellikle
-        yedekli olarak çalıştırılırlar. Bilgilerin tutulduğu ana veritabanı
-        <literal>birincil alan adı sunucu</literal> olarak adlandırılır.
-        İkincil sunucular, <literal>birincil alan adı
-        sunucu</literal>larının verilerini periyodik olarak kendi veritabanına
-        kopyalarlar. Birincil sunucuda herhangi bir problem yaşandığında
-        sorgulama ikincil sunucular üzerinde yapılır.
-      </para>
-      <para>
-        DNS çözümlemesi birkaç kademede incelenebilir. <literal>UlakNet</literal>
-        alan adı sunucusunu kullanan bir istemcinin <literal>www.ulak.net.tr</literal>
-        adresini sorguladığı durumda sunucu kendi veritabanında tanımlı olan bu
-        adresi istemciye döndürecektir. Bu işlem,  <literal>UlakNet</literal> alan adı
-        sunucusu <literal>ulak.net.tr</literal> alan adı altında bulunan tanımlar
-        için en yetkili sunucu olduğu için bu şekilde gerçekleşmiştir.
-      </para>
-      <para>
-        Şekil 3'te bu sorgunun nasıl gerçekleştirildiği görülmektedir.
-      </para><figure><inlinemediaobject>
-          <imageobject>
-            <imagedata fileref="bindwdns/sekil3.gif" format="GIF"/>
-          </imageobject>
-       </inlinemediaobject></figure><para>
-        Görüldüğü gibi istemci <literal>www.ulak.net.tr</literal> adresini bu
-        alan adı için en yetkili durumdaki alan adı sunucusunda sorgulamış ve
-        bu adrese tanımlanmış IP adresi cevap olarak döndürülmüştür.
-      </para>
-      <para>
-        Benzer bir sorgulamayı Amerika kıtasında <literal>ns.digex.net</literal>
-        adlı alan adı sunucuyu kullanan bir istemcinin yaptığındaki durum incelenebilir.
-      </para>
-      <para>
-        <literal>ns.digex.net</literal> kendisine sorulan
-        <literal>www.ulak.net.tr</literal> için herhangi bir bilgiye sahip
-        değildir. Bu yüzden kendi veritabanında tanımlı olan en üst seviye alan
-        adı sunucularına (<literal>root-servers</literal> - daha sonra ayrıntılı
-        olarak açıklanacaktır) bu adresi sorar. Bu sunucu da
-        (<literal>a.root-servers.net</literal>) <literal>www.ulak.net.tr</literal>
-        için kesin bilgiye sahip değildir. Ancak <literal>.tr</literal> üst
-        seviye alan adının <literal>ns1.metu.edu.tr</literal> sunucusu tarafından
-        kontrol edildiğini bilmektedir. Bu yüzden, <literal>ns.digex.net</literal>'e
-        sorguyu <literal>ns1.metu.edu.tr</literal> üzerinde yapması bilgisini
-        iletir. <literal>ns.digex.net</literal> bu kez aynı adresi
-        <literal>ns1.metu.edu.tr</literal> üzerinde sorgulayacaktır. Ancak bu
-        sunucu da <literal>www.ulak.net.tr</literal> için kesin adresi bilemeyecek
-        ve sorgunun <literal>ulak.net.tr</literal> alan adı sunucusu olan
-        <literal>ns.ulak.net.tr</literal> adresine yönlendirilmesini bildirecektir.
-        Son olarak <literal>ns.digex.net</literal>, <literal>www.ulak.net.tr</literal>
-        adresini <literal>ns.ulak.net.tr</literal> üzerinde sorgulayacak ve
-        <literal>ns.ulak.net.tr</literal> kendi veritabanında
-        <literal>www.ulak.net.tr</literal> için tanımlı olan
-        <literal>193.140.83.9</literal> adresini döndürecektir. Bu bilgiye ulaşan
-        <literal>ns.digex.net</literal> de kendi istemcisine bu bilgiyi
-        iletecektir.
-      </para>
-      <para>
-        Bu sorgulama şekil 4'te gösterilmiştir.
-      </para><figure><inlinemediaobject>
-          <imageobject>
-            <imagedata fileref="bindwdns/sekil4.gif" format="GIF"/>
-          </imageobject>
-       </inlinemediaobject></figure><para>
-        Bu analizde dikkati çekmesi gereken iki önemli nokta bulunmaktadır.
-      </para>
-      <para>
-        Öncelikle <literal>.tr</literal> den sorumlu gözüken
-        <literal>ns1.metu.edu.tr</literal>'nin <literal>.net.tr</literal>
-        için ayrı bir alan adı sunucuya yönlendirme yapmadığı, doğrudan
-        <literal>ulak.net.tr</literal> alan adı sunucusuna yönlendirme
-        yaptığına dikkat edilmelidir. Bu işlem,<literal>ns1.metu.edu.tr</literal>
-        hem <literal>.tr</literal> hem de <literal>.net.tr</literal> için
-        alan adı sunucusu olduğu için bu şekilde gerçekleşmiştir. Eğer
-        <literal>.tr</literal> ve <literal>.net.tr</literal> farklı sunucular
-        üzerinde tanımlı olsalardı <literal>ns.digex.net</literal> ayrıca
-        <literal>.net.tr</literal>'den sorumlu sunucuyu da sorgulamak
-        durumunda kalacaktı.
-      </para>
-      <para>
-        Dikkat edilmesi gereken diğer nokta ise istemcinin alan adı sunucuya
-        yalnızca bir sorgu iletmesi ve tüm iş sunucu tarafından yapıldıktan
-        sonra yalnızca cevabı almasıdır. Aynı durum
-        <literal>ns.digex.net</literal> diğer alan adı sunuculara ulaşırken
-        ortaya çıkmamış ve her biri ayrı ayrı sorgulanmıştır. Bunun sebebi
-        <literal>ns.digex.net</literal> sunucusunun tekrarlı (recursive),
-        diğer alan adı sunucularının ise tekrarlı olmayan (iterative) bir
-        şekilde sorgulanmış olmasıdır.
-      </para>
-    </sect2>
-    <sect2>
-      <title>IP Adresinden İsim Çözümlemesi</title>
-      <para>
-        <link linkend="bind-ile-dns-howto_resolv">Bölüm 1.3</link>'te isimden adres çözümlemesi incelenmiştir. Şu ana kadar
-        anlatılan yapı tüm sistemin isimden adres çözümü için tasarlandığı
-        izlenimini vermektedir.  Ancak pratik ihtiyaçlar, IP adresinden isim
-        çözümünü de gerekli kılmaktadır.
-      </para>
-      <para>
-        Böyle bir sorgunun şu ana kadar incelenen yapı üzerinde nasıl
-        çalışabileceğine bakalım. İsimlerin indesklenmesine göre oluşturulmuş
-        hiyerarşik bir sistem görülmektedir. Ancak IP adreslerin bu yapı
-        üzerinde herhangi bir hiyerarşik yapısı bulunmamaktadır. Örneğin
-        <literal>www.ulak.net.tr</literal> adresi <literal>193.140.83.9</literal>
-        IP numarası ile adreslenmişken <literal>truva.ulakbim.gov.tr</literal>
-        adresi <literal>193.140.83.13</literal> IP numarası ile adreslenmiş
-        olabilir. Bu da <literal>193.140.83.</literal> ile başlayan IP'lerin
-        teorik olarak tüm alan adı uzayına yayılmış olabileceğini gösterir.
-      </para>
-      <para>
-        Görüldüğü gibi mevcut yapıda bir IP adresinin isim karşılığını bulmak
-        için veritabanının tümünün taranması gerekmektedir. Bu ise indeksi
-        olmayan dağınık durumdaki milyonlarca kaydın taranması anlamına gelir ki
-        imkansıza yakın bir uğraştır. Bu sorunun çözülebilmesi için IP
-        adresleri için de hiyerarşik bir yapının kurulması gerektiği
-        görülmektedir.
-      </para>
-      <para>
-        Bu yapıya geçmeden önce IP adreslemenin özelliklerinin hatırlanması
-        yararlı olacaktır.  IP adresleri ilk oktetten son oktete (soldan sağa
-        doğru) en genelden en özele doğru sıralanırlar. Örneğin
-        <literal>193.140</literal> hem <literal>193.140.83.13</literal>'ü
-        hem de <literal>193.140.83.9</literal>'u içine alır.
-      </para>
-      <para>
-        Alan adları ise buna ters olarak sağdan sola doğru en genelden en
-        özele doğru sıralanırlar. Örneğin <literal>.tr</literal> hem
-        <literal>ulak.net.tr</literal>'yi hem de <literal>metu.edu.tr</literal>'yi
-        içine alır.
-      </para>
-      <para>
-        İki gösterim de genelden özele sıralanabildiğine göre mevcut hiyerarşik
-        yapılandırmaya IP numaraları için bir üst seviye alan adı eklenmesi
-        mümkündür. Bu alan adı <literal>in-addr.arpa</literal> şeklinde
-        ifade edilir. Bu üst seviye alan adı 1'den 255'e kadar çeşitli alt
-        alanlara bölünür. Bu bölümlemeye 4 okteti tamamlayacak şekilde devam
-        edilebilir. Bu durumda ortaya çıkan yapı şekil 5'te gösterilmiştir.
-      </para><figure><inlinemediaobject>
-          <imageobject>
-            <imagedata fileref="bindwdns/sekil5.gif" format="GIF"/>
-          </imageobject>
-       </inlinemediaobject></figure><para>
-        Üst seviye alan adları arasına <literal>arpa</literal> adında bir alan
-        adı eklenmiştir. Bu alan adının altında <literal>in.addr</literal>
-        şeklinde bir alan daha tanımlanmıştır. Bu alan adının altında IP
-        numarasının ilk okteti alan adı olarak eklenmiş, bunu sırayla IP
-        numarasının ikinci, üçüncü ve dördüncü oktetleri izlemiştir.
-      </para>
-      <para>
-        Görüldüğü gibi artık <literal>193.140.83.13</literal> ve
-        <literal>193.140.83.9</literal> IP numaralarının isim karşılıklarını
-        bulmak son derce kolaylaşmıştır. İncelenen isim sorgusuna benzer bir
-        şekilde IP-isim sorguları da bu yapının yardımıyla yapılabilmektedir.
-        Ancak dikkat edilmesi gereken önemli birkaç nokta bulunmaktadır.
-      </para>
-      <para>
-        Normal alan adı isimlendirme sisteminde isimler ağacın en altından en
-        üstüne doğru okunur.  Bu durumda IP numaraları bilinenin aksine özelden
-        genele doğru okunacaklardır. Örneğin <literal>193.140.83.13</literal>
-        IP numarasının DNS ağacı üzerinde okunuşu
-        <literal>13.83.140.193.in-addr.arpa</literal> şeklinde olacaktır.
-      </para>
-      <para>
-        Dikkat edilmesi gereken diğer bir nokta ise isimden IP'ye yapılan
-        tanımlama ile IP'den isime yapılan tanımlama arasında herhangi bir
-        bağlantı bulunmayışıdır. Örneğin <literal>www.ulak.net.tr</literal>
-        adresi DNS üzerinde <literal>193.140.83.9</literal> olarak tanımlıyken,
-        <literal>193.140.83.9</literal> IP adresinin ismi
-        <literal>efe.ulakbim.gov.tr</literal> şeklinde tanımlı olabilir.
-      </para>
-    </sect2>
-    <sect2>
-      <title>DNS Önbelleği</title>
-      <para>
-        DNS çözümlemesinde anlatıldığı şekilde isim çözümleme işlemi ardışıl
-        olarak alan adı sunucularının sorgulanmasını gerektirir. Bu işlem
-        oldukça vakit alıcı bir işlem olabilir ve karşılıklı olarak sistemler
-        üzerinde yük oluşturduğu gibi hatlar üzerinde yüksek miktarda bant
-        genişliği harcayabilir.
-      </para>
-      <para>
-        Bunun engellenmesi ve sorgunun mümkün olan en kısa sürede
-        sonuçlandırılabilmesi için alan adı sunuculara önbellek (cache) özelliği
-        eklenmiştir. Bu sayede bir alan adı sunucu daha önce sorguladığı alan
-        adlarını kendi belleğinde tutarak yeni sorgularda diğer alan adı
-        sunucularını sorgulamadan doğrudan cevap verebilir. Bu yukarıda
-        anlatılan olumsuzlukları belli bir derecede önleyecektir. Ancak
-        burada önemli bir nokta gözden kaçırılmamalıdır.
-      </para>
-      <para>
-        Sorgulanan alan adında son sorgulamadan sonra  değişiklik yapılmış
-        olabilir. Bu durumda bellekte tutulan bilgi güncelliğini yitirmiştir ve
-        istemciye hatalı bilgi geri döndürülecektir.
-      </para>
-      <para>
-        Bu ancak belli bir noktaya kadar kabul edilebilir bir durumdur. Alan
-        adı tanımları normalde çok sık değiştirilen tanımlamalar değillerdir.
-        Nadiren değitirildiklerinde de değişikliğin etkinleşmesi için bir gün
-        gibi bir süre çoğu zaman yeterlidir. Şu halde bellekte tutulan bilgilerin
-        bir süre sonra güncelliğini yitirdiği kabul edilmelidir. Bunu belirleyen
-        değere daha önceki konularda da değinildiği gibi <literal>TTL</literal>
-        (Time To Live - Yaşam Süresi) denilmektedir ve her alan adının
-        tanımlanmasında bu alan adı için geçerli <literal>TTL</literal> değeri
-        belirtilir. Bu alan adından sorgulanan bilgiler bellekte <literal>TTL</literal>
-        süresince tutulduktan sonra güncelliğini yitirdiği kabul edilir.
-        <literal>TTL</literal>'in nasıl tanımlandığı daha sonra incelenecektir.
-      </para>
-    </sect2>
-  </sect1>
-
-  <sect1 xml:id="bind-ile-dns-howto_bind">
-    <title>BIND</title>
-    <para>
-      Bu bölüme kadar olan kısımda isim çözümleme işlemi açıklanmıştı. Burada
-      ise bir alan adı sunucunun nasıl kurulduğu ve yapılandırması
-      ayrıntılarıyla anlatılacaktır.
-    </para>
-    <para>
-      BIND (Berkeley Internet Name Domain) adını geliştirildiği Berkeley
-      üniversitesinden alan  günümüz Internetinin tartışmasız en popüler alan
-      adı sunucu yazılımıdır. Unix sistemlerinde tasarlanmış ve çalıştırılmaya
-      başlamış olmasına rağmen bugün Microsoft NT için üretilmiş dağıtımları da
-      mevcuttur.
-    </para>
-    <sect2>
-      <title>BIND Paketinin Temini</title>
-      <para>
-        BIND'ın geliştirilmesi Internet Yazılım Konsorsiyumu (Internet Software
-        Consortium) tarafından yapılmaktadır ve web sayfalarından ücretsiz
-        olarak indirilebilir.
-      </para>
-      <para>
-        BIND'in bu belgenin yazımı anındaki en son sürümü Kasım 1999'da
-        yaynlanmış olan sürüm 8.2.2 yama 5'tir.
-        <link xlink:href="http://www.isc.org/products/BIND"
-        >http://www.isc.org/products/BIND</link> adresinden indirilebilir.
-      </para>
-      <para>
-        BIND'in yaygın kullanımda olan 4. ve 8. sürümleri arasında oldukça
-        büyük farklar bulunmaktadır. Bu belgede 8. sürüm incelenecek olup, 4.
-        sürümünü kullananların da mümkünse bu sürüme terfi etmeleri önerilir.
-      </para>
-    </sect2>
-    <sect2>
-      <title>BIND'in Kurulumu</title>
-      <para>
-        BIND paketinin indirilmesi, derlenmesi ve kurulması örneklenerek
-        gösterilecektir. Test makinası sparc mimari üzerinde çalışan bir
-        Red Hat Linux'tur. Ancak Linux üzerinde dağıtım ile beraber gelen
-        derlenmiş durumdaki BIND da kullanılabilir. Burada derlemenin
-        verilmesindeki amaç farklı platformlardaki kullanıcılara yardımcı
-        olmaktır.
-      </para><para>
-<screen>
-[ilker@hornet bind]$ ftp ftp.isc.org
+<article xml:id="bind-ile-dns-howto" xmlns="http://docbook.org/ns/docbook"
+ xmlns:xlink="http://www.w3.org/1999/xlink" version="5.0" xml:lang="tr">
+ <info>
+  <title>BIND 8 ile DNS NASIL</title>
+  <author>
+   <personname>
+    <firstname>İlker Temir</firstname>
+   </personname>
+  </author>
+  <pubdate>Nisan 2000</pubdate>
+  <revhistory>
+   <revision>
+    <revnumber>1.0</revnumber>
+    <date>Nisan 2000</date>
+    <authorinitials>İT</authorinitials>
+    <revremark>İlk sürüm - Belgenin özgün sürümü
+     <link xlink:href="http://www.ilkertemir.com/document/dns.html"/>
+     adresinde bulunabilir.
+    </revremark>
+   </revision>
+  </revhistory>
+  <abstract>
+   <para>
+    Bu belgede DNS hakkında bir önbilgi verilmiş ve internete bağlı
+    bir DNS sunucusunun BIND 8 ile nasıl yapılandırılacağı ve
+    sorgulanacağı örneklenerek anlatılmıştır.
+   </para>
+  </abstract>
+ </info>
+ <sect1 xml:id="bind-ile-dns-howto_dns">
+  <title>DNS</title>
+  <para>
+   Bilindiği üzere bir IP ağı üzerinde çeşitli servislere ulaşmak için bu
+   servislerin çalıştığı sistemlerin IP adresi adı verilen ve 4 sayıdan
+   oluşan akılda kalması zor ve son kullanıcılar için hemen hiçbir şey ifade
+   etmeyen adreslerinin bilinmesi gerekmektedir. DNS servisi bu sorunu
+   ortadan kaldırmak amacıyla tasarlanmıştır.
+  </para>
+  <sect2>
+   <title>DNS'nin Tarihçesi</title>
+   <para>
+    Yukarıda bahsedilen isimlendirme sorunu ilk olarak Internetin babası
+    sayılan ArpaNet zamanında ortaya çıkmıştır. 1970'lerde ArpaNet günümüz
+    ağları ile karşılaştırılamayacak kadar küçük durumdaydı ve yalnızca
+    birkaç yüz ile ifade edilebilen sisteme hizmet veriyordu. Bu tarihlerde
+    isimlendirme için tek noktada tutulan bir dosyanın bulunması ve diğer
+    tüm sistemlerin bu dosyayı belli aralıklarla kendi taraflarında
+    güncellemesi isimlendirme sorununu çözmüştü.
+   </para>
+   <para>
+    Adres-isim tanımlamalarını içeren <literal>HOSTS.TXT</literal> dosyası
+    SRI tarafından SRI-NIC adında bir bilgisayar üzerinde tutulmaktaydı.
+    Bu dosya her adrese bir isim karşılık gelecek şekilde düzenlenmişti.
+    ArpaNet üzerindeki yeni isim tanımlamaları ve değişiklikleri SRI'ya
+    gönderilen e-postalar aracılığı ile yapılıyor ve
+    <literal>HOSTS.TXT</literal>'in kopyası ftp ile alınıyordu.
+   </para>
+   <para>
+    ArpaNet üzerinde TCP/IP kullanımına paralel olarak ortaya çıkan
+    bağlantı patlaması, isim çözümü için bir çok sorunu da beraberinde
+    getirdi. Öncelikle isim çakışmaları ortaya çıktı, sayı artmakta ve
+    her bilgisayara özgün bir isim atanmasında problemler yaşanmaktaydı.
+    Ayrıca yalnızca isim çözümlenmesi için oldukça yüksek miktarda bant
+    genişliği harcanmakta ve buna rağmen kullanılan isim veritabanlarının
+    uyumlu olması her zaman sağlanamamaktaydı.
+   </para>
+   <para>
+    Bu durumun ortaya çıkmasından sonra ArpaNet daha ölçeklenebilir bir
+    isim çözümleme yapısı için araştırmalara başladı. Paul Mockapetris bu
+    işle görevlendirildi. Mockapetris 1984 yılında Domain Name System (DNS)'i
+    (Alan İsimlendirme Sistemi) tanımlayan RFC 882 ve 883'ü yayınladı.
+    Bunlar daha sonra halen geçerli olan RFC 1034 ve 1035 tarafından
+    güncellendiler.
+   </para>
+  </sect2>
+  <sect2>
+   <title> DNS'nin Yapısı</title>
+   <para>
+    ArpaNet döneminde ortaya çıkan güçlükler nedeniyle DNS tasarlanırken
+    uçlardaki sistemlerin kendi bilgilerini kendilerinin güncelleyebileceği
+    bir yapı üzerinde durulmuştur. Ortaya çıkan yapı ise en üstten başlayarak
+    hiyerarşik bir şekilde uçlara doğru açılan dağıtık bir varitabanı
+    mimarisidir. Uçlar birbirleri ile istemci sunucu yöntemiyle konuşurlar.
+   </para>
+   <para>
+    Farklı tablolar ile tek veritabanında tanımlanmış bir alan adı
+    sistemini incelenirse yapısının hiyerarşik olduğu görülür. Her alan adı
+    bir başka alan adının altında tanımlanmıştır. En üst seviyede bulunan
+    bir tablo en üst seviye alan adları olan <literal>.com</literal>,
+    <literal>net</literal> vb içerir ve bu
+    alan adlarının ayrıntılarını içeren tabloları işaret eder. Aynı şekilde
+    bu tablolar da  kendi altlarında bulunan alan adlarını içerir ve
+    ayrıntılarını gösteren tablolara işaret eder.
+   </para>
+   <para>
+    Açıklanan tablo yapısı Şekil-1 üzerinde gösterilmiştir.
+   </para>
+   <mediaobject>
+    <imageobject>
+     <imagedata fileref="bindwdns/sekil1.gif" format="GIF"/>
+    </imageobject>
+   </mediaobject>
+   <para>
+    İlk tabloda en üst seviye alan adları tanımlanmış ve bu tabloda bulunan
+    alt alan adlarının bilgileri ilgili tablolara işaret edilmiştir. Bu tek
+    bir veritabanında gösterilmiş bir yapılanmadır. Bu yapıda tablolar
+    farklı veritabanları üzerinde tutularak yönetim kolaylaştırılabilir.
+    Bu durumda oldukça dinamik ve etkin bir mekanizma kurulmuş olur.
+   </para>
+   <para>
+    Dağıtık veritabanları arasında istemci-sunucu yöntemi ile bağlantı
+    kurulur.
+   </para>
+   <para>
+    Az önce belirtilen en üst seviye alan adları arasında
+    <literal>com</literal>, <literal>net</literal>, <literal>gov</literal>
+    vb. yanında ülkelerin ISO tarafından belirlenen sembolleri de
+    tanımlanmıştır (tr, uk, fr, gr gibi).
+   </para>
+   <para>
+    Yukarıdaki açıklamaların paralelinde oluşan hiyerarşik alan adı ağacı
+    Şekil 2'de gösterilmiştir.
+   </para>
+   <mediaobject>
+    <imageobject>
+     <imagedata fileref="bindwdns/sekil2.gif" format="GIF"/>
+    </imageobject>
+   </mediaobject>
+   <para>
+    Alan adı dağılımı en üst seviyeden başlar ve alt dallara doğru bölünür.
+    Bir alan adının okunuşu en alttan başlayarak en üste doğru yapılır.
+    Ağacın en altında bulunan alan adı <literal>ankara.ulak.net.tr</literal>
+    şeklinde okunacaktır.
+   </para>
+   <para>
+    En üst seviye alan adlarının yönetimi <literal>InterNIC</literal>
+    tarafından yapılmaktadır. ISO kodları ile tanımlanmış ülke adlarının
+    yönetimi ülkelere göre değişiklik göstermektedir. Türkiye'nin ISO kodu
+    olan <literal>tr</literal> üst seviye alan adının yönetimi TRABİS
+    tarafından yapılmaktadır. Dolayısıyla <literal>com</literal>,
+    <literal>net</literal>,  <literal>gov</literal> gibi alan adlarına kayıt
+    <literal>InterNIC</literal> tarafından; <literal>com.tr</literal>,
+    <literal>net.tr</literal>, <literal>gov.tr</literal> gibi alan
+    adlarına kayıt TRABİS'in yetkilendirdiği kurumlar tarafından
+    yapılmaktadır. Alan adı kayıtlarıyla ilgili daha fazla bilgi için
+    <link xlink:href="http://www.internic.net"/> ve
+    <link xlink:href="http://www.metunic.com.tr"/> adresleri incelenebilir.
+   </para>
+   <para>
+    <literal>ankara.ulak.net.tr</literal> örneğinde,
+    <literal>ankara.ulak.net.tr</literal> alan adı UlakNet sunucuları
+    üzerinde, <literal>ulak.net.tr</literal> alan adı ODTÜ sunucuları
+    üzerinde, <literal>net.tr</literal> alan adı yine ODTÜ sunucuları
+    üzerinde, <literal>tr</literal> alan adı ise
+    <literal>root server</literal> (kök sunucusu) adı verilen en üst seviye
+    alan adı sunucuları üzerinde tanımlanmış durumdadır. Kök sunucular,
+    <literal>tr</literal> alan adını içeren alan adlarını çözümlemez, çözümü
+    ODTÜ sunucularından ister. Dikkat edilmesi gereken nokta alan adları
+    alındıktan sonra bu alan adındaki isimlendirmenin yerel olarak
+    yapıldığıdır. Bu daha önce de değinilen yönetimin dağıtık olarak
+    yapılabilmesini sağlar.
+   </para>
+   <para>
+    Bu bilgiler ışığında <literal>xxx.ankara.ulak.net.tr</literal> ya da
+    <literal>yyy.ulak.net.tr</literal> şeklindeki bir tanımlama
+    <literal>UlakNet</literal>'in kontrolünde, benzer şekilde
+    <literal>abc.com.tr</literal> ya da <literal>xyz.net.tr</literal>
+    şeklindeki bir tanımlama ise <literal>ODTÜ</literal>'nün kontrolündedir.
+   </para>
+   <para>
+    İncelenen alan adı ağacı maksimum 127 basamaktan oluşabilir ki bu da
+    pratikte ulaşılması imkansıza yakın bir değerdir.
+   </para>
+  </sect2>
+  <sect2 xml:id="bind-ile-dns-howto_resolv">
+   <title>DNS Çözümlemesi</title>
+   <para>
+    DNS'nin yapısı anlatılırken dağıtık bir veritabanı şeklinde
+    oluşturulduğu ve uçların birbirbirleriyle istemci sunucu mantığı ile
+    konuştuğunu söylenmişti. Bu işlevi yerine getiren yazılımlara alan adı
+    sunucu adı verilir (name server). Alan adı sunucuları alan adı ağacı
+    üzerinde nokta ile gösterilirler.
+   </para>
+   <para>
+    Her alan adı sunucu bir veya birkaç alan adı bilgisini tutar ve bu alan
+    adları için en yetkili alan adı sunucudur. Diğer alan adları için
+    sorgularda bu alan adları için en yetkili alan adı sunucularını bulmaya
+    çalışır.
+   </para>
+   <para>
+    Alan adı sunucular yerine getirdikleri kritik işlev nedeniyle genellikle
+    yedekli olarak çalıştırılırlar. Bilgilerin tutulduğu ana veritabanı
+    <literal>birincil alan adı sunucu</literal> olarak adlandırılır.
+    İkincil sunucular, <literal>birincil alan adı
+    sunucu</literal>larının verilerini periyodik olarak kendi veritabanına
+    kopyalarlar. Birincil sunucuda herhangi bir problem yaşandığında
+    sorgulama ikincil sunucular üzerinde yapılır.
+   </para>
+   <para>
+    DNS çözümlemesi birkaç kademede incelenebilir. <literal>UlakNet</literal>
+    alan adı sunucusunu kullanan bir istemcinin
+    <literal>www.ulak.net.tr</literal> adresini sorguladığı durumda sunucu
+    kendi veritabanında tanımlı olan bu adresi istemciye döndürecektir. Bu
+    işlem,  <literal>UlakNet</literal> alan adı sunucusu
+    <literal>ulak.net.tr</literal> alan adı altında bulunan tanımlar
+    için en yetkili sunucu olduğu için bu şekilde gerçekleşmiştir.
+   </para>
+   <para>
+    Şekil 3'te bu sorgunun nasıl gerçekleştirildiği görülmektedir.
+   </para>
+   <mediaobject>
+    <imageobject>
+     <imagedata fileref="bindwdns/sekil3.gif" format="GIF"/>
+    </imageobject>
+   </mediaobject>
+   <para>
+    Görüldüğü gibi istemci <literal>www.ulak.net.tr</literal> adresini bu
+    alan adı için en yetkili durumdaki alan adı sunucusunda sorgulamış ve
+    bu adrese tanımlanmış IP adresi cevap olarak döndürülmüştür.
+   </para>
+   <para>
+    Benzer bir sorgulamayı Amerika kıtasında <literal>ns.digex.net</literal>
+    adlı alan adı sunucuyu kullanan bir istemcinin yaptığındaki durum
+    incelenebilir.
+   </para>
+   <para>
+    <literal>ns.digex.net</literal> kendisine sorulan
+    <literal>www.ulak.net.tr</literal> için herhangi bir bilgiye sahip
+    değildir. Bu yüzden kendi veritabanında tanımlı olan en üst seviye alan
+    adı sunucularına (<literal>root-servers</literal> - daha sonra ayrıntılı
+    olarak açıklanacaktır) bu adresi sorar. Bu sunucu da
+    (<literal>a.root-servers.net</literal>)
+    <literal>www.ulak.net.tr</literal> için kesin bilgiye sahip değildir.
+    Ancak <literal>.tr</literal> üst seviye alan adının
+    <literal>ns1.metu.edu.tr</literal> sunucusu tarafından kontrol edildiğini
+    bilmektedir. Bu yüzden, <literal>ns.digex.net</literal>'e
+    sorguyu <literal>ns1.metu.edu.tr</literal> üzerinde yapması bilgisini
+    iletir. <literal>ns.digex.net</literal> bu kez aynı adresi
+    <literal>ns1.metu.edu.tr</literal> üzerinde sorgulayacaktır. Ancak bu
+    sunucu da <literal>www.ulak.net.tr</literal> için kesin adresi
+    bilemeyecek ve sorgunun <literal>ulak.net.tr</literal> alan adı sunucusu
+    olan  <literal>ns.ulak.net.tr</literal> adresine yönlendirilmesini
+    bildirecektir. Son olarak <literal>ns.digex.net</literal>,
+    <literal>www.ulak.net.tr</literal> adresini
+    <literal>ns.ulak.net.tr</literal> üzerinde sorgulayacak ve
+    <literal>ns.ulak.net.tr</literal> kendi veritabanında
+    <literal>www.ulak.net.tr</literal> için tanımlı olan
+    <literal>193.140.83.9</literal> adresini döndürecektir. Bu bilgiye ulaşan
+    <literal>ns.digex.net</literal> de kendi istemcisine bu bilgiyi
+    iletecektir.
+   </para>
+   <para>
+    Bu sorgulama şekil 4'te gösterilmiştir.
+   </para>
+   <mediaobject>
+    <imageobject>
+     <imagedata fileref="bindwdns/sekil4.gif" format="GIF"/>
+    </imageobject>
+   </mediaobject>
+   <para>
+    Bu analizde dikkati çekmesi gereken iki önemli nokta bulunmaktadır.
+   </para>
+   <para>
+    Öncelikle <literal>.tr</literal> den sorumlu gözüken
+    <literal>ns1.metu.edu.tr</literal>'nin <literal>.net.tr</literal>
+    için ayrı bir alan adı sunucuya yönlendirme yapmadığı, doğrudan
+    <literal>ulak.net.tr</literal> alan adı sunucusuna yönlendirme
+    yaptığına dikkat edilmelidir. Bu işlem,<literal>ns1.metu.edu.tr</literal>
+    hem <literal>.tr</literal> hem de <literal>.net.tr</literal> için
+    alan adı sunucusu olduğu için bu şekilde gerçekleşmiştir. Eğer
+    <literal>.tr</literal> ve <literal>.net.tr</literal> farklı sunucular
+    üzerinde tanımlı olsalardı <literal>ns.digex.net</literal> ayrıca
+    <literal>.net.tr</literal>'den sorumlu sunucuyu da sorgulamak
+    durumunda kalacaktı.
+   </para>
+   <para>
+    Dikkat edilmesi gereken diğer nokta ise istemcinin alan adı sunucuya
+    yalnızca bir sorgu iletmesi ve tüm iş sunucu tarafından yapıldıktan
+    sonra yalnızca cevabı almasıdır. Aynı durum
+    <literal>ns.digex.net</literal> diğer alan adı sunuculara ulaşırken
+    ortaya çıkmamış ve her biri ayrı ayrı sorgulanmıştır. Bunun sebebi
+    <literal>ns.digex.net</literal> sunucusunun tekrarlı (recursive),
+    diğer alan adı sunucularının ise tekrarlı olmayan (iterative) bir
+    şekilde sorgulanmış olmasıdır.
+   </para>
+  </sect2>
+  <sect2>
+   <title>IP Adresinden İsim Çözümlemesi</title>
+   <para>
+    <link linkend="bind-ile-dns-howto_resolv">Bölüm 1.3</link>'te
+    isimden adres çözümlemesi incelenmiştir. Şu ana kadar
+    anlatılan yapı tüm sistemin isimden adres çözümü için tasarlandığı
+    izlenimini vermektedir.  Ancak pratik ihtiyaçlar, IP adresinden isim
+    çözümünü de gerekli kılmaktadır.
+   </para>
+   <para>
+    Böyle bir sorgunun şu ana kadar incelenen yapı üzerinde nasıl
+    çalışabileceğine bakalım. İsimlerin indesklenmesine göre oluşturulmuş
+    hiyerarşik bir sistem görülmektedir. Ancak IP adreslerin bu yapı
+    üzerinde herhangi bir hiyerarşik yapısı bulunmamaktadır. Örneğin
+    <literal>www.ulak.net.tr</literal> adresi <literal>193.140.83.9</literal>
+    IP numarası ile adreslenmişken <literal>truva.ulakbim.gov.tr</literal>
+    adresi <literal>193.140.83.13</literal> IP numarası ile adreslenmiş
+    olabilir. Bu da <literal>193.140.83.</literal> ile başlayan IP'lerin
+    teorik olarak tüm alan adı uzayına yayılmış olabileceğini gösterir.
+   </para>
+   <para>
+    Görüldüğü gibi mevcut yapıda bir IP adresinin isim karşılığını bulmak
+    için veritabanının tümünün taranması gerekmektedir. Bu ise indeksi
+    olmayan dağınık durumdaki milyonlarca kaydın taranması anlamına gelir ki
+    imkansıza yakın bir uğraştır. Bu sorunun çözülebilmesi için IP
+    adresleri için de hiyerarşik bir yapının kurulması gerektiği
+    görülmektedir.
+   </para>
+   <para>
+    Bu yapıya geçmeden önce IP adreslemenin özelliklerinin hatırlanması
+    yararlı olacaktır.  IP adresleri ilk oktetten son oktete (soldan sağa
+    doğru) en genelden en özele doğru sıralanırlar. Örneğin
+    <literal>193.140</literal> hem <literal>193.140.83.13</literal>'ü
+    hem de <literal>193.140.83.9</literal>'u içine alır.
+   </para>
+   <para>
+    Alan adları ise buna ters olarak sağdan sola doğru en genelden en
+    özele doğru sıralanırlar. Örneğin <literal>.tr</literal> hem
+    <literal>ulak.net.tr</literal>'yi hem de
+    <literal>metu.edu.tr</literal>'yi içine alır.
+   </para>
+   <para>
+    İki gösterim de genelden özele sıralanabildiğine göre mevcut hiyerarşik
+    yapılandırmaya IP numaraları için bir üst seviye alan adı eklenmesi
+    mümkündür. Bu alan adı <literal>in-addr.arpa</literal> şeklinde
+    ifade edilir. Bu üst seviye alan adı 1'den 255'e kadar çeşitli alt
+    alanlara bölünür. Bu bölümlemeye 4 okteti tamamlayacak şekilde devam
+    edilebilir. Bu durumda ortaya çıkan yapı şekil 5'te gösterilmiştir.
+   </para>
+   <mediaobject>
+    <imageobject>
+     <imagedata fileref="bindwdns/sekil5.gif" format="GIF"/>
+    </imageobject>
+   </mediaobject>
+   <para>
+    Üst seviye alan adları arasına <literal>arpa</literal> adında bir alan
+    adı eklenmiştir. Bu alan adının altında <literal>in.addr</literal>
+    şeklinde bir alan daha tanımlanmıştır. Bu alan adının altında IP
+    numarasının ilk okteti alan adı olarak eklenmiş, bunu sırayla IP
+    numarasının ikinci, üçüncü ve dördüncü oktetleri izlemiştir.
+   </para>
+   <para>
+    Görüldüğü gibi artık <literal>193.140.83.13</literal> ve
+    <literal>193.140.83.9</literal> IP numaralarının isim karşılıklarını
+    bulmak son derce kolaylaşmıştır. İncelenen isim sorgusuna benzer bir
+    şekilde IP-isim sorguları da bu yapının yardımıyla yapılabilmektedir.
+    Ancak dikkat edilmesi gereken önemli birkaç nokta bulunmaktadır.
+   </para>
+   <para>
+    Normal alan adı isimlendirme sisteminde isimler ağacın en altından en
+    üstüne doğru okunur.  Bu durumda IP numaraları bilinenin aksine özelden
+    genele doğru okunacaklardır. Örneğin <literal>193.140.83.13</literal>
+    IP numarasının DNS ağacı üzerinde okunuşu
+    <literal>13.83.140.193.in-addr.arpa</literal> şeklinde olacaktır.
+   </para>
+   <para>
+    Dikkat edilmesi gereken diğer bir nokta ise isimden IP'ye yapılan
+    tanımlama ile IP'den isime yapılan tanımlama arasında herhangi bir
+    bağlantı bulunmayışıdır. Örneğin <literal>www.ulak.net.tr</literal>
+    adresi DNS üzerinde <literal>193.140.83.9</literal> olarak tanımlıyken,
+    <literal>193.140.83.9</literal> IP adresinin ismi
+    <literal>efe.ulakbim.gov.tr</literal> şeklinde tanımlı olabilir.
+   </para>
+  </sect2>
+  <sect2>
+   <title>DNS Önbelleği</title>
+   <para>
+    DNS çözümlemesinde anlatıldığı şekilde isim çözümleme işlemi ardışıl
+    olarak alan adı sunucularının sorgulanmasını gerektirir. Bu işlem
+    oldukça vakit alıcı bir işlem olabilir ve karşılıklı olarak sistemler
+    üzerinde yük oluşturduğu gibi hatlar üzerinde yüksek miktarda bant
+    genişliği harcayabilir.
+   </para>
+   <para>
+    Bunun engellenmesi ve sorgunun mümkün olan en kısa sürede
+    sonuçlandırılabilmesi için alan adı sunuculara önbellek (cache) özelliği
+    eklenmiştir. Bu sayede bir alan adı sunucu daha önce sorguladığı alan
+    adlarını kendi belleğinde tutarak yeni sorgularda diğer alan adı
+    sunucularını sorgulamadan doğrudan cevap verebilir. Bu yukarıda
+    anlatılan olumsuzlukları belli bir derecede önleyecektir. Ancak
+    burada önemli bir nokta gözden kaçırılmamalıdır.
+   </para>
+   <para>
+    Sorgulanan alan adında son sorgulamadan sonra  değişiklik yapılmış
+    olabilir. Bu durumda bellekte tutulan bilgi güncelliğini yitirmiştir ve
+    istemciye hatalı bilgi geri döndürülecektir.
+   </para>
+   <para>
+    Bu ancak belli bir noktaya kadar kabul edilebilir bir durumdur. Alan
+    adı tanımları normalde çok sık değiştirilen tanımlamalar değillerdir.
+    Nadiren değitirildiklerinde de değişikliğin etkinleşmesi için bir gün
+    gibi bir süre çoğu zaman yeterlidir. Şu halde bellekte tutulan bilgilerin
+    bir süre sonra güncelliğini yitirdiği kabul edilmelidir. Bunu belirleyen
+    değere daha önceki konularda da değinildiği gibi <literal>TTL</literal>
+    (Time To Live - Yaşam Süresi) denilmektedir ve her alan adının
+    tanımlanmasında bu alan adı için geçerli <literal>TTL</literal> değeri
+    belirtilir. Bu alan adından sorgulanan bilgiler bellekte
+    <literal>TTL</literal> süresince tutulduktan sonra güncelliğini yitirdiği
+    kabul edilir. <literal>TTL</literal>'in nasıl tanımlandığı daha sonra
+    incelenecektir.
+   </para>
+  </sect2>
+ </sect1>
+ <sect1 xml:id="bind-ile-dns-howto_bind">
+  <title>BIND</title>
+  <para>
+   Bu bölüme kadar olan kısımda isim çözümleme işlemi açıklanmıştı. Burada
+   ise bir alan adı sunucunun nasıl kurulduğu ve yapılandırması
+   ayrıntılarıyla anlatılacaktır.
+  </para>
+  <para>
+   BIND (Berkeley Internet Name Domain) adını geliştirildiği Berkeley
+   üniversitesinden alan  günümüz Internetinin tartışmasız en popüler alan
+   adı sunucu yazılımıdır. Unix sistemlerinde tasarlanmış ve çalıştırılmaya
+   başlamış olmasına rağmen bugün Microsoft NT için üretilmiş dağıtımları da
+   mevcuttur.
+  </para>
+  <sect2>
+   <title>BIND Paketinin Temini</title>
+   <para>
+    BIND'ın geliştirilmesi Internet Yazılım Konsorsiyumu (Internet Software
+    Consortium) tarafından yapılmaktadır ve web sayfalarından ücretsiz
+    olarak indirilebilir.
+   </para>
+   <para>
+    BIND'in bu belgenin yazımı anındaki en son sürümü Kasım 1999'da
+    yaynlanmış olan sürüm 8.2.2 yama 5'tir.
+    <link xlink:href="http://www.isc.org/products/BIND"/> adresinden
+    indirilebilir.
+   </para>
+   <para>
+    BIND'in yaygın kullanımda olan 4. ve 8. sürümleri arasında oldukça
+    büyük farklar bulunmaktadır. Bu belgede 8. sürüm incelenecek olup, 4.
+    sürümünü kullananların da mümkünse bu sürüme terfi etmeleri önerilir.
+   </para>
+  </sect2>
+  <sect2>
+   <title>BIND'in Kurulumu</title>
+   <para>
+    BIND paketinin indirilmesi, derlenmesi ve kurulması örneklenerek
+    gösterilecektir. Test makinası sparc mimari üzerinde çalışan bir
+    Red Hat Linux'tur. Ancak Linux üzerinde dağıtım ile beraber gelen
+    derlenmiş durumdaki BIND da kullanılabilir. Burada derlemenin
+    verilmesindeki amaç farklı platformlardaki kullanıcılara yardımcı
+    olmaktır.
+   </para>
+<screen>[ilker@hornet bind]$ ftp ftp.isc.org
 Connected to isrv4.pa.vix.com.
 220 isrv4.pa.vix.com FTP server (Version wu-2.6.0(1) Tue Nov 30 17:39:57 PST ¬
  1999) ready.
@@ -465,17 +464,17 @@ Password:
 230 Guest login ok, access restrictions apply.
 Remote system type is UNIX.
 Using binary mode to transfer files.
-ftp> cd isc/bind/src/8.2.2-P5
+ftp&gt; cd isc/bind/src/8.2.2-P5
 250 CWD command successful.
-ftp> bin
+ftp&gt; bin
 200 Type set to I.
-ftp> get bind-src.tar.gz
+ftp&gt; get bind-src.tar.gz
 local: bind-src.tar.gz remote: bind-src.tar.gz
 200 PORT command successful.
 150 Opening BINARY mode data connection for bind-src.tar.gz (1251509 bytes).
 226 Transfer complete.
 1251509 bytes received in 30.6 secs (40 Kbytes/sec)
-ftp> bye
+ftp&gt; bye
 221-You have transferred 1251509 bytes in 1 files.
 221-Total traffic for this session was 1252085 bytes in 1 transfers.
 221-Thank you for using the FTP service on isrv4.pa.vix.com.
@@ -497,24 +496,23 @@ named 8.2.2-P5 Sun Apr 23 13:45:06 EEST 2000
         ilker@hornet.ulakbim.gov.tr:/home/ilker/download/bind/src/bin/named
 [root@hornet src]#
 </screen>
-      </para><para>
-Görüldüğü gibi BIND'ın kurulumu başarıyla tamamlanmıştır.
-      </para>
-    </sect2>
-    <sect2>
-      <title>BIND Yapılandırması</title>
-      <para>
-        BIND yapılandırma dosyası olarak, aksi belirtilmediği sürece
-        <literal>/etc/named.conf</literal> dosyasını kullanır. BIND'in 4.
-        sürümü için bu dosya <literal>/etc/named.boot</literal> dosyasıdır
-        ve dosyaların biçemleri birbirinden hayli farklıdır bu yüzden iki
-        dosyanın karıştırılmamasına dikkat edilmelidir.
-      </para>
-      <para>
-        Örnek bir <literal>named.conf</literal> dosyasını aşağıda gösterilmiştir.
-      </para><para>
-<screen>
-// /etc/named.conf
+   <para>
+    Görüldüğü gibi BIND'ın kurulumu başarıyla tamamlanmıştır.
+   </para>
+  </sect2>
+  <sect2>
+   <title>BIND Yapılandırması</title>
+   <para>
+    BIND yapılandırma dosyası olarak, aksi belirtilmediği sürece
+    <literal>/etc/named.conf</literal> dosyasını kullanır. BIND'in 4.
+    sürümü için bu dosya <literal>/etc/named.boot</literal> dosyasıdır
+    ve dosyaların biçemleri birbirinden hayli farklıdır bu yüzden iki
+    dosyanın karıştırılmamasına dikkat edilmelidir.
+   </para>
+   <para>
+    Örnek bir <literal>named.conf</literal> dosyasını aşağıda gösterilmiştir.
+   </para>
+<screen>// /etc/named.conf
 // Ilker TEMIR - 23/04/2000
 //
 
@@ -541,74 +539,74 @@ zone "83.140.193.in-addr.arpa" {
         file "rev.193.140.83";
 };
 </screen>
-      </para><para>
-Düşünülenin aksine <literal>named.conf</literal> çoğu durumda örnekte
-        görüldüğü kadar yalın olacaktır. Dosya içeriği aşağıda incelenecektir.
-      </para>
-      <para>
-        Seçenekler (<literal>options</literal>) kısmında tanımlanan dizin
-        (<literal>directory</literal>), adres
-        tanımlarını içeren dosyaların bulunacağı dizindir. Belirtilen tüm
-        dosyalar buradaki dizin altında yer alacaklardır.
-        <literal>/var/named</literal> genellikle bu amaçla en çok kullanılan
-        dizindir.
-      </para>
-      <para>
-        <command><literal>zone "."</literal></command> tanımı değiştirilmemesi gereken standart
-        bir tanımdır. DNS çözümlemesi kısmında açıklanan üst seviye alan adı
-        sunucularını gösterir, sunucu NS çözümünü yapamadığı alanlar için burada
-        tanımlı olan alan adı sunuculara başvuracaktır. Bu sunucu adreslerinin
-        nereden temin edileceği ilerleyen kısımlarda açıklanacaktır.
-      </para>
-      <para>
-        <command><literal>zone "0.0.127.in-addr.arpa"</literal></command> tanımı
-        <literal>loopback</literal> olarak tabir edilen bilgisayarın kendi kendine
-        bağlanması için gereken adreslerin ters tanımlamaları için gereklidir.
-        Bu tanım da değiştirilmeden tutulmalıdır.
-      </para>
-      <para>
-        <command><literal>zone "ulak.net.tr"</literal></command> tanımı ile başlayan kısım
-        anlaşılması gereken en önemli kısımlardan biridir. Örnekte bu,
-        <literal>ulak.net.tr</literal> şeklinde bir alan adı tanımlandığını
-        gösterir. <literal>Type</literal> belirteci ise sunucunun alan adı için
-        durumunu belirtir. Örnekte belirtilmiş olan <literal>master</literal>
-        birincil isim sunucusunu göstermektedir. <literal>File</literal> belirteci
-        ile belirtilen isim ise <literal>ulak.net.tr</literal> için adres IP
-        tanımlamalarını içeren dosyanın adıdır. Örnekte bu dosya
-        <literal>/var/named/zone.ulak.net.tr</literal> olmaktadır.
-      </para>
-      <para>
-        <command><literal>Zone "83.140.193.in-addr.arpa"</literal></command> tanımı ile başlayan
-        kısım da bir öncekine benzer şekilde <literal>83.140.193.in-addr.arpa</literal>
-        alan adını tanımlamaktadır. Çözümleme kısmında açıklandığı şekilde bu
-        alan adı <literal>193.140.83</literal> ağında bulunan IP adreslerinin isim
-        karşılıklarını bulmak için kullanılacaktır.
-      </para>
-      <para>
-        <literal>named.conf</literal> dosyası BIND'a hangi alanlardan sorumlu
-        olduğu ve bu alanlara ait bilgileri nerede bulacağı gibi değiştirgeleri
-        vermektedir. Ancak IP adres karşılıkları bu dosyada işaret edilen veri
-        dosyalarında bulunacaktır. Belirtilen dosya adları tamamen sistem
-        yöneticisinin tercihine kalmıştır ancak sistematik bir yol izlenmesi
-        faydalı olacaktır.
-      </para>
-      <para>
-        <literal>named.conf</literal> dosyasında belirtilen dosyaların
-        içerikleri aşağıda incelenmiştir. Belirtilen dosyaların tamamı
-        <literal>/var/named</literal> dizini altında yer alacaktır.
-      </para>
-      <para>
-        <command>named.root</command>: Bu dosya <literal>root-server</literal>
-        adı verilen en üst seviyede bulunan alan adı sunucularının isimlerini
-        ve adreslerini içermektedir. Sıklıkla değişmemekle birlikte güncel hali
-        <link xlink:href="ftp://ftp.rs.internic.net">ftp://ftp.rs.internic.net</link>
-        adresinden çekilebilir. Bu satırların yazıldığı tarih itibariyle bu dosya
-        şu şekildedir:
-      </para><para>
-<screen>
-;       This file holds the information on root name servers needed to
+   <para>
+    Düşünülenin aksine <literal>named.conf</literal> çoğu durumda örnekte
+    görüldüğü kadar yalın olacaktır. Dosya içeriği aşağıda incelenecektir.
+   </para>
+   <para>
+    Seçenekler (<literal>options</literal>) kısmında tanımlanan dizin
+    (<literal>directory</literal>), adres tanımlarını içeren dosyaların
+    bulunacağı dizindir. Belirtilen tüm dosyalar buradaki dizin altında yer
+    alacaklardır. <literal>/var/named</literal> genellikle bu amaçla en çok
+    kullanılan dizindir.
+   </para>
+   <para>
+    <literal>zone "."</literal> tanımı değiştirilmemesi
+    gereken standart bir tanımdır. DNS çözümlemesi kısmında açıklanan üst
+    seviye alan adı sunucularını gösterir, sunucu NS çözümünü yapamadığı
+    alanlar için burada tanımlı olan alan adı sunuculara başvuracaktır.
+    Bu sunucu adreslerinin nereden temin edileceği ilerleyen kısımlarda
+    açıklanacaktır.
+   </para>
+   <para>
+    <literal>zone "0.0.127.in-addr.arpa"</literal> tanımı
+    <literal>loopback</literal> olarak tabir edilen bilgisayarın kendi
+    kendine bağlanması için gereken adreslerin ters tanımlamaları için
+    gereklidir. Bu tanım da değiştirilmeden tutulmalıdır.
+   </para>
+   <para>
+    <literal>zone "ulak.net.tr"</literal> tanımı ile
+    başlayan kısım anlaşılması gereken en önemli kısımlardan biridir. Örnekte
+    bu, <literal>ulak.net.tr</literal> şeklinde bir alan adı tanımlandığını
+    gösterir. <literal>Type</literal> belirteci ise sunucunun alan adı için
+    durumunu belirtir. Örnekte belirtilmiş olan <literal>master</literal>
+    birincil isim sunucusunu göstermektedir. <literal>File</literal>
+    belirteci ile belirtilen isim ise <literal>ulak.net.tr</literal> için
+    adres IP tanımlamalarını içeren dosyanın adıdır. Örnekte bu dosya
+    <literal>/var/named/zone.ulak.net.tr</literal> olmaktadır.
+   </para>
+   <para>
+    <literal>Zone "83.140.193.in-addr.arpa"</literal>
+    tanımı ile başlayan kısım da bir öncekine benzer şekilde
+    <literal>83.140.193.in-addr.arpa</literal> alan adını tanımlamaktadır.
+    Çözümleme kısmında açıklandığı şekilde bu alan adı
+    <literal>193.140.83</literal> ağında bulunan IP adreslerinin isim
+    karşılıklarını bulmak için kullanılacaktır.
+  </para>
+   <para>
+    <literal>named.conf</literal> dosyası BIND'a hangi alanlardan sorumlu
+    olduğu ve bu alanlara ait bilgileri nerede bulacağı gibi değiştirgeleri
+    vermektedir. Ancak IP adres karşılıkları bu dosyada işaret edilen veri
+    dosyalarında bulunacaktır. Belirtilen dosya adları tamamen sistem
+    yöneticisinin tercihine kalmıştır ancak sistematik bir yol izlenmesi
+    faydalı olacaktır.
+  </para>
+   <para>
+    <literal>named.conf</literal> dosyasında belirtilen dosyaların
+    içerikleri aşağıda incelenmiştir. Belirtilen dosyaların tamamı
+    <literal>/var/named</literal> dizini altında yer alacaktır.
+   </para>
+   <para>
+    <command>named.root</command>: Bu dosya <literal>root-server</literal>
+    adı verilen en üst seviyede bulunan alan adı sunucularının isimlerini
+    ve adreslerini içermektedir. Sıklıkla değişmemekle birlikte güncel hali
+    <link xlink:href="ftp://ftp.rs.internic.net"/>
+    adresinden çekilebilir. Bu satırların yazıldığı tarih itibariyle bu dosya
+    şu şekildedir:
+  </para>
+<screen>;       This file holds the information on root name servers needed to
 ;       initialize cache of Internet domain name servers
-;       (e.g. reference this file in the "cache  .  &lt;file>"
+;       (e.g. reference this file in the "cache  .  &lt;file&gt;"
 ;       configuration file of BIND domain name servers).
 ;
 ;       This file is made available by InterNIC registration services
@@ -690,15 +688,13 @@ L.ROOT-SERVERS.NET.      3600000      A     198.32.64.12
 M.ROOT-SERVERS.NET.      3600000      A     202.12.27.33
 ; End of File
 </screen>
-      </para>
-      <para>
-        <command>rev.local</command>: Bu dosya 127.0.0 ağına ait olan IP
-        adreslerinin isim tanımlamalarını içermektedir. İçeriği aşağıda
-        verilmiştir. İçeriği <literal>rev.193.140.83</literal> dosyasının
-        açıklanmalarında bulunabilir.
-      </para><para>
-<screen>
-$TTL 86400
+   <para>
+    <command>rev.local</command>: Bu dosya 127.0.0 ağına ait olan IP
+    adreslerinin isim tanımlamalarını içermektedir. İçeriği aşağıda
+    verilmiştir. İçeriği <literal>rev.193.140.83</literal> dosyasının
+    açıklanmalarında bulunabilir.
+   </para>
+<screen>$TTL 86400
 @       IN      SOA     hornet.ulak.net.tr. root.hornet.ulak.net.tr. (
                         2000042300 ; Serial
                         28800      ; Refresh
@@ -709,14 +705,12 @@ IN      NS      hornet.ulak.net.tr.
 
 1       IN      PTR     localhost.
 </screen>
-      </para>
-      <para>
-        <command>zone.ulak.net.tr</command>: Bu dosya
-        <literal>ulak.net.tr</literal> alan adı altında tanımlı isim adres
-        tanımlamalarını içermektedir. İçeriği aşağıda sunulmuştur.
-      </para><para>
-<screen>
-$TTL 86400
+   <para>
+    <command>zone.ulak.net.tr</command>: Bu dosya
+    <literal>ulak.net.tr</literal> alan adı altında tanımlı isim adres
+    tanımlamalarını içermektedir. İçeriği aşağıda sunulmuştur.
+   </para>
+<screen>$TTL 86400
 @             IN      SOA     hornet.ulak.net.tr. root.hornet.ulak.net.tr. (
                               2000042300 ; Serino
                               28800      ; Yenileme
@@ -731,79 +725,80 @@ truva         IN      A       193.140.83.13
 hornet        IN      A       193.140.83.91
 www           IN      CNAME   efe.ulak.net.tr.
 </screen>
-      </para>
-      <para>
-        İlk satırda görülen değer daha önce açıklanan TTL değeridir. Bu
-        sunucuya ulaşan istemcilerin sorguladıkları isimleri ne kadar süreyle
-        belleklerinde tutacaklarını gösterir. Bu değerin bilinçsiz olarak
-        değiştirilmesi önerilmez. Çoğu durum için 24 saat uygun bir değerdir.
-        Çok küçük olması DNS trafiğini artıracaktır. Ayrıca 0 yapmaktan
-        kaçınılması gerekir.
-      </para>
-      <para>
-        İkinci satırın başında görülen <literal>@</literal> alan adını
-        belirten bir kısa gösterimdir, örnekte
-        <literal>ulak.net.tr.</literal>'nin yerine geçmiştir.
-      </para>
-      <para>
-        <literal>@</literal>'in yanında görülen <literal>IN</literal>, tanımın
-        Internet için bir tanım olduğunu gösterir (Internet haricinde tanımlar
-        yapabilmek mümkün olsa da burada değinilmeyecektir).
-      </para>
-      <para>
-        SOA, <command>S</command>tart <command>O</command>f <command>A</command>uthority anlamına gelir ve alan adı
-        ile ilgili genel tanımları gösterir. Daha sonra gelen
-        <literal>hornet.ulak.net.tr.</literal> sunucunun üzerinde çalıştığı
-        bilgisayarın adı. <literal>root.hornet.ulak.net.tr.</literal> ise ilk
-        <literal>.</literal>, <literal>@</literal> ile değiştirilmek kaydıyla
-        sunucudan sorumlu kişinin e-posta adresini gösteren tanımlardır.
-      </para>
-      <para>
-        Sırasıyla verilen <literal>serino</literal>, <literal>yenileme</literal>,
-        <literal>tekrar</literal> ve <literal>süre</literal> sayısal değerleri
-        sunucu için çeşitli sayaç ve zaman kıstaslarını gösterir. Zaman
-        birimlerinin tamamı saniyedir. Ne anlama geldikleri <link
-        linkend="bind-ile-dns-howto_soa">daha sonra</link> incelenecektir.
-      </para>
-      <para>
-        Daha sonra görülen <literal>NS</literal> kaydı <command>N</command>ame <command>S</command>erver (alan adı
-        sunucu) tanımıdır. Her alan adı için en az bir alan adı sunucusu bu
-        şekilde tanımlanmalıdır.
-      </para>
-      <para>
-        Sonraki satırda <literal>ulak.net.tr.</literal> için tanımlanmış olan
-        <literal>MX 10</literal> kaydı görülmektedir. <literal>MX</literal>,
-        <command>M</command>ail E<command>X</command>changer'ı temsil eder ve belirtilen alan adı için posta servisinin
-        çalıştığı bilgisayarın ismini gösterir. 10 ise tercih değeridir. Farklı
-        tercih değerleri içinde en düşük tercih değeri seçilecektir. Buradaki
-        örnek, <literal>ulak.net.tr</literal> alan adına giden mesajların
-        <literal>efe.ulak.net.tr</literal> bilgisayarına yönlendirilmesini
-        sağlar.
-      </para>
-      <para>
-        Farklı isimlerin yanında olan <literal>A</literal> kayıtları, adres
-        kayıtlarını temsil eder. İsmin hangi IP numarasına karşılık geldiğini
-        gösterir.
-      </para>
-      <para>
-        Son satırda görülen <literal>CNAME</literal> tanımı ise <command>C</command>anonical
-        <command>NAME</command>'den gelir ve bilgisayarlara ikincil isim verilmesini sağlar.
-        Örnekte görülen tanım <literal>www.ulak.net.tr</literal> adresinin
-        <literal>efe.ulak.net.tr</literal> adresi ile aynı olmasını sağlar.
-        <literal>A</literal> kaydına tercih edilmesinin nedeni
-        <literal>efe.ulak.net.tr</literal> tanımı değiştiğinde onu gösteren
-        <literal>CNAME</literal> kayıtlarının da otomatik olarak değişmesidir.
-        Kullanımda bazı problemler yaratabildiği için kullanılması önerilmez.
-        <literal>CNAME</literal> kullanmak yerine farklı <literal>A</literal>
-        tanımları yapmak daha uygundur.
-      </para>
-      <para>
-        <command>rev.193.140.83</command>: Bu dosya <literal>193.140.83</literal>
-        ağına ait olan IP adreslerinin isim tanımlamalarını içermektedir.
-        İçeriği aşağıda verilmiştir.
-      </para><para>
-<screen>
-$TTL 86400
+   <para>
+    İlk satırda görülen değer daha önce açıklanan TTL değeridir. Bu
+    sunucuya ulaşan istemcilerin sorguladıkları isimleri ne kadar süreyle
+    belleklerinde tutacaklarını gösterir. Bu değerin bilinçsiz olarak
+    değiştirilmesi önerilmez. Çoğu durum için 24 saat uygun bir değerdir.
+    Çok küçük olması DNS trafiğini artıracaktır. Ayrıca 0 yapmaktan
+    kaçınılması gerekir.
+   </para>
+   <para>
+    İkinci satırın başında görülen <literal>@</literal> alan adını
+    belirten bir kısa gösterimdir, örnekte
+    <literal>ulak.net.tr.</literal>'nin yerine geçmiştir.
+   </para>
+   <para>
+    <literal>@</literal>'in yanında görülen <literal>IN</literal>, tanımın
+    Internet için bir tanım olduğunu gösterir (Internet haricinde tanımlar
+    yapabilmek mümkün olsa da burada değinilmeyecektir).
+   </para>
+   <para>
+    SOA, <command>S</command>tart <command>O</command>f
+    <command>A</command>uthority anlamına gelir ve alan adı
+    ile ilgili genel tanımları gösterir. Daha sonra gelen
+    <literal>hornet.ulak.net.tr.</literal> sunucunun üzerinde çalıştığı
+    bilgisayarın adı. <literal>root.hornet.ulak.net.tr.</literal> ise ilk
+    <literal>.</literal>, <literal>@</literal> ile değiştirilmek kaydıyla
+    sunucudan sorumlu kişinin e-posta adresini gösteren tanımlardır.
+   </para>
+   <para>
+    Sırasıyla verilen <literal>serino</literal>, <literal>yenileme</literal>,
+    <literal>tekrar</literal> ve <literal>süre</literal> sayısal değerleri
+    sunucu için çeşitli sayaç ve zaman kıstaslarını gösterir. Zaman
+    birimlerinin tamamı saniyedir. Ne anlama geldikleri
+    <link linkend="bind-ile-dns-howto_soa">daha sonra</link> incelenecektir.
+   </para>
+   <para>
+    Daha sonra görülen <literal>NS</literal> kaydı <command>N</command>ame
+    <command>S</command>erver (alan adı sunucu) tanımıdır. Her alan adı için
+    en az bir alan adı sunucusu bu şekilde tanımlanmalıdır.
+   </para>
+   <para>
+    Sonraki satırda <literal>ulak.net.tr.</literal> için tanımlanmış olan
+    <literal>MX 10</literal> kaydı görülmektedir. <literal>MX</literal>,
+    <command>M</command>ail E<command>X</command>changer'ı temsil eder ve
+    belirtilen alan adı için posta servisinin
+    çalıştığı bilgisayarın ismini gösterir. 10 ise tercih değeridir. Farklı
+    tercih değerleri içinde en düşük tercih değeri seçilecektir. Buradaki
+    örnek, <literal>ulak.net.tr</literal> alan adına giden mesajların
+    <literal>efe.ulak.net.tr</literal> bilgisayarına yönlendirilmesini
+    sağlar.
+   </para>
+   <para>
+    Farklı isimlerin yanında olan <literal>A</literal> kayıtları, adres
+    kayıtlarını temsil eder. İsmin hangi IP numarasına karşılık geldiğini
+    gösterir.
+   </para>
+   <para>
+    Son satırda görülen <literal>CNAME</literal> tanımı ise
+    <command>C</command>anonical <command>NAME</command>'den gelir ve
+    bilgisayarlara ikincil isim verilmesini sağlar.
+    Örnekte görülen tanım <literal>www.ulak.net.tr</literal> adresinin
+    <literal>efe.ulak.net.tr</literal> adresi ile aynı olmasını sağlar.
+    <literal>A</literal> kaydına tercih edilmesinin nedeni
+    <literal>efe.ulak.net.tr</literal> tanımı değiştiğinde onu gösteren
+    <literal>CNAME</literal> kayıtlarının da otomatik olarak değişmesidir.
+    Kullanımda bazı problemler yaratabildiği için kullanılması önerilmez.
+    <literal>CNAME</literal> kullanmak yerine farklı <literal>A</literal>
+    tanımları yapmak daha uygundur.
+   </para>
+   <para>
+    <command>rev.193.140.83</command>: Bu dosya <literal>193.140.83</literal>
+    ağına ait olan IP adreslerinin isim tanımlamalarını içermektedir.
+    İçeriği aşağıda verilmiştir.
+   </para>
+<screen>$TTL 86400
 
 @          IN      SOA     hornet.ulak.net.tr. root.hornet.ulak.net.tr. (
                            2000042300 ; Serino
@@ -817,118 +812,115 @@ IN         NS      hornet.ulak.net.tr.
 13         IN      PTR     truva.ulak.net.tr.
 91         IN      PTR     hornet.ulak.net.tr.
 </screen>
+   <para>
+    Görüldüğü gibi alan adı tanımları hemen hemen standarttır ve bu dosyanın
+    da içerik olarak az önce incelenen dosyadan çok farkı yoktur. Fark
+    yalnızca yeni ortaya çıkan <literal>PTR</literal> kaydıdır,
+    <command>P</command>oin<command>T</command>e<command>R</command>
+    (işaret, gösterge) anlamına gelir. Örnekler sırasıyla
+    <literal>193.140.83.9</literal>'un <literal>efe.ulak.net.tr</literal>,
+    <literal>193.140.83.13</literal>'ün <literal>truva.ulak.net.tr</literal>
+    ve <literal>193.140.83.91</literal>'in
+    <literal>hornet.ulak.net.tr</literal>'yi adreslediğini gösterir.
+   </para>
+   <para>
+    Sıklıkla kullanılan temel kayıtlar iki dosyanın içeriğinin incelenmesi
+    sırasında  açıklanmıştır. Ancak burada belirtilmeyen farklı kayıtlar da
+    mevcuttur.  Bunların listesi ve açıklamaları <link linkend="bind-ile-dns-howto_records">daha sonra</link> verilecektir.
+   </para>
+   <para>
+    SOA kaydında belirtilen değiştirgeler aşağıda ayrıntılı olarak
+    incelenmişlerdir.
+   </para>
+   <variablelist>
+    <varlistentry>
+     <term xml:id="bind-ile-dns-howto_soa">Seri No:</term>
+     <listitem>
+      <para>
+       Sunucudan bilgi alan ikincil isim sunucular tarafından kullanılır.
+       Burada belirtilen değerin ne olduğu gerçekte çok önemli değildir.
+       Önemli olan dosya içeriğinde değişiklik yapıldığında mutlaka
+       artırılması gerektiğidir. İkincil isim sunucular bu değere
+       bakarak alan adı içeriğinin değişip değişmediğine karar verirler.
       </para>
       <para>
-        Görüldüğü gibi alan adı tanımları hemen hemen standarttır ve bu dosyanın
-        da içerik olarak az önce incelenen dosyadan çok farkı yoktur. Fark
-        yalnızca yeni ortaya çıkan <literal>PTR</literal> kaydıdır,
-        <command>P</command>oin<command>T</command>e<command>R</command> (işaret, gösterge) anlamına gelir. Örnekler sırasıyla
-        <literal>193.140.83.9</literal>'un <literal>efe.ulak.net.tr</literal>,
-        <literal>193.140.83.13</literal>'ün <literal>truva.ulak.net.tr</literal>
-        ve <literal>193.140.83.91</literal>'in <literal>hornet.ulak.net.tr</literal>'yi
-        adreslediğini gösterir.
+       Genellikle yıl, ay, gün ve gün içinde yapılan değişiklik sayısı
+       şeklinde kullanılır.
       </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term>Yenileme:</term>
+     <listitem>
       <para>
-        Sıklıkla kullanılan temel kayıtlar iki dosyanın içeriğinin incelenmesi
-        sırasında  açıklanmıştır. Ancak burada belirtilmeyen farklı kayıtlar da
-        mevcuttur.  Bunların listesi ve açıklamaları <link
-        linkend="bind-ile-dns-howto_records">daha sonra</link> verilecektir.
+       İkincil sunucular için birincil sunucuyu ne kadar aralıkla
+       kontrol edeceğini gösteren değerdir. Örneğimizde bu değer 8
+       saattir. Her 8 saatte bir ikincil sunucu birincil sunucuda
+       değişiklik yapılıp yapılmadığını kontrol edecektir.
       </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term>Tekrar:</term>
+     <listitem>
       <para>
-        SOA kaydında belirtilen değiştirgeler aşağıda ayrıntılı olarak
-        incelenmişlerdir.
-        </para><variablelist>
-          <varlistentry>
-            <term xml:id="bind-ile-dns-howto_soa">Seri No:</term>
-            <listitem>
-              <para>
-                Sunucudan bilgi alan ikincil isim sunucular tarafından kullanılır.
-                Burada belirtilen değerin ne olduğu gerçekte çok önemli değildir.
-                Önemli olan dosya içeriğinde değişiklik yapıldığında mutlaka
-                artırılması gerektiğidir. İkincil isim sunucular bu değere
-                bakarak alan adı içeriğinin değişip değişmediğine karar verirler.
-              </para>
-              <para>
-                Genellikle yıl, ay, gün ve gün içinde yapılan değişiklik sayısı
-                şeklinde kullanılır.
-              </para>
-            </listitem>
-          </varlistentry>
-          <varlistentry>
-            <term>Yenileme:</term>
-            <listitem>
-              <para>
-                İkincil sunucular için birincil sunucuyu ne kadar aralıkla
-                kontrol edeceğini gösteren değerdir. Örneğimizde bu değer 8
-                saattir. Her 8 saatte bir ikincil sunucu birincil sunucuda
-                değişiklik yapılıp yapılmadığını kontrol edecektir.
-              </para>
-            </listitem>
-          </varlistentry>
-          <varlistentry>
-            <term>Tekrar:</term>
-            <listitem>
-              <para>
-                Eğer ikincil sunucu herhangi bir nedenle birinci sunucuya ulaşmakta
-                sorun yaşarsa tekrar denemek için ne kadar bekleyeceğini gösteren
-                değerdir. Genellikle <literal>Yenileme</literal> süresinden daha kısa bir süredir.
-                Örneğimizde 4 saattir.
-              </para>
-            </listitem>
-          </varlistentry>
-          <varlistentry>
-            <term>Süre:</term>
-            <listitem>
-              <para>
-                Bu kısım oldukça önemlidir. İkincil sunucunun birincil sunucuya
-                ulaşamadığı durumlarda kendisinde bulunan verinin ne kadar daha
-                doğru kabul edildiğini gösterir. Bu süreden sonra ikincil sunucu
-                çağrılara cevap vermeyi keser. 1 haftadan kısa olması kesinlikle
-                önerilmez. <literal>Yenileme</literal> ve <literal>Tekrar</literal>
-                değerlerinden çok daha büyük olmalıdır.
-              </para>
-            </listitem>
-          </varlistentry>
-          <varlistentry>
-            <term>TTL:</term>
-            <listitem>
-              <para>
-                Daha önce açıklanan 'Yaşam Süresi' (TTL - Time to live) değeridir.
-                İlk satırda <literal>$TTL</literal> ile belirtilenden farkı BIND 8.2.1 ile birlikte
-                buradaki değerin yalnız negatif TTL olarak kullanılmasıdır. Negatif
-                TTL hata veren sorgulamaların bellekte tutulması için geçerli süredir.
-              </para>
-            </listitem>
-          </varlistentry>
-        </variablelist>
-    </sect2>
-    <sect2>
-      <title>BIND'in Çalıştırılması</title>
+       Eğer ikincil sunucu herhangi bir nedenle birinci sunucuya ulaşmakta
+       sorun yaşarsa tekrar denemek için ne kadar bekleyeceğini gösteren
+       değerdir. Genellikle <literal>Yenileme</literal> süresinden daha kısa bir süredir. Örneğimizde 4 saattir.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term>Süre:</term>
+     <listitem>
       <para>
-        Daha önce açıklanan yapılandırma tamamlandıktan sonra, BIND, root
-        kullanıcısı yetkileriyle aşağıdaki şekilde çalıştırılır.
-      </para><para>
-<screen>
-[root@hornet /root]#  /usr/sbin/ndc start
+       Bu kısım oldukça önemlidir. İkincil sunucunun birincil sunucuya
+       ulaşamadığı durumlarda kendisinde bulunan verinin ne kadar daha
+       doğru kabul edildiğini gösterir. Bu süreden sonra ikincil sunucu
+       çağrılara cevap vermeyi keser. 1 haftadan kısa olması kesinlikle
+       önerilmez. <literal>Yenileme</literal> ve <literal>Tekrar</literal>
+       değerlerinden çok daha büyük olmalıdır.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term>TTL:</term>
+     <listitem>
+      <para>
+       Daha önce açıklanan 'Yaşam Süresi' (TTL - Time to live) değeridir.
+       İlk satırda <literal>$TTL</literal> ile belirtilenden farkı BIND 8.2.1
+       ile birlikte buradaki değerin yalnız negatif TTL olarak
+       kullanılmasıdır. Negatif TTL hata veren sorgulamaların bellekte
+       tutulması için geçerli süredir.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </sect2>
+  <sect2>
+   <title>BIND'in Çalıştırılması</title>
+   <para>
+    Daha önce açıklanan yapılandırma tamamlandıktan sonra, BIND, root
+    kullanıcısı yetkileriyle aşağıdaki şekilde çalıştırılır.
+   </para>
+<screen>[root@hornet /root]#  /usr/sbin/ndc start
 new pid is 9089
 [root@hornet /root]#
 </screen>
-      </para><para>
-Çalışıp çalışmadığını anlamak için aşağıdaki yol izlenebilir.
-      </para><para>
-<screen>
-root@hornet /root]# ps -aux |grep named
+   <para>
+    Çalışıp çalışmadığını anlamak için aşağıdaki yol izlenebilir.
+   </para>
+<screen>root@hornet /root]# ps -aux |grep named
 root      9089  0.0  1.4  2568 1808 ?        S    09:23   0:00 /usr/sbin/named
 root      9131  1.0  0.5  1464  712 pts/2    S    09:23   0:00 grep named
 [root@hornet /root]#
 </screen>
-      </para><para>
-Görüldüğü gibi <literal>named</literal> işlemi <literal>9089</literal>
-        PID ile çalışmaya başlamıştır. Herhangi bir hata verip vermediği günlük
-        dosyalarından kontrol edilmelidir.
-      </para><para>
-<screen>
-[root@hornet /root]# tail /var/log/messages
+   <para>
+    Görüldüğü gibi <literal>named</literal> işlemi <literal>9089</literal>
+    PID ile çalışmaya başlamıştır. Herhangi bir hata verip vermediği günlük
+    dosyalarından kontrol edilmelidir.
+   </para>
+<screen>[root@hornet /root]# tail /var/log/messages
 
 Apr 24 15:15:30 hornet named[9088]: starting. named 8.2.2-P5 Sun Apr 23 13:45:06 ¬
   EEST 2000 ^Iilker@hornet.ulakbim.gov.tr:/home/ilker/download/bind/src/bin/named
@@ -945,36 +937,34 @@ Apr 24 15:15:30 hornet named[9088]: Forwarding source address is [0.0.0.0].1038
 Apr 24 15:15:30 hornet named[9089]: Ready to answer queries.
 [root@hornet /root]#
 </screen>
-      </para>
-      <para>
-        <command>Bilgi</command>: Sistem günlükleri farklı Unix türevlerinde
-        farklı dizinlerde bulunabilir. <literal>/var/log/messages</literal>
-        Linux için geçerli bir günlük dosyasıdır.
-      </para>
-      <para>
-        Görüldüğü gibi günlüklerde bir sorunu gösteren herhangi bir belirti
-        bulunmamaktadır.  Alan adı sunucusu sorunsuz olarak çalışmaktadır.
-      </para>
-    </sect2>
-    <sect2>
-      <title>DNS Sorguları - NSLOOKUP</title>
-      <para>
-        <literal>Nslookup</literal> alan adı sunucularını sorgulamak için oldukça etkili bir
-        yazılımdır. Çok ayrıntılı kullanım seçenekleri mevcut olsa da burada
-        ayrıntıya girilmeyecektir. Hemen tüm Unix sistemlerinde yüklü olarak
-        gelmektedir ayrıca Windows NT üzerinde de yüklü olarak gelir.
-      </para>
-      <para>
-        Çalışan sunucunun <literal>nslookup</literal> yardımıyla sorgulanması
-        aşağıda gösterilmiştir.
-      </para><para>
-<screen>
-[root@hornet named]# nslookup - 0
+   <para>
+    <command>Bilgi</command>: Sistem günlükleri farklı Unix türevlerinde
+    farklı dizinlerde bulunabilir. <literal>/var/log/messages</literal>
+    Linux için geçerli bir günlük dosyasıdır.
+   </para>
+   <para>
+    Görüldüğü gibi günlüklerde bir sorunu gösteren herhangi bir belirti
+    bulunmamaktadır.  Alan adı sunucusu sorunsuz olarak çalışmaktadır.
+   </para>
+  </sect2>
+  <sect2>
+   <title>DNS Sorguları - NSLOOKUP</title>
+   <para>
+    <literal>Nslookup</literal> alan adı sunucularını sorgulamak için oldukça
+    etkili bir yazılımdır. Çok ayrıntılı kullanım seçenekleri mevcut olsa da
+    burada ayrıntıya girilmeyecektir. Hemen tüm Unix sistemlerinde yüklü
+    olarak gelmektedir ayrıca Windows NT üzerinde de yüklü olarak gelir.
+   </para>
+   <para>
+    Çalışan sunucunun <literal>nslookup</literal> yardımıyla sorgulanması
+    aşağıda gösterilmiştir.
+   </para>
+<screen>[root@hornet named]# nslookup - 0
 Default Server:  hornet.ulak.net.tr
 Address:  0.0.0.0
 
-> set type=soa
-> ulak.net.tr
+&gt; set type=soa
+&gt; ulak.net.tr
 Server:  hornet.ulak.net.tr
 Address:  0.0.0.0
 
@@ -988,15 +978,15 @@ ulak.net.tr
         minimum ttl = 86400 (1D)
 ulak.net.tr     nameserver = hornet.ulak.net.tr
 hornet.ulak.net.tr   internet address = 193.140.83.91
-> set type=a
-> truva.ulak.net.tr
+&gt; set type=a
+&gt; truva.ulak.net.tr
 Server:  hornet.ulak.net.tr
 Address:  0.0.0.0
 
 Name:    truva.ulak.net.tr
 Address:  193.140.83.13
 
-> www.ulak.net.tr
+&gt; www.ulak.net.tr
 Server:  hornet.ulak.net.tr
 Address:  0.0.0.0
 
@@ -1004,8 +994,8 @@ Name:    efe.ulak.net.tr
 Address:  193.140.83.9
 Aliases:  www.ulak.net.tr
 
-> set type=ptr
-> 9.83.140.193.in-addr.arpa
+&gt; set type=ptr
+&gt; 9.83.140.193.in-addr.arpa
 Server:  hornet.ulak.net.tr
 Address:  0.0.0.0
 
@@ -1013,31 +1003,29 @@ Address:  0.0.0.0
 83.140.193.in-addr.arpa nameserver = hornet.ulak.net.tr
 hornet.ulak.net.tr   internet address = 193.140.83.91
 </screen>
-      </para>
-      <para>
-        İlk satırda görülen, <literal>nslookup</literal> komutunun alan adı
-        sunucu olarak kendi çalıştığı makinayı kullanacak şekilde
-        çalıştırılmasıdır. Sorgu tipi <literal>SOA</literal>'ya değiştirilerek
-        (açılışta varsayılan sorgu tipi <literal>A</literal> kaydı sorgusudur)
-        <literal>ulak.net.tr</literal> alan adı için <literal>SOA</literal> kaydı
-        incelenmiştir. Tüm değerler daha önce tanımlananlarla uyum
-        içerisindedirler. Daha sonra sorgu türü <literal>A</literal> kaydına
-        çevrilmiş ve <literal>truva.ulak.net.tr</literal> için IP adresi
-        bulunmuştur. Veritabanında <literal>CNAME</literal> olarak tanımlanmış
-        olan <literal>www.ulak.net.tr</literal> için yapılan <literal>A</literal>
-        kaydı sorgulaması bu adresin takma ad olarak tanımlandığı
-        <literal>efe.ulak.net.tr</literal> adresini döndürmüştür. Son olarak
-        yapılan <literal>PTR</literal> sorgulamasıyla da
-        <literal>193.140.83.9</literal>'un ters (reverse) tanımı
-        bulunmuştur. Bu da daha önce tanımlanan <literal>efe.ulak.net.tr</literal>
-        şeklindedir.
-      </para>
-      <para>
-        <literal>Nslookup</literal> sorguları genişletilerek devam edilirse;
-      </para><para>
-<screen>
-> set type=a
-> www.metu.edu.tr.
+   <para>
+    İlk satırda görülen, <literal>nslookup</literal> komutunun alan adı
+    sunucu olarak kendi çalıştığı makinayı kullanacak şekilde
+    çalıştırılmasıdır. Sorgu tipi <literal>SOA</literal>'ya değiştirilerek
+    (açılışta varsayılan sorgu tipi <literal>A</literal> kaydı sorgusudur)
+    <literal>ulak.net.tr</literal> alan adı için <literal>SOA</literal> kaydı
+    incelenmiştir. Tüm değerler daha önce tanımlananlarla uyum
+    içerisindedirler. Daha sonra sorgu türü <literal>A</literal> kaydına
+    çevrilmiş ve <literal>truva.ulak.net.tr</literal> için IP adresi
+    bulunmuştur. Veritabanında <literal>CNAME</literal> olarak tanımlanmış
+    olan <literal>www.ulak.net.tr</literal> için yapılan <literal>A</literal>
+    kaydı sorgulaması bu adresin takma ad olarak tanımlandığı
+    <literal>efe.ulak.net.tr</literal> adresini döndürmüştür. Son olarak
+    yapılan <literal>PTR</literal> sorgulamasıyla da
+    <literal>193.140.83.9</literal>'un ters (reverse) tanımı
+    bulunmuştur. Bu da daha önce tanımlanan
+    <literal>efe.ulak.net.tr</literal> şeklindedir.
+   </para>
+   <para>
+    <literal>Nslookup</literal> sorguları genişletilerek devam edilirse;
+   </para>
+<screen>&gt; set type=a
+&gt; www.metu.edu.tr.
 Server:  hornet.ulak.net.tr
 Address:  0.0.0.0
 
@@ -1045,23 +1033,22 @@ Non-authoritative answer:
 Name:    www.metu.edu.tr
 Address:  144.122.199.13
 </screen>
-      </para><para>
-<literal>www.metu.edu.tr</literal> alan adı için ilgili adres
-        döndürülecektir. DNS tanımlarında Türkiye ile herhangi bir tanım
-        olmadığı halde bu işlem nasıl yapılmıştır.
-      </para>
-      <para>
-        Daha önce açıklandığı şekilde root-server kullanılarak
-        <literal>.tr</literal> alan
-        adından sorumlu sunucular bulunmuş ve ardışıl sorgulama ile adrese
-        ulaşılmıştır.
-      </para>
-      <para>
-        Sorgulamaya aşağıdaki şekilde devam edilsin.
-      </para><para>
-<screen>
-> set norecurse
-> www.bilkent.edu.tr.
+   <para>
+    <literal>www.metu.edu.tr</literal> alan adı için ilgili adres
+    döndürülecektir. DNS tanımlarında Türkiye ile herhangi bir tanım
+    olmadığı halde bu işlem nasıl yapılmıştır.
+   </para>
+   <para>
+    Daha önce açıklandığı şekilde root-server kullanılarak
+    <literal>.tr</literal> alan
+    adından sorumlu sunucular bulunmuş ve ardışıl sorgulama ile adrese
+    ulaşılmıştır.
+   </para>
+   <para>
+    Sorgulamaya aşağıdaki şekilde devam edilsin.
+   </para>
+<screen>&gt; set norecurse
+&gt; www.bilkent.edu.tr.
 Server:  hornet.ulak.net.tr
 Address:  0.0.0.0
 
@@ -1080,7 +1067,7 @@ Served by:
           139.179.10.13
           EDU.tr
 
-> www.metu.edu.tr.
+&gt; www.metu.edu.tr.
 Server:  hornet.ulak.net.tr
 Address:  0.0.0.0
 
@@ -1088,7 +1075,7 @@ Non-authoritative answer:
 Name:    www.metu.edu.tr
 Address:  144.122.199.13
 
-> www.ulakbim.gov.tr.
+&gt; www.ulakbim.gov.tr.
 Server:  hornet.ulak.net.tr
 Address:  0.0.0.0
 
@@ -1113,221 +1100,209 @@ Served by:
           137.39.1.3
           tr
 </screen>
-      </para><para>
-<literal>set norecurse</literal> komutu daha önce açıkladığımız tekrarlı
-        sorgulama modunu iptal etmiştir. Bu komuttan sonraki sorgular tekrarlı
-        olarak yapılmayacaktır.
-      </para>
+   <para>
+    <literal>set norecurse</literal> komutu daha önce açıkladığımız tekrarlı
+    sorgulama modunu iptal etmiştir. Bu komuttan sonraki sorgular tekrarlı
+    olarak yapılmayacaktır.
+   </para>
+   <para>
+    Tekrarlı sorgu kapatıldıktan sonra bu kez
+    <literal>www.bilkent.edu.tr</literal>
+    için sorgulama yapılmış ancak sunucu cevap olarak
+    <literal>.edu.tr</literal>'ler için geçerli sunucuları döndürmüştür.
+   </para>
+   <para>
+    <literal>www.ulakbim.gov.tr</literal> alan adı sorgulandığında ise
+    <literal>.tr</literal>'ler için geçerli sunucular dönmüş ancak
+    <literal>www.metu.edu.tr</literal> için IP karşılığı döndürülmeye
+    devam etmiştir. Bu nasıl olmaktadır?
+   </para>
+   <para>
+    Öncelikle tekrarlı sorguyu kapatmadan önce
+    <literal>www.metu.edu.tr</literal> için sorgulama yapıldığı
+    hatırlanmalıdır. Bu sorgulama sırasında sunucumuz bu adres için yaptığı
+    tüm sorguları belleğinde saklamaktadır. Bunlar <literal>.tr</literal>
+    alan adı sunucuları, <literal>.edu.tr</literal> alan adı sunucuları,
+    <literal>.metu.edu.tr</literal> alan adı sunucuları ve
+    <literal>www.metu.edu.tr</literal> adresinin IP numarasıdır.
+    Bu yüzden <literal>.edu.tr</literal> altında bulunan
+    <literal>www.bilkent.edu.tr</literal> sorgulaması yapıldığında bu alan
+    adı hakkında en fazla bilgiye sahip olan <literal>.edu.tr</literal> alan
+    adı sunucuları, <literal>.gov.tr</literal> altında bulunan
+    <literal>www.ulakbim.gov.tr</literal> sorgulaması yapıldığında ise en
+    fazla  bilgiye sahip olan <literal>.tr</literal> alan adı sunucuları
+    döndürülmüştür. <literal>www.metu.edu.tr</literal> adresi ise bellekten
+    doğrudan cevaplanmıştır.
+   </para>
+  </sect2>
+  <sect2 xml:id="bind-ile-dns-howto_records">
+   <title>DNS Kayıtları</title>
+   <para>
+    Geçerli DNS kayıtlarına daha önce de değinilmişti. Bu kayıtlar
+    örneklerde belirtilenlerden sayıca daha fazladır. Burada daha önce
+    açıklananlarla birlikte ayrıntıya girilmeden açıklanacaklardır. Halen
+    deneysel durumda olan kayıtlara burada değinilmeyecektir. Tam
+    listesi RFC1035'ten bulunabilir.
+   </para>
+   <variablelist>
+    <varlistentry>
+     <term>A:</term>
+     <listitem>
       <para>
-        Tekrarlı sorgu kapatıldıktan sonra bu kez
-        <literal>www.bilkent.edu.tr</literal>
-        için sorgulama yapılmış ancak sunucu cevap olarak
-        <literal>.edu.tr</literal>'ler için geçerli sunucuları döndürmüştür.
+       Adres kaydıdır. İsme karşılık gelen 32 bitlik IP numarası
+       tanımlanır.
       </para>
+      <para>Örnek:</para>
+<screen>marine.ulakbim.gov.tr.  IN      A       193.140.83.27
+</screen>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term>CNAME:</term>
+     <listitem>
       <para>
-        <literal>www.ulakbim.gov.tr</literal> alan adı sorgulandığında ise
-        <literal>.tr</literal>'ler için geçerli sunucular dönmüş ancak
-        <literal>www.metu.edu.tr</literal> için IP karşılığı döndürülmeye
-        devam etmiştir. Bu nasıl olmaktadır?
+       Takma ad kaydıdır. Takma ad tanımlanır.
       </para>
+      <para>Örnek:</para>
+<screen>ilker.ulakbim.gov.tr.   IN      CNAME   truva.ulakbim.gov.tr.
+</screen>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term>HINFO:</term>
+     <listitem>
       <para>
-        Öncelikle tekrarlı sorguyu kapatmadan önce <literal>www.metu.edu.tr</literal>
-        için sorgulama yapıldığı hatırlanmalıdır. Bu sorgulama sırasında
-        sunucumuz bu adres için yaptığı tüm sorguları belleğinde saklamaktadır.
-        Bunlar <literal>.tr</literal> alan adı sunucuları, <literal>.edu.tr</literal> alan adı
-        sunucuları, <literal>.metu.edu.tr</literal> alan adı sunucuları ve
-        <literal>www.metu.edu.tr</literal> adresinin IP numarasıdır.
-        Bu yüzden <literal>.edu.tr</literal> altında bulunan
-        <literal>www.bilkent.edu.tr</literal> sorgulaması yapıldığında bu alan adı
-        hakkında en fazla bilgiye sahip olan <literal>.edu.tr</literal> alan
-        adı sunucuları, <literal>.gov.tr</literal> altında bulunan
-        <literal>www.ulakbim.gov.tr</literal> sorgulaması yapıldığında ise en fazla
-        bilgiye sahip olan <literal>.tr</literal> alan adı sunucuları döndürülmüştür.
-        <literal>www.metu.edu.tr</literal> adresi ise bellekten doğrudan cevaplanmıştır.
+       Bilgi kaydıdır, işlemci işletim sistemi tanımlanır.
       </para>
-    </sect2>
-    <sect2 xml:id="bind-ile-dns-howto_records">
-      <title>DNS Kayıtları</title>
+      <para>Örnek:</para>
+<screen> truva.ulakbim.gov.tr.  IN      HINFO   Ultra10 Solaris
+</screen>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term>MD:</term>
+     <listitem>
       <para>
-        Geçerli DNS kayıtlarına daha önce de değinilmişti. Bu kayıtlar
-        örneklerde belirtilenlerden sayıca daha fazladır. Burada daha önce
-        açıklananlarla birlikte ayrıntıya girilmeden açıklanacaklardır. Halen
-        deneysel durumda olan kayıtlara burada değinilmeyecektir. Tam
-        listesi RFC1035'ten bulunabilir.
+       Kullanımdan kalkmıştır. Yerine MX kaydı kullanılır.
       </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term>MF:</term>
+     <listitem>
       <para>
-        <variablelist>
-          <varlistentry>
-            <term>A:</term>
-            <listitem>
-              <para>
-                Adres kaydıdır. İsme karşılık gelen 32 bitlik IP numaras
-                tanımlanır.
-              </para><para>Örnek:</para><para>
-<screen>
-marine.ulakbim.gov.tr.  IN      A       193.140.83.27
-</screen>
-              </para>
-            </listitem>
-          </varlistentry>
-          <varlistentry>
-            <term>CNAME:</term>
-            <listitem>
-              <para>
-                Takma ad kaydıdır. Takma ad tanımlanır.
-              </para><para>Örnek:</para><para>
-<screen>
-ilker.ulakbim.gov.tr.   IN      CNAME   truva.ulakbim.gov.tr.
-</screen>
-              </para>
-            </listitem>
-          </varlistentry>
-          <varlistentry>
-            <term>HINFO:</term>
-            <listitem>
-              <para>
-                Bilgi kaydıdır, işlemci işletim sistemi tanımlanır.
-              </para><para>Örnek:</para><para>
-<screen>
- truva.ulakbim.gov.tr.  IN      HINFO   Ultra10 Solaris
-</screen>
-              </para>
-            </listitem>
-          </varlistentry>
-          <varlistentry>
-            <term>MD:</term>
-            <listitem>
-              <para>
-                Kullanımdan kalkmıştır. Yerine MX kaydı kullanılır.
-              </para>
-            </listitem>
-          </varlistentry>
-          <varlistentry>
-            <term>MF:</term>
-            <listitem>
-              <para>
-                Kullanımdan kalkmıştır. Yerine MX kaydı kullanılır.
-              </para>
-            </listitem>
-          </varlistentry>
-          <varlistentry>
-            <term>MX:</term>
-            <listitem>
-              <para>
-                Posta sunucu kaydı. Alan adı için ilgili posta sunucusunu tanımlar.
-              </para><para>Örnek:</para><para>
-<screen>
-ulakbim.gov.tr.         IN      MX      10      efe.ulakbim.gov.tr.
-</screen>
-              </para>
-            </listitem>
-          </varlistentry>
-          <varlistentry>
-            <term>NS:</term>
-            <listitem>
-              <para>
-                Alan adı sunucu kaydı. Alan için alan adı sunucularını tanımlar.
-              </para><para>Örnek:</para><para>
-<screen>
-ulakbim.gov.tr.         IN      NS      efe.ulakbim.gov.tr
-</screen>
-              </para>
-            </listitem>
-          </varlistentry>
-          <varlistentry>
-            <term>PTR:</term>
-            <listitem>
-              <para>
-                İşaret kaydı. Ters tanımlamada ismi tanımlar.
-              </para><para>Örnek:</para><para>
-<screen>
-9.83.140.193.in-addr.arpa       IN      PTR     efe.ulakbim.gov.tr.
-</screen>
-              </para>
-            </listitem>
-          </varlistentry>
-          <varlistentry>
-            <term>SOA:</term>
-            <listitem>
-              <para>
-                Sunucunun genel özelliklerini tanımlayan kayıttır. Seri No,
-                yenileme, tekrar, süre ve TTL değerlerini alır.
-              </para><para>Örnek:</para><para>
-<screen>
-ulakbim.gov.tr. IN      SOA     efe.ulakbim.gov.tr. root.ulakbim.gov.tr. (
-                                2000042401        ; Serino
-                                28800             ; Yenileme
-                                14400             ; Tekrar
-                                3600000           ; Süre
-                                86400 )           ; TTL
-</screen>
-              </para>
-            </listitem>
-          </varlistentry>
-          <varlistentry>
-            <term>TXT:</term>
-            <listitem>
-              <para>
-                Bilgi kaydı. Kayıt hakkında bilgiyi tanımlar.
-              </para><para>Örnek:</para><para>
-<screen>
-ulakbim.gov.tr.         IN    TXT       "Ulusal Akademik Ag ve Bilgi Merkezi"
-</screen>
-              </para>
-            </listitem>
-          </varlistentry>
-          <varlistentry>
-            <term>WKS:</term>
-            <listitem>
-              <para>
-                Servis kaydı. Çalışan servisleri tanımlar.
-              </para><para>Örnek:</para><para>
-<screen>
-truva.ulakbim.gov.tr.   IN    WKS       TCP (ftp, ssh, telnet, smtp)
-</screen>
-              </para>
-            </listitem>
-          </varlistentry>
-        </variablelist>
+       Kullanımdan kalkmıştır. Yerine MX kaydı kullanılır.
       </para>
-    </sect2>
-  </sect1>
-  <sect1 xml:id="bind-ile-dns-howto_legal">
-      <title>Yasal Açıklamalar</title>
-    <!-- Legal Sections -->
-    <sect2 xml:id="bind-ile-dns-howto_copyright">
-      <title>Telif Hakkı ve Lisans</title>
-
-      <!-- The LDP recommends, but doesn't require, the GFDL -->
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term>MX:</term>
+     <listitem>
       <para>
-       Bu belgenin, <emphasis>BIND 8 ile DNS NASIL</emphasis>,
-       1.0 sürümünün
-       <emphasis role="bold">
-         telif hakkı © 2000 <emphasis>İlker Temir</emphasis></emphasis>'e
-       aittir. Bu belgeyi, Free Software Foundation tarafından yayınlanmış bulunan <link linkend="gpl">GNU Genel Kamu Lisansı</link>nın 2. ya da daha sonraki sürümünün koşullarına bağlı kalarak kopyalayabilir, dağıtabilir ve/veya değiştirebilirsiniz. Bu Lisansın özgün kopyasını <link xlink:href="http://www.gnu.org/copyleft/gpl.html"/> adresinde bulabilirsiniz.
+       Posta sunucu kaydı. Alan adı için ilgili posta sunucusunu tanımlar.
       </para>
-
+      <para>Örnek:</para>
+<screen>ulakbim.gov.tr.         IN      MX      10      efe.ulakbim.gov.tr.
+</screen>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term>NS:</term>
+     <listitem>
       <para>
-       Linux, Linus Torvalds adına kayıtlı bir ticarî isimdir.
+       Alan adı sunucu kaydı. Alan için alan adı sunucularını tanımlar.
       </para>
-    </sect2>
-
-    <sect2 xml:id="bind-ile-dns-howto_disclaimer">
-      <title>Feragatname</title>
-
+      <para>Örnek:</para>
+<screen>ulakbim.gov.tr.         IN      NS      efe.ulakbim.gov.tr
+</screen>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term>PTR:</term>
+     <listitem>
       <para>
-        Bu belgedeki bilgilerin kullanımından doğacak sorumluluklar,
-        ve olası zararlardan belge yazarı sorumlu tutulamaz.
-        Bu belgedeki bilgileri uygulama sorumluluğu uygulayana aittir.
+       İşaret kaydı. Ters tanımlamada ismi tanımlar.
       </para>
-
+      <para>Örnek:</para>
+<screen>9.83.140.193.in-addr.arpa       IN      PTR     efe.ulakbim.gov.tr.
+</screen>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term>SOA:</term>
+     <listitem>
       <para>
-        Tüm telif hakları aksi özellikle belirtilmediği sürece sahibine
-        aittir. Belge içinde geçen herhangi bir terim bir ticarî isim
-        ya da kuruma itibar kazandırma olarak algılanmamalıdır. Bir ürün
-        ya da markanın kullanılmış olması ona onay verildiği anlamında
-        görülmemelidir.
+       Sunucunun genel özelliklerini tanımlayan kayıttır. Seri No,
+       yenileme, tekrar, süre ve TTL değerlerini alır.
       </para>
-    </sect2>
-  </sect1>
+      <para>Örnek:</para>
+<screen>ulakbim.gov.tr. IN      SOA     efe.ulakbim.gov.tr. root.ulakbim.gov.tr. (
+                               2000042401        ; Serino
+                               28800             ; Yenileme
+                               14400             ; Tekrar
+                               3600000           ; Süre
+                               86400 )           ; TTL
+</screen>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term>TXT:</term>
+     <listitem>
+      <para>
+       Bilgi kaydı. Kayıt hakkında bilgiyi tanımlar.
+      </para>
+      <para>Örnek:</para>
+<screen>ulakbim.gov.tr.         IN    TXT       "Ulusal Akademik Ag ve Bilgi Merkezi"
+</screen>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term>WKS:</term>
+     <listitem>
+      <para>
+       Hizmet kaydı. Çalışan hizmetleri tanımlar.
+      </para>
+      <para>Örnek:</para>
+<screen>truva.ulakbim.gov.tr.   IN    WKS       TCP (ftp, ssh, telnet, smtp)
+</screen>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </sect2>
+ </sect1>
+ <sect1 xml:id="bind-ile-dns-howto_legal">
+  <title>Yasal Açıklamalar</title>
+  <!-- Legal Sections -->
+  <sect2 xml:id="bind-ile-dns-howto_copyright">
+   <title>Telif Hakkı ve Lisans</title>
+   <para>
+    Bu belgenin, <emphasis>BIND 8 ile DNS NASIL</emphasis>, 1.0 sürümünün
+    <emphasis role="bold"> telif hakkı © 2000
+    <emphasis>İlker Temir</emphasis></emphasis>'e aittir. Bu belgeyi, Free
+    Software Foundation tarafından yayınlanmış bulunan
+    <link xlink:href="&gpl;">GNU Genel Kamu Lisansı</link>nın 2. ya da daha
+    sonraki sürümünün koşullarına bağlı kalarak kopyalayabilir, dağıtabilir
+    ve/veya değiştirebilirsiniz. Bu Lisansın özgün kopyasını
+    <link xlink:href="&gnu-licences;"/> adresinde bulabilirsiniz.
+   </para>
+   <para>
+    Linux, Linus Torvalds adına kayıtlı bir ticarî isimdir.
+   </para>
+  </sect2>
+  <sect2 xml:id="bind-ile-dns-howto_disclaimer">
+   <title>Feragatname</title>
+   <para>
+    Bu belgedeki bilgilerin kullanımından doğacak sorumluluklar,
+    ve olası zararlardan belge yazarı sorumlu tutulamaz.
+    Bu belgedeki bilgileri uygulama sorumluluğu uygulayana aittir.
+   </para>
+   <para>
+    Tüm telif hakları aksi özellikle belirtilmediği sürece sahibine
+    aittir. Belge içinde geçen herhangi bir terim bir ticarî isim
+    ya da kuruma itibar kazandırma olarak algılanmamalıdır. Bir ürün
+    ya da markanın kullanılmış olması ona onay verildiği anlamında
+    görülmemelidir.
+   </para>
+  </sect2>
+ </sect1>
 </article>

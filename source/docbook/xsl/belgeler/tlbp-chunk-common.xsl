@@ -1279,7 +1279,7 @@ xmlns:exsl="http://exslt.org/common" xmlns:cf="http://docbook.sourceforge.net/xm
   <xsl:variable name="row2" select="count($prev) &gt; 0                                     or (count($up) &gt; 0                                          and generate-id($up) != generate-id($home)                                         and $navig.showtitles != 0)                                     or count($next) &gt; 0"/>
 
   <xsl:if test="$suppress.navigation = '0' and $suppress.header.navigation = '0'">
-    <div class="topbar navbar">
+    <div class="navbar">
      <div class="dropdown" style="width:33%">
       <xsl:variable name="href">
        <xsl:choose>
@@ -1313,8 +1313,8 @@ xmlns:exsl="http://exslt.org/common" xmlns:cf="http://docbook.sourceforge.net/xm
      <div class="dropdown" style="width:34%">
       <button class="dropbtn">Yukarı</button>
       <div class="dropdown-content">
-       <button type="button" class="dropbtn" onclick="window.location.assign('/index.xhtml')">Baş Sayfa</button>
-       <button type="button" class="dropbtn" onclick="window.location.assign('/kitaplik/index.xhtml')">Kitaplık</button>
+       <button type="button" class="dropbtn" onclick="window.location.assign('/index.html')">Baş Sayfa</button>
+       <button type="button" class="dropbtn" onclick="window.location.assign('/kitaplik/index.html')">Kitaplık</button>
        <xsl:if test="$home != . or $nav.context = 'toc'">
         <xsl:variable name="href">
          <xsl:call-template name="href.target">
@@ -1369,7 +1369,7 @@ xmlns:exsl="http://exslt.org/common" xmlns:cf="http://docbook.sourceforge.net/xm
 
 <!-- ==================================================================== -->
 
-<xsl:template name="footer.navigation">
+<xsl:template name="footer.navigation"/><!--
   <xsl:param name="prev" select="/d:foo"/>
   <xsl:param name="next" select="/d:foo"/>
   <xsl:param name="nav.context"/>
@@ -1466,7 +1466,7 @@ xmlns:exsl="http://exslt.org/common" xmlns:cf="http://docbook.sourceforge.net/xm
      </div>
     </div>
   </xsl:if>
-</xsl:template>
+</xsl:template> -->
 
 <!-- ==================================================================== -->
 
@@ -1566,61 +1566,6 @@ xmlns:exsl="http://exslt.org/common" xmlns:cf="http://docbook.sourceforge.net/xm
       <xsl:with-param name="remaining.linktypes" select="substring-after($remaining.linktypes, ' ')"/>
     </xsl:call-template>
   </xsl:if>
-</xsl:template>
-
-<!-- ====================================================================-->
-<xsl:template name="chunk-element-content">
-  <xsl:param name="prev"/>
-  <xsl:param name="next"/>
-  <xsl:param name="nav.context"/>
-  <xsl:param name="content">
-    <xsl:apply-imports/>
-  </xsl:param>
-
-  <xsl:call-template name="user.preroot"/>
-
-  <html>
-    <xsl:call-template name="root.attributes"/>
-    <xsl:call-template name="html.head">
-      <xsl:with-param name="prev" select="$prev"/>
-      <xsl:with-param name="next" select="$next"/>
-    </xsl:call-template>
-
-    <body>
-      <xsl:call-template name="body.attributes"/>
-
-      <xsl:call-template name="user.header.navigation">
-        <xsl:with-param name="prev" select="$prev"/>
-        <xsl:with-param name="next" select="$next"/>
-        <xsl:with-param name="nav.context" select="$nav.context"/>
-      </xsl:call-template>
-
-      <xsl:call-template name="header.navigation">
-        <xsl:with-param name="prev" select="$prev"/>
-        <xsl:with-param name="next" select="$next"/>
-        <xsl:with-param name="nav.context" select="$nav.context"/>
-      </xsl:call-template>
-
-      <xsl:call-template name="user.header.content"/>
-
-      <xsl:copy-of select="$content"/>
-
-      <xsl:call-template name="user.footer.content"/>
-
-      <xsl:call-template name="footer.navigation">
-        <xsl:with-param name="prev" select="$prev"/>
-        <xsl:with-param name="next" select="$next"/>
-        <xsl:with-param name="nav.context" select="$nav.context"/>
-      </xsl:call-template>
-
-      <xsl:call-template name="user.footer.navigation">
-        <xsl:with-param name="prev" select="$prev"/>
-        <xsl:with-param name="next" select="$next"/>
-        <xsl:with-param name="nav.context" select="$nav.context"/>
-      </xsl:call-template>
-    </body>
-  </html>
-  <xsl:value-of select="$chunk.append"/>
 </xsl:template>
 
 <!-- ==================================================================== -->

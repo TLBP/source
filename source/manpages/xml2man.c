@@ -1,5 +1,5 @@
 /*
- Copyright ©  2005  Nilgün Belma Bugüner <nilgun@belgeler·gen·tr>
+ Copyright ©  2022  Nilgün Belma Bugüner <nilgun@belgeler·gen·tr>
 
  This program is free software; you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -340,7 +340,7 @@ xmalloc (size_t size)
 {
   register void *value = malloc (size);
   if (value == 0) {
-    fprintf (stderr, "xmalloc: request for %u bytes failed.\n", size);
+    fprintf (stderr, "xmalloc: request for %lu bytes failed.\n", size);
     abort ();
   }
   return value;
@@ -351,7 +351,7 @@ char *
 load_file(const char *name)
 {
   char *buffer;
-  gzFile *f;
+  gzFile f;
   int ret, size;
 
   f = gzopen(name, "r");
@@ -376,121 +376,6 @@ load_file(const char *name)
   gzclose(f);
   buffer[ret] = '\0';
 
-  return buffer;
-}
-/* ================================================================= */
-char *
-prexslt (char *buffer)
-{
-  char *src, *tgt, *buf2, *t, *tmp;
-  int len, i = 0, j, k, pos;
-
-  len = strlen(buffer);
-  if (buffer[len - 1] != '\n') {
-    puts("Dosya düzgün sonlandırılmamış");
-    exit(1);
-  }
-
-  t = strstr(buffer, "<refentry");
-  if (!t) {
-    puts("Dosya bir kılavuz sayfası içermiyor");
-    exit(1);
-  }
-
-  for (src = buffer; *src; src++)
-    if (*src == '\\') i++;
-
-  for (src = buffer; *src; src++){
-    k = 0;
-    for (j = 1; j < 6; j++)
-      if (strncmp(src, tags[j].start, tags[j].lenso) == 0) k = j;
-    if (k) {
-      while (1) {
-        if (strncmp(src, "\n ", 2) == 0) i++;
-        if (strncmp(src, tags[k].end, tags[k].leneo) == 0) break;
-        ++src;
-      }
-    }
-  }
-
-  len = strlen(buffer) - (t - buffer);
-  buf2 = xmalloc(len + i + 4);
-  strncpy(buf2, t, len);
-  buf2[len] = '\0';
-  buffer = xmalloc(len + i + 4);
-  memset (buffer, 0, len + i + 4);
-
-  for (src = buf2, tgt = buffer; *src; src++, tgt++) {
-    if (*src == '\\') {
-      *tgt = *src;
-      ++tgt;
-      *tgt = *src;
-    } else
-      *tgt = *src;
-  }
-
-  memset (buf2, 0, len + i + 4);
-  /* Boşlukları korunacak etiketlerin arasındakiler hariç
-   * bütün satırsonu karakterlerini boşluklarla değiştireceğiz.
-   */
-  src = buffer;
-  tgt = buf2;
-  while (*src) {
-    k = 0;
-    for (i = 1; i < 6; i++)
-      if (strncmp(src, tags[i].start, tags[i].lenso) == 0) k = i;
-    if (k) {
-      /* Burası boşlukların korunacağı yer */
-      while (1) {
-      /* Satır başlarındaki boşlukları özellikle korumaya almalıyız. */
-        if (strncmp(src, "\n ", 2) == 0) {    /* linefeed + space */
-          len = strlen(buffer) - (src - buffer) - 2;
-          tmp = xmalloc (len);
-          strncpy(tmp, src + 2, len);
-          strncpy(src, "\n ", 3);     /* linefeed + nobreakspace */
-          strncpy(src + 3, tmp, len);
-          free(tmp);
-        }
-        /* Sonlandırıcı etikete rastlayınca bu bölgeyi olduğu gibi hedefe kopyalıyoruz. */
-        if (strncmp(src, tags[k].end, tags[k].leneo) == 0) {
-          strncpy(tgt, tags[k].end, tags[k].leneo);
-          src += tags[k].lenso;
-          tgt += tags[k].lenso;
-          break;
-        } else
-          *tgt = *src;
-
-        ++src; ++tgt;
-      }
-      /* Satırsonu karakterlerinin yerine boşluk koyuyoruz.
-       * Böylece çıktıda oluşacak gereksiz boş satırlardan kurtuluyoruz.
-       */
-    } else if (*src == '\n')
-        *tgt = ' ';
-      else
-        *tgt = *src;
-    ++src; ++tgt;
-  }
-  strncpy(tgt, " \n\0", 3);
-
-  /* Dosya xsltproc için hazır. Şimdi xslss içine alacağız ki,
-   * xsltproc xslt betiklerimizi bulup derleme yapabilsin.
-   */
-
-  //puts(buf2);
-  free(buffer);
-  buffer = alloca (strlen(buf2) + 1024);
-  memset (buffer, 0, strlen(buffer) + 1024);
-  len = strlen(xslss[0].str);
-  strncpy(buffer, xslss[0].str, len);
-  pos = len; len = strlen(buf2);
-  strncpy(buffer + pos, buf2, len);
-  pos +=len; len = strlen(xslss[1].str);
-  strncpy(buffer + pos, xslss[1].str, len);
-  pos +=len;
-  buffer[pos] = '\0';
-
-  free(buf2);
   return buffer;
 }
 /* ================================================================= */
@@ -609,6 +494,128 @@ postxslt_debian (char *buf)
 }
 
 /* ================================================================= */
+void
+xslt (char *buffer, int flag)
+{
+  char *src, *tgt, *buf2, *t, *tmp;
+  int len, i = 0, j, k, pos;
+
+  len = strlen(buffer);
+  if (buffer[len - 1] != '\n') {
+    puts("Dosya düzgün sonlandırılmamış");
+    exit(1);
+  }
+
+  t = strstr(buffer, "<refentry");
+  if (!t) {
+    puts("Dosya bir kılavuz sayfası içermiyor");
+    exit(1);
+  }
+
+  for (src = buffer; *src; src++)
+    if (*src == '\\') i++;
+
+  for (src = buffer; *src; src++){
+    k = 0;
+    for (j = 1; j < 6; j++)
+      if (strncmp(src, tags[j].start, tags[j].lenso) == 0) k = j;
+    if (k) {
+      while (1) {
+        if (strncmp(src, "\n ", 2) == 0) i++;
+        if (strncmp(src, tags[k].end, tags[k].leneo) == 0) break;
+        ++src;
+      }
+    }
+  }
+
+  len = strlen(buffer) - (t - buffer);
+  buf2 = xmalloc(len + i + 4);
+  strncpy(buf2, t, len);
+  buf2[len] = '\0';
+  buffer = xmalloc(len + i + 4);
+  memset (buffer, 0, len + i + 4);
+
+  for (src = buf2, tgt = buffer; *src; src++, tgt++) {
+    if (*src == '\\') {
+      *tgt = *src;
+      ++tgt;
+      *tgt = *src;
+    } else
+      *tgt = *src;
+  }
+
+  memset (buf2, 0, len + i + 4);
+  /* Boşlukları korunacak etiketlerin arasındakiler hariç
+   * bütün satırsonu karakterlerini boşluklarla değiştireceğiz.
+   */
+  src = buffer;
+  tgt = buf2;
+  while (*src) {
+    k = 0;
+    for (i = 1; i < 6; i++)
+      if (strncmp(src, tags[i].start, tags[i].lenso) == 0) k = i;
+    if (k) {
+      /* Burası boşlukların korunacağı yer */
+      while (1) {
+      /* Satır başlarındaki boşlukları özellikle korumaya almalıyız. */
+        if (strncmp(src, "\n ", 2) == 0) {    /* linefeed + space */
+          len = strlen(buffer) - (src - buffer) - 2;
+          tmp = xmalloc (len);
+          strncpy(tmp, src + 2, len);
+          strncpy(src, "\n ", 3);     /* linefeed + nobreakspace */
+          strncpy(src + 3, tmp, len);
+          free(tmp);
+        }
+        /* Sonlandırıcı etikete rastlayınca bu bölgeyi olduğu gibi hedefe kopyalıyoruz. */
+        if (strncmp(src, tags[k].end, tags[k].leneo) == 0) {
+          strncpy(tgt, tags[k].end, tags[k].leneo);
+          src += tags[k].lenso;
+          tgt += tags[k].lenso;
+          break;
+        } else
+          *tgt = *src;
+
+        ++src; ++tgt;
+      }
+      /* Satırsonu karakterlerinin yerine boşluk koyuyoruz.
+       * Böylece çıktıda oluşacak gereksiz boş satırlardan kurtuluyoruz.
+       */
+    } else if (*src == '\n')
+        *tgt = ' ';
+      else
+        *tgt = *src;
+    ++src; ++tgt;
+  }
+  strncpy(tgt, " \n\0", 3);
+
+  /* Dosya xsltproc için hazır. Şimdi xslss içine alacağız ki,
+   * xsltproc xslt betiklerimizi bulup derleme yapabilsin.
+   */
+
+//  puts(buf2);
+  free(buffer);
+  buffer = alloca (strlen(buf2) + 1024);
+  memset (buffer, 0, strlen(buffer) + 1024);
+  len = strlen(xslss[0].str);
+  strncpy(buffer, xslss[0].str, len);
+  pos = len; len = strlen(buf2);
+  strncpy(buffer + pos, buf2, len);
+  free(buf2);
+  pos +=len; len = strlen(xslss[1].str);
+  strncpy(buffer + pos, xslss[1].str, len);
+  pos +=len;
+  buffer[pos] = '\0';
+//puts(buffer);
+  if (flag) {
+    buffer = apply_xslt(buffer);
+    postxslt_debian(buffer);
+  } else {
+    buffer = apply_xslt(buffer);
+    postxslt_normal(buffer);
+
+  }
+}
+/* ================================================================= */
 int
 main(int argc, char *argv[])
 {
@@ -631,15 +638,10 @@ main(int argc, char *argv[])
    */
   if (argc < 3) {
     buf = load_file(argv[1]);
-    buf = prexslt(buf);
-    buf = apply_xslt(buf);
-    postxslt_normal(buf);
+    xslt(buf, 0);
   } else {
     buf = load_file(argv[2]);
-    buf = prexslt(buf);
-    //printf("%s", buf);
-    buf = apply_xslt(buf);
-    postxslt_debian(buf);
+    xslt(buf, 1);
   }
   return 0;
 }

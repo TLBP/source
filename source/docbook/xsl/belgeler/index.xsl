@@ -30,7 +30,7 @@
 <xsl:import href="reftoc.xsl"/>
 <xsl:import href="xmldict.xsl"/>
 
-<!-- özelleştirilmiş parametreler -->
+<!-- özelleştirilmiş değiştirgeler -->
 <xsl:param name="chunk.sections" select="'1'"/>
 <xsl:param name="chunk.first.sections" select="1"/>
 <xsl:param name="chunk.section.depth" select="1"/>

@@ -100,9 +100,11 @@ xmlns="http://www.w3.org/1999/xhtml" version="1.0">
     <xsl:call-template name="anchor">
       <xsl:with-param name="conditional" select="0"/>
     </xsl:call-template>
+    <xsl:call-template name="refentry.header"/>
     <xsl:call-template name="refentry.titlepage"/>
     <xsl:apply-templates/>
     <xsl:call-template name="process.footnotes"/>
+    <xsl:call-template name="refentry.footer"/>
   </div>
 </xsl:template>
 

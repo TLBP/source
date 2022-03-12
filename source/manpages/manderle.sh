@@ -1,8 +1,5 @@
-LANG=C gcc -Wall -lz -o xml2man xml2man.c
+LANG=C gcc -Wall -o xml2man xml2man.c -lz
 mandirs=(1 2 3 4 5 6 7 8)
-
-# FIXME: man7/*.7pg.xml files
-
 for i in ${mandirs[@]};
 do 
     mkdir ../tr/man$i;
