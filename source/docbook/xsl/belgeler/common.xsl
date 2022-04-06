@@ -17,6 +17,12 @@
    You should have received a copy of the GNU Affero General Public License
    along with this program. If not, see &lt;https://www.gnu.org/licenses/&gt;.
 -->
+<!DOCTYPE xsl:stylesheet [
+<!ENTITY allcases  "'aâbcçdefgğhıiîjklmnoöôpqrsştuüûvwxyzAÂBCÇDEFGĞHIİÎJKLMNOÖÔPQRSŞTUÜÛVWXYZ'">
+<!ENTITY uppercases "'AÂBCÇDEFGĞHIİÎJKLMNOÖÔPQRSŞTUÜÛVWXYZAÂBCÇDEFGĞHIİÎJKLMNOÖÔPQRSŞTUÜÛVWXYZ'">
+<!ENTITY allasciicases  "'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'">
+<!ENTITY asciiuppercases "'ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZ'">
+]>
 
 <xsl:stylesheet
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
@@ -25,7 +31,8 @@
   xmlns="http://www.w3.org/1999/xhtml"
   xmlns:xlink="http://www.w3.org/1999/xlink"
   xmlns:l="http://docbook.sourceforge.net/xmlns/l10n/1.0"
-  exclude-result-prefixes="xlink exsl d l"
+  xmlns:t="http://tlbp.gen.tr/ns/tlbp"
+  exclude-result-prefixes="xlink exsl d l t"
   version="1.0">
 
 <!-- özelleştirilmiş xslt betikleri -->
@@ -291,13 +298,12 @@ set       toc,title,titleabbrev
     <a href="{$xml:id}"/>
   </xsl:if>
 
+  <xsl:variable name="rtf">
+    <xsl:apply-templates/>
+  </xsl:variable>
+
     <xsl:choose>
       <xsl:when test="@linenumbering = 'numbered'">
-
-        <xsl:variable name="rtf">
-          <xsl:apply-templates/>
-        </xsl:variable>
-
         <table width="95%" cellpadding="0" cellspacing="1" style="border:1px dotted #999999" summary="{$summary}">
           <tr><td width="12pt" valign="top">
             <pre class="screennumbers">
@@ -316,9 +322,7 @@ set       toc,title,titleabbrev
         </table>
       </xsl:when>
       <xsl:otherwise>
-        <pre class="{name(.)}">
-          <xsl:apply-templates/>
-        </pre>
+<pre class="{name(.)}"><xsl:value-of select="$rtf"/></pre>
     </xsl:otherwise>
   </xsl:choose>
 </xsl:template>
@@ -409,10 +413,17 @@ set       toc,title,titleabbrev
     <xsl:when test="(@role='element')">
       <span class="element"><xsl:apply-templates/></span>
     </xsl:when>
+    <xsl:when test="(@role='warn')">
+      <em class="warn"><xsl:apply-templates/></em>
+    </xsl:when>
     <xsl:otherwise>
       <xsl:call-template name="inline.italicseq"/>
     </xsl:otherwise>
   </xsl:choose>
+</xsl:template>
+
+<xsl:template match="d:keyword">
+  <xsl:call-template name="inline.boldseq"/>
 </xsl:template>
 
 <xsl:template name="string.replace">
@@ -432,6 +443,16 @@ set       toc,title,titleabbrev
       <xsl:value-of select="$string"/>
     </xsl:otherwise>
   </xsl:choose>
+</xsl:template>
+
+<!-- Kılavuz sayfalarına özel aralarında paragraf boşluğu olmayan paragraflar -->
+<xsl:template match="d:simpara[name(..) = 'refsect1']">
+  <xsl:if test="not (preceding-sibling::d:simpara)">
+   <p/>
+  </xsl:if>
+  <div class="simpara">
+    <xsl:apply-templates/>
+  </div>
 </xsl:template>
 
 <xsl:template name="paragraph">
@@ -522,7 +543,7 @@ footnote text gets an id of #ftn.@id. They cross link to each other. -->
 </xsl:template>
 
 <xsl:template match="d:formalpara/d:title">
-  <br/><b><xsl:apply-templates/></b><br/>
+  <b><xsl:apply-templates/></b><br/>
 </xsl:template>
 
 <xsl:template match="d:funcsynopsis">
@@ -610,22 +631,23 @@ footnote text gets an id of #ftn.@id. They cross link to each other. -->
 
 
 <xsl:template name="refentry.header">
+  <xsl:variable name="name">
+    <xsl:value-of select="concat(translate(normalize-space(d:info/t:pageinfo/t:name/text()), &allasciicases;, &asciiuppercases;),'(', d:info/t:pageinfo/t:volnum/text() ,')')"/>
+  </xsl:variable>
 <div class="refentry-header">
   <table cellspacing="3" cellpadding="3" width="100%" border="0">
     <tr>
       <td class="mheadfoot" align="left" width="25%">
-        <xsl:value-of select="./d:refmeta/d:refentrytitle"/>
-        <xsl:apply-templates select="./d:refmeta/d:manvolnum"/>
+        <xsl:value-of select="$name"/>
       </td>
       <td class="mheadfoot" align="center" width="50%">
-        <xsl:if test="(./d:refmeta/d:refmiscinfo[@otherclass='header'])">
-          <xsl:value-of select="./d:refmeta/d:refmiscinfo[@otherclass='header']"/>
+        <xsl:if test="(d:info/t:pageinfo/t:section)">
+          <xsl:value-of select="d:info/t:pageinfo/t:section"/>
         </xsl:if>
         <xsl:text> </xsl:text>
       </td>
       <td class="mheadfoot" align="right" width="25%">
-        <xsl:value-of select="./d:refmeta/d:refentrytitle"/>
-        <xsl:apply-templates select="./d:refmeta/d:manvolnum"/>
+        <xsl:value-of select="$name"/>
       </td>
     </tr>
   </table>
@@ -637,18 +659,17 @@ footnote text gets an id of #ftn.@id. They cross link to each other. -->
   <table cellspacing="3" cellpadding="3" width="100%" border="0">
     <tr>
       <td class="mheadfoot" align="left" width="30%">
-        <xsl:if test="(./d:refmeta/d:refmiscinfo[@otherclass='domain'])">
-          <xsl:value-of select="./d:refmeta/d:refmiscinfo[@otherclass='domain']"/>
+        <xsl:if test="(d:info/t:pageinfo/t:source)">
+          <xsl:value-of select="d:info/t:pageinfo/t:source"/>
         </xsl:if>
       </td>
       <td class="mheadfoot" align="center" width="40%">
-        <xsl:if test="(./d:refmeta/d:refmiscinfo[@otherclass='date'])">
-        <xsl:value-of select="./d:refmeta/d:refmiscinfo[@otherclass='date']"/>
+        <xsl:if test="(d:info/t:pageinfo/t:date)">
+        <xsl:value-of select="d:info/t:pageinfo/t:date"/>
         </xsl:if>
       </td>
       <td class="mheadfoot" align="right" width="30%">
-        <xsl:value-of select="./d:refmeta/d:refentrytitle"/>
-        <xsl:apply-templates select="./d:refmeta/d:manvolnum"/>
+        <xsl:value-of select="concat(translate(normalize-space(d:info/t:pageinfo/t:name/text()), &allasciicases;, &asciiuppercases;),'(', d:info/t:pageinfo/t:volnum/text() ,')')"/>
       </td>
     </tr>
   </table>
@@ -683,7 +704,8 @@ footnote text gets an id of #ftn.@id. They cross link to each other. -->
         <xsl:value-of select="concat('[', $fname, '(', $volnum, ')]')"/>
       </xsl:when>
       <xsl:when test="count($target) = 0 and not (@xreflabel)">
-        <b><xsl:value-of select="concat($fname, '(', $volnum, ')')"/></b>
+        <b><xsl:value-of select="$fname"/></b>
+        <xsl:value-of select="concat('(', $volnum, ')')"/>
       </xsl:when>
       <xsl:otherwise>
         <xsl:variable name="adres">

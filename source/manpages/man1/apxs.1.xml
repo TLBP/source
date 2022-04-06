@@ -1,0 +1,341 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!-- ********************************************************************
+  man1/apxs.1.xml, Apache HTTP Sunucusu 2.4.53, Apache-2.0, NBB - Mart 2022
+     ******************************************************************** -->
+<refentry xml:id="tr-man1-apxs" xmlns="http://docbook.org/ns/docbook"
+ xmlns:xlink="http://www.w3.org/1999/xlink" version="5.0" xml:lang="tr">
+ <info xmlns:t="http://tlbp.gen.tr/ns/tlbp">
+  <t:pageinfo>
+   <t:name>apxs</t:name>
+   <t:volnum>1</t:volnum>
+   <t:section>Kullanıcı Komutları</t:section>
+   <t:source>Apache HTTP Sunucusu 2.4.53</t:source>
+   <t:date>2022-02-28</t:date>
+   <t:remark>.ig
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+..</t:remark>
+  </t:pageinfo>
+ </info>
+ <refnamediv>
+  <refname>apxs</refname>
+  <refpurpose>Apache Eklenti Aracı</refpurpose>
+ </refnamediv>
+ <refsynopsisdiv>
+  <para>
+   <command>apxs</command> -<option>g</option> [ -<option>S</option> <replaceable>isim=değer</replaceable> ] -<option>n</option> <replaceable>modüladı</replaceable>
+  </para>
+  <para>
+   <command>apxs</command> -<option>q</option> [ -<option>v</option> ] [ -<option>S</option> <replaceable>isim=değer</replaceable> ] <replaceable>sorgu</replaceable> ...
+  </para>
+  <para>
+   <command>apxs</command> -<option>c</option> [ -<option>S</option> <replaceable>isim=değer</replaceable> ] [ -<option>o</option> <replaceable>dso-dosyası</replaceable> ] [ -<option>I</option> <replaceable>include-dizini</replaceable> ] [ -<option>D</option> <replaceable>isim=değer</replaceable> ] [ -<option>L</option> <replaceable>lib-dizini</replaceable> ] [ -<option>l</option> <replaceable>kütüphane-adı</replaceable> ] [ -<option>Wc</option><replaceable>,derleyici-seçenekleri</replaceable> ] [ -<option>Wl</option><replaceable>,ilintileyici-seçenekleri</replaceable> ] [ <option>-p</option> ] <replaceable>dosya</replaceable> ...
+  </para>
+  <para>
+    <command>apxs</command> -<option>i</option> [ -<option>S</option> <replaceable>isim=değer</replaceable> ] [ -<option>n</option> <replaceable>modüladı</replaceable> ] [ -<option>a</option> ] [ -<option>A</option> ] <replaceable>dso-dosyası</replaceable> ...
+   </para>
+   <para>
+    <command>apxs</command> -<option>e</option> [ -<option>S</option> <replaceable>isim=değer</replaceable> ] [ -<option>n</option> <replaceable>modüladı</replaceable> ] [ -<option>a</option> ]
+   [ -<option>A</option> ] <replaceable>dso-dosyası</replaceable> ...
+  </para>
+ </refsynopsisdiv>
+ <refsect1><title>AÇIKLAMA</title>
+  <para>
+   <command>apxs</command>, Apache Hiper Metin Aktarım Protokolü (HTTP) sunucusu için ek modül derleme ve kurulum aracıdır. Bu araç sayesinde, bir veya daha fazla kaynak veya nesne <replaceable>dosya</replaceable>'sından bir dinamik paylaşımlı nesne (DSO - "Dynamic Shared Object" kısaltması) derlemek ve bu nesneyi (modülü) Apache sunucusuna çalışma anında <option>mod_so</option> modülünün <option>LoadModule</option> yönergesi üzerinden yüklemek mümkün olmaktadır.
+  </para>
+  <para>
+   Bu eklenti mekanizmasını platformunuzda kullanmak için DSO desteğinin olması ve <uri xlink:href="tr-man8-httpd"/> çalıştırılabilirinin <option>mod_so</option> modülünü içerecek şekilde derlenmiş olması gerekir. Eğer bunlar mevcut değilse <command>apxs</command> aracı durumu size bildirecektir. Bunu aşağıdaki komutla kendiniz de sınayabilirsiniz:
+  </para>
+  <screen userlevel="7">$ httpd -l</screen>
+  <para>
+   <option>mod_so</option> modülü gösterilen listede yer almalıdır. Bu gereksinimler sağlandığı takdirde <command>apxs</command> aracı sayesinde DSO mekanizması üzerinden kendi modüllerinizi kurmak suretiyle Apache sunucunuzun işlevselliğini kolayca arttırabilirsiniz. Örnek bir uygulama:
+  </para>
+  <screen userlevel="7">
+$ apxs -i -a -c mod_foo.c
+gcc -fpic -DSHARED_MODULE -I/dosya/yolu/apache/include -c mod_foo.c
+ld -Bshareable -o mod_foo.so mod_foo.o
+cp mod_foo.so /dosya/yolu/apache/modules/mod_foo.so
+chmod 755 /dosya/yolu/apache/modules/mod_foo.so
+[`foo' modülü /dosya/yolu/apache/etc/httpd.conf'ta etkinleştiriliyor]
+$ apachectl restart
+/dosya/yolu/apache/sbin/apachectl restart: httpd not running, trying to start
+[Tue Mar 31 11:27:55 1998] [debug] mod_so.c(303): loaded module foo_module
+/dosya/yolu/apache/sbin/apachectl restart: httpd started
+$ _
+</screen>
+  <para>
+   <replaceable>dosya</replaceable> olarak bir C kaynak dosyası (<filename>.c</filename>), bir nesne dosyası (<filename>.o</filename>) ve hatta bir kütüphane arşivi archive (<filename>.a</filename>) belirtebilirsiniz. <command>apxs</command> aracı bu dosya uzantılarını tanıdığından C dosyalarını derleme işleminden, arşiv ve nesne dosyalarını ise doğrudan ilintileme işleminden geçirir. Fakat böyle önceden derlenmiş nesne dosyalarını kullanırken, dinamik paylaşımlı nesne olarak kullanılmalarını sağlamak üzere konumdan bağımsız kod (PIC) üretecek şekilde derlenmiş olduklarından emin olmalısınız. Örneğin GCC'yi bunun için daima <option>-fpic</option> seçeneği ile kullanmalısınız. Diğer C derleyiciler için, <command>apxs</command>'in nesne dosyalarını derlerken kullanacağı seçenekleri öğrenmek için o derleyicilerin kılavuz sayfalarına bakınız.
+  </para>
+  <para>
+   Apache'deki DSO desteği ile ilgili daha ayrıntılı bilgi edinmek için <link xlink:href="https://httpd.apache.org/docs/2.4/mod/mod_so.html"><option>mod_so</option></link> belgesini okumakla yetinmeyip <filename>src/modules/standard/mod_so.c</filename> kaynak dosyasını da okuyunuz.
+  </para>
+ </refsect1>
+ <refsect1><title>SEÇENEKLER</title>
+  <refsect2><title>Ortak Seçenekler</title>
+   <variablelist>
+    <varlistentry>
+     <term>
+      <option>-n</option> <replaceable>modüladı</replaceable>
+     </term>
+     <listitem>
+      <para>
+       <option>-i</option> (kurulum) ve <code><option>-g</option></code> (şablon üretimi) seçenekleri için modül ismi belirtmek amacıyla kullanılır. Bir modül ismi belirtmek için bu seçeneği kullanın. <code><option>-g</option></code> seçeneği için bu gereklidir. <code><option>-i</option></code> seçeneği için ise araç, modül  ismini kaynağın ismine bakarak veya (son çare olarak) dosya isminden tahmin etmeye çalışarak saptamaya çalışır.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </refsect2>
+  <refsect2><title>Sorgu Seçenekleri</title>
+   <variablelist>
+    <varlistentry>
+     <term><option>-q</option></term>
+     <listitem>
+      <para>
+       <uri xlink:href="tr-man8-httpd"/>'yi derlemekte kullanılacak değişkenler ve ortam ayarları için bir sorgu gerçekleştirir. <replaceable>sorgu</replaceable> belirtilmeksizin çağrıldığında, bilinen değişkenleri değerleriyle birlikte basar. İsteğe bağlı <option>-v</option> seçeneği liste çıktısını biçemler.
+      </para>
+      <para>
+       Modülünüzü yükleyecek <uri xlink:href="tr-man8-httpd"/>'yi derlemek için kullanılacak ayarları elle belirtmek için kullanılır. Örneğin, Apache'nin C başlık dosyalarının yerini kendi Makefile dosyalarınızın içinde şöyle belirtebilirsiniz:
+      </para>
+      <screen userlevel="7">INC=-I`apxs -q INCLUDEDIR`</screen>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </refsect2>
+  <refsect2><title>Yapılandırma Seçenekleri</title>
+   <variablelist>
+    <varlistentry>
+     <term>
+      <option>-S</option> <replaceable>isim=değer</replaceable>
+     </term>
+     <listitem>
+      <para>
+       Bu seçenek yukarıda açıklanan <command>apxs</command> ayarlarını değiştirir.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </refsect2>
+  <refsect2><title>Şablon Üretme Seçenekleri</title>
+   <variablelist>
+    <varlistentry>
+     <term><option>-g</option></term>
+     <listitem>
+      <para>
+       <replaceable>modüladı</replaceable> (<option>-n</option> seçeneğine bakınız) adında bir alt dizin oluşturur ve içine iki dosya yerleştirir: Kendi modülünüzü oluşturabilmeniz için veya <command>apxs</command> mekanizmaları ile hemen oynamaya başlayabilmeniz için <code>mod_<replaceable>modüladı</replaceable>.c</code> adında bir modül kaynak dosyası örneği ve bu modülü derleyip kurmayı
+       kolaylaştırmak için bir <filename>Makefile</filename> dosyası.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </refsect2>
+  <refsect2><title>DSO Derleme Seçenekleri</title>
+   <variablelist>
+    <varlistentry>
+     <term><option>-c</option></term>
+     <listitem>
+      <para>
+       Bu seçenek derleme yapılacağını belirtir. Önce belirtilen C kaynak <replaceable>dosyalar</replaceable>ını (.c), nesne dosyalarını (.o) elde etmek için derler. Sonra bunları kalan nesne dosyaları (.o ve .a) ile ilintileyerek <replaceable>dso-dosyası</replaceable> adında bir dinamik paylaşımlı nesne oluşturur. Eğer <option>-o</option> seçeneği ile modül ismi belirtilmemişse <replaceable>dosyalar</replaceable> arasındaki ilk dosyanın ismine bakarak dosya ismi tahmin edilmeye çalışılır ve <filename>mod_<replaceable>isim</replaceable>.so</filename> dosya adı bu isimden elde edilir.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term>
+      <option>-o</option> <replaceable>dso-dosyası</replaceable>
+     </term>
+     <listitem>
+      <para>
+       Oluşturulacak dinamik paylaşımlı nesnenin ismini belirtmek için kullanılır. Modül ismi bu seçenekle belirtilmez ve <replaceable>dosya</replaceable> listesinden bir isim tahmini de yapılamazsa son çare olarak <filename>mod_unknown.so</filename> ismi kullanılır.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term>
+      <option>-D</option> <replaceable>isim=değer</replaceable>
+     </term>
+     <listitem>
+      <para>
+       Bu seçenek doğrudan derleme komutlarına aktarılır. Bu seçeneği derleme işlemine kendi tanımlarınızı belirtmek için kullanın.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term>
+      <option>-I</option> <replaceable>include-dizini</replaceable>
+     </term>
+     <listitem>
+      <para>
+       Bu seçenek doğrudan derleme komutlarına aktarılır. Bu seçeneği derleme işleminde kullanılmak üzere kendi başlık dosyalarınızı içeren dizinleri arama yollarına eklemek için kullanın.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term>
+      <option>-L</option> <replaceable>lib-dizini</replaceable>
+     </term>
+     <listitem>
+      <para>
+       Bu seçenek doğrudan derleme komutlarına aktarılır. Bu seçeneği derleme işleminde kullanılmak üzere kendi kütüphane dizinlerinizi arama yollarına eklemek için kullanın.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term>
+      <option>-l</option> <replaceable>kütüphane-adı</replaceable>
+     </term>
+     <listitem>
+      <para>
+       Bu seçenek doğrudan derleme komutlarına aktarılır. Bu seçeneği derleme işleminde kullanılmak üzere kendi kütüphanelerinizi arama yollarına eklemek için kullanın.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term>
+      <option>-Wc</option>,<replaceable>derleyici-seçenekleri</replaceable>
+     </term>
+     <listitem>
+      <para>
+       Bu seçenek <command>libtool --mode=compile</command> komutuna doğrudan seçenek aktarmak için kullanılır. Bu seçeneği yerel derleyiciniz için gereken ek seçenekleri belirtmek için kullanın.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term>
+      <option>-Wl</option>,<replaceable>ilintileyici-seçenekleri</replaceable>
+     </term>
+     <listitem>
+      <para>
+       Bu seçenek <command>libtool --mode=link</command> komutuna doğrudan seçenek aktarmak için kullanılır. Bu seçeneği yerel ilintileyiciniz için gereken ek seçenekleri belirtmek için kullanın.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><option>-p</option></term>
+     <listitem>
+      <para>
+       Bu seçenek <command>apxs</command>'in <filename>apr/apr-util</filename> kütüphaneleriyle ilintilenmesini sağlar. <filename>apr/apr-util</filename> kütüphanelerini kullanan yardımcı uygulamaları derlerken yararlıdır.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </refsect2>
+  <refsect2><title>DSO Kurulum ve Yapılandırma Seçenekleri</title>
+   <variablelist>
+    <varlistentry>
+     <term><option>-i</option></term>
+     <listitem>
+      <para>
+       Kurulum işlemini belirtir ve dinamik olarak paylaşımlı nesneleri sunucunun <replaceable>modules</replaceable> dizinine kurar.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><option>-a</option></term>
+     <listitem>
+      <para>
+       İlgili <option>LoadModule</option> satırını Apache'nin <filename>httpd.conf</filename> yapılandırma dosyasına otomatik olarak ekleyerek veya böyle bir satır varsa bunu etkin kılarak modülü etkinleştirir.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><option>-A</option></term>
+     <listitem>
+      <para>
+       <option>LoadModule</option> yönergesini daha sonra etkinleştirmek üzere satırın başına bir diyez imi (<code>#</code>) yerleştirmesi dışında <option>-a</option> seçeneği ile aynıdır.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><option>-e</option></term>
+     <listitem>
+      <para>
+       Modülü kurmaya çalışmaksızın Apache'nin <filename>httpd.conf</filename> yapılandırma dosyasını <option>-i</option> işlemine benzer şekilde <option>-a</option> ve <option>-A</option> seçenekleri ile düzenleme işlemini belirtir.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </refsect2>
+ </refsect1>
+ <refsect1><title>Örnekler</title>
+  <para>
+   Apache'nin sunucu işlevselliğini genişletmek amacıyla kullanacağınız <filename>mod_foo.c</filename> adında bir Apache modülünüz olduğunu varsayalım. Öncelikle, C kaynak dosyasını, Apache sunucusuna çalışma anında yüklenmeye uygun bir paylaşımlı nesne olarak derlemeniz gerekir. Bunu sağlamak için şu komutları vermelisiniz:
+  </para>
+  <screen userlevel="7">
+$ apxs -c mod_foo.c
+/dosya/yolu/libtool --mode=compile gcc ... -c mod_foo.c
+/dosya/yolu/libtool --mode=link gcc ... -o mod_foo.la mod_foo.slo
+$ _
+</screen>
+   <para>
+    Bundan sonra, Apache yapılandırmanızın bu paylaşımlı nesneyi yüklemek için bir <option>LoadModule</option> yönergesi içermesini sağlamalısınız. <command>apxs</command> bu adımı basitleştirmek amacıyla, paylaşımlı nesneyi sunucunun <replaceable>modules</replaceable> dizinine otomatik olarak kurmak ve <filename>httpd.conf</filename> dosyasını buna uygun olarak güncellemek için bir yol sağlar. Bu sonuç şöyle elde edilebilir:
+   </para>
+   <screen userlevel="7">
+$ apxs -i -a mod_foo.la
+/dosya/yolu/instdso.sh mod_foo.la /path/to/apache/modules
+/dosya/yolu/libtool --mode=install cp mod_foo.la /dosya/yolu/apache/modules
+...
+chmod 755 /dosya/yolu/apache/modules/mod_foo.so
+[`foo' modülü /dosya/yolu/apache/conf/httpd.conf'da etkinleştiriliyor]
+$ _
+</screen>
+   <para>Yapılandıma dosyasına (eğer yoksa) şu satır eklenir:</para>
+   <screen userlevel="7">
+LoadModule foo_module modules/mod_foo.so
+</screen>
+   <para>
+    Bunu öntanımlı olarak iptal etmek isterseniz <option>-A</option> seçeneğini kullanmanız gerekir:
+   </para>
+   <screen userlevel="7">$ apxs -i -A mod_foo.c</screen>
+   <para>
+    <command>apxs</command> mekanizmalarını hızlıca denemek için örnek bir Apache modül şablonunu ve bir Makefile dosyasını şöyle oluşturabilirsiniz:
+   </para>
+   <screen userlevel="7">
+$ apxs -g -n foo
+Creating [DIR]  foo
+Creating [FILE] foo/Makefile
+Creating [FILE] foo/modules.mk
+Creating [FILE] foo/mod_foo.c
+Creating [FILE] foo/.deps
+$ _
+</screen>
+   <para>
+    Ardından bu örnek modülü bir paylaşımlı nesne olarak derleyip Apache sunucusuna yükleyebilirsiniz:
+   </para>
+   <screen userlevel="7">
+$ cd foo
+$ make all reload
+apxs -c mod_foo.c
+/dosya/yolu/libtool --mode=compile gcc ... -c mod_foo.c
+/dosya/yolu/libtool --mode=link gcc ... -o mod_foo.la mod_foo.slo
+apxs -i -a -n "foo" mod_foo.la
+/dosya/yolu/instdso.sh mod_foo.la /dosya/yolu/apache/modules
+/dosya/yolu/libtool --mode=install cp mod_foo.la /dosya/yolu/apache/modules
+...
+chmod 755 /dosya/yolu/apache/modules/mod_foo.so
+[`foo' modülü /dosya/yolu/apache/conf/httpd.conf'ta etkinleştiriliyor]
+apachectl restart
+/dosya/yolu/apache/sbin/apachectl restart: httpd not running, trying to start
+chmod 755 /dosya/yolu/apache/modules/mod_foo.so
+[`foo' modülü /dosya/yolu/apache/etc/httpd.conf'ta etkinleştiriliyor]
+apachectl restart
+/dosya/yolu/apache/sbin/apachectl restart: httpd not running, trying to start
+[Tue Mar 31 11:27:55 1998] [debug] mod_so.c(303): loaded module foo_module
+/dosya/yolu/apache/sbin/apachectl restart: httpd started
+$ _
+</screen>
+ </refsect1>
+ <refsect1><title>ÇEVİREN</title>
+  <simpara>Nilgün Belma Bugüner - Mart 2022</simpara>
+ </refsect1>
+</refentry>
