@@ -99,7 +99,7 @@
   <xsl:variable name="p">
     <xsl:apply-templates/>
   </xsl:variable>
-  <xsl:value-of select="concat('.SS &#34;', translate(normalize-space($p), &allcases;, &uppercases;), '&#34;')"/>
+  <xsl:value-of select="concat('.SS &#34;', normalize-space($p), '&#34;')"/>
 </xsl:template>
 
 <xsl:template match="d:refsect1/d:title">
@@ -148,13 +148,23 @@
   <xsl:variable name="desc">
     <xsl:value-of select="../d:refpurpose"/>
   </xsl:variable>
-  <xsl:value-of select="concat($name, ' ―― ', $desc)"/>
+  <xsl:value-of select="concat($name, ' - ', $desc)"/>
 </xsl:template>
 
 <xsl:template match="d:refpurpose"/>
 
 <xsl:template match="d:refsynopsisdiv">
-  <xsl:value-of select="'.SH KULLANIM'"/>
+  <xsl:variable name="title">
+   <xsl:choose>
+     <xsl:when test="./d:title">
+       <xsl:value-of select="concat('.SH ',./d:title)"/>
+     </xsl:when>
+     <xsl:otherwise>
+       <xsl:value-of select="'.SH KULLANIM'"/>
+     </xsl:otherwise>
+   </xsl:choose>
+  </xsl:variable>
+  <xsl:value-of select="$title"/>
   <xsl:apply-templates/>
 </xsl:template>
 
@@ -252,7 +262,8 @@
 </xsl:template>
 
 <xsl:template match="d:formalpara/d:title">
-  <xsl:value-of select="concat('.TP&#10;', normalize-space(.))"/>
+  <xsl:value-of select="'.TP&#10;'"/>
+  <xsl:apply-templates/>
 </xsl:template>
 
 <xsl:template match="d:formalpara">
@@ -266,7 +277,11 @@
   <xsl:text>.IP</xsl:text>
   <xsl:apply-templates/>
   <xsl:if test="(&indented;)">
-   <xsl:text>.RE</xsl:text>
+<xsl:text>.RE
+.IP</xsl:text>
+  </xsl:if>
+  <xsl:if test="(following-sibling::d:para) or (following-sibling::d:simpara)">
+   <xsl:value-of select="'&#10;.PP'"/>
   </xsl:if>
 </xsl:template>
 
@@ -274,11 +289,14 @@
   <xsl:if test="(&indented;)">
    <xsl:value-of select="'&#10;.IP&#10;.RS&#10;'"/>
   </xsl:if>
-  <xsl:if test="(@userlevel)">
-<xsl:text>.RS </xsl:text><xsl:value-of select="@userlevel"/>
-<xsl:text>
-</xsl:text>
-  </xsl:if>
+  <xsl:choose><!-- girinti öntanımlı 7'dir -->
+   <xsl:when test="(@userlevel)">
+     <xsl:value-of select="concat('.RS ', @userlevel, '&#10;')"/>
+   </xsl:when>
+   <xsl:otherwise>
+    <xsl:value-of select="'.RS 7&#10;'"/>
+   </xsl:otherwise>
+  </xsl:choose>
 <xsl:text>.nf
 </xsl:text>
   <xsl:variable name="p">
@@ -327,13 +345,10 @@
 <xsl:text>
 </xsl:text>
   </xsl:if>
-<xsl:text>.fi</xsl:text>
+<xsl:text>.fi
+.RE</xsl:text>
   <xsl:if test="(following-sibling::d:para) or (following-sibling::d:simpara)">
    <xsl:value-of select="'&#10;.sp'"/>
-  </xsl:if>
-  <xsl:if test="(@userlevel)">
-<xsl:text>
-.RE</xsl:text>
   </xsl:if>
   <xsl:if test="(&indented;)">
    <xsl:value-of select="'&#10;.RE&#10;.IP'"/>
@@ -379,6 +394,9 @@
       <xsl:apply-templates/>
     </xsl:otherwise>
   </xsl:choose>
+  <xsl:if test="((following-sibling::d:para) or (following-sibling::d:simpara)) and not (&indented;)">
+   <xsl:value-of select="'&#10;.PP'"/>
+  </xsl:if>
 </xsl:template>
 
 <xsl:template match="d:varlistentry|d:glossentry">
@@ -422,7 +440,8 @@
 <xsl:template match="d:itemizedlist/d:listitem">
   <xsl:choose>
     <xsl:when test="../@mark='disc'">
-
+<xsl:text>
+.IP \(bu 3.3</xsl:text>
     </xsl:when>
     <xsl:when test="../@mark='square'">
 <xsl:text>
@@ -437,9 +456,8 @@
 </xsl:template>
 
 <xsl:template match="d:orderedlist/d:listitem">
-<xsl:text>
-.IP </xsl:text>
-  <xsl:choose>
+  <xsl:variable name="ip">
+   <xsl:choose>
     <xsl:when test="../@numeration='arabic'">
      <xsl:number from="d:orderedlist" count="d:listitem" format="1."/>
     </xsl:when>
@@ -456,10 +474,19 @@
      <xsl:number from="d:orderedlist" count="d:listitem" format="I."/>
     </xsl:when>
     <xsl:otherwise>
-     <xsl:number from="d:orderedlist" count="d:listitem" format="1."/>
+     <xsl:number from="d:orderedlist" count="d:listitem" format="1"/>
+    </xsl:otherwise>
+   </xsl:choose>
+  </xsl:variable>
+
+  <xsl:choose>
+    <xsl:when test="../@userlevel">
+      <xsl:value-of select="concat('.IP ', $ip, ' ', ../@userlevel)"/>
+    </xsl:when>
+    <xsl:otherwise>
+      <xsl:value-of select="concat('.IP ', $ip, ' 4')"/>
     </xsl:otherwise>
   </xsl:choose>
-  <xsl:text> 3.3</xsl:text>
   <xsl:apply-templates/>
 </xsl:template>
 
@@ -499,7 +526,11 @@
   <xsl:apply-templates/>
   <xsl:if test="(&indented;)">
 <xsl:text>
-.RE</xsl:text>
+.RE
+.IP</xsl:text>
+  </xsl:if>
+  <xsl:if test="((following-sibling::d:para) or (following-sibling::d:simpara)) and not (&indented;)">
+   <xsl:value-of select="'&#10;.PP'"/>
   </xsl:if>
 </xsl:template>
 
@@ -577,7 +608,7 @@
   </xsl:call-template>
 </xsl:template>
 
-<xsl:template match="d:link">
+<xsl:template match="d:link[@xlink:href]">
   <xsl:choose>
     <xsl:when test="count(child::node())=0">
      <xsl:value-of select="@xlink:href"/>
@@ -587,6 +618,13 @@
      <xsl:apply-templates/>
     </xsl:otherwise>
   </xsl:choose>
+</xsl:template>
+
+<xsl:template match="d:link[@linkend]">
+  <xsl:variable name="p">
+    <xsl:apply-templates/>
+  </xsl:variable>
+  <xsl:value-of select="$p"/>
 </xsl:template>
 
 <xsl:template match="d:sbr">
