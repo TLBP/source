@@ -1317,14 +1317,15 @@ xmlns:exsl="http://exslt.org/common" xmlns:cf="http://docbook.sourceforge.net/xm
        <xsl:if test="@xml:id!='index'">
         <button type="button" class="dropbtn" onclick="window.location.assign('/kitaplik/index.html')">Kitaplık</button>
        </xsl:if>
-       <xsl:if test="$home != . or $nav.context = 'toc'">
-        <xsl:variable name="href">
-         <xsl:call-template name="href.target">
-          <xsl:with-param name="object" select="$home"/>
-         </xsl:call-template>
-        </xsl:variable>
-        <button type="button" class="dropbtn" onclick="window.location.assign('{$href}')">Ana Başlık</button>
+       <xsl:if test="ancestor::d:book and generate-id($up) != generate-id(ancestor::d:book)">
+         <xsl:variable name="href">
+           <xsl:call-template name="href.target">
+             <xsl:with-param name="object" select="ancestor::d:book"/>
+           </xsl:call-template>
+         </xsl:variable>
+         <button type="button" class="dropbtn" onclick="window.location.assign('{$href}')">Ana Başlık</button>
         </xsl:if>
+
        <xsl:if test="count($up)&gt;0 and generate-id($up) != generate-id($home)">
          <xsl:variable name="href">
            <xsl:call-template name="href.target">
