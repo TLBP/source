@@ -102,7 +102,7 @@ http://docbook.sourceforge.net/release/images/annot-close.png</xsl:param>
 <xsl:param name="callout.unicode.number.limit">10</xsl:param>
 <xsl:param name="callout.unicode.start.character">10102</xsl:param>
 <xsl:param name="callouts.extension" select="1"/>
-<xsl:param name="chapter.autolabel" select="1"/>
+<xsl:param name="chapter.autolabel" select="0"/>
 <xsl:param name="chunk.append"/>
 <xsl:param name="chunk.first.sections" select="0"/>
 <xsl:param name="chunk.quietly" select="0"/>
@@ -421,7 +421,7 @@ set       toc,title
   <xsl:param name="textinsert.extension" select="1"/>
 <xsl:param name="toc.list.type">dl</xsl:param>
 <xsl:param name="toc.max.depth">8</xsl:param>
-<xsl:param name="toc.section.depth">2</xsl:param>
+<xsl:param name="toc.section.depth">1</xsl:param>
 <xsl:param name="ulink.target">_top</xsl:param>
 <xsl:param name="use.embed.for.svg" select="0"/>
 <xsl:param name="use.extensions" select="0"/>

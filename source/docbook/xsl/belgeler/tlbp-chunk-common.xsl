@@ -1314,7 +1314,9 @@ xmlns:exsl="http://exslt.org/common" xmlns:cf="http://docbook.sourceforge.net/xm
       <button class="dropbtn">Yukarı</button>
       <div class="dropdown-content">
        <button type="button" class="dropbtn" onclick="window.location.assign('/index.html')">Baş Sayfa</button>
-       <button type="button" class="dropbtn" onclick="window.location.assign('/kitaplik/index.html')">Kitaplık</button>
+       <xsl:if test="@xml:id!='index'">
+        <button type="button" class="dropbtn" onclick="window.location.assign('/kitaplik/index.html')">Kitaplık</button>
+       </xsl:if>
        <xsl:if test="$home != . or $nav.context = 'toc'">
         <xsl:variable name="href">
          <xsl:call-template name="href.target">

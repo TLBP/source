@@ -24,12 +24,14 @@
 <!ENTITY allcases "'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'">
 <!ENTITY sortcases "'ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZ'">
 
-<!ENTITY refname 'concat(refname/@sortas, refname, manvolnum)'>
+<!ENTITY refname 'concat(d:refname/@sortas, d:refname)'>
 
 ]>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
  xmlns:d="http://docbook.org/ns/docbook"
- exclude-result-prefixes="d" version='1.0'>
+ xmlns:t="http://tlbp.gen.tr/ns/tlbp"
+ xmlns="http://www.w3.org/1999/xhtml"
+ exclude-result-prefixes="d t" version='1.0'>
 
 <xsl:key name="ref-letter"
          match="d:refnamediv"
@@ -37,31 +39,56 @@
 
 <xsl:key name="refname"
          match="d:refnamediv"
-         use="&refname;"/>
+         use="d:refname"/>
 
 <xsl:key name="manvolnum"
          match="d:refnamediv"
-         use="../d:refmeta/d:manvolnum"/>
+         use="../d:info/t:pageinfo/t:volnum"/>
+
+<xsl:template name="refentry.toc.letters">
+  <xsl:param name="volnum" select="none"/>
+  <xsl:param name="letternum" select="0"/>
+
+  <xsl:if test="string-length(&uppercase;) > $letternum">
+   <xsl:variable name="letter" select="substring(&uppercase;,$letternum + 1,1)"/>
+
+    <xsl:if test="count(key('manvolnum', $volnum)[translate(substring(&refname;, 1, 1),&lowercase;,&uppercase;)=$letter]) > 0">
+     <a>
+      <xsl:attribute name="href">
+       <xsl:value-of select="concat('#', @xml:id, '-ltr-',$letter)"/>
+      </xsl:attribute>
+      <xsl:value-of select="concat('&#160;',$letter, '&#160;')"/>
+     </a><xsl:text>&#160;&#160;&#160;</xsl:text>
+    </xsl:if>
+
+    <xsl:call-template name="refentry.toc.letters">
+      <xsl:with-param name="letternum" select="$letternum + 1"/>
+      <xsl:with-param name="volnum" select="$volnum"/>
+    </xsl:call-template>
+  </xsl:if>
+</xsl:template>
 
 <xsl:template name="refentry.toc">
   <xsl:param name="volnum" select="none"/>
   <xsl:param name="letternum" select="0"/>
 
   <xsl:if test="string-length(&uppercase;) > $letternum">
-    <xsl:variable name="letter"
-                select="substring(&uppercase;,$letternum + 1,1)"/>
+    <xsl:variable name="letter" select="substring(&uppercase;,$letternum + 1,1)"/>
 
     <xsl:if test="count(key('manvolnum', $volnum)[translate(substring(&refname;, 1, 1),&lowercase;,&uppercase;)=$letter]) > 0">
-      <div class="reftoc">
-        <h3><xsl:value-of select="$letter"/></h3>
-        <dl>
-          <xsl:apply-templates select="key('manvolnum', $volnum)[translate(substring(&refname;, 1, 1),&lowercase;,&uppercase;)=$letter]"
-                               mode="reftoc">
-            <xsl:sort select="translate(&refname;,&allcases;,&sortcases;)"/>
-          </xsl:apply-templates>
-        </dl>
-      </div>
+
+      <dl>
+       <xsl:attribute name="id">
+        <xsl:value-of select="concat(@xml:id, '-ltr-',$letter)"/>
+       </xsl:attribute>
+       <dt><h3><xsl:value-of select="$letter"/></h3></dt>
+       <xsl:apply-templates select="key('manvolnum', $volnum)[translate(substring(&refname;, 1, 1),&lowercase;,&uppercase;)=$letter]"
+                            mode="reftoc">
+         <xsl:sort select="translate(&refname;,&allcases;,&sortcases;)"/>
+       </xsl:apply-templates>
+     </dl>
     </xsl:if>
+  <!--xsl:message><xsl:text>buradayız 2 </xsl:text><xsl:value-of select="name(key('manvolnum', $volnum)[translate(substring(&refname;, 1, 1),&lowercase;,&uppercase;)=$letter][1])"/></xsl:message-->
 
     <xsl:call-template name="refentry.toc">
       <xsl:with-param name="letternum" select="$letternum + 1"/>
@@ -79,18 +106,18 @@
   <xsl:variable name="title">
     <xsl:apply-templates select="." mode="title"/>
   </xsl:variable>
-  <dt>
+  <dd>
     <a>
       <xsl:attribute name="href">
         <xsl:call-template name="href.target">
-          <xsl:with-param name="object" select="../.."/>
+        <xsl:with-param name="toc-context" select=".."/>
         </xsl:call-template>
       </xsl:attribute>
       <xsl:copy-of select="$title"/>
     </a>
-    <xsl:text> - </xsl:text>
-    <xsl:value-of select="../refpurpose[position() = $pos]"/>
-  </dt>
+    <xsl:text> — </xsl:text>
+    <xsl:value-of select="../d:refpurpose[position() = $pos]"/>
+  </dd>
 </xsl:template>
 
 <xsl:template match="*" mode="reftoc"/>

@@ -16,7 +16,6 @@ xmlns="http://www.w3.org/1999/xhtml" version="1.0">
      ******************************************************************** -->
 
 <!-- ==================================================================== -->
-
 <xsl:template match="d:reference">
   <xsl:call-template name="id.warning"/>
 
@@ -36,15 +35,32 @@ xmlns="http://www.w3.org/1999/xhtml" version="1.0">
       </xsl:call-template>
     </xsl:variable>
 
-    <xsl:if test="not(d:partintro) and contains($toc.params, 'toc')">
-      <xsl:call-template name="division.toc"/>
-    </xsl:if>
+    <xsl:call-template name="make.lots">
+      <xsl:with-param name="toc.params" select="$toc.params"/>
+      <xsl:with-param name="toc">
+       <xsl:variable name="nodes.plus" select="d:refenry"/>
+
+       <div class="toc">
+         <div class="toc-title">İçindekiler</div>
+         <div class="letters">
+             <xsl:call-template name="refentry.toc.letters">
+               <xsl:with-param name="volnum" select="d:info/d:volumenum"/>
+               <xsl:with-param name="letternum" select="0"/>
+             </xsl:call-template>
+           </div>
+           <xsl:call-template name="refentry.toc">
+             <xsl:with-param name="volnum" select="d:info/d:volumenum"/>
+             <xsl:with-param name="letternum" select="0"/>
+           </xsl:call-template>
+       </div>
+       </xsl:with-param>
+    </xsl:call-template>
     <xsl:apply-templates/>
   </div>
 </xsl:template>
 
 <xsl:template match="d:reference" mode="division.number">
-  <xsl:number from="d:book" count="d:reference" format="I."/>
+  <xsl:value-of select="concat(d:info/d:volumenum, ' ')"/>
 </xsl:template>
 
 <xsl:template match="d:reference/d:docinfo"/>

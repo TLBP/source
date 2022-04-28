@@ -38,9 +38,10 @@
 <!-- özelleştirilmiş xslt betikleri -->
 <xsl:import href="arsiv.xsl"/>
 <xsl:import href="multindex.xsl"/>
-<xsl:import href="reftoc.xsl"/>
 <xsl:import href="index-lists.xsl"/>
 <xsl:import href="tlbp-qandaset.xsl"/>
+<xsl:import href="reftoc.xsl"/>
+<xsl:import href="maketoc.xsl"/>
 
 <!-- özelleştirilmiş değiştirgeler -->
 <xsl:param name="html.ext">.html</xsl:param>
@@ -54,45 +55,46 @@
 <xsl:param name="chunk.base.dir">../../htdocs/dnm/</xsl:param>
 <xsl:param name="docbook.css.link">0</xsl:param>
 <xsl:param name="callout.list.table">0</xsl:param>
+<xsl:param name="chapter.autolabel">1</xsl:param>
 <xsl:param name="section.autolabel">1</xsl:param>
-<xsl:param name="formal.object.break.after">0</xsl:param>
+<xsl:param name="section.label.includes.component.label">1</xsl:param>
 <!-- eskiler -->
 <xsl:param name="chunk.sections">1</xsl:param>
 <xsl:param name="chunk.first.sections">1</xsl:param>
 <xsl:param name="chunk.section.depth">1</xsl:param>
-<xsl:param name="toc.section.depth">3</xsl:param>
+<xsl:param name="toc.section.depth">1</xsl:param>
+<xsl:param name="toc.max.depth">1</xsl:param>
 <xsl:param name="toc.list.type">dl</xsl:param>
 <xsl:param name="root.filename"/>
 <xsl:param name="use.id.as.filename">1</xsl:param>
 <xsl:param name="admon.graphics.path">images/xsl/</xsl:param>
 <xsl:param name="callout.graphics.path">images/xsl/callouts/</xsl:param>
 <xsl:param name="navig.graphics.path">images/xsl/</xsl:param>
-<!--xsl:param name="generate.section.toc.level">2</xsl:param-->
 <xsl:param name="generate.toc">
-appendix  toc,title,titleabbrev
-article/appendix  toc,title,titleabbrev
-article   toc,title,titleabbrev
-book      toc,title,figure,table,example,equation
-chapter   toc,title,titleabbrev
-part      toc,title,titleabbrev
-preface   toc,title,titleabbrev
-qandadiv  toc
-qandaset  toc
-reference toc,title,refpurpose
-sect1     toc,title,titleabbrev
-sect2     toc,title,titleabbrev
-sect3     toc,title,titleabbrev
-sect4     toc,title,titleabbrev
-sect5     toc,title,titleabbrev
-section   toc,title,titleabbrev
-set       toc,title,titleabbrev
+appendix  toc,title
+article/appendix  nop
+article   toc,title
+book      toc,title
+chapter   toc,title
+part      toc,title
+preface   nop
+qandadiv  nop
+qandaset  nop
+reference toc,title
+sect1     nop
+sect2     nop
+sect3     nop
+sect4     nop
+sect5     nop
+section   nop
+set       toc,title
 </xsl:param>
 
 <xsl:template name="user.head.content">
  <meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
- <link rel="stylesheet" type="text/css" href="belgeler.css"/>
- <link rel="stylesheet" type="text/css" href="nav.css"/>
+ <link rel="stylesheet" type="text/css" href="/style/belgeler.css"/>
+ <link rel="stylesheet" type="text/css" href="/style/nav.css"/>
 </xsl:template>
 
 <xsl:template name="root.attributes">
@@ -102,7 +104,7 @@ set       toc,title,titleabbrev
 
 <!-- Belgelerdeki tüm eposta adresleri kaldırıldı (Şubat 2022) -->
 <xsl:template match="d:email">
- <xsl:text>&lt;eposta adresi gizlendi&gt;</xsl:text>
+ <xsl:value-of select="concat('&lt;',.,'&gt;')"/>
 </xsl:template>
 
 <xsl:template match="d:struct">
@@ -542,8 +544,13 @@ footnote text gets an id of #ftn.@id. They cross link to each other. -->
   </a>
 </xsl:template>
 
+<xsl:template match="d:formalpara">
+  <dl><dt><xsl:apply-templates select="d:title"/></dt>
+  <dd><xsl:apply-templates select="./*[name(.)!='title']"/></dd></dl>
+</xsl:template>
+
 <xsl:template match="d:formalpara/d:title">
-  <b><xsl:apply-templates/></b><br/>
+  <xsl:apply-templates/>
 </xsl:template>
 
 <xsl:template match="d:funcsynopsis">
@@ -629,7 +636,6 @@ footnote text gets an id of #ftn.@id. They cross link to each other. -->
   <xsl:apply-templates/>
 </xsl:template>
 
-
 <xsl:template name="refentry.header">
   <xsl:variable name="name">
     <xsl:value-of select="concat(translate(normalize-space(d:info/t:pageinfo/t:name/text()), &allasciicases;, &asciiuppercases;),'(', d:info/t:pageinfo/t:volnum/text() ,')')"/>
@@ -677,8 +683,8 @@ footnote text gets an id of #ftn.@id. They cross link to each other. -->
 </xsl:template>
 
 <xsl:template match="d:uri[(ancestor::d:refentry) and not (child::node())]">
-  <xsl:variable name="targets" select="key('xml:id',@xlink:href)"/>
-  <xsl:variable name="target" select="$targets[1]"/>
+  <xsl:param name="xlink.targets" select="key('id',@xlink:href)"/>
+  <xsl:param name="target" select="$xlink.targets[1]"/>
 
   <xsl:variable name="name">
     <xsl:value-of select="."/>
