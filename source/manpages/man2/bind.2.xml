@@ -1,0 +1,269 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ********************************************************************
+     man2/bind.2.xml, BSD-4, FK - Temmuz 2022
+     ******************************************************************** -->
+<refentry xml:id="man2-bind-" xmlns="http://docbook.org/ns/docbook"
+ xmlns:xlink="http://www.w3.org/1999/xlink" version="5.0" xml:lang="tr">
+ <info xmlns:t="http://tlbp.gen.tr/ns/tlbp">
+  <t:pageinfo>
+   <t:name>bind</t:name>
+   <t:volnum>2</t:volnum>
+   <t:section>Sistem Çağrıları</t:section>
+   <t:source>Linux man-pages 5.10</t:source>
+   <t:date>2020-11-01</t:date>
+  </t:pageinfo>
+ </info>
+ <refnamediv>
+  <refname>İSİM</refname>
+  <refpurpose>adresi sokete bağla</refpurpose>
+ </refnamediv>
+ <refsynopsisdiv><title>BİLDİRİM</title>
+  <screen userlevel="0"><option>#include &lt;sys/types.h></option>          /* NOTLAR'a bakın */
+<option>#include &lt;sys/socket.h></option>
+<option>int bind(int</option> <replacable>sockfd</replacable><option>, const struct sockaddr</option> <replacable>*addr</replacable>, <option>socklen_t</option> <replacable>addrlen</replacable> <option>);</option>
+</screen>
+ </refsynopsisdiv>
+ <refsect1><title>AÇIKLAMA</title>
+  <para>
+   <uri xlink:href="man2-socket"/> kullanılarak bir soket oluşturulduğunda, bu soket bir alan adında (adres ailesi) ortaya çıksada ona bağlı bir adres bulunmaz. <command>bind()</command>, <replaceable>addr</replaceable> ile belirtilen adresi <replaceable>sockfd</replaceable> ile belirtilen soket ile ilişkilendirir. <replaceable>addrlen</replaceable>, <replaceable>addr</replaceable> ile belirtilen adres yapısının boyutunu belirler. Geleneksel olarak bu işleme "sokete isim vermek" denir.
+  </para>
+  <para>
+   <constant>SOCK_STREAM</constant> sokete gelen bağlantıları kabul etmeden önce bir lokal adresi soket ile <command>bind()</command> kullanarak ilişkilendirmek gerekir (<uri xlink:href="man2-accept"/> sayfasına bakın).
+  </para>
+  <para>
+   İlişkilendirmenin kuralları kullanılan adres ailesine göre değişir. Daha detaylı bilgi edimnek için 7.bölüme ait şu kılavuz sayfalarına bakın. <constant>AF_INET</constant> için <uri xlink:href="man7-ip"/>, <constant>AF_INET6</constant> için <uri xlink:href="man7-ipv6"/>, <constant>AF_UNIX</constant> için <uri xlink:href="man7-unix"/>, <constant>AF_APLETALK</constant> için <uri xlink:href="man7-ddp"/>, <constant>AF_PACKET</constant> için <uri xlink:href="man7-packet"/>, <constant>AF_X25</constant> için <uri xlink:href="man7-x25"/>, <constant>AF_NETLINK<constant> için <uri xlink:href="man7-netlink"/>.
+  </para>
+  <para>
+   <replaceable>addr</replaceable> için girilen asıl yapı adres ailesine göre değişir. <replaceable>sockaddr</replaceable> yapısı şu şekile belirtilmiştir.
+  </para><para>
+<literallayout>struct sockaddr {
+      sa_family_t sa_family;
+      char        sa_data[14];
+}
+</literallayout>
+  </para>
+  <para>
+   bu yapının tek amacı <replaceable>addr</replaceable> ile verilen yapı işaretçisini derleyici hatalarını önlemek için dönüştürmektir. ÖRNEKLER bölümüne bakın.
+  </para>
+ </refsect1>
+ <refsect1><title>DÖNÜŞ DEĞERİ</title>
+  <para>
+          Başarılı durumunda sıfır döner. Hata durumunda <code>-1</code> dönder ve hata <replaceable>errno</replaceable> değişkenine atanır.
+  </para>
+ </refsect1>
+ <refsect1><title>HATALAR</title>
+  <glosslist>
+   <glossentry> 
+    <glossterm><constant>EACCES</constant></glossterm>
+    <glossdef>
+     <para>Adres korumalı ve kullanıcı yetki sahibi değil.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm><constant>EADDRINUSE</constant></glossterm>
+    <glossdef>
+     <para>Verilen adres kullanımda.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm><constant>EADDRINUSE</constant></glossterm>
+    <glossdef>
+     <para>
+      (İnternet alanı soketleri için) <replaceable>sockfd</replaceable> ile belirtilen soket, önceden bir adres ile ilişkilendirilmemiş ve soketi geçici bir portla ilişkilen
+dirmeye çalışırken geçici port aralığındaki tüm portların kullanımda olduğu anlaşılmış. <uri xlink:href="man7-ip"/> sayfasındaki <filename>/proc/sys/net/ipv4/ip_local_port_r
+ange</filename> ile ilgili açıklamaya bakınız.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm><constant>EBADF</constant></glossterm>
+    <glossdef>
+     <para>
+      Belirtilen <replaceable>sockfd</replaceable> uygun bir dosya tanıtıcısı değil.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm><constant>EINVAL</constant></glossterm>
+    <glossdef>
+     <para>Soket bir adres ile ilişkilendirilmiş..
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm><constant>ENOTSOCK</constant></glossterm>
+    <glossdef>
+     <para>
+      Belirtilen <replaceable>sockfd</replaceable>'nin bir soketle ilgisi yok.
+     </para>
+    </glossdef>
+   </glossentry>
+   <para>
+    Aşağıdaki hatalar sadece UNIX (<constant>AF_UNIX</constant>)alan adı için geçerlidir.
+   </para>
+   <glossentry>
+    <glossterm><constant>EACCES</constant></glossterm>
+    <glossdef>
+     <para>
+      Verilen dizindeki bir bölüm için arama izni verilmemiş. (Ayrıca <uri xlink:href="man7-path_resolution"/> sayfasına bakın). 
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm><constant>EADDRNOTAVAIL</constant></glossterm>
+    <glossdef>
+     <para>
+      Var olmayan bir arayüz istenmiş veya istenen adres lokalde mevcut değil.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm><constant>EFAULT</constant></glossterm>
+    <glossdef>
+     <para>
+      <replaceable>addr</replaceable>, kullanıcının erişebileceği adres alanının dışında.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm><constant>ELOOP</constant></glossterm>
+    <glossdef>
+     <para>
+      <replaceable>addr</replaceable> çözümlenirken çok fazla sembolik link ile karşılaşıldı.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm><constant>ENAMETOOLONG</constant></glossterm>
+    <glossdef>
+     <para>
+      <replaceable>addr</replaceable> çok uzun.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm><constant>ENOENT</constant></glossterm>
+    <glossdef>
+     <para>
+      Verilen soket dizinindeki bir bölüm mevcut değil.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm><constant>ENOMEM</constant></glossterm>
+    <glossdef>
+     <para>
+      Yeterli çekirdek hafızası yok.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm><constant>ENOTDIR</constant></glossterm>
+    <glossdef>
+     <para>
+      Dizindeki bir bölüm klasör değil.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm><constant>EROFS</constant></glossterm>
+    <glossdef>
+     <para>
+      Soket, sadece okuma iznine sahip bir dosya sisteminde bulunuyor.
+     </para>
+    </glossdef>
+   </glossentry>
+  </glosslist>
+ </refsect1>
+ <refsect1><title>UYUMLULUK</title>
+  <para>
+   POSIX.1-2001, POSIX.1-2008, SVr4, 4.4BSD (<command>bind()</command> ilk defa 4.2BSD ile ortaya çıktı).
+  </para>
+ </refsect1>
+ <refsect1 xml:id="man2-kill-notes"><title>NOTLAR</title>
+  <para>
+   POSIX.1'de, <filename>&lt;sys/types.h&gt;</filename> dahil edilmeyi gerektirmez ve yine bu başlık dosyası Linux'da gerekmez. Fakat bazı tarihsel (BSD) uygulamalardan ötürü bu başlık dosyası gerekir ve taşınabilir uygulamalar için dahil edilmesi akıllıca olacaktır.
+  </para>
+  <para>
+   <replaceable>socklen_t</replaceable>'nin arka planı için <uri xlink:href="man2-accept"/> sayfasına bakın.
+  </para>
+ </refsect1>
+ <refsect1><title>BUGLAR</title>
+  <para>
+   Şeffaf proxy için seçenekler açıklanmamıştır.
+  </para>
+ </refsect1>
+ <refsect1><title>ÖRNEKLER</title>
+  <para>
+   <command>bind()</command>'in internet domain soketleriyle kullanımının örneğini <uri xlink:href="man3-getaddrinfo"/>'de bulabilirsiniz.
+  </para>
+  <para>
+   Aşağıdaki örnek, stream soketi UNIX (<constant>AF_UNIX</constant>) alan adıyla nasıl bağlayacağınızı ve gelen bağlantıları nasıl kabul edeceğinizi gösterir.
+  </para>
+  <para>
+   <screen>
+           #include &lt;sys/socket.h>
+#include &lt;sys/un.h>
+#include &lt;stdlib.h>
+#include &lt;stdio.h>
+#include &lt;string.h>
+
+#define SOKET_YOLU "/somepath"
+#define LISTEN_BACKLOG 50
+
+#define hatayı_işle(msg) \
+    do { perror(msg); exit(EXIT_FAILURE); } while (0)
+
+int
+main(int argc, char *argv[])
+{
+    int sfd, cfd;
+    struct sockaddr_un benim_addr, peer_addr;
+    socklen_t peer_addr_boyut;
+
+    sfd = socket(AF_UNIX, SOCK_STREAM, 0);
+    if (sfd == -1)
+        hatayı_işle("socket");
+
+    memset(&#38;benim_addr, 0, sizeof(benim_addr));
+                        /* Yapıyı temizle */
+    benim_addr.sun_family = AF_UNIX;
+    strncpy(benim_addr.sun_path, SOKET_YOLU,
+            sizeof(benim_addr.sun_path) - 1);
+
+    if (bind(sfd, (struct sockaddr *) &#38;benim_addr,
+            sizeof(benim_addr)) == -1)
+        hatayı_işle("bind");
+
+    if (listen(sfd, LISTEN_BACKLOG) == -1)
+        hatayı_işle("listen");
+
+    /* Şimdi gelen bağlantıları accept(2) kullanarak
+       tek tek kabul edebiliriz.*/
+
+    peer_addr_boyut = sizeof(peer_addr);
+    cfd = accept(sfd, (struct sockaddr *) &#38;peer_addr,
+                 &#38;peer_addr_boyut);
+    if (cfd == -1)
+        hatayı_işle("accept");
+
+    /* Gelen bağlantılarla ilgileneceğiniz kod... */
+
+    /* Daha ihtiyaç yoksa, soket yol adı, SOKET_YOLU unlink(2) veya remove(3)
+       kullanılarak silinmelidir. */
+}
+   </screen>
+  </para>
+ </refsect1>      
+ <refsect1><title>İLGİLİ BELGELER</title>
+  <para>
+   <uri xlink:href="man2-accept"/>, <uri xlink:href="man2-connect"/>, <uri xlink:href="man2-getsockname"/>, <uri xlink:href="man2-listen"/>, <uri xlink:href="man2-socket"/>, <uri xlink:href="man3-getaddrinfo"/>, <uri xlink:href="man3-getifaddrs"/>, <uri xlink:href="man7-ip"/>, <uri xlink:href="man7-ipv6"/>, <uri xlink:href="man7-path_resolution"/>, <uri xlink:href="man7-socket"/>, <uri xlink:href="man7-unix"/>
+  </para>
+ </refsect1>
+ <refsect1><title>ÇEVİREN</title>
+         <para>Fatih Koçer - Temmuz 2022</para>
+ </refsect1>
+</refentry>
+
