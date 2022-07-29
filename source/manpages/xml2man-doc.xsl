@@ -50,7 +50,8 @@ Yasaların izin verdiği ölçüde HİÇBİR GARANTİ YOKTUR.
 .\" Sözcükleri ilgisiz yerlerden bölme (disable hyphenation)
 .nh
 .\" Sözcükleri yayma, sadece sola yanaştır (disable justification)
-.ad l</xsl:text>
+.ad l
+.PD 0</xsl:text>
   <xsl:apply-templates/>
 </xsl:template>
 
