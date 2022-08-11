@@ -29,9 +29,6 @@
   extension-element-prefixes="d xlink t"
   version='1.0'>
 
-<!-- Nedendir bilmem, bu işe yaramıyor -->
-<xsl:preserve-space elements="d:literallayout d:programlisting d:screen"/>
-
 <xsl:key name="id" match="*" use="@id|@xml:id"/>
 
 <xsl:template name="string.replace">
@@ -192,8 +189,11 @@
 <xsl:text>
 </xsl:text>
   </xsl:if>
+  <xsl:variable name="cmd">
+    <xsl:value-of select="normalize-space(./d:command)"/>
+  </xsl:variable>
 
-  <xsl:value-of select="concat('&#10;.IP \fB',./d:command,'\fR ', string-length(./d:command)+1, '&#10;')"/>
+  <xsl:value-of select="concat('&#10;.IP \fB',$cmd,'\fR ', string-length($cmd)+1, '&#10;')"/>
   <xsl:variable name="content">
     <xsl:apply-templates/>
   </xsl:variable>
@@ -202,7 +202,9 @@
   <xsl:if test="(&indented;) and name(following-sibling::*[1])=''">
    <xsl:value-of select="'&#10;.sp'"/>
   </xsl:if>
-
+  <xsl:if test="name(following-sibling::*[1])!='cmdsynopsis'">
+   <xsl:value-of select="'&#10;.sp&#10;.PP'"/>
+  </xsl:if>
   <xsl:if test="(@userlevel)">
 <xsl:text>
 .RE</xsl:text>
@@ -230,6 +232,9 @@
   <xsl:choose>
     <xsl:when test="@choice = 'plain'">
       <xsl:value-of select="concat($content, $repeat)"/>
+    </xsl:when>
+    <xsl:when test="@choice = 'req'">
+      <xsl:value-of select="concat('{', $content, '}', $repeat)"/>
     </xsl:when>
     <xsl:otherwise>
       <xsl:value-of select="concat('[', $content, ']', $repeat)"/>
@@ -276,9 +281,6 @@
       <xsl:value-of select="concat('[', $content, ']', $repeat)"/>
     </xsl:otherwise>
   </xsl:choose>
-  <xsl:if test="following-sibling::d:arg">
-    <xsl:value-of select="'|'"/>
-  </xsl:if>
 </xsl:template>
 
 <xsl:template match="d:arg/d:option">
@@ -287,6 +289,69 @@
 
 <xsl:template match="d:arg/d:replaceable">
   <xsl:value-of select="concat('\fI',., '\fR')"/>
+</xsl:template>
+
+<xsl:template match="d:funcsynopsis">
+  <xsl:apply-templates/>
+  <xsl:if test="following-sibling::*">
+   <xsl:value-of select="'&#10;.sp'"/>
+  </xsl:if>
+</xsl:template>
+
+<xsl:template match="d:funcsynopsisinfo">
+<xsl:text>.nf
+</xsl:text>
+  <xsl:apply-templates/>
+<xsl:text>.fi
+.sp
+</xsl:text>
+</xsl:template>
+
+<xsl:template match="d:funcprototype">
+  <xsl:variable name="p">
+    <xsl:apply-templates/>
+  </xsl:variable>
+  <xsl:choose>
+   <xsl:when test="following-sibling::*">
+    <xsl:value-of select="$p"/>
+    <xsl:value-of select="'&#10;.sp'"/>
+   </xsl:when>
+   <xsl:otherwise>
+   <xsl:value-of select="$p"/>
+   </xsl:otherwise>
+  </xsl:choose>
+</xsl:template>
+
+<xsl:template match="d:funcdef">
+  <xsl:variable name="len">
+    <xsl:value-of select="string-length(.) + 1"/>
+  </xsl:variable>
+  <xsl:variable name="content">
+    <xsl:apply-templates/>
+  </xsl:variable>
+  <xsl:value-of select="concat('&#10;.IP &#34;',$content,'&#34; ', $len, '&#10;')"/>
+</xsl:template>
+
+<xsl:template match="d:funcdef/d:function">
+  <xsl:variable name="content">
+    <xsl:apply-templates/>
+  </xsl:variable>
+  <xsl:value-of select="concat('\fB',$content,'\fR')"/>
+</xsl:template>
+
+<xsl:template match="d:paramdef">
+  <xsl:if test="not (preceding-sibling::d:paramdef)">
+    <xsl:text>(</xsl:text>
+  </xsl:if>
+  <xsl:apply-templates/>
+  <xsl:choose>
+    <xsl:when test="following-sibling::*">
+      <xsl:text>, </xsl:text>
+    </xsl:when>
+    <xsl:otherwise>
+      <xsl:text>);</xsl:text>
+    </xsl:otherwise>
+  </xsl:choose>
 </xsl:template>
 
 <xsl:template match="d:para[@userlevel]|d:simpara[@userlevel]">

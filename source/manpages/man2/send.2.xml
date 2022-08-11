@@ -1,0 +1,416 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ********************************************************************
+     man2/send.2.xml, BSD-4, FK - Ağustos 2022
+     ******************************************************************** -->
+<refentry xml:id="man2-send" xmlns="http://docbook.org/ns/docbook"
+ xmlns:xlink="http://www.w3.org/1999/xlink" version="5.0" xml:lang="tr">
+ <info xmlns:t="http://tlbp.gen.tr/ns/tlbp">
+  <t:pageinfo>
+   <t:name>send</t:name>
+   <t:volnum>2</t:volnum>
+   <t:section>Sistem Çağrıları</t:section>
+   <t:source>Linux man-pages 5.10</t:source>
+   <t:date>2020-11-01</t:date>
+<t:remark>.ig
+Copyright (c) 1983, 1991 The Regents of the University of California.
+All rights reserved.
+
+%%%LICENSE_START(BSD_4_CLAUSE_UCB)
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+3. All advertising materials mentioning features or use of this software
+   must display the following acknowledgement:
+This product includes software developed by the University of
+California, Berkeley and its contributors.
+4. Neither the name of the University nor the names of its contributors
+   may be used to endorse or promote products derived from this software
+   without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+SUCH DAMAGE.
+%%%LICENSE_END
+
+Modified 1993-07-24 by Rik Faith &lt;faith@cs.unc.edu&gt;
+Modified 1996-10-22 by Eric S. Raymond &lt;esr@thyrsus.com&gt;
+Modified Oct 1998 by Andi Kleen
+Modified Oct 2003 by aeb
+Modified 2004-07-01 by mtk
+..</t:remark>
+  </t:pageinfo>
+ </info>
+ <refnamediv>
+  <refname>send</refname>
+  <refpurpose>bağlantılı soket üzerinden ileti yollar</refpurpose>
+ </refnamediv>
+ <refnamediv>
+  <refname>sendto</refname>
+  <refpurpose>bağlantısız soket üzerinden ileti yollar</refpurpose>
+ </refnamediv>
+ <refnamediv>
+  <refname>sendmsg</refname>
+  <refpurpose>soket üzerinden bir dizi ileti yollar</refpurpose>
+ </refnamediv>
+ <refsynopsisdiv><title>BİLDİRİM</title>
+  <funcsynopsis>
+   <funcsynopsisinfo>
+    <option>#include &lt;sys/types.h></option>
+    <option>#include &lt;sys/socket.h></option>
+   </funcsynopsisinfo>
+   <funcprototype>
+    <funcdef>ssize_t <function>send</function></funcdef>
+    <paramdef>int <parameter>sockfd</parameter></paramdef>
+    <paramdef>const void *<parameter>buf</parameter></paramdef>
+    <paramdef>size_t <parameter>len</parameter></paramdef>
+    <paramdef>int <parameter>flags</parameter></paramdef>
+   </funcprototype>
+   <funcprototype>
+    <funcdef>ssize_t <function>sendto</function></funcdef>
+    <paramdef>int <parameter>sockfd</parameter></paramdef>
+    <paramdef>const void *<parameter>buf</parameter></paramdef>
+    <paramdef>size_t <parameter>len</parameter></paramdef>
+    <paramdef>int <parameter>flags</parameter></paramdef>
+    <paramdef>const struct sockaddr <parameter>dest_addr</parameter></paramdef>
+    <paramdef>socklen_t <parameter>addrlen</parameter></paramdef>
+   </funcprototype>
+   <funcprototype>
+    <funcdef>ssize_t <function>sendmsg</function></funcdef>
+    <paramdef>int <parameter>sockfd</parameter></paramdef>
+    <paramdef>const struct msghdr *<parameter>msg</parameter></paramdef>
+    <paramdef>int <parameter>flags</parameter></paramdef>
+   </funcprototype>
+  </funcsynopsis>
+ </refsynopsisdiv>
+ <refsect1><title>AÇIKLAMA</title>
+  <para>
+   <command>send</command>(), <command>sendto</command>() ve <command>sendmsg</command>() sistem çağrıları bir başka sokete ileti aktarmakta kullanılır.
+  </para>
+  <para>
+   <command>send</command>() çağrısı soket sadece <replaceable>connected</replaceable> (bağlantılı) durumda ise kullanılabilir (böylece amaçlanan alıcı biliniyor olur). <command>send</command>() ve <uri xlink:href="man2-write"/> arasındaki tek fark <replaceable>flags</replaceable> değiştirgesinin varlığıdır. Sıfır değeri atanmış <replaceable>flags</replaceable> değiştirgesi kullanan <command>send</command>() ile <uri xlink:href="man2-write"/> eşdeğerdir. Ayrıca aşağıdaki
+  </para>
+  <screen>send(sockfd, buf, len, flags);
+</screen>
+  <para>çağrısı</para>
+  <screen>sendto(sockfd, buf, len, flags, NULL, 0);
+</screen>
+  <para>
+   çağrısına eşdeğerdir. <replaceable>sockfd</replaceable> değiştirgesi, gönderen soketin dosya tanıtıcısıdır.
+  </para>
+  <para>
+   Eğer <command>sendto</command>() bağlantılı bir soket (<constant>SOCK_STREAM</constant>, <constant>SOCK_SEQPACKET</constant>) ile kullanılırsa, <replaceable>dest_addr</replaceable> ve <replaceable>addrlen</replaceable> değiştirgeleri görmezden gelinir (eğer bunlar NULL ve 0 değilse <constant>EISCONN</constant> hatası dönebilir) ve eğer soket bağlanmadıysa <constant>ENOTCONN</constant> hatası döner. Bağlantısız soketle kullanımda, <replaceable>dest_addr</replaceable> hedefin adresini,  <replaceable>addrlen</replaceable> ise hedef adresin boyutunu belirler. <command>sendmsg</command>() için hedef adres <replaceable>msg.msg_name</replaceable> ile belirtilir ve <replaceable>msg.msg_namelen</replaceable> boyutunu belirler.
+  </para>
+  <para>
+   <command>send</command>() ve <command>sendto</command>() için, ileti <replaceable>buf</replaceable> tamponu içinde tutulur ve <replaceable>len</replaceable> uzunluktadır. <command>sendmsg</command>() için, ileti <replaceable>msg.msg_iov</replaceable> dizisindeki öğelerle gösterilir. <command>sendmsg</command>() çağrısı yardımcı verinin de yollanmasını sağlar (denetim bilgisi de denir).
+  </para>
+  <para>
+   Eğer ileti ilgili protokol için bütün olarak gönderilemeyecek kadar uzunsa, <constant>EMGSIZE</constant> hatası döner ve ileti gönderilmez.
+  </para>
+  <para>
+   <command>send</command>() işlevinde teslimatın yapılmadığını gösteren hiçbir belirti yoktur. Yerel olarak hatalar <code>-1</code> dönüş değeri ile saptanır.
+  </para>
+  <para>
+   İleti soketin gönderim tamponuna sığmadığında, <command>send</command>() eğer soket engellemesiz G/Ç kipine alınmadıysa engellenir. Engellemesiz kip başarısız olduğunda <constant>EAGAIN</constant> veya <constant>EWOULDBLOCK</constant> döner. <uri xlink:href="man2-select"/> çağrısı daha fazla veri gönderme olasılığını saptamak için kullanılabilir.
+  </para>
+  <refsect2>
+   <title><replaceable>flags</replaceable> değerleri</title>
+   <para>
+    <replaceable>flags</replaceable> değiştirgesinin değeri ya sıfırdır ya da aşağıdaki sabitlerin  bit düzeyinde veyalanmasıyla elde edilir.
+   </para>
+   <glosslist>
+    <glossentry>
+     <glossterm><constant>MSG_CONFIRM</constant> (Linux 2.3.15 ve sonrası)</glossterm>
+     <glossdef>
+      <para>
+       Bağlantı katmanına yönlendirme sürecinin durumunu bildir: Karşı taraftan başarılı bir yanıt aldın. Eğer bağlantı katmanı bunu alamazsa komşusunu düzenli olarak uyarır (örneğin, tek noktaya ARP ile). Sadece <constant>SOCK_DGRAM</constant> ve <constant>SOCK_RAW</constant> soketleri için geçerli olup şimdilik sadece IPv4 ve IPv6 için gerçeklenmiştir. Ayrıntılar için <uri xlink:href="man7-arp"/> sayfasına bakın.
+      </para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm><constant>MSG_DONTROUTE</constant></glossterm>
+     <glossdef>
+      <para>
+       Paketi yollamak için geçit kullanma, doğrudan  bağlı ağdaki konaklara gönder. Bu genellikle teşhis ve yönlendirme uygulamaları tarafından kullanılır. Bu sadece yönlendirme yapan protokoller için tanımlanmıştır; paket soketleri için değil.
+      </para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm><constant>MSG_DONTWAIT</constant> (Linux 2.2 ve sonrası)</glossterm>
+     <glossdef>
+      <para>
+       Engellemesiz işlemi etkinleştirir; eğer işlem engellenirse, <constant>EAGAIN</constant> veya <constant>EWOULDBLOCK</constant> döner. <constant>O_NONBLOCK</constant> seçeneği tanımlanmış (<uri xlink:href="man2-fcntl"/> üzerinden <constant>F_SETFL</constant> işlemi ile) gibi davranır, fakat <constant>MSG_DONTWAIT</constant> çağrıya özel olmasıyla fark oluşturur. <constant>O_NONBLOCK</constant> seçeneği ise açık dosya tanıtıcısı içindir (<uri xlink:href="man2-open"/> sayfasına bakın), çağrı sürecindeki tüm evreleri ve aynı zamanda aynı açık dosyanın dosya tanıtıcılarına sahip diğer süreçleri de etkiler.
+      </para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm><constant>MSG_EOR</constant> (Linux 2.2 ve sonrası)</glossterm>
+     <glossdef>
+      <para>
+       Bir kaydı sonlandırır (bu kavram <constant>SOCK_SEQPACKET</constant> türündeki soketlerdeki gibi destekleniyorsa).
+      </para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm><constant>MSG_MORE</constant> (Linux 2.4.4 ve sonrası)</glossterm>
+     <glossdef>
+      <para>
+       Çağrıcının hala yollayacağı veri var. Bu seçenek <constant>TCP_CORK</constant> soket seçeneğine ait etkiyi TCP soketleri ile elde etmek için kullanılır (<uri xlink:href="man7-tcp"/> sayfasına bakın). Bu seçeneğin farkı çağrıya özel olmasıdır.
+      </para>
+      <para>
+       Linux 2.6'dan itibaren, bu seçenek UDP soketleri için de desteklenmektedir. Çekirdeğe, sadece bu seçenek belirtilmeksizin yapılan bir çağrı ile aktarım yapılan tek bir verikatarına gönderilecek tüm veriyi bu seçenek kullanılarak yapılan çağrılarla gönderilecek şekilde paketlemesini söyler. (Ayrıca <uri xlink:href="man7-udp"/>'de açıklanan <constant>UDP_CORK</constant> soket seçeneğine de bakın.)
+      </para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm><constant>MSG_NOSIGNAL</constant> (Linux 2.2 ve sonrası)</glossterm>
+     <glossdef>
+      <para>
+       Eğer akım odaklı soket karşıdan bağlantıyı kapattıysa <constant>SIGPIPE</constant> sinyali üretme. <constant>EPIPE</constant> hatası yine de döner. <constant>SIGPIPE</constant> sinyalini görmezden gelmek için <uri xlink:href="man2-sigaction"/> kullanımına benzer bir davranış sağlar, fakat <constant>MSG_NOSIGNAL</constant> çağrıya özeldir, <constant>SIG_PIPE</constant> sinyalinin görmezden gelinmesi sürecin tüm evrelerini etkileyen bir süreç özelliğinin atanmasına sebep olur.
+      </para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm><constant>MSG_OOB</constant></glossterm>
+     <glossdef>
+      <para>
+       Veriyi bantdışı (Out Of Band) veriyi destekleyen soketlere gönderir (örneğin <constant>SOCK_STREAM</constant> türü); kullanılan protokol bantdışı veriyi desteklemelidir.
+      </para>
+     </glossdef>
+    </glossentry>
+   </glosslist>
+  </refsect2>
+  <refsect2><title><command>sendmsg</command>()</title>
+   <para>
+    <command>sendmsg</command>() ile kullanılan <replaceable>msghdr</replaceable> yapısının tanımı:
+   </para>
+   <screen>struct msghdr {
+     void         *msg_name;       /* isteğe bağlı adres */
+     socklen_t     msg_namelen;    /* adresin boyutu */
+     struct iovec *msg_iov;        /* dağıtma/toplama dizisi */
+     size_t        msg_iovlen;     /* msg_iov içindeki öğe sayısı */
+     void         *msg_control;    /* yardımcı veri, aşağıya bakınız */
+     size_t        msg_controllen; /* yardımcı veri tampon boyutu */
+     int           msg_flags;      /* seçenekler (kullanılmıyor) */
+ };
+ </screen>
+   <para>
+    <replaceable>msg_name</replaceable> alanı bağlantısız bir soket üzerinde verikatarı için hedef adresini belirtmekte kullanılır. Adresi içeren tampona göstericidir; <replaceable>msg_namelen</replaceable> alanına adresin boyutu atanmalıdır. Bağlantılı bir soket için, bu alanlar sırasıyla NULL ve 0 olarak belirtilmelidir.
+   </para>
+   <para>
+    <replaceable>msg_iov</replaceable> ve <replaceable>msg_iovlen</replaceable> alanları <uri xlink:href="man2-writev"/> çağrısındaki gibi dağıtma-toplama konumlarını belirtir.
+   </para>
+   <para>
+    <replaceable>msg_control</replaceable> ve <replaceable>msg_controllen</replaceable> kullanılarak denetim bilgisi (yardımcı bilgi) gönderilebilir. Çekirdeğin soket başına işleyebileceği denetim tamponunun azami boyutu <replaceable>/proc/sys/net/core/optmem_max</replaceable> içindeki değerle sınırlanmıştır; <uri xlink:href="man7-socket"/> sayfasına bakın. Yardımcı verilerin çeşitli soketlerde kullanımına ilişkin ayrıntılılı bilgi edinmek için <uri xlink:href="man7-unix"/> ve <uri xlink:href="man7-ip"/> sayfasına bakın.
+   </para>
+   <para>
+    <replaceable>msg_flags</replaceable> alanı görmezden gelinir.
+   </para>
+  </refsect2>
+ </refsect1>
+ <refsect1><title>DÖNÜŞ DEĞERİ</title>
+  <para>
+   Başarı durumunda bu çağrılar gönderilen baytların sayısını döndürür. Hata durumunda, <code>-1</code> döner ve hata <replaceable>errno</replaceable> değişkenine atanır.
+  </para>
+ </refsect1>
+ <refsect1><title>HATALAR</title>
+  <para>
+   Soket katmanı tarafından üretilen bazı standart hatalar vardır. Ayrıca, kullanılan protokol modülleri tarafından üretilen ve döndürülen hatalar da olabilir; bilgi için bunlarla ilgili kılavuz sayfalarına bakın.
+  </para>
+  <glosslist>
+   <glossentry>
+    <glossterm><constant>EACCES</constant></glossterm>
+    <glossdef>
+     <para>
+      (Dosya yoluna göre tanınan UNIX alan soketleri için) Hedef soket dosyası için yazma izni veya dosya yolundaki bir dizin için arama izni reddedilmiş. (Ayrıca <uri xlink:href="man7-path_resolution"/> sayfasına da bakın.)
+     </para>
+     <para>
+      (UDP soketleri için) Ağ/yayın adresine veri yollanmak için girişimde bulunulmuş ancak adres tek nokta için.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm><constant>EAGAIN</constant> veya <constant>EWOULDBLOCK</constant></glossterm>
+    <glossdef>
+     <para>
+      Soket engellemesiz olarak işaretlenmiş ama talep edilen işlem soketi engelleyecek. POSIX.1-2001 her iki hatanın da döndürülmesine izin verir ve bu sabitlerin aynı değerde olmasını gerektirmez, bu bakımdan taşınabilir uygulamalar her iki seçeneği de sınamalıdır.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm><constant>EAGAIN</constant></glossterm>
+    <glossdef>
+     <para>
+      (İnternet alanı verikatarı soketleri için) <replaceable>sockfd</replaceable> ile belirtilen soket, önceden bir adres ile ilişkilendirilmemiş ve soketi geçici bir portla ilişkilendirmeye çalışırken geçici port aralığındaki tüm portların kullanımda olduğu anlaşılmış. <uri xlink:href="man7-ip"/> sayfasındaki <filename>/proc/sys/net/ipv4/ip_local_port_range</filename> ile ilgili açıklamaya bakınız.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm><constant>EALREADY</constant></glossterm>
+    <glossdef>
+     <para>
+      Başka bir Hızlı Açma işlemde.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm><constant>EBADF</constant></glossterm>
+    <glossdef>
+     <para>
+      Belirtilen <replaceable>sockfd</replaceable> geçerli bir açık dosya tanıtıcısı değil.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm><constant>ECONNRESET</constant></glossterm>
+    <glossdef>
+     <para>
+      Bağlantı karşıdan sıfırlandı.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm><constant>EDESTADDRREQ</constant></glossterm>
+    <glossdef>
+     <para>
+      Soket bağlantılı kipte değil ve karşı adres atanmamış.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm><constant>EFAULT</constant></glossterm>
+    <glossdef>
+     <para>
+      Bir değiştirge için belirtilen kullanıcı adres uzayı geçersiz.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm><constant>EINTR</constant></glossterm>
+    <glossdef>
+     <para>
+      Veri gönderilmeden önce bir sinyal alınmış; <uri xlink:href="man7-signal"/> sayfasına bakın.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm><constant>EINVAL</constant></glossterm>
+    <glossdef>
+     <para>
+      Belirtilen değiştirge geçersiz.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm><constant>EISCONN</constant></glossterm>
+    <glossdef>
+     <para>
+      Bağlantılı kipteki soket zaten bağlı ancak bir alıcı belirtilmiş. (Ya bu hata döner ya da belirtilen alıcı dikkate alınmaz.)
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm><constant>EMSGSIZE</constant></glossterm>
+    <glossdef>
+     <para>
+      Soket türü iletinin bütün olarak gönderilmesini gerektiriyor ancak iletinin boyutu bunu imkansız kılıyor.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm><constant>ENOBUFS</constant></glossterm>
+    <glossdef>
+     <para>
+      Ağ arabiriminin çıktı kuyruğu dolu. Bu, genellikle arabirimin göndermeyi durdurduğunu gösterir, ancak geçici bir tıkanıklıktan ötürü de olabilir. (Normalde bu durum Linux'ta olmaz. Aygıtın kuyruğu taşarsa paketler sessizce düşürülür.)
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm><constant>ENOMEM</constant></glossterm>
+    <glossdef>
+     <para>
+      Yeterli bellek yok.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm><constant>ENOTCONN</constant></glossterm>
+    <glossdef>
+     <para>
+      Soket bağlantısız ve bir hedef belirtilmemiş.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm><constant>ENOTSOCK</constant></glossterm>
+    <glossdef>
+     <para>
+      Belirtilen <replaceable>sockfd</replaceable>'nin bir soketle ilgisi yok.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm><constant>EOPNOTSUPP</constant></glossterm>
+    <glossdef>
+     <para>
+      <replaceable>flags</replaceable> değiştirgesindeki bazı bitler soket türüyle uyumsuz.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm><constant>EPIPE</constant></glossterm>
+    <glossdef>
+     <para>
+      Bağlantı yönelimli sokette yerel uç kapatılmış. Bu durumda, <constant>MSG_NOSIGNAL</constant> atanmamışsa işlem ayrıca <constant>SIGPIPE</constant> sinyalini de alır.
+     </para>
+    </glossdef>
+   </glossentry>
+  </glosslist>
+ </refsect1>
+ <refsect1><title>UYUMLULUK</title>
+  <para>
+   4.4BSD, SVr4, POSIX.1-2001.  Bu arayüzler ilk defa 4.2BSD ile ortaya çıktı.
+  </para>
+  <para>
+   POSIX.1-2001 sadece <constant>MSG_OOB</constant> ve <constant>MSG_EOR</constant> seçeneklerini açıklar. POSIX.1-2008 <constant>MSG_NOSIGNAL</constant>'e bir belirtim ekler. <constant>MSG_CONFIRM</constant> seçeneği ise Linux eklentisidir.
+  </para>
+ </refsect1>
+ <refsect1><title>EK BİLGİ</title>
+  <para>
+   POSIX.1-2001'e göre, <replaceable>msghdr</replaceable> yapısının <replaceable>msg_controllen</replaceable> alanı <replaceable>socklen_t</replaceable> türünden, <replaceable>msg_iovlen</replaceable> alanı ise <replaceable>int</replaceable> türünde olmalıdır, fakat glibc ikisine de <replaceable>size_t</replaceable> türünü atar.
+  </para>
+  <para>
+   Tek çağrıda çok sayıda verikatarı iletmek için kullanılan Linux'a özgü sistem çağrısı hakkında bilgi edinmek için <uri xlink:href="man2-sendmmsg"/> sayfasına bakın.
+  </para>
+ </refsect1>
+ <refsect1><title>HATALAR</title>
+  <para>
+   Linux, <constant>ENOTCONN</constant> yerine <constant>EPIPE</constant> döndürebilir.
+  </para>
+ </refsect1>
+ <refsect1><title>ÖRNEKLER</title>
+  <para>
+   <command>sendto</command>() kullanım örneği <uri xlink:href="man3-getaddrinfo"/> sayfasında verilmiştir.
+  </para>
+ </refsect1>
+ <refsect1><title>İLGİLİ BELGELER</title>
+  <para>
+   <uri xlink:href="man2-fcntl"/>, <uri xlink:href="man2-getsockopt"/>, <uri xlink:href="man2-recv"/>, <uri xlink:href="man2-select"/>, <uri xlink:href="man2-sendfile"/>, <uri xlink:href="man2-sendmmsg"/>, <uri xlink:href="man2-shutdown"/>, <uri xlink:href="man2-socket"/>, <uri xlink:href="man2-write"/>, <uri xlink:href="man3-cmsg"/>, <uri xlink:href="man7-ip"/>, <uri xlink:href="man7-ipv6"/>, <uri xlink:href="man7-socket"/>, <uri xlink:href="man7-tcp"/>, <uri xlink:href="man7-udp"/>, <uri xlink:href="man7-unix"/>
+  </para>
+ </refsect1>
+ <refsect1><title>ÇEVİREN</title>
+  <para>Fatih Koçer - Ağustos 2022</para>
+ </refsect1>
+</refentry>
