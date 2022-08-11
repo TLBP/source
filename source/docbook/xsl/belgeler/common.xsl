@@ -36,7 +36,7 @@
   version="1.0">
 
 <!-- özelleştirilmiş xslt betikleri -->
-<xsl:import href="arsiv.xsl"/>
+<!--xsl:import href="arsiv.xsl"/-->
 <xsl:import href="multindex.xsl"/>
 <xsl:import href="index-lists.xsl"/>
 <xsl:import href="tlbp-qandaset.xsl"/>
@@ -52,7 +52,7 @@
 <xsl:param name="l10n.xml" select="document('y11e.xml')"/>
 <xsl:param name="refentry.generate.name">1</xsl:param>
 <xsl:param name="refentry.generate.title">1</xsl:param>
-<xsl:param name="chunk.base.dir">../../htdocs/dnm/</xsl:param>
+<xsl:param name="chunk.base.dir">../htdocs/kitaplik/</xsl:param>
 <xsl:param name="docbook.css.link">0</xsl:param>
 <xsl:param name="callout.list.table">0</xsl:param>
 <xsl:param name="chapter.autolabel">1</xsl:param>
@@ -270,12 +270,43 @@ set       toc,title
   </xsl:if>
 </xsl:template>
 
+<xsl:template match="d:cmdsynopsis">
+  <xsl:if test="position()=1">
+    <br/>
+  </xsl:if>
+  <table>
+    <xsl:apply-templates select="." mode="common.html.attributes"/>
+    <tr>
+      <xsl:call-template name="id.attribute">
+        <xsl:with-param name="conditional" select="0"/>
+      </xsl:call-template>
+      <xsl:call-template name="anchor">
+        <xsl:with-param name="conditional" select="1"/>
+      </xsl:call-template>
+      <td class="cmdsynopsis">
+        <xsl:apply-templates select="*[position()=1]"/>
+      </td>
+      <td class="cmdsynopsis">
+        <xsl:apply-templates select="*[position()>1]"/>
+      </td>
+   </tr>
+  </table>
+</xsl:template>
+
 <xsl:template match="d:literallayout[@role='error']">
   <div class="para">
     <pre class="errorlayout">
       <xsl:apply-templates/>
     </pre>
   </div>
+</xsl:template>
+
+<xsl:template match="d:glossterm/d:glossterm[position()>1]">
+  <br/><xsl:apply-templates/>
+</xsl:template>
+
+<xsl:template match="d:glossterm/d:glossterm[position()=1]">
+  <xsl:apply-templates/>
 </xsl:template>
 
 <xsl:template match="d:screen|d:programlisting|d:synopsis">
@@ -449,12 +480,21 @@ set       toc,title
 
 <!-- Kılavuz sayfalarına özel aralarında paragraf boşluğu olmayan paragraflar -->
 <xsl:template match="d:simpara[name(..) = 'refsect1']">
-  <xsl:if test="not (preceding-sibling::d:simpara)">
+  <xsl:if test="name(preceding-sibling::*[1]) != 'simpara'">
    <p/>
   </xsl:if>
   <div class="simpara">
     <xsl:apply-templates/>
   </div>
+</xsl:template>
+
+<xsl:template match="d:simpara[name(..) != 'refsect1']">
+  <div class="simpara">
+    <xsl:apply-templates/>
+  </div>
+  <xsl:if test="name(following-sibling::*[1]) != 'simpara'">
+   <p/>
+  </xsl:if>
 </xsl:template>
 
 <xsl:template name="paragraph">
@@ -554,62 +594,51 @@ footnote text gets an id of #ftn.@id. They cross link to each other. -->
 </xsl:template>
 
 <xsl:template match="d:funcsynopsis">
-  <xsl:apply-templates/><div style="padding:5px"/>
-</xsl:template>
-
-<xsl:template match="d:funcsynopsisinfo">
   <xsl:apply-templates/>
 </xsl:template>
 
-<xsl:template match="d:funcdeflist">
-  <div class="tablo">
-    <div class="satir">
-      <div class="solsutun">
-      <table cellpadding="5" cellspacing="0" border="0" class="funcinline">
-        <xsl:apply-templates/>
-      </table>
-      </div>
-      <div class="sagsutun">
-        <xsl:value-of select="@role"/>
-      </div>
-    </div>
+<xsl:template match="d:funcsynopsisinfo">
+  <xsl:variable name="rtf">
+    <xsl:apply-templates/>
+  </xsl:variable>
+  <div>
+    <xsl:apply-templates select="." mode="common.html.attributes"/>
+    <xsl:call-template name="id.attribute"/>
+    <xsl:call-template name="make-verbatim">
+      <xsl:with-param name="rtf" select="$rtf"/>
+    </xsl:call-template>
   </div>
 </xsl:template>
 
 <xsl:template match="d:funcprototype">
-  <xsl:if test="(@id)">
+  <xsl:if test="(@xml:id)">
     <a><xsl:attribute name="name">
-        <xsl:value-of select="@id"/>
+        <xsl:value-of select="@xml:id"/>
     </xsl:attribute></a>
   </xsl:if>
-  <xsl:choose>
-    <xsl:when test="name(..)!='funcdeflist'">
-      <div class="tablo">
-        <div class="satir">
-          <div class="solsutun">
-          <table cellpadding="5" cellspacing="0" border="0" class="funcinline">
-            <tr><xsl:apply-templates/></tr>
-          </table>
-          </div>
-          <div class="sagsutun">
-            <xsl:value-of select="@role"/>
-          </div>
-        </div>
-      </div>
-    </xsl:when>
-    <xsl:otherwise>
-      <tr><xsl:apply-templates/></tr>
-    </xsl:otherwise>
-  </xsl:choose>
+  <div class="funcprototype">
+   <code><xsl:apply-templates/></code>
+  </div>
 </xsl:template>
 
 
 <xsl:template match="d:funcdef">
-<td valign="top" align="right" class="tt" nowrap="nowrap"><tt><xsl:apply-templates/></tt></td>
+  <xsl:apply-templates select="." mode="common.html.attributes"/>
+  <xsl:call-template name="id.attribute"/>
+  <xsl:apply-templates mode="ansi-nontabular"/>
+  <xsl:text>(</xsl:text>
 </xsl:template>
 
-<xsl:template match="funcprototype/paramdef">
-<td valign="top"><pre class="paramdef"><xsl:apply-templates/></pre></td>
+<xsl:template match="d:paramdef">
+  <xsl:apply-templates mode="ansi-nontabular"/>
+  <xsl:choose>
+    <xsl:when test="following-sibling::*">
+      <xsl:text>, </xsl:text>
+    </xsl:when>
+    <xsl:otherwise>
+      <xsl:text>);</xsl:text>
+    </xsl:otherwise>
+  </xsl:choose>
 </xsl:template>
 
 <xsl:template match="parameters">
