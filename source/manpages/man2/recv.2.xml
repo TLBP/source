@@ -1,0 +1,456 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ********************************************************************
+     man2/recv.2.xml, BSD-4, FK - Ağustos 2022
+     ******************************************************************** -->
+<refentry xml:id="man2-recv" xmlns="http://docbook.org/ns/docbook"
+ xmlns:xlink="http://www.w3.org/1999/xlink" version="5.0" xml:lang="tr">
+ <info xmlns:t="http://tlbp.gen.tr/ns/tlbp">
+  <t:pageinfo>
+   <t:name>recv</t:name>
+   <t:volnum>2</t:volnum>
+   <t:section>Sistem Çağrıları</t:section>
+   <t:source>Linux man-pages 5.10</t:source>
+   <t:date>2020-11-01</t:date>
+<t:remark>.ig
+Copyright (c) 1983, 1990, 1991 The Regents of the University of California.
+All rights reserved.
+
+%%%LICENSE_START(BSD_4_CLAUSE_UCB)
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+3. All advertising materials mentioning features or use of this software
+   must display the following acknowledgement:
+This product includes software developed by the University of
+California, Berkeley and its contributors.
+4. Neither the name of the University nor the names of its contributors
+   may be used to endorse or promote products derived from this software
+   without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+SUCH DAMAGE.
+%%%LICENSE_END
+
+    $Id: recv.2,v 1.3 1999/05/13 11:33:38 freitag Exp $
+
+Modified Sat Jul 24 00:22:20 1993 by Rik Faith &lt;faith@cs.unc.edu&gt;
+Modified Tue Oct 22 17:45:19 1996 by Eric S. Raymond &lt;esr@thyrsus.com&gt;
+Modified 1998,1999 by Andi Kleen
+2001-06-19 corrected SO_EE_OFFENDER, bug report by James Hawtin
+..</t:remark>
+  </t:pageinfo>
+ </info>
+ <refnamediv>
+  <refname>recv</refname>
+  <refpurpose>bağlantılı soket üzerinden ileti alır</refpurpose>
+ </refnamediv>
+ <refnamediv>
+  <refname>recvfrom</refname>
+  <refpurpose>bağlantısız soket üzerinden ileti alır</refpurpose>
+ </refnamediv>
+ <refnamediv>
+  <refname>recvmsg</refname>
+  <refpurpose>soket üzerinden bir dizi ileti alır</refpurpose>
+ </refnamediv>
+ <refsynopsisdiv><title>BİLDİRİM</title>
+  <funcsynopsis>
+   <funcsynopsisinfo>
+    <option>#include &lt;sys/types.h></option>
+    <option>#include &lt;sys/socket.h></option>
+   </funcsynopsisinfo>
+   <funcprototype>
+    <funcdef>ssize_t <function>recv</function></funcdef>
+    <paramdef>int <parameter>sockfd</parameter></paramdef>
+    <paramdef>void *<parameter>buf</parameter></paramdef>
+    <paramdef>size_t <parameter>len</parameter></paramdef>
+    <paramdef>int <parameter>flags</parameter></paramdef>
+   </funcprototype>
+   <funcprototype>
+    <funcdef>ssize_t <function>recvfrom</function></funcdef>
+    <paramdef>int <parameter>sockfd</parameter></paramdef>
+    <paramdef>void *<parameter>buf</parameter></paramdef>
+    <paramdef>size_t <parameter>len</parameter></paramdef>
+    <paramdef>int <parameter>flags</parameter></paramdef>
+    <paramdef>struct sockaddr *<parameter>src_addr</parameter></paramdef>
+    <paramdef>socklen_t *<parameter>addrlen</parameter></paramdef>
+   </funcprototype>
+   <funcprototype>
+    <funcdef>ssize_t <function>recvmsg</function></funcdef>
+    <paramdef>int <parameter>sockfd</parameter></paramdef>
+    <paramdef>struct msghdr *<parameter>msg</parameter></paramdef>
+    <paramdef>int <parameter>flags</parameter></paramdef>
+   </funcprototype>
+  </funcsynopsis>
+ </refsynopsisdiv>
+ <refsect1><title>AÇIKLAMA</title>
+  <para>
+   <command>recv</command>(), <command>recvfrom</command>() ve <command>recvmsg</command> sistem çağrıları bir başka soketten veri almak için kullanılır. Bu sistem çağrıları hem bağlantılı hem de bağlantısız soketlerde kullanılabilir. Bu sayfa bu üç çağrının genel özelliklerini sonrasında aralarındaki farkı anlatacaktır.
+  </para>
+  <para>
+   <command>recv</command>() ve	<uri xlink:href="man2-read"/> arasındaki tek fark <replaceable>flags</replaceable> değiştirgesinin varlığıdır. Sıfır değeri atanmış <command>recv</command>() genel olarak <uri xlink:href="man2-read"/> ile eşdeğerdir (ancak yine de EK BİLGİLER bölümüne bakın). Ayrıca aşagıdaki
+  </para>
+  <screen>recv(sockfd, buf, len, flags);
+</screen>
+  <para>çağrısı</para>
+  <screen>recvfrom(sockfd, buf, len, flags, NULL, NULL);
+</screen>
+  <para>çağrısına eşdeğerdir.</para>
+  <para>
+   Üç sistem çağrısı da başarı durumunda iletinin boyutunu dönderir. Eğer ileti verilen tampona sığamayacak kadar uzunsa, iletiyi alan soket tipine bağlı olarak fazlalık baytlar atılabilir.
+  </para>
+  <para>
+   Eğer sokette ileti yoksa ve soket engellemesiz değilse çağrılar bir iletinin gelmesini bekler (<uri xlink:href="man2-fcntl"/> sayfasına bakın), eğer soket engellemeliyse <code>-1</code> döner ve <replaceable>errno</replaceable> harici değişkenine <constant>EAGAIN</constant> veya <constant>EWOULDBLOCK</constant> sabitlerinden bir tanesi atanır. Bu sistem çağrıları, talep edilen miktarın tamamının alınmasını beklemek yerine mevcut olan tüm verileri döndürür.
+  </para>
+  <para>
+   Bir uygulama <uri xlink:href="man2-select"/>, <uri xlink:href="man2-poll"/> veya <uri xlink:href="man2-epoll"/> çağrılarını kullanarak sokete fazla verinin ne zaman geleceğine karar verebilir.
+  </para>
+  <refsect2>
+   <title><replaceable>flags</replaceable> değerleri</title>
+   <para>
+    <replaceable>flags</replaceable> değiştirgesinin asağıdaki değerlerin VEYAlanmasıyla elde edilir.
+   </para>
+   <glosslist>
+    <glossentry>
+    <glossterm><constant>MSG_CMSG_CLOEXEC</constant> (sadece <command>recvmsg</command>() için geçerlidir, Linux 2.6.23 ve sonrası)</glossterm>
+     <glossdef>
+      <para>
+       <constant>SCM_RIGHTS</constant> işlemi kullanılarak sağlanan UNIX alan dosya tanımlayıcısına (<uri xlink:href="man7-unix"/> sayfasında açıklanmışdır) close-on-exec bayrağını ayarlar. Bu bayrak, <uri xlink:href="man2-open"/> çağrısına ait <constant>O_CLOEXEC</constant> bayrağıyla aynı sebeplerden ötürü kullanışlıdır.
+      </para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm><constant>MSG_DONTWAIT</constant> (Linux 2.2. ve sonrası)</glossterm>
+     <glossdef>
+      <para>
+        Engellemesiz işlemi etkinleştirir; eğer işlem engellenirse, <constant>EAGAIN</constant> veya <constant>EWOULDBLOCK</constant> döner. <constant>O_NONBLOCK</constant> seçeneği tanımlanmış (<uri xlink:href="man2-fcntl"/> üzerinden <constant>F_SETFL</constant> işlemi ile) gibi davranır, fakat <constant>MSG_DONTWAIT</constant> çağrıya özel olmasıyla fark oluşturur. <constant>O_NONBLOCK</constant> seçeneği ise açık dosya tanıtıcısı içindir (<uri xlink:href="man2-open"/> sayfasına bakın), çağrı sürecindeki tüm evreleri ve aynı zamanda aynı açık dosyanın dosya tanıtıcılarına sahip diğer süreçleri de etkiler.
+      </para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm><constant>MSG_ERRQUEUE</constant> (Linux 2.2 ve sonrası)</glossterm>
+     <glossdef>
+      <para>
+       Bu bayrak, hata sırası soket hata sırasından alınmasını belirtir. Hata, protokole bağlı türden yardımcı veri olarak iletilir (IPv4 için <constant>IP_RECVERR</constant>). Kullanıcı yeteri boyutta bir tampon belirtmelidir. Daha detaylı bilgi için <uri xlink:href="man3-cmsg"/> ve <uri xlink:href="man7-ip"/> sayfalarına bakın. Esas paketteki hataya sebep olan yük <replaceable>msg_iovec</replaceable> ile normal veri olarak sağlanır. Hataya sebep olan esas hedef adresi <replaceable>msg_name</replaceable> ile sağlanır.
+      </para>
+      <para>
+       <replaceable>sock_extended_err</replaceable> yapısında sağlanan hata:
+      </para>
+      <screen>#define SO_EE_ORIGIN_NONE    0
+#define SO_EE_ORIGIN_LOCAL   1
+#define SO_EE_ORIGIN_ICMP    2
+#define SO_EE_ORIGIN_ICMP6   3
+
+struct sock_extended_err
+{
+    uint32_t ee_errno;   /* Hata sayısı */
+    uint8_t  ee_origin;  /* Hatanın kaynağı */
+    uint8_t  ee_type;    /* Tür */
+    uint8_t  ee_code;    /* Kod */
+    uint8_t  ee_pad;     /* Dolgu */
+    uint32_t ee_info;    /* Ek bilgiler */
+    uint32_t ee_data;    /* Diğer veriler */
+    /* Fazladan veri takip edebilir */
+};
+
+struct sockaddr *SO_EE_OFFENDER(struct sock_extended_err *);
+</screen>
+      <para>
+       <replaceable>ee_errno</replaceable> sıraya alınmış <replaceable>errno</replaceable> hatasını içerir. <replaceable>ee_origin</replaceable> hatanın kodun neresinde olduğunu içerir. Diğer alanlar protokole özeldir. <constant>SOCK_EE_OFFENDER</constant> makrosu, yardımcı iletiye verilen işaretçiden kaynaklanan hatanın ağ nesnesinin adresine bir işaretçi dönderir. Eğer adres bilinmiyorsa, <replaceable>sockaddr</replaceable> üyesi <replaceable>sa_family</replaceable> <constant>AF_UNSPEC</constant> içerir ve <replaceable>sockaddr</replaceable> yapısına ait diğer alanlar tanımsızdır. Hataya sebep olan paketteki yük normal veri olarak geçirilir.
+      </para>
+      <para>
+       Yerel hatalar için adres belirtilmez (bu, <replaceable>cmsghdr</replaceable> üyesi <replaceable>cmsg_len</replaceable> ile kontrol edilebilir). Hata alımı için <constant>MSG_ERRQUEUE</constant> bayrağı <replaceable>msghdr</replaceable> içine ayarlanır. Bir hata belirtildikten sonra; bekleyen soket hatası, hata kuyruğundaki diğer hataya göre yeniden oluşturulur ve sıradaki soket işlemiyle belirtilir.
+      </para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm><constant>MSG_OOB</constant></glossterm>
+     <glossdef>
+      <para>
+       Bu bayrak normalde veri akışında alınmayacak bantdışı (Out Of Band) veriye ait tarifi talep eder. Bazı protokoller hızlandırılmış veriyi normal veri sırasının başına yerleştirir ve bu yüzden bu bayrak bu tür protokollerde kullanılamaz.
+      </para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm><constant>MSG_PEEK</constant></glossterm>
+     <glossdef>
+      <para>
+       Bu bayrak; alım işlemini, alım kuyruğunun başındaki veriyi o veriyi silmeden almasına neden olur. Bu sebepten, daha sonraki alım çağrısıda aynı veriyi dönderir.
+      </para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm><constant>MSG_TRUNC</constant> (Linux 2.2 ve sonrası)</glossterm>
+     <glossdef>
+      <para>
+       Ham (<constant>AF_PACKET</constant>), İnternet veri (Linux 2.4.27/2.6.8 ve sonrası), ağ bağlantısı ve UNIX veri (Linux 3.4 ve sonrası) soketleri için: Tampona belirtilenden büyük olsa bile, paketin veya verinin gerçek uzunluğunu dönderir.
+      </para>
+      <para>
+       İnternet akış soketleriyle kullanmak için <uri xlink:href="man7-tcp"/> sayfasına bakın.
+      </para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+    <glossterm><constant>MSG_WAITALL</constant> (Linux 2.2. ve sonrası)</glossterm>
+     <glossdef>
+      <para>
+       Bu bayrak, tüm talep edilenler tamamlandığında işlemin engellemesini talep eder. Ancak çağrı; bir sinyal yakaladığında, bir hata veya bağlantı kopması meydana geldiğinde, alınacak sıradaki verinin türü alınan veri türlerinden farklıysa daha az veri döner. Bu bayrak veri soketleri için herhangi bir etkiye sahip değildir. 
+      </para>
+     </glossdef>
+    </glossentry>
+   </glosslist>
+  </refsect2>
+  <refsect2><title><command>recvfrom</command>()</title>
+   <para>
+    <command>recvfrom</command>(), gelen iletiyi <replaceable>buf</replaceable> tamponuna yerleştirir. Çağrıcı tamponun boyutunu <replaceable>len</replaceable> değeri ile belirtmelidir.
+   </para>
+   <para>
+    Eğer <replaceable>src_addr</replaceable> NULL değilse ve altta yatan protokol iletinin kaynak adresini sağlıyorsa <replaceable>src_addr</replaceable> tarafından gösterilen kaynak adres tampon içine yerleştirilir. Bu durumda, <replaceable>addrlen</replaceable> değer-sonuç değiştirgesidir. <replaceable>addrlen</replaceable>, çağrıdan önce <replaceable>src_addr</replaceable> ile ilişkilendirilmiş tamponun boyutuna ayarlanmalıdır. <replaceable>addrlen</replaceable>, dönüşün üzerine kaynak adresin gerçek boyutunu içerecek şekilde güncellenir. Sağlanan tampon çok küçükse döndürülen adres kesilir; bu durumda, <replaceable>addrlen</replaceable> çağrıya sağlanan boyuttan daha büyük bir değer dönderir.
+   </para>
+   <para>
+    Eğer çağırıcı kaynak adresiyle ilgilenmiyorsa <replaceable>src_addr</replaceable> ve <replaceable>addrlen</replaceable> kısımlarını NULL olarak belirtmelidir.
+   </para>
+  </refsect2>
+  <refsect2><title><command>recv</command>()</title>
+   <para>
+    <command>recv</command>() çağrısı normalde <replaceable>connected</replaceable> (bağlanmış) soketlerle kullanılır (<uri xlink:href="man2-connect"/> sayfasına bakın). Bu çağrı:
+   </para>
+   <screen>recvfrom(fd, buf, len, flags, NULL, 0);
+</screen>
+   <para>
+    çağrısıyla eşdeğerdir.
+   </para>
+  </refsect2>
+  <refsect2><title><command>recvmsg</command>()</title>
+   <para>
+    <command>recvmsg</command>(), <replaceable>msghdr</replaceable> yapısını kullanarak doğrudan sağlanan değiştirge saysını azaltır. Bu yapı, <replaceable>&lt;sys/socket.h> içerisinde şu şekilde tanımlanmıştır:
+   </para>
+   <screen>struct iovec {                    /* Dağınık/toplama (scatter/gather) dizi öğeleri */
+    void  *iov_base;              /* Başlangıç adresi */
+    size_t iov_len;               /* İletilecek baytların saysı */
+};
+</screen>
+   <screen>struct msghdr {
+    void         *msg_name;       /* İsteğe bağlı adres */
+    socklen_t     msg_namelen;    /* Adresin boyutu */
+   struct iovec *msg_iov;        /* Dağınık/toplama (scatter/gather) dizisi */
+    size_t        msg_iovlen;     /* # msg_iov içerisindeki öğeler*/
+    void         *msg_control;    /* Yardımcı veri, aşağıya bakın*/
+    size_t        msg_controllen; /* Yardımcı veri tampon boyutu */
+    int           msg_flags;      /* Alınan iletideki bayraklar */
+};
+</screen>
+   <para>
+    <replaceable>msg_name</replaceable> alanı soket bağlantıdan koparsa çağrıcı tarafından tahsis edilen kaynak adresi dönmek için kullanılan tampona işaret eder. Çağrıcı çağrıyı yapmadan önce tamponun boyutunu <replaceable>msg_namelen</replaceable>'e belirtmelidir; başarılı bir çağrıdan sonra <replaceable>msg_namelen</replaceable> dönen adresin uzunluğunu içerir. Eğer uygulama kaynak adresi bilmeye ihtiyaç duymuyorsa <replaceable>msg_name<replaceable>'i NULL olarak belirtebilir.
+   </para>
+   <para>
+    <uri xlink:href="man2-readv"/> sayfasında açıklandığı üzere, <replaceable>msg_iov</replaceable> ve <replaceable>msg_iovlen</replaceable> alanları dağınık-toplama (scatter-gather) konumlarını açıklar.
+   </para>
+   <para>
+    <replaceable>msg_controllen</replaceable> uzunluğunu sahip <replaceable>msg_control</replaceable> alanı, diğer protokollere ait kontrol iletileri veya çeşitli yardımcı veriler için bir tamponu işaret eder. <command>recvmsg</command>() çağrıldığında, <replaceable>msg_controllen</replaceable> <replaceable>msg_control</replaceable> içinde mevcut olan tamponun boyutunu içermelidir; başarılı bir çağrıda kontrol ileti dizisinin boyutunu içerir.
+   </para>
+   <para>
+    İletinin yapısı:
+   </para>
+   <screen>struct cmsghdr {
+    size_t cmsg_len;    /* Başlıkla beraber veri bayt sayısı
+                           (POSIX'de türü socklen_t'dir) */
+    int    cmsg_level;  /* Kaynak protokol */
+    int    cmsg_type;   /* Protokole özgü tür */
+/* unsigned char cmsg_data[]; ile devam eder */
+};
+</screen>
+   <para>
+    Yardımcı veri sadece <uri xlink:href="man3-cmsg"/> içinde tanımlanan makrolarla erişilmedir.
+   </para>
+   <para>
+    Örnek olarak, Linux bu yardımcı veri mekanizmasını genişletilmiş hataları veya UNIX alan soketleri üzerinden dosya tanımlayıcılarını geçirmek için kullanır. Yardımcı verinin diğer çeşitli soket alanlarında kullanımına ilişkin ayrıntılı bilgi için <uri xlink:href="man7-unix"/> ve <uri xlink:href="man7-ip"/> sayfalarına bakın.
+   </para>
+   <para>
+    <replaceable>msghdr</replaceable> yapısına ait <replaceable>msg_flags</replaceable> alanı, <command>recvmsg</command>() dönüşünde ayarlanır. Aşağıda verilen şu bayrakları içerebilir:
+   </para>
+   <glosslist>
+    <glossentry>
+     <glossterm><constant>MSG_EOR</constant></glossterm>
+     <glossdef>
+      <para>
+       Dönderilen verilerin bir kaydı tamamladığını yani kayıt sonunu (End Of Record) belirtir (genellikle <constant>SOCK_SEQPACKET</constant> türündeki soketlerle kullanılır).
+      </para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm><constant>MSG_TRUNC</constant></glossterm>
+     <glossdef>
+      <para>
+       Verikatarının sağlanan tampondan daha uzun olmasından dolayı kalan kısmın atılmasını belirtir.
+      </para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm><constant>MSG_CTRUNC</constant></glossterm>
+     <glossdef>
+      <para>
+       Yardımcı veri için tampondaki boşluğun az olmasından dolayı kontrol verisinin atılmasını belirtir.
+      </para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm><constant>MSG_OOB</constant></glossterm>
+     <glossdef>
+      <para>
+       Hızlandırılmış veya bantdışı (Out Of Band) verinin alındığını belirtmek için dönderilir.
+      </para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm><constant>MSG_ERRQUEUE</constant></glossterm>
+     <glossdef>
+      <para>
+       Bir veri alınmadığını ancak soket hata dizisinden genişletilmiş bir hata alındığını belirtir.
+      </para>
+     </glossdef>
+    </glossentry>
+   </glosslist>
+  </refsect2>
+ </refsect1>
+ <refsect1><title>DÖNÜŞ DEĞERİ</title>
+  <para>
+   Başarı durumunda bu çağrılar alınan baytların sayısını döndürür. Hata durumunda, <code>-1</code> döner ve hata <replaceable>errno</replaceable> değişkenine atanır.
+  </para>
+  <para>
+   Akış soketi eşi bağlantıyı düzenli bir şekilde kapatırsa dönüş değeri <code>0</code> olur (geleneksel dosya sonu (End Of File) dönüş değeri).
+  </para>
+  <para>
+   Çeşitli alanlardaki verikatarı soketleri (örneğin UNIX ve İnternet alan soketleri) sıfır uzunluktaki verikatarlarına izin verir. Bunun gibi bir verikatarı alınırsa dönüş değeri <code>0</code> olur.
+  </para>
+  <para>
+   Eğer akış soketinden istenilen bayt boyutu 0 ise aynı şekilde <code>0</code> değeri döner. 
+  </para>
+ </refsect1>
+ <refsect1><title>HATALAR</title>
+  <para>
+   Soket katmanı tarafından üretilen bazı standart hatalar vardır. Ayrıca, kullanılan protokol modülleri tarafından üretilen ve döndürülen hatalar da olabilir; bilgi için bunlarla ilgili kılavuz sayfalarına bakın.
+  </para>
+  <glosslist>
+   <glossentry>
+   <glossentry>
+    <glossterm><constant>EAGAIN</constant> veya <constant>EWOULDBLOCK</constant></glossterm>
+    <glossdef>
+     <para>
+      Soket engellemesiz olarak işaretlenmiş ama talep edilen işlem soketi engelleyecek veya veri alım zaman aşımı ayarlanmış ve veri gelmeden önce zaman aşımı süresi dolmuş. POSIX.1 her iki hatanın da döndürülmesine izin verir ve bu sabitlerin aynı değerde olmasını gerektirmez, bu bakımdan taşınabilir uygulamalar her iki seçeneği de sınamalıdır.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm><constant>EBADF</constant></glossterm>
+    <glossdef>
+     <para>
+      Belirtilen <replaceable>sockfd</replaceable> geçerli bir açık dosya tanıtıcısı değil.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm><constant>ECONNREFUSED</constant></glossterm>
+    <glossdef>
+     <para>
+      Konak ağ bağlantısını reddetti (tipik olarak sebebi talep edilen servisi çalıştırmamasıdır).
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm><constant>EFAULT</constant></glossterm>
+    <glossdef>
+     <para>Veri tamponu işaretçisi/işaretçileri süreç adres alanının dışına işaret ediyor.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm><constant>EINTR</constant></glossterm>
+    <glossdef>
+     <para>
+      Herhangi bir veri olmadan önce veri alımı bir sinyal ile kesilmiş; <uri xlink:href="man7-signal"/> sayfasına bakın.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm><constant>EINVAL</constant></glossterm>
+    <glossdef>
+     <para>
+      Belirtilen değiştirge geçersiz.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm><constant>ENOMEM</constant></glossterm>
+    <glossdef>
+     <para><command>recvmsg</command>() için yeterli bellek ayrılamıyor.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm><constant>ENOTCONN</constant></glossterm>
+    <glossdef>
+     <para>
+      Soket, bağlantı odaklı bir protokolle ilişkilendirilmiş ancak bağlanmamış (<uri xlink:href="man2-connect"/> ve <uri xlink:href="man2-accept"/> sayfalarına bakın).
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm><constant>ENOTSOCK</constant></glossterm>
+    <glossdef>
+     <para>
+      Belirtilen <replaceable>sockfd</replaceable>'nin bir soketle ilgisi yok.
+     </para>
+    </glossdef>
+   </glossentry>
+  </glosslist>
+ </refsect1>
+ <refsect1><title>UYUMLULUK</title>
+  <para>
+   POSIX.1-2001, POSIX.1-2008, 4.4BSD  Bu arayüzler ilk defa 4.2BSD ile ortaya çıktı.
+  </para>
+  <para>
+   POSIX.1-2001 sadece <constant>MSG_OOB</constant>, <constant>MSG_PEEK</constant> ve <constant>MSG_WAITALL</constant> seçeneklerini açıklar.
+  </para>
+ </refsect1>
+ <refsect1><title>EK BİLGİ</title>
+  <para>
+   Eğer sıfır uzunluğunda bir verikatarı beklemedeyse, sıfır <replaceable>flags</replaceable> değiştirgeli <uri xlink:href="man2-read"/> ve <command>recv</command>() farklı davranışlar sergiler. Bu koşullarda, <uri xlink:href="man2-read"/> hiçbir etkiye sahip değildir (verikatarı beklemede kalır), <command>recv<command>() ise bekleyen verikatarını tüketir.
+  </para>
+  <para>
+   <replaceable>socklen_t</replaceable> POSIX ile icat edilmiştir. Ayrıca <uri xlink:href="man2-accept"/> sayfasına bakın.
+  </para>
+  <para>
+   POSIX.1'e göre, <replaceable>msghdr</replaceable> yapısının <replaceable>msg_controllen</replaceable> alanı <replaceable>socklen_t</replaceable> türünden, <replaceable>msg_iovlen</replaceable> alanı ise <replaceable>int</replaceable> türünde olmalıdır, fakat glibc ikisine de <replaceable>size_t</replaceable> türünü atar.
+  </para>
+  <para>
+   Tek çağrıda çok sayıda verikatarı alabilmek için kullanılan Linux'a özgü sistem çağrısı hakkında bilgi edinmek için <uri xlink:href="man2-recvmmsg"/> sayfasına bakın.
+  </para>
+ </refsect1>
+ <refsect1><title>ÖRNEKLER</title>
+  <para>
+   <command>recvfrom</command>() kullanım örneği <uri xlink:href="man3-getaddrinfo"/> sayfasında verilmiştir.
+  </para>
+ </refsect1>
+ <refsect1><title>İLGİLİ BELGELER</title>
+  <para>
+   <uri xlink:href="man2-fcntl"/>, <uri xlink:href="man2-getsockopt"/>, <uri xlink:href="man2-read"/>, <uri xlink:href="man2-recvmmsg"/>, <uri xlink:href="man2-select"/>, <uri xlink:href="man2-shutdown"/>, <uri xlink:href="man2-socket"/>, <uri xlink:href="man3-cmsg"/>, <uri xlink:href="man3-sockatmark"/>, <uri xlink:href="man7-ip"/>, <uri xlink:href="man7-ipv6"/>, <uri xlink:href="man7-socket"/>, <uri xlink:href="man7-tcp"/>, <uri xlink:href="man7-udp"/>, <uri xlink:href="man7-unix"/>
+  </para>
+ </refsect1>
+ <refsect1><title>ÇEVİREN</title>
+  <para>Fatih Koçer - Ağustos 2022</para>
+ </refsect1>
+</refentry>
