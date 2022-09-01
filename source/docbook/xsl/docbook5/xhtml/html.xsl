@@ -201,7 +201,8 @@ xmlns="http://www.w3.org/1999/xhtml" version="1.0">
     <xsl:when test="$generate.id.attributes = 0">
       <!-- No id attributes when this param is zero -->
     </xsl:when>
-    <xsl:when test="$conditional = 0 or $node/@id or $node/@xml:id">
+    <!--xsl:when test="$conditional = 0 or $node/@id or $node/@xml:id"-->
+    <xsl:when test="$node/@id or $node/@xml:id">
       <xsl:attribute name="id">
         <xsl:call-template name="object.id">
           <xsl:with-param name="object" select="$node"/>

@@ -42,7 +42,10 @@
 <xsl:import href="tlbp-qandaset.xsl"/>
 <xsl:import href="reftoc.xsl"/>
 <xsl:import href="maketoc.xsl"/>
-
+<!-- rastgele id üretimi durduruldu. Gereksiz güncellemeler yaratıyor.
+Açmak gerekirse xhtml/html.xsl içinde id.attribute template
+içindeki $conditional içeren iptal edilmiş satır çözümdür. Ancak,
+bunu yapmak yerine xml:id'lerle değişmez id'ler oluşturmak daha iyidir. -->
 <!-- özelleştirilmiş değiştirgeler -->
 <xsl:param name="html.ext">.html</xsl:param>
 <xsl:param name="VERSION">-special(derived from DocBook XSL v1.79.1 for Turkish Linux Documentation Project by Nilgün Belma Bugüner - nilgun (at) tlbp.gen.tr)</xsl:param>
