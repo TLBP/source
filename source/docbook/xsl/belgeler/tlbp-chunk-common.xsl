@@ -817,7 +817,7 @@ xmlns:exsl="http://exslt.org/common" xmlns:cf="http://docbook.sourceforge.net/xm
 
   <xsl:apply-templates mode="chunk-filename" select="$object"/>
 
-  <xsl:if test="$ischunk='0'">
+  <xsl:if test="$ischunk='0' and $object/@xml:id">
     <xsl:text>#</xsl:text>
     <xsl:call-template name="object.id">
       <xsl:with-param name="object" select="$object"/>

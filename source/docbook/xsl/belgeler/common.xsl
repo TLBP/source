@@ -43,8 +43,10 @@
 <xsl:import href="reftoc.xsl"/>
 <xsl:import href="maketoc.xsl"/>
 <!-- rastgele id üretimi durduruldu. Gereksiz güncellemeler yaratıyor.
-Açmak gerekirse xhtml/html.xsl içinde id.attribute template
-içindeki $conditional içeren iptal edilmiş satır çözümdür. Ancak,
+Açmak gerekirse tlbp-chunk-common.xsl içinde href.target.uri template
+içinde 820.satırda "and $object/@xml:id" koşulunu ve (tlbp) reftoc.xsl
+içinde id.attribute template içinde xsl:if test="$node/@xml:id" içeren
+satırı ve kapatıcısını silmek yeterlidir. Ancak,
 bunu yapmak yerine xml:id'lerle değişmez id'ler oluşturmak daha iyidir. -->
 <!-- özelleştirilmiş değiştirgeler -->
 <xsl:param name="html.ext">.html</xsl:param>
