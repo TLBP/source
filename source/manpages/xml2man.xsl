@@ -188,9 +188,11 @@
   </xsl:variable>
 
   <xsl:value-of select="concat('&#10;.IP \fB',$cmd,'\fR ', string-length($cmd)+1, '&#10;')"/>
+
   <xsl:variable name="content">
     <xsl:apply-templates/>
   </xsl:variable>
+
   <xsl:value-of select="normalize-space($content)"/>
 
   <xsl:if test="(&indented;) and name(following-sibling::*[1])=''">
@@ -619,7 +621,8 @@
   </xsl:variable>
   <xsl:value-of select="normalize-space($content)"/>
   <xsl:choose>
-    <xsl:when test="../d:glossterm">
+   <xsl:when test="name(.) = 'glossterm' and name (..) = 'glossterm'
+             and name(following-sibling::*)='glossterm'">
       <xsl:text>\p </xsl:text>
     </xsl:when>
     <xsl:when test="name(following-sibling::*)='glossterm' or name(following-sibling::*)='term'">
@@ -775,7 +778,9 @@
                     name(.)='keyword' or
                     name(.)='option' or
                     name(.)='userinput' or
-                    ((name(.)='emphasis' or name(.)='type') and @role='bold')">
+                    ((name(.)='emphasis' or
+                    name(.)='type') and @role='bold') or
+                    (name(.)='systemitem' and @class='username')                   ">
 <xsl:value-of select="concat('\fB', $p, '\fR')"/>
     </xsl:when>
     <xsl:when test="name(.)='quote'">
