@@ -46,6 +46,7 @@ Modified 14 May 2001, 23 Sep 2001 by aeb
  </info>
  <refnamediv>
   <refname>system</refname>
+  <refpurpose>bir kabuk komutunu çalıştırır</refpurpose>
   <refpurpose></refpurpose>
  </refnamediv>
  <refsynopsisdiv><title>BİLDİRİM</title>
@@ -60,35 +61,31 @@ Modified 14 May 2001, 23 Sep 2001 by aeb
   </funcsynopsis>
  </refsynopsisdiv>
  <refsect1><title>AÇIKLAMA</title>
-  <para></para>
-  <screen>execl("/bin/sh", "sh", "-c", command, (char *) NULL);
-</screen>
-  <para></para>
-  <para></para>
-  <para></para>
+  <para>
+   <command>system</command>() <replaceable>command</replaceable> ile belirtilen bir komutu, <command>/bin/sh -c </command><replaceable>command</replaceable> çağrısıyla çalıştırır ve komutun çalışması bittikten sonra geri döner. Komutun çalışması esnasında, <constant>SIGCHLD</constant> engellenir, <constant>SIGINT</constant> ve <constant>SIGOUT</constant> göz ardı edilir.
+  </para>
  </refsect1>
- <refsect1><title>DÖNÜŞ DEĞERLERİ</title>
-  <para></para>
-  <para></para>
-  <para></para>
- </refsect1>
- <refsect1><title>HATALAR</title>
-  <para></para>
- </refsect1>
- <refsect1><title>ÖZNİTELİKLER</title>
-  <para></para>
-  <table></table>
+ <refsect1><title>DÖNÜŞ DEĞERİ</title>
+  <para>
+   Herhangi bir hatada <code>-1</code> döner (fork başarısız olmuş gibi), aksi takdirde komutun dönüş durumu döner. Bu sonuncu dönüş durumu <uri xlink:href="man2-wait"/>'de belirtilen biçimde olur.  Bundan dolayı, komutun çıkış kodu  <command>WEXITSTATUS(</command><replaceable>status</replaceable><command>)</command> olacaktır.  <command>/bin/sh</command>’ın çalıştırılamadığı durumlarda, çıkış durumu, <command>exit</command>(127) yapan komutun durumu olacaktır.
+  </para>
+  <para>
+   Şayet <replaceable>command</replaceable> değeri NULL ise ve kabuk uygunsa, <command>system</command>() sıfırdan farklı bir değer döndürür; uygun değilse sıfır döndürür.
+  </para>
+  <para>
+   <command>system</command>(), çocuk süreçlerden hiçbirinin bekleme durumunu etkilemez.
+  </para>
  </refsect1>
  <refsect1><title>UYUMLULUK</title>
   <para>
-   POSIX.1-2001, POSIX.1-2008, C89, C99.
+   ANSI C, POSIX.2, BSD 4.3
   </para>
  </refsect1>
  <refsect1><title>EK BİLGİLER</title>
-  <para></para>
-  <para></para>
-  <para></para>
-  <screen>while (something) {
+  <para>
+   Bahsedildiği gibi; <command>system</command>(), <constant>SIGINT</constant> ve <constant>SIGQUIT</constant> sinyalini yoksayar.  Bu, uygulamaların kendi çocuklarının çıkış durumlarını kontrol etmedikleri takdirde aşağıdaki örnekteki gibi durdurulamaz bir döngüden sürekli çağrılan uygulamalara sebep olabilir.
+  </para>
+  <screen>while (birsey) {
 int donen = system("foo");
 
 if (WIFSIGNALED(donen) &amp;&amp;
@@ -96,22 +93,23 @@ if (WIFSIGNALED(donen) &amp;&amp;
         break;
 }
 </screen>
-  <para></para>
-  <para></para>
-  <para></para>
-  <refsect2><title>Uyarılar</title>
-   <para></para>
-   <para></para>
-   <para></para>
-  </refsect2>
+  <para>
+   Sistem bütünlüğünü bozmak için, bazı çevre değişkenleri tuhaf değerlerle kullanılabileceğinden, <command>system</command>()’i suid veya sgid yetkileri olan bir yazılımda kullanmayın. Onun yerine <uri xlink:href="man3-exec"/> ailesine ait işlevleri kullanın, ama <uri xlink:href="man3-execlp"/> veya <uri xlink:href="man3-execvp"/> işlevleri hariç. <command>/bin/sh</command>'ın bash'ın 2. sürümü olduğu sistemlerde, bash başlatma sırasında yetkileri tutacağından <command>system</command>(), suid veya sgid hakları olan yazılımlardan düzgün çalışmayacaktır. (Debian <command>sh</command> olarak çağrıldığında bunu yapmayan değiştirilmiş bir bash kullanır.)
+  </para>
+  <para>
+   <command>/bin/sh</command>'ın kullanılabilirliği aslında kontrol edilmez; Daima kullanılabilir olduğu varsayılır. ISO C  kontrolün yapılmasını isterse de POSIX.2 kabuktan geri dönen değerin daima sıfırdan farklı olması gerektiğini kabul eder (çünkü kabuk olmayan bir sistem uyumlu değildir ve uyum için kabuğun eklenmiş olması gerekmektedir).
+  </para>
+  <para>
+   Kabuk komutu için 127 döndürmek mümkündür, bu nedenle kod, <uri xlink:href="man2-execve"/> çağrısının  hata verdiğinin, kesin bir kanıtı sayılamaz.
+  </para>
  </refsect1>
  <refsect1><title>İLGİLİ BELGELER</title>
   <para>
-   <uri xlink:href="man1-sh"/>, <uri xlink:href="man2-execve"/>, <uri xlink:href="man2-fork"/>, <uri xlink:href="man2-sigaction"/>, <uri xlink:href="man2-sigprocmask"/>, <uri xlink:href="man2-wait"/>, <uri xlink:href="man3-exec"/>, <uri xlink:href="man7-signal"/>
+   <uri xlink:href="man1-sh"/>, <uri xlink:href="man2-signal"/>, <uri xlink:href="man2-wait"/>, <uri xlink:href="man3-exec"/>
   </para>
  </refsect1>
  <refsect1><title>ÇEVİREN</title>
-  <simpara></simpara>
+  <simpara>Yalçın Kolukısa - Kasım 2003</simpara>
   <simpara>
    Lütfen, çeviri ile ilgili bildirimler için &lt;belgeler-genel (at) lists.sourceforge.net&gt; adresini kullanın.
   </simpara>
