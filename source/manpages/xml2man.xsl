@@ -111,8 +111,10 @@
   <xsl:if test="not (preceding-sibling::d:refnamediv)">
     <xsl:value-of select="'&#10;.SH İSİM'"/>
   </xsl:if>
-  <xsl:if test="(preceding-sibling::d:refnamediv)">
-    <xsl:value-of select="'.br'"/>
+  <xsl:if test="preceding-sibling::d:refnamediv">
+   <xsl:value-of select="'.br'"/>
+  </xsl:if>
+  <xsl:if test="normalize-space(../d:info/t:pageinfo/t:name) !=  normalize-space(d:refname)">
     <xsl:call-template name="linkme"/>
   </xsl:if>
   <xsl:variable name="content">
