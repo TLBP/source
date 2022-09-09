@@ -398,22 +398,22 @@ set       toc,title
   <div class="{name(.)}">
   <xsl:choose>
     <xsl:when test="@role='translator'">
-      <i style="color:#999999;"><xsl:value-of select="$translatorlabel"/></i>
+      <xsl:value-of select="$translatorlabel"/>
     </xsl:when>
     <xsl:when test="@role='prep'">
-      <i style="color:#999999;"><xsl:value-of select="$preplabel"/></i>
+      <xsl:value-of select="$preplabel"/>
     </xsl:when>
     <xsl:when test="@role='compile'">
-      <i style="color:#999999;"><xsl:value-of select="$compilelabel"/></i>
+      <xsl:value-of select="$compilelabel"/>
     </xsl:when>
     <xsl:when test="@role='editor'">
-      <i style="color:#999999;"><xsl:value-of select="$editorlabel"/></i>
+      <xsl:value-of select="$editorlabel"/>
     </xsl:when>
     <xsl:when test="@role='update'">
-      <i style="color:#999999;"><xsl:value-of select="$updatelabel"/></i>
+      <xsl:value-of select="$updatelabel"/>
     </xsl:when>
     <xsl:otherwise>
-      <i style="color:#999999;"><xsl:value-of select="$authorlabel"/></i>
+      <xsl:value-of select="$authorlabel"/>
     </xsl:otherwise>
   </xsl:choose>
   <xsl:call-template name="person.name"/>
