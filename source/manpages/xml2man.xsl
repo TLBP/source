@@ -295,7 +295,7 @@
 <xsl:template match="d:funcsynopsis">
   <xsl:apply-templates/>
   <xsl:if test="following-sibling::*">
-   <xsl:value-of select="'&#10;.sp'"/>
+   <xsl:value-of select="'&#10;.sp&#10;.PP'"/>
   </xsl:if>
 </xsl:template>
 
@@ -763,11 +763,11 @@
   <xsl:value-of select="concat('\fB', $target,'\fR')"/>
 </xsl:template>
 
-<xsl:template match="d:acronym|d:classname|d:function|d:literal|d:productname|d:prompt|d:statement|d:symbol|d:type">
+<xsl:template match="d:acronym|d:classname|d:literal|d:productname|d:prompt|d:statement|d:symbol|d:type">
   <xsl:apply-templates/>
 </xsl:template>
 
-<xsl:template match="d:application|d:code|d:command|d:constant|d:emphasis|d:envar|d:filename|d:keyword|d:option|d:parameter|d:replaceable|d:userinput|d:quote|d:small|d:type|d:varname|d:wordasword">
+<xsl:template match="d:application|d:code|d:command|d:constant|d:emphasis|d:envar|d:filename|d:function|d:keyword|d:option|d:parameter|d:replaceable|d:userinput|d:quote|d:small|d:type|d:varname|d:wordasword">
   <xsl:variable name="p">
     <xsl:apply-templates/>
   </xsl:variable>
@@ -777,12 +777,13 @@
                     name(.)='code' or
                     name(.)='constant' or
                     name(.)='envar' or
+                    name(.)='function' or
                     name(.)='keyword' or
                     name(.)='option' or
-                    name(.)='userinput' or
+                    (name(.)='systemitem' and @class='username') or                                      name(.)='userinput' or
                     ((name(.)='emphasis' or
-                    name(.)='type') and @role='bold') or
-                    (name(.)='systemitem' and @class='username')                   ">
+                    name(.)='type') and @role='bold')
+">
 <xsl:value-of select="concat('\fB', $p, '\fR')"/>
     </xsl:when>
     <xsl:when test="name(.)='quote'">
@@ -845,7 +846,15 @@ tab(:);</xsl:text>
     <xsl:otherwise>
 <xsl:text>
 .TS
-tab(:);</xsl:text>
+</xsl:text>
+  <xsl:choose>
+    <xsl:when test="@colwidth = '0'">
+     <xsl:text>tab(:);</xsl:text>
+    </xsl:when>
+    <xsl:otherwise>
+     <xsl:text>tab(:) allbox;</xsl:text>
+    </xsl:otherwise>
+  </xsl:choose>
       <xsl:apply-templates/>
 <xsl:text>
 .TE

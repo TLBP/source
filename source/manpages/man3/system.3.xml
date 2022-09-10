@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- ********************************************************************
-     man3/system.3.xml, 2001-09-23, BSD, YK - Kasım 2003
+     man3/system.3.xml, 2019-03-06, BSD, xx - Eylül 2022
 ******************************************************************** -->
 <refentry xml:id="man3-system" xmlns="http://docbook.org/ns/docbook"
  xmlns:xlink="http://www.w3.org/1999/xlink" version="5.0" xml:lang="tr">
@@ -9,11 +9,11 @@
    <t:name>system</t:name>
    <t:volnum>3</t:volnum>
    <t:section>Kütüphane İşlevleri</t:section>
-   <t:source></t:source>
-   <t:date>2001-09-23</t:date>
+   <t:source>Linux man-pages 5.10</t:source>
+   <t:date>2019-03-06</t:date>
 <t:remark>.ig
 Copyright (c) 1993 by Thomas Koenig (ig25@rz.uni-karlsruhe.de)
-and Copyright (c) 2014 by Michael Kerrisk &lt;mtk.manpages@gmail.com&gt;
+and Copyright (c) 2014 by Michael Kerrisk &lt;mtk.manpages@gmail.com>
 |
 %%%LICENSE_START(VERBATIM)
 Permission is granted to make and distribute verbatim copies of this
@@ -46,7 +46,7 @@ Modified 14 May 2001, 23 Sep 2001 by aeb
  </info>
  <refnamediv>
   <refname>system</refname>
-  <refpurpose>bir kabuk komutunu çalıştırır</refpurpose>
+  <refpurpose>kabuk komutu çalıştırır</refpurpose>
  </refnamediv>
  <refsynopsisdiv><title>BİLDİRİM</title>
   <funcsynopsis>
@@ -61,26 +61,96 @@ Modified 14 May 2001, 23 Sep 2001 by aeb
  </refsynopsisdiv>
  <refsect1><title>AÇIKLAMA</title>
   <para>
-   <command>system</command>() <replaceable>command</replaceable> ile belirtilen bir komutu, <command>/bin/sh -c </command><replaceable>command</replaceable> çağrısıyla çalıştırır ve komutun çalışması bittikten sonra geri döner. Komutun çalışması esnasında, <constant>SIGCHLD</constant> engellenir, <constant>SIGINT</constant> ve <constant>SIGOUT</constant> göz ardı edilir.
+   <function>system</function>() kütüphane işlevi, aşağıdaki gibi <uri xlink:href="man3-exec"/> kullanarak belirtilen kabuk komutunu yürüten bir alt süreç oluşturmak için <uri xlink:href="man2-fork"/> çağrısını kullanır:
+  </para>
+  <screen>execl("/bin/sh", "sh", "-c", command, (char *) NULL);
+</screen>
+  <para>
+   Komut tamamlanınca <function>system</function>() işlevi döner.
+  </para>
+  <para>
+   Komutun yürütülmesi sırasında <function>system</function>() çağrısının yapıldığı süreçte SIGCHLD engellenir, SIGINT ve SIGQUIT yok sayılır. (Bu sinyaller, komutu yürüten alt süreç içindeki öntanımlılarına göre işlenir.)
+  </para>
+  <para>
+   <parameter>command</parameter> NULL ise <function>system</function>(), sistemde bir kabuğun mevcut olup olmadığını gösteren bir durum döndürür.
   </para>
  </refsect1>
  <refsect1><title>DÖNÜŞ DEĞERİ</title>
   <para>
-   Herhangi bir hatada <code>-1</code> döner (fork başarısız olmuş gibi), aksi takdirde komutun dönüş durumu döner. Bu sonuncu dönüş durumu <uri xlink:href="man2-wait"/>'de belirtilen biçimde olur.  Bundan dolayı, komutun çıkış kodu  <command>WEXITSTATUS(</command><replaceable>status</replaceable><command>)</command> olacaktır.  <command>/bin/sh</command>’ın çalıştırılamadığı durumlarda, çıkış durumu, <command>exit</command>(127) yapan komutun durumu olacaktır.
+   <function>system</function>() işlevinin dönüş değeri şunlardan biridir:
+  </para>
+  <itemizedlist>
+   <listitem>
+    <para>
+     <parameter>command</parameter> NULL ise, kullanılabilir bir kabuk varsa sıfırdan farklı bir değer, yoksa 0 döner.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     Bir alt süreç oluşturulamıyorsa veya durumu alınamıyorsa -1 döner ve hata kodu errno değişkenine atanır.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     Alt süreçte bir kabuk yürütülemezse, alt kabuk 127 durum koduyla çağrılan <uri xlink:href="man2-_exit"/> ile sonlandırılmış gibi bir durum koduyla döner.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     Tüm <function>system</function>() çağrıları başarılı olursa dönüş değeri komutu çalıştıran alt kabuğun sonlanma durum kodudur. (Kabuğun sonlanma durum kodu, çalıştırdığı son komutun sonlanma durum kodudur.)
+    </para>
+   </listitem>
+  </itemizedlist>
+  <para>
+   Son iki durumda dönüş değeri, <uri xlink:href="man2-waitpid"/> sayfasında açıklanan makrolar (<function>WIFEXITED</function>(), <function>WEXITSTATUS</function>() vb.) kullanılarak incelenebilen bir "bekleme durumu" kodudur.
   </para>
   <para>
-   Şayet <replaceable>command</replaceable> değeri NULL ise ve kabuk uygunsa, <command>system</command>() sıfırdan farklı bir değer döndürür; uygun değilse sıfır döndürür.
+   <function>system</function>() herhangi bir başka alt sürecin bekleme durumunu etkilemez.
   </para>
+ </refsect1>
+ <refsect1><title>HATALAR</title>
   <para>
-   <command>system</command>(), çocuk süreçlerden hiçbirinin bekleme durumunu etkilemez.
+   <function>system</function>() <uri xlink:href="man2-fork"/> ile aynı hatalardan herhangi biriyle başarısız olabilir.
   </para>
+ </refsect1>
+ <refsect1><title>ÖZNİTELİKLER</title>
+  <para>
+   Bu bölümde kulllanılan terimlerin açıklamaları <uri xlink:href="man7-attributes"/> sayfasında bulunabilir.
+  </para>
+  <informaltable>
+   <tgroup cols="3" colsep='1' rowsep='1'>
+    <colspec colwidth="*"/>
+    <colspec colwidth="*"/>
+    <colspec colwidth="*"/>
+    <thead align="left">
+     <row>
+      <entry>İşlev</entry>
+      <entry>Öznitelik</entry>
+      <entry>Değer</entry>
+     </row>
+    </thead>
+    <tbody>
+     <row>
+      <entry><function>system</function></entry>
+      <entry>Evre Güvenliği</entry>
+      <entry>ÇEG-evet</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </informaltable>
  </refsect1>
  <refsect1><title>UYUMLULUK</title>
   <para>
-   ANSI C, POSIX.2, BSD 4.3
+   POSIX.1-2001, POSIX.1-2008, C89, C99.
   </para>
  </refsect1>
  <refsect1><title>EK BİLGİLER</title>
+  <para>
+   system() provides simplicity and convenience: it handles all of the details of calling fork(2),  execl(3),  and  waitpid(2),  as well as the necessary manipulations of signals; in addition, the shell performs the usual substitutions and I/O redirections for command.  The main cost of system() is inefficiency:  additional  system  calls are required to create the process that runs the shell and toexecute the shell.
+  </para>
+  <para>
+   If the _XOPEN_SOURCE feature test macro is defined (before including any  header  files),  then  the macros described in waitpid(2) (WEXITSTATUS(), etc.) are made available when including &lt;stdlib.h>.
+  </para>
   <para>
    Bahsedildiği gibi; <command>system</command>(), <constant>SIGINT</constant> ve <constant>SIGQUIT</constant> sinyalini yoksayar.  Bu, uygulamaların kendi çocuklarının çıkış durumlarını kontrol etmedikleri takdirde aşağıdaki örnekteki gibi durdurulamaz bir döngüden sürekli çağrılan uygulamalara sebep olabilir.
   </para>
@@ -93,22 +163,34 @@ if (WIFSIGNALED(donen) &amp;&amp;
 }
 </screen>
   <para>
-   Sistem bütünlüğünü bozmak için, bazı çevre değişkenleri tuhaf değerlerle kullanılabileceğinden, <command>system</command>()’i suid veya sgid yetkileri olan bir yazılımda kullanmayın. Onun yerine <uri xlink:href="man3-exec"/> ailesine ait işlevleri kullanın, ama <uri xlink:href="man3-execlp"/> veya <uri xlink:href="man3-execvp"/> işlevleri hariç. <command>/bin/sh</command>'ın bash'ın 2. sürümü olduğu sistemlerde, bash başlatma sırasında yetkileri tutacağından <command>system</command>(), suid veya sgid hakları olan yazılımlardan düzgün çalışmayacaktır. (Debian <command>sh</command> olarak çağrıldığında bunu yapmayan değiştirilmiş bir bash kullanır.)
+   According  to  POSIX.1,  it  is  unspecified whether handlers registered using pthread_atfork(3) are called during the execution of system().  In the glibc implementation, such handlers are not called.
   </para>
   <para>
-   <command>/bin/sh</command>'ın kullanılabilirliği aslında kontrol edilmez; Daima kullanılabilir olduğu varsayılır. ISO C  kontrolün yapılmasını isterse de POSIX.2 kabuktan geri dönen değerin daima sıfırdan farklı olması gerektiğini kabul eder (çünkü kabuk olmayan bir sistem uyumlu değildir ve uyum için kabuğun eklenmiş olması gerekmektedir).
+   In versions of glibc before 2.1.3, the check for the availability of /bin/sh was not  actually  performed  if  command was NULL; instead it was always assumed to be available, and system() always returned 1 in this case.  Since glibc 2.1.3, this check is performed because, even though POSIX.1-2001 requires  a  conforming  implementation  to provide a shell, that shell may not be available or executable if the  calling  program  has  previously  called  chroot(2)  (which  is  not  specified  by POSIX.1-2001).
   </para>
   <para>
-   Kabuk komutu için 127 döndürmek mümkündür, bu nedenle kod, <uri xlink:href="man2-execve"/> çağrısının  hata verdiğinin, kesin bir kanıtı sayılamaz.
+   It  is possible for the shell command to terminate with a status of 127, which yields a system() return value that is indistinguishable from the case where a shell could not be executed in the  child process.
   </para>
+  <refsect2><title>Yetersizlikler</title>
+   <para>
+    Do  not  use system() from a privileged program (a set-user-ID or set-group-ID program, or a program with capabilities) because strange values for some environment variables might be  used  to  subvert system  integrity.   For example, PATH could be manipulated so that an arbitrary program is executed with privilege.  Use the exec(3) family of functions instead, but not execlp(3) or execvp(3)  (which also use the PATH environment variable to search for an executable).
+   </para>
+   <para>
+    system()  will not, in fact, work properly from programs with set-user-ID or set-group-ID privileges on systems on which /bin/sh is bash version 2: as a security measure, bash  2  drops  privileges  on startup.  (Debian uses a different shell, dash(1), which does not do this when invoked as sh.)
+   </para>
+   <para>
+    Any user input that is employed as part of command should be carefully sanitized, to ensure that unexpected shell commands or command options are not executed.  Such risks are especially  grave  when using system() from a privileged program.
+   </para>
+  </refsect2>
  </refsect1>
  <refsect1><title>İLGİLİ BELGELER</title>
   <para>
-   <uri xlink:href="man1-sh"/>, <uri xlink:href="man2-signal"/>, <uri xlink:href="man2-wait"/>, <uri xlink:href="man3-exec"/>
+   <uri xlink:href="man1-sh"/>, <uri xlink:href="man2-execv"/>, <uri xlink:href="man2-fork"/>, <uri xlink:href="man2-sigaction"/>, <uri xlink:href="man2-sigprocmask"/>, <uri xlink:href="man2-wait"/>, <uri xlink:href="man3-exec"/>, <uri xlink:href="man7-signal"/>
   </para>
  </refsect1>
  <refsect1><title>ÇEVİREN</title>
   <simpara>Yalçın Kolukısa - Kasım 2003</simpara>
+  <simpara>Nilgün Belma Bugüner - Eylül 2022</simpara>
   <simpara>
    Lütfen, çeviri ile ilgili bildirimler için &lt;belgeler-genel (at) lists.sourceforge.net&gt; adresini kullanın.
   </simpara>

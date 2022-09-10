@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- ********************************************************************
-     man3/encrypt.3.xml, 2002-12-20 22:54:36 EİT - Nisan 2004
+     man3/encrypt.3.xml, 2020-11-01, GPL2+, NBB - Eylül 2022
 ******************************************************************** -->
 <refentry xml:id="man3-encrypt" xmlns="http://docbook.org/ns/docbook"
  xmlns:xlink="http://www.w3.org/1999/xlink" version="5.0" xml:lang="tr">
@@ -8,13 +8,14 @@
   <t:pageinfo>
    <t:name>encrypt</t:name>
    <t:volnum>3</t:volnum>
-   <t:section>Kriptografik İşlevler</t:section>
-   <t:source></t:source>
-   <t:date>2003-04-04</t:date>
+   <t:section>Kütüphane İşlevleri</t:section>
+   <t:source>Linux man-pages 5.10</t:source>
+   <t:date>2020-11-01</t:date>
 <t:remark>.ig
-Copyright 2000 Nicol?s Lichtmaier &lt;nick@debian.org&gt;
+Copyright 2000 Nicolás Lichtmaier &lt;nick@debian.org>
 Created 2000-07-22 00:52-0300
 |
+%%%LICENSE_START(GPLv2+_DOC_FULL)
 This is free documentation; you can redistribute it and/or
 modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of
@@ -30,8 +31,13 @@ but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 |
+You should have received a copy of the GNU General Public
+License along with this manual; if not, see
+&lt;http://www.gnu.org/licenses/>.
+%%%LICENSE_END
+|
 Modified 2002-07-23 19:21:35 CEST 2002 Walter Harms
-&lt;walter.harms@informatik.uni-oldenburg.de&gt;
+&lt;walter.harms@informatik.uni-oldenburg.de>
 |
 Modified 2003-04-04, aeb
 ..</t:remark>
@@ -43,7 +49,7 @@ Modified 2003-04-04, aeb
  </refnamediv>
  <refnamediv>
   <refname>setkey</refname>
-  <refpurpose><command>encrypt</command>() tarafından kullanılan anahtarı belirler</refpurpose>
+  <refpurpose>encrypt() için anahtarı belirler</refpurpose>
  </refnamediv>
  <refnamediv>
   <refname>encrypt_r</refname>
@@ -51,29 +57,33 @@ Modified 2003-04-04, aeb
  </refnamediv>
  <refnamediv>
   <refname>setkey_r</refname>
-  <refpurpose><command>encrypt_r</command>() tarafından kullanılan anahtarı belirler (evresel)</refpurpose>
+  <refpurpose>encrypt_r() için anahtarı belirler (evresel)</refpurpose>
  </refnamediv>
  <refsynopsisdiv><title>BİLDİRİM</title>
   <funcsynopsis>
    <funcsynopsisinfo>
-    <option>#include _XOPEN_SOURCE</option>
+    <option>#include _XOPEN_SOURCE</option>    /* Bkz: <uri xlink:href="man7-feature_test_macros"/> */
     <option>#include &lt;unistd.h></option>
    </funcsynopsisinfo>
    <funcprototype>
     <funcdef>void <function>encrypt</function></funcdef>
-    <paramdef>char <parameter>block</parameter><command>[64]</command></paramdef>
+    <paramdef>char <parameter>block</parameter>[64]</paramdef>
     <paramdef>int <parameter>edflag</parameter></paramdef>
    </funcprototype>
+  </funcsynopsis>
+  <funcsynopsis>
    <funcsynopsisinfo>
-    <option>#include _XOPEN_SOURCE</option>
+    <option>#include _XOPEN_SOURCE</option>    /* Bkz: <uri xlink:href="man7-feature_test_macros"/> */
     <option>#include &lt;stdlib.h></option>
    </funcsynopsisinfo>
    <funcprototype>
     <funcdef>void <function>setkey</function></funcdef>
     <paramdef>const char *<parameter>key</parameter></paramdef>
    </funcprototype>
+  </funcsynopsis>
+  <funcsynopsis>
    <funcsynopsisinfo>
-    <option>#include _XOPEN_SOURCE</option>
+    <option>#include _GNU_SOURCE</option>    /* Bkz: <uri xlink:href="man7-feature_test_macros"/> */
     <option>#include &lt;crypt.h></option>
    </funcsynopsisinfo>
    <funcprototype>
@@ -82,7 +92,7 @@ Modified 2003-04-04, aeb
     <paramdef>struct crypt_data *<parameter>data</parameter></paramdef>
    </funcprototype>
    <funcprototype>
-    <funcdef>void <function>encrypt</function></funcdef>
+    <funcdef>void <function>encrypt_r</function></funcdef>
     <paramdef>char *<parameter>block</parameter></paramdef>
     <paramdef>int <parameter>edflag</parameter></paramdef>
     <paramdef>struct crypt_data *<parameter>data</parameter></paramdef>
@@ -93,14 +103,19 @@ Modified 2003-04-04, aeb
   </para>
  </refsynopsisdiv>
  <refsect1><title>AÇIKLAMA</title>
+  <warning>
+   <para>
+    Artık güvenli kabul edilmeyen DES blok şifresini kullandıkları için <function>crypt</function>(), <function>crypt_r</function>(), <function>setkey</function>() ve <function>setkey_r</function>() glibc-2.28'de kaldırıldı. Uygulamaların <command>libcrypt</command> gibi daha güncel bir şifreleme kütüphanesine geçmesi gerekir.
+   </para>
+  </warning>
   <para>
-   Bu işlevler 64 bitlik iletileri şifreler ve deşifrelerler. <command>setkey</command>() işlevi <command>encrypt</command>() işlevi tarafından kullanılan anahtarı belirler. Burada kullanılan <replaceable>key</replaceable> parametresi bir bayt dizisidir ve her bayt 1 ya da 0 sayısal değerine sahiptir. <replaceable>key</replaceable><command>[n]</command> dizisinin indis değeri <command>n=8*i-1</command> olan elemanları yoksayılır, bu durumda asıl anahtar uzunluğu 56 bit olur.
+   Bu işlevler 64 bitlik iletileri şifreler ve şifresini çözer. <function>setkey</function>() işlevi <function>encrypt</function>() işlevi tarafından kullanılan anahtarı belirler. Burada kullanılan <parameter>key</parameter> değiştirgesi 64 baytlık bir dizidir ve her baytın değeri <literal>1</literal> ya da <literal>0</literal>'dır. <parameter>key</parameter><literal>[n]</literal> dizisinin  <code>n=8*i-1</code> indisli elemanları yoksayılır, bu durumda asıl anahtar uzunluğu 56 bit olur.
   </para>
   <para>
-   <command>setkey</command>() işlevi kendine aktarılan tamponu <replaceable>edflag</replaceable> olarak 0 verilmişse şifreleyerek, 0 verilmişse deşifreleyerek değiştirir. <replaceable>key</replaceable> parametresi gibi <replaceable>block</replaceable> parametresi de şifrelenmiş değerin bit gösteriminin vektörüdür. Sonuç aynı vektör içinde döner.
+   <function>encrypt</function>() işlevi aktarılan tamponda değişiklik yapar, <parameter>edflag</parameter> değiştirgesine 0 aktarılırsa <parameter>block</parameter> içeriğini şifreler, 1 aktarılırsa şifresini çözer. <parameter>key</parameter> gibi <parameter>block</parameter> değiştirgesi de şifrelenmiş değerin bit gösterimini içerir. Sonuç aynı tampon içinde döner.
   </para>
   <para>
-   Bu iki işlev evresel değildir, yani anahtar verisi durağan bellek bölgesinde saklanır. <command>setkey_r</command>() ve <command>encrypt_r</command>() işlevleri evreseldir. ve anahtar verisini saklamak için <replaceable>crypt_data</replaceable> veri yapısını kullanırlar:
+   Bu iki işlev evresel değildir, yani anahtar verisi statik bellek bölgesinde saklanır. <function>setkey_r</function>() ve <function>encrypt_r</function>() işlevleri evreseldir ve anahtar verisini saklamak için <replaceable>crypt_data</replaceable> veri yapısını kullanır:
   </para>
   <literallayout>struct crypt_data {
        char keysched[16 * 8];
@@ -111,9 +126,13 @@ Modified 2003-04-04, aeb
        char crypt_3_buf[14];
        char current_salt[2];
        long int current_saltbits;
-       int  direction, initialized;
+       int  direction;
+       int  initialized;
 };
 </literallayout>
+  <para>
+   <function>setkey_r</function>() çağrısından önce <parameter>data->initialized</parameter> alanına 0 atanır.
+  </para>
  </refsect1>
  <refsect1><title>DÖNÜŞ DEĞERİ</title>
   <para>
@@ -135,38 +154,109 @@ Modified 2003-04-04, aeb
    </glossentry>
   </glosslist>
  </refsect1>
- <refsect1><title>ÖRNEK</title>
+ <refsect1><title>ÖZNİTELİKLER</title>
   <para>
-   Bu örneği glibc2.2 ile derlemek için <command>libcrypt</command> ile ilintilemeniz gerekir. Anlamlı bir çalıştırma için <replaceable>anahtar</replaceable>[] ve <replaceable>ileti</replaceable>[] dizilerini anlamlı bir bit kalıbı ile doldurmalısınız. <command>crypt.h</command> başlık dosyasının <command>setkey</command>() ve <command>encrypt</command>() işlevlerinin prototiplerini koşulsuz olarak verdiğini unutmayın.
+   Bu bölümde kulllanılan terimlerin açıklamaları <uri xlink:href="man7-attributes"/> sayfasında bulunabilir.
   </para>
-  <literallayout>#include &lt;crypt.h>
-
-main() {
-       char anahtar[64];    /* anahtarın bit kalıbı */
-       char ileti[64];      /* iletinin bit kalıbı */
-       setkey(anahtar);
-       encrypt(ileti, 0);   /* şifreler */
-       encrypt(ileti, 1);   /* deşifreler */
-}
-</literallayout>
- </refsect1>
- <refsect1><title>NOTLAR</title>
-  <para>
-   glibc2.2'de bu işlevler DES algoritmasını kullanır.
-  </para>
+  <informaltable>
+   <tgroup cols="3" colsep='1' rowsep='1'>
+    <colspec colwidth="*"/>
+    <colspec colwidth="*"/>
+    <colspec colwidth="*"/>
+    <thead align="left">
+     <row>
+      <entry>İşlev</entry>
+      <entry>Öznitelik</entry>
+      <entry>Değer</entry>
+     </row>
+    </thead>
+    <tbody>
+     <row>
+      <entry><function>encrypt</function>, <function>setkey</function></entry>
+      <entry>Evre Güvenliği</entry>
+      <entry>ÇEG-hayır yarış:crypt</entry>
+     </row>
+     <row>
+      <entry><function>encrypt_r</function>, <function>setkey_r</function></entry>
+      <entry>Evre Güvenliği</entry>
+      <entry>ÇEG-evet</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </informaltable>
  </refsect1>
  <refsect1><title>UYUMLULUK</title>
   <para>
-   <command>encrypt</command>() ve <command>setkey</command>() işlevleri SVID, SUSv2 ve POSIX 1003.1-2001 uyumludur.  <command>encrypt_r</command>() ve <command>setkey_r</command>() işlevleri ise GNU oluşumudur.
+   <function>encrypt</function>(), <function>setkey</function>(): POSIX.1-2001, POSIX.1-2008, SUS, SVr4.
   </para>
+  <para>
+   <function>encrypt_r</function>() ve <function>setkey_r</function>() işlevi GNU eklentisidir.
+  </para>
+ </refsect1>
+ <refsect1><title>EK BİLGİ</title>
+  <para>
+   Glibc'deki yararlanım: Bkz. <uri xlink:href="man3-crypt"/>
+  </para>
+  <para>
+   Glibc'deki özellikler: Gibc-2.2'de bu işlevler DES algoritmasını kullanmaktadır.
+  </para>
+ </refsect1>
+ <refsect1><title>ÖRNEKLER</title>
+  <screen><![CDATA[#define _XOPEN_SOURCE
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <crypt.h>
+
+int
+main(void)
+{
+    char key[64];
+    char orig[9] = "eggplant";
+    char buf[64];
+    char txt[9];
+
+    for (int i = 0; i < 64; i++) {
+        key[i] = rand() & 1;
+    }
+
+    for (int i = 0; i < 8; i++) {
+        for (int j = 0; j < 8; j++) {
+            buf[i * 8 + j] = orig[i] >> j & 1;
+        }
+        setkey(key);
+    }
+    printf("Şifrelenmeden önce: %s\n", orig);
+
+    encrypt(buf, 0);
+    for (int i = 0; i < 8; i++) {
+        for (int j = 0, txt[i] = '\0'; j < 8; j++) {
+            txt[i] |= buf[i * 8 + j] << j;
+        }
+        txt[8] = '\0';
+    }
+    printf("Şifrelemeden sonra:  %s\n", txt);
+
+    encrypt(buf, 1);
+    for (int i = 0; i < 8; i++) {
+        for (int j = 0, txt[i] = '\0'; j < 8; j++) {
+            txt[i] |= buf[i * 8 + j] << j;
+        }
+        txt[8] = '\0';
+    }
+    printf("Şifre çözüldükten sonra:  %s\n", txt);
+    exit(EXIT_SUCCESS);
+}]]>
+</screen>
  </refsect1>
  <refsect1><title>İLGİLİ BELGELER</title>
   <para>
-   <uri xlink:href="man3-cbc_crypt"/>, <uri xlink:href="man3-crypt"/>, <uri xlink:href="man3-ecb_crypt"/>, <uri xlink:href="man3-fcrypt"/>
+   <uri xlink:href="man3-cbc_crypt"/>, <uri xlink:href="man3-crypt"/>, <uri xlink:href="man3-ecb_crypt"/>
   </para>
  </refsect1>
  <refsect1><title>ÇEVİREN</title>
   <simpara>Emin İslam Tatlı - Nisan 2004</simpara>
+  <simpara>Nilgün Belma Bugüner - Eylül 2022</simpara>
   <simpara>
    Lütfen, çeviri ile ilgili bildirimler için &lt;belgeler-genel (at) lists.sourceforge.net&gt; adresini kullanın.
   </simpara>
