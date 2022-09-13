@@ -26,13 +26,13 @@
 
 <xsl:stylesheet
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+  xmlns="http://www.w3.org/1999/xhtml"
   xmlns:d="http://docbook.org/ns/docbook"
   xmlns:exsl="http://exslt.org/common"
-  xmlns="http://www.w3.org/1999/xhtml"
   xmlns:xlink="http://www.w3.org/1999/xlink"
   xmlns:l="http://docbook.sourceforge.net/xmlns/l10n/1.0"
   xmlns:t="http://tlbp.gen.tr/ns/tlbp"
-  exclude-result-prefixes="xlink exsl d l t"
+  exclude-result-prefixes="d exsl xlink l t"
   version="1.0">
 
 <!-- özelleştirilmiş xslt betikleri -->
@@ -312,73 +312,6 @@ set       toc,title
 
 <xsl:template match="d:glossterm/d:glossterm[position()=1]">
   <xsl:apply-templates/>
-</xsl:template>
-
-<xsl:template match="d:screen|d:programlisting|d:synopsis">
-  <xsl:param name="suppress-numbers" select="'0'"/>
-  <xsl:variable name="vendor" select="system-property('xsl:vendor')"/>
-  <xsl:variable name="id"><xsl:call-template name="object.id"/></xsl:variable>
-  <xsl:variable name="summary">
-    <xsl:choose>
-      <xsl:when test="name(.) = 'programlisting'">
-        <xsl:text>Dosya Dökümü</xsl:text>
-      </xsl:when>
-      <xsl:when test="name(.) = 'screen'">
-        <xsl:text>Konsol Görüntüsü</xsl:text>
-      </xsl:when>
-      <xsl:otherwise>
-        <xsl:text>Kullanım Sözdizimi</xsl:text>
-      </xsl:otherwise>
-    </xsl:choose>
-  </xsl:variable>
-
-  <xsl:if test="@xml:id">
-    <a href="{$xml:id}"/>
-  </xsl:if>
-
-  <xsl:variable name="rtf">
-    <xsl:apply-templates/>
-  </xsl:variable>
-
-    <xsl:choose>
-      <xsl:when test="@linenumbering = 'numbered'">
-        <table width="95%" cellpadding="0" cellspacing="1" style="border:1px dotted #999999" summary="{$summary}">
-          <tr><td width="12pt" valign="top">
-            <pre class="screennumbers">
-              <xsl:call-template name="numbered.lines">
-                <xsl:with-param name="rtf" select="$rtf"/>
-              </xsl:call-template>
-            </pre>
-            <xsl:text> </xsl:text>
-          </td>
-          <td width="*" valign="top">
-            <pre class="screenlines">
-              <xsl:apply-templates/>
-            </pre>
-            <xsl:text> </xsl:text>
-          </td></tr>
-        </table>
-      </xsl:when>
-      <xsl:otherwise>
-<pre class="{name(.)}"><xsl:value-of select="$rtf"/></pre>
-    </xsl:otherwise>
-  </xsl:choose>
-</xsl:template>
-
-<xsl:template name="numbered.lines">
-  <xsl:param name="rtf"></xsl:param>
-  <xsl:param name="num" select="0"/>
-
-  <xsl:if test="contains($rtf,'&#10;')">
-    <xsl:if test="$num>0">
-      <xsl:value-of select="$num"/>
-      <xsl:text>&#10;</xsl:text>
-    </xsl:if>
-    <xsl:call-template name="numbered.lines">
-      <xsl:with-param name="rtf" select="substring-after($rtf,'&#10;')"/>
-      <xsl:with-param name="num" select="$num + 1"/>
-    </xsl:call-template>
-  </xsl:if>
 </xsl:template>
 
 <!-- Yazar ve sürüm bilgileri alanında standart olarak bulunmayan
@@ -885,6 +818,14 @@ footnote text gets an id of #ftn.@id. They cross link to each other. -->
 </xsl:template>
 
 <xsl:template match="module">
+  <tt><xsl:apply-templates/></tt>
+</xsl:template>
+
+<xsl:template match="d:structname">
+ <code><xsl:call-template name="inline.boldseq"/></code>
+</xsl:template>
+
+<xsl:template match="d:optional|d:structfield">
   <tt><xsl:apply-templates/></tt>
 </xsl:template>
 

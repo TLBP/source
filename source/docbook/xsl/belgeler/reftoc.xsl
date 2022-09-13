@@ -122,16 +122,4 @@
 
 <xsl:template match="*" mode="reftoc"/>
 
-<xsl:template name="id.attribute">
-  <xsl:param name="node" select="."/>
-  <xsl:param name="conditional" select="1"/>
-  <xsl:if test="$node/@xml:id">
-   <xsl:attribute name="id">
-     <xsl:call-template name="object.id">
-       <xsl:with-param name="object" select="$node"/>
-     </xsl:call-template>
-   </xsl:attribute>
-  </xsl:if>
-</xsl:template>
-
 </xsl:stylesheet>

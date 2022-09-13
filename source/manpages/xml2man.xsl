@@ -767,7 +767,7 @@
   <xsl:apply-templates/>
 </xsl:template>
 
-<xsl:template match="d:application|d:code|d:command|d:constant|d:emphasis|d:envar|d:filename|d:function|d:keyword|d:option|d:parameter|d:replaceable|d:userinput|d:quote|d:small|d:type|d:varname|d:wordasword">
+<xsl:template match="d:application|d:code|d:command|d:constant|d:emphasis|d:envar|d:filename|d:function|d:keyword|d:option|d:parameter|d:replaceable|d:structname|d:structfield|d:userinput|d:quote|d:small|d:type|d:varname|d:wordasword">
   <xsl:variable name="p">
     <xsl:apply-templates/>
   </xsl:variable>

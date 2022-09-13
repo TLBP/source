@@ -1,19 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--This file was created automatically by html2xhtml-->
-<!--from the HTML stylesheets.-->
-<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:d="http://docbook.org/ns/docbook"
-xmlns:exsl="http://exslt.org/common" xmlns:cf="http://docbook.sourceforge.net/xmlns/chunkfast/1.0" xmlns="http://www.w3.org/1999/xhtml" version="1.0" exclude-result-prefixes="exsl cf d">
 
-<!-- ********************************************************************
-     $Id: chunk-common.xsl 9866 2014-01-29 02:55:52Z bobstayton $
-     ********************************************************************
+<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+ xmlns="http://www.w3.org/1999/xhtml"
+ xmlns:d="http://docbook.org/ns/docbook"
+ xmlns:exsl="http://exslt.org/common"
+ xmlns:cf="http://docbook.sourceforge.net/xmlns/chunkfast/1.0"
+ xmlns:suwl="http://nwalsh.com/xslt/ext/com.nwalsh.saxon.UnwrapLinks"
+ xmlns:xlink="http://www.w3.org/1999/xlink"
+ exclude-result-prefixes="d exsl cf suwl xlink"
+ version="1.0">
 
-     This file is part of the XSL DocBook Stylesheet distribution.
-     See ../README or http://docbook.sf.net/release/xsl/current/ for
-     copyright and other information.
-
-     ******************************************************************** -->
-<xsl:template match="d:index">
+ <xsl:template match="d:index">
 
   <xsl:call-template name="id.warning"/>
 
@@ -217,12 +214,6 @@ xmlns:exsl="http://exslt.org/common" xmlns:cf="http://docbook.sourceforge.net/xm
   <xsl:param name="content">
     <xsl:apply-imports/>
   </xsl:param>
-
-  <!-- These xpath expressions are really hairy. The trick is to pick sections -->
-  <!-- that are not first children and are not the children of first children -->
-
-  <!-- Break these variables into pieces to work around
-       http://nagoya.apache.org/bugzilla/show_bug.cgi?id=6063 -->
 
   <xsl:variable name="prev-v1" select="(ancestor::d:sect1[$chunk.section.depth &gt; 0                              and not(ancestor::*/processing-instruction('dbhtml')[normalize-space(.) ='stop-chunking'])                                and preceding-sibling::d:sect1][1]               |ancestor::d:sect2[$chunk.section.depth &gt; 1                                and not(ancestor::*/processing-instruction('dbhtml')[normalize-space(.) ='stop-chunking'])                                and preceding-sibling::d:sect2                                and parent::d:sect1[preceding-sibling::d:sect1]][1]               |ancestor::d:sect3[$chunk.section.depth &gt; 2                                and not(ancestor::*/processing-instruction('dbhtml')[normalize-space(.) ='stop-chunking'])                                and preceding-sibling::d:sect3                                and parent::d:sect2[preceding-sibling::d:sect2]                                and ancestor::d:sect1[preceding-sibling::d:sect1]][1]               |ancestor::d:sect4[$chunk.section.depth &gt; 3                                and not(ancestor::*/processing-instruction('dbhtml')[normalize-space(.) ='stop-chunking'])                                and preceding-sibling::d:sect4                                and parent::d:sect3[preceding-sibling::d:sect3]                                and ancestor::d:sect2[preceding-sibling::d:sect2]                                and ancestor::d:sect1[preceding-sibling::d:sect1]][1]               |ancestor::d:sect5[$chunk.section.depth &gt; 4                                and not(ancestor::*/processing-instruction('dbhtml')[normalize-space(.) ='stop-chunking'])                                and preceding-sibling::d:sect5                                and parent::d:sect4[preceding-sibling::d:sect4]                                and ancestor::d:sect3[preceding-sibling::d:sect3]                                and ancestor::d:sect2[preceding-sibling::d:sect2]                                and ancestor::d:sect1[preceding-sibling::d:sect1]][1]               |ancestor::d:section[$chunk.section.depth &gt; count(ancestor::d:section)                              and not(ancestor::*/processing-instruction('dbhtml')[normalize-space(.) ='stop-chunking'])                                 and not(ancestor::d:section[not(preceding-sibling::d:section)])][1])[last()]"/>
 
@@ -512,19 +503,6 @@ xmlns:exsl="http://exslt.org/common" xmlns:cf="http://docbook.sourceforge.net/xm
     </xsl:call-template>
   </xsl:variable>
 
-<!--
-  <xsl:message>
-    <xsl:text>in.other.chunk: </xsl:text>
-    <xsl:value-of select="name($chunk)"/>
-    <xsl:text> </xsl:text>
-    <xsl:value-of select="name($node)"/>
-    <xsl:text> </xsl:text>
-    <xsl:value-of select="$chunk = $node"/>
-    <xsl:text> </xsl:text>
-    <xsl:value-of select="$is.chunk"/>
-  </xsl:message>
--->
-
   <xsl:choose>
     <xsl:when test="$chunk = $node">0</xsl:when>
     <xsl:when test="$is.chunk = 1">1</xsl:when>
@@ -542,13 +520,6 @@ xmlns:exsl="http://exslt.org/common" xmlns:cf="http://docbook.sourceforge.net/xm
   <xsl:param name="node" select="."/>
   <xsl:param name="footnotes" select="$node//d:footnote"/>
   <xsl:param name="count" select="0"/>
-
-<!--
-  <xsl:message>
-    <xsl:text>count.footnotes.in.this.chunk: </xsl:text>
-    <xsl:value-of select="name($node)"/>
-  </xsl:message>
--->
 
   <xsl:variable name="in.other.chunk">
     <xsl:call-template name="in.other.chunk">
@@ -592,10 +563,6 @@ xmlns:exsl="http://exslt.org/common" xmlns:cf="http://docbook.sourceforge.net/xm
 <xsl:template name="process.footnotes.in.this.chunk">
   <xsl:param name="node" select="."/>
   <xsl:param name="footnotes" select="$node//d:footnote"/>
-
-<!--
-  <xsl:message>process.footnotes.in.this.chunk</xsl:message>
--->
 
   <xsl:variable name="in.other.chunk">
     <xsl:call-template name="in.other.chunk">
@@ -643,15 +610,6 @@ xmlns:exsl="http://exslt.org/common" xmlns:cf="http://docbook.sourceforge.net/xm
     </xsl:call-template>
   </xsl:variable>
 
-<!--
-  <xsl:message>
-    <xsl:value-of select="name(.)"/>
-    <xsl:text> fcount: </xsl:text>
-    <xsl:value-of select="$fcount"/>
-  </xsl:message>
--->
-
-  <!-- Only bother to do this if there's at least one non-table footnote -->
   <xsl:if test="$fcount &gt; 0">
     <div class="footnotes">
       <xsl:call-template name="footnotes.attributes"/>
@@ -679,10 +637,6 @@ xmlns:exsl="http://exslt.org/common" xmlns:cf="http://docbook.sourceforge.net/xm
     </div>
   </xsl:if>
 
-  <!-- FIXME: When chunking, only the annotations actually used
-              in this chunk should be referenced. I don't think it
-              does any harm to reference them all, but it adds
-              unnecessary bloat to each chunk. -->
   <xsl:if test="$annotation.support != 0 and //d:annotation">
     <div class="annotation-list">
       <div class="annotation-nocss">
@@ -807,6 +761,539 @@ xmlns:exsl="http://exslt.org/common" xmlns:cf="http://docbook.sourceforge.net/xm
 </xsl:template>
 
 <!-- ==================================================================== -->
+
+<xsl:template name="html.head">
+  <xsl:param name="prev" select="/d:foo"/>
+  <xsl:param name="next" select="/d:foo"/>
+  <xsl:variable name="this" select="."/>
+  <xsl:variable name="home" select="/*[1]"/>
+  <xsl:variable name="up" select="parent::*"/>
+
+  <head>
+    <xsl:call-template name="system.head.content"/>
+    <xsl:call-template name="head.content"/>
+
+    <!-- home link not valid in HTML5 -->
+    <xsl:if test="$home and $div.element != 'section'">
+      <link rel="home">
+        <xsl:attribute name="href">
+          <xsl:call-template name="href.target">
+            <xsl:with-param name="object" select="$home"/>
+          </xsl:call-template>
+        </xsl:attribute>
+        <xsl:attribute name="title">
+          <xsl:apply-templates select="$home" mode="object.title.markup.textonly"/>
+        </xsl:attribute>
+      </link>
+    </xsl:if>
+
+    <!-- up link not valid in HTML5 -->
+    <xsl:if test="$up and $div.element != 'section'">
+      <link rel="up">
+        <xsl:attribute name="href">
+          <xsl:call-template name="href.target">
+            <xsl:with-param name="object" select="$up"/>
+          </xsl:call-template>
+        </xsl:attribute>
+        <xsl:attribute name="title">
+          <xsl:apply-templates select="$up" mode="object.title.markup.textonly"/>
+        </xsl:attribute>
+      </link>
+    </xsl:if>
+
+    <xsl:if test="$prev">
+      <link rel="prev">
+        <xsl:attribute name="href">
+          <xsl:call-template name="href.target">
+            <xsl:with-param name="object" select="$prev"/>
+          </xsl:call-template>
+        </xsl:attribute>
+        <xsl:attribute name="title">
+          <xsl:apply-templates select="$prev" mode="object.title.markup.textonly"/>
+        </xsl:attribute>
+      </link>
+    </xsl:if>
+
+    <xsl:if test="$next">
+      <link rel="next">
+        <xsl:attribute name="href">
+          <xsl:call-template name="href.target">
+            <xsl:with-param name="object" select="$next"/>
+          </xsl:call-template>
+        </xsl:attribute>
+        <xsl:attribute name="title">
+          <xsl:apply-templates select="$next" mode="object.title.markup.textonly"/>
+        </xsl:attribute>
+      </link>
+    </xsl:if>
+
+    <xsl:if test="$html.extra.head.links != 0">
+      <xsl:for-each select="//d:part                             |//d:reference                             |//d:preface                             |//d:chapter                             |//d:article                             |//d:refentry                             |//d:appendix[not(parent::d:article)]|d:appendix                             |//d:glossary[not(parent::d:article)]|d:glossary                             |//d:index[not(parent::d:article)]|d:index">
+        <link rel="{local-name(.)}">
+          <xsl:attribute name="href">
+            <xsl:call-template name="href.target">
+              <xsl:with-param name="context" select="$this"/>
+              <xsl:with-param name="object" select="."/>
+            </xsl:call-template>
+          </xsl:attribute>
+          <xsl:attribute name="title">
+            <xsl:apply-templates select="." mode="object.title.markup.textonly"/>
+          </xsl:attribute>
+        </link>
+      </xsl:for-each>
+
+      <xsl:for-each select="d:section|d:sect1|d:refsection|d:refsect1">
+        <link>
+          <xsl:attribute name="rel">
+            <xsl:choose>
+              <xsl:when test="local-name($this) = 'section'                               or local-name($this) = 'refsection'">
+                <xsl:value-of select="'subsection'"/>
+              </xsl:when>
+              <xsl:otherwise>
+                <xsl:value-of select="'section'"/>
+              </xsl:otherwise>
+            </xsl:choose>
+          </xsl:attribute>
+          <xsl:attribute name="href">
+            <xsl:call-template name="href.target">
+              <xsl:with-param name="context" select="$this"/>
+              <xsl:with-param name="object" select="."/>
+            </xsl:call-template>
+          </xsl:attribute>
+          <xsl:attribute name="title">
+            <xsl:apply-templates select="." mode="object.title.markup.textonly"/>
+          </xsl:attribute>
+        </link>
+      </xsl:for-each>
+
+      <xsl:for-each select="d:sect2|d:sect3|d:sect4|d:sect5|d:refsect2|d:refsect3">
+        <link rel="subsection">
+          <xsl:attribute name="href">
+            <xsl:call-template name="href.target">
+              <xsl:with-param name="context" select="$this"/>
+              <xsl:with-param name="object" select="."/>
+            </xsl:call-template>
+          </xsl:attribute>
+          <xsl:attribute name="title">
+            <xsl:apply-templates select="." mode="object.title.markup.textonly"/>
+          </xsl:attribute>
+        </link>
+      </xsl:for-each>
+    </xsl:if>
+
+    <!-- * if we have a legalnotice and user wants it output as a -->
+    <!-- * separate page and $html.head.legalnotice.link.types is -->
+    <!-- * non-empty, we generate a link or links for each value in -->
+    <!-- * $html.head.legalnotice.link.types -->
+    <xsl:if test="//d:legalnotice                   and not($generate.legalnotice.link = 0)                   and not($html.head.legalnotice.link.types = '')">
+      <xsl:call-template name="make.legalnotice.head.links"/>
+    </xsl:if>
+
+    <xsl:call-template name="user.head.content"/>
+  </head>
+</xsl:template>
+
+<!-- ==================================================================== -->
+
+<xsl:template name="header.navigation">
+  <xsl:param name="prev" select="/d:foo"/>
+  <xsl:param name="next" select="/d:foo"/>
+  <xsl:param name="nav.context"/>
+
+  <xsl:variable name="home" select="/*[1]"/>
+  <xsl:variable name="up" select="parent::*"/>
+
+  <xsl:variable name="row1" select="$navig.showtitles != 0"/>
+  <xsl:variable name="row2" select="count($prev) &gt; 0                                     or (count($up) &gt; 0                                          and generate-id($up) != generate-id($home)                                         and $navig.showtitles != 0)                                     or count($next) &gt; 0"/>
+
+  <xsl:if test="$suppress.navigation = '0' and $suppress.header.navigation = '0'">
+    <div class="navbar">
+     <div class="dropdown" style="width:33%">
+      <xsl:variable name="href">
+       <xsl:choose>
+        <xsl:when test="count($prev)&gt;0">
+         <xsl:call-template name="href.target">
+          <xsl:with-param name="object" select="$prev"/>
+         </xsl:call-template>
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:text>#</xsl:text>
+        </xsl:otherwise>
+       </xsl:choose>
+      </xsl:variable>
+      <button type="button" class="dropbtn" onclick="window.location.assign('{$href}')">
+       <xsl:choose>
+        <xsl:when test="count($prev)&gt;0">
+         <xsl:text>Önceki</xsl:text>
+        </xsl:when>
+        <xsl:otherwise>
+         <xsl:text>&#160;&#160;</xsl:text>
+        </xsl:otherwise>
+       </xsl:choose>
+      </button>
+      <xsl:if test="count($prev)&gt;0">
+       <div class="dropdown-content">
+         <xsl:apply-templates select="$prev" mode="object.title.markup"/>
+       </div>
+      </xsl:if>
+     </div>
+
+     <div class="dropdown" style="width:34%">
+      <button class="dropbtn">Yukarı</button>
+      <div class="dropdown-content">
+       <button type="button" class="dropbtn" onclick="window.location.assign('/index.html')">Baş Sayfa</button>
+       <xsl:if test="@xml:id!='index'">
+        <button type="button" class="dropbtn" onclick="window.location.assign('/kitaplik/index.html')">Kitaplık</button>
+       </xsl:if>
+       <xsl:if test="ancestor::d:book and generate-id($up) != generate-id(ancestor::d:book)">
+         <xsl:variable name="href">
+           <xsl:call-template name="href.target">
+             <xsl:with-param name="object" select="ancestor::d:book"/>
+           </xsl:call-template>
+         </xsl:variable>
+         <button type="button" class="dropbtn" onclick="window.location.assign('{$href}')">Ana Başlık</button>
+        </xsl:if>
+
+       <xsl:if test="count($up)&gt;0 and generate-id($up) != generate-id($home)">
+         <xsl:variable name="href">
+           <xsl:call-template name="href.target">
+             <xsl:with-param name="object" select="$up"/>
+           </xsl:call-template>
+         </xsl:variable>
+        <button type="button" class="dropbtn" onclick="window.location.assign('{$href}')">Üst Başlık</button>
+       </xsl:if>
+      </div>
+     </div>
+
+     <div class="dropdown" style="width:33%">
+      <xsl:variable name="href">
+       <xsl:choose>
+        <xsl:when test="count($next)&gt;0">
+         <xsl:call-template name="href.target">
+          <xsl:with-param name="object" select="$next"/>
+         </xsl:call-template>
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:text>#</xsl:text>
+        </xsl:otherwise>
+       </xsl:choose>
+      </xsl:variable>
+      <button type="button" class="dropbtn" onclick="window.location.assign('{$href}')">
+       <xsl:choose>
+        <xsl:when test="count($next)&gt;0">
+         <xsl:text>Sonraki</xsl:text>
+        </xsl:when>
+        <xsl:otherwise>
+         <xsl:text>&#160;&#160;</xsl:text>
+        </xsl:otherwise>
+       </xsl:choose>
+      </button>
+      <xsl:if test="count($next)&gt;0">
+       <div class="dropdown-content">
+         <xsl:apply-templates select="$next" mode="object.title.markup"/>
+       </div>
+      </xsl:if>
+     </div>
+    </div>
+  </xsl:if>
+</xsl:template>
+
+<!-- ==================================================================== -->
+<!-- no footer naviation now; header navigation is fixed on page. -->
+<xsl:template name="footer.navigation"/><!--
+  <xsl:param name="prev" select="/d:foo"/>
+  <xsl:param name="next" select="/d:foo"/>
+  <xsl:param name="nav.context"/>
+
+  <xsl:variable name="home" select="/*[1]"/>
+  <xsl:variable name="up" select="parent::*"/>
+
+  <xsl:variable name="row1" select="count($prev) &gt; 0                                     or count($up) &gt; 0                                     or count($next) &gt; 0"/>
+
+  <xsl:variable name="row2" select="($prev and $navig.showtitles != 0)                                     or (generate-id($home) != generate-id(.)                                         or $nav.context = 'toc')                                     or ($chunk.tocs.and.lots != 0                                         and $nav.context != 'toc')                                     or ($next and $navig.showtitles != 0)"/>
+
+  <xsl:if test="$suppress.navigation = '0' and $suppress.footer.navigation = '0'">
+    <div class="footbar navbar">
+     <div class="dropup" style="width:33%">
+      <xsl:variable name="href">
+       <xsl:choose>
+        <xsl:when test="count($prev)&gt;0">
+         <xsl:call-template name="href.target">
+          <xsl:with-param name="object" select="$prev"/>
+         </xsl:call-template>
+        </xsl:when>
+        <xsl:otherwise>
+         <xsl:text>#</xsl:text>
+        </xsl:otherwise>
+       </xsl:choose>
+      </xsl:variable>
+      <button type="button" class="dropbtn" onclick="window.location.assign('{$href}')">
+       <xsl:choose>
+        <xsl:when test="count($prev)&gt;0">
+         <xsl:text>Önceki</xsl:text>
+        </xsl:when>
+        <xsl:otherwise>
+         <xsl:text>&#160;&#160;</xsl:text>
+        </xsl:otherwise>
+       </xsl:choose>
+      </button>
+      <xsl:if test="count($prev)&gt;0">
+       <div class="dropup-content">
+         <xsl:apply-templates select="$prev" mode="object.title.markup"/>
+       </div>
+      </xsl:if>
+     </div>
+     <div class="dropup" style="width:34%">
+      <button class="dropbtn">Yukarı</button>
+      <div class="dropup-content">
+       <button type="button" class="dropbtn" onclick="window.location.assign('/index.xhtml')">Baş Sayfa</button>
+       <button type="button" class="dropbtn" onclick="window.location.assign('/kitaplik/index.xhtml')">Kitaplık</button>
+       <xsl:if test="$home != . or $nav.context = 'toc'">
+        <xsl:variable name="href">
+         <xsl:call-template name="href.target">
+          <xsl:with-param name="object" select="$home"/>
+         </xsl:call-template>
+        </xsl:variable>
+        <button type="button" class="dropbtn" onclick="window.location.assign('{$href}')">Ana Başlık</button>
+        </xsl:if>
+       <xsl:if test="count($up)&gt;0 and generate-id($up) != generate-id($home)">
+         <xsl:variable name="href">
+           <xsl:call-template name="href.target">
+             <xsl:with-param name="object" select="$up"/>
+           </xsl:call-template>
+         </xsl:variable>
+        <button type="button" class="dropbtn" onclick="window.location.assign('{$href}')">Üst Başlık</button>
+       </xsl:if>
+      </div>
+     </div>
+     <div class="dropup" style="width:33%">
+      <xsl:variable name="href">
+       <xsl:choose>
+        <xsl:when test="count($next)&gt;0">
+         <xsl:call-template name="href.target">
+          <xsl:with-param name="object" select="$next"/>
+         </xsl:call-template>
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:text>#</xsl:text>
+        </xsl:otherwise>
+       </xsl:choose>
+      </xsl:variable>
+      <button type="button" class="dropbtn" onclick="window.location.assign('{$href}')">
+       <xsl:choose>
+        <xsl:when test="count($next)&gt;0">
+         <xsl:text>Sonraki</xsl:text>
+        </xsl:when>
+        <xsl:otherwise>
+         <xsl:text>&#160;&#160;</xsl:text>
+        </xsl:otherwise>
+       </xsl:choose>
+      </button>
+      <xsl:if test="count($next)&gt;0">
+       <div class="dropup-content">
+         <xsl:apply-templates select="$next" mode="object.title.markup"/>
+       </div>
+      </xsl:if>
+     </div>
+    </div>
+  </xsl:if>
+</xsl:template> -->
+
+<!-- ==================================================================== -->
+
+<xsl:template name="navig.content">
+    <xsl:param name="direction" select="d:next"/>
+    <xsl:variable name="navtext">
+        <xsl:choose>
+            <xsl:when test="$direction = 'prev'">
+                <xsl:call-template name="gentext.nav.prev"/>
+            </xsl:when>
+            <xsl:when test="$direction = 'next'">
+                <xsl:call-template name="gentext.nav.next"/>
+            </xsl:when>
+            <xsl:when test="$direction = 'up'">
+                <xsl:call-template name="gentext.nav.up"/>
+            </xsl:when>
+            <xsl:when test="$direction = 'home'">
+                <xsl:call-template name="gentext.nav.home"/>
+            </xsl:when>
+            <xsl:otherwise>
+                <xsl:text>xxx</xsl:text>
+            </xsl:otherwise>
+        </xsl:choose>
+    </xsl:variable>
+
+    <xsl:choose>
+        <xsl:when test="$navig.graphics != 0">
+            <img>
+                <xsl:attribute name="src">
+                    <xsl:value-of select="$navig.graphics.path"/>
+                    <xsl:value-of select="$direction"/>
+                    <xsl:value-of select="$navig.graphics.extension"/>
+                </xsl:attribute>
+                <xsl:attribute name="alt">
+                    <xsl:value-of select="$navtext"/>
+                </xsl:attribute>
+            </img>
+        </xsl:when>
+        <xsl:otherwise>
+            <xsl:value-of select="$navtext"/>
+        </xsl:otherwise>
+    </xsl:choose>
+</xsl:template>
+
+<!-- ==================================================================== -->
+
+<!-- * The following template assumes that the first legalnotice -->
+<!-- * instance found in a document applies to the contents of the -->
+<!-- * entire document. It generates an HTML link in each chunk, back -->
+<!-- * to the file containing the contents of the first legalnotice. -->
+<!-- * -->
+<!-- * Actually, it may generate multiple link instances in each chunk, -->
+<!-- * because it walks through the space-separated list of link -->
+<!-- * types specified in the $html.head.legalnotice.link.types param, -->
+<!-- * popping off link types and generating links for them until it -->
+<!-- * depletes the list. -->
+
+<xsl:template name="make.legalnotice.head.links">
+  <!-- * the following ID is used as part of the legalnotice filename; -->
+  <!-- * we need it in order to construct the filename for use in the -->
+  <!-- * value of the href attribute on the link -->
+
+  <xsl:param name="ln-node" select="(//d:legalnotice)[1]"/>
+
+  <xsl:param name="linktype">
+    <xsl:choose>
+      <xsl:when test="contains($html.head.legalnotice.link.types, ' ')">
+        <xsl:value-of select="normalize-space(                     substring-before($html.head.legalnotice.link.types, ' '))"/>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:value-of select="$html.head.legalnotice.link.types"/>
+      </xsl:otherwise>
+    </xsl:choose>
+  </xsl:param>
+  <xsl:param name="remaining.linktypes" select="concat(               normalize-space(               substring-after($html.head.legalnotice.link.types, ' ')),' ')"/>
+  <xsl:if test="not($linktype = '')">
+
+    <!-- Compute name of legalnotice file (see titlepage.xsl) -->
+    <xsl:variable name="file">
+      <xsl:call-template name="ln.or.rh.filename">
+	<xsl:with-param name="node" select="$ln-node"/>
+      </xsl:call-template>
+    </xsl:variable>
+
+    <link rel="{$linktype}">
+      <xsl:attribute name="href">
+        <xsl:value-of select="$file"/>
+      </xsl:attribute>
+      <xsl:attribute name="title">
+        <xsl:apply-templates select="(//d:legalnotice)[1]" mode="object.title.markup.textonly"/>
+      </xsl:attribute>
+    </link>
+    <xsl:call-template name="make.legalnotice.head.links">
+      <!-- * pop the next value off the list of link types -->
+      <xsl:with-param name="linktype" select="substring-before($remaining.linktypes, ' ')"/>
+      <!-- * remove the link type from the list of remaining link types -->
+      <xsl:with-param name="remaining.linktypes" select="substring-after($remaining.linktypes, ' ')"/>
+    </xsl:call-template>
+  </xsl:if>
+</xsl:template>
+
+<!-- ==================================================================== -->
+<xsl:template name="generate.manifest">
+  <xsl:param name="node" select="/"/>
+  <xsl:call-template name="write.text.chunk">
+    <xsl:with-param name="filename">
+      <xsl:if test="$manifest.in.base.dir != 0">
+        <xsl:value-of select="$chunk.base.dir"/>
+      </xsl:if>
+      <xsl:value-of select="$manifest"/>
+    </xsl:with-param>
+    <xsl:with-param name="method" select="'text'"/>
+    <xsl:with-param name="content">
+      <xsl:apply-templates select="$node" mode="enumerate-files"/>
+    </xsl:with-param>
+    <xsl:with-param name="encoding" select="$chunker.output.encoding"/>
+  </xsl:call-template>
+</xsl:template>
+
+<!-- ==================================================================== -->
+
+<xsl:template name="dbhtml-dir">
+  <xsl:param name="context" select="."/>
+  <!-- directories are now inherited from previous levels -->
+  <xsl:variable name="ppath">
+    <xsl:if test="$context/parent::*">
+      <xsl:call-template name="dbhtml-dir">
+        <xsl:with-param name="context" select="$context/parent::*"/>
+      </xsl:call-template>
+    </xsl:if>
+  </xsl:variable>
+  <xsl:variable name="path">
+    <xsl:call-template name="pi.dbhtml_dir">
+      <xsl:with-param name="node" select="$context"/>
+    </xsl:call-template>
+  </xsl:variable>
+  <xsl:choose>
+    <xsl:when test="$path = ''">
+      <xsl:if test="$ppath != ''">
+        <xsl:value-of select="$ppath"/>
+      </xsl:if>
+    </xsl:when>
+    <xsl:otherwise>
+      <xsl:if test="$ppath != ''">
+        <xsl:value-of select="$ppath"/>
+        <xsl:if test="substring($ppath, string-length($ppath), 1) != '/'">
+          <xsl:text>/</xsl:text>
+        </xsl:if>
+      </xsl:if>
+      <xsl:value-of select="$path"/>
+      <xsl:text>/</xsl:text>
+    </xsl:otherwise>
+  </xsl:choose>
+</xsl:template>
+
+<!-- ==================================================================== -->
+
+<xsl:template name="check.id.unique">
+  <xsl:param name="linkend"></xsl:param>
+  <xsl:if test="$linkend != ''">
+    <xsl:variable name="targets" select="key('id',$linkend)"/>
+    <xsl:variable name="target" select="$targets[1]"/>
+
+<!-- Bulamadığı id'ler için hata vermesin. Biz onları nasılsa tamamlarız.
+     Zaten, bulunamayan id'ler için bağ oluşturmuyoruz.
+    <xsl:if test="count($targets)=0">
+      <xsl:message>
+        <xsl:text>Error: no ID for constraint linkend: </xsl:text>
+        <xsl:value-of select="concat('&quot;', $linkend, '&quot;')"/>
+        <xsl:text>.</xsl:text>
+      </xsl:message>
+    </xsl:if>
+-->
+    <!-- Bu hata önemli!  -->
+    <xsl:if test="count($targets)>1">
+      <xsl:message>
+        <xsl:text>Warning: multiple "IDs" for constraint linkend: </xsl:text>
+        <xsl:value-of select="$linkend"/>
+        <xsl:text>.</xsl:text>
+      </xsl:message>
+    </xsl:if>
+  </xsl:if>
+</xsl:template>
+
+<xsl:template name="id.attribute">
+  <xsl:param name="node" select="."/>
+  <xsl:param name="conditional" select="1"/>
+  <xsl:if test="$node/@xml:id">
+   <xsl:attribute name="id">
+     <xsl:call-template name="object.id">
+       <xsl:with-param name="object" select="$node"/>
+     </xsl:call-template>
+   </xsl:attribute>
+  </xsl:if>
+</xsl:template>
+
 <xsl:template name="href.target.uri">
   <xsl:param name="object" select="."/>
   <xsl:variable name="ischunk">
@@ -1129,498 +1616,223 @@ xmlns:exsl="http://exslt.org/common" xmlns:cf="http://docbook.sourceforge.net/xm
       </xsl:call-template>
     </xsl:when>
   </xsl:choose>
-
 </xsl:template>
 
-<!-- ==================================================================== -->
+<xsl:template name="simple.xlink">
+  <xsl:param name="node" select="."/>
+  <xsl:param name="content">
+    <xsl:apply-templates/>
+  </xsl:param>
+  <xsl:param name="linkend" select="$node/@linkend"/>
+  <xsl:param name="xhref" select="$node/@xlink:href"/>
 
-<xsl:template name="html.head">
-  <xsl:param name="prev" select="/d:foo"/>
-  <xsl:param name="next" select="/d:foo"/>
-  <xsl:variable name="this" select="."/>
-  <xsl:variable name="home" select="/*[1]"/>
-  <xsl:variable name="up" select="parent::*"/>
+  <!-- check for nested links, which are undefined in the output -->
+  <xsl:if test="($linkend or $xhref) and $node/ancestor::*[@xlink:href or @linkend]">
+    <xsl:message>
+      <xsl:text>WARNING: nested link may be undefined in output: </xsl:text>
+      <xsl:text>&lt;</xsl:text>
+      <xsl:value-of select="name($node)"/>
+      <xsl:text> </xsl:text>
+      <xsl:choose>
+        <xsl:when test="$linkend">
+          <xsl:text>@linkend = '</xsl:text>
+          <xsl:value-of select="$linkend"/>
+          <xsl:text>'&gt;</xsl:text>
+        </xsl:when>
+        <xsl:when test="$xhref">
+          <xsl:text>@xlink:href = '</xsl:text>
+          <xsl:value-of select="$xhref"/>
+          <xsl:text>'&gt;</xsl:text>
+        </xsl:when>
+      </xsl:choose>
+      <xsl:text> nested inside parent element </xsl:text>
+      <xsl:value-of select="name($node/parent::*)"/>
+    </xsl:message>
+  </xsl:if>
 
-  <head>
-    <xsl:call-template name="system.head.content"/>
-    <xsl:call-template name="head.content"/>
+  <!-- Support for @xlink:show -->
+  <xsl:variable name="target.show">
+    <xsl:choose>
+      <xsl:when test="$node/@xlink:show = 'new'">_blank</xsl:when>
+      <xsl:when test="$node/@xlink:show = 'replace'">_top</xsl:when>
+      <xsl:otherwise/>
+    </xsl:choose>
+  </xsl:variable>
 
-    <!-- home link not valid in HTML5 -->
-    <xsl:if test="$home and $div.element != 'section'">
-      <link rel="home">
-        <xsl:attribute name="href">
-          <xsl:call-template name="href.target">
-            <xsl:with-param name="object" select="$home"/>
-          </xsl:call-template>
-        </xsl:attribute>
-        <xsl:attribute name="title">
-          <xsl:apply-templates select="$home" mode="object.title.markup.textonly"/>
-        </xsl:attribute>
-      </link>
-    </xsl:if>
+  <xsl:variable name="link">
+    <xsl:choose>
+      <xsl:when test="$xhref and
+                      (not($node/@xlink:type) or
+                      $node/@xlink:type='simple')">
 
-    <!-- up link not valid in HTML5 -->
-    <xsl:if test="$up and $div.element != 'section'">
-      <link rel="up">
-        <xsl:attribute name="href">
-          <xsl:call-template name="href.target">
-            <xsl:with-param name="object" select="$up"/>
-          </xsl:call-template>
-        </xsl:attribute>
-        <xsl:attribute name="title">
-          <xsl:apply-templates select="$up" mode="object.title.markup.textonly"/>
-        </xsl:attribute>
-      </link>
-    </xsl:if>
+        <!-- Is it a local idref or a uri? -->
+        <xsl:variable name="is.idref">
+          <xsl:choose>
+            <!-- if the href starts with # and does not contain an "(" -->
+            <!-- or if the href starts with #xpointer(id(, it's just an ID -->
+            <xsl:when test="starts-with($xhref,'#')
+                      and (not(contains($xhref,'('))
+                      or starts-with($xhref,                                        '#xpointer(id('))">1</xsl:when>
+            <xsl:otherwise>0</xsl:otherwise>
+          </xsl:choose>
+        </xsl:variable>
 
-    <xsl:if test="$prev">
-      <link rel="prev">
-        <xsl:attribute name="href">
-          <xsl:call-template name="href.target">
-            <xsl:with-param name="object" select="$prev"/>
-          </xsl:call-template>
-        </xsl:attribute>
-        <xsl:attribute name="title">
-          <xsl:apply-templates select="$prev" mode="object.title.markup.textonly"/>
-        </xsl:attribute>
-      </link>
-    </xsl:if>
+        <!-- Is it an olink ? -->
+        <xsl:variable name="is.olink">
+          <xsl:choose>
+            <!-- If xlink:role="http://docbook.org/xlink/role/olink" -->
+            <!-- and if the href contains # -->
+            <xsl:when test="contains($xhref,'#') and                  @xlink:role = $xolink.role">1</xsl:when>
+            <xsl:otherwise>0</xsl:otherwise>
+          </xsl:choose>
+        </xsl:variable>
 
-    <xsl:if test="$next">
-      <link rel="next">
-        <xsl:attribute name="href">
-          <xsl:call-template name="href.target">
-            <xsl:with-param name="object" select="$next"/>
-          </xsl:call-template>
-        </xsl:attribute>
-        <xsl:attribute name="title">
-          <xsl:apply-templates select="$next" mode="object.title.markup.textonly"/>
-        </xsl:attribute>
-      </link>
-    </xsl:if>
-
-    <xsl:if test="$html.extra.head.links != 0">
-      <xsl:for-each select="//d:part                             |//d:reference                             |//d:preface                             |//d:chapter                             |//d:article                             |//d:refentry                             |//d:appendix[not(parent::d:article)]|d:appendix                             |//d:glossary[not(parent::d:article)]|d:glossary                             |//d:index[not(parent::d:article)]|d:index">
-        <link rel="{local-name(.)}">
-          <xsl:attribute name="href">
-            <xsl:call-template name="href.target">
-              <xsl:with-param name="context" select="$this"/>
-              <xsl:with-param name="object" select="."/>
+        <xsl:choose>
+          <xsl:when test="$is.olink = 1">
+            <xsl:call-template name="olink">
+              <xsl:with-param name="content" select="$content"/>
             </xsl:call-template>
-          </xsl:attribute>
-          <xsl:attribute name="title">
-            <xsl:apply-templates select="." mode="object.title.markup.textonly"/>
-          </xsl:attribute>
-        </link>
-      </xsl:for-each>
+          </xsl:when>
 
-      <xsl:for-each select="d:section|d:sect1|d:refsection|d:refsect1">
-        <link>
-          <xsl:attribute name="rel">
+          <xsl:when test="$is.idref = 1">
+
+            <xsl:variable name="idref">
+              <xsl:call-template name="xpointer.idref">
+                <xsl:with-param name="xpointer" select="$xhref"/>
+              </xsl:call-template>
+            </xsl:variable>
+
+            <xsl:variable name="targets" select="key('id',$idref)"/>
+            <xsl:variable name="target" select="$targets[1]"/>
+
+            <xsl:call-template name="check.id.unique">
+              <xsl:with-param name="linkend" select="$idref"/>
+            </xsl:call-template>
+
             <xsl:choose>
-              <xsl:when test="local-name($this) = 'section'                               or local-name($this) = 'refsection'">
-                <xsl:value-of select="'subsection'"/>
+              <xsl:when test="count($target) = 0">
+                <xsl:message>
+                  <xsl:text>XLink to nonexistent id: </xsl:text>
+                  <xsl:value-of select="$idref"/>
+                </xsl:message>
+                <xsl:copy-of select="$content"/>
               </xsl:when>
+
               <xsl:otherwise>
-                <xsl:value-of select="'section'"/>
+                <a>
+                  <xsl:apply-templates select="." mode="common.html.attributes"/>
+                  <!-- id attribute goes on the element calling
+                  simple.xlink, not on the anchor element, so
+                  this is commented out:
+                  <xsl:call-template name="id.attribute"/>
+                  -->
+
+                  <xsl:attribute name="href">
+                    <xsl:call-template name="href.target">
+                      <xsl:with-param name="object" select="$target"/>
+                    </xsl:call-template>
+                  </xsl:attribute>
+
+                  <xsl:choose>
+                    <xsl:when test="$node/@xlink:title">
+                      <xsl:attribute name="title">
+                        <xsl:value-of select="$node/@xlink:title"/>
+                      </xsl:attribute>
+                    </xsl:when>
+                    <xsl:otherwise>
+                      <xsl:apply-templates select="$target" mode="html.title.attribute"/>
+                    </xsl:otherwise>
+                  </xsl:choose>
+
+                  <xsl:if test="$target.show !=''">
+                    <xsl:attribute name="target">
+                      <xsl:value-of select="$target.show"/>
+                    </xsl:attribute>
+                  </xsl:if>
+
+                  <xsl:copy-of select="$content"/>
+
+                </a>
               </xsl:otherwise>
             </xsl:choose>
-          </xsl:attribute>
-          <xsl:attribute name="href">
-            <xsl:call-template name="href.target">
-              <xsl:with-param name="context" select="$this"/>
-              <xsl:with-param name="object" select="."/>
-            </xsl:call-template>
-          </xsl:attribute>
-          <xsl:attribute name="title">
-            <xsl:apply-templates select="." mode="object.title.markup.textonly"/>
-          </xsl:attribute>
-        </link>
-      </xsl:for-each>
+          </xsl:when>
 
-      <xsl:for-each select="d:sect2|d:sect3|d:sect4|d:sect5|d:refsect2|d:refsect3">
-        <link rel="subsection">
-          <xsl:attribute name="href">
-            <xsl:call-template name="href.target">
-              <xsl:with-param name="context" select="$this"/>
-              <xsl:with-param name="object" select="."/>
-            </xsl:call-template>
-          </xsl:attribute>
-          <xsl:attribute name="title">
-            <xsl:apply-templates select="." mode="object.title.markup.textonly"/>
-          </xsl:attribute>
-        </link>
-      </xsl:for-each>
-    </xsl:if>
+          <!-- otherwise it's a URI -->
+          <xsl:otherwise>
+            <a>
+              <xsl:apply-templates select="." mode="common.html.attributes"/>
+              <xsl:call-template name="id.attribute"/>
+              <xsl:attribute name="href">
+                <xsl:value-of select="$xhref"/>
+              </xsl:attribute>
+              <xsl:if test="$node/@xlink:title">
+                <xsl:attribute name="title">
+                  <xsl:value-of select="$node/@xlink:title"/>
+                </xsl:attribute>
+              </xsl:if>
 
-    <!-- * if we have a legalnotice and user wants it output as a -->
-    <!-- * separate page and $html.head.legalnotice.link.types is -->
-    <!-- * non-empty, we generate a link or links for each value in -->
-    <!-- * $html.head.legalnotice.link.types -->
-    <xsl:if test="//d:legalnotice                   and not($generate.legalnotice.link = 0)                   and not($html.head.legalnotice.link.types = '')">
-      <xsl:call-template name="make.legalnotice.head.links"/>
-    </xsl:if>
+              <!-- For URIs, use @xlink:show if defined, otherwise use ulink.target -->
+              <xsl:choose>
+                <xsl:when test="$target.show !=''">
+                  <xsl:attribute name="target">
+                    <xsl:value-of select="$target.show"/>
+                  </xsl:attribute>
+                </xsl:when>
+                <xsl:when test="$ulink.target !=''">
+                  <xsl:attribute name="target">
+                    <xsl:value-of select="$ulink.target"/>
+                  </xsl:attribute>
+                </xsl:when>
+              </xsl:choose>
 
-    <xsl:call-template name="user.head.content"/>
-  </head>
-</xsl:template>
-
-<!-- ==================================================================== -->
-
-<xsl:template name="header.navigation">
-  <xsl:param name="prev" select="/d:foo"/>
-  <xsl:param name="next" select="/d:foo"/>
-  <xsl:param name="nav.context"/>
-
-  <xsl:variable name="home" select="/*[1]"/>
-  <xsl:variable name="up" select="parent::*"/>
-
-  <xsl:variable name="row1" select="$navig.showtitles != 0"/>
-  <xsl:variable name="row2" select="count($prev) &gt; 0                                     or (count($up) &gt; 0                                          and generate-id($up) != generate-id($home)                                         and $navig.showtitles != 0)                                     or count($next) &gt; 0"/>
-
-  <xsl:if test="$suppress.navigation = '0' and $suppress.header.navigation = '0'">
-    <div class="navbar">
-     <div class="dropdown" style="width:33%">
-      <xsl:variable name="href">
-       <xsl:choose>
-        <xsl:when test="count($prev)&gt;0">
-         <xsl:call-template name="href.target">
-          <xsl:with-param name="object" select="$prev"/>
-         </xsl:call-template>
-        </xsl:when>
-        <xsl:otherwise>
-          <xsl:text>#</xsl:text>
-        </xsl:otherwise>
-       </xsl:choose>
-      </xsl:variable>
-      <button type="button" class="dropbtn" onclick="window.location.assign('{$href}')">
-       <xsl:choose>
-        <xsl:when test="count($prev)&gt;0">
-         <xsl:text>Önceki</xsl:text>
-        </xsl:when>
-        <xsl:otherwise>
-         <xsl:text>&#160;&#160;</xsl:text>
-        </xsl:otherwise>
-       </xsl:choose>
-      </button>
-      <xsl:if test="count($prev)&gt;0">
-       <div class="dropdown-content">
-         <xsl:apply-templates select="$prev" mode="object.title.markup"/>
-       </div>
-      </xsl:if>
-     </div>
-
-     <div class="dropdown" style="width:34%">
-      <button class="dropbtn">Yukarı</button>
-      <div class="dropdown-content">
-       <button type="button" class="dropbtn" onclick="window.location.assign('/index.html')">Baş Sayfa</button>
-       <xsl:if test="@xml:id!='index'">
-        <button type="button" class="dropbtn" onclick="window.location.assign('/kitaplik/index.html')">Kitaplık</button>
-       </xsl:if>
-       <xsl:if test="ancestor::d:book and generate-id($up) != generate-id(ancestor::d:book)">
-         <xsl:variable name="href">
-           <xsl:call-template name="href.target">
-             <xsl:with-param name="object" select="ancestor::d:book"/>
-           </xsl:call-template>
-         </xsl:variable>
-         <button type="button" class="dropbtn" onclick="window.location.assign('{$href}')">Ana Başlık</button>
-        </xsl:if>
-
-       <xsl:if test="count($up)&gt;0 and generate-id($up) != generate-id($home)">
-         <xsl:variable name="href">
-           <xsl:call-template name="href.target">
-             <xsl:with-param name="object" select="$up"/>
-           </xsl:call-template>
-         </xsl:variable>
-        <button type="button" class="dropbtn" onclick="window.location.assign('{$href}')">Üst Başlık</button>
-       </xsl:if>
-      </div>
-     </div>
-
-     <div class="dropdown" style="width:33%">
-      <xsl:variable name="href">
-       <xsl:choose>
-        <xsl:when test="count($next)&gt;0">
-         <xsl:call-template name="href.target">
-          <xsl:with-param name="object" select="$next"/>
-         </xsl:call-template>
-        </xsl:when>
-        <xsl:otherwise>
-          <xsl:text>#</xsl:text>
-        </xsl:otherwise>
-       </xsl:choose>
-      </xsl:variable>
-      <button type="button" class="dropbtn" onclick="window.location.assign('{$href}')">
-       <xsl:choose>
-        <xsl:when test="count($next)&gt;0">
-         <xsl:text>Sonraki</xsl:text>
-        </xsl:when>
-        <xsl:otherwise>
-         <xsl:text>&#160;&#160;</xsl:text>
-        </xsl:otherwise>
-       </xsl:choose>
-      </button>
-      <xsl:if test="count($next)&gt;0">
-       <div class="dropdown-content">
-         <xsl:apply-templates select="$next" mode="object.title.markup"/>
-       </div>
-      </xsl:if>
-     </div>
-    </div>
-  </xsl:if>
-</xsl:template>
-
-<!-- ==================================================================== -->
-
-<xsl:template name="footer.navigation"/><!--
-  <xsl:param name="prev" select="/d:foo"/>
-  <xsl:param name="next" select="/d:foo"/>
-  <xsl:param name="nav.context"/>
-
-  <xsl:variable name="home" select="/*[1]"/>
-  <xsl:variable name="up" select="parent::*"/>
-
-  <xsl:variable name="row1" select="count($prev) &gt; 0                                     or count($up) &gt; 0                                     or count($next) &gt; 0"/>
-
-  <xsl:variable name="row2" select="($prev and $navig.showtitles != 0)                                     or (generate-id($home) != generate-id(.)                                         or $nav.context = 'toc')                                     or ($chunk.tocs.and.lots != 0                                         and $nav.context != 'toc')                                     or ($next and $navig.showtitles != 0)"/>
-
-  <xsl:if test="$suppress.navigation = '0' and $suppress.footer.navigation = '0'">
-    <div class="footbar navbar">
-     <div class="dropup" style="width:33%">
-      <xsl:variable name="href">
-       <xsl:choose>
-        <xsl:when test="count($prev)&gt;0">
-         <xsl:call-template name="href.target">
-          <xsl:with-param name="object" select="$prev"/>
-         </xsl:call-template>
-        </xsl:when>
-        <xsl:otherwise>
-         <xsl:text>#</xsl:text>
-        </xsl:otherwise>
-       </xsl:choose>
-      </xsl:variable>
-      <button type="button" class="dropbtn" onclick="window.location.assign('{$href}')">
-       <xsl:choose>
-        <xsl:when test="count($prev)&gt;0">
-         <xsl:text>Önceki</xsl:text>
-        </xsl:when>
-        <xsl:otherwise>
-         <xsl:text>&#160;&#160;</xsl:text>
-        </xsl:otherwise>
-       </xsl:choose>
-      </button>
-      <xsl:if test="count($prev)&gt;0">
-       <div class="dropup-content">
-         <xsl:apply-templates select="$prev" mode="object.title.markup"/>
-       </div>
-      </xsl:if>
-     </div>
-     <div class="dropup" style="width:34%">
-      <button class="dropbtn">Yukarı</button>
-      <div class="dropup-content">
-       <button type="button" class="dropbtn" onclick="window.location.assign('/index.xhtml')">Baş Sayfa</button>
-       <button type="button" class="dropbtn" onclick="window.location.assign('/kitaplik/index.xhtml')">Kitaplık</button>
-       <xsl:if test="$home != . or $nav.context = 'toc'">
-        <xsl:variable name="href">
-         <xsl:call-template name="href.target">
-          <xsl:with-param name="object" select="$home"/>
-         </xsl:call-template>
-        </xsl:variable>
-        <button type="button" class="dropbtn" onclick="window.location.assign('{$href}')">Ana Başlık</button>
-        </xsl:if>
-       <xsl:if test="count($up)&gt;0 and generate-id($up) != generate-id($home)">
-         <xsl:variable name="href">
-           <xsl:call-template name="href.target">
-             <xsl:with-param name="object" select="$up"/>
-           </xsl:call-template>
-         </xsl:variable>
-        <button type="button" class="dropbtn" onclick="window.location.assign('{$href}')">Üst Başlık</button>
-       </xsl:if>
-      </div>
-     </div>
-     <div class="dropup" style="width:33%">
-      <xsl:variable name="href">
-       <xsl:choose>
-        <xsl:when test="count($next)&gt;0">
-         <xsl:call-template name="href.target">
-          <xsl:with-param name="object" select="$next"/>
-         </xsl:call-template>
-        </xsl:when>
-        <xsl:otherwise>
-          <xsl:text>#</xsl:text>
-        </xsl:otherwise>
-       </xsl:choose>
-      </xsl:variable>
-      <button type="button" class="dropbtn" onclick="window.location.assign('{$href}')">
-       <xsl:choose>
-        <xsl:when test="count($next)&gt;0">
-         <xsl:text>Sonraki</xsl:text>
-        </xsl:when>
-        <xsl:otherwise>
-         <xsl:text>&#160;&#160;</xsl:text>
-        </xsl:otherwise>
-       </xsl:choose>
-      </button>
-      <xsl:if test="count($next)&gt;0">
-       <div class="dropup-content">
-         <xsl:apply-templates select="$next" mode="object.title.markup"/>
-       </div>
-      </xsl:if>
-     </div>
-    </div>
-  </xsl:if>
-</xsl:template> -->
-
-<!-- ==================================================================== -->
-
-<xsl:template name="navig.content">
-    <xsl:param name="direction" select="d:next"/>
-    <xsl:variable name="navtext">
-        <xsl:choose>
-            <xsl:when test="$direction = 'prev'">
-                <xsl:call-template name="gentext.nav.prev"/>
-            </xsl:when>
-            <xsl:when test="$direction = 'next'">
-                <xsl:call-template name="gentext.nav.next"/>
-            </xsl:when>
-            <xsl:when test="$direction = 'up'">
-                <xsl:call-template name="gentext.nav.up"/>
-            </xsl:when>
-            <xsl:when test="$direction = 'home'">
-                <xsl:call-template name="gentext.nav.home"/>
-            </xsl:when>
-            <xsl:otherwise>
-                <xsl:text>xxx</xsl:text>
-            </xsl:otherwise>
+              <xsl:copy-of select="$content"/>
+            </a>
+          </xsl:otherwise>
         </xsl:choose>
-    </xsl:variable>
+      </xsl:when>
 
-    <xsl:choose>
-        <xsl:when test="$navig.graphics != 0">
-            <img>
-                <xsl:attribute name="src">
-                    <xsl:value-of select="$navig.graphics.path"/>
-                    <xsl:value-of select="$direction"/>
-                    <xsl:value-of select="$navig.graphics.extension"/>
-                </xsl:attribute>
-                <xsl:attribute name="alt">
-                    <xsl:value-of select="$navtext"/>
-                </xsl:attribute>
-            </img>
-        </xsl:when>
-        <xsl:otherwise>
-            <xsl:value-of select="$navtext"/>
-        </xsl:otherwise>
-    </xsl:choose>
-</xsl:template>
+      <xsl:when test="$linkend">
+        <xsl:variable name="targets" select="key('id',$linkend)"/>
+        <xsl:variable name="target" select="$targets[1]"/>
 
-<!-- ==================================================================== -->
+        <xsl:call-template name="check.id.unique">
+          <xsl:with-param name="linkend" select="$linkend"/>
+        </xsl:call-template>
 
-<!-- * The following template assumes that the first legalnotice -->
-<!-- * instance found in a document applies to the contents of the -->
-<!-- * entire document. It generates an HTML link in each chunk, back -->
-<!-- * to the file containing the contents of the first legalnotice. -->
-<!-- * -->
-<!-- * Actually, it may generate multiple link instances in each chunk, -->
-<!-- * because it walks through the space-separated list of link -->
-<!-- * types specified in the $html.head.legalnotice.link.types param, -->
-<!-- * popping off link types and generating links for them until it -->
-<!-- * depletes the list. -->
+        <xsl:choose>
+         <xsl:when test="count($target)>0">
+          <a>
+          <xsl:apply-templates select="." mode="common.html.attributes"/>
+          <xsl:call-template name="id.attribute"/>
+          <xsl:attribute name="href">
+            <xsl:call-template name="href.target">
+              <xsl:with-param name="object" select="$target"/>
+            </xsl:call-template>
+          </xsl:attribute>
 
-<xsl:template name="make.legalnotice.head.links">
-  <!-- * the following ID is used as part of the legalnotice filename; -->
-  <!-- * we need it in order to construct the filename for use in the -->
-  <!-- * value of the href attribute on the link -->
+          <xsl:apply-templates select="$target" mode="html.title.attribute"/>
 
-  <xsl:param name="ln-node" select="(//d:legalnotice)[1]"/>
+          <xsl:copy-of select="$content"/>
 
-  <xsl:param name="linktype">
-    <xsl:choose>
-      <xsl:when test="contains($html.head.legalnotice.link.types, ' ')">
-        <xsl:value-of select="normalize-space(                     substring-before($html.head.legalnotice.link.types, ' '))"/>
+          </a>
+         </xsl:when>
+         <xsl:otherwise>
+          <xsl:copy-of select="$content"/>
+         </xsl:otherwise>
+        </xsl:choose>
       </xsl:when>
       <xsl:otherwise>
-        <xsl:value-of select="$html.head.legalnotice.link.types"/>
+        <xsl:copy-of select="$content"/>
       </xsl:otherwise>
     </xsl:choose>
-  </xsl:param>
-  <xsl:param name="remaining.linktypes" select="concat(               normalize-space(               substring-after($html.head.legalnotice.link.types, ' ')),' ')"/>
-  <xsl:if test="not($linktype = '')">
-
-    <!-- Compute name of legalnotice file (see titlepage.xsl) -->
-    <xsl:variable name="file">
-      <xsl:call-template name="ln.or.rh.filename">
-	<xsl:with-param name="node" select="$ln-node"/>
-      </xsl:call-template>
-    </xsl:variable>
-
-    <link rel="{$linktype}">
-      <xsl:attribute name="href">
-        <xsl:value-of select="$file"/>
-      </xsl:attribute>
-      <xsl:attribute name="title">
-        <xsl:apply-templates select="(//d:legalnotice)[1]" mode="object.title.markup.textonly"/>
-      </xsl:attribute>
-    </link>
-    <xsl:call-template name="make.legalnotice.head.links">
-      <!-- * pop the next value off the list of link types -->
-      <xsl:with-param name="linktype" select="substring-before($remaining.linktypes, ' ')"/>
-      <!-- * remove the link type from the list of remaining link types -->
-      <xsl:with-param name="remaining.linktypes" select="substring-after($remaining.linktypes, ' ')"/>
-    </xsl:call-template>
-  </xsl:if>
-</xsl:template>
-
-<!-- ==================================================================== -->
-<xsl:template name="generate.manifest">
-  <xsl:param name="node" select="/"/>
-  <xsl:call-template name="write.text.chunk">
-    <xsl:with-param name="filename">
-      <xsl:if test="$manifest.in.base.dir != 0">
-        <xsl:value-of select="$chunk.base.dir"/>
-      </xsl:if>
-      <xsl:value-of select="$manifest"/>
-    </xsl:with-param>
-    <xsl:with-param name="method" select="'text'"/>
-    <xsl:with-param name="content">
-      <xsl:apply-templates select="$node" mode="enumerate-files"/>
-    </xsl:with-param>
-    <xsl:with-param name="encoding" select="$chunker.output.encoding"/>
-  </xsl:call-template>
-</xsl:template>
-
-<!-- ==================================================================== -->
-
-<xsl:template name="dbhtml-dir">
-  <xsl:param name="context" select="."/>
-  <!-- directories are now inherited from previous levels -->
-  <xsl:variable name="ppath">
-    <xsl:if test="$context/parent::*">
-      <xsl:call-template name="dbhtml-dir">
-        <xsl:with-param name="context" select="$context/parent::*"/>
-      </xsl:call-template>
-    </xsl:if>
   </xsl:variable>
-  <xsl:variable name="path">
-    <xsl:call-template name="pi.dbhtml_dir">
-      <xsl:with-param name="node" select="$context"/>
-    </xsl:call-template>
-  </xsl:variable>
+
   <xsl:choose>
-    <xsl:when test="$path = ''">
-      <xsl:if test="$ppath != ''">
-        <xsl:value-of select="$ppath"/>
-      </xsl:if>
+    <xsl:when test="function-available('suwl:unwrapLinks')">
+      <xsl:copy-of select="suwl:unwrapLinks($link)"/>
     </xsl:when>
     <xsl:otherwise>
-      <xsl:if test="$ppath != ''">
-        <xsl:value-of select="$ppath"/>
-        <xsl:if test="substring($ppath, string-length($ppath), 1) != '/'">
-          <xsl:text>/</xsl:text>
-        </xsl:if>
-      </xsl:if>
-      <xsl:value-of select="$path"/>
-      <xsl:text>/</xsl:text>
+      <xsl:copy-of select="$link"/>
     </xsl:otherwise>
   </xsl:choose>
 </xsl:template>
