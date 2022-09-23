@@ -50,7 +50,7 @@ satırı ve kapatıcısını silmek yeterlidir. Ancak,
 bunu yapmak yerine xml:id'lerle değişmez id'ler oluşturmak daha iyidir. -->
 <!-- özelleştirilmiş değiştirgeler -->
 <xsl:param name="html.ext">.html</xsl:param>
-<xsl:param name="VERSION">-special(derived from DocBook XSL v1.79.1 for Turkish Linux Documentation Project by Nilgün Belma Bugüner - nilgun (at) tlbp.gen.tr)</xsl:param>
+<xsl:param name="VERSION">-special (derived from DocBook XSL v1.79.1 for Turkish Linux Documentation Project by Nilgün Belma Bugüner - nilgun (at) tlbp.org.tr)</xsl:param>
 <xsl:param name="chunker.output.encoding">UTF-8</xsl:param>
 <!-- hata ayıklama/geliştirme için "yes" sunumda "no" olmalı" -->
 <xsl:param name="chunker.output.indent">yes</xsl:param>
@@ -146,29 +146,6 @@ set       toc,title
     </xsl:apply-templates>
   </table>
  </div>
-</xsl:template>
-
-<xsl:template match="d:legalnotice/d:title" mode="titlepage.mode">
-  <div class="legalnotice-title">
-    <xsl:apply-templates/>
-  </div>
-</xsl:template>
-
-<xsl:template match="d:abstract" mode="titlepage.mode">
-  <div>
-    <xsl:apply-templates select="." mode="common.html.attributes"/>
-    <xsl:call-template name="id.attribute"/>
-    <xsl:call-template name="anchor"/>
-    <xsl:if test="$abstract.notitle.enabled = 0">
-      <xsl:call-template name="formal.object.heading">
-        <xsl:with-param name="title">
-          <xsl:apply-templates select="." mode="title.markup"/>
-        </xsl:with-param>
-      </xsl:call-template>
-    </xsl:if>
-    <xsl:apply-templates mode="titlepage.mode"/>
-    <!--xsl:call-template name="process.footnotes"/-->
-  </div>
 </xsl:template>
 
 <xsl:template match="d:indexterm">
@@ -604,6 +581,8 @@ footnote text gets an id of #ftn.@id. They cross link to each other. -->
 </xsl:template>
 
 <xsl:template name="refentry.header">
+ <xsl:choose>
+  <xsl:when test="d:info/t:pageinfo">
   <xsl:variable name="name">
     <xsl:value-of select="concat(translate(normalize-space(d:info/t:pageinfo/t:name/text()), &allasciicases;, &asciiuppercases;),'(', d:info/t:pageinfo/t:volnum/text() ,')')"/>
   </xsl:variable>
@@ -625,9 +604,57 @@ footnote text gets an id of #ftn.@id. They cross link to each other. -->
     </tr>
   </table>
 </div><p/>
+  </xsl:when>
+  <xsl:otherwise>
+  <xsl:variable name="name">
+   <xsl:value-of select="concat(translate(normalize-space(d:refmeta/d:refentrytitle), &allasciicases;, &asciiuppercases;),'(', d:refmeta/d:manvolnum ,')')"/>
+  </xsl:variable>
+<div class="refentry-header">
+  <table cellspacing="3" cellpadding="3" width="100%" border="0">
+    <tr>
+      <td class="mheadfoot" align="left" width="25%">
+        <xsl:value-of select="$name"/>
+      </td>
+      <td class="mheadfoot" align="center" width="50%">
+        <xsl:if test="(d:refmeta/d:refmiscinfo/d:sectdesc)">
+          <xsl:value-of select="d:refmeta/d:refmiscinfo/d:sectdesc"/>
+        </xsl:if>
+        <xsl:text> </xsl:text>
+      </td>
+      <td class="mheadfoot" align="right" width="25%">
+        <xsl:value-of select="$name"/>
+      </td>
+    </tr>
+  </table>
+</div><p/>
+  </xsl:otherwise>
+ </xsl:choose>
 </xsl:template>
 
 <xsl:template name="refentry.footer">
+ <xsl:choose>
+  <xsl:when test="not (d:info/t:pageinfo)">
+   <div class="refentry-footer">
+     <table cellspacing="3" cellpadding="3" width="100%" border="0">
+       <tr>
+         <td class="mheadfoot" align="left" width="30%">
+           <xsl:if test="(d:refmeta/d:refmiscinfo/d:source)">
+             <xsl:value-of select="d:refmeta/d:refmiscinfo/d:source"/>
+           </xsl:if>
+         </td>
+         <td class="mheadfoot" align="center" width="40%">
+           <xsl:if test="(d:refmeta/d:refmiscinfo/d:date)">
+           <xsl:value-of select="d:refmeta/d:refmiscinfo/d:date"/>
+           </xsl:if>
+         </td>
+         <td class="mheadfoot" align="right" width="30%">
+           <xsl:value-of select="concat(translate(normalize-space(d:refmeta/d:refentrytitle), &allasciicases;, &asciiuppercases;),'(', d:refmeta/d:manvolnum ,')')"/>
+         </td>
+       </tr>
+     </table>
+   </div>
+  </xsl:when>
+  <xsl:otherwise>
 <div class="refentry-footer">
   <table cellspacing="3" cellpadding="3" width="100%" border="0">
     <tr>
@@ -647,6 +674,25 @@ footnote text gets an id of #ftn.@id. They cross link to each other. -->
     </tr>
   </table>
 </div>
+  </xsl:otherwise>
+ </xsl:choose>
+</xsl:template>
+
+<xsl:template match="d:legalnotice/d:title" mode="titlepage.mode"/>
+
+<xsl:template match="d:legalnotice" mode="titlepage.mode">
+  <div class="dropnotice">
+    <xsl:variable name="title">
+      <xsl:apply-templates select="." mode="title.markup"/>
+    </xsl:variable>
+
+    <div class="legalnotice-title">
+     <a style="text-decoration: underline"><xsl:copy-of select="$title"/></a>
+    </div>
+    <div class="droplegal">
+     <xsl:apply-templates mode="titlepage.mode"/>
+    </div>
+  </div>
 </xsl:template>
 
 <xsl:template match="d:uri[(ancestor::d:refentry) and not (child::node())]">

@@ -136,7 +136,7 @@
   <xsl:value-of select="concat($name, ' - ', $desc)"/>
 </xsl:template>
 
-<xsl:template match="d:refpurpose"/>
+<xsl:template match="d:refpurpose|d:refmiscinfo|d:manvolnum|d:refentrytitle|d:legalnotice"/>
 
 <xsl:template match="d:refsynopsisdiv">
   <xsl:variable name="title">
@@ -479,9 +479,21 @@
   </xsl:choose>
 <xsl:text>.nf
 </xsl:text>
-  <xsl:variable name="p">
-    <xsl:apply-templates/>
-  </xsl:variable>
+<xsl:call-template name="verbatim">
+  <xsl:with-param name="p">
+   <xsl:apply-templates/>
+  </xsl:with-param>
+</xsl:call-template>
+<xsl:text>.fi
+.sp
+.RE</xsl:text>
+  <xsl:if test="(&indented;)">
+   <xsl:value-of select="'&#10;.RE&#10;.IP'"/>
+  </xsl:if>
+</xsl:template>
+
+<xsl:template name="verbatim">
+ <xsl:param name="p"></xsl:param>
   <xsl:variable name="p1">
     <xsl:choose>
       <xsl:when test="not(starts-with($p, '&#10;'))">
@@ -524,12 +536,6 @@
   <xsl:if test="substring($p, string-length($p), 1)!='&#10;'">
 <xsl:text>
 </xsl:text>
-  </xsl:if>
-<xsl:text>.fi
-.sp
-.RE</xsl:text>
-  <xsl:if test="(&indented;)">
-   <xsl:value-of select="'&#10;.RE&#10;.IP'"/>
   </xsl:if>
 </xsl:template>
 

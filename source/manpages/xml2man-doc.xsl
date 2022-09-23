@@ -29,20 +29,29 @@ GNU AGPL (http://gnu.org/licenses/agpl.html) lisansı geçerlidir.
 Bu çevirinin telif hakları belgenin çevirmenlerine aittir.
 Bu bir özgür yazılımdır: Yazılımı değiştirmek ve dağıtmakta özgürsünüz.
 Yasaların izin verdiği ölçüde HİÇBİR GARANTİ YOKTUR.
-..
+\&amp;
+</xsl:text>
+<xsl:if test="d:refmeta/d:legalnotice">
+ <xsl:call-template name="verbatim">
+   <xsl:with-param name="p">
+    <xsl:value-of select="d:refmeta/d:legalnotice/d:screen"/>
+   </xsl:with-param>
+ </xsl:call-template>
+</xsl:if>
+<xsl:text>..
 .\" Derlenme zamanı: </xsl:text>
   <xsl:value-of select="date:date-time()"/>
   <xsl:variable name="p">
     <xsl:text>.TH "</xsl:text>
-    <xsl:value-of select="translate(normalize-space(d:info/t:pageinfo/t:name/text()), &allcases;, &uppercases;)"/>
+    <xsl:value-of select="translate(normalize-space(d:refmeta/d:refentrytitle), &allcases;, &uppercases;)"/>
     <xsl:text>" </xsl:text>
-    <xsl:value-of select="d:info/t:pageinfo/t:volnum"/>
+    <xsl:value-of select="d:refmeta/d:manvolnum"/>
     <xsl:text> "</xsl:text>
-    <xsl:value-of select="d:info/t:pageinfo/t:date"/>
+    <xsl:value-of select="d:refmeta/d:refmiscinfo/d:date"/>
     <xsl:text>" "</xsl:text>
-    <xsl:value-of select="d:info/t:pageinfo/t:source"/>
+    <xsl:value-of select="d:refmeta/d:refmiscinfo/d:source"/>
     <xsl:text>" "</xsl:text>
-    <xsl:value-of select="d:info/t:pageinfo/t:section"/>
+    <xsl:value-of select="d:refmeta/d:refmiscinfo/d:sectdesc"/>
     <xsl:text>"</xsl:text>
   </xsl:variable>
 <xsl:value-of select="concat('&#10;', normalize-space($p))"/>
@@ -55,12 +64,12 @@ Yasaların izin verdiği ölçüde HİÇBİR GARANTİ YOKTUR.
   <xsl:apply-templates/>
 </xsl:template>
 
-<xsl:template match="d:info"/>
+<xsl:template match="d:info|d:refname/d:refmiscinfo"/>
 
 <xsl:template name="linkme">
 
   <xsl:variable name="dizge">
-    <xsl:value-of select="d:refname/text()"/>
+    <xsl:value-of select="d:refname"/>
   </xsl:variable>
 
   <xsl:variable name="thisbase">
@@ -79,7 +88,7 @@ Yasaların izin verdiği ölçüde HİÇBİR GARANTİ YOKTUR.
   </xsl:variable>
 
   <xsl:variable name="dizge2">
-    <xsl:value-of select="../d:info/t:pageinfo/t:name/text()"/>
+    <xsl:value-of select="../d:refmeta/d:refentrytitle"/>
   </xsl:variable>
 
   <xsl:variable name="mainbase">
@@ -98,7 +107,7 @@ Yasaların izin verdiği ölçüde HİÇBİR GARANTİ YOKTUR.
   </xsl:variable>
 
   <xsl:variable name="ext">
-    <xsl:value-of select="../d:info/t:pageinfo/t:volnum/text()"/>
+    <xsl:value-of select="../d:refmeta/d:manvolnum"/>
   </xsl:variable>
 
   <doc:document href="{concat('tr/man', $ext, '/', $thisbase, '.', $ext)}" omit-xml-declaration="yes">

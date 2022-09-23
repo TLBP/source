@@ -43,7 +43,7 @@
 
 <xsl:key name="manvolnum"
          match="d:refnamediv"
-         use="../d:info/t:pageinfo/t:volnum"/>
+         use="../d:refmeta/d:manvolnum"/>
 
 <xsl:template name="refentry.toc.letters">
   <xsl:param name="volnum" select="none"/>
@@ -121,5 +121,9 @@
 </xsl:template>
 
 <xsl:template match="*" mode="reftoc"/>
+
+<xsl:template match="d:refmiscinfo">
+ <xsl:apply-templates/>
+</xsl:template>
 
 </xsl:stylesheet>

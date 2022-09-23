@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--This file was created automatically by html2xhtml-->
-<!--from the HTML stylesheets.-->
+<!--from the HTML stylesheets.
+Bu dosyanın içeriğini bu dosyanın dışında çalıştıramıyorum.
+Bu nedenle dosyayı yerinde hack etmekten başka çare kalmadı -->
 <xsl:stylesheet exclude-result-prefixes="d"
                  xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:d="http://docbook.org/ns/docbook"
 xmlns="http://www.w3.org/1999/xhtml" version="1.0">
@@ -119,35 +121,49 @@ xmlns="http://www.w3.org/1999/xhtml" version="1.0">
     <xsl:call-template name="refentry.header"/>
     <xsl:call-template name="refentry.titlepage"/>
     <xsl:apply-templates/>
+    <xsl:apply-templates select="d:refmeta" mode="refentry.footer"/>
     <xsl:call-template name="process.footnotes"/>
     <xsl:call-template name="refentry.footer"/>
-  </div>
+   </div>
 </xsl:template>
 
 <xsl:template match="d:refentry/d:docinfo|d:refentry/d:refentryinfo"/>
-<xsl:template match="d:refentry/d:info"/>
+<xsl:template match="d:refentry/d:info|d:refmeta"/>
 
 <xsl:template match="d:refentrytitle|d:refname|d:refdescriptor" mode="title">
   <xsl:apply-templates/>
 </xsl:template>
 
-<xsl:template match="d:refmeta">
+<xsl:template match="d:refmeta" mode="refentry.footer">
+ <xsl:apply-templates  mode="refentry.footer"/>
 </xsl:template>
 
-<xsl:template match="d:manvolnum">
-  <xsl:if test="$refentry.xref.manvolnum != 0">
-    <xsl:text>(</xsl:text>
-    <xsl:apply-templates/>
-    <xsl:text>)</xsl:text>
-  </xsl:if>
+<xsl:template match="d:refmiscinfo"/>
+<xsl:template match="d:legalnotice|d:legalnotice/d:title"/>
+<xsl:template match="d:legalnotice/d:screen"  mode="refentry.footer">
+ <pre><xsl:apply-templates/></pre>
 </xsl:template>
 
-<xsl:template match="d:refmiscinfo">
+<xsl:template match="d:legalnotice" mode="refentry.footer">
+  <div class="refnotice">
+    <xsl:variable name="title">
+      <xsl:apply-templates select="." mode="title.markup"/>
+    </xsl:variable>
+
+    <div class="legalnotice-title">
+      <xsl:copy-of select="$title"/>
+    </div>
+    <div class="reflegal">
+     <xsl:apply-templates  mode="refentry.footer"/>
+    </div>
+  </div>
 </xsl:template>
 
-<xsl:template match="d:refentrytitle">
-  <xsl:call-template name="inline.charseq"/>
-</xsl:template>
+<xsl:template match="*" mode="refentry.footer"/>
+
+<xsl:template match="d:sectdesc|d:source|d:refmiscinfo/d:date"/>
+<xsl:template match="d:manvolnum"/>
+<xsl:template match="d:refentrytitle"/>
 
 <xsl:template match="d:refnamediv">
   <div>
