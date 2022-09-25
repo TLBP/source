@@ -20,16 +20,10 @@
     <xsl:value-of select="concat($remark, '&#10;')"/>
   </xsl:if>
 <xsl:text>.ig
-Bu kılavuz sayfası Türkçe Linux Belgelendirme Projesi (TLBP) tarafından
-XML belgelerden derlenmiş olup manpages-tr paketinin parçasıdır:
-https://github.com/TLBP/manpages-tr
-İngilizce kılavuz sayfasında varsa, lisans ve telif hakkı bilgileri
-korunmuştur. Lisans bilgisi içermeyen belgelerin türkçe çevirileri için
-GNU AGPL (http://gnu.org/licenses/agpl.html) lisansı geçerlidir.
-Bu çevirinin telif hakları belgenin çevirmenlerine aittir.
-Bu bir özgür yazılımdır: Yazılımı değiştirmek ve dağıtmakta özgürsünüz.
-Yasaların izin verdiği ölçüde HİÇBİR GARANTİ YOKTUR.
-\&amp;
+ * Bu kılavuz sayfası Türkçe Linux Belgelendirme Projesi (TLBP) tarafından
+ * XML belgelerden derlenmiş olup manpages-tr paketinin parçasıdır:
+ * https://github.com/TLBP/manpages-tr
+ *
 </xsl:text>
 <xsl:if test="d:refmeta/d:legalnotice">
  <xsl:call-template name="verbatim">
