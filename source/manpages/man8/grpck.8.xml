@@ -1,20 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- ********************************************************************
-       man8/groupdel.8.xml, Shadow-utils 4.11.1, BSD3, NBB - Ekim 2022
+       man8/grpck.8.xml, Shadow-utils 4.11.1, BSD3, NBB - Ekim 2022
      ******************************************************************** -->
-<refentry xml:id="man8-groupdel" xmlns="http://docbook.org/ns/docbook"
+<refentry xml:id="man8-grpck" xmlns="http://docbook.org/ns/docbook"
  xmlns:xlink="http://www.w3.org/1999/xlink" version="5.0" xml:lang="tr">
  <info>
   <keywordset>
    <keyword>Linux, manpage, kütüphane, kitaplık, belge, belgeler</keyword>
    <keyword>kabuk, komut, kullanıcı, yardım, kılavuz, Shadow-utils</keyword>
-   <keyword>groupdel, kişisel, kabuk, login.defs, grup, sistem</keyword>
-   <keyword>parola, kimlik, sil, politika, chroot, prefix, root</keyword>
+   <keyword>grpck, kişisel, kabuk, login.defs, grup, sistem, root</keyword>
+   <keyword>kimlik, değiştir, sil, chroot, bütünlük, tutarlılık</keyword>
   </keywordset>
  </info>
  <refmeta>
   <manvolnum>8</manvolnum>
-  <refentrytitle>groupdel</refentrytitle>
+  <refentrytitle>grpck</refentrytitle>
   <refmiscinfo>
    <sectdesc>Sistem Yönetim Komutları</sectdesc>
    <source>Shadow-utils 4.11.1</source>
@@ -26,7 +26,8 @@
  *
  * Copyright 1991 - 1994, Julianne Frances Haugh
  * Copyright 1996 - 2000, Marek Michałkiewicz
- * Copyright 2000 - 2006, Tomasz Kłoczko
+ * Copyright 2001,        Michał Moskal
+ * Copyright 2001 - 2006, Tomasz Kłoczko
  * Copyright 2007 - 2011, Nicolas François
  * All rights reserved.
  *
@@ -57,33 +58,70 @@
   </legalnotice>
  </refmeta>
  <refnamediv>
-  <refname>groupdel</refname>
-  <refpurpose>bir grubu siler</refpurpose>
+  <refname>grpck</refname>
+  <refpurpose>grup dosyalarının tutarlılığını doğrular</refpurpose>
  </refnamediv>
  <refsynopsisdiv><title>KULLANIM</title>
   <cmdsynopsis>
-   <command>groupdel</command>
+   <command>grpck</command>
    <arg><replaceable>seçenekler</replaceable></arg>
-   <arg choice="plain"><replaceable>GRUP</replaceable></arg>
+   <arg><replaceable>group</replaceable> <arg>
+     <replaceable>shadow</replaceable> </arg></arg>
   </cmdsynopsis>
  </refsynopsisdiv>
- <refsect1><title>AÇIKLAMA</title>
+ <refsect1>
+  <title>AÇIKLAMA</title>
   <para>
-   <command>groupdel</command> komutu, sistem hesap dosyalarını düzenler ve <replaceable>GRUP</replaceable> olarak belirtilen gruba ait bütün girdileri siler. Silinmek istenen grup, sistemde varolmalıdır.
+   <command>grpck</command> grup bilgilerinin tutarlılığını doğrular.  <filename>/etc/group</filename> ve <filename>/etc/gshadow</filename> dosyalarındaki girdilerin geçerli bilgi içerip içermediğini ve uygun biçemde olup olmadığını denetler. Kullanıcıdan, hatalı biçimlendirilmiş veya hataları düzeltilemeyen girdileri silmesi istenir.
+  </para>
+  <para>
+   Her girdinin aşağıdakilere sahip olduğunu doğrulamak için denetim yapılır:
+  </para>
+  <itemizedlist>
+   <listitem>
+    <para>
+     doğru sayıda alan
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     eşsiz ve geçerli grup ismi
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     geçerli grup belirteci (yalnızca <filename>/etc/group</filename> için)
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     geçerli yönetici ve üye listesi
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     <filename>/etc/group</filename> içindeki sırayla <filename>/etc/gshadow</filename> dosyasında girdinin karşılığı
+    </para>
+   </listitem>
+  </itemizedlist>
+  <para>
+   Doğru sayıda alan ve benzersiz grup adı için yapılan denetimler ölümcüldür. Bir girdide yanlış sayıda alan varsa, kullanıcıdan tüm satırı silmesi istenir. Kullanıcı olumlu yanıt vermezse, diğer tüm denetimler atlanır. Yinelenen grup adına sahip bir girdinin silinmesi istenir, ancak kalan denetimler yine de yapılır. Diğer tüm hatalar uyarıdır ve kullanıcının hatayı düzeltmek için <uri xlink:href="man8-groupmod"/> komutunu çalıştırması önerilir.
+  </para>
+  <para>
+   <filename>/etc/group</filename> ve <filename>/etc/gshadow</filename> dosyaları üzerinde işlem yapan komutlar, bozuk veya yinelenen girdileri değiştiremez. Böyle durumlarda <command>grpck</command> rahatsız edici girdileri kaldırmak için kullanılmalıdır.
   </para>
  </refsect1>
  <refsect1><title>SEÇENEKLER</title>
+  <para>
+   <command>grpck</command> öntanımlı olarak, <filename>/etc/group</filename> ve <filename>/etc/gshadow</filename> dosyaları üzerinde işlem yapar. <replaceable>group</replaceable> ve <replaceable>shadow</replaceable> değiştirgeleri ile bunların yerine başka dosyalar belirtilebilir.
+  </para>
+  <para>
+   <option>-r</option> ve <option>-s</option> seçenekleri birlikte kullanılamaz.
+  </para>
+  <para>
+   Bu komuta verilebilecek seçenekler şunlardır:
+  </para>
   <glosslist>
-   <glossentry>
-    <glossterm>
-     <option>-f</option>, <option>--force</option>
-    </glossterm>
-    <glossdef>
-     <para>
-      Bu seçenek, <command>groupadd</command> komutunun eklemeye çalıştığı grup sistemde zaten var ise, başarılı durum koduyla çıkmasını sağlar. <option>-g</option> seçeneği ile kullanıldığında ve belirtilen <replaceable>grup-kimliği</replaceable> mevcutsa diğer (eşsiz) grup kimliği seçilir (yani <option>-g</option> kapatılır).
-     </para>
-    </glossdef>
-   </glossentry>
    <glossentry>
     <glossterm>
      <option>-h</option>, <option>--help</option>
@@ -91,6 +129,16 @@
     <glossdef>
      <para>
       Yardım metnini gösterir ve çıkar.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <option>-r</option>, <option>--read-only</option>
+    </glossterm>
+    <glossdef>
+     <para>
+      <command>grpck</command> komutunu salt okunur kipte çalıştırır. Bu, değişikliklerle ilgili tüm soruların kullanıcı müdahalesi olmadan "no/hayır" olarak yanıtlanmasına neden olur.
      </para>
     </glossdef>
    </glossentry>
@@ -107,24 +155,26 @@
    </glossentry>
    <glossentry>
     <glossterm>
-     <option>-P</option>,
-     <option>--prefix</option> <replaceable>PREFIX_DİZİNİ</replaceable>
+     <option>-s</option>,
+     <option>--sort</option>
     </glossterm>
     <glossdef>
      <para>
-      Değişiklikleri <replaceable>PREFIX_DİZİNİ</replaceable>nde uygular ve <replaceable>PREFIX_DİZİNİ</replaceable>ndeki yapılandırma dosyaları kullanılır. Bu seçenek chroot yapmaz ve çapraz derlemeye hazırlık için tasarlanmamıştır. Bazı sınırlamalar: NIS ve LDAP kullanıcı ve grupları doğrulanmaz. PAM kimlik kanıtlaması konak dosyalarını kulllanılır. SELinux desteklenmez.
+      <filename>/etc/group</filename> ve <filename>/etc/gshadow</filename> dosyalarındaki girdileri grup kimliklerine göre sıralar.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <option>-S</option>, <option>--silence-warnings</option>
+    </glossterm>
+    <glossdef>
+     <para>
+      Tartışmalı uyarıları, özellikle <filename>/etc/group</filename> ve <filename>/etc/gshadow</filename>'da listelenen grup üyeleri arasındaki tutarsızlıklar hakkındaki uyarıları kaldırır.
      </para>
     </glossdef>
    </glossentry>
   </glosslist>
- </refsect1>
- <refsect1><title>YETERSİZLİKLER</title>
-  <para>
-   Varolan herhangi bir kullanıcının birincil grubunu silemeyebilirsiniz. Grubu silmeden önce bu kullanıcıyı sistemden kaldırmak zorundasınız.
-  </para>
-  <para>
-   Silme işleminden sonra, silinen grup numarasına ait herhangi bir dosya kalmadığından emin olmak için bütün dosya sistemlerini kontrol etmelisiniz.
-  </para>
  </refsect1>
  <refsect1><title>YAPILANDIRMA</title>
   <para>
@@ -154,54 +204,60 @@
   </variablelist>
  </refsect1>
  <refsect1><title>İLGİLİ DOSYALAR</title>
-   <screen><command>/etc/group</command>   - grupların hesap bilgileri
-<command>/etc/gshadow</command> - güvenli grup bilgileri
+   <screen><option>/etc/group</option>   - grupların hesap bilgileri
+<option>/etc/gshadow</option> - güvenli grup bilgileri
+<option>/etc/passwd</option>  - Kullanıcı hesap bilgileri
 </screen>
  </refsect1>
  <refsect1><title>ÇIKIŞ DURUMU</title>
   <para>
-   <command>groupdel</command> komutu şu değerlerle çıkar:
+   <command>grpck</command> komutu şu değerlerle çıkar:
   </para>
   <variablelist termlength="4">
    <varlistentry>
     <term><replaceable>0</replaceable></term>
     <listitem>
-      <para>başarılı</para>
+     <para>başarılı</para>
+    </listitem>
+   </varlistentry>
+   <varlistentry>
+    <term><replaceable>1</replaceable></term>
+    <listitem>
+     <para>geçersiz komut sözdizimi</para>
     </listitem>
    </varlistentry>
    <varlistentry>
     <term><replaceable>2</replaceable></term>
     <listitem>
-      <para>geçersiz sözdizimi</para>
-      </listitem>
-   </varlistentry>
-   <varlistentry>
-    <term><replaceable>6</replaceable></term>
-    <listitem>
-      <para>böyle bir grup yok</para>
+      <para>bir veya daha fazla grup girdisi geçersiz</para>
     </listitem>
    </varlistentry>
    <varlistentry>
-    <term><replaceable>8</replaceable></term>
+    <term><replaceable>3</replaceable></term>
     <listitem>
-     <para>kullanıcının birincil grubu silinemiyor</para>
+     <para>grup dosyaları açılamıyor</para>
     </listitem>
    </varlistentry>
    <varlistentry>
-    <term><replaceable>10</replaceable></term>
+    <term><replaceable>4</replaceable></term>
     <listitem>
-      <para><filename>/etc/group</filename> dosyası güncellenemiyor</para>
+     <para>grup dosyaları kilitlenemiyor</para>
+    </listitem>
+   </varlistentry>
+   <varlistentry>
+    <term><replaceable>5</replaceable></term>
+    <listitem>
+      <para>grup dosyaları güncellenemiyor</para>
     </listitem>
    </varlistentry>
   </variablelist>
  </refsect1>
  <refsect1><title>İLGİLİ BELGELER</title>
   <para>
-   <uri xlink:href="man1-chfn"/>, <uri xlink:href="man1-chsh"/>, <uri xlink:href="man1-passwd"/>, <uri xlink:href="man1-gpasswd"/>, <uri xlink:href="man8-groupadd"/>, <uri xlink:href="man8-groupmod"/>, <uri xlink:href="man5-login.defs"/>, <uri xlink:href="man8-useradd"/>, <uri xlink:href="man8-userdel"/>, <uri xlink:href="man8-usermod"/>.
+   <uri xlink:href="man5-group"/>, <uri xlink:href="man8-groupmod"/>, <uri xlink:href="man5-gshadow"/>, <uri xlink:href="man5-passwd"/>, <uri xlink:href="man5-login.defs"/>, <uri xlink:href="man8-pwck"/>, <uri xlink:href="man5-shadow"/>.
   </para>
  </refsect1>
  <refsect1><title>ÇEVİREN</title>
-  <simpara>© 2004 Yalçın Kolukısa</simpara>
   <simpara>© 2022 Nilgün Belma Bugüner</simpara>
   <simpara>
    Bu çeviri özgür yazılımdır: Yasaların izin verdiği ölçüde HİÇBİR GARANTİ YOKTUR.

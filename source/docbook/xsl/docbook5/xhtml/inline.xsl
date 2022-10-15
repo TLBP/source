@@ -179,7 +179,7 @@ xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:suwl="http://nwalsh.com/xslt/ex
                   </xsl:attribute>
                 </xsl:when>
               </xsl:choose>
-              
+
               <xsl:copy-of select="$content"/>
             </a>
           </xsl:otherwise>
@@ -206,7 +206,7 @@ xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:suwl="http://nwalsh.com/xslt/ex
           <xsl:apply-templates select="$target" mode="html.title.attribute"/>
 
           <xsl:copy-of select="$content"/>
-          
+
         </a>
       </xsl:when>
       <xsl:otherwise>

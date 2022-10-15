@@ -94,6 +94,8 @@ sect5     nop
 section   nop
 set       toc,title
 </xsl:param>
+<!-- sözlük yapılandırılınca silinecek -->
+<xsl:template match="d:dicterm|d:english|d:turkish"/>
 
 <xsl:template name="user.head.content">
  <meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
@@ -140,7 +142,7 @@ set       toc,title
     </xsl:otherwise>
   </xsl:choose>
 
-  <table width="100%" cellpadding="0" cellspacing="5" border="0" class="{name(.)}">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" class="{name(.)}">
     <xsl:apply-templates mode="titlepage.mode">
       <xsl:with-param name="numcols" select="$numcols"/>
     </xsl:apply-templates>
@@ -209,7 +211,7 @@ set       toc,title
   <xsl:variable name="revauthor" select="d:authorinitials|d:author"/>
   <xsl:variable name="revremark" select="d:revremark|d:revdescription"/>
   <tr>
-    <td align="{$direction.align.start}">
+    <td style="line-height: 1rem;" align="{$direction.align.start}">
       <xsl:if test="$revnumber">
         <xsl:call-template name="gentext">
           <xsl:with-param name="key" select="'Revision'"/>
@@ -218,12 +220,12 @@ set       toc,title
         <xsl:apply-templates select="$revnumber[1]" mode="titlepage.mode"/>
       </xsl:if>
     </td>
-    <td align="{$direction.align.start}">
+    <td style="line-height: 1rem;" align="{$direction.align.start}">
       <xsl:apply-templates select="$revdate[1]" mode="titlepage.mode"/>
     </td>
     <xsl:choose>
       <xsl:when test="$revauthor">
-        <td align="{$direction.align.start}">
+        <td style="line-height: 1rem;" align="{$direction.align.start}">
           <xsl:for-each select="$revauthor">
             <xsl:apply-templates select="." mode="titlepage.mode"/>
             <xsl:if test="position() != last()">
@@ -244,11 +246,11 @@ set       toc,title
         <xsl:apply-templates select="$revremark[1]" mode="titlepage.mode"/>
       </td>
     </tr>
-  </xsl:if>
-  <xsl:if test="position() != last()">
-   <tr>
-     <td align="{$direction.align.start}" colspan="{$numcols}"></td>
-   </tr>
+    <xsl:if test="position() != last()">
+     <tr>
+       <td class="revremark-blank" align="{$direction.align.start}" colspan="{$numcols}"> </td>
+     </tr>
+    </xsl:if>
   </xsl:if>
 </xsl:template>
 
@@ -403,13 +405,20 @@ set       toc,title
   </div>
 </xsl:template>
 
-<xsl:template match="d:simpara[name(..) != 'refsect1']">
+<xsl:template match="d:simpara[name(..) != 'refsect1' and
+                               name(..) != 'revdescription']">
   <div class="simpara">
     <xsl:apply-templates/>
   </div>
   <xsl:if test="name(following-sibling::*[1]) != 'simpara'">
    <p/>
   </xsl:if>
+</xsl:template>
+
+<xsl:template match="d:simpara[name(..) = 'revdescription']">
+  <div class="simpara">
+    <xsl:apply-templates/>
+  </div>
 </xsl:template>
 
 <xsl:template name="paragraph">
@@ -737,14 +746,16 @@ footnote text gets an id of #ftn.@id. They cross link to each other. -->
             <b><xsl:value-of select="@xreflabel"/></b>
             <xsl:text>[</xsl:text>
             <a href="{$adres}">
-              <xsl:value-of select="concat($fname, '(', $volnum, ')')"/>
+              <xsl:value-of select="$fname"/>
             </a>
+            <xsl:value-of select="concat('(', $volnum, ')')"/>
             <xsl:text>]</xsl:text>
           </xsl:when>
           <xsl:otherwise>
             <a href="{$adres}">
-              <b><xsl:value-of select="concat($fname, '(', $volnum, ')')"/></b>
+              <b><xsl:value-of select="$fname"/></b>
             </a>
+            <xsl:value-of select="concat('(', $volnum, ')')"/>
           </xsl:otherwise>
         </xsl:choose>
       </xsl:otherwise>

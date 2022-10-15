@@ -31,6 +31,8 @@
 
 <xsl:key name="id" match="*" use="@id|@xml:id"/>
 
+<xsl:template match="d:dicterm|d:english|d:turkish"/>
+
 <xsl:template name="string.replace">
   <xsl:param name="string"></xsl:param>
   <xsl:param name="target"></xsl:param>
@@ -452,16 +454,14 @@
 
 <xsl:template match="d:blockquote">
   <xsl:if test="(&indented;)">
-    <xsl:value-of select="concat('&#10;.RS ', ../@userlevel)"/>
+    <xsl:value-of select="'&#10;.RS 4&#10;'"/>
   </xsl:if>
-  <xsl:text>.IP "" 4</xsl:text>
+  <xsl:text>.RS 4&#10;</xsl:text>
   <xsl:apply-templates/>
+<xsl:text>.sp
+.RE</xsl:text>
   <xsl:if test="(&indented;)">
-<xsl:text>.RE
-.IP</xsl:text>
-  </xsl:if>
-  <xsl:if test="(following-sibling::d:para) or (following-sibling::d:simpara)">
-   <xsl:value-of select="'&#10;.PP'"/>
+   <xsl:value-of select="'&#10;.RE&#10;.IP'"/>
   </xsl:if>
 </xsl:template>
 
