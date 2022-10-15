@@ -1,0 +1,1210 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ********************************************************************
+        man1/sed.1.xml, v sed-4.8, GPLv3+, NBB - Eylül 2022
+     ******************************************************************** -->
+<refentry xml:id="man1-sed" xmlns="http://docbook.org/ns/docbook"
+ xmlns:xlink="http://www.w3.org/1999/xlink" version="5.0" xml:lang="tr">
+ <info>
+  <keywordset>
+   <keyword>Linux, manpage, kütüphane, kitaplık, belge, belgeler</keyword>
+   <keyword>kabuk, komut, kullanıcı, yardım, kılavuz, sed</keyword>
+   <keyword>kalıp, alan, satır, tut, süz, dönüştür, yerleştir</keyword>
+   <keyword>metin, ileti, akım, düzenleyici, girdi, çıktı</keyword>
+  </keywordset>
+ </info>
+ <refmeta>
+  <manvolnum>1</manvolnum>
+  <refentrytitle>sed</refentrytitle>
+  <refmiscinfo>
+   <sectdesc>Kullanıcı Komutları</sectdesc>
+   <source>sed-4.8</source>
+   <date>Ocak 2020</date>
+  </refmiscinfo>
+ </refmeta>
+ <refnamediv>
+  <refname>sed</refname>
+  <refpurpose>metni süzmek ve dönüştürmek için akım düzenleyici</refpurpose>
+ </refnamediv>
+ <refsynopsisdiv>
+  <cmdsynopsis>
+   <command>sed</command>
+   <arg choice='plain' rep="repeat"><replaceable>SEÇENEKLER</replaceable></arg>
+   <arg><replaceable>BETİK</replaceable></arg>
+   <arg><arg choice='plain' rep="repeat"><replaceable>GİRDİ-DOSYASI</replaceable></arg></arg>
+  </cmdsynopsis>
+ </refsynopsisdiv>
+ <refsect1><title>AÇIKLAMA</title>
+  <para>
+   <command>sed</command> bir akım düzenleyicisidir. Akım düzenleyicisi girdi akımında (dosya veya boru hattı girdisi) temel metin dönüşümlerini gerçekleştirmek için kullanılır. Bazı yönlerden komut dosyasıyla düzenlemelere (ed gibi) izin veren bir düzenleyiciye benzese de, <command>sed</command> girdi(ler) üzerinden yalnızca bir geçiş yaparak çalışır ve sonuç olarak daha verimlidir. Ancak, onu diğer düzenleyicilerden özellikle ayıran, <command>sed</command>'in bir boru hattındaki metni süzme yeteneğidir.
+  </para>
+  <refsect2 xml:id="man1-sed-how"><title>sed nasıl çalışır</title>
+   <para>
+    <command>sed</command> iki veri tamponu tutar: etkin kalıp alanı ve yardımcı tutma alanı. Her ikisi de başlangıçta boştur.
+   </para>
+   <para>
+    <command>sed</command>, her girdi satırında şöyle bir döngü gerçekleştirerek çalışır: ilk olarak, <command>sed</command> girdi akımından bir satır okur, satır sonu karakterini kaldırıp satırı kalıp alanına yerleştirir. Ardından komutlar yürütülür; her komutun kendisiyle ilişkili bir adresi vardır: adresler bir tür koşul kodudur ve bir komut yalnızca, koşul doğrulanırsa yürütülür.
+   </para>
+   <para>
+    Betiğin sonuna ulaşıldığında, <option>-n</option> seçeneği kullanımda değilse, kalıp alanının içeriği çıktı akımına yazılır ve kaldırılmışsa satır sonu karakteri de satırın sonuna eklenir. Ardından, bir sonraki girdi satırı için bir sonraki döngü başlar.
+   </para>
+   <para>
+    '<option linkend="man1-sed-commands-D">D</option>' gibi özel komutlar kullanılmadıkça, iki döngü arasında kalıp alanı silinir. Tutma alanındaki veriler ise döngüler arasında saklanır (verileri iki tampon arasında taşıyan <link linkend="man1-sed-commands">'h', 'H', 'x', 'g', 'G' komutları</link>na da bakınız).
+   </para>
+  </refsect2>
+ </refsect1>
+ <refsect1><title>SEÇENEKLER</title>
+  <glosslist>
+   <glossentry>
+    <glossterm>
+     <option>--version</option>
+    </glossterm>
+    <glossdef>
+     <para>
+      <command>sed</command> sürüm ve telif hakkı bilgilerini gösterir ve çıkar.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <option>--help</option>
+    </glossterm>
+    <glossdef>
+     <para>
+      Komut satırını, seçeneklerin kısa açıklamalarını ve hata bildirim adresini gösterir ve çıkar.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <option>-n</option>, <option>--quiet</option>, <option>--silent</option>
+    </glossterm>
+    <glossdef>
+     <para>
+      Öntanımlı olarak, <command>sed</command> betik üzerinden her döngünün sonunda kalıp alanını çıktılar (bkz: <xref linkend="man1-sed-how"/>). Bu seçenekler bu öntanımlı çıktılamayı devre dışı bırakır ve <command>sed</command> yalnızca <option>p</option> komutu ile çıktı üretir.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <option>--debug</option>
+    </glossterm>
+    <glossdef>
+     <para>
+      Girilen <command>sed</command> uygulamasını kurallı biçimde çıktılayıp işlemin açıklamasını ekler.
+     </para>
+     <screen>$ <userinput>echo 1 | sed '\%1%s21232'</userinput>
+3
+
+$ <userinput>echo 1 | sed --debug '\%1%s21232'</userinput>
+SED PROGRAM:
+  /1/ s/1/3/
+INPUT:   'STDIN' line 1
+PATTERN: 1
+COMMAND: /1/ s/1/3/
+MATCHED REGEX REGISTERS
+  regex[0] = 0-1 '1'
+PATTERN: 3
+END-OF-CYCLE:
+3
+</screen>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <option>-e</option>[<replaceable>BETİK</replaceable>],
+     <option>--expression</option>[=<replaceable>BETİK</replaceable>]
+    </glossterm>
+    <glossdef>
+     <para>
+      Girdi işlenirken çalıştırılacak komut kümesine <replaceable>BETİK</replaceable>teki komutları ekler.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <option>-f</option>[<replaceable>BETİK</replaceable>],
+     <option>--file</option>[=<replaceable>BETİK</replaceable>]
+    </glossterm>
+    <glossdef>
+     <para>
+      Girdi işlenirken çalıştırılacak komut kümesine <replaceable>BETİK</replaceable> dosyasındaki komutları ekler.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <option>-i</option>[<replaceable>SONEK</replaceable>],
+     <option>--in-place</option>[=<replaceable>SONEK</replaceable>]
+    </glossterm>
+    <glossdef>
+     <para>
+      Bu seçenek, dosyaların yerinde düzenleneceğini belirtir. GNU <command>sed</command> bunu geçici bir dosya oluşturarak ve standart çıktı yerine bu dosyaya çıktı göndererek yapar. Bu, <option>=, a, c, i, l, p</option> gibi komutlar için geçerlidir. <filename>/dev/stdout</filename> özel dosyasıyla birlikte <option>w</option> veya <option>W</option> komutunu kullanarak standart çıktıya yine de yazabilirsiniz.
+     </para>
+     <para>
+      Bu seçenek örtük olarak <option>-s</option> seçeneğini de uygular.
+     </para>
+     <para>
+      Dosyanın sonuna ulaşıldığında, geçici dosya, çıktı dosyasının özgün adıyla yeniden adlandırılır. Sağlanmışsa, <replaceable>SONEK</replaceable>, geçici dosyayı yeniden adlandırmadan önce eski dosyanın adını değiştirmek ve böylece yedek bir kopya oluşturmak için kullanılır.
+     </para>
+     <note><para>
+      GNU <command>sed</command> herhangi bir çıktının gerçekten değişip değişmediğine bakılmaksızın yedekleme dosyasını oluşturacaktır.
+     </para></note>
+     <para>
+      Şu kural izlenir: <replaceable>SONEK</replaceable> bir * içermiyorsa, geçerli dosya adının sonuna uzantı olarak eklenir; <replaceable>SONEK</replaceable> bir veya daha fazla * karakteri içeriyorsa, her yıldız imi geçerli dosya adıyla değiştirilir. Bu, bir sonek yerine (veya buna ek olarak) yedekleme dosyasına bir önek eklemenize ve hatta özgün dosyaların yedeklerini başka bir dizine (dizinin mevcut olması koşuluyla) yerleştirmenize olanak tanır.
+     </para>
+     <para>
+      <replaceable>SONEK</replaceable> belirtilmemişse yedekleme yapılmaksızın özgün dosyanın üzerine yazılır.
+     </para>
+     <para>
+      <option>-i</option> seçeneği isteğe bağlı değiştirge aldığından ardından başka bir kısa seçenek gelmemelidir:
+     </para>
+     <screen>sed -Ei '...' DOSYA
+</screen>
+     <para>
+      Yedekeme soneki olmaksızın <option>-E -i</option> ile aynıdır. DOSYA yedeği alınmadan yerinde düzenlenir.
+     </para>
+     <screen>sed -iE '...' DOSYA
+</screen>
+     <para>
+      <option>--in-place=E</option> seçeneğine eşdeğer olup DOSYA yedeği olarak DOSYAE oluşturulur.
+     </para>
+     <para>
+      <option>-n</option>'yi <option>-i</option> ile kullanırken dikkatli olun: ilki satırların otomatik çıktılanmasını devre dışı bırakır ve ikincisi dosyayı yedeklemeden yerinde değiştirir. Dikkatsizce kullanıldığında (ve açık bir <option>p</option> komutu olmadan), çıktı dosyası boş olacaktır:
+     </para>
+     <screen># YANLIŞ KULLANIM: 'DOSYA' kırpılır.
+sed -ni 's/foo/bar/' DOSYA
+</screen>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <option>-l</option>[<replaceable>N</replaceable>],
+     <option>--line-length</option>[=<replaceable>N</replaceable>]
+    </glossterm>
+    <glossdef>
+     <para>
+      <option>l</option> komutu için satır sarmalama uzunluğunu belirler. <literal>0</literal> belirtilirse satırlar asla sarmalanmaz. Hiç belirtilmezse <literal>70</literal> öntanımlıdır.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <option>--posix</option>
+    </glossterm>
+    <glossdef>
+     <para>
+      GNU <command>sed</command>, POSIX <command>sed</command>'e göre  birkaç eklenti içerir. Taşınabilir betikler yazmayı basitleştirmek için bu seçenek, ek komutlar da dahil olmak üzere bu kılavuzun belgelediği tüm eklentileri devre dışı bırakır. Çoğu sed uyguaması, POSIX tarafından zorunlu kılınan sözdiziminin dışındaki eklentilerin çoğunu kabul eder, ancak bazı eklentiler (Geribidirim bölümünde açıklanan <option>N</option> komutunun davranışı gibi) aslında standardı ihlal eder. Yalnızca standardı ihlal eden eklentiler devre dışı bırakılmak istenirse, <envar>POSIXLY_CORRECT</envar> değişkeni boş olmayan bir değere ayarlanabilir.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <option>-b</option>, <option>--binary</option>
+    </glossterm>
+    <glossdef>
+     <para>
+      Bu seçenek her platformda mevcuttur, ancak yalnızca işletim sisteminin metin dosyaları ile ikili dosyalar arasında bir ayrım yaptığı durumlarda etkilidir. Böyle bir ayrım yapıldığında (MS-DOS, Windows, Cygwin'de olduğu gibi) metin dosyaları bir satır sonu ve bir satır başı karakteri ile ayrılmış satırlardan oluşur ve <command>sed</command> sonlandıran satır başını görmez. Bu seçenek belirtildiğinde, <command>sed</command> girdi dosyalarını ikil kipte açar, böylece bu özel işlemi talep etmez ve satırların bir satır başı ile bitmesini dikkate alır.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <option>--follow-symlinks</option>
+    </glossterm>
+    <glossdef>
+     <para>
+      Bu seçenek yalnızca sembolik bağları destekleyen platformlarda kullanılabilir ve yalnızca <option>-i</option> seçeneği belirtilmişse bir etkiye sahiptir. Bu durumda, komut satırında belirtilen dosya sembolik bağ ise, <command>sed</command> bağlantıyı takip edecek ve bağlantının nihai hedefini düzenleyecektir. Öntanımlı davranış, sembolik bağı koparmaktır, böylece bağlantı hedefi değiştirilmez.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <option>-E</option>, <option>-r</option>, <option>--regexp-extended</option>
+    </glossterm>
+    <glossdef>
+     <para>
+      Temel düzenli ifadeler yerine genişletilmiş düzenli ifadeler kullanılır. Genişletilmiş düzenli ifadeler, <uri xlink:href="man1-egrep"/>'in kabul ettiği ifadelerdir; genellikle daha az ters eğik çizgiye sahip oldukları için bunlar daha okunaklıdır. Tarihsel olarak bu bir GNU eklentisi idi, ancak <option>-E</option> eklentisi artık POSIX standardına eklendiğinden (<link xlink:href="http://austingroupbugs.net/view.php?id=528"/>) <option>-E</option> seçeneği yalnızca taşınabilirlik için kullanılır oldu. GNU <command>sed</command> yıllarca <option>-E</option>'yi belgelendirilmemiş bir seçenek olarak kabul etti ve *BSD <command>sed</command>'leri de yıllarca <option>-E</option>'yi kabul etti, ancak <option>-E</option> kullanan betikler diğer eski sistemlere taşınamayabilir. Bkz. <link linkend="man1-sed-eregexp">Genişletilmiş düzenli ifadeler</link>.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+    <option>-s</option>, <option>--separate</option>
+    </glossterm>
+    <glossdef>
+     <para>
+      Öntanımlı olarak, <command>sed</command> komut satırında belirtilen dosyaları tek bir sürekli uzun akım olarak kabul eder. Bu GNU <command>sed</command> eklentisi, kullanıcının bunları ayrı dosyalar olarak görmesine izin verir: aralık adreslerinin ('<code>/abc/,/def/</code>' gibi) birden fazla dosyaya yayılmasına izin verilmez, satır numaraları her dosyanın başlangıcına görelidir, <option>$</option> her dosyanın son satırını ifade eder ve <option>R</option> komutları ile çağrılan dosyalar dosya başlangıcına geri sarılır.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <option>--sandbox</option>
+    </glossterm>
+    <glossdef>
+     <para>
+      Korumalı alan tipinde, <option>e/w/r</option> komutları reddedilir - bunları içeren betikler çalıştırılmadan iptal edilir. Korumalı alan kipi, <command>sed</command>'in yalnızca komut satırında belirtilen girdi dosyalarında çalışmasını ve harici betikleri çalıştıramamasını sağlar.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <option>-u</option>, <option>--unbuffered</option>
+    </glossterm>
+    <glossdef>
+     <para>
+      Hem girdiyi hem de çıktıyı mümkün olan en düşük düzeyde tamponlar. (Bu, özellikle girdi "<command>tail -f</command>" benzeri komutlardan geliyorsa ve dönüştürülen çıktının mümkün olan en kısa sürede görülmesi isteniyorsa kullanışlıdır.)
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <option>-z</option>, <option>--null-data</option>,
+     <option>--zero-terminated</option>
+    </glossterm>
+    <glossdef>
+     <para>
+      Girdiyi, her satırı, satır sonu yerine boş karakter (ASCII 'NUL' karakteri) ile sonlandırılmış bir satır kümesi olarak ele alır. Bu seçenek, rastgele dosya adlarını işlemek için "<command>sort -z</command>" ve "<command>find -print0</command>" gibi komutlarla kullanılabilir.
+     </para>
+    </glossdef>
+   </glossentry>
+  </glosslist>
+   <para>
+    Komut satırında <option>-e</option>, <option>-f</option>, <option>--expression</option> veya <option>--file</option> seçeneği verilmezse, komut satırındaki seçenek olmayan ilk değiştirge yürütülecek betik dosyası olarak alınır.
+   </para>
+   <para>
+    Yukarıdakilerin işlenmesinden sonra herhangi bir komut satırı değiştirgesi kalırsa, bu değiştirgeler işlenecek girdi dosyalarının adları olarak yorumlanır. '-' dosya adı, standart girdi akımını ifade eder. Hiçbir dosya adı belirtilmemişse standart girdi okunur.
+   </para>
+ </refsect1>
+ <refsect1 xml:id="man1-sed-commands"><title>KOMUTLAR</title>
+  <para>
+   GNU <command>sed</command> aşağıdaki komutları destekler. Bazıları standart POSIX komutlarıdır, diğerleri ise GNU eklentisidir.
+  </para>
+  <glosslist>
+   <glossentry>
+    <glossterm>
+     <glossterm>
+      <option>a \</option>
+     </glossterm>
+     <glossterm>
+      <replaceable>metin</replaceable>
+     </glossterm>
+    </glossterm>
+    <glossdef>
+     <para>
+      Satırın ardına <replaceable>metin</replaceable>i ekler.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <option>a</option> <replaceable>metin</replaceable>
+    </glossterm>
+    <glossdef>
+     <para>
+      Satırın ardına <replaceable>metin</replaceable>i ekler (başka bir sözdizimi).
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <option>b</option> [<replaceable>ETİKET</replaceable>]
+    </glossterm>
+    <glossdef>
+     <para>
+      Koşulsuz olarak <replaceable>ETİKET</replaceable>e dallanır. <replaceable>ETİKET</replaceable> belirtilmemişse sonraki döngü başlatılır.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <glossterm>
+      <option>c \</option>
+     </glossterm>
+     <glossterm>
+      <replaceable>metin</replaceable>
+     </glossterm>
+    </glossterm>
+    <glossdef>
+     <para>
+      Seçili satırları, satır sonu karakterlerinin yerine ters eğik çizgiler yerleştirilmiş metin ile değiştirir.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <option>c</option> <replaceable>metin</replaceable>
+    </glossterm>
+    <glossdef>
+     <para>
+      Satırları metin ile değiştirir (başka bir sözdizimi).
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <option>d</option>
+    </glossterm>
+    <glossdef>
+     <para>
+      Kalıp alanını silip sonraki döngüyü başlatır.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry xml:id="man1-sed-commands-D">
+    <glossterm>
+     <option>D</option>
+    </glossterm>
+    <glossdef>
+     <para>
+      Kalıp alanı satır sonu karakterlerini içeriyorsa, kalıp alanındaki metni ilk satır sonu karakterine kadar silip yeni bir girdi satırı okumaksızın kalıp alanında kalanlarla döngüyü yeniden başlatır.
+     </para>
+     <para>
+      Kalıp alanı satır sonu karakteri içermiyorsa, d komutu kullanılmış gibi  yeni dongüyü normal olarak başlatır.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <option>e</option>
+    </glossterm>
+    <glossdef>
+     <para>
+      Kalıp alanında bulunan komutu yürütüp, çıktıyı kalıp alanının üzerine sondaki satır sonu karakteri olmaksızın yazar.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <option>e</option> <replaceable>KOMUT</replaceable>
+    </glossterm>
+    <glossdef>
+     <para>
+      <replaceable>KOMUT</replaceable> yürütülüp çıktısı çıktı akımına gönderilir. <replaceable>KOMUT</replaceable>, ters eğik çizgi ile bitenler dışında, birden çok satırda çalışabilir.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <option>F</option>
+    </glossterm>
+    <glossdef>
+     <para>
+      Geçerli girdi dosyasının ismini satır sonu karakteri ile birlikte çıktıya yazar.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <option>g</option>
+    </glossterm>
+    <glossdef>
+     <para>
+      Kalıp alanının içeriğini tutma alanının içeriği ile değiştirir.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <option>G</option>
+    </glossterm>
+    <glossdef>
+     <para>
+      Kalıp alanının içeriğine satır sonu karakterini ekledikten sonra tutma alanının içeriğini kalıp alanının içeriğine ekler.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <option>h</option>
+    </glossterm>
+    <glossdef>
+     <para>
+      Tutma alanının içeriğini kalıp alanının içeriği ile değiştirir.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <option>H</option>
+    </glossterm>
+    <glossdef>
+     <para>
+      Tutma alanının içeriğine satır sonu karakterini ekledikten sonra kalıp alanının içeriğini tutma alanının içeriğine ekler.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry xml:id="man1-sed-cmd-i">
+    <glossterm>
+     <glossterm>
+      <option>i \</option>
+     </glossterm>
+     <glossterm>
+      <replaceable>metin</replaceable>
+     </glossterm>
+    </glossterm>
+    <glossdef>
+     <para>
+      Satırdan önce metni basar.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <option>i</option> <replaceable>metin</replaceable>
+    </glossterm>
+    <glossdef>
+     <para>
+      Satırdan önce metni basar (başka bir sözdizimi).
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <option>n</option>
+    </glossterm>
+    <glossdef>
+     <para>
+      Otomatik çıktılama devre dışı değilse kalıp alanını çıktıladıktan sonra, ne olursa olsun, kalıp alanını sonraki girdi satırı ile değiştirir. Hiç girdi satırı kalmamışsa <command>sed</command> hiçbir komut yürütmeden çıkar.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <option>l</option>
+    </glossterm>
+    <glossdef>
+     <para>
+      Kalıp alanını belirsizliğe yol açmadan ekrana basar.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <option>l</option> <replaceable>genişlik</replaceable>
+    </glossterm>
+    <glossdef>
+     <para>
+      Kalıp alanını <replaceable>genişlik</replaceable> karakterden keserek belirsizliğe yol açmadan ekrana basar. Bu bir GNU eklentisidir.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <option>n</option>
+    </glossterm>
+    <glossdef>
+     <para>
+      Otomatik çıktılama devre dışı değilse kalıp alanını çıktıladıktan sonra, ne olursa olsun, kalıp alanını sonraki girdi satırı ile değiştirir. Hiç girdi satırı kalmamışsa <command>sed</command> hiçbir komut yürütmeden çıkar.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <option>N</option>
+    </glossterm>
+    <glossdef>
+     <para>
+      Kalıp alanına satır sonu karakterini ekledikren sonra sonraki girdi satırını kalıp alanına ekler. Hiç girdi satırı kalmamışsa <command>sed</command> hiçbir komut yürütmeden çıkar.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <option>p</option>
+    </glossterm>
+    <glossdef>
+     <para>
+      Kalıp alanını satır sonu karakterine kadar çıktılar.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <option>P</option>
+    </glossterm>
+    <glossdef>
+     <para>
+      Kalıp alanını çıktılar.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <option>q</option> [<replaceable>ÇIKIŞ-KODU</replaceable>]
+    </glossterm>
+    <glossdef>
+     <para>
+      Otomatik çıktılama devre dışı bırakılmazsa, geçerli kalıp alanının çıktılanmasının gerekliliği dışında, daha fazla girdi işlemeden <command>sed</command> betikten hemen çıkar. <replaceable>ÇIKIŞ-KODU</replaceable> değiştirgesi bir GNU eklentisidir.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <option>Q</option> [<replaceable>ÇIKIŞ-KODU</replaceable>]
+    </glossterm>
+    <glossdef>
+     <para>
+      <option>q</option> gibidir, farklı olarak kalıp alanının içeriği çıktılanmaz. Tıpkı <option>q</option> komutundaki gibi çağrıcıya bir çıkış kodu döndürür. Bu bir GNU eklentisidir.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <option>r</option> <replaceable>DOSYA</replaceable>
+    </glossterm>
+    <glossdef>
+     <para>
+      <replaceable>DOSYA</replaceable>dan okunan metni ekler.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <option>R</option> <replaceable>DOSYA</replaceable>
+    </glossterm>
+    <glossdef>
+     <para>
+      <replaceable>DOSYA</replaceable>dan okunan satırı ekler. Komutun her çağrısında dosyadan bir satır okunur. Bu bir GNU eklentisidir.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <code>s/</code><replaceable>DÜZİFADE</replaceable><code>/</code><replaceable>YENİSİ</replaceable><code>/</code>[<replaceable>SÇN</replaceable>]
+    </glossterm>
+    <glossdef>
+     <para>
+      <replaceable>DÜZİFADE</replaceable> düzenli ifadesini kalıp alanı ile eşleştirmeye çalışır. Başarılı olursa, eşleşen kısım  <replaceable>YENİSİ</replaceable> ile değiştirilir. <replaceable>YENİSİ</replaceable> dizgesi kalıp uzayının eşleşen kısmına atıfta bulunmak için <code>&amp;</code> özel karakterini ve <replaceable>DÜZİFADE</replaceable>de karşılık gelen eşleşen alt ifadelere atıfta bulunmak için <code>\1</code> ile <code>\9</code> arasındaki özel öncelemler içerebilir.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <option>t</option>[<replaceable>YAFTA</replaceable>]
+    </glossterm>
+    <glossdef>
+     <para>
+      Yalnızca son giriş satırının okunmasından veya koşullu dallanmanın alınmasından sonra başarılı bir ikame olmuşsa, <replaceable>YAFTA</replaceable>ya atlanır. <replaceable>YAFTA</replaceable> belirtilmezse, bir sonraki döngü başlatılır.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <option>T</option> <replaceable>label</replaceable>
+    </glossterm>
+    <glossdef>
+     <para>
+      Yalnızca son giriş satırının okunmasından veya koşullu dallanmanın alınmasından sonra başarılı bir ikame yoksa, <replaceable>YAFTA</replaceable>ya atlanır. <replaceable>YAFTA</replaceable> belirtilmezse, bir sonraki döngü başlatılır. Bu bir GNU eklentisidir.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <option>v</option> [<replaceable>SÜRÜM</replaceable>]
+    </glossterm>
+    <glossdef>
+     <para>
+      Bu komut hiçbir şey yapmaz, ancak GNU <command>sed</command> eklentileri desteklenmiyorsa veya belirtilen <replaceable>SÜRÜM</replaceable> mevcut değilse <command>sed</command> başarısız olur.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <option>w</option> <replaceable>DOSYA</replaceable>
+    </glossterm>
+    <glossdef>
+     <para>
+      Geçerli kalıp alanını <replaceable>DOSYA</replaceable>ya yazar
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <option>W</option> <replaceable>filename</replaceable>
+    </glossterm>
+    <glossdef>
+     <para>
+      Geçerli kalıp alanının ilk satırını <replaceable>DOSYA</replaceable>ya yazar.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <option>x</option>
+    </glossterm>
+    <glossdef>
+     <para>
+      Kalıp ve tutma alanlarının içeriklerini takas eder.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <code>y/</code><replaceable>KAYNAK</replaceable><code>/</code><replaceable>HEDEF</replaceable><code>/</code>
+    </glossterm>
+    <glossdef>
+     <para>
+      Kalıp alanındaki karakterlerden <replaceable>KAYNAK</replaceable>ta görünenleri <replaceable>HEDEF</replaceable>teki karşılıklarına dönüştürür.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <option>z</option>
+    </glossterm>
+    <glossdef>
+     <para>
+      Kalıp alanını boşaltır.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <option>#</option>
+    </glossterm>
+    <glossdef>
+     <para>
+      Bu karakterden satır sonu karakterine kadar dizge bir yorum olup yok sayılır.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     { <replaceable>KOMUT</replaceable> ;
+     <replaceable>KOMUT</replaceable> ... }
+    </glossterm>
+    <glossdef>
+     <para>
+      Çeşitli komutları tek bir komuta gruplar.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <option>=</option>
+    </glossterm>
+    <glossdef>
+     <para>
+      Geçerli satırın numarasını (satır sonu karakteri ekleyerek) çıktılar.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <option>:</option><replaceable>YAFTA</replaceable>
+    </glossterm>
+    <glossdef>
+     <para>
+      Dallanma komutları (<option>b</option>, <option>t</option>, <option>T</option>) için <replaceable>YAFTA</replaceable> konumunu belirler.
+     </para>
+    </glossdef>
+   </glossentry>
+  </glosslist>
+ </refsect1>
+ <refsect1><title>ADRESLER</title>
+  <para>
+   <command>sed</command> komutları adressiz verilebilir, bu durumda komut tüm girdi satırları için yürütülür; tek adresle verilmesi durumunda komut yalnızca bu adresle eşleşen girdi satırları için yürütülür; iki adresle verilmesi durumunda durumda ise komut, birinci adresten başlayıp ikinci adrese kadar devam eden kapsayıcı satır aralığıyla eşleşen tüm girdi satırları için yürütülür.
+  </para>
+  <para>
+   Adres aralıkları hakkında dikkat edilmesi gereken üç şey:
+  </para>
+  <simpara>
+   1. Sözdizimi <replaceable>ADDR1,ADDR2</replaceable>'dir (yani, adresler virgülle ayrılır);
+  </simpara>
+  <simpara>
+   2. <replaceable>ADDR1</replaceable>'in eşleştiği satır, <replaceable>ADDR2</replaceable> daha önceki bir satırı seçse bile her zaman kabul edilir;
+  </simpara>
+  <simpara>
+   3. Eğer <replaceable>ADDR2</replaceable> bir düzenli ifade ise, <replaceable>ADDR1</replaceable>'in eşleştiği satırla eşleştirmeye çalışılmaz.
+  </simpara>
+  <para>
+   Adresten (veya adres aralığından) önce veya sonra <code>!</code> komutu yerleştirilebilir. Bu durumda komut, yalnızca adres (veya adres aralığı) eşleşmediğinde yürütülür.
+  </para>
+  <refsect2><title>Sayısal adresler</title>
+   <glosslist>
+    <glossentry>
+     <glossterm>
+      <replaceable>NUM</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+       Yalnızca belirtilen satır <replaceable>NUM</replaceable>arasıyla eşleşme olur (komut satırında <option>-s</option> seçeneği belirtilmemişse, dosyalar arasında eklenerek artan satır <replaceable>NUM</replaceable>arasıyla eşleşme olur)
+      </para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <option>$</option>
+     </glossterm>
+     <glossdef>
+      <para>
+       Son satırla eşleşir.
+      </para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <replaceable>İLK</replaceable><command>~</command><replaceable>ADIM</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+       <replaceable>İLK</replaceable> satırdan başlayarak her <replaceable>ADIM</replaceable>ıncı satırla eşleşir. Örneğin, "<command>sed -n 1~2p</command>" komutu girdi akımındaki tüm tek sayılı satırları çıktıllayacak, "<command>2~5</command>" adresi ise ikinciden başlayarak her beşinci satırla eşleşecektir. <replaceable>İLK</replaceable> sıfır olabilir; bu durumda <command>sed</command>, adıma eşitmiş gibi çalışır. (Bu bir eklentidir.) Örnekler:
+      </para>
+      <screen>$ <userinput>seq 10 | sed -n '0~4p'</userinput>
+4
+8
+
+$ <userinput>seq 10 | sed -n '1~3p'</userinput>
+1
+4
+7
+10
+</screen>
+     </glossdef>
+    </glossentry>
+   </glosslist>
+  </refsect2>
+  <refsect2 xml:id="man1-sed-regexp-addr"><title>Düzenli ifadeli adresler</title>
+  <glosslist>
+   <glossentry>
+    <glossterm>
+     <option>/</option><replaceable>DÜZİFD</replaceable><option>/</option>
+    </glossterm>
+    <glossdef>
+     <para>
+      <replaceable>DÜZİFD</replaceable> düzenli ifadesiyle eşleşen satırı seçer. <replaceable>DÜZİFD</replaceable> içinde <option>/</option> karakterleri varsa, bunlar ters eğik çizgi (<option>\</option>) ile öncelenmelidir.
+     </para>
+     <para>
+      Aşağıdaki komut, <filename>/etc/passwd</filename> dosyasında '<code>bash</code>' ile biten satırları ekrana basar:
+     </para>
+     <screen>sed -n '/bash$/p' /etc/passwd
+</screen>
+     <para>
+      Boş düzenli ifade '<code>//</code>', son düzenli ifade eşleşmesini tekrarlar (aynı durum, boş düzenli ifade <option>s</option> komutuna aktarıldığında da geçerlidir). Düzenli ifade değiştiricilerinin düzenli ifade derlenirken değerlendirildiğini, dolayısıyla bunları boş düzenli ifadeyle birlikte belirtmenin geçersiz olacağı unutulmamalıdır.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <option>\c</option><replaceable>DÜZİFD</replaceable><option>c</option>
+    </glossterm>
+    <glossdef>
+     <para>
+      <option>c</option> herhangi bir karakter olabilir.
+     </para>
+     <para>
+      Bu aynı zamanda <replaceable>DÜZİFD</replaceable> düzenli ifadesiyle de eşleşir, ancak <code>/</code> dışında bir sınırlayıcı kullanılmasına da izin verir. Bu, özellikle düzenli ifadenin kendisi çok sayıda eğik çizgi içeriyorsa kullanışlıdır. Düzenli ifadenin kendisi herhangi bir sınırlayıcı karakter içeriyorsa, her biri bir ters eğik çizgi (<code>\</code>) ile öncelenmelidir.
+     </para>
+     <para>
+      Aşağıdaki komutlar eşdeğerdir. <filename>/home/alice/documents/</filename> ile başlayan satırları ekrana basar:
+     </para>
+     <screen>sed -n '/^\/home\/alice\/documents\//p'
+sed -n '\%^/home/alice/documents/%p'
+sed -n '\;^/home/alice/documents/;p'
+</screen>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <glossterm>
+      <option>/</option><replaceable>DÜZİFD</replaceable><option>/I</option>
+     </glossterm>
+     <glossterm>
+      <option>\c</option><replaceable>DÜZİFD</replaceable><option>cI</option>
+     </glossterm>
+    </glossterm>
+    <glossdef>
+     <para>
+      Düzenli ifade eşleştirmesinin <option>I</option> değiştiricisi, düzenli ifadenin harf büyüklüğünü önemsemeden eşleşmesine sebep olan bir GNU eklentisidir.
+     </para>
+     <para>
+      Çoğu yazılım dilinde, harf büyüklüğünü önemsemeyen düzenli ifade eşleşmesi için küçük harf <option>i</option> kullanılır. Ancak, <command>sed</command>'de <option>i</option>, yerleştirme komutu için kullanılır (bkz. <link linkend="man1-sed-cmd-i">yerleştirme komutu</link>).
+     </para>
+     <para>
+      Aşağıdaki örnekler arasındaki farka dikkat edin.
+     </para>
+     <para>
+      Bu örnekte, <code>/b/I</code> adrestir, <code>I</code> düzenli ifade değiştiricisidir, <code>d</code> ise silme komutudur:
+     </para>
+     <screen>$ <userinput>printf "%s\n" a b c | sed '/b/Id'</userinput>
+a
+c
+</screen>
+     <para>
+      Burada, <code>/b/</code>  adrestir, <code>i</code> yerleştirme komutudur. <code>d</code> yerleştirilen değerdir.
+     </para>
+     <screen>$ <userinput>printf "%s\n" a b c | sed '/b/id'</userinput>
+a
+d
+b
+c
+</screen>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <glossterm>
+      <option>/</option><replaceable>DÜZİFD</replaceable><option>/M</option>
+     </glossterm>
+     <glossterm>
+      <option>\%</option><replaceable>DÜZİFD</replaceable><option>%M</option>
+     </glossterm>
+    </glossterm>
+    <glossdef>
+     <para>
+      <option>M</option> değiştiricisi, düzenli ifadeyi çok satırlı kipte eşleştirmeye yönlendiren bir GNU sed eklentisidir. Değiştirici, (normal davranışa ek olarak) <code>^</code>'ın satır sonu karakterinden sonraki boş dizgeyle (sonraki satırın başıyla) ve <code>$</code>'ın satır sonu karakterinden önceki boş dizgeyle eşleşmesine sebep olur. Daima tamponun başı veya sonuyla eşleşen özel karakter dizilimleri de (<code>\`</code> ve <code>\'</code>) vardır. Ek olarak nokta karakteri, çok satırlı kipte satır sonu karakteriyle eşleşmez.
+     </para>
+    </glossdef>
+   </glossentry>
+  </glosslist>
+  <para>
+   Düzenli ifadeli adresler, mevcut kalıp uzayının içeriği üzerinde çalışır. Kalıp alanı değiştirilirse (örneğin <option>s///</option> komutuyla), düzenli ifade değiştirilen metin ile eşleştirilmeye çalışılır.
+  </para>
+  <para>
+   Aşağıdaki örnekte, <option>-n</option> ile otomatik yazdırma devre dışı bırakılmıştır. <code>s/2/X/</code> komutu, '<code>2</code>' içeren satırları '<code>X</code>' ile değiştirir. <code>/[0-9]/p</code> komutu, satırları rakamlarla eşleştirir ve yazdırır. İkinci satır <code>/[0-9]/</code> düzenli ifadesinden önce değiştirildiği için eşleşmeyecek ve yazdırılmayacaktır:
+  </para>
+  <screen>$ <userinput>seq 3 | sed -n 's/2/X/ ; /[0-9]/p'</userinput>
+1
+3
+</screen>
+  </refsect2>
+  <refsect2><title>Desteklenen diğer adres biçemleri</title>
+   <glosslist>
+    <glossentry>
+     <glossterm>
+      <code>0,/</code><replaceable>DÜZİFD</replaceable><code>/</code>
+     </glossterm>
+     <glossdef>
+      <para>
+        <code>0,/</code><replaceable>DÜZİFD</replaceable><code>/</code> adres belirtiminde <code>0</code> satır numarası kullanılabilir, böylece <command>sed</command> ilk girdi satırında da <replaceable>DÜZİFD</replaceable> ile eşleşmeye çalışır. Başka bir deyişle, <replaceable>DÜZİFD</replaceable>'nin en baştaki girdi satırı ile eşleşmesi dışında <code>0,/</code><replaceable>DÜZİFD</replaceable><code>/</code> ile <code>1,/</code><replaceable>DÜZİFD</replaceable><code>/</code> benzerdir. <code>0,/</code><replaceable>DÜZİFD</replaceable><code>/</code> bunu aralığın sonu olarak değerlendirir. Halbuki, <code>1,/</code><replaceable>DÜZİFD</replaceable><code>/</code> aralığın başlangıcı ile eşleşir. Bu nedenle, aralık düzenli ifadenin ikinci benzerine kadar genişletilir.
+      </para>
+      <para>
+       Bunun, 0 adresinin anlamlı olduğu tek yer oluşuna dikkat edilmelidir; 0. satır yoktur ve başka bir yolla 0 adresi belirtilen komutlar hata verir.
+      </para>
+      <para>
+       Aşağıdaki örnekler, adres 1 ve 0 ile başlama arasındaki farkı göstermektedir:
+      </para>
+  <screen>$ <userinput>seq 10 | sed -n '1,/[0-9]/p'</userinput>
+1
+2
+
+$ <userinput>seq 10 | sed -n '0,/[0-9]/p'</userinput>
+1
+</screen>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <replaceable>ADRES1</replaceable>, <replaceable>+N</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+       <replaceable>ADRES1</replaceable> ve <replaceable>ADRES1</replaceable>'i izleyen <replaceable>N</replaceable> satırla eşleşir.
+      </para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <replaceable>ADRES1</replaceable>, <replaceable>~N</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+       <replaceable>ADRES1</replaceable> ve <replaceable>ADRES1</replaceable>i izleyen satırlardan, satır numarası <replaceable>N</replaceable>'nin katları olan satırlara kadar olan satırlarla eşleşir.
+      </para>
+     </glossdef>
+    </glossentry>
+   </glosslist>
+  </refsect2>
+ </refsect1>
+ <refsect1><title>EK BİLGİ</title>
+  <refsect2><title>s komutu</title>
+  <para>
+   <option>s</option> komutu muhtemelen <command>sed</command> içindeki en önemli komuttur ve birçok farklı seçeneğe sahiptir. <option>s</option> komutunun sözdizimi:
+  </para>
+  <screen>‘<option>s/</option><replaceable>DÜZİFD</replaceable><option>/</option><replaceable>YENİSİ</replaceable><option>/</option><replaceable>SEÇENEKLER</replaceable>’
+</screen>
+  <para>
+   Temel kavram basittir: <option>s/</option> komutu, kalıp alanını belirtilen <replaceable>DÜZİFD</replaceable> düzenli ifadesiyle eşleştirmeye çalışır; eşleşme başarılı olursa, kalıp alanının eşleşen kısmı <replaceable>YENİSİ</replaceable> ile değiştirilir.
+  </para>
+  <para>
+   Düzenli ifade sözdizimi ile ilgili ayrıntılar için bkz: <xref linkend="man1-sed-regexp-addr"/>
+  </para>
+  <para>
+   <replaceable>YENİSİ</replaceable>, eşleşmenin <code>n</code>'inci <code>\...\</code> kısmına atıfta bulunan, <code>\n</code>  atıfları içerebilir (<code>n</code>, 1'den 9'a kadar bir sayıdır). Ayrıca, <replaceable>YENİSİ</replaceable> kalıp alanının eşleşen kısmının tamamına atıfta bulunan öncelenmemiş <code>&amp;</code> karakterleri de içerebilir.
+  </para>
+  <para>
+   Sınırlayıcı <code>/</code> karakterleri, verilen herhangi bir <option>s</option> komutunda herhangi bir başka tek karakterle eşli olarak değiştirilebilir. <code>/</code> karakteri (veya onun yerine kullanılan karakter), <replaceable>DÜZİFD</replaceable> ve <replaceable>YENİSİ</replaceable> içinde ancak bir <code>\</code> karakteri ile öncelenerek görünebilir.
+  </para>
+  <para>
+   Son olarak, GNU <command>sed</command> eklentisi olarak, komut, bir ters eğik çizgi ile öncelenerek  <option>L, l, U, u, E</option> özel karakterlerinden birini içerebilir. Bunların anlamları:
+  </para>
+  <glosslist>
+   <glossentry>
+    <glossterm>
+     <option>\L</option>
+    </glossterm>
+    <glossdef>
+     <para>
+      Bir <option>\U</option> veya <option>\E</option> öncelemine rastlayana dek <replaceable>YENİSİ</replaceable> içeriği küçük harfe dönüştürülür.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <option>\l</option>
+    </glossterm>
+    <glossdef>
+     <para>
+      Sonraki karakteri küçük harfe dönüştürür.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <option>\U</option>
+    </glossterm>
+    <glossdef>
+     <para>
+      Bir <option>\L</option> veya <option>\E</option> öncelemine rastlayana dek <replaceable>YENİSİ</replaceable> içeriği büyük harfe dönüştürülür.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <option>\u</option>
+    </glossterm>
+    <glossdef>
+     <para>
+      Sonraki karakteri büyük harfe dönüştürür.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <option>\E</option>
+    </glossterm>
+    <glossdef>
+     <para>
+      <option>\L</option> veya <option>\U</option> ile başlatılmış harf dönüşümünü durdurur.
+     </para>
+    </glossdef>
+   </glossentry>
+  </glosslist>
+  <para>
+   <option>g</option> komutu kullanıldığında, harf dönüşümü düzenli ifadenin yinelenen oluşumları arasında aktarılmaz. Örneğin, aşağıdaki komut kalıp alanındaki ‘<code>a-b-</code>’ ile çalıştırıldığında:
+  </para>
+  <screen>s/\(b\?\)-/x\u\1/g
+</screen>
+  <para>
+   ‘<code>axxB</code>’ çıktılar. İlk ‘<code>-</code>’ dönüştürülürken ‘<option>\u</option>’ seçeneği ile ‘<option>\1</option>' numaralı düzenli ifade için <replaceable>YENİSİ</replaceable> boş olur. <code>b-</code> ise <code>xB</code>'ye dönüştürülürken kalıp alanına eklenen x karakteri dönüşümden etkilenmez.
+  </para>
+  <para>
+   Diğer yandan, \l ve \u boş bir ikameye öncülük ediyorsa <replaceable>YENİSİ</replaceable>'nin kalanını etkiler. Kalıp alanındaki ‘<code>a-b-</code>’ ile:
+  </para>
+  <screen>s/\(b\?\)-/\u\1x/g
+</screen>
+  <para>
+   komutu '-’ ile ‘X’ (büyük harf) ve ‘b-’ ile ‘Bx’ dönüşümü yapar. Bu davranış istenmiyorsa, '\1’den sonra dönüşümü durduran bir ‘\E’ eklenebilir.
+  </para>
+  <para>
+   Son dönüşümde \, &amp; veya satır sonu karakteri yerleştirilmek istenirse, bu karakterlerin bir \ ile öncelenmiş olmasına dikkat edilmelidir.
+  </para>
+  <para>
+   <option>s</option> komutunu şu seçeneklerden sıfır veya daha fazlası izleyebilir:
+  </para>
+  <glosslist>
+   <glossentry>
+    <glossterm>
+     <option>g</option>
+    </glossterm>
+    <glossdef>
+     <para>
+      Eşleşen (yalnızca ilkini değil) tüm <replaceable>DÜZİFD</replaceable>'leri <replaceable>YENİSİ</replaceable> ile değiştirir.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <replaceable>N</replaceable>
+    </glossterm>
+    <glossdef>
+     <para>
+      Yalnızca <replaceable>N</replaceable>inci <replaceable>DÜZİFD</replaceable> <replaceable>YENİSİ</replaceable> ile değiştirilir.
+     </para>
+     <note><title><option>g</option> ve <replaceable>N</replaceable> etkileşimi</title>
+      <para>
+       POSIX standardı, <option>g</option> ve sayı değiştiricileri birlikte kullanıldığında ne olması gerektiğini belirtmez ve şu anda <command>sed</command> uygulamaları arasında geniş çapta üzerinde anlaşmaya varılmış bir çözüm yoktur. GNU <command>sed</command> için etkileşim şu şekilde tanımlanıştır: <replaceable>N</replaceable>'den önceki eşleşmeleri yoksay ve ardından <replaceable>N</replaceable>'den itibaren tüm eşleşmeleri eşleştir ve değiştir.
+      </para>
+     </note>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <option>p</option>
+    </glossterm>
+    <glossdef>
+     <para>
+      Dönüşüm yapılmışsa yeni kalıp alanını çıktılar.
+     </para>
+     <note>
+      <para>
+       <option>p</option> ve <option>e</option> seçenekleri birlikte belirtildiğinde bu ikisinin bir birine göre konumu farklı sonuçlar üretebilir. Genelde, <option>ep</option> (değerlendir ve çıktıla) istenir fakat diğer türlüsü de hata ayıklama için kullanışlıdır. Bu nedenle, GNU <command>sed</command>'in geçerli sürümü <option>s</option> komutunun genel seçenekleri etkilerini yalnızca bir kere gösterirken, özellikle <option>p</option> seçeneğinin hem <option>e</option> den önce hem de <option>e</option> den sonra kullanımında kalıp alanını önce ve sonra değerlendirir. Bu davranış, bu sürümde böyle belgelenmiş olsa da gelecekte değişebilir.
+      </para>
+     </note>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <option>w</option> <replaceable>DOSYA</replaceable>
+    </glossterm>
+    <glossdef>
+     <para>
+      Dönüşüm yapılmışsa sonucu belirtilen <replaceable>DOSYA</replaceable>'ya yazar. GNU <command>sed</command> eklentisi olarak, <replaceable>DOSYA</replaceable> için iki özel değer desteklenmektedir: sonuçları standart hataya yazan <filename>/dev/stderr</filename> ve standart çıktıya yazan <filename>/dev/stdout</filename>. Bu seçenek, <option>-i</option> seçeneği kullanılmadıkça <option>p</option>'ye eşdeğerdir.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <option>e</option>
+    </glossterm>
+    <glossdef>
+     <para>
+      Bu komut, bir kabuk komutundaki girdiyi kalıp alanına borulamaya yarar. Dönüşüm yapılmışsa, kalıp alanında bulunan komut yürütülür ve kalıp alanı komutun çıktısına yerleştirilir. Sondaki satır sonu karakterleri engellenir; boş (NUL) karakter içeren bir komutun yürütülmesinin sonuçları tanımsızdır. Bu bir GNU eklentisidir.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <option>I</option>, <option>i</option>
+    </glossterm>
+    <glossdef>
+     <para>
+      Düzenli ifadenin harf büyüklüğüne duyarsız eşleştirilmesini sağlayan <option>I</option> değiştiricisi bir GNU eklentisidir.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <option>M</option>, <option>m</option>
+    </glossterm>
+    <glossdef>
+     <para>
+      Düzenli ifadenin çok satırlı kipte eşleştirilmesini sağlayan <option>M</option> değiştiricisi bir GNU eklentisidir. Değiştirici, (normal davranışa ek olarak) <code>^</code>'ın satır sonu karakterinden sonraki boş dizgeyle (sonraki satırın başıyla) ve <code>$</code>'ın satır sonu karakterinden önceki boş dizgeyle eşleşmesine sebep olur. Daima tamponun başı veya sonuyla eşleşen özel karakter dizilimleri de (<code>\`</code> ve <code>\'</code>) vardır. Ek olarak nokta karakteri, çok satırlı kipte satır sonu karakteriyle eşleşmez.
+     </para>
+    </glossdef>
+   </glossentry>
+  </glosslist>
+  </refsect2>
+  <refsect2><title>Düzenli İfadeler</title>
+  <para>
+   POSIX.2 Temel Düzenli İfadelerinin desteklenmesini gerektirse de başarım sorunları nedeniyle bunlar tamamlanmış değildir. <code>\n</code> dizilimi bir düzenli ifadede satır sonu karakteri ile eşleşir, <code>\a</code>, <code>\t</code> ve benzerleri için benzer eşleşmeler söz konusudur. <option>-E</option> seçeneği temel düzenli ifadeler yerine gelişmiş düzenli ifadelerin kullanılmasını sağlar. Gelişmiş düzenli ifadeler yıllarca GNU <command>sed</command> tarafından desteklenmiş ve artık POSIX'e de dahil edilmiştir.
+  </para>
+ </refsect2>
+ </refsect1>
+ <refsect1><title>ÇIKIŞ DURUMU</title>
+  <para>
+   Sıfır çıkış durumu başarıyı betimller. Sıfırdan farklı bir çıkış kodu ise hata oluştuğunu gösterir. GNU <command>sed</command> şu çıkış kodları ile çıkar:
+  </para>
+  <glosslist>
+   <glossentry>
+    <glossterm>
+     <option>0</option>
+    </glossterm>
+    <glossdef>
+     <para>
+      İşlem başarılı.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <option>1</option>
+    </glossterm>
+    <glossdef>
+     <para>
+      Komut veya düzenli ifade geçersiz ya da <option>--posix</option> seçeneği ile GNU <command>sed</command> eklentisi kullanılmış.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <option>2</option>
+    </glossterm>
+    <glossdef>
+     <para>
+      Komut satırında belirtilmiş bir veya daha fazla girdi dosyası açılamadı (örn, dosya yoktur veya izinler yetersizdir). Diğer dosyalardan işleme devam edildi.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <option>4</option>
+    </glossterm>
+    <glossdef>
+     <para>
+      Çalışma anında bir G/Ç veya ciddi bir işlem hatası oluştu. GNU <command>sed</command> hemen çıktı.
+     </para>
+    </glossdef>
+   </glossentry>
+  </glosslist>
+  <para>
+   Ek olarak, <option>q</option> ve <option>Q</option> komutları <command>sed</command>'in özel bir çıkış kodu ile çıkmasını sağlamak için kullanılabilir:
+  </para>
+  <screen>$ <userinput>echo | sed 'Q42' ; echo $?</userinput>
+42
+</screen>
+ </refsect1>
+ <refsect1><title>GERİBİLDİRİM</title>
+  <para>
+   Yazılım hatalarını bildirmek için: bug-sed (at) gnu.org.  Ayrıca, eposta gönderirken <command>sed --version</command> komutunun çıktısının da iletiye dahil edilmesi rica olunur.
+  </para>
+ </refsect1>
+ <refsect1><title>YAZAN</title>
+  <para>
+   Jay Fenlason, Tom Lord, Ken Pizzini, Paolo Bonzini, Jim Meyering ve Assaf Gordon tarafından yazıldı.
+  </para>
+ </refsect1>
+ <refsect1><title>TELİF HAKKI</title>
+  <simpara>
+   Telif hakkı © 2020 Free Software Foundation, Inc.
+  </simpara>
+  <simpara>
+   Lisans GPLv3+: GNU GPL sürüm 3 veya üstü &lt;<link xlink:href="http://gnu.org/licenses/gpl.html"/>&gt;
+  </simpara>
+  <simpara>
+   Bu bir özgür yazılımdır: yazılımı değiştirmek ve dağıtmakta özgürsünüz. Yasaların izin verdiği ölçüde HİÇBİR GARANTİ YOKTUR.
+  </simpara>
+ </refsect1>
+ <refsect1><title>İLGİLİ BELGELER</title>
+  <para>
+   <uri xlink:href="man1-awk"/>, <uri xlink:href="man1-ad"/>, <uri xlink:href="man1-grep"/>, <uri xlink:href="man1-tr"/>, <uri xlink:href="man1-perlre"/>, sed.info, sed hakkında çeşitli kitaplar, sed SSS (<link xlink:href="http://sed.sf.net/grabbag/tutorials/sedfaq.txt"/>), <link xlink:href="http://sed.sf.net/grabbag/"/>.
+  </para>
+  <simpara>
+   GNU  sed  sayfası:  &lt;<link xlink:href="https://www.gnu.org/software/sed/"/>&gt;.
+  </simpara>
+  <simpara>
+   GNU yazılımları için genel yardım sayfası: &lt;<link xlink:href="https://www.gnu.org/gethelp/"/>&gt;.
+  </simpara>
+  <para>
+   <command>sed</command> komutu ile ilgili kapsamlı bir kılavuz Texinfo olarak mevcuttur. <command>info</command> ve <command>sed</command> yazılımları düzgün bir şekilde sisteminizde mevcutsa,
+  </para>
+  <blockquote>
+   <para>
+    <command>info sed</command>
+   </para>
+  </blockquote>
+  <para>
+   komutu ile bu kılavuzu görüntüleyebilirsiniz.
+  </para>
+ </refsect1>
+ <refsect1><title>ÇEVİREN</title>
+  <simpara>© 2022 Nilgün Belma Bugüner</simpara>
+  <simpara>
+   Bu çeviri özgür yazılımdır: Yasaların izin verdiği ölçüde HİÇBİR GARANTİ YOKTUR.
+  </simpara>
+  <simpara>
+   Lütfen, çeviri ile ilgili bildirimler için &lt;belgeler-genel (at) lists.sourceforge.net&gt; adresini kullanın.
+  </simpara>
+ </refsect1>
+</refentry>
