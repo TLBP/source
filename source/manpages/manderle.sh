@@ -1,13 +1,16 @@
-#! /bin/sh
+#!/bin/bash
+# Bu betiğin ve bağlı betiklerin sisteminizde çalışması için
+# depolarımızın kopyalarının
+# $HOME/github/belgeler/manpages-tr
+# $HOME/github/belgeler/source
+# dizinlerinde bulunması gerekir.
 mandirs=(1 2 3 4 5 6 7 8)
+
 for i in ${mandirs[@]};
 do
-  mkdir ../tr/man$i;
-  for j in man$i/*;
-  do
-    manfile=`basename $j .$i.xml`;
-    echo man$i/$manfile.$i derleniyor;
-    ./xml2man.sh  $i $manfile;
-  done
-#  gzip tr/man$i/*;
+  ./manlist.sh $i
+  rm $HOME/github/belgeler/manpages-tr/tr/man$i/*
+  . ./tr/man$i.lst
+  gzip $HOME/github/belgeler/manpages-tr/tr/man$i/*
 done
+

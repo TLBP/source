@@ -25,8 +25,7 @@
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
   xmlns:d="http://docbook.org/ns/docbook"
   xmlns:xlink="http://www.w3.org/1999/xlink"
-  xmlns:t="http://tlbp.gen.tr/ns/tlbp"
-  extension-element-prefixes="d xlink t"
+  extension-element-prefixes="d xlink"
   version='1.0'>
 
 <xsl:key name="id" match="*" use="@id|@xml:id"/>
@@ -116,7 +115,7 @@
   <xsl:if test="preceding-sibling::d:refnamediv">
    <xsl:value-of select="'.br'"/>
   </xsl:if>
-  <xsl:if test="normalize-space(../d:info/t:pageinfo/t:name) !=  normalize-space(d:refname)">
+  <xsl:if test="normalize-space(../d:refmeta/d:refentrytitle) !=  normalize-space(d:refname)">
     <xsl:call-template name="linkme"/>
   </xsl:if>
   <xsl:variable name="content">

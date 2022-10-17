@@ -8,17 +8,10 @@
                 xmlns:d="http://docbook.org/ns/docbook"
                 xmlns:doc="http://exslt.org/common"
                 xmlns:date="http://exslt.org/dates-and-times"
-                xmlns:t="http://tlbp.gen.tr/ns/tlbp"
-                extension-element-prefixes="d doc date t"
+                extension-element-prefixes="d doc date"
                 version='1.0'>
 
 <xsl:template match="d:refentry">
-  <xsl:variable name="remark">
-    <xsl:value-of select="d:info/t:pageinfo/t:remark"/>
-  </xsl:variable>
-  <xsl:if test="$remark != ''">
-    <xsl:value-of select="concat($remark, '&#10;')"/>
-  </xsl:if>
 <xsl:text>.ig
  * Bu kılavuz sayfası Türkçe Linux Belgelendirme Projesi (TLBP) tarafından
  * XML belgelerden derlenmiş olup manpages-tr paketinin parçasıdır:
@@ -104,7 +97,7 @@
     <xsl:value-of select="../d:refmeta/d:manvolnum"/>
   </xsl:variable>
 
-  <doc:document href="{concat('tr/man', $ext, '/', $thisbase, '.', $ext)}" omit-xml-declaration="yes">
+  <doc:document href="{concat($home, '/github/belgeler/manpages-tr/tr/man', $ext, '/', $thisbase, '.', $ext)}" omit-xml-declaration="yes">
     <xsl:value-of select="concat('.so ', $mainbase, '.', $ext, '.gz&#10;')"/>
   </doc:document>
 </xsl:template>

@@ -5,7 +5,8 @@
 #
 # Artık ISO-8859-9 kullanımdan kalktığından UTF-8 karakterlerle
 # sorun yaşayan kalmadığından hareketle dönüşüm basitleştirildi.
-LANG=C xsltproc xmltoman.xsl man$1/$2.$1.xml | grep . | sed \
+LANG=C xsltproc --stringparam home $HOME xmltoman.xsl man$1/$2.$1.xml | \
+grep . | sed \
  -e "s/'/\\\\\\&'/g" \
  -e "s/\`/\\\\\\&'/g" \
- > tr/man$1/$2.$1
+ > $HOME/github/belgeler/manpages-tr/tr/man$1/$2.$1
