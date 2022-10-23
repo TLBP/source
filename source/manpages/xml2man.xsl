@@ -125,6 +125,10 @@
   <xsl:if test="not (following-sibling::d:refnamediv)">
     <xsl:value-of select="'&#10;.sp'"/>
   </xsl:if>
+  <xsl:message>
+   <xsl:number from="d:book" count="d:refnamediv" level="any"/>
+   <xsl:value-of select="concat(' ', d:refname, '.', ../d:refmeta/d:manvolnum, ' yazılıyor.&#10;')"/>
+  </xsl:message>
 </xsl:template>
 
 <xsl:template match="d:refname">
@@ -491,6 +495,14 @@
   </xsl:if>
 </xsl:template>
 
+<xsl:template match="d:screen[name(../..) = 'refmeta']">
+ <xsl:call-template name="verbatim">
+   <xsl:with-param name="p">
+    <xsl:apply-templates/>
+   </xsl:with-param>
+ </xsl:call-template>
+</xsl:template>
+
 <xsl:template name="verbatim">
  <xsl:param name="p"></xsl:param>
   <xsl:variable name="p1">
@@ -768,7 +780,7 @@
   <xsl:value-of select="concat('\fB', $target,'\fR')"/>
 </xsl:template>
 
-<xsl:template match="d:acronym|d:classname|d:literal|d:productname|d:prompt|d:statement|d:symbol|d:type">
+<xsl:template match="d:acronym|d:classname|d:literal|d:productname|d:prompt|d:statement|d:symbol|d:tag|d:type">
   <xsl:apply-templates/>
 </xsl:template>
 
@@ -836,6 +848,12 @@
 </xsl:template>
 
 <xsl:template match="d:informaltable|d:table">
+
+  <xsl:if test="name(.)='table' and (./d:title)">
+<xsl:text>
+.B </xsl:text><xsl:value-of select="d:title"/>
+  </xsl:if>
+
   <xsl:choose>
     <xsl:when test="(&indented;)">
 <xsl:text>
@@ -929,10 +947,10 @@ tab(:);</xsl:text>
    <xsl:when test="name(../..) = 'thead'">
     <xsl:choose>
      <xsl:when test="not (preceding-sibling::d:entry)">
-      <xsl:apply-templates/>
+      <xsl:text>\fB</xsl:text><xsl:apply-templates/><xsl:text>\fR</xsl:text>
      </xsl:when>
      <xsl:otherwise>
-      <xsl:text>:</xsl:text><xsl:apply-templates/>
+      <xsl:text>:\fB</xsl:text><xsl:apply-templates/><xsl:text>\fR</xsl:text>
      </xsl:otherwise>
     </xsl:choose>
    </xsl:when>

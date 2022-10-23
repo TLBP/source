@@ -11,7 +11,33 @@
                 extension-element-prefixes="d doc date"
                 version='1.0'>
 
+<xsl:include href="xml2man.xsl"/>
+
+<xsl:template match="/">
+ <xsl:apply-templates/>
+</xsl:template>
+
+<xsl:template match="d:book">
+ <xsl:apply-templates/>
+</xsl:template>
+
+<xsl:template match="d:reference">
+   <xsl:apply-templates/>
+</xsl:template>
+
 <xsl:template match="d:refentry">
+ <xsl:variable name="ext">
+  <xsl:value-of select="d:refmeta/d:manvolnum"/>
+ </xsl:variable>
+ <xsl:variable name="name">
+  <xsl:value-of select="normalize-space(d:refmeta/d:refentrytitle)"/>
+ </xsl:variable>
+ <doc:document href="{concat('man', $ext, '/', $name, '.', $ext)}"
+             method="text"
+             encoding="UTF-8"
+             omit-xml-declaration="yes"
+             standalone="yes"
+             indent="no">
 <xsl:text>.ig
  * Bu kılavuz sayfası Türkçe Linux Belgelendirme Projesi (TLBP) tarafından
  * XML belgelerden derlenmiş olup manpages-tr paketinin parçasıdır:
@@ -21,7 +47,7 @@
 <xsl:if test="d:refmeta/d:legalnotice">
  <xsl:call-template name="verbatim">
    <xsl:with-param name="p">
-    <xsl:value-of select="d:refmeta/d:legalnotice/d:screen"/>
+    <xsl:apply-templates select="d:refmeta/d:legalnotice/d:screen"/>
    </xsl:with-param>
  </xsl:call-template>
 </xsl:if>
@@ -49,6 +75,7 @@
 .ad l
 .PD 0</xsl:text>
   <xsl:apply-templates/>
+ </doc:document>
 </xsl:template>
 
 <xsl:template match="d:info|d:refname/d:refmiscinfo"/>
@@ -97,9 +124,16 @@
     <xsl:value-of select="../d:refmeta/d:manvolnum"/>
   </xsl:variable>
 
-  <doc:document href="{concat($home, '/github/belgeler/manpages-tr/tr/man', $ext, '/', $thisbase, '.', $ext)}" omit-xml-declaration="yes">
+  <doc:document href="{concat($thisbase, '.', $ext)}"
+             method="text"
+             encoding="UTF-8"
+             omit-xml-declaration="yes"
+             standalone="yes"
+             indent="no">
     <xsl:value-of select="concat('.so ', $mainbase, '.', $ext, '.gz&#10;')"/>
   </doc:document>
 </xsl:template>
+
+
 
 </xsl:stylesheet>
