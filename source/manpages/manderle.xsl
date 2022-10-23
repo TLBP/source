@@ -124,13 +124,13 @@
     <xsl:value-of select="../d:refmeta/d:manvolnum"/>
   </xsl:variable>
 
-  <doc:document href="{concat($thisbase, '.', $ext)}"
+  <doc:document href="{concat($thisbase, '.', $ext, '.gz')}"
              method="text"
              encoding="UTF-8"
              omit-xml-declaration="yes"
              standalone="yes"
              indent="no">
-    <xsl:value-of select="concat('.so ', $mainbase, '.', $ext, '.gz&#10;')"/>
+    <xsl:value-of select="concat('.so ', $mainbase, '.', $ext, '.gz')"/>
   </doc:document>
 </xsl:template>
 

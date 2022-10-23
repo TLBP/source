@@ -255,7 +255,7 @@ set       toc,title
 </xsl:template>
 
 <xsl:template match="d:cmdsynopsis">
-  <xsl:if test="position()=1">
+  <xsl:if test="not (preceding-sibling::d:cmdsynopsis)">
     <br/>
   </xsl:if>
   <table>
@@ -545,15 +545,37 @@ footnote text gets an id of #ftn.@id. They cross link to each other. -->
   </div>
 </xsl:template>
 
+<xsl:template match="d:funcprototype">
+  <table>
+    <xsl:apply-templates select="." mode="common.html.attributes"/>
+    <tr>
+      <xsl:call-template name="id.attribute">
+        <xsl:with-param name="conditional" select="0"/>
+      </xsl:call-template>
+      <xsl:call-template name="anchor">
+        <xsl:with-param name="conditional" select="1"/>
+      </xsl:call-template>
+      <td class="funcdef">
+        <xsl:apply-templates select="*[position()=1]"/>
+      </td>
+      <td class="paramdef">
+        <xsl:apply-templates select="*[position()>1]"/>
+      </td>
+   </tr>
+  </table>
+</xsl:template>
+
 
 <xsl:template match="d:funcdef">
   <xsl:apply-templates select="." mode="common.html.attributes"/>
   <xsl:call-template name="id.attribute"/>
   <xsl:apply-templates mode="ansi-nontabular"/>
-  <xsl:text>(</xsl:text>
 </xsl:template>
 
 <xsl:template match="d:paramdef">
+  <xsl:if test="not (preceding-sibling::d:paramdef)">
+    <xsl:text>(</xsl:text>
+  </xsl:if>
   <xsl:apply-templates mode="ansi-nontabular"/>
   <xsl:choose>
     <xsl:when test="following-sibling::*">

@@ -31,7 +31,7 @@ do
     cat $j | grep . | sed -e "s/'/’/g" -e "s/\`/’/g" > $j.tmp;
     rm $j;
     mv $j.tmp $j;
-    gzip $j;
+    gzip -q $j;
   done
 done
 
