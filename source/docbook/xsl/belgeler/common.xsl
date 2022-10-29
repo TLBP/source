@@ -255,7 +255,8 @@ set       toc,title
 </xsl:template>
 
 <xsl:template match="d:cmdsynopsis">
-  <xsl:if test="not (preceding-sibling::d:cmdsynopsis)">
+  <xsl:if test="not (preceding-sibling::d:cmdsynopsis) and
+                not (preceding-sibling::d:para)">
     <br/>
   </xsl:if>
   <table>

@@ -165,7 +165,7 @@ xmlns="http://www.w3.org/1999/xhtml" version="1.0">
 <xsl:template match="d:manvolnum"/>
 <xsl:template match="d:refentrytitle"/>
 
-<xsl:template match="d:refnamediv">
+<xsl:template match="d:refnamediv[not (@node)]">
   <div>
     <xsl:call-template name="common.html.attributes">
       <xsl:with-param name="inherit" select="1"/>

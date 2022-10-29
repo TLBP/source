@@ -112,18 +112,21 @@
   <xsl:if test="not (preceding-sibling::d:refnamediv)">
     <xsl:value-of select="'&#10;.SH İSİM'"/>
   </xsl:if>
-  <xsl:if test="preceding-sibling::d:refnamediv">
+  <xsl:if test="preceding-sibling::d:refnamediv and not (@role)">
    <xsl:value-of select="'.br'"/>
   </xsl:if>
   <xsl:if test="normalize-space(../d:refmeta/d:refentrytitle) !=  normalize-space(d:refname)">
     <xsl:call-template name="linkme"/>
   </xsl:if>
-  <xsl:variable name="content">
-    <xsl:apply-templates/>
-  </xsl:variable>
-  <xsl:value-of select="concat('&#10;', normalize-space($content))"/>
-  <xsl:if test="not (following-sibling::d:refnamediv)">
-    <xsl:value-of select="'&#10;.sp'"/>
+  <!-- @role = 'symbolic' özniteliği (linkme) içindir, dosyaya bilgiler yazılmaz-->
+  <xsl:if test="not (@role)">
+   <xsl:variable name="content">
+     <xsl:apply-templates/>
+   </xsl:variable>
+   <xsl:value-of select="concat('&#10;', normalize-space($content))"/>
+   <xsl:if test="not (following-sibling::d:refnamediv)">
+     <xsl:value-of select="'&#10;.sp'"/>
+   </xsl:if>
   </xsl:if>
   <xsl:message>
    <xsl:number from="d:book" count="d:refnamediv" level="any"/>
@@ -172,13 +175,20 @@
 </xsl:template>
 
 <xsl:template match="d:refsect3">
-<xsl:text>
-.B </xsl:text><xsl:value-of select="d:title"/>
+ <xsl:choose>
+  <xsl:when test="./d:title/@userlevel='notbold'">
+   <xsl:value-of select="concat('&#10;', d:title)"/>
+   <xsl:apply-templates/>
+  </xsl:when>
+  <xsl:otherwise>
+   <xsl:value-of select="concat('&#10;.B ', d:title)"/>
 <xsl:text>
 .RS 4</xsl:text>
 <xsl:apply-templates/>
 <xsl:text>
 .RE 1</xsl:text>
+  </xsl:otherwise>
+ </xsl:choose>
 </xsl:template>
 
 <xsl:template match="d:cmdsynopsis">
@@ -780,11 +790,11 @@
   <xsl:value-of select="concat('\fB', $target,'\fR')"/>
 </xsl:template>
 
-<xsl:template match="d:acronym|d:classname|d:literal|d:productname|d:prompt|d:statement|d:symbol|d:tag|d:type">
+<xsl:template match="d:acronym|d:classname|d:literal|d:productname|d:prompt|d:statement|d:symbol|d:type">
   <xsl:apply-templates/>
 </xsl:template>
 
-<xsl:template match="d:application|d:code|d:command|d:constant|d:emphasis|d:envar|d:filename|d:function|d:keyword|d:option|d:parameter|d:replaceable|d:structname|d:structfield|d:userinput|d:quote|d:small|d:type|d:varname|d:wordasword">
+<xsl:template match="d:application|d:code|d:command|d:constant|d:emphasis|d:envar|d:filename|d:function|d:keyword|d:option|d:parameter|d:replaceable|d:structname|d:structfield|d:userinput|d:quote|d:small|d:tag|d:type|d:varname|d:wordasword">
   <xsl:variable name="p">
     <xsl:apply-templates/>
   </xsl:variable>
@@ -797,7 +807,8 @@
                     name(.)='function' or
                     name(.)='keyword' or
                     name(.)='option' or
-                    (name(.)='systemitem' and @class='username') or                                      name(.)='userinput' or
+                    (name(.)='systemitem' and @class='username') or                                      name(.)='tag' or
+                    name(.)='userinput' or
                     ((name(.)='emphasis' or
                     name(.)='type') and @role='bold')
 ">

@@ -2,11 +2,11 @@ Belgelendirme Çalışma Grubu, Linux ile ilgili olarak, NASIL, kılavuz ve bilg
 sayfaları ile yardım belgelerinin çevrilmesi, yeni belgelerin hazırlanması,
 eski belgelerin arşivlenmesiyle ilgilenir. (Mayıs 2002)
 
-Bu depo belgeler.org / belgeler.gen.tr sitesinin HTML sayfalarını üreten
+Bu depo belgeler.org.tr / tlbp.org.tr sitesinin HTML sayfalarını üreten
 kodları ve üretildikleri XML belgeleri içermektedir. Bu depodaki kodlarla
 XML belgelerden ayrıca, PDF belgeler ve man sayfaları da üretilebilmektedir.
 ```
-   Copyright © 2002-2021 Nilgün Belma Bugüner <nilgun@tlbp·gen·tr>
+   Copyright © 2002-2021 Nilgün Belma Bugüner <nilgun@tlbp·org·tr>
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU Affero General Public License as published
    by the Free Software Foundation, either version 3 of the License, or

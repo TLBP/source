@@ -1,102 +1,272 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- ********************************************************************
-     $Id: mkswap.8.xml,v 1.4 2002/12/20 22:54:36 nilgun Exp $
+       man8/mkswap.8.xml, util-linux 2.38, GPL, NBB - Ekim 2022
      ******************************************************************** -->
-<refentry xml:id="tr-man8-mkswap">
-<remark>.\" Copyright 1998 Andries E. Brouwer (aeb (at) cwi.nl)
-.\"
-.\" May be distributed under the GNU General Public License
-.\" Rewritten for 2.1.117, aeb, 981010.
-.\"
-</remark>
-  <refmeta>
-    <manvolnum>8</manvolnum>
-    <refentrytitle>mkswap</refentrytitle>
-    <refmiscinfo class="header">Linux Yazılımcısının Kılavuzu</refmiscinfo>
-    <refmiscinfo class="domain">Linux 2.2.4</refmiscinfo>
-    <refmiscinfo class="date">25 Mart 1999</refmiscinfo>
-  </refmeta>
-
-  <refnamediv>
-    <refname>mkswap</refname>
-    <refpurpose>Linux takas alanını ayarlar</refpurpose>
-  </refnamediv>
-
-  <refsynopsisdiv><title>KULLANIM</title>
-<synopsis><command>mkswap</command>  [<command>-c</command>] [<command>-v</command><emphasis>N</emphasis>] [<command>-f</command>] [<command>-p </command><emphasis>sayfa_boyu</emphasis>] <emphasis>aygıt</emphasis> [<emphasis>boyut</emphasis>]
-</synopsis>
-  </refsynopsisdiv>
-
-  <refsect1><title>AÇIKLAMA</title>
-    <para>
-<command>mkswap</command>, bir aygıt ya da dosya üzerinde Linux takas alanını oluşturur.
-    </para><para>
-(Takas alanını oluşturduktan sonra <command>swapon</command> komutuyla etkinleştirmeniz gerekir. Takas alanları çoğunlukla <filename>/etc/fstab</filename> içinde listelenirler ve sistemin açılışı sırasında <command>swapon -a</command> komutunu çalıştıran betiklerle kullanıma hazır hale getirilirler.)
-    </para><para>
-<varname>aygıt</varname> argümanı çoğunlukla bir disk bölümü (<filename>/dev/hda4</filename>, <filename>/dev/sdb7</filename> gibi) olmakla birlikte bir dosya da olabilir. Linux çekirdeği disk bölümlerinin kimliklerine bakmaz ama çoğu kurulum betiği, onaltılık tabanda türü 82 (<literal>LINUX_SWAP</literal>) olan disk bölümünü Linux takas alanı olarak kabul eder. (Uyarı: Solaris de bu türü kullanır. Solaris disk bölümünüzü öldürürken dikkatli olun.)
-    </para><para>
-<varname>boyut</varname> argümanı gereksiz olmakla birlikte geriye uyumluluk amacıyla korunmuştur. (İstenen takas alanı miktarını 1024 baytlık bloklar halinde belirtmek için kullanılır. Şayet bu argüman belirtilmemişse, <command>mkswap</command> bütün disk bölümünü veya dosyanın tamamını takas alanı olarak kabul eder. - olarak belirtmek pek akıllıca olmaz, diskinizin bozulmasına sebep olabilir.)
-    </para><para>
-<varname>sayfa_boyu</varname> parametresi kullanılacak sayfa boyunu belirtmek içindir. Bu parametreyi belirtmek genellikle gereksizdir (hatta akılsızcadır) ama bazı libc sürümleri sayfa boyu hakkında yanlış bilgi verirler, bu nedenle <command>mkswap</command>'ın bu boyutu yanlış algılaması mümkündür. Sonradan ortaya çıkan, takas imzası bulunamadı şeklindeki, <command>swapon</command> hataları bunun belirtisi sayılabilir. Takas bölümüne özgü <varname>sayfa_boyu</varname> değerleri 4096 ve 8192 dir.
-    </para><para>
-Linux iki tür takas alanı tanır: eski tür ve yeni tür. Takas alanının ilk sayfasının son 10 baytı bu ayrımı yapmak için kullanılır. Eski türün imzası ‘<literal>SWAP_SPACE</literal>’ iken yeni türün imzası ‘<literal>SWAPSPACE2</literal>’dir.
-    </para><para>
-Eski türde, ilk sayfanın kalanı, takas alanının kullanılabilir her sayfası için 1 bit olmak üzere bir bit eşlemdi. İlk sayfa bu biteşlemi tuttuğundan ilk bit 0 idi. Ayrıca son 10 bayt imza için ayrılmıştır. Bu durumda, şayet sayfa boyu B ise, eski türte bir takas alanı en fazla 8*(B-10)-1 sayfalık takas alanı kullanabilir. i386’da olduğu gibi <literal>B=4096</literal> ise, kullanılabilecek alan en fazla  133890048 bayt olabilir (takriben 128MiB). Bir Alpha veya Sparc64'de ise, <literal>B=8192</literal> ve kullanılabilecek alan  en fazla 535560992 bayt (takriben 512 MiB) olabilir
-    </para><para>
-Eski türler, bu biteşlem sayfasının çoğunu boşa harcar. Çünkü sıfır bitleri bozuk blok alanları veya takas alanından sonraki bloklar olarak kabul edilir. Basit bir  tamsayı, -şayet varsa- bozuk blokların listelenebilmesi için yeterli olmaktadır. Hiçkimse yüzlerce bozuk blok bulunan bir takas alanını kullanmak istemez (hatta ben içinde 1 tane bile bozuk blok bulunan bir takas alanı kullanmak istemem).  Yeni türdeki takas alanlarında, bu olması gerektiği gibi yapılmıştır. Şimdi takas alanının kullanılabilecek azami boyutu mimariye bağlıdır. Kabaca: bir i386, PPC, m68k, ARM için 2GiB; mips’lerde 512 MiB; alpha’da 128GiB ve bir sparc64’de 3TiB’tır.
-    </para><para>
-Not: Linux 2.1.117’den önce, çekirdek belleğinde her sayfa için bir bayt ayrılırdı, şimdi ise iki bayt ayrılmaktadır. Bu yüzden, 2GiB'lık bir takas alanı kullanımı, 2MiB'lık bir çekirdek belleği gerektirebilir.
-    </para><para>
-Şu an, Linux 8 adet takas alanına izin vermektedir.  Kullanımdaki takas alanlarını <filename>/proc/swaps</filename> dosyası içinde görebilirsiniz (Linux-2.1.25’den  beri).
-    </para><para>
-<command>mkswap</command> 10 sayfadan daha küçük alanları kabul etmez.
-    </para><para>
-Şayet makinanızın kullandığı sayfa boyutunu bilmiyorsanız, <command>cat /proc/cpuinfo</command> komutu ile bunu öğrenebilirsiniz (veya öğrenemezsiniz. Bu dosyanın içeriği kullandığınız çekirdek sürümüne ve mimariye göre değişiklik gösterebilir).
-    </para><para>
-Bir takas dosyası oluşturmak için, <command>mkswap</command> ile başlatmadan önce aşağıdakine benzer bir komutla önce bir dosya oluşturmalısınız:
-    </para><glosslist>
-      <glossentry>
-        <glossdef><para><screen>
-# dd if=/dev/zero of=swapfile bs=1024 count=65536
+<refentry xml:id="man8-mkswap" xmlns="http://docbook.org/ns/docbook"
+ xmlns:xlink="http://www.w3.org/1999/xlink" version="5.0" xml:lang="tr">
+ <info>
+  <keywordset>
+   <keyword>Linux, manpage, kütüphane, kitaplık, belge, belgeler</keyword>
+   <keyword>mkswap, aygıt, bölüm, bölümleme, takas, swap, paging</keyword>
+   <keyword>dosya, sistem, disk, sayfalama, util-linux</keyword>
+  </keywordset>
+ </info>
+ <refmeta>
+  <manvolnum>8</manvolnum>
+  <refentrytitle>mkswap</refentrytitle>
+  <refmiscinfo>
+   <sectdesc>Sistem Yönetim Komutları</sectdesc>
+   <source>util-linux 2.38</source>
+   <date>17 Şubat 2022</date>
+  </refmiscinfo>
+  <legalnotice>
+   <title>Yasal Uyarı</title>
+   <screen> * Özgün Belgenin Lisans ve Telif Hakkı bilgileri:
+ *
+ * Copyright 1998 Andries E. Brouwer (aeb (at) cwi.nl)
+ *
+ * May be distributed under the GNU General Public License
+ *
 </screen>
-        </para></glossdef>
-      </glossentry></glosslist>
-    <para>
-Not: Bir takas dosyası kesintisiz, tek parça olmalıdır. Bu nedenle <command>cp</command>(1) komutu ile oluşturulmuş bir takas dosyası kabul edilmez.
+  </legalnotice>
+ </refmeta>
+ <refnamediv>
+  <refname>mkswap</refname>
+  <refpurpose>Linux takas alanını oluşturur</refpurpose>
+ </refnamediv>
+ <refsynopsisdiv>
+  <title>KULLANIM</title>
+  <cmdsynopsis>
+   <command>mkswap</command>
+   <arg><replaceable>seçenekler</replaceable></arg>
+   <arg choice='plain'><replaceable>aygıt</replaceable></arg>
+   <arg><replaceable>boyut</replaceable></arg>
+  </cmdsynopsis>
+ </refsynopsisdiv>
+ <refsect1>
+  <title>AÇIKLAMA</title>
+  <para>
+   <command>mkswap</command>, bir aygıt ya da dosya üzerinde Linux takas alanını oluşturur.
+  </para>
+  <para>
+   <replaceable>aygıt</replaceable> olarak bir disk bölümü (<filename>/dev/sdb7</filename> gibi) veya bir dosya belirtilebilir. Linux çekirdeği disk bölümlerinin kimliklerine bakmaz ama çoğu kurulum betiği, onaltılık tabanda türü 82 (<literal>LINUX_SWAP</literal>) olan disk bölümünü Linux takas alanı olarak kabul eder.
+  </para>
+  <warning>
+   <para>
+    Solaris disk bölümü türü de 82'dir. Solaris disk bölümü öldürülürken dikkatli olunmalıdır.
+   </para>
+  </warning>
+  <para>
+   <replaceable>boyut</replaceable>  gereksiz olmakla birlikte geriye uyumluluk amacıyla korunmuştur. İstenen takas alanı miktarını 1024 baytlık bloklar halinde belirtmek için kullanılır. Şayet <replaceable>boyut</replaceable> belirtilmezse, <command>mkswap</command> bütün disk bölümünü veya dosyanın tamamını takas alanı olarak kabul eder. <replaceable>boyut</replaceable> olarak <code>-</code> belirtmek pek akıllıca olmaz, diskin bozulmasına sebep olabilir.
+  </para>
+  <para>
+   Takas alanını oluşturduktan sonra <command>swapon</command> komutuyla etkinleştirmek gerekir. Takas alanları çoğunlukla <filename>/etc/fstab</filename> içinde listelenir ve sistemin açılışı sırasında <command>swapon -a</command> komutunu çalıştıran açılış betikleriyle kullanıma hazır hale getirilir.
+  </para>
+  <warning>
+   <para>
+    Takas başlığı ilk bloğa dokunmaz. Orada bir önyükleyici veya disk etiketi olabilir, ancak bu önerilen bir kurulum değildir. Önerilen kurulum, Linux takas alanı için ayrı bir bölüm kullanmaktır.
+   </para>
+   <para>
+    <command>mkswap</command>, diğer birçok <command>mkfs</command> benzeri uygulama gibi, <code>önceki herhangi bir dosya sistemini görünmez yapmak için disk bölümünün ilk bloğunu siler</code>.
+   </para>
+   <para>
+     Ancak, <command>mkswap</command> disk etiketli (SUN, BSD, ...) bir aygıttaki ilk bloğu silmeyi reddeder.
+   </para>
+  </warning>
+ </refsect1>
+ <refsect1><title>SEÇENEKLER</title>
+  <glosslist>
+   <glossentry>
+    <glossterm>
+     <option>-c</option>, <option>--check</option>
+    </glossterm>
+    <glossdef>
+     <para>
+      Takas alanı oluşturmadan önce aygıtı bozuk bloklar için (bir blok aygıtı ise) tarar ve bozuk blok varsa sayısını gösterir.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <option>-f</option>, <option>--force</option>
+    </glossterm>
+    <glossdef>
+     <para>
+      Baskıcı kiptir. Verilen komut salakça olsa bile, yerine getirilir. İçinde bulunduğu dosya ya da bölümden daha büyük bir takas alanı oluşturulmasını sağlar.
+     </para>
+     <para>
+      Ayrıca, bu seçenek olmaksızın, <command>mkswap</command> aygıt veya disk bölümünün ilk bloğunu silmeyi reddeder.
     </para>
-  </refsect1><refsect1><title>SEÇENEKLER</title>
-    <glosslist>
-      <glossentry>
-        <glossterm><command>-c</command></glossterm>
-        <glossdef><para>Takas alanı oluşturmadan önce aygıtı bozuk bloklar için (bir blok aygıtı ise) tarar ve bozuk blok varsa sayısını gösterir.
-        </para></glossdef>
-      </glossentry><glossentry>
-        <glossterm><command>-f</command></glossterm>
-        <glossdef><para>Baskıcı kiptir. Verilen komut salakça olsa bile, yapılmasını
-sağlar. İçinde bulunacağı dosya ya da bölümden daha büyük bir takas alanı oluşturulmasını sağlar. SPARC’larda, takas alanının oluşturulmasını zorlar. Bu seçenek olmadan, <command>mkswap</command> geçerli bir SPARC süperbloklu aygıtta bir v0  takasını oluşturmayı reddecektir (bu komut bölüm tablosunu silmek gibi algılanacağı için).
-        </para></glossdef>
-      </glossentry><glossentry>
-        <glossterm><command>-p </command><varname>sayfa_boyu</varname></glossterm>
-        <glossdef><para>Kullanılacak sayfa boyu belirtilir.
-        </para></glossdef>
-      </glossentry><glossentry>
-        <glossterm><command>-v0</command></glossterm>
-        <glossdef><para>Eski tarz takas alanı oluşturur.
-        </para></glossdef>
-      </glossentry><glossentry>
-        <glossterm><command>-v1</command></glossterm>
-        <glossdef><para>Yeni tarz takas alanı oluşturur.
-        </para></glossdef>
-      </glossentry></glosslist>
-    <para>
-Şayet <command>-v</command> seçeneği belirtilmemişse <command>mkswap</command>, yeni türde bir takas alanı oluşturur, ancak kullanılan çekirdek 2.1.117 sürümünden daha eski ise (ayrıca, PAGE_SIZE &lt; 2048 ise) eski tarz takas alanı oluşturur. Yeni tarz başlıklar ilk bloğu kullanmazlar, bu nedenle önyükleyici veya disk etiketi için burası kullanılacaksa tercih edilebilirler. Eğer hem 2.0 hem de 2.2 çekirdek kullanmak zorunda iseniz, takas alanını oluştururken <command>-v0</command> seçeneğini kullanın.
-    </para>
-  </refsect1><refsect1><title>İLGİLİ BELGELER</title>
-    <para>
-<link linkend="tr-man8-fdisk"/>, <link linkend="tr-man8-swapon"/>.
-    </para>
-  </refsect1><refsect1><title>ÇEVİREN</title>
-    <para>Yalçın Kolukısa, Ocak 2004</para>
-  </refsect1>
+   </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <option>-q</option>, <option>--quiet</option>
+    </glossterm>
+    <glossdef>
+     <para>
+      Çıktı ve uyarı iletileri engellenir.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <option>-L</option>,
+     <option>--label</option> <replaceable>etiket</replaceable>
+    </glossterm>
+    <glossdef>
+     <para>
+      Aygıt etiketi. <uri xlink:href="man8-swapon"/> komutuna aygıt etiketi belirtmek içindir.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <option>--lock</option>[=<replaceable>kip</replaceable>]
+    </glossterm>
+    <glossdef>
+     <para>
+      Çalıştığı aygıt veya dosya için ayrıcalıklı BSD kilidi kullanır. İsteğe bağlı <replaceable>kip</replaceable> yes/evet, no/hayır (veya 1 ve 0) veya <code>nonblock</code> olabilir. <replaceable>kip</replaceable> belirtilmezse, yes/evet öntanımlıdır. Bu seçenek, <envar>LOCK_BLOCK_DEVICE</envar> ortam değişkenini geçersiz kılar. Herhangi bir kilit kullanılmaması öntanımlıdır. ancak <uri xlink:href="man8-systemd-udevd"/> veya diğer araçlarla çarpışmalardan kaçınmak için kullanılması önerilir.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <option>-p</option>,
+     <option>--pagesize</option> <replaceable>sayfa_boyu</replaceable>
+    </glossterm>
+    <glossdef>
+     <para>
+      Bayt cinsinden kullanılacak <replaceable>sayfa_boyu</replaceable> belirtilir. <command>mkswap</command> sayfa boyunu çekirdekten okuduğundan bu seçenek aslında gereksizdir
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <option>-U</option> <replaceable>UUID</replaceable>
+    </glossterm>
+    <glossdef>
+     <para>
+      Dosya sisteminin evrensel benzersiz tanımlayıcısını <replaceable>UUID</replaceable> olarak belirler. UUID üretimi öntanımlıdır. <replaceable>UUID</replaceable>, tire ayraçlı bir dizi onaltılık basamaktan oluşur, örneğin: "<literal>c1b9d5a2-f162-11cf-9ece-0020afc76f16</literal>". <replaceable>UUID</replaceable> olarak ayrıca şunlar belirtilebilir:
+     </para>
+     <screen><option>clear</option>  dosya sistemi UUID'sini temizler
+<option>random</option> rastgele bir UUID üretir
+<option>time</option>   zamana dayalı bir UUID üretir
+</screen>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <option>-v</option>, <option>--swapversion 1</option>
+    </glossterm>
+    <glossdef>
+     <para>
+      Takas alanı sürümü belirtilir. (Eski -v 0 seçeneği geçersiz olduğundan ve artık yalnızca -v 1 desteklendiğinden bu seçenek şu anda anlamsızdır. Çekirdek, 2.5.22'den (Haziran 2002) beri v0 takas alanı biçimini desteklememektedir. Yeni sürüm v1 2.1.117'den beri desteklenmektedir (Ağustos 1998).)
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <option>--verbose</option>
+    </glossterm>
+    <glossdef>
+     <para>
+      Çıktı ayrıntılı olur. Bu seçenekle, takas alanının oluşturulması sırasında saptanan sorunlar hakkında daha ayrıntılı çıktı üretilir.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <option>-h</option>, <option>--help</option>
+    </glossterm>
+    <glossdef>
+     <para>
+      Yardım metnini gösterir ve çıkar.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <option>-V</option>, <option>--version</option>
+    </glossterm>
+    <glossdef>
+     <para>
+      Sürüm bilgilerini gösterir ve çıkar.
+     </para>
+    </glossdef>
+   </glossentry>
+  </glosslist>
+ </refsect1>
+ <refsect1><title>ORTAM DEĞİŞKENLERİ</title>
+  <glosslist>
+   <glossentry>
+    <glossterm>
+     <envar>LIBBLKID_DEBUG=all</envar>
+    </glossterm>
+    <glossdef>
+     <para>
+      Libblkid hata ayıklama çıktısı etkin olur.
+     </para>
+    </glossdef>
+   </glossentry>
+   <glossentry>
+    <glossterm>
+     <envar>LOCK_BLOCK_DEVICE=</envar><replaceable>kip</replaceable>
+    </glossterm>
+    <glossdef>
+     <para>
+      Ayrıcalıklı BSD kilidi kullanılır. <replaceable>kip</replaceable> "1" veya "0" olabilir. Ayrıntılar için <option>--lock</option> seçeneğine bakılabilir.
+     </para>
+    </glossdef>
+   </glossentry>
+  </glosslist>
+ </refsect1>
+ <refsect1 xml:id="man8-mkswap-notes"><title>Ek BİLGİ</title>
+  <para>
+   Takas alanının kullanışlı azami boyutu mimariye ve çekirdek sürümüne bağlıdır.
+  </para>
+  <para>
+   Takas alanı başlığı ile adreslenebilecek sayfa sayısı en fazla 4.294.967.295'tir (32 bitlik işaretsiz tamsayı). Takas aygıtında kalan alan yok sayılır.
+  </para>
+  <para>
+   Şu an, Linux 32 adet takas alanına izin vermektedir.  Kullanımdaki takas alanları <filename>/proc/swaps</filename> dosyası içinde görülebilir.
+  </para>
+  <para>
+   <command>mkswap</command> 10 sayfadan daha küçük alanları kabul etmez.
+  </para>
+  <para>
+   Kullanılan sayfa boyutu, <command>getconf PAGESIZE</command> komutu ile öğrenilebilir.
+  </para>
+  <para>
+   Bir takas dosyası oluşturmak için, <command>mkswap</command> ile ilklendirmeden önce aşağıdakine benzer bir komutla önce bir dosya oluşturulmalıdır:
+  </para>
+  <screen># dd if=/dev/zero of=swapfile bs=1MiB count=$((8*1024))
+</screen>
+  <para>
+   Bu komut <filename>swapfile</filename> adında 8GiB'lık takas dosyası oluşturur.
+  </para>
+  <para>
+   Takas dosyası kullanım kısıtlamaları (delikler, ön tahsis ve yazarak kopyalama sorunları) hakkında <uri xlink:href="man8-swapon"/> kılavuz sayfasındaki <link linkend="man8-swapon-notes">EK BİLGİ</link> bölümüne bakılabilir.
+  </para>
+ </refsect1>
+ <refsect1><title>İLGİLİ BELGELER</title>
+  <para>
+   <uri xlink:href="man8-fdisk"/>, <uri xlink:href="man8-swapon"/>
+  </para>
+ </refsect1>
+ <refsect1><title>GERİBİLDİRİM</title>
+  <para>
+   Hata bildirimleri için <link xlink:href="https://github.com/util-linux/util-linux/issues"/> adresindeki hata izleyici kullanılabilir.
+  </para>
+ </refsect1>
+ <refsect1><title>YARARLANIM</title>
+  <para>
+   <command>blkid</command> komutu util-linux paketinin bir parçası olup Linux Çekirdek Arşivinden indirilebilir: &lt;<link xlink:href="https://www.kernel.org/pub/linux/utils/util-linux/"/>&gt;.
+  </para>
+ </refsect1>
+ <refsect1><title>ÇEVİREN</title>
+  <simpara>© 2004 Yalçın Kolukısa</simpara>
+  <simpara>© 2022 Nilgün Belma Bugüner</simpara>
+  &manpages.notice;
+ </refsect1>
 </refentry>
-
