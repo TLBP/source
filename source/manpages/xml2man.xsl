@@ -4,8 +4,6 @@
                 or name(../..) ='literallayout'
                 or name(..) ='screen'
                 or name(../..) ='screen'
-                or name(..) ='synopsis'
-                or name(../..) ='synopsis'
                 or name(..) ='programlisting'
                 or name(../..) ='programlisting'">
 
@@ -465,7 +463,7 @@
   </xsl:if>
 </xsl:template>
 
-<xsl:template match="d:blockquote">
+<xsl:template match="d:blockquote|d:synopsis">
   <xsl:if test="(&indented;)">
     <xsl:value-of select="'&#10;.RS 4&#10;'"/>
   </xsl:if>
@@ -478,7 +476,7 @@
   </xsl:if>
 </xsl:template>
 
-<xsl:template match="d:literallayout|d:screen|d:synopsis|d:programlisting">
+<xsl:template match="d:literallayout|d:screen|d:programlisting">
   <xsl:if test="(&indented;)">
    <xsl:value-of select="'&#10;.RS 4&#10;'"/>
   </xsl:if>
