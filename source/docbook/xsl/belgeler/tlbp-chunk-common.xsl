@@ -911,7 +911,7 @@
      <div class="dropdown" style="width:33%">
       <xsl:variable name="href">
        <xsl:choose>
-        <xsl:when test="count($prev)&gt;0">
+        <xsl:when test="name(.)!='book' and count($prev)&gt;0">
          <xsl:call-template name="href.target">
           <xsl:with-param name="object" select="$prev"/>
          </xsl:call-template>
@@ -923,7 +923,7 @@
       </xsl:variable>
       <button type="button" class="dropbtn" onclick="window.location.assign('{$href}')">
        <xsl:choose>
-        <xsl:when test="count($prev)&gt;0">
+        <xsl:when test="name(.)!='book' and count($prev)&gt;0">
          <xsl:text>Önceki</xsl:text>
         </xsl:when>
         <xsl:otherwise>
@@ -931,7 +931,7 @@
         </xsl:otherwise>
        </xsl:choose>
       </button>
-      <xsl:if test="count($prev)&gt;0">
+      <xsl:if test="name(.)!='book' and count($prev)&gt;0">
        <div class="dropdown-content">
          <xsl:apply-templates select="$prev" mode="object.title.markup"/>
        </div>
@@ -943,7 +943,7 @@
       <div class="dropdown-content">
        <button type="button" class="dropbtn" onclick="window.location.assign('/index.html')">Baş Sayfa</button>
        <xsl:if test="@xml:id!='index'">
-        <button type="button" class="dropbtn" onclick="window.location.assign('/kitaplik/index.html')">Kitaplık</button>
+        <button type="button" class="dropbtn" onclick="window.location.assign('/KiTAPLIK/index.html')">Kitaplık</button>
        </xsl:if>
        <xsl:if test="ancestor::d:book and generate-id($up) != generate-id(ancestor::d:book)">
          <xsl:variable name="href">
@@ -968,7 +968,7 @@
      <div class="dropdown" style="width:33%">
       <xsl:variable name="href">
        <xsl:choose>
-        <xsl:when test="count($next)&gt;0">
+        <xsl:when test="name($next)!='book' and count($next)&gt;0">
          <xsl:call-template name="href.target">
           <xsl:with-param name="object" select="$next"/>
          </xsl:call-template>
@@ -980,7 +980,7 @@
       </xsl:variable>
       <button type="button" class="dropbtn" onclick="window.location.assign('{$href}')">
        <xsl:choose>
-        <xsl:when test="count($next)&gt;0">
+        <xsl:when test="name($next)!='book' and count($next)&gt;0">
          <xsl:text>Sonraki</xsl:text>
         </xsl:when>
         <xsl:otherwise>
@@ -988,7 +988,7 @@
         </xsl:otherwise>
        </xsl:choose>
       </button>
-      <xsl:if test="count($next)&gt;0">
+      <xsl:if test="name($next)!='book' and count($next)&gt;0">
        <div class="dropdown-content">
          <xsl:apply-templates select="$next" mode="object.title.markup"/>
        </div>
