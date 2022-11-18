@@ -48,7 +48,7 @@ içinde 820.satırda "and $object/@xml:id" koşulunu ve (tlbp) reftoc.xsl
 içinde id.attribute template içinde xsl:if test="$node/@xml:id" içeren
 satırı ve kapatıcısını silmek yeterlidir. Ancak,
 bunu yapmak yerine xml:id'lerle değişmez id'ler oluşturmak daha iyidir. -->
-<!-- özelleştirilmiş değiştirgeler -->
+<!-- özelleştirilmiş bağımsız değişkenler -->
 <xsl:param name="html.ext">.html</xsl:param>
 <xsl:param name="VERSION">-special (derived from DocBook XSL v1.79.1 for Turkish Linux Documentation Project by Nilgün Belma Bugüner - nilgun (at) tlbp.org.tr)</xsl:param>
 <xsl:param name="chunker.output.encoding">UTF-8</xsl:param>
