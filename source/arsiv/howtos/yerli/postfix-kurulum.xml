@@ -1,0 +1,599 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ********************************************************************
+       yerli/postfix-kurulum.xml
+     ******************************************************************** -->
+<article xml:id="postfix-kurulum">
+ <info>
+  <title>Postfix Kurulumu</title>
+  <author>
+   <personname>
+    <firstname>Genco Yılmaz</firstname>
+   </personname>
+  </author>
+  <pubdate>Mart 2004</pubdate>
+  <revhistory>
+   <revision>
+    <revnumber>1.0</revnumber>
+    <date>Mart 2004</date>
+    <authorinitials>GY</authorinitials>
+    <revremark>İlk sürüm</revremark>
+   </revision>
+  </revhistory>
+  <abstract>
+   <para>
+    Sendmail'in hakim olduğu MTA (Mail Transfer Agent) arenasını benim için
+    kapatan ve kullanırken helal olsun dedirten bu yazılımın yaratıcısı
+    "Wietse Zweitze Venema" arkadaşımıza bir teşekkürle başlayalım yazıya.
+    Eserler sahiplerinin adlarıyla anılmalı, değil mi? <literal>:)</literal>
+    Kendi kendime neden <userinput>postfix</userinput>, neden
+    <userinput>qmail</userinput> değil diye sorarken,
+    <userinput>cyrus-imap</userinput> ve <userinput>postfix</userinput>
+    belgesinin yazarınında aynı soruyu sorduğunu cevabının ise "ne bileyim
+    daha sempatik galiba" olduğunu gördüm. Evet daha sempatik
+    <literal>:)</literal>, kolay kurulan, sisteme kolay uyarlanan ve sizi
+    üzmeyen bir eposta aktarımcısı. Bu kadar gevezelikten sonra kuruluma
+    başlayalım.
+   </para>
+  </abstract>
+  <legalnotice>
+   <title>Yasal Uyarı</title>
+   <para>
+    Bu belgenin, <emphasis>Postfix Kurulumu</emphasis> 1.0 sürümünün
+    <emphasis role="bold"> telif hakkı © 2004
+    <emphasis>Genco Yılmaz</emphasis></emphasis>'a aittir. Bu belgeyi, Free
+    Software Foundation tarafından yayınlanmış bulunan
+    <link xlink:href="&gpl;">GNU Genel Kamu Lisansı</link>nın 2. ya da daha
+    sonraki sürümünün koşullarına bağlı kalarak kopyalayabilir, dağıtabilir
+    ve/veya değiştirebilirsiniz. Bu Lisansın özgün kopyasını
+    <link xlink:href="&gnu-licences;"/> adresinde bulabilirsiniz.
+   </para>
+   <para>
+    Linux, Linus Torvalds adına kayıtlı bir ticarî isimdir.
+   </para>
+   <para>
+    Bu belgedeki bilgilerin kullanımından doğacak sorumluluklar ve olası
+    zararlardan belge yazarı sorumlu tutulamaz. Bu belgedeki bilgileri
+    uygulama sorumluluğu uygulayan aittir.
+   </para>
+   <para>
+    Tüm telif hakları aksi özellikle belirtilmediği sürece sahibine aittir.
+    Belge içinde geçen herhangi bir terim, bir ticarî isim yada kuruma itibar
+    kazandırma olarak algılanmamalıdır. Bir ürün ya da markanın kullanılmış
+    olması ona onay verildiği anlamında görülmemelidir.
+   </para>
+  </legalnotice>
+ </info>
+ <sect1 xml:id="postfix-kurulum-giris">
+  <title>Hazırlık</title>
+  <sect2>
+   <title>Neden Postfix'i AUTH destekli derliyoruz, nedir bu AUTH?</title>
+   <para>
+    <userinput>postfix</userinput> kurulduktan sonra kendi bağlı bulunduğu IP
+    ağından iletilerin gönderilmesine olanak verir. SMTP sunucu üzerinde
+    tanımlı bulunan IP bloğu dışından ileti gönderimi yapamazsınız. Buna çözüm
+    olarak ya IP bloklarını RELAY işlemine açarsınız ya da SMTP-AUTH tekniğini
+    kullanarak smtp sunucunuz üzerinden ileti göndermek isteyen istemcilerin
+    kimliklerini doğrulatırsınız. Peki nedir bu RELAY? Buradaki anlamıyla
+    sizin makinanızda barındırılmayan bir alan adı için sizin üzerinizden
+    ileti gönderme işlemine denir.
+   </para>
+   <informalexample>
+    <para>
+     Sizin makinanız <filename>example.com</filename>,
+     <filename>example.org</filename> alan adları için e-posta kabul ediyor
+     diyelim. Ama siz bu SMTP sunucuyu kullanarak başka adreslere ileti
+     göndermek istiyorsunuz. Buna RELAY diyoruz. Yani ben göndermeyim, sen
+     gönder benim yerime demek. Sizin bulunduğunuz IP ağı RELAY işlemine
+     kapalıysa, SMTP sunucu "RELAYING DENIED" şeklinde  durum bildirimi
+     gönderir. Buradan görüyoruz ki, her yeri RELAY'e açamayız. Bu nedenle
+     SMTP-AUTH kullanmak durumundayız. Hadi başlayalım
+    </para>
+   </informalexample>
+  </sect2>
+  <sect2>
+   <title>Gerekli Paketler</title>
+   <para>
+    <link xlink:href="http://repo.boun.edu.tr/postfix/postfix-release/official/postfix-2.0.20.tar.gz"/>
+    <link xlink:href="https://github.com/cyrusimap/cyrus-sasl/releases/download/cyrus-sasl-2.1.27/cyrus-sasl-2.1.27.tar.gz"/>
+   </para>
+  </sect2>
+  <sect2>
+   <title>Kurulum Değişkenleri</title>
+   <para/>
+   <para><command>makina adı: </command><filename>smtp.example.net</filename> (ters çözünürlük kaydındaki değer olmasına dikkat edin)
+<command>alan adı: </command><filename>example.net</filename>
+<command>IP adresi: </command><literal>144.122.211.1</literal>
+  </para>
+  </sect2>
+ </sect1>
+ <sect1 xml:id="postfix-kurulum-bu">
+  <title>Kurulum</title>
+  <sect2>
+   <title><literal>cyrus-sasl</literal> Kurulumu</title>
+<screen># tar zxf cyrus-sasl-2.1.27.tar.gz
+# cd cyrus-sasl-2.1.27
+# ./configure --enable-plain --enable-login --disable-krb4 \
+  --with-saslauthd=/var/run/saslauthd \
+  --with-plugindir=/usr/local/lib/sasl2 --disable-cram --disable-digest \
+  --disable-otp --disable-gssapi --disable-anon
+...
+# make
+...
+# make install
+...
+# ln -s /usr/local/lib/sasl2 /usr/lib/sasl2
+# echo "/usr/local/lib/" &gt;&gt; /etc/ld.so.conf
+# ldconfig
+</screen>
+   <para>
+    <userinput>cyrus-sasl</userinput> kurulumu esnasında muhtelemen
+    kullanmayacağımız bazı seçenekleri <literal>disable</literal>
+    seçenekleriyle iptal ettik.
+    <filename>/usr/local/lib/sasl2/smtpd.conf</filename> dosyasını oluşturup
+    içine şu satırları yazalım:
+   </para>
+<screen># saslauthd kullanarak smtp kimlik dogrulamasi yap.
+<userinput>pwcheck_method:saslauthd</userinput>
+# Sadece plain ve login kimlik dogrulama yontemlerine izin verelim.
+<userinput>mech_list: plain login</userinput>
+</screen>
+  </sect2>
+  <sect2>
+   <title>Postfix Kurulumu</title>
+<screen># <userinput>tar xvfz postfix-2.0.19.tar.gz</userinput>
+# <userinput>cd postfix-2.0.19</userinput>
+# <userinput>useradd postfix</userinput>
+# <userinput>groupadd postdrop</userinput>
+# <userinput>make makefiles CCARGS="-DUSE_SASL_AUTH -I/usr/local/include/sasl" \</userinput>
+<userinput>AUXLIBS="-L/usr/local/lib -lsasl2"</userinput>
+# <userinput>make</userinput>
+...
+# <userinput>make install</userinput>
+</screen>
+   <para>
+    <userinput>make install</userinput> esnasında bir takım sorular soracak
+    hepsinin öntanımlı değerini kabul edebilirsiniz. Şimdi aşağıdaki satırları
+    <filename>/etc/rc.d/postfix</filename> dosyasına yazıp,
+   </para>
+<screen>#!/bin/bash
+#
+# postfix       Bu betik postfix'in baslatilip durdurulmasini saglar
+#
+
+
+case "$1" in
+    start)
+        /usr/sbin/postfix start
+    ;;
+    stop)
+        /usr/sbin/postfix stop
+    ;;
+    reload)
+        /usr/sbin/postfix reload
+    ;;
+    restart)
+        $0 stop
+        $0 start
+    ;;
+    *)
+    echo "Usage: $0 {start|stop|reload|restart}"
+    exit 1
+esac
+exit 0
+</screen>
+   <para>755 izinlerini verelim.</para>
+<screen># <userinput>chmod 755 /etc/rc.d/postfix</userinput></screen>
+  </sect2>
+ </sect1>
+ <sect1 xml:id="postfix-kurulum-ayar">
+  <title>Yapılandırma</title>
+  <sect2>
+   <title><literal>postfix</literal> Yapılandırması</title>
+   <para>
+    Artık <userinput>postfix</userinput>'imiz çalışabilir durumda. Sıra
+    yapılandırmaya geldi. <userinput>postfix</userinput>'in yapılandırma
+    dosyaları bir değişiklik yapmadıysanız <filename>/etc/postfix</filename>
+    dizini altında bulunuyor. <filename>/etc/postfix/main.cf</filename>
+    dosyası bizim oyuncağımız olacak. Bu dosyayı açıp içindeki değerlerlerle
+    oynayabilirsiniz ya da sunucunun çalışması için gerekli olan aşağıdaki
+    satırları <filename>/etc/postfix/main.cf</filename> dosyasının sonuna
+    ekleyebilirsiniz. Ben öyle yapıyorum, en azından ne değişiklik yapmışım
+    ekranda görüyorum.
+   </para>
+   <para>
+    <userinput>/etc/postfix/main.cf</userinput> dosyası:
+   </para>
+<screen>mydomain = example.net
+myhostname = smtp.example.net
+mynetworks = 144.122.211.1/32, 127.0.0.0/8
+virtual_alias_maps = hash:/etc/postfix/virtual-users
+virtual_alias_domains = /etc/postfix/local-domains
+smtpd_sasl_local_domain =
+smtpd_sasl_auth_enable = yes
+smtpd_sasl_security_options = noanonymous
+broken_sasl_auth_clients = yes
+smtpd_recipient_restrictions = permit_sasl_authenticated, \
+  permit_mynetworks,check_relay_domains
+inet_interfaces = all
+alias_maps = hash:/etc/aliases
+smtpd_banner = smtp.example.net ESMTP
+smtpd_helo_required = yes
+disable_vrfy_command = yes
+mime_header_checks = regexp:/etc/postfix/mime_header_checks.regexp
+header_checks = regexp:/etc/postfix/header_checks
+</screen>
+   <para>
+    Şimdi bu yukarıdaki değişkenler ne, onları açıklayalım:
+   </para>
+   <variablelist>
+    <varlistentry>
+     <term>mydomain</term>
+     <listitem>
+      <para>
+       Makinanızın asıl alan adı olarak kabul ettiğimiz
+       alan adını buraya yazıyoruz.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term>myhostname</term>
+     <listitem>
+      <para>
+       SMTP sunucumuzun tam adı. Daha önce söylediğim gibi
+       ters çözünürlük kaydındaki adı olmasına özen gösterin.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term>mynetworks</term>
+     <listitem>
+      <para>
+       <userinput>postfix</userinput>'imizin rölelemeye izin verdiği
+       IP blokları.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term>virtual_alias_maps</term>
+     <listitem>
+      <para>
+       E-posta adresleriyle kullanıcı eşleşmelerinin yapılacağı dosyanın ismi.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term>virtual_alias_domains</term>
+     <listitem>
+      <para>
+       Hangi alan adları için ileti kabul etmek istiyorsanız bu dosyanın
+       içine yazın.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term>inet_interfaces</term>
+     <listitem>
+      <para>
+       SMTP sunucunun hangi arayüzleri dinleyeceğini belirtir.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term>alias_maps</term>
+     <listitem>
+      <para>
+       Takma adlarımızın bulunduğu dosyamızın ismi.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term>smtpd_banner</term>
+     <listitem>
+      <para>
+       SMTP sunucunuza bağlanıldığında sunucunuzun vereceği selam
+       <literal>:)</literal>
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term>smtpd_helo_required</term>
+     <listitem>
+      <para>
+       SMTP protokolü sununucuya bağlantı yapmak isteyen istemcilerin
+       kendilerini tanıtmalarını ister (RFC 282). Bu bir zorunluluk değildir
+       ama istenir. Olmazsa da olur. Bazı spam yazılımları
+       <literal>helo</literal> aşamasına uymadıkları için bunu etkinleştirmek
+       iyi olacaktır.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term>disable_vrfy_command</term>
+     <listitem>
+      <para>
+       <userinput>postfix</userinput>, <literal>vrfy</literal> komutu
+       isteklerine cevap verir <literal>:(</literal>. Bu değişken bunu
+       kapatmamızı sağlıyor.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term>mime_header_checks</term>
+     <listitem>
+      <para>
+       Bu değişkenin belirttiği dosyadaki değerlere göre bazı kısıtlamalar
+       getirebiliyoruz. Örneğin bazı dosya uzantılarını kısıtlamak
+       istiyorsunuz, bu dosya içine aşağıdaki örnekte belirtilenleri yazmanız
+       yeterli oluyor.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term>header_checks</term>
+     <listitem>
+      <para>
+       İleti başlık bilgilerine göre (örn, konu, kimden, kime satırlarına
+       göre) kısıtlama yapabiliyorsunuz.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+   <para>
+    Şimdi; yukarıdaki değişkenlerden <userinput>mime_header_checks</userinput>
+    ve <userinput>header_checks</userinput> iki dosya adı belirtiyor. Bu
+    dosyaların yapıları nasıl olmalı?
+   </para>
+   <example>
+    <title><literal>/etc/postfix/mime_header_checks.regexp</literal> dosyası</title>
+<screen>/filename=\"?(.*)\.(bat|chm|cmd|com|do|hta|jse|rm|scr|pif|vbe|vbs|vxd|xl)\"?$/
+   REJECT For security reasons we reject attachments of this type / Guvenlik ¬
+    sebebiyle bu turdeki ek dosyalar sunucumuz tarafindan kabul edilmemektedir
+
+/^\s*Content-(Disposition|Type).*name\s*=\s*"?(.+\.(lnk|asd|hlp|ocx|¬
+reg|bat|c[ho]m|cmd|dll|vxd|pif|scr|hta|jse?|sh[mbs]|vb[esx]|ws[fh]|¬
+wav|mov|wmf|xl))"?\s*$/
+   REJECT Attachment type not allowed. File "$2" has the unacceptable ¬
+   extension "$3" / "$2" dosyasi istenmeyen "$3" uzantisini icermektedir
+</screen>
+    <para>
+     Yukarıdaki kural neticesinde sisteminize gelen ve uzantıları
+     <literal>bat, chm, cmd, com, do, hta, jse, rm, scr, pif, vbe, vbs, vxd,
+     xl</literal> olan ek dosyalar içeren iletiler "REJECT" ifadesinden
+     sonraki cümleyle reddedilecektir.
+    </para>
+   </example>
+   <para>
+    Diğer dosyamızda ise ileti başlık bilgilerine göre kısıtlama yapıyoruz.
+   </para>
+   <example>
+    <title><filename>/etc/postfix/header_checks</filename> dosyası</title>
+<screen>/^Subject:.Re:.Approved/           DISCARD Likely SOBIG.F Virus
+/^Subject:.Re:.Details/            DISCARD Likely SOBIG.F Virus
+/^Subject:.Re:.Re:.My.details/     DISCARD Likely SOBIG.F Virus
+/^Subject:.Re:.My.details/         DISCARD Likely SOBIG.F Virus
+/^Subject:.Re:.Thank.you!/         DISCARD Likely SOBIG.F Virus
+/^Subject:.Re:.That.movie/         DISCARD Likely SOBIG.F Virus
+/^Subject:.Re:.Wicked.screensaver/ DISCARD Likely SOBIG.F Virus
+/^Subject:.Re:.Your.application/   DISCARD Likely SOBIG.F Virus
+/^Subject:.Thank.you!/             DISCARD Likely SOBIG.F Virus
+/^Subject:.Your.details/           DISCARD Likely SOBIG.F Virus
+
+/^Subject:.*read it immediately/ REJECT We dont accept virus your subject is ¬
+  treated as a worm
+/^Subject:.*fake/ REJECT We dont accept virus your subject is treated as a worm
+/^Subject:.*stolen/ REJECT We dont accept virus your subject is treated as a worm
+/^Subject:.*something for you/ REJECT We dont accept virus your subject is ¬
+  treated as a worm
+/^Subject:.*WINING NOTIFICATION/ REJECT We dont accept virus your subject is ¬
+  treated as a worm
+</screen>
+    <para>
+     Yukarıdaki dosyanın ne anlattığı açıktır umarım. Bu konularla gelen e-
+     postalar belirtilen ifadelerle reddedilir.
+    </para>
+   </example>
+   <sect3>
+    <title>Bazı Kullanışlı Komutlar</title>
+    <para>
+     Postfix'ile kullanacağımız bir takım komutlarda mevcut. Birkaç komut
+     aşağıda belirtilmiştir.
+    </para>
+    <glosslist>
+     <glossentry>
+      <glossterm>
+       <userinput>postfix reload</userinput>
+      </glossterm>
+      <glossdef>
+       <para>
+        Sunucu yapılandırma dosyasında bir değişiklik yapıldığında
+        değişiklikleri uygular.
+       </para>
+      </glossdef>
+     </glossentry>
+     <glossentry>
+      <glossterm>
+       <userinput>postalias /etc/aliases</userinput>
+      </glossterm>
+      <glossdef>
+       <para>
+        Yeni bir takma ad (alias) eklediğimizde geçerli olması için
+        çalıştırmamız gerekir.
+       </para>
+      </glossdef>
+     </glossentry>
+     <glossentry>
+      <glossterm>
+       <userinput>postmap /etc/postfix/virtual-users</userinput>
+      </glossterm>
+      <glossdef>
+       <para>
+        <literal>virtual_alias_maps</literal> ile belirtilen dosyaya yeni
+        bir e-posta adresi eklediğimizde çalıştırmamız gerekir.
+       </para>
+      </glossdef>
+     </glossentry>
+     <glossentry>
+      <glossterm>
+       <userinput>postqueue -p</userinput>
+      </glossterm>
+      <glossdef>
+       <para>
+        Sendmail'deki gibi kuyruktaki iletileri görmek isterseniz.
+       </para>
+      </glossdef>
+     </glossentry>
+     <glossentry>
+      <glossterm>
+       <userinput>postsuper</userinput>
+      </glossterm>
+      <glossdef>
+       <para>
+        Kuyruktaki iletiler ile ilgili işlem yapabilmek için (bir takım
+        bağımsız değişkenler girmeniz gerek).
+       </para>
+      </glossdef>
+     </glossentry>
+    </glosslist>
+   </sect3>
+  </sect2>
+  <sect2>
+   <title><literal>saslauth</literal> Yapılandırması</title>
+   <para>
+    Aşağıdaki satırları <filename>/etc/rc.d/saslauthd</filename> dosyası
+    içine yazıp,
+   </para>
+<screen>#!/bin/sh -e
+
+NAME=saslauthd
+DAEMON="/usr/local/sbin/${NAME}"
+DESC="SASL Authentication Daemon"
+DEFAULTS=/etc/default/saslauthd
+
+test -f "${DAEMON}" || exit 0
+
+# Varsayilan degerler dosyasi; betigi yapilandirmak icin
+# bu dosyayla  oynayabilirsiniz.
+if [ -e "${DEFAULTS}" ]; then
+    . "${DEFAULTS}"
+fi
+
+# Postfix baslamiyorsa , cik
+if [ "${START}" != "yes" ]; then
+    exit 0
+fi
+
+# Tanimli bir mekanizma yoksa
+if [ "x${MECHANISMS}" = "x" ]; then
+   echo "${DEFAULTS} degerlerini mekanizmalarla birlikte yapilandirmalisiniz. "
+   exit 0
+fi
+
+for i in ${MECHANISMS}; do
+    PARAMS="${PARAMS} -a ${i}"
+done
+
+case "${1}" in
+  start)
+        echo -n "Starting ${DESC}: "
+        ln -fs /var/spool/postfix/var/run/${NAME} /var/run/${NAME}
+        ${DAEMON} ${PARAMS}
+        echo "${NAME}."
+        ;;
+  stop)
+        echo -n "Stopping ${DESC}: "
+        PROCS=`ps aux | grep -iw '/usr/sbin/saslauthd' \
+        | grep -v 'grep' |awk '{print $2}' | tr '\n' ' '`
+        if [ "x${PROCS}" != "x" ]; then
+          kill -15 ${PROCS} &amp;&gt; /dev/null
+        fi
+        echo "${NAME}."
+        ;;
+  restart|force-reload)
+        $0 stop
+        sleep 1
+        $0 start
+        echo "${NAME}."
+        ;;
+  *)
+        echo "Usage: /etc/init.d/${NAME} {start|stop|restart|force-reload}" &gt;&amp;2
+        exit 1
+        ;;
+esac
+
+exit 0
+</screen>
+   <para>755 izinlerini verin:</para>
+<screen>chmod 755 /etc/rc.d/saslauthd
+rm -rf /var/run/saslauthd
+mkdir /var/run/saslauthd
+</screen>
+   <para>
+    <filename>/etc/default/saslauthd</filename> dosyasına şu satırları yazalım.
+  </para>
+<screen><userinput>START=yes</userinput>
+#Bu MECHANISMS seçeneği kimlik doğrulama yöntemini belirtiyor.
+#PAM desteği için pam yazabilirsiniz.Pam olmadan yapmak için shadow
+#yazmanız gerekli.(ahh.. ah.. slackware de PAM yok)
+<userinput>MECHANISMS=shadow</userinput>
+</screen>
+   <para>
+    Şimdi bütün işlerimizin bitmiş olması gerek.Tek yapmadığımız sunucu
+    betiklerini açılışa koymamak. Açılışta başlaması için dağıtımınıza göre
+   </para>
+<screen># <userinput>/etc/rc.d/saslauthd start</userinput>
+# <userinput>/etc/rc.d/postfix start</userinput>
+</screen>
+   <para>komutlarını açılışta işletmeniz gerekli.</para>
+   <para>
+    Sisteminizde <literal>AUTH</literal> desteği olup olmadığını öğrenmek
+    için sunucunun 25. portuna <userinput>telnet</userinput> çekelim.
+    <userinput>ehlo example.net</userinput> yazdığımızda aşağıdaki şekilde
+    bir çıktı veriyorsa işimiz tamamdır.
+   </para>
+<screen>bash-2.05b# <userinput>telnet smtp.example.net 25</userinput>
+Trying 144.122.211.1...
+Connected to smtp.example.net.
+Escape character is '^]'.
+220 smtp.example.net ESMTP
+<userinput>ehlo example.net</userinput>
+
+250-smtp.example.net
+250-PIPELINING
+250-SIZE 10000000
+250-ETRN
+250-AUTH LOGIN PLAIN
+250-AUTH=LOGIN PLAIN
+250 8BITMIME
+</screen>
+   <para>İşimiz bitti.Esenlikler dilerim.</para>
+  </sect2>
+ </sect1>
+ <sect1 xml:id="postfix-kurulum-son">
+  <title>Sonsöz</title>
+  <para>
+   <command>Bu belgeye daha sonra eklemeyi düşündüklerim:</command>
+  </para>
+  <orderedlist>
+   <listitem>
+    <para>
+     <userinput>postfix</userinput> MySQL ile iletişime geçebiliyor. Böylece
+     kullanıcılarınızı veritabanında tutabiliyorsunuz. Fakat ben kendim yapmak
+     istedim C, PHP ve perl ile yazmış olduğum küçük bir yazılım ile linuxtaki
+     kullanıcıları veritabanına aktarıp web üzerinden idare ediyorum.
+     Programlar hazır fakat değişiklik gerekiyor üzerinde, bitirebildiğim
+     zaman buraya yerleştiricem.<literal>:)</literal>
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     Daha geniş ve açıklayıcı bir şekilde belgeyi uzatmak istiyorum.
+    </para>
+   </listitem>
+  </orderedlist>
+  <para><command>Kaynaklar:</command></para>
+  <para>
+   <link xlink:href="http://www.projektfarm.com/en/support/howto/postfix_smtp_auth_tls.html"/>
+   <link xlink:href="http://www.postfix.org"/>
+  </para>
+ </sect1>
+</article>

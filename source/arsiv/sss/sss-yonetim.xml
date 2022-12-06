@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ********************************************************************
+       sss/sss-yonetim.xml
+     ******************************************************************** -->
+<sect1 xml:id="sss-yon-genel" xmlns="http://docbook.org/ns/docbook"
+version="5.0" xml:lang="tr">
+ <title>Genel</title>
+ <qandaset defaultlabel="number">
+  <qandaentry>
+   <question xml:id="sss-yonetim_rc">
+    <para>
+     Bir uygulamanın veya betiğin Linux her açıldığında çalıştırılmasını nasıl
+     sağlarım?
+    </para>
+   </question>
+   <answer>
+    <para>
+     Yanıtlayan:  <emphasis role="bold">M. Umut Atasever</emphasis>
+     ve <emphasis role="bold">Murat Koç</emphasis>
+    </para>
+    <para>
+     Programınızı <literal>/etc/rc.local</literal> dosyasının sonuna
+     eklerseniz sistem başlangıcında çalıştırılır.
+    </para>
+    <para>
+     <literal>rc</literal> betikleri genelde <literal>/etc/rc.d/</literal>
+     veya  <literal>/etc/init.d</literal> dizinlerinin altında bulunur ki
+     zaten  <literal>rc.d</literal> dizini de <literal>init.d</literal>
+     dizinine bağ  durumundadır. Dolayısı ile dosyanın temel olarak olması
+     gereken yer  <literal>/etc/rc.d/rc.local</literal>'dir. Fakat bazı
+     dağıtımlarda bu ismi  <literal>/etc/rc.d/boot.local</literal> biçiminde
+     de görebilirsiniz.
+    </para>
+    <para>
+     Benim asil eklemek istediğim ise <literal>rc.local</literal> veya
+     <literal>boot.local</literal> betiklerini <literal>init</literal>
+     işleminden sonra <literal>rc</literal>'den hemen sonra çalıştırılan
+     betiktir. Dolayısı ile eğer ağ ile ilgili birşey yaptırmak istiyorsanız
+     (samba'daki  bir paylaşımı bağlamak örneğin) bunu ağ ayarlarının
+     düzenlenmesinden sonra  yapmanız gerekir.  Bundan dolayı temelde yapmanız
+     gereken şey için bir  bash betiği yazmak bunun içine "start" ve "stop"
+     bağımsız değişkenlerinde yapacağı işleri tanımlamak ve bunu hangi çalışma
+     seviyesinde (runlevel)  çalıştıracaksanız onunla ilgili olan dizine
+     <literal>Sxxservis Kxxservis</literal> biçiminde bağlamanız kontrolun
+     daha fazla elinizde olmasını sağlayacaktır. Ama nispeten basit şeyler
+     yapacaksanız bu durumda <literal>rc.local</literal> veya
+     <literal>boot.local</literal> dosyasını gönül rahatlığı ile
+     kullanabilirsiniz (Sxx ve Kxx'in anlamları için
+     <literal>/etc/init.d</literal>'de README dosyası olur, genelde ona
+     bakabilirsiniz).
+    </para>
+   </answer>
+  </qandaentry>
+  <qandaentry>
+   <question xml:id="sss-yonetim_userlist">
+    <para>
+Sistemde kayıtlı olan normal kullanıcıların listesini nasıl alabilirim?
+    </para>
+   </question>
+   <answer>
+    <para>
+     Yanıtlayan: <emphasis role="bold">Görkem Çetin</emphasis>
+    </para>
+    <para>
+     Aşağıdaki komut ile kullanıcı numaraları 500'den fazla olanların
+     kullanıcı isimlerini ekrana yazabilirsiniz:
+    </para>
+<screen># <userinput>awk -F: '{ if ($3&gt;500) print $1 }' &lt; /etc/passwd</userinput>
+</screen>
+   </answer>
+  </qandaentry>
+  <qandaentry>
+   <question xml:id="sss-yonetim_fstab-ext3">
+    <para>
+     Dosya sistemi ext3 olan bir disk bölümünü her açılışta sistemime nasıl
+     tanıtabilirim?
+    </para>
+   </question>
+   <answer>
+    <para>
+     Yanıtlayan: <emphasis role="bold">Alper Oğuz</emphasis>
+    </para>
+    <para>
+     <literal>/etc/fstab</literal> dosyanızda ilgili satırda
+     <literal>ext2    defaults</literal> yerine
+     <literal>ext3    defaults,journal=update</literal> yazmalı ve
+    </para>
+<screen># <userinput>tune2fs -i 0 -c 0</userinput></screen>
+    <para>
+     çalıştırıp açılışta <literal>fsck</literal> yapılmasını engellemelisiniz.
+    </para>
+   </answer>
+  </qandaentry>
+  <qandaentry>
+   <question xml:id="sss-yonetim_backup">
+    <para>
+     Eski linux'umu yeni kurduğum Linux'a taşımak istiyorum.  Veri kaybı
+     olmaması için hangi yolu izlemeliyim?
+    </para>
+   </question>
+   <answer>
+    <para>
+     Yanıtlayan: <emphasis role="bold">Barış Şimşek</emphasis>
+    </para>
+    <para>
+     Eski Linux'unuzda çalışan hizmetlere göre değişir. Ancak genel olarak konuşursak:
+    </para>
+    <para>
+     Dosya haklarının ve sahiplerinin korunması için
+     <literal>/etc/passwd, /etc/shadow</literal> ve
+     <literal>/etc/group</literal> dosyalarını almalısınız.
+    </para>
+    <para>
+     Kullanıcıların kendi kök dizinlerinde dosya varsa
+     <literal>/home</literal> dizinini de tamamen almalısınız.
+    </para>
+    <para>
+     Bu makina eğer eposta sunuculuğu yapıyordu ise
+     <literal>/var/spool/mail</literal> (kullanıcı epostaları) dizinindeki
+     tüm dosyaları almalısınız. Tabii ki eposta sunucu yazılımınızın ayar
+     dosyalarını da almalısınız.
+    </para>
+    <para>
+     Yetkili kullanıcının kök dizini <literal>/home</literal> altında olmayıp
+     <literal>/root</literal> dizinidir. Bunu da almayı unutmayın.
+    </para>
+    <para>
+     <literal>/etc</literal> altında değişiklik yaptığınız ayar dosyaları
+     varsa onları da yedekleyin.
+    </para>
+    <para>
+     Apache için <literal>httpd.conf</literal> ve bu dosyada belirtilen
+     <literal>DocumentRoot</literal> dizinini, sanal web sayfası dizinlerini,
+     <literal>.htacess</literal> ile korunan dizinlerin parola dosyalarını,
+     varsa SSL dosyalarınızı (<literal>ssl.key, ssl.crt ...</literal>)
+     yedekleyin.
+    </para>
+   </answer>
+  </qandaentry>
+  <qandaentry>
+   <question xml:id="sss-yonetim_inetd">
+    <para>
+     RedHat 7.x sürümü kullanıyorum ve inetd deamon'ı bulamadım. Servisleri
+     nasıl ayarlayabilirim?
+    </para>
+   </question>
+   <answer>
+    <para>
+     Yanıtlayan: <emphasis role="bold">M. Umut Karabudak</emphasis>
+    </para>
+    <para>
+     RH 7.x sürümünden itibaren <literal>inetd</literal> yerine
+     <literal>xinetd</literal>'yi sürümüne dahil etti.
+     <literal>xinetd</literal> tek dosya yapısı yerine birden çok dosyadan
+     oluşmaktadır.
+    </para>
+    <para>
+     Program ayarları için <literal>/etc/xinetd.conf</literal> dosyasına,
+     servis  ayarları için  <literal>/etc/xinetd.d</literal> dizinindeki
+     ilgili servis  dosyasını düzenleyiniz.
+    </para>
+    <para>
+     Daha ayrıntılı bilgi için: <literal># man xinetd</literal>
+    </para>
+   </answer>
+  </qandaentry>
+  <qandaentry>
+   <question xml:id="sss-yonetim_root-passwd">
+    <para>
+     root parolasını unuttum. Ne yapabilirim?
+    </para>
+   </question>
+   <answer>
+    <para>
+     <xref linkend="sss-konsol_root-passwd"/> sorusunun yanıtına bakın.
+    </para>
+   </answer>
+  </qandaentry>
+  <qandaentry>
+   <question xml:id="sss-yonetim_ulimit">
+    <para>
+     Kullanıcıların çalıştırabileceği süreç sayısını veya benzer kısıtlamaları
+     nasıl yapabilirim?
+    </para>
+   </question>
+   <answer>
+    <para>
+     Yanıtlayan: <emphasis role="bold">Murat Koç</emphasis>
+    </para>
+    <para>
+     <literal>pam</literal>'in yanında <literal>ulimit</literal> özellikle bu
+     tür şeyleri engellemek için bulunmaktadır. Daha fazla bilgiyi
+     <literal># man ulimit</literal> ile alabilirsiniz.
+    </para>
+   </answer>
+  </qandaentry>
+  <qandaentry>
+   <question xml:id="sss-yonetim_cron">
+    <para>
+     Belli aralıklarla yapılmasını istediğim işleri nasıl
+     otomatikleştirebilirim?
+    </para>
+   </question>
+   <answer>
+    <para>
+     Yanıtlayan: <emphasis role="bold">Barış Şimşek</emphasis>
+    </para>
+    <para>
+     Bu işleri yapacak yazılımlarınızı <literal>crontab</literal>'a ekleyerek.
+    </para>
+    <para>
+     <literal>Crontab</literal>'a ekleme yapmak için
+     <literal>crontab -e</literal> komutunu verin. Bu komut ile, o an
+     bulunduğunuz kullanıcı için periyodik iş eklersiniz. Sistem dizinlerine
+     erişen bir betik vb. yazılımlamak için root olarak girip bu komutu
+     vermelisiniz.
+    </para>
+    <para>
+     <literal>Crontab</literal> komutu şu şekildedir:
+    </para>
+<literallayout>
+<emphasis>dakika saat aygun ay haftagun komut</emphasis>
+</literallayout>
+    <para>Örnekler:</para>
+<screen>38 4 * 1,3,6 * /usr/local/sbin/update_dat
+10,15,20,25,30,35,40,45,50,55,0 * * * * /root/scripts/checkdaemon
+50 5 * 6 * /root/scripts/getbackup
+</screen>
+    <para>
+     <literal>*</literal>, bulunduğu zaman diliminde her zaman demektir.
+     İlk satır, her ayın her haftasının 1, 3 ve 6. günleri saat 4:38 de
+     <literal>update_dat</literal> betiğini çalıştırır.
+    </para>
+   </answer>
+  </qandaentry>
+  <qandaentry>
+   <question xml:id="sss-yonetim_su">
+    <para>
+     Sisteme root olarak girdiğim halde /usr/sbin gibi bazı dizinlerin PATH
+     değişkeninde yer almadığını görüyorum. Hata nedir?
+    </para>
+   </question>
+   <answer>
+    <para>
+     Yanıtlayan: <emphasis role="bold">Enver ALTIN</emphasis>
+    </para>
+    <para>
+     Anladığım kadarıyla <literal>su</literal> komutu ile root oluyorsunuz.
+     <literal>su</literal> yerine, <literal>su -</literal> (sondaki - işareti,
+     root kullanıcısının ortam değişkenlerinin de aktarılmasını sağlıyor) ile
+     root olursanız sorun çözülecektir.
+    </para>
+   </answer>
+  </qandaentry>
+ </qandaset>
+</sect1>

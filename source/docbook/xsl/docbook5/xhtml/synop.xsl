@@ -70,6 +70,9 @@ xmlns="http://www.w3.org/1999/xhtml" version="1.0">
       <xsl:when test="ancestor-or-self::*/@sepchar">
         <xsl:value-of select="ancestor-or-self::*/@sepchar"/>
       </xsl:when>
+      <xsl:when test="name(..)='arg'">
+        <xsl:value-of select="''"/>
+      </xsl:when>
       <xsl:otherwise>
         <xsl:text> </xsl:text>
       </xsl:otherwise>
@@ -160,7 +163,7 @@ xmlns="http://www.w3.org/1999/xhtml" version="1.0">
   <xsl:variable name="snum">
     <xsl:apply-templates select="." mode="synopfragment.number"/>
   </xsl:variable>
-  <!-- You can't introduce another <p> here, because you're 
+  <!-- You can't introduce another <p> here, because you're
        already in a <p> from cmdsynopsis-->
   <span>
     <xsl:variable name="id">

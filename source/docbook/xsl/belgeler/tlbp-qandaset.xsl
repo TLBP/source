@@ -147,7 +147,7 @@ xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" xmlns="http://www.w3.org/199
     <xsl:apply-templates select="." mode="common.html.attributes"/>
     <!-- capture the id of the  quandaentry -->
     <xsl:call-template name="id.attribute">
-      <xsl:with-param name="node" select=".."/>
+      <xsl:with-param name="node" select="."/>
       <xsl:with-param name="conditional" select="0"/>
     </xsl:call-template>
     <xsl:choose>
@@ -303,7 +303,7 @@ xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" xmlns="http://www.w3.org/199
     <a>
       <xsl:attribute name="href">
         <xsl:call-template name="href.target">
-          <xsl:with-param name="object" select=".."/>
+          <xsl:with-param name="object" select="."/>
         </xsl:call-template>
       </xsl:attribute>
       <xsl:value-of select="$firstch"/>

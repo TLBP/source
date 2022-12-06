@@ -76,7 +76,7 @@ bunu yapmak yerine xml:id'lerle değişmez id'ler oluşturmak daha iyidir. -->
 <xsl:param name="callout.graphics.path">images/xsl/callouts/</xsl:param>
 <xsl:param name="navig.graphics.path">images/xsl/</xsl:param>
 <xsl:param name="generate.toc">
-appendix  toc,title
+appendix  nop
 article/appendix  nop
 article   toc,title
 book      toc,title
@@ -84,7 +84,7 @@ chapter   toc,title
 part      toc,title
 preface   nop
 qandadiv  nop
-qandaset  nop
+qandaset  toc
 reference toc,title
 sect1     nop
 sect2     nop
@@ -94,6 +94,7 @@ sect5     nop
 section   nop
 set       toc,title
 </xsl:param>
+<xsl:param name="label.from.part">1</xsl:param>
 <!-- sözlük yapılandırılınca silinecek -->
 <xsl:template match="d:dicterm|d:english|d:turkish"/>
 
@@ -286,6 +287,13 @@ set       toc,title
   </div>
 </xsl:template>
 
+<xsl:template match="*" mode="class.value">
+  <xsl:param name="class" select="local-name(.)"/>
+  <!-- permit customization of class value only -->
+  <!-- Use element name by default -->
+  <xsl:value-of select="concat($class, ' ', @class)"/>
+</xsl:template>
+
 <xsl:template match="d:glossterm/d:glossterm[position()>1]">
   <br/><xsl:apply-templates/>
 </xsl:template>
@@ -334,11 +342,12 @@ set       toc,title
   <div><dl>
     <xsl:apply-templates mode="titlepage.mode" select="./d:affiliation"/>
     <xsl:apply-templates mode="titlepage.mode" select="./d:contrib"/>
+    <xsl:apply-templates mode="titlepage.mode" select="./d:address"/>
   </dl></div>
 </xsl:template>
 
 <xsl:template match="d:address" mode="titlepage.mode">
-  <dd><xsl:apply-templates mode="titlepage.mode"/></dd>
+ <dd class="address"><xsl:apply-templates/></dd>
 </xsl:template>
 
 <xsl:template match="d:small">
@@ -911,5 +920,11 @@ footnote text gets an id of #ftn.@id. They cross link to each other. -->
 
 <xsl:template match="article-w3cinfo|atomEntry|cover|dicterm|english|
 subtitle|turkish|titleabbrev"/>
+
+<xsl:template match="d:literallayout[@xml:space='preserve']">
+  <pre class="preservespace">
+   <xsl:apply-templates/>
+ </pre>
+</xsl:template>
 
 </xsl:stylesheet>

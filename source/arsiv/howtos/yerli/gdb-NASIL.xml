@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--DOCTYPE article SYSTEM "../../docbook/dtd/docbookx.dtd"-->
+<!-- ********************************************************************
+     $Id: gdb-NASIL.xml,v 1.4 2002/09/30 18:21:13 nilgun Exp $
+     ******************************************************************** -->
+
+<article xml:id="gdb-NASIL" lang="tr">
+  <info>
+    <title>GNU Debugger Kullanımı</title>
+    <author>
+      <personname><firstname>M. Ali</firstname>
+       <surname>Vardar</surname></personname>
+     </author>
+     <pubdate>Ocak 2005</pubdate>
+     <revhistory>
+       <revision>
+          <revnumber>1.0</revnumber>
+          <date>Ocak 2005</date>
+          <authorinitials>MAV</authorinitials>
+       </revision>
+    </revhistory>
+    <abstract>
+      <para>
+Uygulamalarımızı geliştirme sırasında gerek sistemden olsun gerek yazılımcı tarafından olsun gelen bir takım sinyaller veya kesmeler veya hatalar yüzünden uygulamamızın çalışmasında kesilmeler olabilir. Bu
+gibi durumları çoğu zaman tahmin edebiliyor olmak yeterli olmayabilir. Bu gibi durumlarda en büyük yardımcımız gdb olacaktır.
+      </para>
+    </abstract>
+    <legalnotice><title>Yasal Açıklamalar</title>
+      <para>
+Bu belgenin, <emphasis>GNU Debugger Kullanımı</emphasis> 1.0 sürümünün <emphasis role="bold"> telif hakkı © 2005 <emphasis>M. Ali Vardar</emphasis></emphasis>'a aittir.  &notice.gfdl.orig;</para>
+      &notice.disc;
+    </legalnotice>
+  </info>
+
+  <bridgehead renderas="sect1">GDB Kullanımı</bridgehead>
+  <para>
+Uygulamalarımızı geliştirme sırasında gerek sistemden olsun gerek yazılımcı tarafından olsun gelen bir takım sinyaller veya kesmeler veya hatalar yüzünden uygulamamızın çalışmasında kesilmeler olabilir. Bu
+gibi durumları çoğu zaman tahmin edebiliyor olmak yeterli olmayabilir. Bu gibi durumlarda en büyük yardımcımız <userinput>gdb</userinput> olacaktır. Linux sistemlerde yaygın olarak GBU debugger isimli uygulama kullanılır. Bu uygulama ile uygulamanızın kodu veya <filename>core</filename> dosyası incelenebilir. Öncelikle derleme işlemine bir bakalım.
+  </para><para>
+<screen>$ <userinput>gcc -g deneme.c -o deneme</userinput></screen>
+  </para><para>
+Derleme işleminden sonra uygulamanın büyüklüğünün normal <option>-g</option> bağımsız değişkeniz
+büyüklüğünden fazla olduğu görülecektir. Bu aşamadan sonra derlenen uygulama hata ayıklama işlemleri için gerekli olan açıklamaları da çalıştırılabilir dosyanın içerisine katmaktadır. Hata veren örnek bir uygulama yazalım. Örnek uygulama içerisinde değişiklik yapalım ve uygulamanın hata vermesini sağlayalım.
+  </para><para>
+<screen>int main()
+{
+  int a[5];
+  int i=0;
+  duzenle(a);
+}
+
+void duzenle(int a[])
+{
+  int i;
+  for (i=0; i&lt;10000; i++) a[i]=i;
+}
+</screen>
+  </para><para>
+Uygulamamız <literal>for (i=0; i&lt;10000; i++) a[i]=i;</literal> satırında hata vermektedir. Çünkü bu satırda hafıza için ayrılmış olan 5 tamsayılık alanın 10000 nci değerine erişilmeye çalışılmaktadır. Uygulama ilk çalıştırıldığı anda "segmentation failed" (bölütleme başarısız) hatası verecektir. Bu kadar kısa bir kod içerisinde bunu bulmak sorun olmayacaktır. Ancak uygulamanın iç içe çağrılardan oluşan 100.000 satırlık bir uygulama olduğunu varsayarsanız bu gibi bir hatanın bulunması yazılımcıyı epey zorlayacaktır. Uygulamaya tekrar geri dönelim ve uygulamayı şimdi aşağıdaki şekilde çalıştıralım.
+  </para><para>
+<screen>[root@linuxyazılımlama 1]# <userinput>gdb deneme</userinput>
+GNU gdb Red Hat Linux (5.1.90CVS-5)
+Copyright 2002 Free Software Foundation, Inc.
+GDB is free software, covered by the GNU General Public License, and
+you are welcome to change it and/or distribute copies of it under
+certain conditions.
+Type "show copying" to see the conditions.
+There is absolutely no warranty for GDB.     Type "show warranty" for
+details.
+This GDB was configured as "i386-redhat-linux"...
+(gdb)
+</screen>
+  </para><para>
+<userinput>gdb</userinput> ilk çalıştığı zaman yukarıdaki şekilde bir karşılama iletisi karşımıza çıkacaktır. Uygulama çalıştırılabilir dosyası <userinput>gdb</userinput> tarafından yüklenmiş
+olacaktır. Uygulamayı <userinput>r</userinput> komutunu verelim ve karşımıza çıkan iletiye
+bir bakalım.
+  </para><para>
+<screen>(gdb) <userinput>r</userinput>
+Starting program: /Projects/Kurs/1/deneme
+Program received signal SIGSEGV, Segmentation fault.
+0x08048418 in duzenle (a=0xbffff970) at deneme.c:12
+12 for (i=0; i&lt;9000; i++) a[i]=i;
+</screen>
+  </para><para>
+İşte <userinput>gdb</userinput> hata veren satırımızı ekrana yazdı. Açıklamanın başında bulunan 12 rakamı bize uygulama kodumuz içerisinde hatayı veren satırdır. Şimdi hatanın oluşma süreçlerine bakalım bu amaçla <userinput>bt</userinput> (backtrace) komutunu kullanıyoruz.
+  </para><para>
+<screen>(gdb) <userinput>bt</userinput>
+#0  0x08048418 in duzenle (a=0xbffff970) at deneme.c:12
+#1  0x080483e9 in main () at deneme.c:6
+#2  0x0000000b in ?? ()
+Cannot access memory at address 0xa
+(gdb)
+</screen>
+  </para><para>
+Böylelikle en sade halde uygulamamızda bulunan hataları izleme yöntemini gördük. Şimdi de daha etkin bir şekilde GNU debugger kullanabilmek amacıyla bir takım komutlara göz atalım.
+  </para><para>
+<userinput>list</userinput> komutu bize hataya neden olan satırın bulunduğu komut listesini
+verecektir.
+  </para><para>
+<screen>(gdb) <userinput>list</userinput>
+7       }
+8
+9       void duzenle(int a[])
+10      {
+11      int i;
+12      for (i=0; i&lt;9000; i++) a[i]=i;
+13      }
+(gdb)
+</screen>
+  </para><para>
+Değişkenler hakkında bilgi almak için <userinput>print</userinput> komutu kullanılır.
+  </para><para>
+<screen>(gdb) <userinput>print a[5]</userinput>
+$2 = 5
+(gdb)
+</screen>
+  </para><para>
+Değişken türünü öğrenmek için <userinput>whatis</userinput> komutu kullanılır.
+  </para><para>
+<screen>(gdb) <userinput>whatis a</userinput>
+type = int *
+</screen>
+  </para><para>
+Peki bir koşul oluşması durumunda istenen değişken bilgilerini almak istesek ne yapmamız gerekir? Bu amaçla uygulamanın çalışma anında durdurulmasını sağlayacak bir kırılma noktası yerleştirmeliyiz.
+  </para><para>
+<screen>(gdb) <userinput>break 12</userinput>
+Breakpoint 1 at 0x80483f6: file deneme.c, line 12.
+(gdb) <userinput>r</userinput>
+Starting program: /Projects/Kurs/1/deneme
+
+Breakpoint 1, duzenle (a=0xbffff970) at deneme.c:12
+12 for (i=0; i&lt;9000; i++) a[i]=i;
+(gdb) <userinput>print i</userinput>
+$1 = 0
+</screen>
+  </para><para>
+Yukarıda, 12. satıra bir kırılma noktası yerleştirdik ve o anki <varname>i</varname> değerine baktık. Diğer bir şartlı kırılma noktasına örnek ise;
+  </para><para>
+<screen>(gdb) <userinput>break 12 if i==5</userinput>
+Breakpoint 1 at 0x80483f6: file deneme.c, line 12.
+(gdb)
+</screen>
+  </para><para>
+Görüldüğü üzere <varname>i</varname> değişkeni 12. satırda 5 değerine ulaştığı an uygulama
+kesilecektir. Makina dili kodlarını öğrenmek amacıyla verilen iki bellek arasını yazdırmak istersek:
+  </para><para>
+<screen>(gdb) <userinput>disas 0x63e4 0x6404</userinput>
+Dump of assembler code from 0x63e4 to 0x6404:
+0x63e4 &lt;builtin_init+5340>:       ble 0x63f8 &lt;builtin_init+5360>
+0x63e8 &lt;builtin_init+5344>:       sethi %hi(0x4c00), %o0
+0x63ec &lt;builtin_init+5348>:       ld [%i1+4], %o0
+0x63f0 &lt;builtin_init+5352>:       b 0x63fc &lt;builtin_init+5364>
+0x63f4 &lt;builtin_init+5356>:       ld [%o0+4], %o0
+0x63f8 &lt;builtin_init+5360>:       or %o0, 0x1a4, %o0
+0x63fc &lt;builtin_init+5364>:       call 0x9288 &lt;path_search>
+0x6400 &lt;builtin_init+5368>:       nop
+End of assembler dump.
+</screen>
+  </para><para>
+Kesilmiş olan yerden devam etmek aşağıdaki gibi <userinput>c</userinput> komutunu vermek gerekir.
+  </para><para>
+<screen>(gdb) <userinput>c</userinput>
+Continuing.
+</screen>
+  </para><para>
+<userinput>gdb</userinput>'den çıkmak için <userinput>quit</userinput> veya <userinput>q</userinput> yazınız.
+  </para><para>
+Aynı zamanda uygulamanız çöktüğünde oluşan <filename>core</filename> dosyasını da
+  </para><para>
+<screen># <userinput>gdb core</userinput></screen>
+  </para><para>
+şeklinde kullanarak hata veren yeren yeri bulabilirsiniz.
+  </para>
+</article>
+

@@ -1,0 +1,1474 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ********************************************************************
+     $Id: Assembly-HOWTO.xml,v 1.20 2003/07/19 09:25:04 nilgun Exp $
+     ******************************************************************** -->
+
+<article xml:id="assembly-howto">
+<info>
+<title>Linux Makina Dili NASIL</title>
+  <authorgroup>
+    <author>
+   <personname><firstname>Konstantin</firstname>
+    <surname>Boldyshev</surname></personname>
+    <affiliation>
+        <orgname>
+<link xlink:href="http://linuxassembly.org">Linux Assembly</link>
+        </orgname>
+    </affiliation>
+  </author><author>
+   <personname><firstname>Francois-Rene</firstname>
+    <surname>Rideau</surname></personname>
+    <affiliation>
+        <orgname>
+            <link xlink:href="http://tunes.org"> Tunes project </orgname>
+    </affiliation>
+  </author><author role="translator">
+     <personname><firstname>Oğuz Yarımtepe</firstname>
+    </author>
+</authorgroup>
+
+<copyright>
+<year>1999-2006</year><holder>Konstantin Boldyshev</holder>
+</copyright>
+<copyright>
+<year>1996-1999</year><holder>Francois-Rene Rideau</holder>
+</copyright>
+
+<edition>0.6g</edition>
+<pubdate>Mart 2006</pubdate>
+
+<abstract>
+<para>
+Bu, Linux Sembolik Makina Dili NASIL, sürüm 0.6g belgesidir. Bu belge <emphasis>özgür</emphasis> yazılımlama araçları kullanarak, genelde IA-32 (i386) platformunda, Linux işletim sistemi için veya Linux işletim sistemi kaynaklı, sembolik makina dilinde nasil yazılımlama yapılacağını anlatmaktadır.  İçerik diğer yazılım veya donanıma uygulanamayabilir.
+</para>
+</abstract>
+<legalnotice><title>Yasal Açıklamalar</title>
+<para>
+Bu belgenin çevirisinin, <emphasis>Linux Sembolik Makina Dili Nasıl</emphasis> 1.1 sürümünün <emphasis role="bold">telif hakkı © 2005 <emphasis>Oğuz Yarımtepe</emphasis>'ye</emphasis> aittir. &notice.gfdl.translation;
+  </para>&notice.disc;
+</legalnotice>
+</info>
+&toc.gfdl;
+<sect1 xml:id="assembly-howto-s-intro">
+<title>Giriş</title>
+
+<note><para>
+Eğer NASIL'lara yabancı değilseniz veya sadece buradaki sembolik makina diliyle ilgisiz ıvır zıvırları okumaktan nefret ediyorsanız bu bölümü geçebilirsiniz.
+</para></note>
+
+<sect2><title>Belgenin son sürümü</title>
+<para>
+Bu belgenin en son resmi sürümleri <link xlink:href="http://linuxassembly.org/howto.html">Linux Sembolik Makina Dili (Linux Assembly)</link> ve <link xlink:href="http://linuxdoc.org/docs.html">LDP</link> sitelerinden elde edilebilir.
+</para>
+</sect2>
+
+<sect2><title>Önsöz</title>
+<para>
+Bu belge, özellikle Linux işletim sistemi altında, 32-bit x86 sembolik makina dili kullanarak <emphasis>özgür yazılım</emphasis> altında yazılımlayan ya da yazılımlamak isteyenlerin sorularına cevap olmayı amaçlamaktadır. Pek çok yerde Evrensel Kaynak Konumlayıcılar (Universal Resource Locators - URL) bazı yazılım veya belge depoları için verilmiştir. Bu belge ayrıca, temel amacı olmamakla beraber, özgür olmayan (non-free), x86 tabanlı olmayan (non-x86) veya 32 bit olmayan (non-32-bit) derleyicilerle ilgili diğer belgelere de işaret etmektedir. Aynı zamanda, doğrudan sembolik makina diliyle ilgili olmayan platforma bağlı meselelerde, favori platformunuzda (artık her ne ise) yazılımlama yapmak için SSS (Sıkça Sorulan Sorular) ve belgeler olduğuna da dikkat edin.
+</para><para>
+Sembolik makina dili ile yazılımlamak temel ilgi alanı, C derleyicilerinin ihtiyaç duyulan ifadeleri sağlamakta yetersiz kaldığı (performans oldukça nadir bir meseledir), işletim sisteminin sindirim sistemi, yorumlayıcı, derleyici ve oyunları olduğundan, bu tür yazılımları geliştirmek üzerine odaklanıyoruz.
+</para><para>
+Eğer <emphasis><link xlink:href="http://www.gnu.org/philosophy/">özgür yazılımın</link></emphasis> ne olduğunu bilmiyorsanız, pekçok yazılımda kullanılan ve pekçoğunun lisansının modeli olan, GNU <link linkend="gpl">Genel Kamu Lisansı</link>'nı (<acronym>GPL</acronym> veya <acronym>copyleft</acronym>) lütfen <emphasis>dikkatle</emphasis> okuyunuz. Genelde adı <filename>COPYING</filename> (veya <filename>COPYING.LIB</filename>) olan bir dosya içerisinde gelmektedir. <link xlink:href="http://www.fsf.org/">Özgür Yazılım Vakfı</link> (<acronym>FSF</acronym>) tarafından yayınlanmış eserler de size yardımcı olabilir. Özellikler, özgür yazılımın en ilgi çekici özelliği başvurabileceğiniz veya düzeltebileceğiniz veya hatta bazen ödünç alabileceğiniz kaynak koduyla gelmesidir. Size özel lisansı okuyun ve ona bağlı kalın.
+</para>
+</sect2>
+<sect2><title>Katkıda Bulunanlar</title>
+<para>
+Bu, etkileşimli olarak gelişen bir belgedir: Sorular sormak, sorulara cevap vermek, verilen cevapları düzeltmek, yeni yazılımlara işaret etmek, şu anki sürdürücüyü sayfadaki hatalar veya eksiklikler ile ilgili uyarmak için özellikle davet ediliyorsunuz. Tek kelimeyle, katılın!
+</para><para>
+Katılımda bulunmak için, <link linkend="assembly-howto-konst">geliştirici</link> ile iletişime geçin.
+</para><para>
+
+<note><para>
+Yazım sırasında, bu kişi <link linkend="assembly-howto-konst">Konstantin Boldyshev</link> idi, <link linkend="assembly-howto-fare">Francois-Rene Rideau</link> artık yok (versiyon 0.5'den beri). Ben (<link linkend="assembly-howto-fare">Fare</link>) uzun bir süreden beri bu belgeyi sürdürecek, yerime geçecek bir üstat (hacker) aramaktaydım ve sizlere değerli halefim olarak <link linkend="assembly-howto-konst">Konstantin</link>'i sunmaktan memnunum.
+</para></note>
+</para>
+</sect2>
+
+<sect2><title>Tercümeler</title>
+<para>
+Bu NASIL belgesinin Kore diline çevirisi <link xlink:href="http://kldp.org/HOWTO/html/Assembly-HOWTO/"/> adresinden, Türkçe çevirisi ise <link xlink:href="http://belgeler.org/howto/assembly-howto.html"/> adresinden edinilebilir. Tamamlanmamış Rusça çevirisi ise <link xlink:href="http://volgograd.lug.ru/wiki/GrableVodstvo/articles/AssembleInLinux/"/> adresindedir. Ayrıca, eski NASIL sürümleri için Fransızca çeviriler vardı, fakat bulamadım.
+</para>
+</sect2>
+</sect1>
+
+<sect1 xml:id="assembly-howto-s-doyou">
+<title>Sembolik makina diline ihtiyacınız var mı?</title>
+<para>
+Aslında, her ne yapıyorsanız bölmek istemem, ama burada zor kazanılmış tecrübelerin sonucu olarak bazı tavsiyelerde bulunacağım.
+</para>
+
+<sect2><title>Artılar ve Eksiler</title>
+<sect3><title>Sembolik makina dilinin (Assembly) avantajları</title>
+<para>
+Sembolik makina dili (Assembly) pekçok düşük seviyeli şeyi ifade edebilir:
+</para><itemizedlist>
+<listitem><para>
+makinaya bağlı yazmaç ve Giriş/Çıkışlara (I/O) erileşilirsiniz
+</para></listitem>
+<listitem><para>
+çoklu yazılım parçalarının ya da donanım aygıtlarının ölümcül kilitlenmesini içeren kritik bölümlere özgü kod davranışlarını kontrol edebilirsiniz.
+</para></listitem>
+<listitem><para>
+alışıldık derleyicinizin herkesçe kabul görmüş kurallarını kırabilirsiniz, ki bu da bazı eniyilemelere izin vermektedir (bellek tahsisiyle, evrelerle (threading), çağrı kurallarıyla ilgili kuralları geçici olarak kırmak gibi).
+</para></listitem>
+<listitem><para>
+kod parçaları arasında, uygun olmayan (örn. değişik derleyiciler tarafından üretilen veya düşük seviye arayüzlerle ayrılan) kurallar kullanarak arayüzler tasarlayabilirsiniz.
+</para></listitem>
+<listitem><para>
+işlemcinizin alışılmadık yazılımlama kiplerine erişebilirsiniz (örn. açılış arayüzü için 16 bitlik kip, aygıt yazılımları, Intel bilgisayarlardaki kalıtsal kodlar).
+</para></listitem>
+<listitem><para>
+kötü ve eniyileme yapmayan derleyicilerle uyumlu çalışacak sıkı döngüler için oldukça hızlı kodlar üretebilirsiniz. (Ancak, eniyileme yapabilen özgür derleyiciler var!)
+</para></listitem>
+<listitem><para>
+her ne kadar başka herhangi birininkine ait olmayacak olsa da, size özel aygıt ayarlarınız için el ile eniyilenmiş mükemmel bir kod üretebilirsiniz
+</para></listitem>
+<listitem><para>
+yeni dilinizin eniyileme yapabilen derleyicisi için bir kod yazabilirsiniz (bu, çok azımızın yapacağı ve hatta pek de sıklıkla yapmayacağı bir iştir).
+</para></listitem>
+<listitem><para>
+örn. kendi kodunuzu tamamiyle kontrol altına alabilirsiniz
+</para></listitem>
+</itemizedlist>
+</sect3>
+<sect3><title>Sembolik makina dilinin (Assembly) dezavantajları</title>
+<para>
+Sembolik makina dili, oldukça düşük seviyeli bir dildir (bundan daha aşağıda ikilik komutları el ile kodlamak bulunmaktadır). Bu da şu manalara gelmektedir:
+</para><itemizedlist>
+<listitem>
+ilk başlarda yazmak, oldukça uzun ve can sıkıcıdır
+</listitem>
+<listitem>
+hata yapmaya oldukça meyillidir
+</listitem>
+<listitem>
+hatalarınızı takip etmek oldukça zor olabilir
+</listitem>
+<listitem>
+kodunuzu anlamak ve değiştirmek oldukça zordur, örn. bakımını yapmak
+</listitem>
+<listitem>
+sonuç, şu anda veya gelecekte var olacak mimarilere taşınabilir değildir
+</listitem>
+<listitem><para>
+kodunuz aynı mimarinin sadece belli bir gerçekleştirimi için eniyilenecektir: mesela, Intel uyumlu platformlar arasında, herbir CPU tasarımı ve türevi (işlemci birimlerinin nispi gecikme süresi, üretilen iş (through-output) ve kapasitesi, önbellekler (cache), RAM, taşıt (bus), diskler, FPU, MMX, 3DNOW, SIMD uzantılarının varlıkları, v.b.) tamamiyle farklı eniyileme tekniklerini ifade etmektedir.
+İşlemci (CPU) tasarımları halihazırda şunları içermektedir: Intel 386, 486, Pentium, PPro, PII, PIII, PIV; Cyrix 5x86, 6x86, M2; AMD K5, K6 (K6-2, K6-III), K7 (Athlon, Duron). Yeni tasarımlar yukarılara doğru tırmanmayı sürdürmektedir, dolayısıyle ne bu listenin ne de kodunuzun güncel kalacağını ummayın.
+</para></listitem>
+<listitem><para>
+çok az bir ayrıntı üzerinde fazlaca zaman harcarsınız, hızlanmanın  büyük kısmını oluşturan küçük ve geniş algoritmik tasarımlar üzerine odaklanamazsınız (örn. liste/diziler üzerinde değişikler yapan hızlı ve ilkel nesneler oluşturmak için çokça zaman harcayabilirsiniz; oysa sadece hesaba dayalı bir adresleme (hash) tablosu veya başka bir yaklaşımda ikilik ağaç ya da pekçok CPU kümesine dağıtılmış olan yüksek seviyeli bir yapı yazılımınızı çok daha hızlandırırdı).
+</para></listitem>
+<listitem><para>
+algoritmik tasarımınızdaki ufak bir değiliklik var olan sembolik makina kodunuzu tamamiyle geçersiz hale getirebilir. Bu durumda ya tamamen tekrar yazmaya (yazabilemeye) hazırsınızdır veya belirli bir algoritmik tasarımı yapmaktan sıkılmışsınızdır.
+</para></listitem>
+<listitem><para>
+Standart karşılaştırmalı değerlendirmeden (benchmark) uzak olmayan kod üzerinde, eniyileme yapan ticari derleyiciler elle kodlanmış sembolik makina dili gerçekleştirirler (aslında, RISC mimarisine göre bu durum x86 mimarisi üzerinde daha az geçerlidir ve belki de geniş bir şekilde bulunan/kullanılan derleyiciler için de daha az doğrudur; herneyse, tipik bir C kodu için GCC oldukça iyidir);
+</para></listitem>
+<listitem><para>
+Ve her durumda, <link xlink:href="news:comp.compilers">comp.compilers</link>'da bulunan yönetici John Levine'nin dediği gibi,
+</para><blockquote><para>
+"derleyiciler karmaşık veri yapılarının kullanımını oldukça kolay hale getirmektedir ve derleyiciler işin yarısından sonra sıkılmamakta ve güvenilir oldukça güzel kodlar üretmektedir."
+</para></blockquote><para>
+Prosedür ve modül sınırları arasında kodu eniyilerken, aynı zamanda da tüm (büyük) yazılım boyunca <emphasis>düzgün</emphasis> biçimde kod dönüşümleri üreteceklerdir.
+</para></listitem>
+</itemizedlist>
+</sect3>
+<sect3><title>Değerlendirme</title>
+<para>
+Tüm bunlardan sonra, sembolik makina dili kullanmanın bir ihtiyaç olduğunu düşünebilirsiniz ve hatta ihtiyaç olmadığı bazı yerlerde kullanmak çok da faydalı olabilir. Şunları yapmak isteyeceksiniz:
+</para>
+<itemizedlist>
+<listitem>
+sembolik makina dilinin kullanımını küçültmek
+</listitem>
+<listitem>
+iyi tanımlanmış arayüzler içine bu kodları koymak (encapsulate)
+</listitem>
+<listitem>
+sembolik makine dili dışında yüksek seviyeli dillerle tanımlanmış yapılar tarafından sembolik makine dili kodunuzun otomatik üretilmesi (örn. GCC satıriçi (inline) makrolar)
+</listitem>
+<listitem>
+bu yazılımları otomatik araçların sembolik makine dili koduna dönüştürmesi
+</listitem>
+<listitem>
+bu kodun eğer mümkünse eniyilenmesi
+</listitem>
+<listitem>
+yukarıdakilerin tümü, örn. bir derleyici (ya da derleyiciye bir eklenti) arka ucu (back-end)
+</listitem>
+</itemizedlist>
+<para>
+Sembolik makina diline gerek duyulsa (örn. İşletim sistemi geliştirmek) bile, yukarıdakilerin çok daha fazlasına gerek duyulmayacağını göreceksiniz ve de üstteki prensipler de varlığını koruyacaktır.
+</para><para>
+Bununla ilgili olarak Linux çekirdek kaynaklarına bakınız: ne kadar az sembolik makina diline gerek duyulursa, neticesinde hızlı, güvenilir, taşınabilir ve sürdürülebilir işletim sistemi oluşmaktadır. Hatta DOOM gibi başarılı bir oyun dahi yoğun şekilde C ile yazılmıştır, sadece küçük bir kısmı hızı arttırmak için sembolik makine dili ile yazılmıştır.
+</para>
+</sect3>
+</sect2>
+
+<sect2 xml:id="assembly-howto-howtonot">
+<title>Sembolik makina dili nasıl kullanılmaz</title>
+<sect3><title>Başarılı kodu gerçeklemek için adımlar</title>
+<para>
+<link xlink:href="news:comp.compilers">comp.compilers</link>'daki Charles Fiterman'ın bilgisayara karşın insanın ürettiği sembolik makina kodlarıyla ilgili söylediği gibi:
+</para><blockquote>
+<literallayout indent="0">
+İnsanoğlu her zaman kazanmak zorundadır ve işte bu da nedenidir.
+
+Birincisi insanoğlu herşeyi yüksek seviyeli dilde yazar.
+İkincisi üzerinde zaman harcadığı sıcak noktaları bulacak
+şekilde yazılımın taslağını hazırlar.
+Üçüncüsü elinde bu kısımlar için derleyicinin ürettiği kod vardır.
+Dördüncüsü makina kodu üzerinde ufak gelişmeler sağlayarak onlara
+bir canlılık kazandırabilir.
+
+İnsanoğlu kazanır çünkü makinaları kullanabilmektedir.
+</literallayout></blockquote>
+</sect3>
+
+<sect3><title>Eniyileme yapan derleyiciler ile dilleri</title>
+<para>
+Diğerleri arasında ObjectiveCAML, SML, CommonLISP, Scheme, ADA, Pascal, C, C++ gibi dillerin yazılımınızın şişkinliğini eniyileyecek özgür derleyicileri vardır ve genellikle, sıkı döngüler için bile elle yazılmış sembolik makina kodundan daha iyisini üretirler, bu arada da daha yüksek seviyeli ayrıntılar üzerinde odaklanmanızı sağlarlar ve de belli bir kararlı düzeye geldikten sonra da yukarıda bahsedilen şekilde belli miktar başarıma el koymanızı yasaklamazlar. Elbette, bu dillerin çoğu için eniyileme yapan ticari derleyiciler de vardır!
+</para><para>
+Bazı diller C kodu üreten ve sonrasında eniyilemesini C derleyicisine yaptıran derleyicilere sahiptir: LISP, Scheme, Perl ve diğer pekçoğu. Hız oldukça iyidir.
+</para>
+</sect3>
+
+<sect3><title>Kodunuzu hızlandıracak için genel adımlar</title>
+<para>
+Kodunuzun hızlı çalışmasını sağlamak için, analiz araçlarından birinin kodunuzun belli bir yerini sürekli bir performans darboğazı olarak tanımlaması gerekmektedir.
+</para><para>
+Bu nedenle, bir kod parçasını çok yavaş olarak tanımladıktan sonra, şunları yapmalısınız:
+</para><itemizedlist>
+<listitem>
+öncelikle daha iyi bir algoritma kullanmaya çalışın;
+</listitem>
+<listitem>
+yorumlamak yerine onu derleyin;
+</listitem>
+<listitem>
+daha sonra derleyicinizdeki eniyilemeyi etkinleştirip onunla oynayın
+</listitem>
+<listitem>
+daha sonra derleyiciye nasıl eniyileme yapacağına dair ipuçları verin (LISP'de bilgi girmek; GCC ile yazmaç kullanmak; pekçok derleyicideki seçenekler, v.b)
+</listitem>
+<listitem>
+bundan sonra ancak son çare sembolik makina dilidir.
+</listitem>
+</itemizedlist>
+<para>
+Son olarak, sembolik makina diliyle yazmayı bitirmeden önce, üretilen kodu incelemelisiniz, problemin gerçekten de kötü kod üretiminden kaynaklandığını görmelisiniz, ki bu herzaman sanılan durum olmayabilir: derleyicinin ürettiği kod sizin yazdığından daha iyi olabilir, özellikle modern çoklu ardışık düzen (multi-pipelined) mimarilerinde! Programın yavaş olan kısımları esas olarak böyle olabilir. Hızlı işlemcili modern mimarilerde temel sorun, bellek erişim gecikmeleri, önbellek atlamaları, TLB (TLB-misses) kayıpları ve sayfa hatalarından kaynaklanmaktadır; yazmaç kullanımı gereksiz olmaktadır ve veri yapılarını daha kazançlı bir şekilde ve bellek erişimini daha iyi yapmanın yollarını tekrar düşüneceksiniz. Belki de tamamen farklı bir yaklaşım sorunun çözümüne yardımcı olabilir.
+</para>
+</sect3>
+
+<sect3><title>Derleyicinin ürettiği kodu incelemek</title>
+<para>
+Derleyicinin ürettiği kodu incelemek için pek çok neden vardır. İşte size bu kodla neler yapacağınız:
+</para>
+<itemizedlist>
+<listitem><para>
+üretilen kodun el yordamıyla geliştirilip geliştirilemeyeceğini kontrol edin (veya derleyici seçenekleriyle oynayarak)
+</para></listitem>
+<listitem><para>
+durum böyle ise, o zaman üretilmiş kod ile başlayın, onu yeniden yazmak yerine değiştirin
+</para></listitem>
+<listitem><para>
+genel olarak, dış dünyaya karşı sizin sembolik makine rutinlerinizi anlayan üretilen kodu değişiklik yapmak için bir yama gibi kullanın
+</para></listitem>
+<listitem><para>
+derleyicinizdeki hataları takip edin (tahminim en az sıklıkla)
+</para></listitem>
+</itemizedlist>
+<para>
+Sembolik makina dilinizin oluşması için standart yol derleyicinizi <option>-S</option> bağımsız değişkeniyle çalıştırmaktır. Bu, GCC C derleyicisini de içeren (GCC) pekçok Unix derleyicinde çalışmaktadır. GCC'ye gelince, <option>-fverbose-asm</option> komut satırı bağımsız değişkeniyle çok daha anlaşılabilir sembolik makina kodları üretecektir. Elbette, iyi sembolik makina kodu elde etmek istiyorsanız, herzamanki eniyileme seçeneklerinizi ve ipuçlarını unutmayınız!
+</para>
+</sect3>
+</sect2>
+
+<sect2 xml:id="assembly-howto-landa">
+<title>Linux ve Assembly</title>
+<para>
+Muhtemelen farkettiğiniz üzere, genel olarak, Linux yazılımlamada sembolik makine dilini kullanmaya ihtiyaç duymazsınız. DOS'takinin aksine, Linux sürücülerini sembolik makine dili ile yazmanız zorunlu değildir (aslında, eğer gerçekten istiyorsanız yapabilirsiniz). Ve günümüzün eniyileme yapan derleyicileriyle, farklı işlemcilerdeki hızı dikkate alıyorsanız, C ile yazmak çok daha basittir. Yine de, bunu okuyorsanız, C/C++ yerine sembolik makine dili kullanmak için bir nedeniniz olabilir.
+</para><para>
+Sembolik makine dilini kullanmak <emphasis>ihtiyacında</emphasis> olabilirsiniz veya sadece kullanmak <emphasis>isteyebilirsiniz</emphasis>. Kısaca, sembolik makine dili krallığına dalmaktaki temel pratik sebepler (<emphasis>ihtiyaç</emphasis>) <emphasis>kısa kodlar</emphasis> ve <emphasis>libc</emphasis> <emphasis>bağımsızlıklarıdır</emphasis>. Pratik olarak ve en sık karşılaşılan nedense (<emphasis>istek</emphasis>), 20 yıllık ve herşeyi sembolik makine dili ile yapma alışkanlığı olan eski bir bilgisayar kurdu olmaktır.
+</para><para>
+Yine de, eğer Linux'u gömülü bir sisteme yerleştiriyorsanız, tüm sistemin büyüklüğüne göre kısa olabilirsiniz: çekirdeği, <application>libc</application> ve tüm diğer şeylerin <application>(file|find|text|sh|v.b)</application> uygulamalarını birkaç yüz kilobyte'a oturtmalısınız ve her kilobyte'ın değeri çok fazladır. Bundan dolayı, mümkün olan yollardan birisi, sistemin bazı (veya tüm) kısımlarını sembolik makine dili ile yazmaktır ve bu durum da pekçok yer tasarrufu sağlayacaktır. Mesela, basit bir, sembolik makine dili ile yazılmış, <command>httpd</command> 600 byte'tan az tutmaktadır; kernel, httpd ve ftpd içeren bir sunucuyu 400kb veya daha az boyutta ayarlayabilirsiniz... Bunu düşünün.
+</para>
+</sect2>
+</sect1>
+<sect1 xml:id="assembly-howto-s-assem" xreflabel="Assemblers">
+<title>Çeviriciler (Assemblers)</title>
+<sect2 xml:id="assembly-howto-p-gcc">
+<title>GCC Satıriçi Sembolik Makina Dili</title>
+<para>
+GNU projesinin kalbinde bulunan 32 bitlik eniyileme yapan, iyi bilinen GNU C/C++ derleyicisi (GCC), x86 mimarisini oldukça iyi bir şekilde desteklemektedir ve C kodları içerisine, yazmaç tahsisini özel olarak belirtilerek veya GCC'ye bırakılabilecek şekilde, sembolik makina kodları gömülmesine olanak sağlamaktadır. GCC pekçok platformda, *BSD, VSTa, OS/2, *DOS, Win*, v.b., özellikle Linux'da çalışır.
+</para>
+<sect3><title>GCC'yi nereden bulabiliriz</title>
+<para>
+GCC ana sayfası <link xlink:href="http://gcc.gnu.org/"/> adresindedir.
+</para><para xml:id="assembly-howto-p-djgpp">
+GCC'nin DOS tabanlı çalışan sürümüne <link xlink:href="http://www.delorie.com/djgpp/">DJGPP</link> denir.
+</para><para>
+GCC'nin Win32 tabanında çalışan iki sürümü vardır: <link xlink:href="http://www.cygwin.com/">cygwin</link> ve <link xlink:href="http://www.mingw.org/">mingw</link>
+</para><para>
+CC'nin bir de OS/2 tabanlı EMX olarak isimlendirilen bir sürümü vardır; DOS altında da çalışır ve unix-benzeri kütüphane yordamlarının pekçoğunu içerir. Şu siteye bir göz atın: <link xlink:href="ftp://ftp.leo.org/pub/comp/os/os2/leo/gnu/emx+gcc/"/>.
+</para>
+</sect3>
+<sect3><title>GCC satır içi sembolik makina dili için belgeler nerede</title>
+<para>
+GCC'nin belgelendirmesi belge dosyalarını TeXinfo biçiminde içerir. TeX ile bunları derleyip çıktılarını görebilirsiniz, <filename>.info</filename>'ya çevirip emacs ile göz atabilirsiniz veya <filename>.html</filename>'ye çevirebilirsiniz ya da hemen hemen istediğiniz herhangi bir biçime; istediğiniz herhangi bir şeye çevirin (düzgün araçlarla) veya olduğu haliyle okuyun. <filename>.info</filename> dosyaları GCC için yapılan herhangi bir iyi yüklemede bulunur.
+</para><para>
+Bakmak için doğru yer <literal>C Extensions::Extended Asm::</literal>'dir.
+</para><para>
+<literal>Invoking GCC::Submodel Options::i386 Options::</literal> kısmı da size yardımcı olabilir. Özellikle, yazmaçlara i386'ya özgü kısıtlandırılmış isimler verir:
+<literal>abcdSDB</literal> sırasıyla
+<literal>%eax</literal>,
+<literal>%ebx</literal>,
+<literal>%ecx</literal>,
+<literal>%edx</literal>,
+<literal>%esi</literal>,
+<literal>%edi</literal>
+ve
+<literal>%ebp</literal>
+(<literal>%esp</literal> için bir harf yok)'ye karşılık gelmektedir.
+</para><para>
+DJGPP Oyun kaynağı (sadece oyun ustaları için değil) özellikle sembolik makina diliyle ilgili bir sayfaya sahipti, fakat artık erişilebilir değil. Herşeye rağmen oradaki veriler <link linkend="assembly-howto-p-djgpp">DJGP</link> ve diğer faydalı bilgilerin madenini içeren belgeler tekrar bir araya getirilmiştir: <link xlink:href="http://www.delorie.com/djgpp/doc/brennan/"/> ve <link xlink:href="http://www.castle.net/~avly/djasm.html"/>
+</para><para>
+GCC, makina diline çeviri için GAS'a (aşağıyı inceleyiniz) dayanır; şunu unutmayın ki satır içi asm yüzdelik karakterlerinin çift tırnak içerisine alınmasına ihtiyaç duyar ve GAS'a onlar aktarılacaktır. Aşağıdaki <xref linkend="assembly-howto-p-gas"/> bölümüne bakınız.
+</para><para>
+Linux çekirdeğinin kaynağının alt dizini olan <filename>linux/include/asm-i386/</filename> altında <emphasis>çokça</emphasis> örnek bulabilirsiniz.
+</para>
+</sect3>
+<sect3><title>GCC'yi uygun satıriçi sembolik makina kodu üretmesi için çağırmak</title>
+<para>
+Çekirdek başlık dosyalarındaki (ve büyük ihtimal sizin kendi başlığınızda da, eğer kendi sembolik makina yazılımlamanızı Linux çekirdeğindeki gibi temiz yaparsanız) sembolik makina yordamları <emphasis>harici satıriçi (extern inline)</emphasis> işlevlere gömülü olduğundan, GCC, kullanabilir olduğu bu yordamlar için, <option>-O</option> seçeneği ile çağrılmalıdır (veya <option>-O2</option>, <option>-O3</option>, v.b.). Aksi halde, kodunuz derlenebilir, fakat, yazılımınızın bağlı olduğu kütüphanelere karşın satıriçi olmayan harici kütüphanelere bakıyor olacağından, düzgün şekilde bağlanmaz. Başka bir yöntem ise yordamların sonçare sürümlerini içeren kütüphanelere bağlantı yapmaktır.
+</para><para>
+Satıriçi çeviri (sembolik makine diline) <option>-fno-asm</option> ile devre dışı bırakılabilir, böylece derleyici, genişletilmiş satıriçi kodlar kullanılırken çalışmayacaktır veya bağlayıcının algılıyamacağı <function>asm()</function> isimli işleve çağrılarda bulunacaktır. Bu bayrağın çalışmasına karşı durum için, <option>-fasm</option> bayrağı ile <literal>asm</literal> anahtar kelimesine karşı olan davranış geri kazandırılır.
+</para><para>
+Daha genel olarak x86 platformunda  GCC için iyi derleme seçenekleri şu şekildedir:
+</para><para>
+<literallayout indent="0">
+   <command>gcc -O2 -fomit-frame-pointer -W -Wall</command>
+</literallayout>
+</para><para>
+<option>-O2</option> pekçok durumda iyi bir eniyileme seviyesidir. Bunun yanında eniyileme uzun zaman alır ve de kodun olduğundan daha büyümesine sebep olur, fakat neticede olduğundan biraz daha hızlı çalışır hale gelir; böylesi bir aşırı eniyileme sembolik makina dilinde her halükarda yaptığınız sıkı döngülerde (eğer varsa) faydalı olabilir. Eğer gerçekten de bazı seyrek dosyalar için oldukça güçlü bir eniyilemeye ihtiyaç duyarsanız, <option>-O6</option>'yı kullanmayı deneyin.
+</para><para>
+<option>-fomit-frame-pointer</option> kullanımı, üretilen kodun aptal çerçeve gösterici onarımını (frame pointer maintenance) atlamasını sağlar, bu da kodun daha küçük ve hızlı olmasını sağlar ve de bir yazmacı sonraki kullanımlar için boşaltır. (<command>gdb</command>)'nin kolay kullanımına müsade etmez, fakat bunları kullandığınız zaman, boyut ve hızı artık dert etmezsiniz.
+</para><para>
+<option>-W -Wall</option> ile tüm faydalı uyarıları etkinleştirilir ve aleni yapılan aptalca hataları yakalamanızı sağlar.
+</para><para>
+İşlemciye özel, <option>-m486</option> gibi komutlar ekleyerek üretilen kodun size özel işlemciye daha uygun halde olmasını sağlayabilirsiniz. Modern GCC'nin komut sadırı seçenekleri <option>-mpentium</option> ve  benzeri şeklindedir (<link xlink:href="http://goof.com/pcg/">PGCC</link>'de daha da fazladır), oysa ki GCC 2.7.x ve daha eski sürümleri böyle değildir. İşlemciye özel en iyi seçeneklerin neler olacağı Linux çekirdeği içindedir. Daha ayrıntılı bilgi için şu anki GCC'nizin belgelendirmesini inceleyiniz.
+</para><para>
+<option>-m386</option> boyutta eniyilemeyi sağlamaktadır, bu da belleğin sıkı (tight) olmasını ve/veya yüklenmiş olan bilgisayarlarda hızlanmayı sağlamaktadır, çünkü büyük yazılımlar takas alanı kullanımına sebep olmaktadır, bu da daha büyük kodlar için sayılandan daha çok eniyilemeye meyledilecek demektir. Bu tür ayarlarda, C dilini kullanmayı bırakmak faydalı olabilir, bunun yerine işlevsel bir dil ve/veya FORTH gibi kod çözümlemeye meyilli bir dil kullanın ve bayt seviyesi (bytecode) - veya sözcük seviyesi (wordcode) - tabanlı bir gerçekleme kullanın.
+</para><para>
+Kod üretim seçeneklerini dosyadan dosyaya değiştirebilirsiniz, böylece başarımın önemli olduğu dosyalar azami eniyileme kullanacaklardır, oysa ki diğerleri boyutlarına göre eniyileneceklerdir.
+</para><para>
+Daha çok eniyileme için, <option>-mregparm=2</option> seçeneği ve/veya buna karşılık gelen işlev davranışları yardım edebilir, fakat yabancı kodlara, <application>libc</application> <emphasis>dahil</emphasis>, ilintileme yaparken pekçok soruna sebep olabilir. Yabancı işlevlerin bildirimi için yollar vardır, böylece doğru çağrı sırası üretilmiş olur veya yabancı kütüphanelerinizi aynı yazmaç tabanlı çağrı uzlaşımlarını kullanacak şekilde tekrar derlemeyi isteyebilirsiniz.
+</para><para>
+<filename>/usr/lib/gcc-lib/i486-linux/2.7.2.3/specs</filename> dosyasını (veya her nerede ise) düzenleyerek bu secenekleri öntanımlı olarak ekleyebilirsiniz (<option>-W -Wall</option> seçeneklerini eklememek daha iyi olacaktır). GCC'ye özel dosyalarınızın sisteminizde nerede olduğunu <command>gcc -v</command> ile öğrenebilirsiniz.
+</para>
+</sect3>
+<sect3><title>Makro desteği</title>
+<para>
+GCC, satır içi sembolik makina dilinde yazmaç kısıtlamalarını belirlemenizi sağlar (ve gerektirir), böylece eniyileyicinin bunlar hakkında herzaman bilgisi olur; satır içi sembolik makina kodu gerçekten bir takım kalıplardan oluşmuştur, zorunlu şekilde oluşturulan kodlardan değil.
+</para><para>
+Böylece sembolik makina kodunuzu CPP makrolarının ve satır içi C fonsiyonlarının içine koyabilirsiniz ve böylece herhangi biri onu herhangi bir C işlevi/makrosu olarak kullanabilir. Satıriçi işlevler makrolara çok benzer, fakat kullanmak için daha temizdir. Tüm bu durumlarda, kodun tekrar edeceğine (dublicate) dikkat edin, bundan dolayı asm kodunda sadece yerel etiketler (<literal>1:</literal> tanımlanmış olmalıdır. Yine de, bir makro yerel olmayan etiketlerin bağımsız değişken olarak aktarılmasına izin verecektir (veya sizin bazı ek meta yazılımlama yöntemleri kullanmanız gerekecektir). Ayrıca şuna da dikkat edin, satıriçi sembolik makina kodu üretmek, içerisinde olası hataların da yayılmasına sebep olacaktır; bundan dolayı böylesi bir satıriçi asm kodundaki yazmaç kısıtlamalarını iki kere kontrol edin.
+</para><para>
+Son olarak, C dilinin kendisi, sembolik makina dili yazılımlama için iyi bir soyutlama katmanı olabilir ve bu da sizi sembolik makina dilinin pekçok sorunlarından kurtarır.
+</para>
+</sect3>
+</sect2>
+<sect2 xml:id="assembly-howto-p-gas"><title>GAS</title>
+<para>
+GAS, GCC'nin güvendiği GNU Çeviricisidir (Assembler).
+</para>
+<sect3><title>Nereden Bulurum</title>
+<para>
+GCC'yi bulacağınız yerdeki ikilik uygulama paketleri (binutils paketi) içerinde bulabilirsiniz. İkilik uygulama paketinin son sürümü <link xlink:href="http://sources.redhat.com/binutils/"/> adresinden temin edilebilir.
+</para>
+</sect3>
+<sect3><title>Şu AT&amp;T sözdizimi de ne ola ki</title>
+<para>
+GAS 32 bit Unix derleyicilerini desteklemek için icat edildiğinden, standart AT&amp;T sözdizimini kullanmaktadır. Bu söz dizimi UNIX dünyasında bir standart olan m68k çeviricilerinin sözdizimine benzemektedir. Bu sözdizimi Intel'in söz diziminden ne daha iyi ne de daha kötüdür. Alıştıktan sonra, Intel sözdiziminden daha sıradan bulursunuz, hatta biraz daha sıkıcı.
+</para><para>
+GAS sözdizimi ile ilgili temel uyarılar:
+</para><para>
+<itemizedlist>
+<listitem><para>
+Yazmaç isimleri <literal>%</literal> ile başlar, bunun için de eax, dl, v.b isimler yerine, yazmaçlar <literal>%eax, %dl</literal>, v.b. şekilde isimlendirilir. Bu da, harici C sembollerinin, herhangi bir karıştırma riski olmadan veya herhangi bir çirkin görünümlü alt çizgi kullanma ihtiyacı olmadan, sembolik makina kodu içerisine dahil edilmesine olanak sağlar.
+</para></listitem><listitem><para>
+Intel'deki geleneksel önce hedef sonra kaynak kuralının tersine, terimlerin sırası kaynak-önce/hedef-sonra şeklindedir. Böylece, Intel'de <function>mov eax,edx</function> (<literal>edx</literal> yazmacının içeriğini <literal>eax</literal> içerisine taşı) şeklindeki bir sözdizimi GAS'da <function>mov %edx,%eax</function> haline gelecektir.
+</para></listitem><listitem><para>
+Terim genişliği, komut adına bir sonek olarak belirtilir. Sonek olarak kullanılan <literal>b</literal> (8 bit) bayt için, <literal>w</literal> (16 bit) kelime (word) için ve <literal>l</literal> (32 bit) long içindir. Mesela, yukarıdaki ifade için doğru sözdizimi <function>movl %edx,%eax</function> şeklinde olacaktır. Yine de, <command>gas</command> katı bir AT&amp;T sözdizimi gerektirmemektedir, bunun için de yazmaç terimlerinin genişliği tahmin edilebildiğinde sonek isteğe bağlıdır, aksi durumlarda öntanımlı olarak 32 bittir (bir uyarı ile birlikte).
+</para></listitem><listitem><para>
+Anlık değerler önlerine bir <literal>$</literal> konarak belirtilir, <function>addl $5,%eax</function>  örneğinde olduğu gibi (uzun tamsayı olarak anlık 5 değerini <literal>%eax</literal> yazmacına ekle).
+</para></listitem><listitem><para>
+Terim öneklerinin olmaması, terimin bir bellek içeriği olduğu anlamına gelmektedir; burada <function>movl $foo,%eax</function> foo'nun <emphasis>adresini</emphasis> %eax'e koyarken, <function>movl foo,%eax</function> foo'nun <emphasis>içeriğini</emphasis> <literal>%eax</literal> yazmacına koymaktadır.
+</para></listitem><listitem><para>
+Sıralama veya yönlendirme, referans yazmacını veya yönlendirme bellek hücresi adresini parantez içerisine almakla sağlanır, <function>testb $0x80,17(%ebp)</function>'de olduğu gibi (<literal>%ebp</literal> ile işaret edilen hücreden 17 birim uzaklıktaki baytın en yüksek anlamlı bitini sına).
+</para></listitem>
+</itemizedlist>
+</para><para xml:id="assembly-howto-p-convert">
+Not: AT&amp;T ve Intel çevirici sözdizimleri arasında kaynak kodu dönüşümü için <link linkend="assembly-howto-s-res">birkaç yazılımın</link> size yardımı dokunabilir, bazıları her iki yönde de dönüşüm gerçekleştirebilmektedir.
+</para><para>
+GAS'ın TeXinfo biçiminde, en azından kaynak dağıtımıyla gelen, kapsamlı bir belgelendirmesi vardır. <filename>.info</filename> sayfalarını Emacs veya herhangi birşeyle gözden geçirin. GAS kaynak paketi içerisinde <filename>gas.doc</filename> veya <filename>as.doc</filename> isimli bir dosya olsa gerek, fakat TeXinfo belgeleri arasına gömülmüştür. Elbette, herhangi bir şüphe durumunda en iyi belgelendirme kaynağın kendisidir! Sizi özellikle ilgilendiren kısım <literal>Machine Dependencies::i386-Dependent::</literal>'dır.
+</para><para>
+Yine, Linux kaynağı (işletim sistemi çekirdeği) mükemmel bir örnek olarak gelmektedir; <filename>linux/arch/i386/</filename> altındaki şu dosyalara bakınız: <filename>kernel/*.S, boot/compressed/*.S</filename>, <filename>math-emu/*.S.</filename>
+</para><para>
+Eğer bir çeşit dil, bir evre (thread) paketi, v.b. yazıyorsanız diğer dillerin (<link xlink:href="http://para.inria.fr/">OCaml</link>,
+<link xlink:href="http://www.jwdt.com/~paysan/gforth.html">Gforth</link>, v.b.) veya evre kütüphanelerinin (QuickThreads, MIT pthreads, LinuxThreads, v.b.) bu işleri nasıl yaptıklarına bakabilirsiniz.
+</para><para>
+Son olarak, bir C kodunu sembolik makina diline derlemek de aradığınız komut çeşitleriyle ilgili sözdizimini size gösterebilir. Yukarıdaki <xref linkend="assembly-howto-s-doyou"/> kısmına bakınız.
+</para>
+</sect3>
+<sect3><title>Intel sözdizimi</title>
+<para>
+İyi haber şu ki 2.10 sürümünden itibaren, GAS Intel sözdizimini de desteklemektedir. <literal>.intel_syntax</literal> komutu ile bu kipe geçiş sağlanabilir. Ne yazık ki, resmi binutils kılavuzunda bu belgelenmemiştir (henüz?), dolayısiyle kullanmak istiyorsanız, binutils'in 2.11 AMD64 tabanlı sürümünü, <link xlink:href="http://www.lxhp.in-berlin.de/lhpas86.html"/> adresinden inceleyiniz.
+</para>
+</sect3>
+<sect3><title>16 bitlik kip</title>
+<para>
+Binutils (2.9.1.0.25+) i386 kişisel bilgisayarlarda tam olarak 16 bitlik kipi desteklemektedir (yazmaçlar <emphasis>ve</emphasis> adreslemeler). <literal>.code16</literal> ve <literal>.code32</literal>'yi çevirme kipleri arasında geçiş için kullanın.
+</para><para>
+Ayrıca, pekçok kimse (işletim sistemine kitaplık (kit) hazırlayan yazarlar da dahil) tarafından kullanılan zeki hilelerden birisi de GCC'yi 16 bitlik gerçek kip için kod üretmeye zorlamaktır, bu da <literal>asm(".code16\n")</literal> şeklinde bir satıriçi ifade ile sağlanır. GCC halen 32 bitlik adresleme kipleri üretirken, GAS onlar için uygun 32 bitlik önekleri ekleyecektir.
+</para>
+</sect3>
+<sect3><title>Makro desteği</title>
+<para>
+AS, texinfo belgelerinde de belirtildiği gibi makro desteği de barındırmaktadır. Üstelik, GCC <filename>.s</filename> dosyalarını GAS'a göndermek için işlenmemiş birer sembolik makina kodu olarak algılarken, aynı zamanda <filename>.S</filename> dosyalarını GAS'a göndermeden önce CPP süzgecinden de geçirmeyi algılıyabilmektedir. Tekrar tekrar, örnekler için Linux kaynaklarına bakınız.
+</para><para>
+GAS'ın ayrıca GASP önişlemcisi de vardır, ki bu da makrosembolik makine dili hilelerinin GAS'a dahil olmasını sağlamaktadır. GASP, GAS binutils paketi içerisinde gelmektedir. <xref linkend="assembly-howto-p-cpp"/> ve <xref linkend="assembly-howto-p-m4"/> gibi filtre olarak çalışmaktadır. Ayrıntılar hakkında hiç bilgim yok, fakat kendi texinfo dosyasıyla beraber gelmektedir, gözatmak (<command>info gasp</command>), çıktısını almak isteyebilirsiniz. GAS ve GASP bana sıradan makro-çeviriciler gibi gelmektedir.
+</para>
+</sect3>
+</sect2>
+<sect2 xml:id="assembly-howto-p-nasm">
+<title>NASM</title>
+<para>
+Netwide Assembler Projesi, C ile yazılmış, bilinen tüm sözdizimlerine ve nesne biçimlerine uyması gereken, hoş bir i386 çeviricisi sunmaktadır.
+</para>
+<sect3 xml:id="assembly-howto-p-nasm-where">
+<title>NASM'ı nereden bulurum</title>
+<para>
+<link xlink:href="http://nasm.sourceforge.net"/>, <link xlink:href="http://sourceforge.net/projects/nasm/"/> adreslerinde bulabilirsiniz.
+</para><para>
+Kullandığınız olağan yansınızdaki ikilik sürümü <filename>devel/lang/asm/</filename> dizini altındadır. Aynı zamanda <filename>.rpm</filename> ve <filename>.deb</filename> biçiminde Linux dağıtımlarının 'contrib' kısmında bulunması lazım.
+</para>
+</sect3>
+<sect3><title>Ne yapar</title>
+<para>
+Söz dizimi Intel sözdizimidir. Kapsamlı makro işleme desteği eklenmiştir.
+</para><para>
+Desteklenen nesne dosyaları
+<literal>bin</literal>,
+<literal>aout</literal>,
+<literal>coff</literal>,
+<literal>elf</literal>,
+<literal>as86</literal>,
+<literal>obj</literal> (DOS),
+<literal>win32</literal>,
+<literal>rdf</literal> (onların kendi biçimi).
+</para><para>
+NASM, özgür LCC derleyicisi için bir arka uç (backend) olarak kullanılabilir (destek dosyaları eklenmiştir).
+</para><para>
+16 bitlik derleyici olarak BCC kullanmadığınız sürece (ki bu da bu 32 bitlik NASIL belgesinin kapsamı dışındadır), AS86 veya MASM yerine kesinlikle NASM kullanmalısınız, çünkü her platformda çalışır.
+</para><para>
+<note><para>
+NASM, NDISASM isimli bir tersine çevirici (disassembler) ile beraber gelmektedir.
+</para></note>
+</para><para>
+El yazım çözümleyicisi onu GAS'tan daha hızlı hale getirmektedir, buna rağmen elbette ki, 3 bazilyon (1 zilyondan büyük oldukça büyük bir sayı) değişik mimariyi desteklememektedir. Eğer GAS sözdiziminin aksine, Intel tarzı sözdizimini seviyorsanız, bu tercih edeceğiniz çevirici olacaktır.
+</para><para>
+Not: AT&amp;T ve Intel çeviricileri arasında kaynak kod dönüşümünü sağlayan <link linkend="assembly-howto-s-res">çok az yazılım</link> bulunmaktadır; bazıları her iki yönde de çeviri yapabilmektedir.
+</para>
+</sect3>
+</sect2>
+<sect2 xml:id="assembly-howto-p-other"><title>Diğer Sembolik Makina Çeviricileri</title>
+<para>
+Değişik ve göze çarpan özellikleriyle ilginizi çekebilecek başka sembolik makina çeviricileri de bulunmaktadır.
+</para><para><note><para>
+Klasik olmayan/Yüksek seviyeli gibi değişik geliştirilme seviyelerinde olabilirler.
+</para></note></para>
+<sect3 xml:id="assembly-howto-p-as86"><title>AS86</title>
+<para>
+AS86 makro desteğine sahip 16 bit ve 32 bitlik çalışma kipleri olan 80*86 çeviricisidir. Intel sözdizimine sahiptir fakat adresleme kiplerinde ufak farklılıkları vardır. Bir süre önce Linux çekirdeğinin de içinde bulunduğu pekçok projede kullanılıyordu. Daha sonra bu projeler GAS ve NASM içerisinde kullanılmaya başlandı. Bildiğim kadarıyla ELKS halen kullanmaya devam etmektedir.
+</para><para>
+AS86 <link xlink:href="http://www.cix.co.uk/~mayday/"/> adresinde bin86 paketi içerisinde bir bağlayıcı ile (ld86) veya ayrı bir dosya olarak bulunabilir. Kılavuz sayfalarında ve kaynak paketteki asm.doc içerisinde belgelendirmesi bulunmaktadır. Şüpheye düştüğünüzde kaynağın kendisi iyi bir kılavuzdur: İyi şekilde açıklama satırları olmasa da yazılımlama şekli oldukça doğrudur. ELKS, LILO veya Tunes 0.0.0.25 içerisinde AS86 nasıl kullanıldığına bakmak isteyebilirsiniz.
+</para><para>
+<note><para>
+Çekirdeğin 2.4 sürümünden önce tamamen modası geçmiş bir sürümü, HJLu tarafından, bin86 adı ile, şu an herhangi bir Linux GCC deposunda bulunabilir, sadece Linux çekirdeğini derlemek için dağıtılıyordu. Fakat hiç kimseye bunu Linux çekirdeğini derlemek dışında başka bir şeyde kullanmasını önermem. Bu sürüm sadece elden geçirilmiş bir minix nesne dosyası içermektedir ve bu da GNU binutils ya da başka herhangi bir şey tarafından desteklenmediği gibi 32 bitlik kipinde bazı hatalar vardır, dolayısiyle onu sadece Linux çekirdeğini derlemekte kullanırsanız daha iyi olur.
+</para></note></para>
+<sect4><title>Belgeleri nerden bulurum</title>
+<para>
+Kaynak paketteki kılavuz sayfalarına ve <filename>as.doc</filename> belgesine bakınız. Şüpheye düşüldüğünde, kaynağın kendisi en iyi belgedir: yorum satırları iyi yazılmamıştır, fakat yazılım geliştirme tarzı çok açıklayıcıdır. as86'nın ELKS, LILO veya Tunes 0.0.0.25... uygulamalarında nasıl kullanıldığına  bakabilirsiniz.
+</para></sect4>
+<sect4><title>AS86'nın BCC ile kullanımı</title>
+<para>
+<filename>.s</filename> asm'yi a.out <filename>.o</filename> nesne ve <filename>.l</filename> listeleme dosyasına dönüştürmek için BCC kullanımıyla ilgili GNU Makefile dosya satırı şöyledir:
+</para><para>
+<screen>%.o %.l:        %.s
+        bcc -3 -G -c -A-d -A-l -A$*.l -o $*.o $&lt;
+</screen>
+</para><para>
+Eğer herhangi bir listeleme istemezseniz, <literal>%.l</literal>, <literal>-A-l</literal> ve <literal>-A$*.l</literal> kısımlarını kaldırın. a.out dışında başka bir şey isterseniz, BCC belgelerini diğer desteklenen dillerle ilgili olarak inceleyebilirsiniz ve/veya GNU binutils <command>objcopy</command> uygulamasını kullanabilirsiniz.
+</para></sect4></sect3>
+<sect3><title>YASM</title>
+<para>
+YASM, NASM çeviricisinin tamamen yeniden GNU GPL (bazı kısımları "yeni" BSD Lisansı altındadır) altında tekrar yazılmış halidir. Temelden itibaren çoklu söz dizimine (örn. NASM, TASM, GAS, v.b.) ve çoklu çıktı nesne biçimlerine izin vermek için tasarlanmıştır. Tüm tasarım içerisindeki önemli modüllerden biri de eniyileme gerçekleştiren modüldür.
+</para><para>
+Umut verici görünmektedir; yoğun şekilde bir gelişim sürecindedir, siz de bunda yer almak isteyebilirsiniz. <link xlink:href="http://www.tortall.net/projects/yasm/"/> adresine bakınız.
+</para>
+</sect3>
+<sect3><title>FASM</title>
+<para>
+FASM (düz çevirici-flat assembler) 'düz gerçek modda' ('flat real mode') çalışan, verimli ve hızlı bir 80x86 çeviricisidir. Diğer pekçok 80x86 çeviricisinin tersine, ihtiyaç duyduğu bilgiyi eklemek için sadece kaynak koda gereksinim duyar. Kendi diliyle yazılmıştır, çok küçük ve hızlıdır. DOS/Windows/Linux altında çalışabilir, DOS EXE, Win32 PE ve COFF çıktıları gibi, düz ikilikler üretir (flat binary). <link xlink:href="http://fasm.sourceforge.net/"/> adresine bakınız.
+</para>
+</sect3>
+<sect3><title>OSIMPA (SHASM)</title>
+<para>
+osimpa, 80x86 ve sonraki kuşakları için, tamamen GNU Bash komut yorumlama kabuğunda yazılmış olan bir çeviricidir. osimpa'nın atası shasm idi. osimpa daha iyi ayıklanmış, faydalı Linux ELF çalıştırılabilir dosyaları üretebilir ve pekçok HLL-benzeri eklentisi ve yazılımcıya uygun komutları vardır.
+</para><para>
+Elbetteki, diğer çeviricilerden daha yavaştır. Kendi söz dizimi vardır (x86 opkodları için kendi isimlerini kullanır). Oldukça iyi bir belgeleleme eklenmiştir. <link xlink:href="ftp://linux01.gwdg.de/pub/cLIeNUX/interim/"/> adresine bir göz atın. Muhtemelen sıradan işler için kullanmayacaksınız, fakat en azından ilginç bir alan olarak ilginizi hak etmektedir.
+</para>
+</sect3>
+<sect3><title>AASM</title>
+<para>
+Aasm değişik hedef mimarileri desteklemek için tasarlanmış gelişmiş bir çeviricidir. Kolayca genişletilebilmesi için tasarlanmıştır ve her bir işlemci ve ikilik dosya biçimi için yapılan yekpare çevirici tasarımım için bir alternatif olarak düşünülmelidir.
+</para><para>
+Aasm sunduğu sembol alanı, ifade makinası, büyük tamsayı desteği, makro yeteneği ve çok sayıdaki ve doğru uyarı mesajları gibi ileri özellikleri ile sembolik makina yazılımlamayı kolay hale getirmelidir. Değişken modüler yapısı dinamik kütüphanelerin eklenmesine imkan sağlamaktadır.
+</para><para>
+Girdi modulü nasm, tasm, masm, v.b  gibi söz dizimlerini destekler. x86 çevirici modulü MMX, SSE ve 3DNow'ı da içeren P6'ya kadar uzanan opkod uzantılarını destekler. F-CPU ve SPARC çevirici modulleri geliştirilme aşamasındadır.
+</para><para>
+<link xlink:href="http://savannah.nongnu.org/projects/aasm/"/>
+</para></sect3>
+<sect3><title>TDASM</title>
+<para>
+Table Driven Assembler (TDASM) herhangi bir sembolik makina dili için <emphasis>özgür</emphasis>, taşınabilir, platformlar arasında uygunluk gösteren bir çeviricidir. Derleme işlemini tanımlayan bir tablo kullanılarak herhangi bir hedef işlemci için onu bir derleyici olarak kullanmak mümkün olmalıdır.
+</para><para>
+<link xlink:href="http://www.penguin.cz/~niki/tdasm/"/> adresinden temin edilebilir.
+</para>
+</sect3>
+<sect3><title>HLA</title>
+<para>
+<link xlink:href="http://http://webster.cs.ucr.edu/AsmTools/HLA/">HLA</link> Yüksek Seviyeli Sembolik Makina Dilidir (<command>H</command>igh <command>L</command>evel <command>A</command>ssembly). Değişken tanımlama, yordam tanımlama ve yordam çağrıları için yüksek seviyeli dile benzer (Pascal, C/C++ ve diğer yüksek seviyeli dillere benzer) bir sözdizimi kullanmaktadır. Standart makina dili komutları için değiştirilmiş bir sözdizimi kullanmaktadır. Aynı zamanda yüksek seviyeli dile özgü denetim yapıları da (<literal>if, while, repeat..until</literal>, v.b) sağlayarak, daha okunabilir kodlar yazılmasını sağlamaktadır.
+</para><para>
+HLA özgürdür ve kaynak kodlarıyla beraber gelmektedir, Linux ve Win32 sürümleri de mevcuttur. Win32 için MASM'a ve de MS-link'in Win32 de çalışan 32 bitlik sürümüne ihtiyacınız vardır, Linux üzerinde GAS'a ihtiyacınız vardır, çünkü HLA özelleştirilmiş sembolik makina kodu üretir ve en son aşamadaki çevirme ve bağlama işlemlerinde bu çeviriciyi kullanır.
+</para>
+</sect3>
+<sect3><title>TALC</title>
+<para>
+<link xlink:href="http://www.cs.cornell.edu/talc/">TALC</link> bir diğer MASM/Win32 tabanlı derleyicidir (yine de ELF çıktısını desteklemektedir, değil mi?).
+</para><para>
+TAL, <command>T</command>yped <command>A</command>ssembly <command>L</command>anguage sözcüklerinin kısaltmasıdır. Yazım açıklamalı geleneksel türsüz sembolik makina dilini, bellek yönetim ilkellerini ve yazım kurallarının bir ses kümesini içermesi yanında bellek güveliğini sağlama, akış güvenliği denetimi ve TAl yazılımlarının yazım güvenliği konusunda zenginleştirilmiştir. Bunun yanında yazma yapıları, kayıtlar ve yapılar içeren, diziler, polimorfik ve yüksek seviyeden işlevler içeren, olağandışılıklar, soyut veri yapıları, altyazımlar ve modüller içeren kaynak yazılımlama dili özelliklerini çözümleyecek kadar, yeterince açıklayıcıdır. TAL düşük seviyeli derleyici eniyilemelerini kabul etme esnekliğiyle tek başına önemli bir yere sahiptir. Sonuç olarak, TAL tür yönlendirmeli derleyiciler, taşınabilir kod uygulamarı içerisinde doğrulanmış güvenli kod veya genişleyebilir işletim sistemi çekirdekleri üretmek isteyen biri için ideal bir platformdur.
+</para>
+</sect3>
+<sect3><title>Özgür Pascal (Free Pascal)</title>
+<para>
+<link xlink:href="http://www.freepascal.org/">Free Pascal</link> dahili bir 32 bitlik çeviriciye (NASM tablolarına dayanan) sahiptir ve seçeneklerle ayarlanabilen çıktıları şunlardır:
+</para><para>
+<itemizedlist>
+<listitem>İkilik (çapraz olarak .o derlendiğinde ELF ve coff) çıktı</listitem>
+<listitem>NASM</listitem>
+<listitem>MASM</listitem>
+<listitem>TASM</listitem>
+<listitem>AS (aout,coff, elf32)</listitem>
+</itemizedlist>
+</para><para>
+MASM ve TASM çıktılarının hataları diğer ikisi kadar güzel ayıklanmamıştır, fakat bu da bazen yararlı olabilir.
+</para><para>
+Çeviricinin görünüşü ve kullanımı Turbo Pascal'ın dahili BASM'ına dayanmaktadır, IDE benzeri renklendirmeleri desteklemektedir, FPC'de tam olarak gcc ile içiçe geçebilir (C düzeyinde, C++ değil).
+</para><para>
+Aptal bir RTL kullanarak bile, birisi saf sembolik makina kodu üretebilir.
+</para>
+</sect3>
+<sect3><title>Win32Forth derleyicisi</title>
+<para>
+Win32Forth, Win32s, Win95, Win/NT altında çalışan, <emphasis>özgür</emphasis> bir 32-bit ANS FORTH sistemidir. FORTH dilini yansıtacak 32 bitlik özgür bir derleyici (önekli veya sonekli bir sözdizimine sahip olabilir) barındırır. Makro işleme FORTH dilinin gücüyle gerçeklenir; yine de, girdi ve çıktı içeriğini tek destekleyen Win32For'un kendisidir (<filename>.obj</filename> dosyalarının dökümlenmesi yoktur, fakat bu özelliği ekleyebilirsiniz). <link xlink:href="ftp://ftp.forth.org/pub/Forth/Compilers/native/windows/Win32For/"/> adresine bakınız.
+</para>
+</sect3>
+<sect3><title>Terse</title>
+<para>
+<link xlink:href="http://www.terse.com/">TERSE</link>, x86 ailesi için en öz sembolik makine dili sözdizimini sağlayan  yazılım geliştirme aracıdır! Yine de şeytani bir yazılımdır. Bir yerlerde, orjinal yazarın sözdizimine sahip çıktığı, değersiz hileler içerdiğinden sonradan ortadan kaldırılan, özgür bir kopyasının olduğu söylenir. Eğer sembolik makina dili korsanlığıyla ilgili kendinize ilgi çekici bir proje arıyorsanız, sizi NASM için bir terse-sözdizimi ucu geliştirmeye davet ediyorum, tabii eğer o sözdizimini severseniz.
+</para><para>
+<link xlink:href="news:comp.compilers">comp.compilers</link>'da tarihi bir not:
+</para><para><literallayout indent="0">
+999/07/11 19:36:5, moderator şöyle yazmış:
+
+"Çeviricilerin oldukça kötü bir söz diziminin olması zorunluluğunun
+bir sebebi yok. Yaklaşık 30 yıl önce, Niklaus Wirth'in PL360'ını
+kullandım, temelde S/360 çeviricisi olan, Algol sözdizimine sahip ve
+döngülerin açık dallanmalara dönüşmesinden dolayı biraz sentetik şeker
+gibi bir çeviriciydi. Aslında gerçekten de bir çeviriciydi, örn.
+ifadenizi yazmaçlara gidecek açık değer atamalarıyla yazmalıydınız,
+fakat oldukça hoştu. Gene de Algol W ile, Algol'un hızlı bir alt kümesi,
+Pascal'ın atası ile yazmaya değerdi. Her zaman söylendiği gibi,
+atalarına nazaran önemli bir gelişmeydi. -John"
+</literallayout>
+</para>
+</sect3>
+<sect3><title>Özgür olmayan ve/veya 32-bit olmayan x86 çeviricileri</title>
+<para>
+Bunların pekçoğunu, x86 sembolik makina dili yazılımlamanın temelleriyle beraber, <link linkend="assembly-howto-s-res-gen">Raymond Moon'un x86 sembolik makina dili SSS</link>'inde bulabilirsiniz.
+</para><para>
+DOS tabanlı tüm çeviricilerin, Linux DOS emülatöründe, aynı zamanda benzer diğer emüilatörlerde çalışması gerektiğini unutmayın, dolayısiyle eğer elinizde bir tane varsa, onu hala gerçek bir işletim sistemi içerisinde kullanabilirsiniz. DOS tabanlı çeviriciler, GNU BFD kütüphanesi tarafından desteklenen, COFF ve/veya diğer nesne dosyalarını destekler, dolayısiyle bunları kendi özgür 32 bitlik araçlarınızla kullanabilirsiniz ve belki de GNU <command>objcopy</command>'i de (binutils'in bir parçası) bir dönüştürme aracı olarak kullanabilirsiniz.
+</para>
+</sect3>
+</sect2>
+</sect1>
+
+<sect1 xml:id="assembly-howto-s-meta">
+<title>Düşük seviye yazılımlama</title>
+<para>
+Sembolik makina dili ile yazılımlama, yazılımın kritik kısımları için bir can sıkıntısıdır.
+</para><para>
+Doğru görev için uygun araçları kullanmalısınız, dolayısiyle eğer uygun değilse sembolik makina dilini kullanmak için seçmeyin; pekçok durumda C, OCaml, Perl, Scheme daha iyi birer seçim olabilir.
+</para><para>
+Yine de, makina üzerinde bu araçların makina üzerinde yeterince iyi olanaklar sunmadığı anlar vardır ve sembolik makina dili böylesi durumlar için faydalı veya gereklidir. Böyle bir durumda, sonsuz kere kullanılabilir tanımlamalar içerisine yerleştirilmiş tekrar eden kalıplara izin veren makroyazılımlama ve metayazılımlama sistemini takdir edeceksiniz, ki bu sistem aynı zamanda, daha güvenli yazılımlama, model değişiminin otomatik üretimi, vs. sağlamaktadır. Yalın çeviriciler genelde yetersizdir, hatta sadece C ile ilintilenecek küçük yordamlar yaparken bile.
+</para>
+<sect2 xml:id="assembly-howto-external">
+<title>Harici Filtreler</title>
+<para>
+Sizin çeviricinizde her ne makro desteği varsa veya her ne dilini (hatta C!) kullanıyorsanız, eğer dil yeterince sizin için ifadesel değilse, bir Makefile kuralı ile dosyalarınızı harici bir filtreden şu şekilde geçirebilirsiniz:
+</para>
+<screen>
+%.s:    %.S other_dependencies
+        $(FILTER) $(FILTER_OPTIONS) &lt; $&lt; > $@
+</screen>
+
+<sect3 xml:id="assembly-howto-p-cpp"><title>CPP</title>
+<para>
+CPP gerçekten çok anlamlı, ifadesel değildir, fakat kolay şeyler için yeterlidir ve GCC tarafından şeffaf şekilde çağrılır.
+</para><para>
+Kısıtlamalarına bir örnek olarak, yokediciler de (destructors), bildirim bloğunun sonunda çağrıldıklarından içinde nesne bildirimleri yapamazsınız; bölümlere veya etki alanlarına, vs. sahip olamazsınız.
+</para><para>
+CPP herhangi bir C derleyicisi ile birlikte gelir. Yine de, ne kadar vasat olduğunu düşünürsek, eğer onu C'siz kullanmayı başarabilirseniz de, ondan uzak durun.
+</para>
+</sect3>
+<sect3 xml:id="assembly-howto-p-m4"><title>M4</title>
+<para>
+M4 size, Turing dengi bir dil, yinelemeler (recursions), düzenli ifadeler (regular expression) ile,  macro işlemenin tüm gücünü vermektedir. CPP'nin yapamadığı herşeyi onunla yapabilirsiniz.
+</para><para>
+M4 kullanarak yapılan ileri düzey yazılımlama örnekleri için <link xlink:href="ftp://ftp.forth.org/pub/Forth/Compilers/native/unix/this4th.tar.gz">macro4th (this4th)</link> veya <link xlink:href="ftp://ftp.tunes.org/pub/tunes/obsolete/dist/tunes.0.0.0/tunes.0.0.0.25.src.zip">Tunes 0.0.0.25 kaynaklarına</link> bakınız.
+</para><para>
+Yine de, işlevsel olmayan tırnak kullanımı (quoting) ve bunun kaldırılması (disquoting) şeklindeki anlamsal yapı (semantics), eğer <emphasis>ileri</emphasis> düzey makro yazılımlama yapmak istiyorsanız sizi süreklilik gösteren içiçe makro tarzı (continuation-passing tail-recursive macro style) kullanmaya zorlamaktadır (ki bu da insana TeX'i hatırlatıyor - herneyse, TeX'i yazı yazmak dışında bir makroişlemci olarak kullanan kimse var mı?). Tırnak ve yineleme (recursion) kullanımına hiç izin vermeyen CPP'den daha kötü değildir.
+</para><para>
+M4'ü kullanmak için doğru sürüm, en çok özelliği, en az hatası ve kısıtlamaları olan <literal>GNU m4 1.4</literal>'tür (varsa daha sonraki sürümleri). m4 herhangi bir şey için yavaş çalışacak şekilde tasarlanmıştır fakat en kolay kullanıma sahiptir, ki bu da çoğu sembolik makina dili için makul bir durumdur (milyonlarca satır sembolik makina kodu yazmıyorsunuz değil mi?).
+</para>
+</sect3>
+<sect3><title>Kendi filtreleriniz ile makroyazılımlama</title>
+<para>
+Bilindik araçlarla kendi basit makro genişleme filtrelerinizi yazabilirsiniz: perl, awk, sed, v.b. Biraz daha hızlı gerçeklenebilir ve herşeyi denetmersiniz. Fakat, elbetteki, makroişlemede güç, "zor yol" anlamına gelmektedir.
+</para>
+</sect3>
+</sect2>
+<sect2 xml:id="assembly-howto-meta">
+<title>Metayazılımlama</title>
+<para>
+Makroları genişleten harici bir filtre kullanmak yerine, işleri yapmanın bir yolu da tüm diğer yazılımların bir kısmını ya da tamamını yazan yazılımlar yazmaktır.
+</para><para>
+Örneğin, çıktı olarak aşağıdakileri gerçeklemek için kaynak kod üreten bir yazılım kullanabilirsiniz:
+</para><para>
+<itemizedlist>
+<listitem>sinüs/kosinüs/vs. arama tablolarını üretmek için,</listitem>
+<listitem>bir ikilik dosyanın kaynak kodu gösterimini elde etmek için,</listitem>
+<listitem>hızlı ekran yordamlarına biteşlemleri derlemek için,</listitem>
+<listitem>normal kaynak koddan başka, belgelendirme, başlangıç/bitiş kodları, tanımlama tablolarını elde etmek için,</listitem>
+<listitem>perl/shell/scheme betiğinden üretilen rastgele işlem yapan özelleştirilmiş sembolik makina koduna sahip olmak için,</listitem>
+<listitem>çapraz başvuru tabloları ve kod bölümlerinden sadece tek noktada tanımlı veri etkileşimi sağlamak için,</listitem>
+<listitem><para>
+v.b.
+</para></listitem>
+</itemizedlist>
+</para><para>
+Bunun hakkında düşünün!
+</para>
+<sect3><title>Derleyicilerdeki arka uçlar</title>
+<para>
+GCC, SML/NJ gibi derleyiciler, Objective CAML (OCAML), MIT-Scheme, CMUCL, v.b.'nin, kullanmayı tercih edebileceğiniz, kendi dahili çevirici arkauçları (backend) vardır, eğer yarı otomatik olarak bu dillere göre ya da elden geçirdiğiniz dillerden kod üretmeye niyetlenirseniz: uzun sembolik makina kodları yazmak yerine, bir derleyiciyi değiştirebilirsiniz, böylece uzun sembolik makina kodu çöpe gider!
+</para>
+</sect3>
+<sect3><title>New-Jersey makina kodu araç seti</title>
+<para>
+Sembolik makina kodunu değiştirecek bir kod üretim tabanı oluşturmak için Icon yazılımlama dilini kullanan (deneme açamasındaki ML sürümü ile) bir proje vardır. <link xlink:href="http://www.eecs.harvard.edu/~nr/toolkit/"/> adresine bakınız.
+</para>
+</sect3>
+<sect3><title>TUNES</title>
+<para>
+Özgür Fikirli Bilgisayar Sistemi (Free Reflective Computing System) için <link xlink:href="http://www.tunes.org/">TUNES Projesi</link>, kendi gelişim sürecinin bir parçası şeklinde, Scheme dilinin bir uzantısı olarak kendi çeviricisini geliştirmektedir. Henüz hiç çalışmamıştır, fakat yardımlar kabul edilmektedir.
+</para><para>
+Çevirici soyut sözdizim ağaçlarını (abstract syntax trees) değiştirmektedir, böylece sembolik makina sözdizimi çeviricisi, tersine çevirici (disassembler), genel sembolik makina dili/derleyici arka ucu, v.b. tabanı olarak eşit şekilde hizmet verebilmektedir. Aynı zamanda, gerçek bir dilin, Scheme, tüm gücü, makroyazılımlama ve metayazılımlama için onu karşı konulmaz hale getirmektedir.
+</para>
+</sect3>
+</sect2>
+</sect1>
+
+<sect1 xml:id="assembly-howto-s-call"><title>Çağrı Uzlaşımları</title>
+<sect2 xml:id="assembly-howto-linux"><title>Linux</title>
+<sect3><title>GCC'ye ilintileme</title>
+<para>
+C-asm karışımı projeler üretiyorsanız bu tercih edilen yoldur. <application>GAS</application> açıklamaları olan Linux çekirdeği <application>.s</application> dosyalarından örnekleri ve GCC belgelerini inceleyiniz (<application>as86</application> ile ilgili olanları).
+</para><para>
+32 bitlik geridönüş adresi üzerinde, 32 bitlik bağımsız değişkenler yığıta (stack) ters sözdizimsel sırada itilirler (push) (böylece doğru sırada erişilir/çıkarılırlar (pop)). <literal>%ebp</literal>, <literal>%esi</literal>, <literal>%edi</literal> ve <literal>%ebx</literal> çağrılan tarafından kullanılır, diğer yazmaçlar ise çağırıcı tarafından kullanılır; <literal>%eax</literal> sonuçları tutmak içindir veya <literal>%edx:%eax</literal> 64 bitlik sonuçlar için kullanılır.
+</para><para>
+FP yığıtı (FP stack): Emin değilim ama, sanırım tüm sonuç, saklanmış çağrıcıların tamamı <literal>st(0)</literal> içindeydi. Eğer daha fazla ayrıntı istiyorsanız <link xlink:href="http://www.caldera.com/developer/devspecs/"/> adresindeki SVR4 i386 ABI belirtimi iyi bir başvuru kaynağıdır.
+</para><para>
+GCC'nin çağrı uzlaşımlarını değiştirmek için, yazmaçları önceden ayırtan, yazmaçlarda bağımsız değişkenler barındırılmasını sağlayan, FPU'yu dikkate almayan, v.b. seçenekleri olduğunu unutmayın. i386 <filename>.info</filename> sayfalarına bakınız.
+</para><para>
+Standart GCC çağrı uzlaşımlarını izleyecek bir işlev için <literal>cdecl</literal> ve <literal>regparm(0)</literal> bildirimlerini yapmanız gerektiğine dikkat edin. GCC info sayfasından <literal>C Extensions::Extended Asm::</literal> kısmına bakınız. Aynı zamanda Linux'un kendi <literal>asmlinkage</literal> makrosunu da nasıl tanımladığına bakınız.
+</para>
+</sect3>
+
+<sect3><title>ELF ve a.out arasındaki sorunlar</title>
+<para>
+Bazı C derleyicileri, diğerleri yapmadığı halde, her sembolden önce bir alt çizgi yerleştirirler.
+</para><para>
+Özellikle, Linux a.out GCC böylesi bir ön yerleştirmeyi yapar, oysa ki Linux ELF GCC yapmamaktadır.
+</para><para>
+Eğer her iki davranış biçimiyle de aynı anda uğraşmak isterseniz, varolan paketlerin bunu nasıl yaptıklarına bakınız. Mesela, Elk, qthreads, OCaml... gibi eski bir Linux kaynak ağacı edinin.
+</para><para>
+Ayrıca, örneğin, <function>foo()</function> işlev çağrısının gerçekte bir makine dili kodu olan <function>bar</function>'ın çağrılmasını sağlaması için şu şekilde bir ek ifade ile örtük C->asm isim değişikliğini zorlayabilirsiniz:
+</para>
+<screen>void foo asm("bar") (void);
+</screen>
+<para>
+Binutils paketindeki <command>objcopy</command> uygulamasının a.out nesnelerinizi ELF nesnelerine dönüştürmeyi mümkün kılması gerektiğini unutmayın, hatta bazı durumlarda tam tersine de imkan tanır. Daha genel olarak, pekçok dosya biçimi arasında dönüşüm gerçekleştirir.
+</para>
+</sect3>
+<sect3><title>Doğrudan Linux sistem çağrıları (syscalls)</title>
+<para>
+Genelde <application>C kütüphanesi</application> (<acronym>libc</acronym>) kullanmanın tek yol olduğu ve doğrudan sistem çağrıları yapmanın kötü olduğu söylenir. Bu doğrudur. Bir bakıma... Genel olarak, <application>libc</application> kütüphanesinin kutsal olmadığını bilmelisiniz ve <emphasis>pekçok</emphasis> durumda sadece bazı denetimler yapar, sonra çekirdeğe çağrı yapar ve  ardından errno'ya atama yapar. Bunu kendi yazılımınızda da yapabilirsiniz (eğer ihtiyacınız varsa) ve yazılımınız bir düzine kat daha küçük olacaktır, bu da gelişmiş bir başarım artışına sebep olacaktır, bu da sırf paylaşımlı kütüphaneleri kullanmadığınızdan kaynaklanacaktır (durağan (static) kütüphaneler daha hızlıdır). Sembolik makina dili ile yazılımlamada <application>libc</application> kullanımı pratik birşeyden çok zevk/inanış meselesidir. Linux'un POSIX standartlarına uygun olmayı hedeflediğini unutmayın, benzer şekilde <application>libc</application> de. Bu da, hemen her <application>libc</application> "sistem çağrısı" sözdizimin gerçek çekirdek sistemi çağrılarındaki sözdizimiyle örtüşmesi anlamına gelir (ve tam tersi). Buna ek olarak, <application>GNU libc (glibc)</application> sürümden sürüme daha yavaş hale gelmekte ve daha çok bellek tüketmektedir. İlerde siz de kendi, değişik türlerde, <application>libc</application>'ye özel işlevlerinizi (sadece birer sistem çağrısı değil) tanımlayacaksınız (<function>printf()</function> ve şürekası)... Ve buna hazırsınız, değil mi? <literal>:)</literal>
+</para><para>
+Doğrudan sistem çağrıları yapmanın artı ve eksileri şu şekilde özetlenebilir:
+</para>
+<bridgehead>Artılar</bridgehead><para>
+<itemizedlist>
+<listitem>olası en küçük boyut; son baytı sistem dışında bırakmak</listitem>
+<listitem>olası en yüksek hız; favori karşılaştırmalı değerlendirme (benchmark) dışı döngüleri bunun dışında bırakmak</listitem>
+<listitem>tam denetim: yazılım/kütüphanenizi size özgü dile veya bellek gereksinimlerine veya herhangi bir şeye uydurabilirsiniz.</listitem>
+<listitem>libc çerçöplerinin yol açacağı bir kirlilik olmaz</listitem>
+<listitem>C çağrı uzlaşımlarının yol açacağı bir kirlilik olmaz (eğer kendi dilinizi veya ortamınızı tasarlıyorsanız)</listitem>
+<listitem>durağan kütüphaneler libc yükseltmelerinden ve çökmelerinden veya yorumlayıcıya <literal>#!</literal> yolu ile asılmanızdan sizi bağımsız kılar. (ve daha hızlıdır)</listitem>
+<listitem>biraz da eğlence içindir (sembolik makina dili dışında heyecanlanmaz mısınız?)</listitem>
+</itemizedlist>
+</para><bridgehead>Eksiler</bridgehead>
+<itemizedlist>
+<listitem><para>
+Eğer bilgisayarınızda bir başka yazılım da libc kullanıyorsa, libc kodunun yinelenmesi otomatik olarak belleğin, korunması yerine, boşa harcanmasına sebep olacaktır.
+</para></listitem><listitem><para>
+Pekçok durağan ikilikte (static binary) gereksiz yere tanımlanan servisler bellek israfıdır. Fakat kendi libc yerdeğiştirmenizin bir paylaşımlı kütüphane olmasını sağlayabilirsiniz. (NBB: Bu  yukarıdaki iddiasını yalanlamıyor mu? <literal>;-)</literal>)
+</para></listitem><listitem><para>
+Herşeyi sembolik makina dili ile yazmak yerine, bir çeşit bayt kodu, sözcük kodu veya yapısal yorumlayıcıya sahip olmakla, boyut çok daha iyi korunur. (derleyicinin kendisi C veya sembolik makina dilinde yazılabilir). İkilik çeşitliliğini küçük tutmanın en iyi yolu, çoklu ikilikler yapmamaktır, yerine <literal>#!</literal> önekiyle başlayan yorumlanan işlem dosyaları kullanmaktır. Bu, OCaml'ın sözcük kodu kipinde çalıştığındaki durumdur (eniyilenmiş doğal kod kipine karşın) ve de libc kullanımıyla uyumludur. Bu aynı zamanda unix araçlarının yeniden gerçeklenimi olan Tom Christiansen'in Perl Güç Araçları (Perl PowerTools)'nın nasıl çalıştığının açıklamasıdır. Son olarak, bunları küçük tutmanın bir yolu da, tam olarak yolu kodlanmış harici bir dosyaya bağımlı olmamaktır, bu da kütüphane veya yorumlayıcı olsun, tek bir ikilik dosyaya sahip olmak ve buna sabit veya sembolik bağlar yapmaktır: aynı ikilik size en makul alanda, alt yordamların gereksiz kullanımı veya gereksiz ikilik başlıkları olmadan,  ihtiyacınız olan herşeyi sunacaktır; kendine özel davranışı <parameter>argv[0]</parameter> değerine bakarak yönlendirecektir; bu durumda tanınan ismiyle çağrılmaz, bir kabuğa öntanımlı olabilir ve muhtemelen bir yorumlayıcı olarak da kullanışlı olmuş olur!
+</para></listitem><listitem><para>
+Nadir linux sistem çağrıları yanında libc'nin sunduğu pekçok işlevsellikten faydalanamazsınız: malloc, thread, locale, password, yüksek-seviyeli ağ yönetimi, v.b. işlevsellikler, kılavuz sayfalarının 2. bölümünde değil, 3. bölümünde yer alır.
+</para></listitem><listitem><para>
+Bu yüzden, libc'nin, <function>printf()</function>'den <function>malloc()</function> ve <function>gethostbyname</function>'e uzanan çok sayıda parçalasını yeniden gerçeklemek zorunda kalabilirsiniz. libc varken bu gereksizdir, hatta <emphasis>oldukça</emphasis> sıkıcı olabilir. Bazılarının libc'nin bazı kısımları için "hafif" (ligth) yerdeğiştirmeler yazdıklalarına dikkat ediniz - bunları inceleyiniz! (Redhat'in minilibc'si, Rick Hohensee'nin <link xlink:href="ftp://linux01.gwdg.de/pub/cLIeNUX/interim/libsys.tgz">libsys</link>'si, Felix von Leitner'in <link xlink:href="http://www.fefe.de/dietlibc/">dietlibc</link>'si, Christian Fowelin'in <link xlink:href="http://www.fowelin.de/christian/computer/libASM/">libASM</link>'si, <link xlink:href="http://linuxassembly.org/asmutils.html">asmutils</link> projesi de tamamen saf sembolik makina libc'si ile çalışmaktadır)
+</para></listitem><listitem><para>
+Durağan kütüphaneler sizi, libc güncellemelerinden ve aynı zamanda, gzip-sıkıştırılmış dosyalarını düzgün şekilde ihtiyaç olduğunca açmanızı sağlayan,  <application>zlib</application> paketi gibi libc eklentilerinden faydalanmaktan alıkoyar.
+</para></listitem><listitem><para>
+libc tarafından eklenen çok az sayıdaki komutun sistem çağrılarının maliyetine kıyasla <emphasis>küçük</emphasis> bir hız yükü olabilir. Eğer hız gözönüne alınırsa, temel sorununuz, onların sarmalayıcı işlevlerini değil, kendi sistem çağrılarınızın kullanımıdır.
+</para></listitem><listitem><para>
+Kendi çağrı uzlaşımları olan ve standart uzlaşım kullanımında kural dönüşüm yüküne (high convention-translation overhead) büyük önem veren L4Linux gibi Linux'un mikro çekirdek sürümleri çalıştırılırken, sistem çağrıları için standart sembolik makina dili API'leri kullanmak, libc API'leri kullanmaktan daha yavaştır (L4Linux, sistem çağrı API'leri ile yeniden derlenmiş şekilde gelir; elbette kendi kodunuzu onun API'leriyle tekrar derleyebilirsiniz).
+</para></listitem><listitem><para>
+Genel hız eniyileme konularıyla ilgili olarak önceki konulara bakınız.
+</para></listitem><listitem><para>
+Eğer sistem çağrıları size göre çok yavaşsa, kullanıcı adasında kalmak yerine çekirdek kaynak kodlarını (C dilindeki) elden geçirmeyi isteyebilirsiniz.
+</para></listitem></itemizedlist>
+<para>
+Eğer yukarıdaki artı ve eksileri zihninizde iyice ölçüp tarttıysanız ve hala doğrudan sistem çağrılarını kullanmak istiyorsanız, size bazı önerilerim olacak:
+</para>
+<itemizedlist>
+<listitem><para>
+Sistem çağrı işlevlerinizi taşınabilir bir şekilde, C dilinde (sembolik makina dilinin taşınamaz özelliğine karşın) <filename>asm/unistd.h</filename> ile sunulan makroları kullanarak tanımlayabilirsiniz.
+</para></listitem><listitem><para>
+Sistem çağrısı işlevlerini değiştirmeyi deneyecekseniz, libc'den kaynak kodunu alıp inceleyin. (Ve daha iyisini yapabileceğinizi düşünüyorsanız, bunu yazarlara bildirin!)
+</para></listitem>
+<listitem><para>
+İstediğiniz her işi yapan bir sembolik makina kodu için <xref linkend="assembly-howto-s-res"/>ına bakınız.
+</para></listitem>
+</itemizedlist>
+<para>
+Temelde, <literal>eax</literal> içerisine <literal>__NR_</literal>sistemçağrı_ismi numarası (<filename>asm/unistd.h</filename> dosyasındadırlar) ile <function>int 0x80</function> değeri ve bağımsız değişkenleri de sırasıyla (<link linkend="assembly-howto-six-arg">altı</link>ya kadar) <literal>ebx</literal>, <literal>ecx</literal>, <literal>edx</literal>, <literal>esi</literal>, <literal>edi</literal>, <link linkend="assembly-howto-six-arg">ebp</link> içine konur.
+</para><para>
+Sonuç <literal>eax</literal> içerisinde döndürülür, negatif sonuçlarda hata ile döner, bunun karşılığı da libc içerisinde <literal>errno</literal>'dur. Kullanıcı yığıtına dokunulmaz, dolayısiyle bir sistem çağrısı yaparken geçerli bir kullanıcı yığıtına ihtiyacınız yoktur.
+</para><note><para xml:id="assembly-howto-six-arg">
+<literal>ebp</literal>'ye 6 bağımsız değişken aktarımı Linux 2.4 sürümünde mümkün olmuştur, daha önceki Linux sürümleri yazmaçlarda sadece 5 bağımsız değişkene bakıyordu.
+</para></note>
+<para>
+<link xlink:href="http://www.linuxdoc.org/LDP/lki/">Linux Çekirdeğinin Dahili Yapısı (Linux Kernel Internals)</link> belgesi ve özellikle <link xlink:href="http://www.linuxdoc.org/LDP/lki/lki-2.html#ss2.11">i386 Mimarisinde Sistem Çağrıları Nasıl Gerçeklenir? (How System Calls Are Implemented on i386 Architecture?)</link> bölümü çok daha sağlıklı bilgi verecektir.
+</para><para>
+Başlatırken bir sürece bağımsız değişkenlerin aktarılmasında olduğu gibi, genel prensip, yığıtın orjinal olarak bağımsız değişken sayısını (<parameter>argc</parameter>) ve ardından <parameter>*argv</parameter>'ler halinde bağımsız değişken göstericilerini, bundan sonra da <parameter>environ</parameter> (ortam) için boş gösterici ile sonlandırılmış boş karakter sonlandırmalı <literal>isim=deger</literal> dizgelerini
+içereceğidir. Daha ayrıntılı bilgi için, <xref linkend="assembly-howto-s-res"/> bölümünü okuyunuz, libc'nizdeki C başlatma (<filename>crt0.S</filename> veya <filename>crt1.S</filename>) kodlarını veya bunların Linux çekirdeğinde olanlarını (<filename>exec.c</filename> ve <filename>linux/fs</filename> içindeki <filename>binfmt_*.c</filename>) inceleyiniz.
+</para>
+</sect3>
+<sect3><title>Linux altında donanımsal G/Ç</title>
+<para>
+Eğer Linux altında doğrudan port erişimi ile G/Ç işlemleri gerçekleştirmek istiyorsanız, bu ya işletim sisteminde bir değişiklik gerektirmeyen basit bir iştir ve bununla ilgili <literal>G/Ç portları ve yazılımlama (IO-Port-Programming)</literal> küçük nasıl belgesini okumanız yeterli olur ya da bir çekirdek aygıt sürücüsü gereklidir ve çekirdek kaynak kodlarını elden geçirme, aygıt sürücüsü geliştirme, çekirdek modülleri, v.b.  ile ilgili daha fazla bilgi edinmeniz gerekir. Bunlarla ilgili pek çok belge ve NASILlar LDP sayfalarında bulunmaktadır.
+</para><para>
+Belki de, grafik yazılımlama yapmak istersiniz, o zaman <link xlink:href="http://www.ggi-project.org/">GGI</link> veya <link xlink:href="http://www.xfree86.org/">XFree86</link> projelerinden birine katılın.
+</para><para>
+Bazıları daha iyisini bile yapabilir, yorumlanmış belli bir alana özgü bir dilde, GAL, küçük ve güçlü XFree86 sürücüleri yazabilirler, bazı değerlendirmelerden sonra da C ile yazılmış sürücülerin verimini arttırabilirler (sürücüler ne sadece asm'dir ne de sadece C!). Burada sorun, verimi arttırmak için kullanılacak bazı değerlendiricilerin özgür olmamasıdır. Bunların özgür sürümlerini gerçekleştirecek olan var mı?
+</para><para>
+Herneyse, tüm bu durumlarda, herşeyi sembolik makina kodu ile yazmak yerine GCC satıriçi sembolik makina dilini <filename>linux/asm/*.h</filename> dosyalarındaki makrolarla kullanmak daha iyi olacaktır.
+</para>
+</sect3>
+<sect3><title>Linux/i386'daki 16 bitlik sürücülere erişim</title>
+<para>
+Böyle bir şey teorik olarak doğrudur (kanıt: <link xlink:href="http://www.dosemu.org/">DOSEMU</link>'nun yazılımlara seçici bir şekilde port atamalarını nasıl yaptığını inceleyiniz) ve ben de bir yerlerde birilerinin bunu yaptığı söylentilerini de duydum (bir PCI sürücüsü mü? bir VESA erişim aracı mı?  ISA PnP mi? bilmiyorum). Eğer bunun hakkında çok net bilginiz varsa, o zaman çok daha memnun olacaksınız. Herneyse, daha ayrıntılı bilgi için bakılması gereken kaynaklar Linux çekirdeğinin kaynak kodları, DOSEMU kaynakları (ve DOSEMU deposundaki diğer yazılımlar) ve de Linux altında pekçok düşük seviyeli yazılımın kaynaklarıdır ... (belki CGI'da olabilir, eğer VESA desteği varsa).
+</para><para>
+Temel olarak ya 16 bitlik korumalı kipi veya vm86 kipini kullanmalısınız.
+</para><para>
+İlkinin yapılandırılması daha basittir, fakat sadece segman aritmetiği veya mutlak segman adreslemesi (özellikle 0. segmanı adreslerken) ile ilgili işlemler yapmayacak iyi davranışlı kodla çalışır, fakat şans eseri tüm segmanlar kullanılırsa, LDT ile ileri düzey ayarlama yapılabilir.
+</para><para>
+İkincisi ise harcıalem 16 bitlik ortamlarla daha bir uyumluluk sağlar, fakat idaresi daha karmaşıktır.
+</para><para>
+Her iki durumda da 16 bitlik koda geçmeden önce, şunları yapmalısınız:
+</para>
+<itemizedlist>
+<listitem>
+16 bitlik kod içerisinde kullanılan herhangi bir mutlak adresi (ROM, video tamponları, DMA hedefleri ve bellek eşlemli G/Ç gibi) <filename>/dev/mem</filename>'den sürecinizin adres uzayına <function>mmap</function>'leyin.
+</listitem>
+<listitem>
+LDT ve/veya vm86 kipi gözlemleyici ayarlayın
+</listitem>
+<listitem>
+çekirdekten uygun G/Ç izinlerini kapın (üst bölümlere bakınız)
+</listitem>
+</itemizedlist>
+<para>
+Tekrar, DOSEMU projesiyle sunulan belgeleri dikkatlice okuyunuz, özellikle Linux/i386 altında ELKS ve/veya <filename>.COM</filename> yazılımlarını çalıştırmak için kullanılan küçük emülatörlerle ilgili kısımları.
+</para>
+</sect3>
+</sect2>
+<sect2 xml:id="assembly-howto-dos"><title>DOS ve Windows</title>
+<para>
+Pekçok DOS çoğaltıcıları (extenders) DOS servisleri için bazı servislerle beraber gelir. Bununla ilgili belgeleri okuyunuz, fakat genelde, <function>int 0x21</function> ve benzerine benzetim yaparlar (simulate) ve siz de sanki gerçek kipteymiş gibi çalışırsınız (Az gelişmişlik dışında birşeyleri olduğundan ve işlemleri 32 bitlik terimlerle çalışır hale getirdiklerinden şüpheliyim, daha çok gelen kesmeleri gerçek kip veya vm86 eylemcisine yansıtıyor gibiler.)
+</para><para>
+DPMI hakkındaki belgeler (ve fazlası) <link xlink:href="ftp://x2ftp.oulu.fi/pub/msdos/yazılımming/"/> adresinde bulunabilir (yine, asıl x2ftp sitesi kapanıyor (kapandı?), onun için <link xlink:href="ftp://ftp.lip6.fr/pub/pc/x2ftp/README.mirror_sites">yansıyı</link> kullanın).
+</para><para>
+DJGPP kendi (sınırlı) <application>glibc</application> türev/altküme/yerdeğiştirmeleri v.b.leri ile gelmektedir.
+</para><para>
+Linux'tan DOS'a çapraz-derleme (cross-compile) yapmak mümkündür, metalab.unc.edu için olan yerel FTP yansınızın <filename>devel/msdos/</filename> dizinine bakınız; Aynı zamanda Utah üniversitesindeki <link xlink:href="http://www.cs.utah.edu/projects/flux/">Flux Projesi</link>'nden MOSS DOS-extender (DOS-genişletici)'ye de bakınız.
+</para><para>
+Diğer belgeler ve SSS, DOS merkezlidir; biz DOS gelişimini tavsiye etmiyoruz.
+</para><formalpara><title>Windows ve Şürekası</title>
+<para>
+Bu belge Windows yazılımlama hakkında değildir, bununla ilgili pekçok belgeyi heryerde bulabilirsiniz... Bilmeniz gereken, GNU yazılımlarının Win32 altında çalışması için, <link xlink:href="http://www.cygwin.com/">cygwin32.dll</link> kütüphanesini olduğudur, böylece sizler GCC, GAS ve tüm GNU araçları ile pekçok diğer Unix uygulamasını kullanabilmektesiniz.
+</para>
+</formalpara>
+</sect2>
+<sect2 xml:id="assembly-howto-ownos"><title>Kendi işletim sisteminiz</title>
+<para>
+Denetim duygusu pekçok işletim sistemi geliştiricisini sembolik makina diline çeken şeydir, bu da genelde sembolik makina dili kodları elden geçirmeye yol açmakta veya ondan kaynaklanmaktadır. Her ne kadar temelini oluturan bir sistemin tepesinde çalışabiliyor olsa da (Mac üzerindeki Linux veya Unix üzerindeki OpenGenera), kendi kendine gelişime izin veren bir sistem ancak işletim sistemi olarak isimlendirilebilir.
+</para><para>
+Böylece, kolay hata ayıklama amaçları için, ilk başlarda kendi işletim sisteminizi Linux üzerinde çalışır şekilde tasarlayabilirsiniz (yavaşlığına rağmen), daha sonra <link xlink:href="http://www.cs.utah.edu/projects/flux/oskit/">Flux OS aracı</link>nı kullanarak (kendi işletim sisteminizde Linux ve BSD sürücülerinin kullanımını garanti eder), onu kendi başına çalışır hale getirebilirsiniz. İşletim sisteminiz kararlı olduğunda, artık gerçekten sevdiyseniz, kendi donanım sürücülerinizi yazmanın vaktidir.
+</para><para>
+Bu NASIL belgesi önyükleyici (bootloader) kodlarını, 32 bitlik kipe geçmeyi, kesmelerle işlem yapmayı, Intel'in temel güvenli kipini veya V86/R86 beyinölümlülüğünü (braindeadness), nesne biçiminizi tanımlamayı ve çağrı uzlaşımlarını kapsaMAmaktadır.
+</para><para>
+Tüm bunlar için güvenli bilgi bulabileceğiniz yer halihazırdaki işletim sisteminin veya önyükleyicinin kaynak kodlarıdır. Pekçok konu şu adreste mevcuttur: <link xlink:href="http://www.tunes.org/Review/OSes.html"/>
+</para>
+</sect2>
+</sect1>
+
+<sect1 xml:id="assembly-howto-s-quick"><title>Hızlı başlangıç</title>
+<sect2><title>Giriş</title>
+<para>
+Son olarak, eğer hala bu çılgınca fikri denemek ve sembolik makina kodu yazmak istiyorsanız (eğer bu kısma ulaştıysanız gerçekten de bir sembolik makina hayranısınızdır), başlangıç için gerekenleri bu kısımda bulacaksınız.
+</para><para>
+Daha önce de okuduğunuz gibi, Linux için değişik şekillerde yazabilirsiniz; size <emphasis>doğrudan</emphasis> sistem çağrılarını nasıl yapacağınızı göstereceğim, çünkü bu çekirdek servislerini çağırmanın en hızlı yoludur; kodumuz hiç bir kütüphaneye bağlı değildir, ELF yorumlayıcısını kullanmayınız, çünkü çekirdek ile doğrudan iletişim kurar.
+</para><para>
+Aynı kodu <command>nasm</command> ve <command>gas</command> için göstereceğim ve böylelikle Intel ve AT&amp;T söz dizimini de göstermiş olacağım.
+</para><para>
+Aynı zamanda <link xlink:href="http://linuxassembly.org/intro.html">Unix bembolik makne dili ile yazılımlamaya giriş kılavuzu</link>nu okumak isteyebilirsiniz; UNIX benzeri işletim sistemleri için örnek kodlar da içermektedir.
+</para>
+<sect3><title>İhtiyacınız olan araçlar</title>
+<para>
+Herşeyden önce bir çeviriciye (derleyici) ihtiyacınız vardır - <command>nasm</command> veya <command>gas</command>
+</para><para>
+İkinci olarak, bir ilintileyiciye (linker) ihtiyacınız vardır - <command>ld</command>, çünkü çeviriciler sadece nesne kodunu üretmektedir. Hemen her dağıtım <application>gas</application> ve <application>ld</application>'yi binutils içerisinde sunmaktadır.
+</para><para>
+<application>nasm</application>'a gelince, Linux için paketleri ve belgeleri <link linkend="assembly-howto-p-nasm-where">nasm sayfasından</link> indirip kurmanız gerekebilir, pekçok dağıtımın (Stampede, Debian, SuSe, Mandrake) <application>nasm</application>'ı kendi sürümleri içerisinde barındırdıklarını unutmayın, önce bir kontrol edin.
+</para><para>
+Eğer daha derine inecekseniz, işletim sisteminizin başlık dosyalarını ve mümkünse çekirdek kaynak paketini edinmelisiniz.
+</para>
+</sect3>
+</sect2>
+<sect2 xml:id="assembly-howto-hello"><title>Merhaba Dünyalı <literal>:-)</literal></title>
+<sect3><title>Yerleşim</title>
+<para>
+Linux, 32 bitliktir, korumalı kipte çalışır, düz bellek modeline sahiptir ve ikilikler için ELF biçimini kullanır.
+</para><para>
+Bir yazılım bölümlere ayrılabilir: kodunuz için <literal>.text</literal> kısnı (salt-okunur), verileriniz için <literal>.data</literal> kısmı (oku-yaz), ilklendirilmemiş veriler için <literal>.bss</literal> kısmı (oku-yaz); aslında bir kaç tane daha, kullanıcı tanımlı bölüm yanında, standart bölüm olabilir, fakat onların kullanılacakları durumlar çok nadir olmaktadır ve bizim ilgi alanımız dışındalar. Bir yazılım en azından <literal>.text</literal> kısmına sahip olmalıdır.
+</para><para>
+Şimdi ilk yazılımımızı yazacağız.
+</para>
+</sect3>
+<sect3><title>NASM (hello.asm)</title>
+<screen>
+section .text                           ;bölüm bildirimi
+
+                           ;giriş noktasını ELF ilintileyiciye veya yükleyiciye
+    global _start          ;göndermeliyiz (export). Giriş noktasını uzlaşımsal
+                           ;olarak _start ile belirtiriz. Öntanımlı durumu
+                           ;değiştirmek için: ld -e foo kullanın.
+
+_start:
+
+;dizgemizi stdout'a yazar
+
+        mov     edx,len    ;üçüncü bağımsız değişken: ileti uzunluğu
+        mov     ecx,msg    ;ikinci bağımsız değişken: yazılacak iletinin göstericisi
+        mov     ebx,1      ;ilk bağımsız değişken: dosya tutucu (stdout)
+        mov     eax,4      ;sistem çağrısı numarası (sys_write)
+        int     0x80       ;çekirdeği çağır
+
+;ve çık
+
+        mov     ebx,0      ;ilk sistem çağrısı bağımsız değişkeni: çıkış kodu
+        mov     eax,1      ;sistem çağrı numarası (sys_exit)
+        int     0x80       ;çekirdeği çağır
+
+section .data              ;bölüm bildirimi
+
+        msg     db      "Hello, world!",0xa     ;sevgili dizgemiz
+        len     equ     $ - msg                 ;sevgili dizgemizin boyu
+</screen>
+</sect3>
+<sect3><title>GAS (hello.S)</title>
+<screen>
+.text                         # bölüm bildirimi
+
+                           ;giriş noktasını ELF ilintileyiciye veya yükleyiciye
+    global _start          ;göndermeliyiz (export). Giriş noktasını uzlaşımsal
+                           ;olarak _start ile belirtiriz. Öntanımlı durumu
+                           ;değiştirmek için: ld -e foo kullanın.
+
+_start:
+
+# dizgemizi stdout'a yazar
+
+        movl    $len,%edx     # üçüncü bağımsız değişken: ileti uzunluğu
+        movl    $msg,%ecx     # ikinci bağımsız değişken: yazılacak iletinin göstericisi
+        movl    $1,%ebx       # ilk bağımsız değişken: dosya tutucu (stdout)
+        movl    $4,%eax       # sistem çağrı numarası
+        int     $0x80         # çekirdeği çağır
+
+# ve çık
+
+        movl    $0,%ebx       # ilk sistem çağrısı bağımsız değişkeni: çıkış kodu
+        movl    $1,%eax       # sistem çağrı numarası (sys_exit)
+        int     $0x80         # çekirdeği çağır
+
+.data                         # bölüm bildirimi
+
+        msg:
+                .ascii  "Hello, world!\n"       # sevgili dizgemiz
+                len = . - msg                   # sevgili dizgemizin boyu
+</screen>
+</sect3>
+</sect2>
+<sect2 xml:id="assembly-howto-build"><title>Çaliştırılabilir bir kod üretmek</title>
+<sect3><title>Nesne kodu üretimi</title>
+<para>
+Çalıştırılabilir bir kod elde etmenin ilk adımı nesne dosyasını kaynaktan derlemek (veya çevirmek)tir:
+</para><para>
+<application>Nasm</application> örneği için:
+</para>
+<screen>$ <command>nasm -f elf hello.asm</command>
+</screen>
+<para>
+<application>gas</application > örneği için
+</para>
+<screen>$ <command>as -o hello.o hello.S</command>
+</screen>
+<para>
+Bu <filename>hello.o</filename> nesne dosyasını oluşturur.
+</para>
+</sect3>
+<sect3><title>Çalıştırılabilir üretmek</title>
+<para>
+İkinci adım ilintileyiciyi çağırarak nesne dosyasının kendisinden çalıştırılabilir bir dosya üretmektir:
+</para>
+<screen>$ <command>ld -s -o hello hello.o</command>
+</screen>
+<para>
+Sonuç olarak bu <filename>hello</filename> çalıştırılabilir dosyasını üretecektir.
+   </para><para>
+Hey, çalıştırmayı deneyin... Çalıştı mı? İşte bu. Oldukça basit.
+</para>
+</sect3>
+</sect2>
+<sect2><title>MIPS Örneği</title><para>
+Gerçek dünyada x86 sülalesi dışında da bir evren var. Aşağıda Spencer Parkin tarafından sunulan ve MIPS işlemciler için yazılmış bir örnek vardır. Buraya kadar gelmişken <link xlink:href="http://www.cuillin.demon.co.uk/nazz/trivia/hw/hw_assembler.html"/> adresindeki Bir Grup Sembolik Makina Dili ile Yazılmış Merhaba Dünya Programına bakabilirsiniz.
+   </para>
+<screen>
+# hello.S       by Spencer T. Parkin
+
+# Bu benim ilk MIPS-RISC sembolik makina dili yazılımım!
+# Derlemek için:
+# > gcc -o hello hello.S -non_shared
+
+# Bu yazılım PlayStation2 MIPS R5900 (EE Çekirdek)
+# üzerinde hatasız ve uyarısız derlenir.
+# EE Duygu Makinası (Emotion Engine) anlamına gelir
+
+# -non_shared seçeneği gcc'ye
+# yeniden tahsis edilebilir kod ile ilgilenmediğimizi söyler.
+# Eğer isteseydik, PIC-ABI çağrım kurallarını
+# ve diğer protokolleri kullanmalıydık
+
+#include &lt;asm/regdef.h>         // Anaşılabilir yazmaç adları için
+#include &lt;asm/unistd.h>         // Sistem servisleri için
+
+        .rdata                  # yalnız okunabilir veri bölümüne başlangıç
+        align          2        # belleğin yapım şeklinden dolayı böyle
+
+hello:  .asciz  "Hello, world!\n"  # Null ile sonlanmış bir karakter dizisi
+        .align  4               # belleğin yapım şeklinden dolayı
+length: .word   .- hello        # length = IC - (hello-addr)
+
+        .text                   # kod bölümü başlangıcı
+        .globl  main            # gcc/ld bağlamasından dolayı
+        .ent    main            # gdp hata ayıklama bilgisi
+
+main:                           # gcc'ye bir -non_shared alanı sunmalıyız
+                                # ya da aşağıdaki üç satır etkin olmalı
+#       .set    noreorder       # yeniden komut sıralamasını kapat
+#       .cpload t9              # PIC ABI zırvası
+#       .set    reorder         # yeniden komut sıralaması aktif
+
+        move    a0,$0           # dosya tanımlayıcısı standart çıktıyı göstersin
+        la      a1,hello        # karakter dizisi adresini yükle
+        lw      a2,length       # karakter dizisi boyunu yükle
+        li      v0,__NR_write   # sistem yazma servislerini belirt
+        syscall                 # çekirdeği çağır (karakter dizisini yaz)
+        li      v0,0            # geri dönüş kodunu yükle
+        j       ra              # çağırana dönüş
+        .end    main            # dgb için hata ayıklama bilgisi
+
+# hepsi bu kadar millet!
+</screen>
+</sect2>
+</sect1>
+
+<sect1 xml:id="assembly-howto-s-res"><title>Özkaynaklar</title>
+<sect2 xml:id="assembly-howto-s-res-url"><title>Siteler</title>
+<para>
+Linux/UNIX sembolik makina dili ile yazılımlama malzemeleri için asıl özkaynak:
+</para><blockquote><para>
+<link xlink:href="http://linuxassembly.org/resources.html"/>
+</para></blockquote>
+<para>
+Mutlaka ziyaret edin, Değişik UNIX işletim sistemleri ve işlemcileriyle ilgili pekçok sembolik makina dili projeleri, araçlar, kılavuz sayfaları, belgeler, rehberler, v.b. edinin. Çok çabuk geliştiği için, ikinci bir kere daha tekrar etmeyeceğim.
+</para><para>
+Eğer sembolik makina diline yabancıysanız işte size bir kaç başlangıç noktası:
+</para>
+<itemizedlist xml:id="assembly-howto-s-res-gen">
+<listitem>
+<link xlink:href="http://webster.cs.ucr.edu/AoA/">Sembolik Makina Dili Sanatı (The Art Of Assembly)</link>
+</listitem>
+<listitem>
+x86 Sembolik Makina Dili Sıkça Sorulan Soruları (Google'u kullanın)
+</listitem>
+<listitem>
+<link xlink:href="http://www.koth.org/">ÇekirdekSavaşları (CoreWars)</link>, sembolik makina dilini genel hatlarıyla eğlenceli öğrenmenin bir yolu
+</listitem></itemizedlist>
+</sect2>
+<sect2><title>Haber grupları</title>
+<itemizedlist>
+<listitem><link xlink:href="news://comp.lang.asm.x86">comp.lang.asm.x86</link>;
+</listitem><listitem><link xlink:href="news://alt.lang.asm">alt.lang.asm</link>
+</listitem></itemizedlist>
+</sect2>
+<sect2 xml:id="assembly-howto-s-res-list"><title>Listeler</title>
+<para>
+Eğer Linux/UNIX sembolik makina diliyle ilgileniyorsanız (veya sorularınız varsa ya da sadece merak ediyorsanız), sizi özellikle Linux sembolik makina dili yazılımlama listesine davet ediyorum.
+</para><para>
+Bu, Linux, *BSD, BeOS ve diğer UNIX/POSIX benzeri işletim sistemleri altında sembolik makina dili ile yazılımlama tartışmalarının olduğu açık bir ortamdır; ayrıca sadece x86 ile sınırlı değildir (Alpha, Sparc, PPC ve diğer bilgisayar üstatları da davetlidir!).
+</para><para>
+İleti listesi adresi: <email>linux-assembly@vger.kernel.org</email>.
+</para><para>
+Kayıt olmak için iletinin gövde bölümüne aşağıdaki metni yazıp <email>majordomo@vger.kernel.org</email> adresine epostanızı gönderiniz.
+</para>
+<literallayout indent="0">
+    subscribe assembly
+</literallayout>
+<para>
+Ayrıntılı bilgi ve liste arşivleri <link xlink:href="http://linuxassembly.org/list.html"/> adresinde mevcuttur.
+</para>
+</sect2>
+</sect1>
+
+
+<sect1 xml:id="assembly-howto-s-faq"><title>Sıkça Sorulan Sorular</title>
+<para>
+Aşağıda Linux sembolik makina dili ile yazılımlamada sıkça sorulan sorular (cevapları ile) verilmiştir. Bazı soruar ve cevapları <link linkend="assembly-howto-s-res-list">linux-assembly ileti listesi</link>nden alınmıştır.
+</para>
+<qandaset defaultlabel="number"><qandaentry>
+<question><para>
+Linux altında nasıl grafik yazılımlama yaparım?
+</para></question>
+<answer><para>
+<link xlink:href="mailto:paulf@icom.co.za">Paul Furber</link>'den bir cevap:
+</para>
+<literallayout indent="0">
+Pekala, Linux'ta grafik işleri için pekçok araç vardır. Hangisini
+kullanacağınız ne yapmak istediğinize bağlıdır. Tüm bilgilere sahip
+bir web sayfası yoktur ama işte bir kaç püf nokta:
+
+SVGALib: Bu, konsoldan SVGA erişimi için C kütüphanesidir.
+Artıları: öğrenmesi kolay, iyi kodlama örnekleri, DOS'taki gfx
+kütüphanesinden pek de farklı değil, DOS'taki tüm etkiler az bir
+değişiklikle dönüştürülebilir.
+Eksileri: yazılım doğrudan donanıma eriştiği için, çalışmak için root
+erişim yetkilerine gerek duyar, her çip (chipset) ile çalışmaz,
+X-Windows altında çalışmaz.
+http://ftp.is.co.za'da svgalib-1.4.x diye aratın.
+
+Framebuffer: SVGA ile ilgili kendinizce yapılabilen grafikler
+Artıları: hızlı, doğrusal olarak haritalanmış video erişimi,
+eğer isterseniz ASM kullanılabilir :)
+Eksileri: çekirdek içinde derlenmeli, çipsete özgün özellikler,
+çalışması için X kapatılmalı, iyi linux sistem çağrıları ve çekirdek
+bilgisine dayanır, hata ayıklaması zordur
+Örnekler: asmutils (http://www.linuxassembly.org), yaprak örneği,
+framebuffer kodu ve asm ile ilgili ipuçları için benim sayfam
+(http://ma.verick.co.za/linux4k/)
+
+Xlib: XFree86 için uygulama ve geliştirme kütüphaneleri.
+Artıları: X uygulamanız üzerinde tam bir kontrol
+Eksileri: Öğrenmesi zor, çalışması korkunç ve az da olsa X'in düşük
+seviyede nasıl çalıştığı bilgisini gerektirir
+Tavsiye edilmez, ama onu için bu kadar yanıp tutuşuyorsanız durmayın.
+Muhtemelen tüm başlık ve kütüphane  dosyaları yüklenmiştir, dolayısiyle
+ihtiyacınız olana sahipsiniz.
+
+Düşük seviyeli API'ler: PTC, SDL, GGI ve Clanlib'i içerir.
+Artıları: çok esnek, X veya konsolda çalışır, video donanımını soyutlar
+onun için düzgün doğrusal bir yüzey çizebilirsiniz, pekçok güzel örnek kod,
+OpenGL ve ses kütüphaneleri gibi diğer API'lere bağlantı kurabilir
+Microsoft DirectX sürümleri özgürdür.
+Artıları: Kendi yaptığınız kadar hızlı değildir, gelişim sürecince bazen
+sürümler çok sık değişir.
+Örnekler: PTC ve GGI mükemmel demolara sahiptir, SDL ise oyunlar için,
+sdlQuake, Myth II, Civ CTP ve ayrıca Clanlib'de kullanılmıştır.
+
+Yüksek seviyeli API'ler: OpenGL - başka var mı?
+Artıları: temiz API, yüzlerce işlevsellik ve örnek, endüstriyel
+standart; bundan dolayı mesela SGI'dan öğrenilebilir
+Eksileri: donanım hızlandırılması normalde bir zorunluluktur,
+bazı sürümler ve platformlar arasında acayiplikler
+Örnekler: çokça - bağlantılar bölümü altındaki www.mesa3d.org kısma bakınız.
+
+Bakmayı sürdürmek için svgalib örneklerini inceleyin ve aynı zamanda
+SDL'yı yükleyin ve çalışır duruma getirin. Bundan sonrasında ise limit
+gökyüzüdür.
+</literallayout>
+</answer>
+</qandaentry><qandaentry>
+<question><para>
+Saf (pure) sembolik makina kodunu Linux altında nasıl derlerim?
+</para></question>
+<answer><para>
+Sembolik Makina Dili Hata Ayıklayıcısı'nın (<link xlink:href="http://ald.sourceforge.net/">Assembly Language Debugger</link>), sembolik makina kodlarıyla çalışması için tasarlanmış eski bir sürümü vardır ve de Linux ve *BSD üzerinde çalışmabilmesi için yeterince taşınabilirdir. Halihazırda işlevseldir ve de doğru seçim olacaktır, bir bakın!
+</para><para>
+<command>gdb</command>'yi de deneyebilirsiniz ;). Kaynak kod hata ayıklayıcısı olmasına rağmen, saf sembolik makina kodlarını ayıklamak için de kullanılabilir, biraz hileyle <command>gdb</command>'ye istediğinizi yapmanızı söyleyebilirsiniz (maalesef <command>nasm</command>'ın <option>g</option> seçeneği <command>gdb</command> için yeterli bilgi üretmemektedir; sanırım bu <command>nasm</command>'ın bir açığı). Aşağıda Dmitry Bakhvalov'dan bir cevap var:
+</para>
+<literallayout indent="0">
+Kişisel olarak, gdb'yi asm uygulamarınının hatalarını bulmak için
+kullanırım. şunu deneyin:
+
+1) Derlemek için aşağıdaki kodu kullanın:
+   $ nasm -f elf -g smth.asm
+   $ ld -o smth smth.o
+
+2) gdb'yi çalıştırın
+   $ gdb smth
+
+3) gdb içinde:
+   (gdb) disassemble _start
+   at _start+1'e bir kesme koyun
+    (eğer at _start konursa çalışmaz, nedenini bilmiyorum)
+   (gdb) b *0x8048075
+
+   kodu takip edebilmek için aşağıdaki kodu kullanırım
+   (gdb)define n
+   >ni
+   >printf "eax=%x ebx=%x ...etc...",$eax,$ebx,...etc...
+   >disassemble $pc $pc+15
+   >end
+
+   daha sonra yazılımı r bağımsız değişkeniyle çalıştırıp, n ile hata ayıklayın
+
+   Umarım yardımcı olmuştur.
+</literallayout>
+<para>
+???'dan ek bir bilgi:
+</para>
+<literallayout indent="0">
+  .gdbinit'imin içinde epeydir kullandığım bir makro var,
+  ve eminim hayatı daha kolay hale getiriyor.
+  Az farkla: "x /8i $pc"' kullanırım bu da belli sayıdaki çevrilmemiş
+  koda müsaade eder.  Daha sonra iyi şekilde boyutu seçilmiş xterm'imle
+  gdb çıktısı tazelenmiş olarak ve kaydırma gerektirmeden görünür.
+</literallayout>
+<para>
+Eğer kodunuza kesmeler koymak istiyorsanız, sadece <function>int 3</function> ifadesini kesme olarak kullanabilirsiniz. (<command>gdb</command> içerisine elle adresi gömmek yerine).
+</para><para>
+Eğer <application>gas</application> kullanıyorsanız, <application>gas</application> ve <application>gdp</application> ile ilgili <link xlink:href="http://linuxassembly.org/resources.html#tutorials">belgelere</link> başvurmalısınız..
+</para></answer>
+</qandaentry><qandaentry>
+<question><para>Başka faydalı araçlar var mı?</para></question>
+<answer><para>
+Elbette, <command>strace</command> size yardım edebilir (FreeBSD'de <command>ktrace</command> ve <command>kdump</command>), bu sistem çağrı ve sinyallerini takip etmek için kullanılır. Ayrıntılar için kılavuz sayfasını (<command>man trace</command>) ve <command>strace --help</command> komutunu deneyiniz.
+</para></answer>
+</qandaentry><qandaentry>
+<question><para>
+Linux'tan (BSD, BeOS, v.b.) BIOS işlevlerine nasıl erişebilirim?
+</para></question>
+<answer><para>
+Kısa cevap: Hiç bir şekilde. Bu korumalı bir kiptir, yerine işletim sistemi servislerini kullanın. Tekrar ediyorum, <function>int 0x10</function>, <function>int 0x13</function>, v.b.'yi kullanamazsınız. Ne şans ki, hemen her şey sistem çağrıları ve kütüphane işlevleri ile ifade edilebilmektedir. En kötü durumda, port erişimini deneyebilir ve bir çekirdek yamasıyla istenileni gerçekleştirmeyi deneyebilirsiniz veya LRMI kütüphanesini kullanarak BIOS işlevlerine erişmeyi deneyin.
+</para></answer>
+</qandaentry><qandaentry>
+<question><para>
+Sembolik makina dilinde çekirdek modülleri yazmak mümkün mü?
+</para></question>
+<answer><para>
+Evet, aslında mümkün. Her ne kadar genelde iyi bir fikir olmamasına rağmen (bir şeyleri çok zor hızlandıracaktır), böylesine bir yönteme ihtiyaç olabilir. Bir modülün kendisini yazmak o kadar da zor değildir - bir modülün kendisinin öntanımlı evrensel işlevleri olmalıdır, aynı zamanda bazı harici işlevleri de çekirdekten çağırması gerekebilir. Ayrıntılar için çekirdek kaynak koduna (bir modül olarak derlenebilenlere) bakınız.
+</para><para>
+Bu arada, işte size en basitinden bir çekirdek modülü
+(kaynak APJ #8'den mammon_'un örneğine dayanmaktadır):
+</para>
+<screen>section .text
+
+        global init_module
+        global cleanup_module
+        global kernel_version
+
+        extern printk
+
+init_module:
+        push    dword str1
+        call    printk
+        pop     eax
+        xor     eax,eax
+        ret
+
+cleanup_module:
+        push    dword str2
+        call    printk
+        pop     eax
+        ret
+
+str1            db      "init_module done",0xa,0
+str2            db      "cleanup_module done",0xa,0
+
+kernel_version  db      "2.2.18",0
+</screen>
+<para>
+Bu örneğin yaptığı tek şey yaptıklarını rapor etmekdir. <filename>kernel_version</filename>'unu sizinkine uygun halde değiştirin ve modülü şöyle derleyin:
+</para>
+<screen>$ <command>nasm -f elf -o module.m module.asm</command>
+$ <command>ld -r -o module.o module.m</command>
+</screen>
+<para>
+Artık onunla <command>insmod/rmmod/lsmod</command> (root yetkileri gerekir) kullanarak oynayabilirsiniz; çok eğlenceli, değil mi?
+</para></answer>
+</qandaentry><qandaentry>
+<question><para>
+Belleği dinamik olarak nasıl tahsis edebilirim?
+</para></question>
+<answer><para>
+<link xlink:href="mailto:phpr@snafu.de">H-Peter Recktenwald</link>'dan özlü bir cevap:
+</para>
+<screen>ebx := 0        (in fact, any value below .bss seems to do)
+sys_brk
+eax := current top (of .bss section)
+
+ebx := [ current top &lt; ebx &lt; (esp - 16K) ]
+sys_brk
+eax := new top of .bss
+</screen>
+<para>
+<link xlink:href="mailto:ee97034@fe.up.pt">Tiago Gasiba</link>'dan daha gelişmiş bir cevap:
+</para>
+<screen>section .bss
+
+var1    resb    1
+
+section .text
+
+;
+;allocate memory
+;
+
+%define LIMIT   0x4000000          ; yaklaşık 100Megs
+
+        mov     ebx,0              ; data bölümünün en alt kısmını elde et
+        call    sys_brk
+
+        cmp     eax,-1             ; tamam mı?
+        je      erro1
+
+        add     eax,LIMIT          ; +LIMIT bellek kısmını tahsis et
+        mov     ebx,eax
+        call    sys_brk
+
+        cmp     eax,-1             ; tamam mı?
+        je      erro1
+
+        cmp     eax,var1+1         ; data bölümü büyüdü mü?
+        je      erro1
+
+;
+;tahsis edilmiş alanı kullan
+;
+                                   ; şimdi eax data bölümünün alt kısmını
+                                   ; barındırır
+        mov     ebx,eax            ; alt kısmı kaydet
+        mov     eax,var1           ; eax=data bölümün başlangıç kısmı
+repeat:
+        mov     word    [eax],1    ; 1'lerle doldur
+        inc     eax
+        cmp     ebx,eax            ; şu anki pozisyon = en alt?
+        jne     repeat
+
+;
+;belleği serbest bırak
+;
+
+        mov     ebx,var1           ; belleği geri ver
+        call    sys_brk            ; başlangıcını=var1 yaparak
+
+        cmp     eax,-1             ; tamam mı?
+        je      erro2
+</screen>
+</answer>
+</qandaentry><qandaentry>
+<question><para>
+<function>select</function> sistem çağrılarını nasıl kullanacağımı anlayamıyorum!
+</para></question>
+<answer><para>
+<link xlink:href="mailto:mochel@transmeta.com">Patrick Mochel</link>'den bir cevap
+</para>
+<literallayout indent="0">
+sys_open'ı çağırdığınız zaman, sürecinizle ilgili açık olan tüm
+dosya tanıtıcılarının olduğu bir tablodan bir indis olarak, bir
+dosya tanıtıcı döndürür. stdin, stdout ve stderr için sırasıyla
+0, 1 ve 2'dir, çünkü bunlar süreciniz için her zaman açık durur.
+Aynı zamanda ilk açtığınız dosya tanıtıcısının 3 olocağını ve
+artacağını unutmayın.
+
+İndislemeyi anlamak select'in ne yaptığını anlamanızı sağlar.
+select'i çağırdığınız zaman, okumak için, yazmak için, istisnai
+durumları belirlemek için belli bir dosya tanıtıcısını beklediğinizi
+belirtiyorsunuzdur. Süreciniz 1024 açık dosya tanıtıcısına sahip olabilir,
+dolayısiyle fd_set sadece bir bit maskesi gibi çalışarak hangi
+dosya tanıtıcısının hangi işlem için geçerli olduğunu belirtir.
+Bir şeyler ifade etti mi?
+
+Her açtığınız fd birer indis olduğu için, her bir fd_set için on
+veya off olmaya ihtiyacı vardır, sadece 1024 bitlik bir fd_set yapısına
+ihtiyacınız vardır. Yapıyı belirtmek için 1024 / 32 = 32 long gereklidir.
+
+Şimdi basit bir örnekle açıklayalım.
+Farzedelimki dosya tanıtıcıyı okumaya çalışıyorsunuz (zamanaşımı olmadan).
+
+- fd_set'e belleği tahsis et
+
+.data
+
+my_fds: times 32 dd 0
+
+- okumak istediğiniz dosya tanıtıcıyı açın
+
+- fd_set yapısındaki bitini ayarlayın
+
+    Öncelikle, 32 dwords'ün hangisinde bitin olduğunu belirlemelisiniz.
+
+    Daha sonra, bts'yi kullanarak bu dword içindeki biti ayarlayın,
+    bts biti 32'ye bölümden kalana göre ayarlayacaktır.
+    Bu da önce hangi dword ile çalışmaya başlamanızı belirlemenin sebebidir.
+
+    mov edx, 0
+    mov ebx, 32
+    div ebx
+
+    lea ebx, my_fds
+    bts ebx[eax * 4], edx
+
+- son adımı okumak istediğiniz dosya tanıtıcılar için yineleyin
+
+- belli bir eylem beklediğiniz diğer iki fd_set'in herbiri için de
+  tüm örneği tekrarlayın
+
+Bundan, geriye denklemin diğer iki parçası kalır - n bağımsız değişkeni ve
+zaman aşımı bağımsız değişkeni. Zaman aşımı bağımsız değişkenini okuyucuya örnek
+olarak bırakıyorum (evet, tembelim), fakat kısaca n bağımsız değişkeniyle
+ilgili konuşacağım.
+
+Bu, seçtiğiniz dosya tanıtıcıları içerisindeki en büyük değere sahip
+olanın değeri (herhangi bir fd_set'ten) artı birdir. Neden artı bir?
+Çünkü, bu değerden maskeyi belirlemek kolaydır. Farzedin ki x dosya
+göstericisi üzerinde bir veri var, fakat sizin ilgilendiğiniz en yüksek
+olan (n-1). fd_set sadece bir bit maskesi olduğundan, çekirdeğin
+select'en geri dönmesi veya dönememesi için verimli bir yola ihtiyacı
+vardır. Dolayısiyle, bu, ilgilendiğiniz bitleri maske dışında bırakır,
+halihazırda atanmış bitlerde herhangi bir değer var mı diye kontrol eder,
+eğer varsa geri döner. Aslında, fantastik olduğunu söylemek düşündüğüm kadar
+kolay değil. Çekirdeğin bu maskeyi nasıl belirlediğini görmek için,
+çekirdek kaynak ağacındaki fs/select.c'ye bakınız.
+
+Herneyse, bu numarayı bilmeye ihtiyacınız vardır, en kolay yol da açılmış
+olan en son dosya tanıtıcının numarasını bir yerlere kaydetmektir.
+
+Evet, bildiklerim bunlar. Yukarıdaki kodla ilgili uyarı (her zaman ki gibi)
+şu: test edilmemiştir. Sanırım çalışır, eğer çalışmazsa beni haberdar edin.
+Fakat, eğer evrensel bir nükleer felakete sebep olursa, o zaman aramayın. ;)
+</literallayout>
+</answer>
+</qandaentry></qandaset>
+<para>
+<emphasis>Şimdilik hepsi bu kadar.</emphasis>.
+</para>
+</sect1>
+
+<sect1 xml:id="assembly-howto-app"><title>Ekler</title>
+<sect2 xml:id="assembly-howto-a-history"><title>Tarihçe</title>
+<para>
+Belgenin geçmişini merak ediyorsanız <link xlink:href="http://tldp.org/HOWTO/Assembly-HOWTO/history.html">orjinal belgeye</link> bakabilirsiniz.
+</para>
+</sect2>
+
+<sect2 xml:id="assembly-howto-a-ack"><title>Teşekkür</title>
+<para>
+Fikirleri, yanıtları, yorumları ve moral destekleri olan herkese teşekkür ederim, ayrıca yazılış sırasıyla aşağıda yazılanlara da teşekkür ederim.
+</para>
+<itemizedlist>
+<listitem>
+Linux için Linus Torvalds'a
+</listitem>
+<listitem>
+<anchor xml:id="assembly-howto-bde"/>
+ a86'dan bcc'yi çıkardığı için Bruce Evans'a
+</listitem>
+<listitem>
+NASM için Simon Tatham ve Julian Hall'a 
+</listitem>
+<listitem>
+NASIL belgelerini sürdürdükleri için Greg Hankins ve şimdilerde Tim Bynum'a
+</listitem>
+<listitem>
+Belgenin SSS'i için Raymond Moon'a 
+</listitem>
+<listitem>
+küçük-NASIL belgesini Fransızca'ya (üzücü olan taraf orjinal yazarın Fransız olması ve İngilizce yazması) çevirdiği için Eric Dumas'a
+</listitem>
+<listitem>
+bana yardım ettikleri için, olmasa bile NASIL belgesini üstlendikleri için Paul Anderson ve Rahim Azizarab'a</listitem>
+<listitem>
+GCC çağrımıyla ilgili görüşleri için Marc Lehman'a 
+</listitem>
+<listitem>
+bana bağımsız değişken aktarım uzlaşımları konusunda yardım ettiği için Abhijit Menon-Sen'a
+</listitem>
+</itemizedlist>
+</sect2>
+</sect1>
+</article>

@@ -175,6 +175,19 @@
                     name($nodes)='reference')">
           <xsl:copy-of select="$subtoc.list"/>
         </xsl:when>
+        <xsl:when test="name($toc-context) = 'book' and
+                  ($toc-context[@userlevel='longtoc']) and
+                    (name($nodes)='part' or
+                    name($nodes)='preface' or
+                    name($nodes)='article' or
+                    name($nodes)='chapter' or
+                    name($nodes)='appendix' or
+                    name($nodes)='reference' or
+                          name($nodes) = 'sect1' or
+                          name($nodes) = 'sect2' or
+                          name($nodes) = 'sect3')">
+          <xsl:copy-of select="$subtoc.list"/>
+        </xsl:when>
         <xsl:when test="name($toc-context) != 'set' and
                         name($toc-context) != 'book' and
                         not (name($toc-context) = 'part' and

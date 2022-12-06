@@ -1,0 +1,2415 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ********************************************************************
+       ceviri/Bootdisk-HOWTO.xml
+     ******************************************************************** -->
+<!--DOCTYPE article SYSTEM "../../docbook/dtd/belgeler.dtd" [
+  <!ENTITY % belgeler.dtd SYSTEM "../../belgeler.dtd">
+  %belgeler.dtd;
+]-->
+<article xml:id="bootdisk-howto" xmlns="http://docbook.org/ns/docbook"
+ version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink" xml:lang="tr">
+ <info>
+  <title>Linux Açılış Disketi NASIL</title>
+  <authorgroup>
+   <author>
+    <personname><firstname>Tom</firstname>
+     <surname>Fawcett</surname></personname>
+    <affiliation>
+     <address>
+      <email>Bootdisk-HOWTO@linuxdoc.org</email>
+     </address>
+    </affiliation>
+   </author>
+   <author role="translator">
+   <personname><firstname>Yalçın</firstname>
+    <surname>Kolukısa</surname></personname>
+   </author>
+  </authorgroup>
+  <copyright>
+   <year>1995-2002</year>
+   <holder>Tom Fawcett - İngilizce orjinalinin yazarı</holder>
+  </copyright>
+  <copyright>
+   <year>2004</year>
+   <holder>Yalçın Kolukısa - Türkçe çevirmeni</holder>
+  </copyright>
+  <legalnotice>
+   <title>Yasal Uyarı</title>
+   <para>
+    Telif Hakkı © 1995-2002 Tom Fawcett ve Graham Chapman.
+    Türkçe çeviri: Telif Hakkı © 2004 Yalçın Kolukısa.
+    Bu belge <link xlink:href="http://en.tldp.org/copyright.html">Linux
+    Belgelendirme Projesi Kopyalama Lisansı</link>nın kurallarına uymak
+    şartıyla dağıtılabilir. Lisansı bulamadıysanız lütfen belge yazarlarına
+    başvurunuz.
+   </para>
+  </legalnotice>
+  <legalnotice>
+   <title>Legal Notice</title>
+   <para>
+    Copyright © 1995-2002 by Tom Fawcett and Graham Chapman.
+    Turkish translation: Copyright © 2004 by Yalçın Kolukısa.
+    This document may be distributed under the terms set forth in the <link
+    xlink:href="http://en.tldp.org/copyright.html">Linux Documentation Project
+    Copying License</link>. Please contact the authors if you are unable to
+    get the license.
+   </para>
+  </legalnotice>
+  <pubdate>v4.5, Ocak 2002</pubdate>
+  <pubdate>Çeviri: v1.0, Ocak 2004</pubdate>
+  <abstract>
+   <para>
+    Bu kılavuz, Linux için açılış/kurtarma disketlerinin nasıl oluşturulacağını anlatmaktadır. Bu disketler kurtarma disketi olarak veya yeni sistem elemanlarını sınamak için kullanılabilir.
+   </para>
+   <para>
+    Bu kılavuzda anlatılan açılış disketini oluşturmaya kalkmadan önce, sistem yönetim görevleri hakkında bilgi sahibi olmanız gerekmektedir. Şayet acil durumlar için bir kurtarma disketine ihtiyacınız var ise doğrudan <xref linkend="bootdisk-howto_PreMade"/> bölümüne bakınız.<footnote><para>Ç.N: Bu kılavuz açılış/kurtarma disketlerini anlatmakla birlikte, bir Linux sisteminde açılış sürecinin ve çekirdek yüklenmesinin nasıl gerçekleştiği, gerekli olan temel bileşenlerin neler olduğunu anlamaya yönelik iyi bir başlangıç kılavuzu olarak kabul edilebilir. Kılavuz içerisinde bu konular-başlangıç seviyesi için ayrıntılı bir şekilde ele alınmış ve sistemin genel hatları göz önüne serilmiştir. Bu NASIL'ı, GNU/Linux sistemlerinin temel yapısını anlamaya yönelik sağlam bir adım olarak değerlendirmek gerektiği inancındayım. Bir yerden başlamak gerek, öyle değil mi?</para></footnote>
+   </para>
+  </abstract>
+ </info>
+
+ <sect1 xml:id="bootdisk-howto_preface">
+  <title>Başlarken</title>
+  <important>
+   <para>
+    Elinizdeki sürüm, bu kılavuzun en güncel sürümü olmayabilir. Şayet elinizdeki sürümün tarihi, altı aydan daha eski ise, <link xlink:href="http://www.linuxlots.com/~fawcett/Bootdisk-HOWTO/index.html">BootDisk-HOWTO Ana Sayfasına</link> göz atınız.
+   </para>
+  </important>
+  <para>
+   Bu kılavuz, metin biçimli olarak da okunması kolay ve anlaşılır olmakla birlikte; pdf, postscript veya HTML biçimli olarak daha kolay okunabilir. Ne de olsa bu biçimlerde zengin görsel öğeler kullanılmaktadır.
+  </para>
+  <sect2>
+   <title>Sürüm notları</title>
+   <para>
+    İlk Açılış Disketi NASIL'ı Graham Chapman yazmış ve sürüm 3.1'e kadar güncellemeleri yapmıştır. Çekirdeğin v2. sürümünün çıktığı ilk zamanlarda, Tom Fawcett yardımcı yazar olarak belgeye destek vermeye başlamıştır. Bugün için ise Tom Fawcett,  bu belgenin bakım sorumlusudur. Chapman'dan uzun süredir haber alınamamakta ve nerede olduğu bilinmemektedir.
+   </para>
+   <para>
+    Bu kılavuzdaki bilgiler <emphasis>Intel</emphasis> tabanlı Linuxlar için hazırlanmıştır. Buradaki bilgilerin pek çoğu diğer işlemciler için de geçerlidir, fakat bunların geçerliliği birinci elden kontrol edilmemiştir. Şayet diğer platformlar üzerinde açılış disketi oluşturmak hakkında deneyiminiz varsa, lütfen bunları bana bildirin.
+   </para>
+  </sect2>
+
+  <sect2>
+   <title>Yapılacak işler listesi</title>
+   <orderedlist>
+    <listitem>
+     <para>
+      <link xlink:href="http://user-mode-linux.sourceforge.net/"/> adresindeki Kullanıcı Kipi Linux projesi, açılış disketlerini sınamak için sistemi tekrar başlatma zorunluluğunu ortadan kaldırması açısından oldukça yararlı görünüyor. Bu konu üzerinde şu ana kadar çalışma yapma şansım olmadı. Şayet birileri bunun için, ev yapımı açılış disketlerini kullanıyor ise lütfen bana da bilgi versin.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      Dağıtımların açılış disketleri tekrar gözden geçirilecek ve  <xref linkend="bootdisk-howto_Pros"/> bölümü güncellenecek.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      Init-getty-login işlemlerinin daha ne kadar basitleştirilebileceği araştırılacak. Bir kaç kişi; init'in doğrudan /bin/sh'a bağlanabileceğini söyledi. Şayet bu doğru ise ve fazladan sınırlamalar getirmeyecekse, başlangıç bölümü, bunu yapacak şekilde değiştirilecek. Böylece getty, login, gettydefs ve belki de bütün PAM ve NSS araçlarına olan bağımlılık ortadan kalkacak.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      Çekirdeğin 2.4 sürümünün kaynak kodları incelenecek ve açılış süreci ve ramdisk yüklenmesi süreçleri hakkında ayrıntılı bir açıklama yazılacak (tabii ki öncelikle benim bu olayı daha ayrıntılı ve iyi bir şekilde öğrenmem gerekecek). Açılış aygıtlarının sınırları ve initrd hakkında henüz anlayamadığım bazı noktalar var.
+      </para>
+    </listitem>
+    <listitem>
+     <para>
+      Dağıtım açılış disketlerinin nasıl güncelleneceğini anlatan bölüm kılavuzdan çıkarılacak. Yarardan çok zararı var.
+      </para>
+    </listitem>
+    <listitem>
+     <para>
+      rdev komutları LILO anahtar kelimeleri ile değiştirilecek.
+     </para>
+    </listitem>
+   </orderedlist>
+  </sect2>
+
+  <sect2>
+   <title>Geri besleme ve destekleyenler</title>
+   <para>
+    Bu kılavuzun içeriği hakkındaki her türlü, iyi veya kötü, eleştirileri bana gönderebilirsiniz. Buradaki açıklama ve bilgileri, elimden gelenin en iyisini yapmaya çalışarak, anlaşılır ve doğru bir şekilde vermeye çalıştım fakat unutmayın ki ben de herşeyi bilmiyorum ve çekirdek gelişimi üzerine çalışmıyorum. Şayet herhangi bir hata veya eksiklik bulursanız lütfen beni düzeltin. Bana yazarken, elinizdeki kılavuzun sürüm numarasını belirtmeyi lütfen unutmayın.
+   </para>
+   <para>
+    Düzeltmeler ve öneriler gönderen bütün herkese teşekkürlerimi sunarım. Onların sayesinde bu kılavuz, bizim tek başımıza yapabileceğimizden çok daha iyi olmuştur.
+   </para>
+   <para>
+    Yorum ve düzeltmelerinizi yukarıda belirtilen, yazarın e-posta adresine gönderiniz. Çeviride bulduğunuz imla, yazım, sözdizimi, anlam hatalarını çeviren kısmındaki e-posta adresine gönderiniz. Sorularınızı sormadan önce <emphasis>lütfen  <xref linkend="bootdisk-howto_troubleshooting"/> bölümünü okuyunuz</emphasis>. Hazırladığınız disket imajlarını bana <emphasis>göndermeyiniz</emphasis>.
+   </para>
+  </sect2>
+
+  <sect2>
+   <title>Dağıtım politikası</title>
+   <para>
+    Bu belgenin orjinal ingilizce sürümünün telif hakları © 1995-2002  Tom Fawcett ve Graham Chapman'a, türkçe tercümesinin telif hakları © 2004 Yalçın Kolukısa'ya aittir. Bu kılavuz  <link xlink:href="http://en.tldp.org/copyright.html">Linux Belgelendirme Projesi Lisansı</link> altında kullanılabilir.  Şayet bu lisansa ulaşamıyorsanız lütfen yazarlar ile iletişim kurunuz.
+   </para>
+   <para>
+    BU BELGE "ÜCRETSİZ" OLARAK RUHSATLANDIĞI İÇİN, İÇERDİĞİ BİLGİLER İÇİN İLGİLİ KANUNLARIN İZİN VERDİĞİ ÖLÇÜDE HERHANGİ BİR GARANTİ VERİLMEMEKTEDİR. AKSİ YAZILI OLARAK BELİRTİLMEDİĞİ MÜDDETÇE TELİF HAKKI SAHİPLERİ VE/VEYA BAŞKA ŞAHISLAR BELGEYİ "OLDUĞU GİBİ", AŞİKAR VEYA ZIMNEN, SATILABİLİRLİĞİ VEYA HERHANGİ BİR AMACA UYGUNLUĞU DA DAHİL OLMAK ÜZERE HİÇBİR GARANTİ VERMEKSİZİN DAĞITMAKTADIRLAR. BİLGİNİN KALİTESİ İLE İLGİLİ TÜM SORUNLAR SİZE AİTTİR. HERHANGİ BİR HATALI BİLGİDEN DOLAYI DOĞABİLECEK OLAN BÜTÜN SERVİS, TAMİR VEYA DÜZELTME MASRAFLARI SİZE AİTTİR.
+  </para>
+   <para>
+    İLGİLİ KANUNUN İCBAR ETTİĞİ DURUMLAR VEYA YAZILI ANLAŞMA HARİCİNDE HERHANGİ BİR ŞEKİLDE TELİF HAKKI SAHİBİ VEYA YUKARIDA İZİN VERİLDİĞİ ŞEKİLDE BELGEYİ DEĞİŞTİREN VEYA YENİDEN DAĞITAN HERHANGİ BİR KİŞİ, BİLGİNİN KULLANIMI VEYA KULLANILAMAMASI (VEYA VERİ KAYBI OLUŞMASI, VERİNİN YANLIŞ HALE GELMESİ, SİZİN VEYA ÜÇÜNCÜ ŞAHISLARIN ZARARA UĞRAMASI VEYA BİLGİLERİN BAŞKA BİLGİLERLE UYUMSUZ OLMASI) YÜZÜNDEN OLUŞAN GENEL, ÖZEL, DOĞRUDAN YA DA DOLAYLI HERHANGİ BİR ZARARDAN, BÖYLE BİR TAZMİNAT TALEBİ TELİF HAKKI SAHİBİ VEYA İLGİLİ KİŞİYE BİLDİRİLMİŞ OLSA DAHİ, SORUMLU DEĞİLDİR.
+   </para>
+  </sect2>
+ </sect1>
+
+ <sect1 xml:id="bootdisk-howto_intro">
+  <title>Giriş</title>
+  <para>
+   Linux açılış disk/disketlerini kullanabileceğiniz pek çok durum vardır: yeni bir çekirdeği sınamak, hata veren bir diski kurtarmak, açılmayan bir sistemi normale döndürmek veya çok önemli sistem dosyalarını (<filename>libc.so</filename> gibi) güven içinde güncellemek.
+  </para>
+  <para>
+   Açılış disk/disketleri elde etmenin de çeşitli yolları vardır:
+  </para>
+  <simplelist>
+   <member>
+    Slackware gibi bir dağıtımın açılış disketini kullanmak.
+    Bu disket ile en azından sistemi açabilirsiniz.
+   </member>
+   <member>
+    Kurtarma disketleri üretmek için hazırlanmış bir kurtarma paketi kullanmak.
+   </member>
+   <member>
+    Bu tür disketleri üretmek için neler gerektiğini öğrenmek ve kendi söküğünü dikmek.
+   </member>
+  </simplelist>
+  <para>
+   Bazı insanlar son şıkkı tercih eder ve kendi disketlerini kendileri hazırlarlar. Bu yöntemde bir şeyler yanlış giderse, bunu düzeltmek için kendileri uğraşırlar. Ayrıca, bir Linux sisteminin nasıl çalıştığını öğrenmenin en iyi yolu da budur.
+  </para>
+  <para>
+   Bu kılavuz, sizin temel Linux yönetim mantığını ve komutlarını bildiğinizi kabul ederek yazılmıştır. Örneğin; dizinler, dosya sistemleri ve disketler hakkında bilgi sahibi olmanız beklenmektedir. Ayrıca <command>mount</command> ve <command>df</command>  komutlarını kullanabilmeniz beklenmektedir. <filename>/etc/passwd</filename> ve <filename>fstab</filename> dosyalarının ne işe yaradığını ve bunların içeriklerinin neye benzediğini bildiğiniz kabul edilmektedir. Bu NASIL'da adı geçen komutların pek çoğunu root kullanıcı olarak çalıştırmanız gerektiğiniz bilmelisiniz.
+  </para>
+  <para>
+   Sıfırdan bir açılış disketi oluşturmak karışık bir iş olabilir. Şayet Linux SSS ve ilgili belgeleri okumadıysanız, kendi açılış disketlerinizi yapmaya kalkışmayın. Eğer tüm derdiniz çalışır vaziyette bir açılış disketi ise, hazır yapılmış olanlarından birisini internetten indirmek çok daha kolaydır. Bunların listesi için  <xref linkend="bootdisk-howto_PreMade"/> bölümüne bakınız.
+  </para>
+ </sect1>
+
+ <sect1 xml:id="bootdisk-howto_bootproc">
+  <title>Açılış disketleri ve önyükleme süreci</title>
+  <indexterm linkend="bootdisk-howto_cp"><primary>önyükleme süreci</primary>
+  </indexterm>
+  <para>
+   Bir açılış disketi basitçe: bir disket içerisinde bulunan minik bir Linux sistemi diye tanımlanabilir.  Büyük boyutlu Linux sistemlerinin gerçekleştirdiği işlevlerin pek çoğunu gerçekleştirmelidir. Bir açılış disketi yapmaya geçmeden önce, Linux açılış sürecini tam olarak anlamalısınız. Biz bu kısımda temel bilgileri anlatacağız, böylece kılavuzun geri kalanını anlamanıza yetecek bilgiye sahip olacaksınız. Pek çok ayrıntı ve olası seçenekler, bu kılavuz içinde açıklanmamaktadır.
+  </para>
+  <sect2>
+   <title>Önyükleme süreci</title>
+   <indexterm linkend="bootdisk-howto_cp"><primary>Önyükleme sektorü</primary>
+   </indexterm>
+   <indexterm linkend="bootdisk-howto_cp"><primary>BIOS</primary></indexterm>
+   <indexterm linkend="bootdisk-howto_cp"><primary>önyükleme aygıtı</primary>
+   </indexterm>
+   <para>
+    Bütün PC sistemleri önyükleme sürecini ROM (BIOS) içindeki kodu çalıştırıp, önyükleme aygıtının 0.silindirinin 0. sektöründen yükleyerek başlatır. Bu önyükleme aygıtı genellikle birincil disket sürücüdür (DOS için <filename>A:</filename> ve Linux için <filename>/dev/fd0</filename> ile ifade edilir). Daha sonra BIOS bu sektördeki kodu çalıştırmayı dener. Pek çok önyükleme yapılabilen diskte, 0.silindirin 0. sektörü şunlardan birini ihtiva eder:
+   </para>
+   <simplelist>
+    <member>
+     LILO gibi bir önyükleyicinin kodu (bu kod çekirdeği yükler ve düzgün olarak çalışmasını sağlar)
+    </member>
+    <member>
+     Linux gibi bir işletim sistemi çekirdeğinin başlangıcını.
+    </member>
+   </simplelist>
+   <para>
+    Şayet Linux çekirdeği bir diskete ham biçimde kopyalanmışsa, disketin ilk sektörü, Linux çekirdeğinin ilk sektörü olacaktır. Bu ilk sektör, önyükleme aygıtında bulunan çekirdeğin kalan kısımlarını yükleyerek önyükleme sürecinin devamını sağlar.
+   </para>
+   <indexterm linkend="bootdisk-howto_cp"><primary>kök dosya sistemi</primary>
+   </indexterm>
+   <indexterm linkend="bootdisk-howto_cp"><primary>ramdisk</primary>
+   </indexterm>
+   <indexterm linkend="bootdisk-howto_cp"><primary>sıkıştırılmış dosya sistemi</primary>
+   </indexterm>
+   <para>
+    Çekirdek tamamen diskete/diske yüklenmişse, ilk sektör aygıt sürücülerini ve dahili veri yapısını ilklendirir. Bu işlem bir kere tamamlanınca, <wordasword>ramdisk</wordasword> diye adlandırılan özel bir yere yerleştirilen bir biteşleme sıra gelir. Buradan, kök dosya sistemini nerede ve nasıl bulunacağı bilgisi alınır.  <wordasword>Kök dosya sistemi</wordasword> ``<filename>/</filename>'' şeklinde bağlanan bir dosya sistemidir. Çekirdeğe bu dosya sistemini nerede bulabileceği bilgisini verilmelidir.  Şayet orada yüklenebilir bir biteşlem bulamazsa, sistem kapatılır.
+   </para>
+   <para>
+    Bazı önyüklemelerde — genellikle disketten yapılan önyüklemelerde —  kök dosya sistemi bir ramdisk'e yüklenir.  Bir ramdisk, disket muamelesine tabi tutulan bir RAM alanıdır. RAM, bir disketten çok daha hızlı olduğu için, ramdisk üzerinden yapılan sistem açılışları çok daha hızlı olmaktadır. Ayrıca, çekirdek sıkıştırılmış bir dosya sistemini ramdisk'e yükleyebilir ve orada açabilir. Bu sayede tek bir diskete çok daha fazla dosya sığdırılmış olur.
+   </para>
+   <para>
+    Kök dosya sistemi yüklenip, bağlandıktan sonra şuna benzer bir ileti göreceksiniz:
+   </para>
+<screen>VFS: Mounted root (ext2 filesystem) readonly.</screen>
+   <para>
+    <indexterm linkend="bootdisk-howto_cp"><primary><command>init</command></primary></indexterm>
+    <indexterm linkend="bootdisk-howto_cp"><primary><filename>inittab</filename></primary></indexterm>
+    <indexterm linkend="bootdisk-howto_cp"><primary><command>sysinit</command></primary></indexterm>
+    Sistem, kök dosya sistemini başarılı bir şekilde yüklendikten sonra, <command>init</command> çalıştırılır (<filename>/bin</filename> veya <filename>/sbin</filename> içinden). <command>init</command>,  <filename>/etc/inittab</filename> dosyasından ayarlarını okur, <command>sysinit</command>'i işaret eden bir satır arar ve daha sonra ismi geçen betiği çalıştırır. <command>sysinit</command> betiği genellikle, <filename>/etc/rc</filename> veya <filename>/etc/init.d/boot</filename> gibi birşeydir. Bu betik, temel sistem servislerini düzenleyen, - örneğin sabit disk üzerinde <command>fsck</command>'nın çalışmasını sağlayan - gerekli çekirdek modüllerini yükleyen, ağı ve takas alanını ilklendiren ve <filename>/etc/fstab</filename> içinde bahsi geçen dosya sistemlerini bağlayan  kabuk komutları topluluğudur.
+   </para>
+   <para>
+    <indexterm linkend="bootdisk-howto_cp"><primary sortas="etc/rc.d/"><filename>/etc/rc.d/</filename></primary></indexterm>
+    Bu betik genellikle, modüler başlangıçları sağlamak için, başka betikleri de çalıştırır. Örneğin; genel SysVinit yapısı içinde, <filename>/etc/rc.d/</filename> dizini,  sistem servislerinin açılış ve kapanış durumlarını düzenleyen bilgileri içeren dosyaların  bulunduğu pek çok alt dizin ihtiva eder. Bu dizin oldukça karışık bir yapıya sahiptir. Bununla birlikte, bir açılış disketindeki <command>sysinit</command> betiği oldukça basit bir yapıdadır.
+   </para>
+   <para>
+    <command>sysinit</command> betiğinin çalışması bitince, denetim tekrar <command>init</command>'e geçer. <filename>inittab</filename> içinde tanımlanmış olan <literal>initdefault</literal> anahtar sözcüğü ie belirtilen <wordasword>öntanımlı çalışma seviyesi</wordasword>ne girilir. Çalışma seviyesi satırı, genellikle <command>getty</command> gibi biruygulamayı işaret eder. Bu uygulama konsollar ve tty'ler arası iletişimi kontrol etmekten ve düzenlemekten sorumludur. Sisteme girişiniz esnasında gördüğünüz  ``<prompt>login:</prompt>'' isteminden <command>getty</command> sorumludur. Kullanıcının adını ve parolasını girmesinden sonra, bu bilgilerin geçerlilik ve tutarlılığını kontrol etmek için, <command>login</command> uygulaması çalıştırılır.
+   </para>
+  </sect2>
+
+  <sect2>
+   <title>Disk çeşitleri</title>
+   <para>
+    Temel açılış sürecine göz attıktan sonra, bahsi geçen disklerin çeşitlerini tanımlayabiliriz. Biz burada diskleri dörde ayıracağız. Aksi belirtilmediği sürece "disk" kelimesi disketleri tanımlamaktadır.  Bunun yanında, burada belirtilen pek çok şey sabit diskler içinde geçerlidir.
+   </para>
+   <variablelist>
+    <varlistentry>
+     <term>önyükleme [İng: boot]</term>
+     <listitem>
+      <para>
+       Açılış yapabilen bir çekirdek ihtiva eden bir disk. Bu disk önce çekrideği yüklemek ve ardından başka bir diskten kök dosya sistemini yüklemek için kullanılabilir. Bir önyükleme disketindeki çekirdeğe, kök dosya sisteminin yolu bildirilmelidir.
+     </para>
+      <para>
+       Sıklıkla, önyükleme diskleri, kök dosya sistemlerini başka bir disketten yüklerler. Başka bir disketten yüklemek yerine, kök dosya sistemini sabit diskten yükleyecek şekilde ayar yapmak da mümkündür. Bu genellikle yeni bir çekirdek sürümünü denerken kullanılır (aslında ``<command>make zdisk</command>'' komutu, çekirdek kaynak kodlarını kullanarak bu tür bir açılış disketi yapmanızı sağlar).
+     </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term>kök [İng: root]</term>
+     <listitem>
+      <para>
+       Bir Linux sisteminin çalışması için gereken dosyaları içeren bir dosya sisteminin bulunduğu disk. Bu tür diskler çekirdek veya önyükleyici içermek zorunda değildir.
+<indexterm linkend="bootdisk-howto_cp"><primary>kök diski</primary></indexterm>
+     </para>
+      <para>
+       Çekirdek bir kere yüklendikten sonra, kök disklerini diğer disklere bağımlı olmadan kullanabilirsiniz. Genelde, kök diski ramdisk'e özdevinimli olarak kopyalanır. Bu sayede kök diske erişim çok daha hızlı olur ve disket sürücüyü uygulama disketlerini kullanabilmek için serbest bırakmış oluruz.
+     </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term>önyükleme ve kök [İng: boot/root]<indexterm linkend="bootdisk-howto_cp"><primary>önyükleme ve kök</primary></indexterm></term>
+     <listitem>
+      <para>
+       Hem çekirdek hem de kök dosya sistemi içeren diskler. Başka bir deyişle: sabit disk olmadan bir Linux sistemini yükleyecek ve çalışmasını sağlayacak her şeyi içeren bir disket. Bu tür bir diskin yararı küçük boyutlu olmasıdır; gereken her şey tek bir disk üzerindedir. Bununla birlikte, bu yararı aynı zamanda zorluklarını da yanında getirir: tek bir diskete her şeyi sığdırmak, sıkıştırılmış olsa bile, oldukça zordur.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><indexterm linkend="bootdisk-howto_cp"><primary>uygulamalar disketi</primary></indexterm>uygulamalar</term>
+     <listitem>
+      <para>
+       Bir dosya sistemi içeren ama kök dosya sistemi olarak bağlanması tasarlanmamış olan diskler. İlave verilerin bulunduğu disk. Bu tür diskleri, kök diske sığdırmayı beceremediğimiz uygulama ve verileri taşımak için kullanacağız.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+   <para>
+    Genel olarak, "bir açılış disketi yapmak"tan bahsederken, hem önyükleme, hem de kök bölümleri yapmaktan  bahsediyor olacağız.  Bu iki bölüm tek bir diskette olabileceği gibi, iki ayrı diskette (önyükleme + kök diskleri) şeklinde de olabilir. Kurtarma diskleri için en esnek yapı, sanırım ayrı ayrı disklerin kullanılması olsa gerek. Gerekli uygulama ve veriler için de ek bir uygulama disketleri kullanabilirsiniz.
+   </para>
+  </sect2>
+ </sect1>
+
+ <sect1 xml:id="bootdisk-howto_buildroot">
+  <title>Bir kök dosya sisteminin oluşturulması</title>
+  <para>
+   Bir kök dosya sisteminin oluşturulması, sistemin çalışması için gerekecek dosyaları seçmeyi zorunlu kılar. Bu bölümde, sıkıştırılmış bir kök dosya sisteminin nasıl yapılacağını göreceğiz. <wordasword>Sıkıştırılmış dosya sistemi</wordasword>ni, doğrudan kök dosya sistemi olarak bağlanan bir disket üzerinde oluşturmanın daha az kullanılan bir diğer yöntemi <xref linkend="bootdisk-howto_NonRamdiskRoot"/> bölümünde anlatılmaktadır.
+  </para>
+  <sect2>
+   <title>Genel bakış</title>
+   <para>
+    Bir kök dosya sistemi, tam bir Linux sistemi desteklemek için gerekli olan herşeyi içermelidir. Bunu yapabilmek için, bu disket bir Linux sistemde gerekli olan asgari araçları içermelidir:
+   </para>
+   <simplelist>
+    <member>temel dosya sistemi yapısını;</member>
+    <member>
+     en azından şu dizinleri: <filename class="directory">/dev</filename>,
+     <filename class="directory">/proc</filename>,
+     <filename class="directory">/bin</filename>,
+     <filename class="directory">/etc</filename>,
+     <filename class="directory">/lib</filename>,
+     <filename class="directory">/usr</filename>,
+     <filename class="directory">/tmp</filename>;
+    </member>
+    <member>
+     temel araçları: <command>sh, ls, cp, mv</command>, vs.;
+    </member>
+    <member>
+     ayar dosyalarının en temel olanlarını: <filename>rc, inittab, fstab</filename>, vs.;
+    </member>
+    <member>
+     aygıtları: <filename>/dev/hd*, /dev/tty*, /dev/fd0</filename>, vs.;
+    </member>
+    <member>
+     araçlar tarafından kullanılan temel işlevleri sağlayan çalışma anı kütüphanelerini.
+    </member>
+   </simplelist>
+   <para>
+    Elbette ki, herhangi bir sistem, üzerinde bir şeyler çalıştırabildiğimiz sürece işe yarardır. Bir kök disket aşağıdakileri veya bunlara benzer şeyleri yapabildiğiniz sürece bir anlam ifade eder:
+   </para>
+   <itemizedlist>
+    <listitem>
+     <para>
+      Başka bir sürücüdeki dosya sistemini kontrol edebilmeli. Örneğin, sabit diskinizdeki kök dosya sistemini denetleyebilmeli, sistemi başka bir sürücüden açtıktan sonra, sizin orjinal kök bölümünüzü, bağlı değil iken, <command>fsck</command> ile denetlemenizi sağlamalı.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      Arşivlenmiş ve/veya sıkıştırılmış orjinal kök dosya sisteminizin hepsini veya bir bölümünü <command>cpio, gzip, tar</command> veya <command>ftape</command> gibi araçlar kullanarak tekrar yükleyebilmeli.
+     </para>
+    </listitem>
+   </itemizedlist>
+   <para>
+    <wordasword>Sıkıştırılmış dosya sistemi</wordasword> yapmayı burada açıklayacağız. Bu isimle anılmasını sebebi, sıkıştırılmış olması ve önyükleme işlemi sonrası ramdisk içine açılmasıdır. Sıkıştırılmış dosya sistemi kullanarak 6MB'ye yakın veriyi tek bir 1440k'lık bir diskete sığdırmak mümkündür. Dosya sistemi tek bir disketin boyutunda daha büyük olduğu için, dosya sistemini disket üzerinde hazırlamak mümkün değildir. Bu nedenle, dosya sistemini başka bir yerde hazırlamalı, orada  sıkıştırıp daha sonra diskete kopyalamalıyız.
+   </para>
+  </sect2>
+
+  <sect2 xml:id="bootdisk-howto_creatingrootfs">
+   <title>Dosya sisteminin oluşturulması</title>
+   <para>
+    Bu tür bir kök dosya sistemi oluşturmak için, sıkıştırma öncesi bütün araç ve dosyaları içine alabilecek kadar büyük bir yere ihtiyacımız var. 4MB kadar kapasiteye sahip bir aygıta ihtiyacımız var. Bunun için çeşitli seçenekler mevcuttur:
+   </para>
+   <itemizedlist>
+    <listitem>
+     <para>
+      Bir <wordasword>ramdisk</wordasword> (<literal>AYGIT = /dev/ram0</literal>) kullanın. Bu durumda, fiziksel bellek,  bir disk sürücü gibi kullanılır. Ramdiskimiz yeterince büyük olmalıdır. Şayet LILO kullanıyorsanız, RAM içinde yaratılacak ramdiskin boyutunu sınırlayan bir satır (<literal>RAMDISK=nnn</literal> gibi) olup olmadığını <filename>/etc/lilo.conf</filename> ayar dosyası içinden kontrol edin. Öntanımlı değer 4096K'dır ve bu yeterli olacaktır.  8MB'den daha küçük RAM'i olan bir makine üzerinde böyle bir ramdisk yapmaya kalkışmayın. <filename>/dev/ram0, /dev/ram</filename> veya <filename>/dev/ramdisk</filename>  gibi bir aygıta sahip olduğunuzdan emin olun. Şayet bu tür bir aygıt sisteminizde yok ise <command>mknod</command> kullanarak <filename>/dev/ram0</filename> aygıtını oluşturun (ana=1, alt=0). Aygıt dosyaları yapmak için  gerekli bilgiyi <command>man mknod</command>  veya <xref linkend="sag"/> içinde bulabilirsiniz.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      Şayet yeterli boyutta kullanılmayan bir disk bölümüne sahipseniz, bu da kabul.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+<indexterm linkend="bootdisk-howto_cp"><primary>geridönüş aygıtı</primary></indexterm>
+      Bir <wordasword>geridönüş aygıtı</wordasword> kullanın. Bu aygıt ile, bir disk dosyasına bir aygıtmış gibi davranabilirsiniz. Bir geridönüş aygıtı kullanarak, sabit diskiniz üzerinde,  dosya sistemini yapmamıza yetecek kadar büyük bir dosya oluşturabilirsiniz (3MB civarı).
+     </para>
+     <para>
+      Geridönüş aygıtlar hakkında bilgi almak için: <command>man losetup</command>. Şayet sisteminizde <command>losetup</command> yok ise, <command>mount</command> ve <command>umount</command> sürümleri ile uyumlu olarak <link xlink:href="ftp://ftp.win.tue.nl/pub/linux-local/utils/util-linux/"/> adresinden util-linux paketi içinde alabilirsiniz.
+     </para>
+     <para>
+      Şayet sisteminizde bir dönüş aygıtı yok ise (<filename>/dev/loop0</filename>, <filename>/dev/loop1</filename>, vs.),  ``<command>mknod /dev/loop0 b 7 0</command>'' komutunu kullanarak bir tane oluşturmalısınız. Özel <command>mount</command> ve <command>umount</command> çalıştırılabilirlerini de yükledikten sonra, diskiniz üzerinde yeterli kapasiteye sahip geçici bir dosya oluşturun (örneğin <filename>/tmp/fsfile</filename>). <varname>nnn</varname> blokluk bir dosya oluşturmak için şu komutu kullanabilirsiniz:
+     </para>
+<screen>dd if=/dev/zero of=/tmp/fsfile bs=1k count=<varname>nnn</varname>
+</screen>
+     <para>
+      Aşağıdaki <replaceable>aygıt</replaceable> kelimesinin yerine dosya ismini koyun. Bağlama işlemi yapacağınız zaman, <command>mount</command> komutu ile birlikte <command>-o loop</command> seçeneğini kullanmanız gerekmektedir. Böylece <command>mount</command> uygulamasına bağlanacak şeyin bir dönüş aygıt olduğu bildirilmiş olur.
+     </para>
+    </listitem>
+   </itemizedlist>
+   <para>
+    Bu seçeneklerden birisini seçtikten sonra <replaceable>aygıt</replaceable>'ı hazırlayın:
+   </para>
+<screen>dd if=/dev/zero of=<replaceable>aygıt</replaceable> bs=1k count=4096
+</screen>
+   <para>
+    Bu komut aygıtı sıfırlarla doldurur.
+   </para>
+   <important>
+    <para>
+     Bir aygıtın sıfırlarla doldurulması, dosya sistemi daha sonra sıkıştırılacağı için kritik bir öneme haizdir. Azami sıkıştırmayı sağlamak için kullanılmayan bütün bölümler sıfır ile doldurulmalıdır. Dosya sistemindeki bir dosyayı silerken veya taşırken bunu aklınızda bulundurun. Dosya sistemi blokları doğru bir şekilde tekrar yerleştirir <emphasis>ama onları tekrar sıfırla doldurmaz</emphasis>. Şayet sıklıkla silme ve kopyalama yapıyorsanız, sıkıştırılmış dosya sisteminiz ihtiyaç duyduğumuzdan daha büyük olabilir.
+    </para>
+   </important>
+   <para>
+    <indexterm linkend="bootdisk-howto_cp"><primary>dosya düğümleri</primary><secondary>kök dosya sisteminde ayrılması</secondary></indexterm>
+    Daha sonra dosya sistemini oluşturun. Linux çekirdeği, ramdiske özdevinimli olarak yüklenen,  iki çeşit dosya sistemi kabul eder. Bunlar minix ve ext2'dir. ext2'yi tercih etmenizi öneririz. Şayet ext2 kullanırsanız, öntanımlı değerden daha fazla dosya düğümü oluşturmak için kullanılan <option>-N</option> seçeneğinin oldukça işe yarar olduğunu görürsünüz.  <option>-N 2000</option> değerini kullanmanızı öneririm. Böylece dosya düğümü sıkıntısı yaşamazsınız. Ayrıca, gereksiz <filename>/dev</filename> dosyalarını silerek de dosya düğümü tasarrufu sağlanabilir.  <command>mke2fs</command>, öntanımlı olarak 1.44MB'lik bir diskette 360 adet dosya düğümü oluşturur.  Benim yaptığım kök diskette 120 tane dosya düğümü yeterli olmuştu. Eğer <filename>/dev</filename> içindeki bütün aygıtları eklemeye niyetiniz varsa, rahatlıkla 360 düğüm sınırını geçebilirsiniz. Sıkıştırılmış bir dosya sistemi kullanmak, daha büyük bir dosya sistemine ve daha çok düğüme izin verir fakat hala ya düğüm sayısını artırmanız ya da kullandığınız dosya sayısını sınırlamanız gerekmektedir.
+   </para>
+   <para>
+    Bu nedenle kullanacağımız komut şuna benzer olacaktır:
+   </para>
+<screen>mke2fs -m 0 -N 2000 <replaceable>aygıt</replaceable></screen>
+   <para>
+    (Şayet bir geridönüş aygıtı kullanıyorsanız, <replaceable>aygıt</replaceable> yazan yerde kullandığınız dosyanın adı olmalıdır.)
+   </para>
+   <para>
+    <command>mke2fs</command> kullanılabilir alanı kendiliğinden tespit eder ve gerekli ayarlamaları yapar.  ``<command>-m 0</command>''  bağımsız değişkeni  root kullanıcı için alan ayrılmasını önlemiş olur ve böylece diskette daha fazla alan bulunması sağlanmış olur.
+   </para>
+   <para>
+    Daha sonra aygıtı bağlayın:
+   </para>
+<screen>mount -t ext2 <replaceable>aygıt</replaceable> /mnt</screen>
+   <para>
+    (Şayet <filename>/mnt</filename> bağlantı noktası sisteminizde yoksa, bunu oluşturmak zorundasınız.) Bölümün geri kalanında hedef dizin isimleri <filename>/mnt</filename>'ye göre ayarlanacaktır.
+   </para>
+  </sect2>
+  <sect2 xml:id="bootdisk-howto_fsfill">
+   <title>Dosya sisteminin doldurulması</title>
+   <para>
+    Kök dosya sisteminiz için gerekli olan mümkün en az sayıda dizin şunlardan oluşabilir<footnote><para>Burada anlatılan dizin yapısı, sadece kök disket kullanımı içindir. Gerçek Linux Sistemleri hangi dosyanın nerede bulunacağının belirlendiği daha karmaşık ve daha disiplinli bir yapıya sahiptir:  <link xlink:href="https://refspecs.linuxfoundation.org/FHS_3.0/fhs/index.html">Dosyasistemi Hiyerarşi Standardı</link>.</para></footnote>:
+   </para>
+   <simplelist>
+    <member><filename>/dev</filename> -- aygıt dosyaları, G/Ç'lar için gereklidir.
+   </member>
+    <member><filename>/proc</filename> -- proc dosya sistemi tarafından ihtiyaç duyulan dizin
+   </member>
+    <member><filename>/etc</filename> -- sistem yapılandırma dosyaları
+   </member>
+    <member><filename>/sbin</filename> -- Kritical sistem çalıştırılabilirler
+   </member>
+    <member><filename>/bin</filename> -- sistemin parçası olarak kabul edilen çalıştırılabilirler
+   </member>
+    <member><filename>/lib</filename> -- çalışma zamanı desteği sağlayan paylaşımlı kütüphaneler
+   </member>
+    <member><filename>/mnt</filename> -- diğer disklerdeki bakım/onarım işleri için bağlantı noktası
+   </member>
+    <member><filename>/usr</filename> -- ilave araçlar ve uygulamalar
+   </member>
+   </simplelist>
+   <para>
+    Bu dizinlerden üç tanesi boş olacaktır, bu nedenle sadece <command>mkdir</command> kullanarak bunları oluşturmak yeterli olacaktır. <filename>/proc</filename> dizini, proc dosya sisteminin yerleştiği bir dizindir. <filename>/mnt</filename> ve <filename>/usr</filename> dizinleri, sistem çalıştıktan sonra kullanılacak bağlantı noktalarıdır.
+   </para>
+   <para>
+    Geri kalan dizinler aşağıda ki bölümlerde açıklanmıştır.
+   </para>
+   <sect3 xml:id="bootdisk-howto_dev">
+    <title><indexterm linkend="bootdisk-howto_cp">
+     <primary>aygıt dizini (<filename>/dev</filename>)</primary>
+    </indexterm><filename>/dev</filename></title>
+    <para>
+     Bir Linux sistemi için gerekli olan bütün aygıtların dosyalarının bulunduğu bir dizindir. Dizinin kendisi normal bir dizindir ve <command>mkdir</command> komutu ile normal bir şekilde oluşturulabilir. Aygıt özel dosyaları ise, <command>mknod</command> komutu kullanılarak özel bir yöntemle oluşturulmalıdır.
+    </para>
+    <para>
+     Aynı zamanda bu işi yapmanın kısa bir yolu da vardır: sabit diskinizdeki aygıt dosyalarını disketin <filename>/dev</filename> dizinine kopyalayabilirsiniz.  Bu işlem esnasında yapmanız gereken tek şey <option>-R</option> seçeneğini kullanmaktır. Böylece, dizin içindeki dosyaların içerikleri kopyalanmadan sadece dizin kopyalanır. Örneğin:
+    </para>
+<screen>cp -dpR /dev/fd[01]* /mnt/dev
+cp -dpR /dev/tty[0-6] /mnt/dev
+</screen>
+    <para>
+     Disketin <filename>/mnt</filename> dizinine bağlı olduğunu varsayarsak, <literal>dp</literal> seçenekleri sembolik bağların yine bağ olarak kopyalandığından, dosya özniteliklerinin korunduğundan ve iyelik bilgilerini saklandığından emin olmamızı sağlar.
+    </para>
+    <para>
+     Şayet bu işi zor yoldan halletmek isterseniz, istediğiniz aygıtın ana ve alt numaralarını görebilmek için <command>ls -l</command>  komutunu kullanın. Daha sonra disket içerisinde <command>mknod</command>  komutunu kullanarak istediğiniz aygıtı oluşturun.
+    </para>
+    <para>
+     Aygıt dosyalarını oluştururken, ihtiyaç duyduğunuz özel aygıtların, diskette bulunduğundan emin olun. Örneğin; <literal>ftape</literal> dosyasını, teyp aygıtları kullanır ve şayet disketi kullanarak teyp sürücünüze erişmek istiyorsanız, teyp aygıtı dosyasını oluşturmalısınız.
+    </para>
+    <para>
+     Her bir özel aygıt için bir dosya düğümüne ihtiyacınız olduğunu ve disketlerde düğümlerin nadir bulunan değerli varlıklar olduğunu aklınızdan çıkarmayın. Öyle bol keseden dosya düğümü dağıtmayın. Ekleyeceğiniz aygıt dosyaları için seçici davranın. Şayet, sisteminizde SCSI diskler yok ise, <literal>/dev/sd*</literal> dosyalarını oluşturmayın. Seri portlardan iletişim sağlamayacaksanız, <literal>/dev/ttyS*</literal> aygıtlarına ihtiyacınız yok demektir.
+    </para>
+    <para>
+     Şayet, kök dosya sisteminizi oluştururken: aygıt içinde yer kalmadığı şeklinde bir hata iletisi görürseniz ama <command>df</command> komutunun çıktısı aygıtta yer olduğunu gösterirse, elinizdeki dosya düğümlerini bitirmişsiniz demektir. <command>df -i</command>  komutu ile düğüm kullanım durumunu görebilirsiniz.
+    </para>
+    <important>
+     <para>
+      Şu dosyaların bu dizin içinde bulunduğunda emin olun:
+      <filename>console</filename>, <filename>kmem</filename>, <filename>mem</filename>, <filename>null</filename>,
+      <filename>ram0</filename> ve <filename>tty1</filename>.
+     </para>
+    </important>
+   </sect3>
+   <sect3>
+    <title><indexterm linkend="bootdisk-howto_cp"><primary sortas="etc dizini"><filename>/etc</filename> dizini</primary></indexterm><filename>/etc</filename></title>
+    <para>
+     <filename>/etc</filename> dizini sistem yapılandırma dosyalarını barındırır. İçeriği, hangi süreçlerin çalıştıracağınıza bağlı olarak değişir. Pek çok sistemde, bunlar, üç gruba ayrılır:
+    </para>
+    <orderedlist>
+     <listitem>
+      <para>
+       Herzaman gerekli olanlar: <filename>rc</filename>,
+       <filename>fstab</filename>, <filename>passwd</filename>, vs.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       Gerekli olabilecek ama asla emin olamayacaklarınız.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       ıvır zıvır.
+      </para>
+     </listitem>
+    </orderedlist>
+    <para>
+     Gerekli olmayan dosyalar aşağıdaki komut ile tespit edilebilir:
+    </para>
+<screen>ls -ltru</screen>
+    <para>
+     Bu komut ile en son ulaşılan tarihten itibaren ters sıralama ile, bir dosya listesi görüntülenir. Böylece hiç erişim sağlanmamış dosyalar varsa, bunları gönül rahatlığı içinde yok sayabilirsiniz.
+    </para>
+    <para>
+     Benim kök disketimde, 15 taneden az ayar dosyam var. Böylece üç değişik türte dosya ile ilgilenmem gerekmekte ve yapmam gereken işler azalmakta:
+    </para>
+    <orderedlist>
+     <listitem>
+      <para>
+       önyükleme ve kök sistemi için mutlaka yapılandılmaları gerekenler:
+      </para>
+      <orderedlist numeration="loweralpha">
+       <listitem>
+        <para>
+         <filename>rc.d/*</filename> --  sistem başlatma ve çalışma seviyesi değiştirme betikleri
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         <filename>fstab</filename> -- bağlanacak dosya sistemlerinin listesi
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         <filename>inittab</filename> -- <command>init</command> süreci için bağımsız değişkenler, açılış sırasında çalıştırılan ilk süreçtir.
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         <filename>gettydefs</filename> -- <command>login</command> süreci için bağımsız değişkenler, kullanıcının sisteme girişinde çalıştırılır.
+        </para>
+       </listitem>
+      </orderedlist>
+      <para>
+       önyükleme ve kök sistemi için düzenlemem gerekenler:
+      </para>
+      <orderedlist numeration="loweralpha">
+       <listitem>
+       <para>
+        <filename>passwd</filename> -- kullanıcıların, ev dizinlerinin, vs. bilgilerin bulunduğu önemli bir liste.
+<indexterm linkend="bootdisk-howto_cp"><primary>kullanıcı grupları</primary></indexterm>
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+        <filename>group</filename> --  kullanıcı grupları.
+<indexterm linkend="bootdisk-howto_cp"><primary>gölge parolalar</primary></indexterm>
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+        <filename>shadow</filename> -- kullanıcıların parolaları. Bunu dahil etmek zorunda değilsiniz.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+        <filename>termcap</filename> -- uçbirim yetenekleri veritabanı.
+       </para>
+       </listitem>
+      </orderedlist>
+      <para>
+       <indexterm linkend="bootdisk-howto_cp"><primary>dosyaların budanması</primary></indexterm>Şayet güvenlik önemli ise <filename>passwd</filename> ve <filename>shadow</filename> dosyaları iyice budanmalı, kullanıcı parolalarının kopyalanması önlenmeli ve gereksiz girdiler çıkarılmalıdır. Böylece disketten açılış yaparken istenmeyen kullanıcı girişleri reddedilir.
+      </para>
+      <para>
+       <indexterm linkend="bootdisk-howto_cp"><primary><filename>passwd</filename> dosyası</primary></indexterm><filename>passwd</filename> dosyasında en azından <literal>root</literal> kullanıcının bulunduğundan emin olun. Şayet diğer kullanıcıların da bağlantı yapmasını isterseniz, ev dizinlerinin ve kabukların sistemde var olduğundan emin olun.
+      </para>
+      <para>
+       <filename>termcap</filename>, uçbirim veritabanıdır ve yüzlerce kB'dır. Sizin önyükleme ve kök disketinizdeki sürümün, sadece işinize yarayacak olan uçbirimleri içerdiğinde emin olun: genellikle sadece <literal>linux</literal> veya <literal>linux-console</literal> girdisi yeterlidir.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       Ve geriye kalanlar. O an çalışıyorlardı, bu yüzden onlara dokunmadım.
+      </para>
+     </listitem>
+    </orderedlist>
+    <para>
+     Bunların haricinde, gerçekte ayarlamam gereken sadece iki dosya var ve onlarda hayret verici bir şekilde küçükler:
+    </para>
+    <itemizedlist>
+     <listitem>
+      <para>
+       <filename>rc</filename> şunları içermeli:
+      </para>
+<screen>#!/bin/sh
+/bin/mount -av
+/bin/hostname Kangaroo
+</screen>
+      <para>
+       Çalıştırma izni olduğunda emin olun, tepesinde "#!" işareti bulunduğundan emin olun ve dosya isimlerinin doğru olduğundan da emin olun. Aslında  <command>hostname</command>'i çalıştırmanız gerekmemekte —yaparsanız hoş olur, yapmazsanız hiçbir şey olmaz.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       <filename>fstab</filename> en azından şunları içermeli:
+      </para>
+<screen>/dev/ram0       /               ext2    defaults
+/dev/fd0        /               ext2    defaults
+/proc           /proc           proc    defaults
+</screen>
+      <para>
+       <indexterm linkend="bootdisk-howto_cp">
+       <primary><filename>fstab</filename> dosyası</primary></indexterm>
+       Çalışan sisteminizdeki <filename>fstab</filename> girdilerini buraya kopyalayabilirsiniz, fakat sabit diskinizdeki bölümleri özdevinimli olarak bağlamaya kalkışmayın. <literal>noauto</literal> anahtar kelimesini bunların yanında kullanmayı unutmayın.  Açılış disketini kullanmak zorunda kaldığınız durumlarda, sabit diskinizin kafası biraz karışmış olabilir.
+      </para>
+     </listitem>
+    </itemizedlist>
+    <para>
+     <filename>inittab</filename> içindeki <literal>sysinit</literal> satırı, <filename>rc</filename> veya hangi temel betik kullanılacak ise, ona göre düzenlenmelidir. Ayrıca seri portlar üzerindeki kullanıcıların bağlanamayacaklarından emin olmak isterseniz, sonlarında <filename>ttys</filename> veya <filename>ttyS</filename> aygıtları içeren bütün <filename>getty</filename> satırlarının başına yorum işareti "#" getirin. <filename>tty</filename> portlarına dokunmayın ki, konsoldan bağlanabilesiniz.
+    </para>
+    <para>
+     <indexterm linkend="bootdisk-howto_cp"><primary><filename>inittab</filename> dosyası</primary></indexterm>
+     <indexterm linkend="bootdisk-howto_cp"><primary><filename>sysinit</filename></primary></indexterm>
+     <indexterm linkend="bootdisk-howto_cp"><primary><filename>rc</filename> betiği</primary></indexterm>
+     En küçük yapıda <filename>inittab</filename> dosyası şuna benzer:
+    </para>
+<screen>id:2:initdefault:
+si::sysinit:/etc/rc
+1:2345:respawn:/sbin/getty 9600 tty1
+2:23:respawn:/sbin/getty 9600 tty2
+</screen>
+    <para>
+Bu <filename>inittab</filename> dosyası, sistemin değişik seviyelerde çalışabileceğini/başlatılabileceğini, çoklu kullanıcı kipine geçebileceğini, vs.. tanımlar. <filename>inittab</filename> içindeki isimleri dikkatlice kontrol edin. Şayet <literal>init</literal>, bu isimleri bulamazsa, sistem açılışı gerçekleşmez ve hatta bir hata iletisi bile alamayabilirsiniz.
+    </para>
+    <para>
+     <indexterm linkend="bootdisk-howto_cp"><primary>yerleri değiştirilemeyenler</primary></indexterm>
+     Unutmayın ki bazı uygulamalar olmazsa olmazdır ve başka uygulamalar bunları yerlerini bilerek çağırdığından yerleri değiştirilemez. Örneğin; benim sisteminde, <filename>/etc/shutdown</filename>  <filename>/etc/reboot</filename>'u çalıştırdığından şayet <filename>reboot</filename>'u <filename>/bin/reboot</filename>'a taşırsam, bir <command>shutdown</command> komutu, <command>reboot</command>'u bulamayacağı için çalışmayacaktır.
+    </para>
+    <para>
+     İşin geri kalan kısmı, <filename>/etc</filename> dizinindeki tüm metin dosyalarını ve gerekli olacağından emin olmasanız bile <filename>/etc</filename> dizinindeki bütün çalıştırılabilir dosyaları  kopyalamaktan ibarettir. Yardımcı olması açısından <xref linkend="bootdisk-howto_Listings"/> içindeki örnek listeye göz atabilirsiniz.  Muhtemelen buradaki dosyalar yeterli olacaktır ama sistemler arası farklılıklar olduğu için, buradaki dosyaların, sizin sisteminizdekiler ile aynı olduğunda emin olamazsınız.  Emin olmanın tek yolu <literal>inittab</literal> ile başlamak ve daha nelerin gerektiğini bulmaktır.
+    </para>
+    <para>
+     Pek çok sistem, değişik çalışma seviyelerine geçiş sağlayan kabuk betiklerini saklamak için  <filename>/etc/rc.d/</filename> dizinini kullanırlar. Asgari gereksinim tek bir <filename>rc</filename> betiğidir ama <filename>inittab</filename> ve <filename>/etc/rc.d</filename> dizinindekileri doğrudan diskete kopyalamak ve daha sonra bir disket ortamında işi olamayacak kabuk betiklerini temizlemek daha basit olabilir.
+    </para>
+   </sect3>
+
+   <sect3>
+    <title><indexterm linkend="bootdisk-howto_cp"><primary sortas="bin dizini"><filename>/bin</filename> dizini</primary></indexterm>
+     <indexterm linkend="bootdisk-howto_cp"><primary sortas="sbin dizini"><filename>/sbin</filename> dizini</primary></indexterm><filename>/bin</filename> ve <filename>/sbin</filename></title>
+    <para>
+
+     <filename>/bin</filename> dizini, temel işlemleri (<command>ls</command>, <command>mv</command>, <command>cat</command> ve <command>dd</command> gibi) yapmak için gerekli olan  ilave araçları saklamak için elverişli bir dizindir. <filename>/bin</filename> ve <filename>/sbin</filename> dizininde bulunması gereken dosyaların örnek bir listesi için <xref linkend="bootdisk-howto_Listings"/> bölümüne bakınız. Yedekleri geri yüklemek için gereken araçların (<command>cpio</command>, <command>tar</command> ve <command>gzip</command> gibi) hiçbiri bu listede yoktur.  Çünkü ben bu araçları başka bir uygulama disketine yerleştirdim. Amacım önyüleme ve kök disketlerinde yer tasarrufu sağlamaktı.  Önyükleme ve kök disketinden açılış yapıldıktan sonra, bunların içindekiler ramdiske yüklenir ve disket sürücü başka disketler için boşalmış olur. Ben bu uygulama disketini genellikle <filename>/usr</filename> altına bağlarım.
+    </para>
+    <para>
+     Uygulama disketi yapımı <xref linkend="bootdisk-howto_UtilityDisk"/> içinde anlatılmaktadır. Yedekleme yapmak için, yedekleme araçlarının aynı sürümdeki birer kopyasını kullanmak iyi bir fikir olacaktır. Bu sayede sizin yedeklerinizi okuyamayan araçların yeni sürümlerini yüklemek ile vakit kaybetmezsiniz. Sisteminizdeki yedekleri hangi araçlar ile yaratmış iseniz, aynı araçların aynı sürümlerini kullanarak bir uygulama disketi oluşturun.
+<indexterm linkend="bootdisk-howto_cp"><primary><command>init</command></primary></indexterm>
+<indexterm linkend="bootdisk-howto_cp"><primary><command>getty</command></primary></indexterm>
+<indexterm linkend="bootdisk-howto_cp"><primary><command>login</command></primary></indexterm>
+<indexterm linkend="bootdisk-howto_cp"><primary><command>sh</command></primary></indexterm>
+<indexterm linkend="bootdisk-howto_cp"><primary><filename>shells</filename> dosyası</primary></indexterm>
+    </para>
+    <important>
+     <para>
+      Şu uygulamaları yüklediğinizden emin olun: <command>init</command>, <command>getty</command> veya eşdeğeri, <command>login</command>, <command>mount</command>, rc betiklerini çalıştırabilecek bir kabuk ve <command>sh</command>'dan bu kabuğa bir bağ.
+     </para>
+    </important>
+   </sect3>
+
+   <sect3>
+    <title><filename>/lib</filename></title>
+    <para>
+     <indexterm linkend="bootdisk-howto_cp"><primary>kütüphane (lib) dizini</primary></indexterm>
+     <indexterm linkend="bootdisk-howto_cp"><primary>kütüphaneler</primary></indexterm>
+     Bu dizine gerekli olacak paylaşımlı kütüphaneleri ve yükleyicileri koyabilirsiniz. Şayet paylaşımlı kütüphaneler <filename>/lib</filename> dizini altında bulunamazsa, sistem açılmayacaktır. Şayet şanslı iseniz, bunun sebebini söyleyen bir hata iletisi ile karşılaşabilirsiniz.
+    </para>
+    <para>
+     <indexterm linkend="bootdisk-howto_cp"><primary><filename>libc.so</filename></primary></indexterm>
+     Hemen hemen bütün uygulamalar <filename>libc</filename> kütüphanesine ihtiyaç duyarlar; <filename>libc.so.</filename><varname>N</varname>: buradaki <varname>N</varname> geçerli sürüm numarası anlamına gelir.  <filename>/lib</filename> dizininizi kontrol edin. Tam sürüm adını taşıyan bir dosya ismine verilmiş olan sembolik bir bağ olarak bir <filename>libc.so.</filename><varname>N</varname> dosyası vardır:
+    </para>
+<screen>#  ls -l /lib/libc*
+-rwxr-xr-x   1 root     root      4016683 Apr 16 18:48 libc-2.1.1.so*
+lrwxrwxrwx   1 root     root           13 Apr 10 12:25 libc.so.6 -&gt; libc-2.1.1.so*
+</screen>
+    <para>
+     Bu durumda <filename>libc-2.1.1.so</filename>'yu kullanmamız gerekecektir.  Yüklemeniz gereken diğer kütüphaneleri bulmak için, yüklemeyi planladığınız çalıştırılabilirlerin bağımlılıklarını <command>ldd</command> ile kontrol ediniz.  Örnek:
+    </para>
+<screen># ldd /sbin/mke2fs
+libext2fs.so.2 =&gt; /lib/libext2fs.so.2 (0x40014000)
+libcom_err.so.2 =&gt; /lib/libcom_err.so.2 (0x40026000)
+libuuid.so.1 =&gt; /lib/libuuid.so.1 (0x40028000)
+libc.so.6 =&gt; /lib/libc.so.6 (0x4002c000)
+/lib/ld-linux.so.2 =&gt; /lib/ld-linux.so.2 (0x40000000)
+</screen>
+    <para>
+     Sağ tarafta bulunan bütün dosyalar gereklidir. Dosya bir sembolik bağ olabilir.
+    </para>
+    <para>
+     Bazı kütüphanelerin oldukça büyük olduğunu ve kök dosya sisteminize sığmayabileceğini aklınızda bulundurun. Örneğin;  yukarıda listelenen <filename>libc.so</filename> yaklaşık olarak 4MB'dır. Kütüphaneleri kök dosya sisteminize kopyalarken, muhtemelen onları soymanız gerekecek. Ayrıntılar için <xref linkend="bootdisk-howto_slimfast"/>  bölümüne bakınız.
+    </para>
+    <para>
+     <indexterm linkend="bootdisk-howto_cp"><primary>yükleyiciler</primary></indexterm>
+     <filename>/lib</filename> içine, kütüphaneleri yükleyecek bir yükleyici de yerleştirmelisiniz. Yükleyici ya  <filename>ld.so</filename> (A.OUT kütüphaneleri içindir ve güncelliğini yitirmiştir) ya da <filename>ld-linux.so</filename> (ELF kütüphaneleri için) olmalıdır.  <command>ldd</command>'nin yeni sürümleri hangi yükleyiciye ihtiyacınız olduğunu söyleyecektir -yukarıdaki örnekte görülebileceği üzere- fakat eski sürümler bunu yapmazlar. Şayet hangisine ihtiyaç duyduğunuzdan emin değilseniz, kütüphane için <command>file</command> komutunu çalıştırın:
+    </para>
+<screen># file /lib/libc.so.4.7.2 /lib/libc.so.5.4.33 /lib/libc-2.1.1.so
+/lib/libc.so.4.7.2: Linux/i386 demand-paged executable (QMAGIC), stripped
+/lib/libc.so.5.4.33: ELF 32-bit LSB shared object, Intel 80386, version 1, stripped
+/lib/libc-2.1.1.so: ELF 32-bit LSB shared object, Intel 80386, version 1, not stripped
+</screen>
+    <para>
+     <literal>QMAGIC</literal>, <literal>4.7.2</literal>'nin A.OUT kütüphanesi olduğunu ve <literal>4.7.2</literal> ile <literal>2.1.1</literal>'in  ELF kütüphanesi olduğunu göstermektedir.
+<indexterm linkend="bootdisk-howto_cp"><primary>ELF</primary></indexterm>
+    </para>
+    <para>
+     Gereken yükleyici(ler)yi, kök dosya sisteminize kopyalayın. Kütüphaneler ve yükleyicileri, içerildikleri çalıştırılabilirlere karşı dikkatlice kontrol edilmelidir. Şayet çekirdek gereken bir kütüphaneyi yükleyemezse, herhangi bir hata verilmeksizin çekirdek askıda kalabilir. Alın başınıza bela.
+    </para>
+   </sect3>
+  </sect2>
+
+  <sect2 xml:id="bootdisk-howto_PAMandNSS">
+   <title>PAM ve NSS'in sağlanması</title>
+   <para>
+    Sisteminiz, <command>ldd</command> ile görülemeyen çzdev,ml, yükelenen kütüphanelere ihtiyaç duyabilir. Şayet bunları sağlayamazsanız, sisteme bağlanma veya açılış disketini kullanma ile sorunlar yaşayabilirsiniz.
+   </para>
+   <sect3>
+    <title>PAM (Pluggable Authentication Modules)</title>
+    <subtitle>(Eklemlenebilen Kimlik Kanıtlama Modülleri)</subtitle>
+    <para>
+     Şayet sisteminizde PAM kullanılıyor ise, açılışı disketinizde bunun için bazı hazırlıklar yapmalısınız. Kısaca tanımlamak gerekirse, PAM: kullanıcıları doğrulama ve onların servislere erişimini denetleyen gelişmiş bir modüler yöntemdir denebilir. Sisteminizde PAM kullanılıp kullanılmadığını anlamanın en kolay yolu, <command>login</command> çalıştırılabiliri üzerinde <command>ldd</command> komutunu kullanmaktır. Şayet çıktıda <filename>libpam.so</filename> var ise, PAM'e ihtiyacınız var demektir.
+    </para>
+    <para>
+     Şans eseri, açılış disketleri için güvenlik bir sorun değildir: makinenize fiziksel erişimi olan bir kişi zaten istediği herşeyi yapabilir. Bu nedenle, kök dosya sisteminizde aşağıdakine benzer bir <filename>/etc/pam.conf</filename> dosyası oluşturup, PAM konusunu kapatabilirsiniz:
+    </para>
+<screen>OTHER   auth       optional     /lib/security/pam_permit.so
+OTHER   account    optional     /lib/security/pam_permit.so
+OTHER   password   optional     /lib/security/pam_permit.so
+OTHER   session    optional     /lib/security/pam_permit.so
+</screen>
+    <para>
+     Ayrıca <filename>/lib/security/pam_permit.so</filename> dosyasını kendi kök dosya sisteminize kopyalayın.  Bu kütüphane sadece 8k'dır ve pek baş ağrıtmaz.
+    </para>
+    <para>
+     Bu ayarlar, herhangi bir kimsenin sisteminizdeki servis ve dosyalara erişimize izin verir. Özel sebeplerden dolayı, güvenlik, açılış disketiniz için önemli ise, sabit diskinizdeki PAM ayar dosyalarının çoğunu veya hepsini kök dosya sisteminzie kopyalamak zorundasınız. PAM belgelerini dikkatlice okuyun ve <filename>/lib/security</filename> içindeki gerekli bütün kütüphaneleri kök dosya sisteminize kopyalayın.
+    </para>
+    <para>
+     Ayrıca <filename>/lib/libpam.so</filename> dosyasını da önyükleme disketinize kopyalamak zorundasınız. Siz bunu zaten biliyorsunuz, <command>ldd</command> komutunu <filename>/bin/login</filename> üzerinde çalıştırdınız değil mi? Böylece bağımlılıkların neler olduğunu öğrenmiş oldunuz.
+    </para>
+   </sect3>
+
+   <sect3>
+    <title>NSS (İsim Servisi Değiştirici)</title>
+    <subtitle>(Name Service Switch)</subtitle>
+    <para>
+     Şayet glibc (nam-ı diğer libc6) kullanıyorsanız, isim servisleri için bazı düzenlemeler yapmalısınız yoksa sisteme bağlanamayabilirsiniz.   <filename>/etc/nsswitch.conf</filename> dosyası, çeşitli servisleri yürüten veritabanlarını kontrol eder. Şayet ağ üzerinden servislere erişimi düşünmüyorsanız (örneğin, DNS veya NIS aramaları), aşağıdakine benzer basit bir  <filename>nsswitch.conf</filename> dosyası hazırlamanız yeterli olacaktır:
+    </para>
+<screen>passwd:     files
+shadow:     files
+group:      files
+hosts:      files
+services:   files
+networks:   files
+protocols:  files
+rpc:        files
+ethers:     files
+netmasks:   files
+bootparams: files
+automount:  files
+aliases:    files
+netgroup:   files
+publickey:  files
+</screen>
+    <para>
+     Burada bütün servislerin sadece yerel dosyaları yürütülebileceği belirtilmiştir. Ayrıca <filename>/lib/libnss_files.so.</filename><varname>X</varname> dosyasını eklemeniz gerekmekte (burada <varname>X</varname> değeri glibc 2.0 için 1 ve  glibc 2.1 için 2'dir) eklemeniz gerekmekte. Bu kütüphane, dosya aramalarını gerçekleştirmek için özdevimli yüklenecektir.
+    </para>
+    <para>
+     Şayet açılış disketiniz üzerinden ağa çıkmayı planlıyor iseniz,  daha ayrıntılı bir <filename>nsswitch.conf</filename> dosyası oluşturmanız gerekmekte. Tanımladığınız her bir <replaceable>servis</replaceable> için bir  <filename>/lib/libnss_</filename><replaceable>service</replaceable><filename>.so.1</filename>  dosyası eklemeniz gerekmektedir.
+    </para>
+   </sect3>
+  </sect2>
+  <sect2>
+   <title>Modüller</title>
+   <para>
+    <indexterm linkend="bootdisk-howto_cp"><primary>modüller</primary></indexterm>
+    Şayet modüler yapıda bir çekirdeğe sahipseniz, açılış disketi ile açılış yapıldıktan sonra hangi modüllerin yüklenmesini istediğinizi tespit etmelisiniz. Şayet yedekleriniz teyp üzerinde ise <command>ftape</command> ve <command>zftape</command> modüllerinin yüklenmesini isteyebilirsiniz veya SCSI aygıtlarınız varsa SCSI modüllerinin yüklenmesini isteyebilirsiniz. Acil durumlarda ağa erişim istiyorsanız, PPP veya SLIP modüllerini yüklemeniz kuvvetle muhtemeldir.
+   </para>
+   <para>
+    Bu modüller <filename>/lib/modules</filename> içinde yer alabilir. Ayrıca <command>insmod</command>, <command>rmmod</command> ve <command>lsmod</command>'u da eklemelisiniz. Özdevinimli yüklenmesini istediğiniz modüllere bağlı olarak <command>modprobe</command>, <command>depmod</command> ve <command>swapout</command>'u da ekleyebilirsiniz. Şayet <command>kerneld</command> kullanıyor iseniz, onu da  <filename>/etc/conf.modules</filename>'e ekleyin.
+   </para>
+   <para>
+    Bunların yanında, modülleri kullanmanın temel faydası, kritik öneme haiz olmayan modülleri bir uygulama disketi içinde tutabilmenizdir. Bu sayede kök diskette daha çok alan size kalır.  Şayet pek çok değişik aygıt ile uğraşmanız  gerekecek ise;  bu yaklaşım, gömülü sürücülere sahip daha büyük bir çekirdek yapmayı tercih edilebilir kılar.
+   </para>
+   <important>
+    <para>
+     Sıkıştırılımış bir ext2 dosya sisteminden açılış yapabilmek için ramdisk ve ext2 desteğini çekirdeğe gömülü olarak vermeniz gerekir. BUNLARI MODÜL OLARAK KULLANAMAZSINIZ.
+    </para>
+   </important>
+  </sect2>
+
+  <sect2>
+   <title>Son olarak bazı ayrıntılar</title>
+   <para>
+    Bazı sistem uygulamaları, mesela <command>login</command>, <filename>/var/run/utmp</filename> dosyası ve<filename>/var/log</filename> dizini yok ise şikayet edip dururlar. Bu nedenle şu komutları verin:
+   </para>
+<screen># mkdir -p /mnt/var/{log,run}
+# touch /mnt/var/run/utmp
+</screen>
+   <para>
+    En sonunda, gerekli bütün kütüphaneleri ayarladıktan sonra, kök dosya sistemindeki <filename>/etc/ld.so.cache</filename> dosyasını yeniden yapılandırmak için  <command>ldconfig</command> komutunu kullanın. Bunun şu şekilde yapabilirsiniz:
+   </para>
+<screen># ldconfig -r /mnt</screen>
+<indexterm linkend="bootdisk-howto_cp"><primary><filename>ldconfig</filename></primary></indexterm>
+<indexterm linkend="bootdisk-howto_cp"><primary><filename>ld.so.cache</filename></primary></indexterm>
+  </sect2>
+
+  <sect2 xml:id="bootdisk-howto_wrappingitup">
+   <title>Paketleme</title>
+   <para>
+    Kök dosya sistemi inşaatını bitirdimize göre, onu sistemden ayıralım ve bir dosyaya kopyalayıp sıkıştıralım:
+   </para>
+<screen># umount /mnt
+# dd if=<replaceable>aygıt</replaceable> bs=1k | gzip -v9 &gt; rootfs.gz
+</screen>
+   <para>
+    Bu işlemin sonunda <filename>rootfs.gz</filename> isimli bir dosyaya sahip olacaksınız.Bu sizin sıkıştırılmış dosya sisteminizdir. Bu dosyanın boyutunun diskete sığacağından emin olun. Şayet boyutu disket boyutundan büyük ise, geri dönmeli ve bazı dosyaları kaldırmalısınız. Kök dosya sistemini küçültmek hakkında bazı öneriler <xref linkend="bootdisk-howto_slimfast"/> bölümünde bulunabilir.
+   </para>
+  </sect2>
+ </sect1>
+
+ <sect1 xml:id="bootdisk-howto_choosingkernel">
+  <title>Çekirdek Seçimi</title>
+  <indexterm linkend="bootdisk-howto_cp">
+   <primary>çekirdek</primary><secondary>seçimi</secondary></indexterm>
+  <para>
+   Bulunduğunuz noktada, sıkıştırılmış bir kök dosya sistemine sahipsiniz.  Şimdiki adımımız bir çekirdek seçmek veya derlemek.  Pek çok durum için, kullandığınız sistemdeki çekirdeği diskete kopyalamak ve bununla açılış yapmak mümkün olabilir. Bununla birlikte, kendi çekirdeğinizi kendiniz oluşturmak isteyeceğiniz zamanlar da olabilir.
+  </para>
+  <para>
+   Birinci sebep: boyut. Şayet tek bir önyükleme ve kök disketi elde etmek istiyorsanız, çekirdek disketteki en büyük dosya olacak ve hali ile siz de bu boyutu küçültmek isteyeceksiniz. Çekirdek boyutunu küçültmek için, arzu edilen sistemde sadece gerekli olacak işlevleri yerine getirecek bir çekirdek düzenlemek yeterli olacaktır. Bunun anlamı, ihtiyacınız olmayan herşeyi atın demektir. Safra atma zamanı geldi millet. Ağ terkedilecek birinci şey olabilir. Kullanmayacağınız disk sürücüleri ve diğer aygıtları peşi sıra göndermek de iyi bir tercihtir. Daha önce de söylediğim gibi, ramdisk ve ext2 desteğini çekirdeğinize <emphasis>gömmelisiniz</emphasis>.
+  </para>
+  <para>
+   Gerekli olacak asgari gereksinimleri çekirdeğe gömdükten sonra, başka neler lazım olacak diye çalışmaya başlayabilirsiniz. Galiba,  önyükleme ve kök disketi için en gerekli olan şey, bozulmuş dosya sistemlerini kontrol etmek ve yeniden düzeltmektir. Bunu yapabilmek için de çekirdek desteğine ihtiyacımız var. Örneğin; yedeklerinizi <command>ftape</command> kullanarak teyp sürücü üzerinde saklıyor iseniz ve kök sürücünüzü ve <command>ftape</command>'i içeren sürücünüzü kaybetmişseniz, yedeklerinizi teypten geri yükleyemezsiniz. Linux'u tekrar kurmalı, <command>ftape</command>'i tekrar indirip sisteme yüklemeli ve daha sonra yedeklerinize ulaşmayı denemelisiniz.
+  </para>
+  <para>
+   Buradaki önemli nokta; yedeklerinizi desteklemek için çekirdeğe eklediğiniz G/Ç desteğini, önyükleme ve kök disketindeki çekirdeğe de vermeniz gerektiğidir.
+  </para>
+  <para>
+   <indexterm linkend="bootdisk-howto_cp"><primary>çekirdek</primary><secondary>derleme</secondary></indexterm>
+   Çekirdeğin nasıl derleneceğini anlatan kılavuzlar, çekirdek ile birlikte dağıtılmaktadır. Buradaki adımları izlemek oldukça kolaydır, bu nedenle <filename>/usr/src/linux</filename> altına bakmanız faydalı olabilir. Şayet çekirdeği derlemek ile ilgili sorunlarınız varsa, önyükleme ve kök sistemi yapmaya kalkışmamanız gerektiği sonucunu çıkarabiliriz. Çekirdek yok ise, bu tür bir sistem yapmaya kalkmanın da bir anlamı yoktur. Derleme işleminde sonra  ``<command>make zImage</command>'' ile çekirdeği sıkıştırmayı unutmayın.
+  </para>
+ </sect1>
+
+ <sect1 xml:id="bootdisk-howto_makingdisket">
+  <title>Herşeyi biraraya getirelim</title>
+  <subtitle>Disket(ler)in yapımı</subtitle>
+  <para>
+   Şu anda elimizde bir çekirdek ve sıkıştırılmış bir dosya sistemi mevcut.  Eğer önyükleme ve kök disketi yapacaksanız, bunların boyutunun tek bir diskete sığacağından emin olun. Şayet iki disketlik önyükleme + kök disketlerini yapacaksanız, kök dosya sisteminin tek bir diskete sığacak kadar küçülmüş olduğunda emin olun.
+  </para>
+  <para>
+   Önyükleme disketindeki çekirdeği yüklemek için LILO kullanıp kullanmayacağınıza karar vermek durumundasınız. Ayrıca isterseniz; çekirdeği doğrudan diskete kopyalayabilir ve LILO olmaksızın açılış yapabilirsiniz. LILO kullanmanın faydası, açılış esnasında bazı donanımları ilklendirecek özel bağımsız değişkenleri çekirdeğe verebilmektir (sisteminizdeki <filename>/etc/lilo.conf</filename> dosyasını kontrol edin. Şayet içerisinde  ``<literal>append=...</literal>'' gibi bir satır varsa, muhtemelen bu özeliğe ihtiyacımız olacak demektir). LILO kullanmanın bir götürüsü de daha karmaşık bir açılış disketi yapmak ve bunun biraz daha fazla bayta mal olmasıdır. <wordasword>Çekirdek dosya sistemi</wordasword> olarak adlandırabileceğimiz küçük bir dosya sistemi oluşturup buraya LILO'nun ihtiyaç duyacağı çekirdeği ve birkaç dosyayı koyacağız.
+  </para>
+  <para>
+   <indexterm linkend="bootdisk-howto_cp"><primary>lilo dosya sistemi</primary></indexterm>
+   <indexterm linkend="bootdisk-howto_cp"><primary><filename>lilo.conf</filename></primary></indexterm>
+   <indexterm linkend="bootdisk-howto_cp"><primary>çekirdek</primary><secondary>bağımsız değişkenleri</secondary></indexterm>
+   Şayet LILO kullanacaksanız, okumaya devem edin. Çekirdeği doğrudan diskete aktarcaksanız  <xref linkend="bootdisk-howto_TransferringWithoutLILO"/> bölümüne atlayın.
+  </para>
+  <sect2 xml:id="bootdisk-howto_TransferringWithLILO">
+   <title>Çekirdeğin LILO ile kullanımı</title>
+   <para>
+    İlk olarak, LILO'nun en son sürümüne sahip olduğunuzdan emin olun.
+   </para>
+   <para>
+    LILO için küçük bir yapılandırma dosyası oluşturmanız gerekiyor:
+   </para>
+<screen>boot      =/dev/fd0
+install   =/boot/boot.b
+map       =/boot/map
+read-write
+backup    =/dev/null
+compact
+image     = KERNEL
+label     = Bootdisk
+root      =/dev/fd0
+</screen>
+   <para>
+    Buradaki bağımsız değişkenlerin açıklamaları için LILO kullanıcı belgelerine bakınız. Ayrıca <literal>append=...</literal> şeklinde bir satır da eklemek isteyebilirsiniz (sabit diskinizdeki <filename>/etc/lilo.conf</filename> dosyasındaki satırı).
+   </para>
+   <para>
+    Bu dosyayı <filename>bdlilo.conf</filename> ismiyle kaydedin.
+   </para>
+   <para>
+    Şimdi, kök dosya sisteminden ayırt edebilmek için <wordasword>çekirdek dosya sistemi</wordasword> olarak adlandıracağımız küçük bir dosya sistemi oluşturacağız.
+   </para>
+   <para>
+    İlk olarak, bu dosya sisteminin boyutuna karar verin.  ``<command>ls -s KERNEL</command>'' komutu ile çekirdeğin boyutunu blok cinsinden öğrenin ve buna 50 ekleyin. Bu 50 blok, diğer dosyalar ve düğümler tarafından kullanılacak blok sayısıdır. Bu sayıyı tam olarak hesaplamak mümkündür ama biz  burada 50'yi  kullanacağız. Şayet iki disketlik bir set yapacaksanız, bu sayıyı abartmanızda bir mahsur yoktur. Nasıl olsa birinci disket sadece çekirdek tarafından kullanılacaktır. Bu sayıya <replaceable>çekirdek_blokları</replaceable> adını verelim.
+   </para>
+   <para>
+    Sürücüye bir disket koyun (buna <filename>/dev/fd0</filename> diyeceğiz) ve bir ext2 çekirdek dosya sistemi oluşturun:
+   </para>
+<screen># mke2fs -N 24 -m 0 /dev/fd0 <replaceable>çekirdek_blokları</replaceable></screen>
+   <para>
+    <indexterm linkend="bootdisk-howto_cp"><primary>dosya düğümleri</primary><secondary>ayırma</secondary></indexterm>
+    ``<literal>-N 24</literal>'', bu dosya sistemi için ihtiyaç duyacağımız 24 tane dosya düğümünü belirtir. Daha sonra dosya sistemini bağlayın ve <filename>lost+found</filename> dizinini silin. Bunu ardından, LILO için <filename>dev</filename> ve <filename>boot</filename> dizinlerini oluşturun:
+   </para>
+<screen># mount -o dev /dev/fd0 /mnt
+# rm -rf /mnt/lost+found
+# mkdir /mnt/{boot,dev}
+</screen>
+   <para>
+    Daha sonra, <filename>/dev/null</filename> ve <filename>/dev/fd0</filename> dosyalarını oluşurun. Aygıt numaralarını aramak yerine, sabit diskinizden bunları kopyalayabilirsiniz (<literal>-R</literal> seçeneği ile):
+   </para>
+<screen># cp -R /dev/{null,fd0} /mnt/dev</screen>
+   <para>
+    LILO, kendi önyükleyicisinin bir kopyasına ihtiyaç duyar:  <filename>boot.b</filename>. Bunu da sabit diskinizden kopyalayabilirsiniz. Bu dosya genellikle <filename>/boot</filename> dizini içindedir.
+   </para>
+<screen># cp /boot/boot.b /mnt/boot</screen>
+   <para>
+    Son olarak, geçen bölümde oluşturduğunuz LILO yapılandırma dosyasını ve çekirdeği kopyalayın. Her ikisi de kök dizine konabilir:
+   </para>
+<screen># cp bdlilo.conf KERNEL /mnt</screen>
+   <para>
+    LILO'nun ihtiyaç duyduğu herşey, artık çekirdek dosya sisteminde. Artık onu çalıştırmaya hazırız. LILO'nun <literal>-r</literal> seçeneği, onu başka kök sistemlere yüklemek için kullanılır:
+   </para>
+<screen># lilo -v -C bdlilo.conf -r /mnt</screen>
+   <para>
+    LILO hatasız olarak çalışmalı ve daha sonra çekirdek dosya sistemi şuna benzemeli:
+   </para>
+<screen>total 361
+  1 -rw-r--r--   1 root     root          176 Jan 10 07:22 bdlilo.conf
+  1 drwxr-xr-x   2 root     root         1024 Jan 10 07:23 boot/
+  1 drwxr-xr-x   2 root     root         1024 Jan 10 07:22 dev/
+358 -rw-r--r--   1 root     root       362707 Jan 10 07:23 vmlinuz
+boot:
+total 8
+  4 -rw-r--r--   1 root     root         3708 Jan 10 07:22 boot.b
+  4 -rw-------   1 root     root         3584 Jan 10 07:23 map
+dev:
+total 0
+  0 brw-r-----   1 root     root       2,   0 Jan 10 07:22 fd0
+  0 crw-r--r--   1 root     root       1,   3 Jan 10 07:22 null
+</screen>
+   <para>
+    <indexterm linkend="bootdisk-howto_cp"><primary>çekirdek</primary><secondary>dosya sistemi</secondary></indexterm>
+    Dosya boyutları biraz farklı ise, bunu dert etmeyin.
+   </para>
+   <para>
+    Şimdi, disketi sürücüde bırakın ve <xref linkend="bootdisk-howto_SettingRamdiskWord"/> bölümüne geçin.
+   </para>
+  </sect2>
+
+  <sect2 xml:id="bootdisk-howto_TransferringWithoutLILO">
+   <title>Çekirdeğin LILO'suz kullanımı</title>
+   <para>
+    Şayet LILO <emphasis>kullanmayacaksanız</emphasis>, çekirdeği önyükleme disketine  <command>dd</command> kullanarak gönderin:
+   </para>
+<screen><prompt># </prompt><command>dd if=KERNEL of=/dev/fd0 bs=1k</command>
+353+1 records in
+353+1 records out
+</screen>
+   <para>
+    Bu örnekte <command>dd</command>,  353 tam kayıt + 1 kısmi kayıt yazdı. Bu nedenle, çekirdek disketin ilk 354 bloğu üzerine kurulmuş oldu. Bu sayıyı <replaceable>çekirdek_blokları</replaceable> diye adlandıracağız.
+   </para>
+   <para>
+    Son olarak, kök aygıtı disket olarak ayarlayın ve burayı okunur/yazılır kipte yüklenecek şekilde düzenleyin:
+   </para>
+<screen># rdev /dev/fd0 /dev/fd0
+# rdev -R /dev/fd0 0
+</screen>
+   <para>
+    <indexterm linkend="bootdisk-howto_cp"><primary><command>rdev</command></primary></indexterm>
+    İkinci <command>rdev</command> komutunda <literal>-R</literal> seçeneğini kullanırken dikkatli olun. Büyük harf ile yazdığınızdan emin olun.
+   </para>
+  </sect2>
+
+  <sect2 xml:id="bootdisk-howto_SettingRamdiskWord">
+   <title><literal>ramdisk</literal> sözcüğünün yapılandırılması</title>
+   <para>
+    Çekirdek biteşlemi içindeki <wordasword>ramdisk</wordasword> kelimesi<footnote><para>Ç.N: Burada kelime ya da sözcük ile ifade edilen 16 bitlik bir alandır (<literal>8 bit = bayt, 16 bit = kelime [word]</literal>).</para></footnote> diğer seçeneklerin yanısıra kök dosya sisteminin nerede bulunacağını belirtir. Bu kelime <command>rdev</command> komutu ile ayarlanabilir. İçeriği aşağıda açıklandığı gibidir:
+   </para>
+   <informaltable frame="none" >
+    <tgroup cols="2" align="left">
+     <colspec colname="Bit" colwidth=".1"/>
+     <colspec colname="Descrip" align="left" colwidth=".9"/>
+     <thead>
+      <row>
+       <entry>Bit alanı</entry>
+       <entry>Açıklama</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row >
+       <entry align="right">0-10</entry>
+       <entry>1024 baytlık bloklar halindeki ramdisk'in başlangıç konumu</entry>
+      </row>
+      <row>
+       <entry align="right">11-13</entry>
+       <entry>kullanılmadı</entry>
+      </row>
+      <row>
+       <entry align="right">14</entry>
+       <entry>ramdiskin yükleneceğini gösteren bayrak</entry>
+      </row>
+      <row>
+       <entry align="right">15</entry>
+       <entry>rootfs yüklenmeden önce bir istem geleceğini gösteren bayrak</entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </informaltable>
+   <para>
+    Şayet 15 numaralı bit ayarlanmış ise, açılışta sürücüye yeni bir disket koymanızı söyleyen bir ekran çıkar. Bu iki disketlik setlerde gereklidir.
+   </para>
+   <para>
+    Tek veya çift disketlik bir set oluşturmanıza bağlı olarak iki ayrı durum söz konusudur:
+   </para>
+   <orderedlist>
+    <listitem>
+     <para>
+      Şayet tek bir disket oluşturmuşsanız, sıkıştırılmış dosya sistemi çekirdeğin ardı sıra yüklenir. Bu nedenle başlangıcı ilk boş blokta olacaktır (<replaceable>çekirdek_blokları</replaceable> ile aynı olmalıdır). 14. bit 1, 15. bit ise 0 olacaktır.
+     </para>
+     <para>
+      Örneğin; diyelim ki tek disketlik bir sistem yaptınız ve kök dosya sistemi 253. bloktan (onluk olarak) başlıyor. Ramdiskin kelime değeri 14. bit 1, 15. bit 0 olmak üzere 253 olmalıdır. Değeri hesaplamak için ondalık değerleri toplamak yeterlidir:  253 + (2^14) = 253 + 16384 = 16637. Şayet bu sayının nereden geldiğini anlmadıysanız, bilimsel bir hesap makinasına bunu yazın ve ikilik düzene çevirin.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      Şayet iki disketlik bir set yaptıysanız, kök dosya sistemi 0. bloktan başlar, bu nedenle başlangıç konumu sıfır olacaktır. 14. ve 15. bit 1 olacaktır. Bu durumda ondalık değer ise 2^14 + 2^15 = 49152 olur.
+     </para>
+    </listitem>
+   </orderedlist>
+   <para>
+    <indexterm linkend="bootdisk-howto_cp"><primary>ramdisk sözcüğü</primary></indexterm>
+    <indexterm linkend="bootdisk-howto_cp"><primary><command>rdev</command></primary></indexterm>
+    Bu ramdisk sözcüğünün değerini dikkatlice hesapladıktan sonra,  <command>rdev -r</command> ile bunu çekirdek biteşlemine yazın.  Ondalık değerleri kullandığınızdan emin olun. Şayet LILO kullandıysanız, <command>rdev</command>'e  verilecek bağımsız değişken bağlanana çekirdeğin dosya yolu olmalıdır. Örneğin; <filename>/mnt/vmlinuz</filename>; şayet çekirdeği <command>dd</command> bunun yerine disket aygıtının ismi (örn, <filename>/dev/fd0</filename>) gelecektir.
+   </para>
+<screen># rdev -r<emphasis>çekirdek_yolu_veya_disket_aygıtı değer</emphasis></screen>
+   <para>
+    Şayet LILO kullandıysanız, şimdi disketi ayırın.
+   </para>
+   <important>
+    <para>
+     <command>rdev</command> veya <command>ramsize</command> man sayfasının ramdisk boyutu hakkında söylediklerine inanmayın.  Bu kılavuz sayfası oldukça eski. Çekirdek 2.0 veya o civardakilerde, ramdisk kelimesi ramdisk boyutunu belirtmez, <xref linkend="bootdisk-howto_SettingRamdiskWord"/> bölümünün başlangıcındaki tabloyu ifade eder. Ayrıntılı bilgi için, ramdisk.txt  dosyasına veya <link xlink:href="http://www.linuxhq.com/kernel/v2.4/doc/ramdisk.txt.html"/> adresine bakınız.
+    </para>
+   </important>
+  </sect2>
+
+  <sect2>
+   <title>Kök dosya sistemini aktarılması</title>
+   <para>
+    Son adımımız kök dosya sistemini aktarmaktır.
+   </para>
+   <itemizedlist>
+    <listitem>
+     <para>
+      Şayet kök dosya sistemi çekirdek ile aynı diskete konacaksa, <command>dd</command> komutunu <option>seek</option> seçeneği ile kullanarak aktarın. <option>seek</option> seçeneği kaç tane bloğun atlanacağını belirtir:
+     </para>
+<screen># dd if=rootfs.gz of=/dev/fd0 bs=1k seek=<replaceable>çekirdek_blokları</replaceable></screen>
+    </listitem>
+    <listitem>
+     <para>
+      Şayet kök dosya sistemi ikinci bir diskete konacaksa; birinci disketi çıkarın, ikinci disketi sürücüye takın ve daha sonra kök dosya sistemini aktarın:
+     </para>
+<screen># dd if=rootfs.gz of=/dev/fd0 bs=1k</screen>
+    </listitem>
+   </itemizedlist>
+   <para>
+    Tebrikler, başardınız!
+   </para>
+   <important>
+    <para>
+     Yapmış olduğunu açılış  disketlerini, acil durumlar için kenara koymadan önce mutlaka sınayın. Şayet disket ile sistemi açamazsanız, okumaya devam edin.
+    </para>
+   </important>
+  </sect2>
+ </sect1>
+
+ <sect1 xml:id="bootdisk-howto_troubleshooting">
+  <title>Sorun çözmek ya da Yenilginin Acısı</title>
+  <indexterm linkend="bootdisk-howto_cp">
+   <primary>sorunların çözülmesi</primary>
+  </indexterm>
+  <para>
+   Açılış disketleri yapmak için giriştiğiniz ilk bir kaç sefer başarısızlıkla sonuçlanabilir. Bir kök disket yapmak için genel yaklaşım; sisteminizdeki hazır parçaları bir araya toplamak, bunları disket tabanlı bir hale sokmak ve konsoldan açılış yapmaktır. Bir kere, sizinle iletişime geçtimi, savaşın yarısını kazanmışsınız demektir. Sistem çalıştığı sürece, bağımsız sorunları çözmek mümkün olabilir. Şayet herhangi bir uyarı vermeden, sistem askıda kalırsa, bu problemi halletmek biraz zor olabilir. Sistemin sizinle iletişimi kestiği noktada meydana gelen problemleri bulmak için önerilen süreç şudur:
+  </para>
+  <itemizedlist>
+   <listitem>
+    <para>
+     Şuna benzer bir ileti alabilirsiniz:
+   </para>
+<screen>Kernel panic: VFS: Unable to mount root fs on XX:YY</screen>
+    <para>
+     Bu genel bir sorundur ve birkaç sebebi vardır. İlk olarak,   <varname>XX:YY</varname> aygıtının kodlarını <filename>/usr/src/linux/Documentation/devices.txt</filename> dosyasındaki aygıt kodları listesi ile karşılaştırın. Şayet yanlış ise, muhtemelen <command>rdev -R</command> yapmamışsınız demektir veya yanlış biteşlem üzerinde işlem yapmışsınız demektir. Eğer aygıt kodu doğru ise, çekirdek içinde gömülü aygıt sürücülerini kontrol edin; bir disket sürücü, ramdisk ve ext2 dosya sistemi desteğine sahip olduğundan emin olun.
+   </para>
+   </listitem>
+   <listitem>
+    <para>
+     Şayet şuna benzer pek çok hata alırsanız:
+   </para>
+<screen>end_request: I/O error, dev 01:00 (ramdisk), sector NNN</screen>
+    <para>
+     Bu ramdisk sürücüsünden gelen bir G/Ç hatasıdır. Genellikle çekirdeğin aygıt dışına yazmaya kalkıştığı durumlarda olur. Ramdisk, kök dosya sistemini taşımak için çok küçük gelmiştir. Açılış disketi çekirdek ilklendirme iletilerinde şuna benzer bir satır olup olmadığını kontrol edin:
+   </para>
+<screen>Ramdisk driver initialized : 16 ramdisks of 4096K size</screen>
+    <para>
+     Bu boyutu <emphasis>sıkıştırılmamış</emphasis> kök dosya sistemi boyutu ile karşılaştırın. Şayet ramdisk yeterince büyük değilse, daha büyüğünü yapın.
+   </para>
+   </listitem>
+   <listitem>
+    <para>
+     Kök diskette, olması gereken dizinlerin olup olmadığını kontrol edin. Yanlış bir yere kopyalamış olabilirsiniz. <filename>/bin</filename> yerine elinizde <filename>/bootdisk/bin</filename> diye bir dizin olabilir (Tıpkı benim yaptığım gibi <literal>:-)</literal> -yazarın değil, çevirmenin yaptığı gibi).
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     Sabit diskinizdeki <filename>/lib</filename> dizini içinde görünen  bağ ile aynı adlı bir <filename>/lib/libc.so</filename> olduğundan emin olun.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     Sabit diskinizdeki <filename>/dev</filename> dizini altında bulunan sembolik bağların, kök dosya sisteminizde de olduğundan emin olun. Bu bağlar, sizin kök dosya sisteminize yerleştirdiğiniz aygıtlara atanmış sembolik bağlar olmak zorundadır. Özellikle <filename>/dev/console</filename> bağları pek çok durumda gerekliliktir.
+<indexterm linkend="bootdisk-howto_cp"><primary>aygıt (dev) dizini</primary></indexterm>
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     <filename>/dev/tty1, /dev/null, /dev/zero, /dev/mem, /dev/ram</filename> ve <filename>/dev/kmem</filename> dosyalarını diskete koyduğunuzdan emin olun.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     Çekirdek ayarlarınız kontrol edin -- kullanıcı girişi anında gerekli olan bütün özkaynaklar, çekirdeğe gömülü olmalıdır, modüler yapıda değil. Bu nedenle <emphasis>ramdisk ve ext2 desteği modüler olarak kullanılamaz</emphasis>.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     Çekirdek kök aygıtı ve ramdisk ayarlarınızı kontrol edin.
+   </para>
+   </listitem>
+  </itemizedlist>
+  <para>
+   Bu genel kaideleri geçtikten sonra, kontrol edebileceğiniz bazı belli başlı dosyalar  vardır:
+  </para>
+  <orderedlist>
+   <listitem>
+    <para>
+     <command>init</command>'in  <filename>/sbin/init</filename> veya <filename>/bin/init</filename> olarak yüklendiğinden ve çalıştırılabilir olduğundan emin olun.
+   </para>
+   </listitem>
+   <listitem>
+    <para>
+     <command>init</command>'in kütüphanelerini kontrol etmek için <command>ldd init</command> komutunu kullanın. Genelde bu sadece <filename>libc.so</filename> olur ama yine de kontrol etmekte fayda vardır.
+   </para>
+   </listitem>
+   <listitem>
+    <para>
+     Kütüphaneler için doğru yükleyicilere sahip olduğunuzdan emin olun -- a.out için <filename>ld.so</filename> veya ELF için <filename>ld-linux.so</filename>.
+<indexterm linkend="bootdisk-howto_cp"><primary>yükleyiciler</primary></indexterm>
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     Açılış disketi dosya sisteminizdeki <filename>/etc/inittab</filename>'ı <command>getty</command> (veya bazı <command>getty</command>-benzeri uygulamalar; mesela <command>agetty</command>, <command>mgetty</command> veya <command>getty_ps</command>) çağrıları için kontrol edin. Sabit diskinizdeki <filename>inittab</filename> ile iki kere karşılaştırın.  Kullandığınız uygulamaların man sayfalarını kontrol edin. Muhtemelen, <filename>inittab</filename> zincirin en zayıf halkasıdır: sözdizimi ve sistemin doğal yapısından dolayı. Bu sorunu çözmenin tek yolu <command>init</command>'in ve <filename>inittab</filename>'ın man sayfalarını okumak ve  elinizdeki sistemin açılış esnasında ne yaptığını anlamaya çalışmaktır. <filename>/etc/inittab</filename> içinde sistem başlatma girdisi olup olmadığını kontrol edin.  Sistem başlatma betiğini çalıştıracak bir satır olması gerekmektedir.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     Tıpkı <command>init</command>'e yaptığımız gibi, <command>ldd</command> komutunu  <command>getty</command> için de çalıştırın ve onun gereksinimlerini kontrol edin. Gerekli kütüphane ve yükleyicilerin kök dosya sisteminizde bulunduğundan emin olun.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     rc betiklerini çalıştırma yeteneğine sahip bir kabuk yazılımı eklediğinizden emin olun(örneğin <command>bash</command> veya <command>ash</command>).
+<indexterm linkend="bootdisk-howto_cp"><primary>kabuklar</primary></indexterm>
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     Kurtarma diskinizde bir <filename>/etc/ld.so.cache</filename> dosyası varsa, bu dosyayı tekrar oluşturun.
+   </para>
+   </listitem>
+  </orderedlist>
+  <para>
+   Şayet <command>init</command> başlıyor ama bunun gibi bir ileti alıyorsanız:
+  </para>
+<screen>Id xxx respawning too fast: disabled for 5 minutes</screen>
+  <para>
+   Bunu sebebi <command>init</command>'dir, genelikle  <command>getty</command> veya <command>login</command>'in başlar başlamaz sonlandığı anlamına gelir.  <command>getty</command> ve <command>login</command> çalıştırılabilir dosyalarını ve kütüphanelerini kontrol edin. <filename>/etc/inittab</filename> içinde belirtilmiş çağrıların doğru olduğunu kontrol edin. Şayet  <command>getty</command>'den acayip iletiler alıyorsanız, bunu anlamı <filename>/etc/inittab</filename> içinden yapılan çağrıların hatalı olabileceğidir.
+  </para>
+  <para>
+   Şayet bir bağlantı ekranına kadar geliyor, geçerli bir isim giriyor ama sistem sizden başka bir isim girmenizi istiyorsa, problemin kaynağı PAM veya NSS olabilir. <xref linkend="bootdisk-howto_PAMandNSS"/> bölümüne göz atınız. Ayrıca gölgeli parolalar kullanıyor ama <filename>/etc/shadow</filename> dosyasını açılış disketinize kopyalamamış olabilirsiniz.
+  </para>
+  <para>
+   Şayet kurtarma disketinizdeki <command>df</command> gibi bazı çalıştırılabilir dosyaları deniyorsanız ve  <literal>df: command not found</literal>  gibi bir hata alıyorsanız; iki şeyi kontrol etmeniz gerekir:
+  </para>
+  <orderedlist>
+   <listitem>
+    <para>
+    <literal>PATH</literal> içinde, dosyanın içinde bulunduğu dizinin tanımlı olduğunu,
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     komut için gerekli olan kütüphane ve yükleyicilerin diskette bulunduğunu.
+    </para>
+   </listitem>
+  </orderedlist>
+ </sect1>
+
+ <sect1 xml:id="bootdisk-howto_slimfast">
+  <title>Kök dosya sistemi boyutunun küçültülmesi</title>
+  <para>
+Bu tür disket setleri yapmanın en zor tarafı, her şeyi bir veya iki diskete sığdırmak zorunda olmaktır. Dosyalar sıkıştırılmış bile olsalar, bu yine de zor bir iştir. Neden? Çünkü, Linux sistem araçları sürekli olarak artmakta. Aşağıda boyuttan tasarruf için kullanabileceğiniz bazı genel yöntemler açıklanmaktadır.
+  </para>
+  <sect2>
+   <title>Disket kapasitesini arttırın</title>
+   <para>
+    Öntanımlı olarak, disketler 1440k olarak biçimlenir.  Ama daha büyük disketler biçimlemek mümkündür. Daha büyük boyutlu disketler ile açılış yapabilmek BIOS'unuza bağlıdır. <command>fdformat</command> komutu, disketleri şu boyutlarda biçemleyebilir: 1600k, 1680k, 1722k, 1743k, 1760k, 1840k ve 1920k. Ayrıntılar için <command>fdformat</command> man sayfasına ve  <filename>/usr/src/linux/Documentation/devices.txt</filename> dosyasına bakınız.
+   </para>
+   <para>
+    İyi de hangi disket boyutu/geometrisi sizin makinanızca desteklenecek? Aşağıda <command>fdutils</command>'in yazarı Alain Knaff'ın cevaplarını bulacaksınız (hafiften düzenlenmiş bir biçimde):
+   </para>
+   <blockquote>
+    <para>
+     "Bu olay, disket üzerine atılacak fiziksel biçimden ziyade BIOS ile alakalı bir durumdur. Şayet BIOS 18'den büyük sektör numaralarını bozuk olarak kabul ederse, yapılacak fazla birşey yok demektir.  Gerçekte, deneme ve yanılma yöntemi elimizdeki tek yoldur. Bununla birlikte, BIOS ED diskleri destekliyorsa (ek yoğunluk: 36sektör/iz ve 2.88 MB), 1722k'lık disketler elde etme şansımız olabilir.
+     </para>
+     <para>
+      21 sektör/iz oranından daha fazlasına sahip süper biçimli disketler kendiliğinden açılabilir değildir.  Aslında standart sektör boyutu yerine daha fazlasını kullanan disketlerin hiçbiri sistem açılışı yapamazlar. Bununla birlikte, özel bir önyükleme sektörü yazmak mümkündür. Şayet doğru hatırlıyorsam, DOS 2m aracı böyle bir "canavara" sahipti, tıpkı OS/2'nin XDF aracı gibi.
+     </para>
+     <para>
+      Bazı BIOS'lar "yalancıktan", 18'den büyük sektör numaralarının hata olması gerektiğini iddia ederler. 1722k'lık bir disket 21 sektör kullanır ve bu nedenle disket üzerinden açılış mümkün olmayacaktır.  Bunu sınamanın en iyi yolu, bir DOS veya syslinus disketini 1722K olarak biçimlemek ve bu disketi önyükleme yapabilir yapmaktır. Şayet LILO kullanıyorsanız, <literal>linear</literal> seçeneğini kullanmayın. Bu seçenek öntanımlı olarak 18 sektör/iz kabul eder ve BIOS desteklese bile açılış işlemi başarısız olur."
+    </para>
+   </blockquote>
+  </sect2>
+
+  <sect2>
+   <title>Ortak araçları BusyBox ile değiştirin</title>
+   <para>
+    Kök dosya sisteminin  büyük kısmı GNU sistem araçları tarafından ortaklaşa kullanılır: <command>cat, chmod, cp, dd, df</command>,  vs. BusyBox projesi, bu genel sistem araçlarını asgari gereksinimleri sağlayarak değiştirmek amacını gütmektedir.  BusyBox, tek bir çalıştırılabilir dosya sağlar, <literal>/bin/busybox</literal>, yaklaşık 150kB civarındadır. Bu dosya, bu araçların görevlerini yerine getirir. Daha sonra, bu çalıştırılabilir dosyaya, değişik araçlardan sembolik bağlar yapabilirsiniz: <command>busybox</command> bunun nasıl adlandırıldığını görür ve doğru kodu çalıştırır. BusyBox basit bir kabuk bile içerir. BusyBox, pek çok dağıtım için, ikilik paketler halinde dağıtılmaktadır ve kaynak kodları <link xlink:href="http://www.busybox.net/">BusyBox yöresinden</link> elde edilebilir.
+<!-- The above link gets a 404 error, but I feel in my heart it is a correct
+URL so I shall not change it.  (sıkma canını, çalışıyor)-->
+    </para>
+  </sect2>
+  <sect2>
+   <title>Başka bir kabuk kullanın</title>
+   <para><command>bash</command> ve <command>tcsh</command> gibi bazı çok bilinen Linux kabukları oldukça büyüktür ve pek çok kütüphane isterler. Şayet BusyBox kabuğunu kullanmazsanız, bu kabuklar yerine bir başkasını kullanmayı düşünmelisiniz. Bazı hafif siklet kabuklar; <command>ash</command>, <command>lsh</command>, <command>kiss</command> ve <command>smash</command> oldukça küçük boyutludurlar ve çok az (ya da hiç) kütüphaneye ihtiyaç duyarlar. Bu kabukların pek çoğu <link xlink:href="http://www.ibiblio.org/pub/Linux/system/shells/"/> adresinden elde edilebilir. Kullandığınız kabuğun, rc dosyasındaki komutları çalıştırma yeteneği olduğundan emin olun.
+<indexterm linkend="bootdisk-howto_cp"><primary>kabuklar</primary></indexterm>
+   </para>
+  </sect2>
+
+  <sect2>
+   <title>Kütüphaneleri ve çalıştırılabilirleri soyun</title>
+   <para>
+    Pek çok kütüphane ve çalıştırılabilir hata ayıklama bilgileri ile birlikte dağıtılmaktadır. Bu dosyalar üzerinde <command>file</command> komutunu kullandığınızda, bu böyleyse ``<literal>not stripped</literal>'' şeklinde bunu belirtecektir. İkilik dosyaları kök dosya sisteminize kopyalarken, aşağıdaki komutu kullanmak oldukça faydalı olacaktır:
+   </para>
+    <indexterm linkend="bootdisk-howto_cp">
+     <primary>kütüphaneler</primary><secondary>soyulması</secondary>
+    </indexterm>
+    <indexterm linkend="bootdisk-howto_cp">
+     <primary><command>strip</command></primary></indexterm>
+    <indexterm linkend="bootdisk-howto_cp">
+     <primary><command>objcopy</command></primary></indexterm>
+<screen>objcopy --strip-all <varname>bir_yerden bir_yere</varname></screen>
+   <para/>
+   <important>
+    <para>
+     Kütüphaneleri kopyalarken, <option>strip-all</option> yerine <option>strip-debug</option> kullanmalısınız.
+    </para>
+   </important>
+  </sect2>
+
+  <sect2>
+   <title>Dosyaları uygulamalar disketine koyun</title>
+   <para>
+    Şayet bazı ikilik dosyalar açılış veya sisteme giriş için gerekli değil ise, bunları başka bir uygulama disketine koyabilirsiniz.  Ayrıntılar için <xref linkend="bootdisk-howto_UtilityDisk"/> bölümüne göz atınız. Tabii ki modülleri de bir uygulama disketi içine koymayı düşünebilirsiniz.
+<indexterm linkend="bootdisk-howto_cp"><primary>uygulamalar disketi</primary></indexterm>
+   </para>
+  </sect2>
+ </sect1>
+
+ <sect1 xml:id="bootdisk-howto_misctopics">
+  <title>Çeşitli konular</title>
+  <sect2 xml:id="bootdisk-howto_NonRamdiskRoot">
+   <title>Ramdisksiz kök dosya sistemleri</title>
+<indexterm linkend="bootdisk-howto_cp"><primary>ramdisk</primary></indexterm>
+   <para>
+    <xref linkend="bootdisk-howto_buildroot"/>  bölümünde ramdisk içine yüklenen bir sıkıştırılmış dosya sisteminin nasıl yapılacağı açıklanmıştır. Bu yöntemin çeşitli faydaları olduğu için, geniş çapta kullanıma sahiptir. Bununla birlikte, küçük boyutlu RAM'lere sahip bazı sistemler bunu gerçekleştiremezler. Bu nedenle kök dosya sistemi doğrudan disketten bağlanmalıdır.
+   </para>
+   <para>
+    Bu tür dosya sistemlerini oluşturmak, sıkıştırılmış dosya sistemlerini oluşturmaktan daha kolaydır. Çünkü başka aygıtlar üzerinde uğraşmaktansa, bu dosya sistemi doğrudan disket üzerinde oluşturulabilir ve sıkıştırılmak zorunda değildir. Biz burada, daha önceki anlatımımızdan farklı yönlerini açıklayarak ana hatları ortaya koyacağız. Şayet bu yöntemi tercih ederseniz, elinizde daha <emphasis>kısıltlı</emphasis> bir alan bulunacağını aklınızdan çıkarmayın.
+   </para>
+   <orderedlist>
+    <listitem>
+     <para>
+      Kök dosyaları için ne kadar alana sahip olduğunuz hesaplayın. Şayet tek bir önyükleme ve kök disketi yapıyorsanız, tek bir diskete çekirdek ve kök dosya sistemi için gereken blokları sığdırmak zorundasınız.
+     </para>
+   </listitem>
+    <listitem>
+     <para>
+      <command>mke2fs</command> kullanarak disket üzerinde uygun boyutlu bir kök dosya sistemi oluşturun.
+     </para>
+   </listitem>
+    <listitem>
+     <para>
+     <link linkend="bootdisk-howto_fsfill">Daha önceden tarif edildiği şekilde</link> dosya sistemini doldurun.
+     </para>
+   </listitem>
+    <listitem>
+     <para>
+      Bu işlem bittiğinde dosya sistemini ayırıp, onu diskete <emphasis>sıkıştırılmamış</emphasis> bir şekilde aktarın.
+     </para>
+   </listitem>
+    <listitem>
+     <para>
+      Çekirdeği diskete kopyalayın. Ramdisk kelime değerini hesaplarken, <emphasis>14. biti sıfıra ayarlayın</emphasis> ve dosya sisteminin ramdiske yüklenmeyeceğini belirtin. Daha önce tarif edildiği şekilde <command>rdev</command>'i çalıştırın.
+<indexterm linkend="bootdisk-howto_cp"><primary>ramdisk sözcüğü</primary></indexterm>
+<indexterm linkend="bootdisk-howto_cp"><primary><command>rdev</command></primary></indexterm>
+     </para>
+   </listitem>
+    <listitem>
+     <para>
+      Kök dosya sistemini daha önceki gibi aktarın.
+     </para>
+    </listitem>
+   </orderedlist>
+   <para>
+    Kullanabileceğiniz çeşitli kısa yollar mevcuttur. Şayet iki disketlik bir set yapıyorsanız, kök dosya sistemini doğrudan bir disket üzerinde oluşurabilir ve sabit diskinizdeki bir dosya ile disket arasında taşımacılık yapmak zorunda kalmazsınız. Ayrıca, hem tek disketli sistem yapacak hem de LILO kullanacaksanız, bütün disket üzerinde çekirdek, LILO dosyaları ve kök dosyaları içeren tek bir dosya sistemi oluşturabilir ve daha sonra son adım olarak LILO komutunu çalıştırabilirsiniz.
+   </para>
+  </sect2>
+
+  <sect2 xml:id="bootdisk-howto_UtilityDisk">
+   <title>Uygulamalar disketinin oluşturulması</title>
+   <para>
+    <indexterm linkend="bootdisk-howto_cp"><primary>uygulamalar disketi</primary></indexterm>
+    Bir uygulama disketi yapmak nispeten daha kolaydır -- biçimlenmiş bir diskette bir dosya sistemi oluşturun ve dosyları oraya kopyalayın.  Bu disketi bir önyükleme disketi ile kullanmak için, sistem açılışından sonra, uygulama disketini kök dizine bağlamanız yeterlidir.
+   </para>
+   <para>
+    Daha önceki açıklamalarda da belirttiğimiz gibi, uygulama disketi <filename>/usr</filename> altına bağlanabilir. Bu durumda, ikilik dosyaları diskette <filename>/bin</filename> dizini altına yerleştirdiyseniz <literal>PATH</literal> ortam değişkenindeki <filename>/usr/bin</filename> tanımı sayesinde burası erişilebilir bir alan olur. Bu uygulamalar tarafından ihtiyaç duyulan kütüphaneler de  uygulama disketi içinde <filename>/lib</filename> dizini altına yerleştirilebilir.
+   </para>
+   <para>
+    Bir uygulamalar disketi yaparken şu noktaları aklınızdan çıkarmayın:
+   </para>
+   <orderedlist>
+    <listitem>
+     <para>
+      Kritik öneme haiz sistem ikilikleri veya kütüphaneleri uygulamalar disketine koymayın. Unutmayın ki sistem açılana kadar, bu disketin içindekileri sisteme bağlamanız mümkün değildir.
+     </para>
+   </listitem>
+    <listitem>
+     <para>
+      Bir diskete ve disket sürücüsüne takılan bir teybe aynı anda erişim sağlayamazsınız. Yani, uygulama disketi sisteme bağlı iken teyp sürücüye erişim mümkün olmayacaktır.
+     </para>
+   </listitem>
+    <listitem>
+     <para>
+      Uygulama disketindeki dosyalara erişim nispeten yavaş olacaktır.
+     </para>
+    </listitem>
+   </orderedlist>
+   <para>
+    <xref linkend="bootdisk-howto_utilitylist"/> bölümünde  uygulama disketindeki dosyalar için örnek bir liste bulabilirsiniz. Faydalı olabilecek bir kaç fikir: diskleri araştırma ve yönetme yazılımları (<command>format, fdisk</command>) ve dosya sistemleri (<command>mke2fs, fsck, debugfs, isofs.o</command>), hafif siklet bir metin düzenleyici (<command>elvis, jove</command>), sıkıştırma ve arşivleme araçları (<command>gzip, bzip, tar, cpio, afio</command>), teyp araçları (<command>mt, ftmt, tob, taper</command>), iletişim araçları (<command>ppp.o, slip.o, minicom</command>) ve aygıtlar için araçlar (<command>setserial, mknod</command>).
+    </para>
+  </sect2>
+ </sect1>
+
+ <sect1 xml:id="bootdisk-howto_Pros">
+  <title>Profesyoneller nasıl yapıyor</title>
+  <para>
+   Slackware, RedHat veya Debian gibi ana dağıtımlar tarafından kullanılan açılış disketlerinin, bu kılavuzda anlatılandan daha karmaşık yapılarda olduğunu görmüş olabilirsiniz. Profesyonel dağıtımların kurtarma/açılış disketleri burada anlatılan ana hatlar üzerine kurulmuştur ama çeşitli ilave hünerleri daha vardır. Çünkü bu açılış disketleri ilave gereksinimlere ihtiyaç duyarlar. Birinci olarak, oldukça geniş çaplı donanım üzerinde çaılşmalıdır, bu nedenle kullanıcı ile etkileşimli olmalı ve değişik aygıt sürücülerini yükleyebilmelidir. İkinci olarak, bu disketler değişik yükleme seçeneklerini, çeşitli otomatik seviyelerde desteklemelidir. Son olarakta, dağıtım açılış disketleri yükleme ve kurtarma kabiliyetinin birleşimine sahip olmalıdır.
+  </para>
+  <para>
+   <indexterm linkend="bootdisk-howto_cp"><primary>birincil ramdiski (initrd)</primary></indexterm>
+   Bazı açılış disketleri <command>initrd</command> (birincil ramdiski/initial ramdisk) diye bilinen bir özellik kullanırlar. Bu özellik çekirdeğin 2.0.x sürümü aşamasında devreye girmiş ve çekirdeğe iki aşamalı olarak yüklenme esnekliğini sağlamıştır. Bu birincil ramdisk, gerçek kök dosya sistemi yüklenmeden önce çalışan bir yazılım içeren bir kök dosya sistemidir. Bu yazılım, genellikle, ortamı denetler ve/veya kullanıcıdan çeşitli açılış seçeneklerinde birisini seçmesini ister (örneğin gerçek kök dosya sisteminin yükleneceği aygıtı).  Ayrıca, çekirdek içine gömülmemiş ilave modülleri de yükler. Bu birincil yazılımın işi bitince, çekirdek gerçek kök biteşlemini yükler ve açılma işlemi normal olarak devam eder. <command>initrd</command> hakkında daha ayrıntılı bilgi elde edebilmek için sisteminizdeki <link xlink:href="file:/usr/src/linux/Documentation/initrd.txt"/> dosyasına ve <link xlink:href="ftp://elserv.ffm.fgan.de/pub/linux/loadlin-1.6/initrd-example.tgz"/> adresine bakabilirsiniz.
+  </para>
+  <para>
+   Aşağıda dağıtımların yükleme disketlerinin nasıl çalıştığının özetlerini bulacaksınız. Bu açıklamalar, kaynak kodlarına ve dosya sistemlerinde yapılan incelemelere göre çıkarılmıştır. Bu bilgilerin tam ve doğru olduğunun garantisi yoktur. Kılavuzumuzun bu sürümü yazıldığından beri bu bilgilerin değişmiş olması ihtimalini göz önünde bulundurmanız yararlı olur.
+  </para>
+  <para>
+   Slackware (v.3.1),<xref linkend="bootdisk-howto_TransferringWithLILO"/> bölümünde tarif edildiği gibi basit LILO açılışını kullanmaktadır. Slackware açılış disketi LILO'nun <literal>message</literal> bağımsız değişkenini kullanarak bir açılış iletisi basar (“<literal>Welcome to the Slackware Linux bootkernel disk!</literal>/Slackware Linux çekirdek açılış disketine hoş geldiniz!”). Bu açıklamanın ardından kullanıcıdan, gerekli ise, açılış bağımsız değişkenleri girmesini ister. Açılıştan sonra, kök dosya sistemi ikinci bir disketten yüklenir. Kullanıcı, yüklemeyi başlatan <command>setup</command> betiğini çalıştırır. Slack, çeşitli çekirdek seçenekleri sunarak, modüler bir çekirdek kullanmak yerine, kullanıcının kendi ihtiyacına göre bir çekirdek seçmesine olanak verir.
+  </para>
+  <para>
+   Red Hat (v.4.0) de LILO açılışını kullanır. Birinci diskete sıkıştırılmış bir ramdisk yükler ve buradan özel bir <command>init</command>  yazılımı çalıştırılır. Bu yazılım sürücüleri tarar ve şayet gerekli ise başka bir diskten ek dosyaları yükler.
+  </para>
+  <para>
+   Debian (v.1.3), muhtemelen en karışık başlangıç diski setine sahiptir.  Değişik yükleme seçeneklerini düzenlemek için SYSLINUX yükleyicisi kullanır ve daha sonra yükleme işleminde kullanıcıya yol göstermek için bir <literal>initrd</literal> biteşlemi kullanır. Özelleştirilmiş bir kabuk ve <command>init</command> kullanmışlar gibi görünüyor.
+  </para>
+ </sect1>
+
+ <sect1 xml:id="bootdisk-howto_CD-ROMs">
+  <title>Önyükleme yapabilen CD-ROMların hazırlanması</title>
+  <note>
+   <para>
+    Bu bölüm Rizwan Mohammed Darwe (<literal>rizwan AT clovertechnologies dot com</literal>) tarafından hazırlanmıştır.
+   </para>
+  </note>
+  <para>
+   Bu bölümde, Linux'da CD yazma süreci hakkında bilginiz olduğu kabul edilmiştir. Burada anlatılanları, yazdığınız CD'leri önyükleme yapabilir hale getirmek için hızlı referans olarak kabul edin. CD yazma hakkında daha ayrıntılı bilgi elde etmek için  <xref linkend="cd-yazimi"/> belgesine göz atınız.
+  </para>
+
+  <sect2>
+   <title>El Torito nedir?</title>
+   <para>
+    x86 platformlarında, pek çok BIOS önyükleme yapabilen CD'leri desteklemektedir. <command>mkisofs</command> için yazılan yamalar "El Torito" standardını temel alır. Basitçe anlatmak gerekirse; El Torito, CD'lerin kendiliğinden sistem açılışı gerçekleştirebilmeleri için nasıl biçimlenmesi gerektiğini gösteren bir belirtimdir.
+   </para>
+   <para>
+    "El Torito" belirtimi, BIOS desteklediği sürece herhangi bir CDROM sürücünün çalışması gerektiğini söyler (SCSI veya IDE). Bugüne kadar, bu olay sadece EIDE CD-ROMlar ile sınanabildi, çünkü SCSI kontrolcülerin hiçbiri El Torito'yu desteklemiyordu. Anakartlar  El Torito desteğine mutlaka sahip olmalıdır. Peki anakartınızın El Torito'yu desteklediğini nasıl anlarsınız? Şayet anakartınız sabit diskten, disketten, CD-ROM'dan veya ağ üzerinden başlatma seçeneğine sahip ise, El Torito'yu destekliyor demektir.
+   </para>
+  </sect2>
+
+  <sect2>
+   <title>El Torito nasıl çalışır?</title>
+   <para>
+    El Torito standartı, CD sürücüyü, BIOS'a normal disket sürücü gibi gösterir. Bu yöntemde, basitçe, bir disket boyutlu biteşlem, ISO dosya sistemine yerleştirilir (1440k'lık disket için 1440k'lık bir biteşlem dosyası). ISO dosya sisteminin başına bu biteşlemi gösteren bir gösterici yerleştirilir. BIOS bu biteşlemi, CD'den bulur ve sanki disketten açılış yapıyormuşcasına devam eder. Bu sayede çalışan bir LILO önyükleme diski elde edilmiş olur.
+   </para>
+   <para>
+    Kabaca söylersek; CD'nin ilk 1.44 (veya destekliyorsa 2.88) MB'lık kısmı bir disket biteşlemi içerir. Bu biteşlem, BIOS'a kendini disket sürücü diye yutturur ve sistemin açılması işlemini başlatır. Bu açılma işlemi sırasında birinci disket sürücünüz (A veya <filename>/dev/fd0</filename>) erişilmez durumda olur ama bu problemi <filename>/dev/fd1</filename> kullanarak aşabilirsiniz.
+   </para>
+  </sect2>
+
+  <sect2>
+   <title>Nasıl çalışır hale getireceğiz?</title>
+   <para>
+    İlk olarak bir dosya oluşturacağız, diyelim ki "boot.img". Bu dosya disket biteşlemi boyutlarında olmalı: 1.44 MB. Disketin 1. sürücüde olduğunu varsayarak aşağıdaki komut işiniz görür:
+   </para>
+<screen># dd if=/dev/fd0 of=boot.img bs=10k count=144
+</screen>
+   <para>
+    Bu dosyayı iso9660 dosya sistemi hiyerarşisi içine yerleştirin. Açılış ile ilgili bütün dosyaları ilgili dizin altına (mesela iso9660fs'in kökü altında <filename>boot</filename> dizinine) yerleştirmek iyi bir fikir olabilir.
+   </para>
+   <para>
+    Bir yetersizlik -- Açılış disketiniz LILO üzerinden birincil ramdiski yükleyebilmelidir, çekirdek ramdisk sürücüsünü değil. Çünkü Linux çekirdeği yüklenmeye başladı mı, BIOS'a CD'yi disket olarak yutturma işlemi düşecek ve açılış gerçekleşmeyecektir. LILO, BIOS disk çağrılarını kullanarak, birincil ramdiski yükleyecek ve böylece yutturmaca tasarlandığı biçimde devam edebilecektir.
+   </para>
+   <para>
+    El Torito belirtimi bir "açılış kataloğu" gerektirir. Bu  kullanım amacı dışında hiçbir şey ile ilgisi olmayan 2048 baytlık bir dosyadır. <command>mkisofs</command>'nin yazarı tarafından yapılan yama, özdevinimli olarak açılış kataloğu yapılmasını sağlayacaktır fakat bu kataloğun iso9660 dosya sistemi içinde nerede bulunacağını tanımlamak zorundasınız.  Genellikle,  bu kataloğu önyükleme biteşlemi ile aynı yere koymak iyi bir fikirdir. <filename>boot.catalog</filename> şekilde bir isim ise oldukça uygun olacaktır.
+   </para>
+   <para>
+    Böylece <filename>boot.img</filename> dosyası içinde önyükleme biteşlemini elde etmiş olduk ve bunu iso9660 dosya sistemi içindeki <filename>/boot</filename> dizinine koyduk. Kataloğumuz da, <filename>boot.catalog</filename> adı ile aynı dizine yerleştirdik.<filename>bootcd.iso</filename> içinde iso9660 dosya sistemini oluşturmak için gereken komut:
+   </para>
+<screen># mkisofs -r -b boot/boot.img -c boot/boot.catalog -o bootcd.iso .</screen>
+   <para>
+    <command>-b</command> seçeneği kullanılacak önyükleme biteşlemini belirtir (dosya yolu diskteki yerine bağlı olarak değişebilir) ve  <command>-c</command> seçeneği önyükleme kataloğunun dosyası içindir. <command>-r</command> seçeneği uygun dosya iyelikleri ve kipleri (<command>mkisofs</command> man sayfasına bakınız) oluşturacaktır. En sondaki "<command>.</command>" işaret ise kaynakların geçerli dizinden alınacağını belirtmektedir.
+   </para>
+   <para>
+    Daha sonra CD'yi alışılmış yöntemler ile yakın; "önyükleme yapabilen" CD'niz artık hazır.
+   </para>
+  </sect2>
+
+  <sect2>
+   <title>Win9x Önyüklenebilir CD-ROMlarının yapımı</title>
+   <para>
+    İlk adım önyükleme biteşleminin kaynak CD'den alınmasıdır. Ancak Linux altında CD'yi sisteme bağlayıp <command>dd</command> ile ilk 1440k yı bir diskete ya da <filename>boot.img</filename> gibi bir dosyaya alamazsınız. Bunun yerine basitçe CD-ROM'dan açılışı yapın.
+   </para>
+   <para>
+    Win98 CD ile açılış yapıldıktan sonra aslında bir ramdisk olan A: istemine düşün. DOS'un <command>diskcopy</command> komutu ile A: biteşlemini o an için B: olarak görünen birinci disket yuvasındaki diskete kopyalayın. Bunu şu şekilde yapabilirsiniz:
+   </para>
+<screen>diskcopy A: B:</screen>
+   <para>
+    Bu komut <command>dd</command> gibi çalışır. Bu yeni oluştırduğunuz diskten önyükleme yaptırarak kaynak CDROMdan yapılan bir açılış gibi bir açılış yapıldığını deneyerek görebilirsiniz. Bu disketten dd ile <filename>boot.img</filename> gibi bir dosyaya önyükleme biteşlemini aktardıktan sonra yapılacaklar yukarıda anlatılanlar ile aynıdır.
+   </para>
+  </sect2>
+ </sect1>
+
+ <sect1 xml:id="bootdisk-howto_faq">
+  <title>Sıkça Sorulan Sorular(SSS) listesi</title>
+  <qandaset defaultlabel="number">
+   <qandaentry>
+    <question>
+     <para>
+      <emphasis>Önyükleme ve kök disklerimden açılış yapıyorum ama hiçbir şey olmuyor. Ne yapmalıyım?</emphasis>
+     </para>
+    </question>
+    <answer>
+     <para>
+      <xref linkend="bootdisk-howto_troubleshooting"/> bölümüne bakınız.
+     </para>
+    </answer>
+   </qandaentry>
+   <qandaentry>
+    <question>
+     <para>
+      <emphasis>Slackware/Debian/RedHat açılış diskleri nasıl çalışır?</emphasis>
+     </para>
+    </question>
+    <answer>
+     <para>
+      <xref linkend="bootdisk-howto_Pros"/> bölümüne bakınız.
+     </para>
+    </answer>
+   </qandaentry>
+   <qandaentry>
+    <question>
+     <para>
+      <emphasis>Büyük boyutlu diskleri (1440K'dan büyük) nasıl kullanabilirim? Kendi disket sürücüm ile hangi boyutta disketin çalışacağını nasıl anlayabilirim?</emphasis>
+     </para>
+    </question>
+    <answer>
+     <para>
+      <xref linkend="bootdisk-howto_slimfast"/>bölümüne bakınız. Orada Alain Knaff'in bu konudaki yorumlarını bulacaksınız. Kendisi bu konu hakkında, benim tanıdığım en otoriter kişidir.
+     </para>
+    </answer>
+   </qandaentry>
+   <qandaentry>
+    <question>
+     <para>
+      <emphasis>Ramdiskimin boyutunu nasıl artırırım?</emphasis>
+     </para>
+    </question>
+    <answer>
+     <para>
+      Bu konu metin içinde açıklansa daha iyi olurdu ama başlangıç olarak buraya kısa bir yanıt koyuyorum.
+     </para>
+     <para>
+      İlk olarak; bunu yapmak için  <literal>rdev</literal> veya <literal>ramsize</literal> komutlarını <emphasis role="bold">kullanmayın</emphasis>. Kılavuzların ne söylediğini boşverin.  ramdisk kelimesi, artık ramdisk boyutunu tayin etmek için kullanılmamaktadır.
+     </para>
+     <para>
+      İkinci olarak; ramdisklerin gerçekte dinamik yapıda olduğunu unutmayın. Bir ramdisk ayarladığınız zaman, bellekte yer ayırmıyorsunuz, sadece ramdiskin ne kadar genişliyebileceğine karar vermiş oluyorsunuz. Ramdisk boyutunu büyük tutmaktan korkmayın (8 MB veya 16 MB gibi).  Fiziksel bellek alanı, gerekli olmadığı sürece kullanılmaz veya boş tutulmaz. Bu ayarı çeşitli şekillerde yapabilirsiniz.
+     </para>
+     <orderedlist>
+      <listitem>
+       <para>
+        Komut satırından <literal>ramdisk_size=NNN</literal> komut satırı bağımsız değişkenini  kullanın. Bu komutu, komut satırından doğrudan verebileceğiniz gibi, LILO içerisinden  <literal>append="ramdisk_size=NNN"</literal> şeklinde de belirtebilirsiniz.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+        Şayet LILO kullanıyorsanız, <literal>lilo.conf</literal> dosyası içinde <literal>ramdisk=8192K</literal> şeklinde bir çekirdek seçeneği belirtebilirsiniz.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+        Çekirdek ayar seçeneği <literal>CONFIG_BLK_DEV_RAM_SIZE</literal>'ı değiştirin ve çekirdeği tekrar derleyin.
+       </para>
+      </listitem>
+     </orderedlist>
+    </answer>
+   </qandaentry>
+   <qandaentry>
+    <question>
+     <para>
+      <emphasis>Önyükleme yapabilien CDROM'ları nasıl oluşturabilirim?</emphasis>
+     </para>
+    </question>
+    <answer>
+     <para>
+      <xref linkend="bootdisk-howto_CD-ROMs"/> bölümüne bakınız.
+     </para>
+    </answer>
+   </qandaentry>
+   <qandaentry>
+    <question>
+     <para>
+      <emphasis>Önyükleme yapabilien LS-120 disklerini nasıl oluşturabilirim?</emphasis>
+     </para>
+    </question>
+    <answer>
+     <para>
+      Bir LS-120 sürücüye sahip olmadığım için, aşağıdaki bilgileri Linux Router Projesi'nden <link xlink:href="http://www.linuxrouter.org/floppy.shtml">Dave Cinege tarafından sağlanan bilgilerden</link> derledim.
+     </para>
+     <para>
+      LS-120 bir  IDE disket sürücüsüdür. Hem 3.5" lik hem de 120MB'lik yeni diskler ile uyumludur. Linux 2.0.31'den beri tam desteğe sahiptir. Bu diskler ile sistem açılışı yapabilmek için, bu diskleri sürücü 0 (IDE sürücüler normalde 80'den başlar) olarak kabul eden BIOS'lara ihtiyacınız var. Şayet BIOS desteğiniz yok ise, bu sorunu aşmak için Promise Technologies'den küçük bir IDE FloppyMAX kartı satın alabilirsiniz.
+     </para>
+     <para>
+      Çekirdek önyükleyicisi LS-120'yi sevmez ve anında ölür. Ayrıca 2M diskleri de onu sevmez ve önyükleme yapmaz. 1.44MB ile 1.74MB arası diskler normal çalışacaktır. SYSLINUX, sürüm 1.32'den beri 120MB'lik diskler ile anlaşabilmektedir. MS-DOS uyumu gerekmediği sürece, SYSLINUX kullanmak yerine, diski yeniden bölümlemek ve ext2 veya minix kullanmak daha uygundur.
+     </para>
+     <para>
+      LILO 120MB'lık diskler ile çalışabilir. Burada örnek bir <literal>lilo.conf dosyası</literal> var:
+     </para>
+<screen>boot=/dev/hda
+compact
+disk=/dev/hda bios=0
+install=/floppy/boot.b
+map=/floppy/map
+image=/floppy/linux
+label=Linux
+append="load_ramdisk=1"
+initrd=/floppy/root.bin
+ramdisk=8192
+</screen>
+     <para>
+      "<literal>disk=/dev/hda bios=0</literal>"  satırı LS-120'den önyükleme yapılabilmesini sağlayan hileyi gerçekleştirir.
+     </para>
+    </answer>
+   </qandaentry>
+   <qandaentry>
+    <question>
+     <para>
+      <emphasis>Bir XYZ sürücüsü ile bir açılış diskini nasıl yapabilirim?</emphasis>
+     </para>
+    </question>
+    <answer>
+     <para>
+      En kolay yol, en yakınınızdaki bir Slackware yansısından bir Slack çekirdeği indirmektir. Slack çekirdekleri, mümkün olan en fazla sürücüye destek vermeye çalışan genel çekirdeklerdir. Şayet bir SCSI veya IDE kontrolcüsünün sürücüsüne ihtiyacınız var ise Slack çekirdeği içinde bu sürücüyü bulma ihtimaliniz görece daha yüksektir.
+     </para>
+     <para>
+      <filename>a1</filename> dizinine gidin ve sahip olduğunuz denetleyiciye göre IDE veya SCSI çekirdeği seçin. İstediğiniz sürücünün, bu çekirdek içinde bulunup bulunmadığını anlamak için  <filename>xxxxkern.cfg</filename> dosyasını inceleyin. Şayet aradığınız sürücü bu çekirdek içinde ise, bu çekirdek sizin sisteminizi açabilmelidir. <filename>xxxxkern.tgz</filename> dosyasını indirin ve daha önce anlatıldığı şekilde açılış disketinize kopyalayın.
+     </para>
+     <para>
+      <indexterm linkend="bootdisk-howto_cp"><primary>aygıt sürücüleri</primary></indexterm>
+      Daha sonra <command>rdev zImage</command> komutunu kullanarak çekirdekteki kök aygıtı kontrol etmelisiniz. Şayet bu sizin istediğiniz kök aygıt değilse, değiştirmek için <command>rdev</command>'i kullanın. Örneğin; düzenlemeye çalıştığım çekirdek için <filename>/dev/sda2</filename> idi ama benim kök SCSI bölümüm <filename>/dev/sda8</filename> idi. Bir kök disketini kullanabilmek için  <command>rdev zImage /dev/fd0 </command> komutunu kullanmanız gerekir.
+     </para>
+     <para>
+      Şayet bir Slack kök disketinin nasıl yapıldığını bilmek istiyorsanız, bu konu bizim NASIL'ımızın alanı dışındadır. Linux Install Guide'ı incelemenizi veya bir Slackware dağıtımı almanızı öneririm.
+     </para>
+    </answer>
+   </qandaentry>
+   <qandaentry>
+    <question>
+     <para>
+      <emphasis>Kök disketimi yeni dosyalarla nasıl güncellerim?</emphasis>
+     </para>
+    </question>
+    <answer>
+     <para>
+      <indexterm linkend="bootdisk-howto_cp"><primary>kök dosya sistemi</primary><secondary>güncelleme</secondary></indexterm>
+      En kolay yol, kök disketteki dosya sistemini, daha önce kullandığımız <replaceable>aygıt</replaceable>'a (<xref linkend="bootdisk-howto_creatingrootfs"/>) kopyalamaktır. Daha sonra dosya sistemini bağlayın ve değişiklikleri yapın. Kök dosya sisteminizin nerede başladığını ve kaç  bloktan oluştuğunu hatırlamanız gerekmekte:
+     </para>
+<screen># dd if=/dev/fd0 bs=1k skip=<replaceable>kök_başlangıcı</replaceable> count=<replaceable>blok_sayısı</replaceable> | gunzip &gt; <replaceable>aygıt</replaceable>
+# mount -t ext2 <replaceable>aygıt</replaceable> /mnt
+</screen>
+     <para>
+      Değişikleri yaptıktan sonra, daha önce tarif edildiği şekilde (<xref linkend="bootdisk-howto_wrappingitup"/>) kök dosya sistemini diskete aktarın.  Yeni kök dosya sisteminin başlangıç konumunu değiştirmemişseniz, çekirdeği tekrar aktarmanız ve ramdiski tekrar hesaplamanızda gerekmeyecektir.
+     </para>
+    </answer>
+   </qandaentry>
+   <qandaentry>
+    <question>
+     <para>
+      <emphasis>Sistemi DOS'tan tekrar başlatabilmek için LILO'yu nasıl kaldırabilirim?</emphasis>
+     </para>
+    </question>
+    <answer>
+     <para>
+      <indexterm linkend="bootdisk-howto_cp"><primary>Ana Önyükleme Kaydı (MBR)</primary></indexterm>
+      <indexterm linkend="bootdisk-howto_cp"><primary>LILO</primary><secondary>kaldırılması</secondary></indexterm>
+      Aslında bu bir açılış disketi konusu değil ama oldukça sık sorulmakta. Linux'ta iken şunu yapın:
+     </para>
+<screen># /sbin/lilo -u</screen>
+     <para>
+      Ayrıca, LILO tarafından açılış sektörüne kaydedilmiş yedeği kopyalamak için <command>dd</command> komutunu kullanabilirsiniz. Bunu yapmak istityorsanız LILO belgelerine bakınız.
+     </para>
+     <para>
+      DOS ve Windows içinde bu DOS komutunu kullanabilirsiniz:
+     </para>
+<screen>FDISK /MBR</screen>
+     <para>
+      MBR,  Master Boot Record sözcüklerinin kısaltmasıdır ve ana önyükleme kaydı anlamına gelir. Bu komut önyükleme sektörünü temiz bir tanesi ile değiştirir. Bölümleme tablosunu etkilemez. Bazı titiz insanlar bu konuda hem fikir değillerdir ama LILO yazarı Werner Almesberger bu yöntemi önerir. Oldukça kolay ve işe yarar bir yöntemdir.
+     </para>
+    </answer>
+   </qandaentry>
+   <qandaentry>
+    <question>
+     <para>
+      <emphasis>Şayet hem çekirdeği hem de açılış disketimi kaybedersem, sistemi nasıl açabilirim?</emphasis>
+     </para>
+    </question>
+    <answer>
+     <para>
+      Şayet elinizde bir açılış diskeri yok ise, muhtemelen en kolay yol; disk denetleyicinize uygun bir Slack çekirdeği  elde etmektir. Daha sonra "XYZ sürücüsü ile bir açılış diskini nasıl yapabilirim?"  sorusundaki yöntemi izleyin. Bu çekirdek ile sistemi açabilir ve hasar gören ne ise onu düzeltebilirsiniz.
+     </para>
+     <para>
+      İndirdiğiniz çekirdek size uyan bir kök bölüm veya kök tipi içermeyebilir. Genel olarak Slack SCSI çekirdeğinde kayıtlı kök aygıtı <filename>/dev/sda2</filename>'dir. Benin ki ise <filename>/dev/sda8</filename> idi. Bu durumda çekirdek içinde kayıtlı kök aygıt değiştirilmelidir.
+     </para>
+     <para>
+      Bütün sahip  olduğunuz bir çekirdek veya başka bir işletim sistemi olsa bile (örneğin DOS), çekirdek içinde kayıtlı kök aygıt ayarını değiştirme imkanınız hala var.
+     </para>
+     <para>
+      <command>rdev</command>, çekirdek dosyası içindeki sabit bayt konumlarındaki verileri değiştirerek, çekirdek ayarlarını değiştirir. Bu yöntemle, elinizdeki sistem ne olursa olsun bir onaltılık düzenleyici ile istediğiniz değişiklikleri yapabilirsiniz. Örneğin DOS altında Norton Utilities Disk Editor'ü kullanabilirsiniz. Daha sonra gerekli değişiklikleri çekirdek içinde yapın:
+<indexterm linkend="bootdisk-howto_cp"><primary>ramdisk sözcüğü</primary></indexterm>
+<indexterm linkend="bootdisk-howto_cp"><primary><command>rdev</command></primary></indexterm>
+     </para>
+<screen>16'lık Onluk Açıklama
+------ ----  --------------------------
+0x01F8  504  RAMDISK sözcüğünün düşük baytı
+0x01F9  505  RAMDISK sözcüğünün yüksek baytı
+0x01FC  508  Kök aygıtın alt aygıt numarası - aşağıya bakınız
+0X01FD  509  Kök aygıtın ana aygıt numarası - aşağıya bakınız
+</screen>
+     <para>
+      Ramdisk kelimesinin yorumu daha önce <xref linkend="bootdisk-howto_SettingRamdiskWord"/> içinde yapılmıştı.
+     </para>
+     <para>
+      Bağlamak istediğiniz aygıtın minör ve major aygıt numaraları uygun şekilde değiştirilmelidir. Aşağıda bazı yararlı değerleri bulabilirsiniz.
+     </para>
+<screen>AYGIT              ANA   ALT   Açıklama
+-------            ---   ---  ---------------------
+/dev/fd0            2     0   1. disket yuvası
+/dev/hda1           3     1   1. IDE  sürücünün 1. bölümü
+/dev/sda1           8     1   1. SCSI sürücünün 1. bölümü
+/dev/sda8           8     8   1. SCSI sürücünün 8. bölümü
+</screen>
+     <para>
+      Bu değerleri düzenledikten sonra, bu dosyayı Norton Utilities Disk Editor veya <command>rawrite.exe</command> yazılımını kullanarak diskete yazabilirsiniz. Bu yazılım bütün dağıtımların içinde bulunur. Bu yazılım, dosya sistemi yerine açılış sektöründen başlayarak "ham" disk üzerine yazabilen bir DOS yazılımıdır. Şayet Norton araçlarını kullanıyorsanız, dosyayı fiziksel diske, diskin başlangıç noktasından başlayarak yazmanız gerekir.
+     </para>
+    </answer>
+   </qandaentry>
+   <qandaentry>
+    <question>
+     <para>
+      <emphasis>Önyükleme ve kök disketlerimin kopyalarını nasıl alabilirim?</emphasis>
+     </para>
+    </question>
+    <answer>
+     <para>
+      Manyetik araçlar  zamanla bozulduğu için, kurtarma setinizin bir kopyasını saklamak iyi bir fikir olacaktır.
+     </para>
+     <para>
+      Bunu yapmanın en kolay yolu, disketleri <command>dd</command> komutu ile diskteki bir dosyaya kopyalamak ve daha sonra aynı komutla diskten diskete kopyalamaktır.  Bu işlem esnasında disketi bağlamak zorunda değilsiniz, çünkü <command>dd</command> ham aygıt arayüzünü kullanır.
+     </para>
+     <para>
+      Disketi diske kopyalamak için:
+     </para>
+<screen># dd if=<replaceable>aygıt_adı</replaceable> of=<replaceable>dosya_adı</replaceable></screen>
+     <para>
+      Burada <varname>aygıt_adı</varname> disketin aygıt adı ve <replaceable>dosya_adı</replaceable> disketin içeriğinin kopyalanacağı sabit diskteki dosyanın adıdır. Komut <literal>count</literal> bağımsız değişkeni olmaksızın kullanılarak <command>dd</command>'nin bütün disketi olduğu gibi kopyalaması sağlanır.
+     </para>
+     <para>
+      Yeni bir diskete kopyalamak için, disket sürücüye boş bir disket yerleştirin ve:
+     </para>
+<screen># dd if=<replaceable>dosya_adı</replaceable> of=<replaceable>aygıt_adı</replaceable></screen>
+     <para>
+      Bu açıklamalar, sadece bir  adet disket sürücünüz olduğu varsayılarak yapılmaktadır. Şayet iki adet disket sürücünüz varsa:
+     </para>
+<screen># dd if=/dev/fd0 of=/dev/fd1</screen>
+    </answer>
+   </qandaentry>
+   <qandaentry>
+    <question>
+     <para>
+      <emphasis>Her seferinde  “ahaxxxx=nn,nn,nn”  yazmadan nasıl açılış yapabilirim?</emphasis>
+     </para>
+    </question>
+    <answer>
+     <para>
+      <indexterm linkend="bootdisk-howto_cp"><primary>çekirdek</primary><secondary>bağımsız değişkenleri</secondary></indexterm>
+      Bir disk aygıtı özdevinimli olarak saptanamadığı için çekirdeğe aygıt bağımsız değişkenlerini gösteren bir dizge verilmesi gereklidir:
+     </para>
+<screen>aha152x=0x340,11,3,1</screen>
+     <para>
+      Bu bağımsız değişken dizgesi LILO içine çeşitli şekillerde yazılabilir:
+     </para>
+     <itemizedlist>
+      <listitem>
+       <para>
+        Sistem LILO üzerinde açılırken, komut satırına her seferinde yazarak. Oldukça sıkıcı olsa gerek.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+        LILO'nun <literal>lock</literal> anahtar sözcüğünü kullanarak bu satırı öntanımlı komut satırı haline getirerek. Böylece LILO her açılışta bu bağımsız değişkeni kullanacaktır.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+        LILO ayar dosyası içinde <literal>append="ifade"</literal> şeklinde kullanarak. <literal>ifade</literal>'nin çift tırnak ile kapatılmış olduğuna dikkat ediniz.
+       </para>
+      </listitem>
+     </itemizedlist>
+     <para>
+      Örneğin, yukarıdaki bağımsız değişken dizgesini kullanan bir komut satırı şu şekilde olurdu:
+     </para>
+<screen>zImage  aha152x=0x340,11,3,1 root=/dev/sda1 lock</screen>
+     <para>
+      Bu, aygıt bağımsız değişken dizgesini geçecekti ve ayrıca çekirdeğin kök aygıtı <filename>/dev/sda1</filename> olarak ayarlamasını isteyecek ve bütün satırı kaydedip, sonraki açılışta tekrar kullanmasını sağlayacaktır.
+     </para>
+     <para>
+      Örnek bir <literal>APPEND</literal> ifadesi:
+     </para>
+<screen>APPEND = "aha152x=0x340,11,3,1"</screen>
+     <para>
+      EK BİLGİ: bağımsız değişken dizgesi komut satırında çift tırnak alınmaz ama <literal>APPEND</literal> için kullanırken mutlaka çift tırnağı kullanmanız gerekmektedir.
+     </para>
+     <para>
+      Ayrıca yürütülen bağımsız değişken dizgesi için, çekirdekte uygun türde sürücü bulunmalıdır. Şayet bulunamaz ise, bağımsız değişken dizgesini sözünü dinleyecek hiçbir şey olmayacak demektir. Bu nedenle çekirdeği, bu sürücü desteği ile tekrar derlemeniz gerekecektir. Çekirdek derlemenin ayrıntıları için  <filename>/usr/src/linux</filename> içine bakınız ve README'yi okuyunuz. Linux SSS'yi ve Kurulum NASIL'ı  okuyun. Bundan başka, istediğiniz sürücüye sahip genel bir çekirdek alabilir ve onu yükleyebilirsiniz.
+     </para>
+     <para>
+      LILO'yu yüklemeye kalkmadan önce kullanıcıların LILO belgelerini okumaları şiddetle önerilir. Hatalı kullanımlar bölümlere zarar verebilir.
+     </para>
+    </answer>
+   </qandaentry>
+   <qandaentry>
+    <question>
+     <para>
+      <emphasis>Açılış esnasında, bir hata alıyorum:  “A:  B'yi çalıştıramıyor”. Niye?</emphasis>
+     </para>
+    </question>
+    <answer>
+     <para>
+      <indexterm linkend="bootdisk-howto_cp"><primary>yerleri değiştirilemeyenler</primary></indexterm>
+      Yerleri çeşitli araçlara sabit kodlanmış uygulamalar bu soruna sebep olabilir.  Bu her zaman olmayabilir ama sisteminizde görebildiğiniz halde çalışmayan bir uygulamanın çalışmama sebebini bu şekilde açıklamak mümkün olabilir. İstenilen yazılımın başka bir tanesine sabit kodlanmış olup olmadığını görmek için: çıktısı <command>grep</command>'e borulanan <command>strings</command>  komutu işe yarayabilir.
+     </para>
+     <para>
+      Yerlerinin değişmeyeceği varsayılan uygulamalardan örnekler:
+     </para>
+     <itemizedlist>
+      <listitem>
+       <para>
+        <command>shutdown</command> bazı sürümlerde <filename>/etc/reboot</filename>'a sabit kodlanmıştır. Bu durumda <command>reboot</command> <filename>/etc</filename> dizini altında olmak zorundadır.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+        <command>init</command> en azından bir kişi için, sorun çıkardı, çekirdek <command>init</command>'i bulamadı.
+       </para>
+      </listitem>
+     </itemizedlist>
+     <para>
+      Bu sorunları aşmak için ya dosyaları olmaları gereken yerlere taşıyın ya da ayar dosyalarını (örneğin: <filename>inittab</filename>) düzeltin. Şayet iki arada bir derede kalmışsanız, bu dosyaları sabit diskinizde bulundukları yerlere koyun ve sabit diskinizdeki <filename>inittab</filename> ve <filename>/etc/rc.d</filename> dosyalarını kullanın.
+     </para>
+    </answer>
+   </qandaentry>
+   <qandaentry>
+    <question>
+     <para>
+      <emphasis>Çekirdeğim ramdisk desteğine sahip ama ramdisk başlangıç boyutu olarak 0 kB. Neden?</emphasis>
+     </para>
+    </question>
+    <answer>
+     <para>
+      Bunun olduğu yerde, çekirdek yüklenirken aşağıdakine benzer bir çekirdek iletisi görüntülenir:
+<indexterm linkend="bootdisk-howto_cp"><primary>ramdisk</primary></indexterm>
+     </para>
+<screen>Ramdisk driver initialized : 16 ramdisks of 0K size</screen>
+     <para>
+      Bunu muhtemel sebebi, önyükleme sırasında çekirdek bağımsız değişkenleri tarafından ramdisk boyutunun 0 kB olarak ayarlanmış olmasıdır. LILO yapılandırma bağımsız değişkenlerinde gözden kaçırdığımız bir şey olması da muhtemeldir:
+     </para>
+<screen>ramdisk= 0</screen>
+     <para>
+      Bazı eski dağıtımların LILO ayar dosyalarında bu satır bbulunmaktadır. Bu satır  daha önceden verilmiş çekirdek bağımsız değişkenlerini yoksayar. Buna benzer bir satır ayar dosyasında var ise, o satırı silin.
+     </para>
+     <para>
+      EK BİLGİ: Şayet 0 boyutlu bir ramdisk kullanmaya kalkarsanız, bu davranış manasız olacağı için, çekirdek panik verebilir.
+     </para>
+    </answer>
+   </qandaentry>
+  </qandaset>
+ </sect1>
+
+ <appendix xml:id="bootdisk-howto_appa">
+  <title>Özkaynaklar ve Göstericiler</title>
+  <para>
+   Bir paketi alırken, geçerli bir sebebiniz olmadığı sürece, en son sürümü aldığınızdan emin olun.
+  </para>
+
+  <sect1 xml:id="bootdisk-howto_PreMade">
+   <title>Hazır açılış disketleri</title>
+   <para>
+    Dağıtımların açılış disketleri için kaynaklar mevcuttur. <emphasis>Bu makinelere aşırı yük binmemesi için, lütfen yansılardan birisini kullanın.</emphasis>
+   </para>
+   <itemizedlist>
+    <listitem>
+     <para>
+      <link xlink:href="http://distro.ibiblio.org/pub/Linux/distributions/slackware/bootdsks.144/">Slackware açılış disketleri</link>,
+      <link xlink:href="http://distro.ibiblio.org/pub/Linux/distributions/slackware/rootdsks/">kök disketleri</link> ve <link xlink:href="http://www.slackware.com/getslack/">Slackware yansıları</link>
+     </para>
+   </listitem>
+    <listitem>
+     <para>
+     <link xlink:href="ftp://ftp.redhat.com/pub/redhat/linux/current/en/os/i386/images/">Red Hat açılış disketleri</link> ve <link xlink:href="http://www.redhat.com/mirrors.html">Red Hat yansıları</link>
+     </para>
+   </listitem>
+    <listitem>
+     <para>
+     <link xlink:href="ftp://ftp.debian.org/debian/dists/stable/main/disks-i386/current/">Debian açılış disketleri</link> ve <link xlink:href="ftp://ftp.debian.org/debian/README.mirrors.html">Debian yansıları</link>
+     </para>
+   </listitem>
+    <listitem>
+     <para>
+     <link xlink:href="http://www.linux-mandrake.com/en/ftp.php3">Mandrake
+      ftp yansıları</link>
+     </para>
+    </listitem>
+   </itemizedlist>
+   <para>
+    Bu dağıtım açılış disklerine ek olarak, aşağıdaki kurtarma diski biteşlemleri de mevcuttur. Aksi belirtilmediği sürece bunlara şu dizin içinde ulaşabilirsiniz: <link xlink:href="http://www.ibiblio.org/pub/Linux/system/recovery/!INDEX.html"/>
+   </para>
+   <itemizedlist>
+    <listitem>
+     <para>
+      <literal>RIP</literal> bir açılış vekurtarma setidir ve çeşitli sürümleri vardır: birisi 1.44M'lik disketler, bir diğeri ise CD-ROM içindir. Geniş bir dosya desteğine ve disk bakım ve kurtarma için pek çok uygulama aracına sahiptir. ext2, ext3, iso9660, msdos, ntfs, reiserfs, ufs ve vfat desteği vardır.  RIP setini bulabileceğiniz bir yer:  <link xlink:href="http://www.tux.org/pub/people/kent-robotti/looplinux/rip/index.html"/>
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      Tom Oehser tarafından yapılmış olan <literal>tomsrtbt</literal> tek bir disket üzerine kurulmuş olan Çekirdek 2.0'a sahip önyükleme ve kök disketidir. Geniş bir desteğe ve uygulama araçlarına sahiptir. IDE, SCSI, teyp ağ bağdaştırıcıları, PCMCIA, vs. desteği vardır. Tamir tadilat maksatlı 100 kusür uygulama ve araç disket içinde mevcuttur.  Paket içinde ayrıca biteşlemi parçalara ayırmak ve yeniden oluşturmak için gerekli betikler de mevcuttur. Bu sayede, gerekli olduğu durumlarda,  yeni araçlar ekleme olanağı elde edilmektedir.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      1.3.84 çekirdeği üzerine kurulmuş <literal>rescue02</literal>, John Comyns tarafından yapılmıştır. Kurtarma diskidir.  IDE, Adaptec 1542 ve NCR53C7,8xx desteği vardır. ELF ikilik dosyalarını kullanır ama başka sistemler üzerinde de kullanılacak yeterince komuta sahiptir.  Diğer SCSI kartlar için, açılış işlemi sonrasında kullanılabilecek modüllere sahiptir. 3MB civarı ramdisk kullandığı için, 4MB'lik RAM'e sahip sistemlerde çalışmayabilir.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      <literal>resque_disk-2.0.22</literal>, Sergei Viznyuk tarafından yapılmıştır, Çekirdek 2.0.22 üzerine kurulu yetenekli bir önyükleme ve kök disketidir. Gömülü olarak IDE, pek çok değişik SCSI kontrolcüsü ve ELF/A.out desteği mevcuttur. Ayrıca pek çok modül ve sabit disk tamir-tadilatı için gerekli araç gereç içerir.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      <link xlink:href="http://www.ibiblio.org/pub/Linux/system/recovery/images"><literal>cramdisk</literal> biteşlemleri</link>, çekirdek 2.0.23 üzerine kurulu 4MB ve 8MB'lik sistemler içindir. Matematik emülatörü ve ağ (PPP ve dialin betiği, NE2000, 3C509) ve paralel port ZIP sürücü desteği içerirler. Bu disket bitşlemleri 4MB'lık bir 386 üzerinde çalışır. MSDOS desteği vardır, bu sayede internetten bir DOS bölüme indirebilirsiniz.
+     </para>
+    </listitem>
+   </itemizedlist>
+  </sect1>
+
+  <sect1 xml:id="bootdisk-howto_rescue">
+   <title>Kurtarma paketleri</title>
+   <para>
+    www.ibiblio.org adresinde, kurtarma disketleri yapmak için çeşitli paketler mevcuttur. Bu paketler ile açılış disketlerinin yapımına dosyaları dahil etmek ve bu işi özdevinimli yapmak için çeşitli setler tanımlayabilirsiniz. Ayrıntılı bilgi için: <link xlink:href="http://www.ibiblio.org/pub/Linux/system/recovery/!INDEX.html"/>. Dosya tarihlerini kontrol etmeyi unutmayın. Bu paketlerin bazıları yıllardan beri güncellenmedi ve ramdiske yüklenen sıkıştırılmış kök dosya sistemi desteklenmemektedir.  Bildiğimiz kadarı ile bunu yapacak tek paket <link xlink:href="http://www.linuxlots.com/~fawcett/yard/index.html">Yard</link>'dır.
+   </para>
+  </sect1>
+
+  <sect1 xml:id="bootdisk-howto_lilo">
+   <title>LILO -- Linux yükleyicisi</title>
+   <para>
+    Werner Almesberger tarafından yazılmıştır.  Mükemmel bir önyükleyicidir ve belgeleri önyükleme sektörü içeriği ve önyükleme sürecinin ilk safhaları hakkında bilgi içermektedir.
+   </para>
+   <para>
+    Ftp'den <link xlink:href="ftp://tsx-11.mit.edu/pub/linux/packages/lilo/"/> adresinden erişilebilir. Ayrıca Metalab ve yansılarında da bulunmaktadır.
+   </para>
+  </sect1>
+
+  <sect1 xml:id="bootdisk-howto_rdusage">
+   <title>Ramdisk kullanımı</title>
+<indexterm linkend="bootdisk-howto_cp"><primary>ramdisk</primary></indexterm>
+   <para>
+    Ramdiskin nasıl çalıştığını anlatan mükemmel belgeler, çekirdek belgeleri arasında bulunabilir. <filename>/usr/src/linux/Documentation/ramdisk.txt</filename> dosyasına göz atınız. Paul Gortmaker tarafından yazılmıştır ve sıkıştırılmış bir ramdisk yapmanın anlatıldığı bir bölüm de vardır.
+   </para>
+  </sect1>
+
+  <sect1 xml:id="bootdisk-howto_bootprocess">
+   <title>Linux önyükleme süreci</title>
+<indexterm linkend="bootdisk-howto_cp"><primary>önyükleme süreci</primary></indexterm>
+   <para>
+    Linux önyükleme süreci hakkında bazı kaynaklar:
+   </para>
+   <itemizedlist>
+    <listitem>
+     <para>
+      <xref linkend="sag"/> önyükleme süreci hakkında bir bölüm içermektedir.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      <link xlink:href="http://www.ibiblio.org/pub/Linux/system/boot/lilo/lilo-t-21.ps.gz">LILO ``Technical overview''</link> alt seviyede eksiksiz bir teknik açıklamaya sahiptir.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      Kaynak kodları mükemmel bir kaynaktır. Aşağıda önyükleme süreci ile ilgili bazı çekirdek dosyaları bulunmaktadır. Şayet Linux çekirdek kaynak kodlarına sahipseniz, kendi makinenizde <filename>/usr/src/linux</filename> altında bu dosyaları bulabilirsiniz. Ayrıca olarak, Shigio Yamaguchi (shigio at tamacom.com)'nun çekirdek kaynak kodlarını okumak için çok hoş bir  <link xlink:href="http://www.tamacom.com/tour/linux/index.html">hypertext çekirdek tarayıcısı</link> vardır. İlgili belgeler:
+     </para>
+     <variablelist>
+      <varlistentry>
+       <term><filename>arch/i386/boot/bootsect.S</filename> ve <filename>setup.S</filename></term>
+       <listitem>
+        <para>
+         Önyükleme sektörünün sembolik makina dili kodlarını içerir.
+        </para>
+       </listitem>
+      </varlistentry>
+      <varlistentry>
+       <term>
+        <filename>arch/i386/boot/compressed/misc.c</filename>
+       </term>
+       <listitem>
+        <para>
+         Sıkıştırılmış çekirdeği açan kodlar bulunur.
+        </para>
+       </listitem>
+      </varlistentry>
+      <varlistentry>
+       <term>
+        <filename>arch/i386/kernel/</filename>
+       </term>
+       <listitem>
+        <para>
+         Dizin çelirdek ilklendirme kodlarını içerir. ramdisk sözcüğü <filename>setup.c</filename> dosyasında tanımlanmıştır.
+        </para>
+       </listitem>
+      </varlistentry>
+      <varlistentry>
+       <term>
+        <filename>drivers/block/rd.c</filename>
+       </term>
+       <listitem>
+        <para>
+         Ramdisk sürücüsünü içerir. <command>rd_load</command> ve <command>rd_load_image</command> süreçleri bir aygıttaki blokları ramdiskin içine yükler. <command>identify_ramdisk_image</command> süreci ne tür bir dosya sisteminin bulunduğunu ve sıkıştırılmış olup olmadığını saptar.
+        </para>
+       </listitem>
+      </varlistentry>
+     </variablelist>
+    </listitem>
+   </itemizedlist>
+  </sect1>
+ </appendix>
+
+ <appendix xml:id="bootdisk-howto_appb">
+  <title>LILO önyükleme hata kodları</title>
+  <indexterm linkend="bootdisk-howto_cp"><primary>LILO</primary>
+   <secondary>hata kodları</secondary></indexterm>
+  <para>
+   Bu sorular USENET üzerinde o kadar çok soruldu ki bunları amme hizmeti olarak buraya koymayı uygun bulduk. Bu özet Werner Almsberger'in  <link xlink:href="http://www.ibiblio.org/pub/Linux/system/boot/lilo/lilo-u-21.ps.gz">LILO kullanıcı belgelerinden</link> alıntıdır.
+  </para>
+  <para>
+   LILO kendini yüklediği zaman <literal>LILO</literal> kelimesi ekranda görünür. Her bir harf belirli bir işlemin gerçekleşmesi öncesinde veya sonrasında ekrana yazılır. Şayet LILO bir noktada çakılırsa, o ana kadar ekrana gelmiş harfler sorunu aydınlatmak için kullanılabilir.
+  </para>
+  <informaltable frame="none">
+   <tgroup cols="2" align="left">
+    <colspec colname="Output" align="left" colwidth=".1"/>
+    <colspec colname="Descrip" align="left" colwidth=".9"/>
+    <thead>
+     <row>
+      <entry>Çıktı</entry>
+      <entry>Sorun</entry>
+     </row>
+    </thead>
+    <tbody>
+     <row>
+      <entry>(çıktı yok)</entry>
+      <entry>LILO'nun hiçbir parçası yüklenmemiş demektir. Ya LILO kurulmamıştır ya da içinde bulunduğu disk bölümünün açılış bayrağı etkin değildir.</entry>
+     </row>
+     <row>
+      <entry>L</entry>
+      <entry>LILO yüklenirken ilk aşama. LILO başlamış ama ikinci aşamaya geçememiş. İki haneli hata kodu sorunu tanımlar (``Disk hata kodları'' bölümüne bakınız). Bir aygıt bozukluğu veya disk geometri hatasını belirtir (hatalı disk bağımsız değişkenleri gibi).</entry>
+     </row>
+     <row>
+      <entry>LI</entry>
+      <entry>Önyükleyicinin ilk evresi ikinci aşamayı yüklemiş fakat onu çalıştıramadan hata vermiş demektir.  Ya disk geometri hatası söz konusudur ya da <filename>/boot/boot.b</filename>'yi eşlem yükleyiciyi çalıştırmadan taşımışsınız demektir.</entry>
+     </row>
+     <row>
+      <entry>LIL</entry>
+      <entry>İkinci evre başlatılmış, fakat map dosyasından tanımlama tablosu yüklenmesi gerçekleştirilememiş. Aygıt hatası veya disk geometrisi uyuşmazlığı söz konusu olabilir.</entry>
+     </row>
+     <row>
+      <entry>LIL?</entry>
+      <entry>İkinci evrede önyükleyici yanlış adrese yüklendi.  Bu genelde, farkedilmesi güç bir geometri hatasından veya <filename>/boot/boot.b</filename>'nin eşlem yükleyicisi çalıştırılmadan taşınmasından kaynaklanır.</entry>
+     </row>
+     <row>
+      <entry>LIL-</entry>
+      <entry> Tanımlama tablosu bozuk. Ya disk geometrisi uyuşmazlığından ya da <filename>/boot/map</filename>'in eşlem yükleyicisi çalıştırılmadan taşınmasından meydana gelmiştir.</entry>
+     </row>
+     <row>
+      <entry>LILO</entry>
+      <entry>LILO başarılı bir şekilde yüklendi.</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </informaltable>
+  <para>
+   LILO önyükleme biteşlemini yüklemeye çalışırken, BIOS hata sinyali verirse, kendi hata kodu görüntülenir. Bu kodlar <literal>0x00</literal>'dan <literal>0xbb</literal>'ye kadardır. Bunların açıklamaları için LILO Kullanıcı Kılavuzuna bakınız.
+  </para>
+ </appendix>
+
+ <appendix xml:id="bootdisk-howto_Listings">
+  <title>Kök dosya sistemi listesi örneği</title>
+  <indexterm linkend="bootdisk-howto_cp"><primary>kök dosya sistemi</primary>
+  </indexterm>
+<screen>/:
+drwx--x--x   2 root     root         1024 Nov  1 15:39 bin
+drwx--x--x   2 root     root         4096 Nov  1 15:39 dev
+drwx--x--x   3 root     root         1024 Nov  1 15:39 etc
+drwx--x--x   4 root     root         1024 Nov  1 15:39 lib
+drwx--x--x   5 root     root         1024 Nov  1 15:39 mnt
+drwx--x--x   2 root     root         1024 Nov  1 15:39 proc
+drwx--x--x   2 root     root         1024 Nov  1 15:39 root
+drwx--x--x   2 root     root         1024 Nov  1 15:39 sbin
+drwx--x--x   2 root     root         1024 Nov  1 15:39 tmp
+drwx--x--x   7 root     root         1024 Nov  1 15:39 usr
+drwx--x--x   5 root     root         1024 Nov  1 15:39 var
+
+/bin:
+-rwx--x--x   1 root     root        62660 Nov  1 15:39 ash
+-rwx--x--x   1 root     root         9032 Nov  1 15:39 cat
+-rwx--x--x   1 root     root        10276 Nov  1 15:39 chmod
+-rwx--x--x   1 root     root         9592 Nov  1 15:39 chown
+-rwx--x--x   1 root     root        23124 Nov  1 15:39 cp
+-rwx--x--x   1 root     root        23028 Nov  1 15:39 date
+-rwx--x--x   1 root     root        14052 Nov  1 15:39 dd
+-rwx--x--x   1 root     root        14144 Nov  1 15:39 df
+-rwx--x--x   1 root     root        69444 Nov  1 15:39 egrep
+-rwx--x--x   1 root     root          395 Nov  1 15:39 false
+-rwx--x--x   1 root     root        69444 Nov  1 15:39 fgrep
+-rwx--x--x   1 root     root        69444 Nov  1 15:39 grep
+-rwx--x--x   3 root     root        45436 Nov  1 15:39 gunzip
+-rwx--x--x   3 root     root        45436 Nov  1 15:39 gzip
+-rwx--x--x   1 root     root         8008 Nov  1 15:39 hostname
+-rwx--x--x   1 root     root        12736 Nov  1 15:39 ln
+-rws--x--x   1 root     root        15284 Nov  1 15:39 login
+-rwx--x--x   1 root     root        29308 Nov  1 15:39 ls
+-rwx--x--x   1 root     root         8268 Nov  1 15:39 mkdir
+-rwx--x--x   1 root     root         8920 Nov  1 15:39 mknod
+-rwx--x--x   1 root     root        24836 Nov  1 15:39 more
+-rws--x--x   1 root     root        37640 Nov  1 15:39 mount
+-rwx--x--x   1 root     root        12240 Nov  1 15:39 mt
+-rwx--x--x   1 root     root        12932 Nov  1 15:39 mv
+-r-x--x--x   1 root     root        12324 Nov  1 15:39 ps
+-rwx--x--x   1 root     root         5388 Nov  1 15:39 pwd
+-rwx--x--x   1 root     root        10092 Nov  1 15:39 rm
+lrwxrwxrwx   1 root     root            3 Nov  1 15:39 sh -&gt; ash
+-rwx--x--x   1 root     root        25296 Nov  1 15:39 stty
+-rws--x--x   1 root     root        12648 Nov  1 15:39 su
+-rwx--x--x   1 root     root         4444 Nov  1 15:39 sync
+-rwx--x--x   1 root     root        19712 Nov  1 15:39 touch
+-rwx--x--x   1 root     root          395 Nov  1 15:39 true
+-rws--x--x   1 root     root        19084 Nov  1 15:39 umount
+-rwx--x--x   1 root     root         5368 Nov  1 15:39 uname
+-rwx--x--x   3 root     root        45436 Nov  1 15:39 zcat
+
+/dev:
+lrwxrwxrwx   1 root     root            6 Nov  1 15:39 cdrom -&gt; cdu31a
+brw-rw-r--   1 root     root      15,   0 May  5  1998 cdu31a
+crw-------   1 root     root       4,   0 Nov  1 15:29 console
+crw-rw-rw-   1 root     uucp       5,  64 Sep  9 19:46 cua0
+crw-rw-rw-   1 root     uucp       5,  65 May  5  1998 cua1
+crw-rw-rw-   1 root     uucp       5,  66 May  5  1998 cua2
+crw-rw-rw-   1 root     uucp       5,  67 May  5  1998 cua3
+brw-rw----   1 root     floppy     2,   0 Aug  8 13:54 fd0
+brw-rw----   1 root     floppy     2,  36 Aug  8 13:54 fd0CompaQ
+brw-rw----   1 root     floppy     2,  84 Aug  8 13:55 fd0D1040
+brw-rw----   1 root     floppy     2,  88 Aug  8 13:55 fd0D1120
+brw-rw----   1 root     floppy     2,  12 Aug  8 13:54 fd0D360
+brw-rw----   1 root     floppy     2,  16 Aug  8 13:54 fd0D720
+brw-rw----   1 root     floppy     2, 120 Aug  8 13:55 fd0D800
+brw-rw----   1 root     floppy     2,  32 Aug  8 13:54 fd0E2880
+brw-rw----   1 root     floppy     2, 104 Aug  8 13:55 fd0E3200
+brw-rw----   1 root     floppy     2, 108 Aug  8 13:55 fd0E3520
+brw-rw----   1 root     floppy     2, 112 Aug  8 13:55 fd0E3840
+brw-rw----   1 root     floppy     2,  28 Aug  8 13:54 fd0H1440
+brw-rw----   1 root     floppy     2, 124 Aug  8 13:55 fd0H1600
+brw-rw----   1 root     floppy     2,  44 Aug  8 13:55 fd0H1680
+brw-rw----   1 root     floppy     2,  60 Aug  8 13:55 fd0H1722
+brw-rw----   1 root     floppy     2,  76 Aug  8 13:55 fd0H1743
+brw-rw----   1 root     floppy     2,  96 Aug  8 13:55 fd0H1760
+brw-rw----   1 root     floppy     2, 116 Aug  8 13:55 fd0H1840
+brw-rw----   1 root     floppy     2, 100 Aug  8 13:55 fd0H1920
+lrwxrwxrwx   1 root     root            7 Nov  1 15:39 fd0H360 -&gt; fd0D360
+lrwxrwxrwx   1 root     root            7 Nov  1 15:39 fd0H720 -&gt; fd0D720
+brw-rw----   1 root     floppy     2,  52 Aug  8 13:55 fd0H820
+brw-rw----   1 root     floppy     2,  68 Aug  8 13:55 fd0H830
+brw-rw----   1 root     floppy     2,   4 Aug  8 13:54 fd0d360
+brw-rw----   1 root     floppy     2,   8 Aug  8 13:54 fd0h1200
+brw-rw----   1 root     floppy     2,  40 Aug  8 13:54 fd0h1440
+brw-rw----   1 root     floppy     2,  56 Aug  8 13:55 fd0h1476
+brw-rw----   1 root     floppy     2,  72 Aug  8 13:55 fd0h1494
+brw-rw----   1 root     floppy     2,  92 Aug  8 13:55 fd0h1600
+brw-rw----   1 root     floppy     2,  20 Aug  8 13:54 fd0h360
+brw-rw----   1 root     floppy     2,  48 Aug  8 13:55 fd0h410
+brw-rw----   1 root     floppy     2,  64 Aug  8 13:55 fd0h420
+brw-rw----   1 root     floppy     2,  24 Aug  8 13:54 fd0h720
+brw-rw----   1 root     floppy     2,  80 Aug  8 13:55 fd0h880
+brw-rw----   1 root     disk       3,   0 May  5  1998 hda
+brw-rw----   1 root     disk       3,   1 May  5  1998 hda1
+brw-rw----   1 root     disk       3,   2 May  5  1998 hda2
+brw-rw----   1 root     disk       3,   3 May  5  1998 hda3
+brw-rw----   1 root     disk       3,   4 May  5  1998 hda4
+brw-rw----   1 root     disk       3,   5 May  5  1998 hda5
+brw-rw----   1 root     disk       3,   6 May  5  1998 hda6
+brw-rw----   1 root     disk       3,  64 May  5  1998 hdb
+brw-rw----   1 root     disk       3,  65 May  5  1998 hdb1
+brw-rw----   1 root     disk       3,  66 May  5  1998 hdb2
+brw-rw----   1 root     disk       3,  67 May  5  1998 hdb3
+brw-rw----   1 root     disk       3,  68 May  5  1998 hdb4
+brw-rw----   1 root     disk       3,  69 May  5  1998 hdb5
+brw-rw----   1 root     disk       3,  70 May  5  1998 hdb6
+crw-r-----   1 root     kmem       1,   2 May  5  1998 kmem
+crw-r-----   1 root     kmem       1,   1 May  5  1998 mem
+lrwxrwxrwx   1 root     root           12 Nov  1 15:39 modem -&gt; ttyS1
+lrwxrwxrwx   1 root     root           12 Nov  1 15:39 mouse -&gt; psaux
+crw-rw-rw-   1 root     root       1,   3 May  5  1998 null
+crwxrwxrwx   1 root     root      10,   1 Oct  5 20:22 psaux
+brw-r-----   1 root     disk       1,   1 May  5  1998 ram
+brw-rw----   1 root     disk       1,   0 May  5  1998 ram0
+brw-rw----   1 root     disk       1,   1 May  5  1998 ram1
+brw-rw----   1 root     disk       1,   2 May  5  1998 ram2
+brw-rw----   1 root     disk       1,   3 May  5  1998 ram3
+brw-rw----   1 root     disk       1,   4 May  5  1998 ram4
+brw-rw----   1 root     disk       1,   5 May  5  1998 ram5
+brw-rw----   1 root     disk       1,   6 May  5  1998 ram6
+brw-rw----   1 root     disk       1,   7 May  5  1998 ram7
+brw-rw----   1 root     disk       1,   8 May  5  1998 ram8
+brw-rw----   1 root     disk       1,   9 May  5  1998 ram9
+lrwxrwxrwx   1 root     root            4 Nov  1 15:39 ramdisk -&gt; ram0
+
+<command>***  Sadece kendi kullandığım IDE bölümdeki aygıtları ekledim.</command>
+<command>***  Şayet siz SCSI aygıtlar kullanıyorsanız, bunlar yerine</command>
+<command>***  /dev/sdXX aygıtlar kullanın.</command>
+
+crw-------   1 root     root       4,   0 May  5  1998 tty0
+crw-w-----   1 root     tty        4,   1 Nov  1 15:39 tty1
+crw-------   1 root     root       4,   2 Nov  1 15:29 tty2
+crw-------   1 root     root       4,   3 Nov  1 15:29 tty3
+crw-------   1 root     root       4,   4 Nov  1 15:29 tty4
+crw-------   1 root     root       4,   5 Nov  1 15:29 tty5
+crw-------   1 root     root       4,   6 Nov  1 15:29 tty6
+crw-------   1 root     root       4,   7 May  5  1998 tty7
+crw-------   1 root     tty        4,   8 May  5  1998 tty8
+crw-------   1 root     tty        4,   9 May  8 12:57 tty9
+crw-rw-rw-   1 root     root       4,  65 Nov  1 12:17 ttyS1
+crw-rw-rw-   1 root     root       1,   5 May  5  1998 zero
+
+/etc:
+-rw-------   1 root     root          164 Nov  1 15:39 conf.modules
+-rw-------   1 root     root          668 Nov  1 15:39 fstab
+-rw-------   1 root     root           71 Nov  1 15:39 gettydefs
+-rw-------   1 root     root          389 Nov  1 15:39 group
+-rw-------   1 root     root          413 Nov  1 15:39 inittab
+-rw-------   1 root     root           65 Nov  1 15:39 issue
+-rw-r--r--   1 root     root          746 Nov  1 15:39 ld.so.cache
+-rw-------   1 root     root           32 Nov  1 15:39 motd
+-rw-------   1 root     root          949 Nov  1 15:39 nsswitch.conf
+drwx--x--x   2 root     root         1024 Nov  1 15:39 pam.d
+-rw-------   1 root     root          139 Nov  1 15:39 passwd
+-rw-------   1 root     root          516 Nov  1 15:39 profile
+-rwx--x--x   1 root     root          387 Nov  1 15:39 rc
+-rw-------   1 root     root           55 Nov  1 15:39 shells
+-rw-------   1 root     root          774 Nov  1 15:39 termcap
+-rw-------   1 root     root           78 Nov  1 15:39 ttytype
+lrwxrwxrwx   1 root     root           15 Nov  1 15:39 utmp -&gt; ../var/run/utmp
+lrwxrwxrwx   1 root     root           15 Nov  1 15:39 wtmp -&gt; ../var/log/wtmp
+
+/etc/pam.d:
+-rw-------   1 root     root          356 Nov  1 15:39 other
+
+/lib:
+-rwxr-xr-x   1 root     root        45415 Nov  1 15:39 ld-2.0.7.so
+lrwxrwxrwx   1 root     root           11 Nov  1 15:39 ¬
+ld-linux.so.2 -&gt; ld-2.0.7.so
+-rwxr-xr-x   1 root     root       731548 Nov  1 15:39 libc-2.0.7.so
+lrwxrwxrwx   1 root     root           13 Nov  1 15:39 ¬
+libc.so.6 -&gt; libc-2.0.7.so
+lrwxrwxrwx   1 root     root           17 Nov  1 15:39 ¬
+libcom_err.so.2 -&gt; libcom_err.so.2.0
+-rwxr-xr-x   1 root     root         6209 Nov  1 15:39 libcom_err.so.2.0
+-rwxr-xr-x   1 root     root       153881 Nov  1 15:39 libcrypt-2.0.7.so
+lrwxrwxrwx   1 root     root           17 Nov  1 15:39 ¬
+libcrypt.so.1 -&gt; libcrypt-2.0.7.so
+-rwxr-xr-x   1 root     root        12962 Nov  1 15:39 libdl-2.0.7.so
+lrwxrwxrwx   1 root     root           14 Nov  1 15:39 ¬
+libdl.so.2 -&gt; libdl-2.0.7.so
+lrwxrwxrwx   1 root     root           16 Nov  1 15:39 ¬
+libext2fs.so.2 -&gt; libext2fs.so.2.4
+-rwxr-xr-x   1 root     root        81382 Nov  1 15:39 libext2fs.so.2.4
+-rwxr-xr-x   1 root     root        25222 Nov  1 15:39 libnsl-2.0.7.so
+lrwxrwxrwx   1 root     root           15 Nov  1 15:39 ¬
+libnsl.so.1 -&gt; libnsl-2.0.7.so
+-rwx--x--x   1 root     root       178336 Nov  1 15:39 libnss_files-2.0.7.so
+lrwxrwxrwx   1 root     root           21 Nov  1 15:39 ¬
+libnss_files.so.1 -&gt; libnss_files-2.0.7.so
+lrwxrwxrwx   1 root     root           14 Nov  1 ¬
+15:39 libpam.so.0 -&gt; libpam.so.0.64
+-rwxr-xr-x   1 root     root        26906 Nov  1 15:39 libpam.so.0.64
+lrwxrwxrwx   1 root     root           19 Nov  1 15:39 ¬
+libpam_misc.so.0 -&gt; libpam_misc.so.0.64
+-rwxr-xr-x   1 root     root         7086 Nov  1 15:39 libpam_misc.so.0.64
+-r-xr-xr-x   1 root     root        35615 Nov  1 15:39 libproc.so.1.2.6
+lrwxrwxrwx   1 root     root           15 Nov  1 15:39 ¬
+libpwdb.so.0 -&gt; libpwdb.so.0.54
+-rw-r-r---   1 root     root       121899 Nov  1 15:39 libpwdb.so.0.54
+lrwxrwxrwx   1 root     root           19 Nov  1 15:39 ¬
+libtermcap.so.2 -&gt; libtermcap.so.2.0.8
+-rwxr-xr-x   1 root     root        12041 Nov  1 15:39 libtermcap.so.2.0.8
+-rwxr-xr-x   1 root     root        12874 Nov  1 15:39 libutil-2.0.7.so
+lrwxrwxrwx   1 root     root           16 Nov  1 15:39 ¬
+libutil.so.1 -&gt; libutil-2.0.7.so
+lrwxrwxrwx   1 root     root           14 Nov  1 15:39 ¬
+libuuid.so.1 -&gt; libuuid.so.1.1
+-rwxr-xr-x   1 root     root         8039 Nov  1 15:39 libuuid.so.1.1
+drwx--x--x   3 root     root         1024 Nov  1 15:39 modules
+drwx--x--x   2 root     root         1024 Nov  1 15:39 security
+
+/lib/modules:
+drwx--x--x   4 root     root         1024 Nov  1 15:39 2.0.35
+
+/lib/modules/2.0.35:
+drwx--x--x   2 root     root         1024 Nov  1 15:39 block
+drwx--x--x   2 root     root         1024 Nov  1 15:39 cdrom
+
+/lib/modules/2.0.35/block:
+drwx------   1 root     root         7156 Nov  1 15:39 loop.o
+
+/lib/modules/2.0.35/cdrom:
+drwx------   1 root     root        24108 Nov  1 15:39 cdu31a.o
+
+/lib/security:
+-rwx--x--x   1 root     root         8771 Nov  1 15:39 pam_permit.so
+
+
+<command>***  Çıkarılabilir aygıt bağlama dizileri</command>
+
+/mnt:
+drwx--x--x   2 root     root         1024 Nov  1 15:39 cdrom
+drwx--x--x   2 root     root         1024 Nov  1 15:39 floppy
+
+/proc:
+
+/root:
+-rw-------   1 root     root          176 Nov  1 15:39 .bashrc
+-rw-------   1 root     root          182 Nov  1 15:39 .cshrc
+-rwx--x--x   1 root     root          455 Nov  1 15:39 .profile
+-rw-------   1 root     root         4014 Nov  1 15:39 .tcshrc
+
+/sbin:
+-rwx--x--x   1 root     root        23976 Nov  1 15:39 depmod
+-rwx--x--x   2 root     root       274600 Nov  1 15:39 e2fsck
+-rwx--x--x   1 root     root        41268 Nov  1 15:39 fdisk
+-rwx--x--x   1 root     root         9396 Nov  1 15:39 fsck
+-rwx--x--x   2 root     root       274600 Nov  1 15:39 fsck.ext2
+-rwx--x--x   1 root     root        29556 Nov  1 15:39 getty
+-rwx--x--x   1 root     root         6620 Nov  1 15:39 halt
+-rwx--x--x   1 root     root        23116 Nov  1 15:39 init
+-rwx--x--x   1 root     root        25612 Nov  1 15:39 insmod
+-rwx--x--x   1 root     root        10368 Nov  1 15:39 kerneld
+-rwx--x--x   1 root     root       110400 Nov  1 15:39 ldconfig
+-rwx--x--x   1 root     root         6108 Nov  1 15:39 lsmod
+-rwx--x--x   2 root     root        17400 Nov  1 15:39 mke2fs
+-rwx--x--x   1 root     root         4072 Nov  1 15:39 mkfs
+-rwx--x--x   2 root     root        17400 Nov  1 15:39 mkfs.ext2
+-rwx--x--x   1 root     root         5664 Nov  1 15:39 mkswap
+-rwx--x--x   1 root     root        22032 Nov  1 15:39 modprobe
+lrwxrwxrwx   1 root     root            4 Nov  1 15:39 reboot -&gt; halt
+-rwx--x--x   1 root     root         7492 Nov  1 15:39 rmmod
+-rwx--x--x   1 root     root        12932 Nov  1 15:39 shutdown
+lrwxrwxrwx   1 root     root            6 Nov  1 15:39 swapoff -&gt; swapon
+-rwx--x--x   1 root     root         5124 Nov  1 15:39 swapon
+lrwxrwxrwx   1 root     root            4 Nov  1 15:39 telinit -&gt; init
+-rwx--x--x   1 root     root         6944 Nov  1 15:39 update
+
+/tmp:
+
+/usr:
+drwx--x--x   2 root     root         1024 Nov  1 15:39 bin
+drwx--x--x   2 root     root         1024 Nov  1 15:39 lib
+drwx--x--x   3 root     root         1024 Nov  1 15:39 man
+drwx--x--x   2 root     root         1024 Nov  1 15:39 sbin
+drwx--x--x   3 root     root         1024 Nov  1 15:39 share
+lrwxrwxrwx   1 root     root           10 Nov  1 15:39 tmp -&gt; ../var/tmp
+
+/usr/bin:
+-rwx--x--x   1 root     root        37164 Nov  1 15:39 afio
+-rwx--x--x   1 root     root         5044 Nov  1 15:39 chroot
+-rwx--x--x   1 root     root        10656 Nov  1 15:39 cut
+-rwx--x--x   1 root     root        63652 Nov  1 15:39 diff
+-rwx--x--x   1 root     root        12972 Nov  1 15:39 du
+-rwx--x--x   1 root     root        56552 Nov  1 15:39 find
+-r-x--x--x   1 root     root         6280 Nov  1 15:39 free
+-rwx--x--x   1 root     root         7680 Nov  1 15:39 head
+-rwx--x--x   1 root     root         8504 Nov  1 15:39 id
+-r-sr-xr-x   1 root     bin          4200 Nov  1 15:39 passwd
+-rwx--x--x   1 root     root        14856 Nov  1 15:39 tail
+-rwx--x--x   1 root     root        19008 Nov  1 15:39 tr
+-rwx--x--x   1 root     root         7160 Nov  1 15:39 wc
+-rwx--x--x   1 root     root         4412 Nov  1 15:39 whoami
+
+/usr/lib:
+lrwxrwxrwx   1 root     root           17 Nov  1 15:39 ¬
+libncurses.so.4 -&gt; libncurses.so.4.2
+-rw-r-r---   1 root     root       260474 Nov  1 15:39 libncurses.so.4.2
+
+/usr/sbin:
+-r-x--x--x   1 root     root        13684 Nov  1 15:39 fuser
+-rwx--x--x   1 root     root         3876 Nov  1 15:39 mklost+found
+
+/usr/share:
+drwx--x--x   4 root     root         1024 Nov  1 15:39 terminfo
+
+/usr/share/terminfo:
+drwx--x--x   2 root     root         1024 Nov  1 15:39 l
+drwx--x--x   2 root     root         1024 Nov  1 15:39 v
+
+/usr/share/terminfo/l:
+-rw-------   1 root     root         1552 Nov  1 15:39 linux
+-rw-------   1 root     root         1516 Nov  1 15:39 linux-m
+-rw-------   1 root     root         1583 Nov  1 15:39 linux-nic
+
+/usr/share/terminfo/v:
+-rw-------   2 root     root         1143 Nov  1 15:39 vt100
+-rw-------   2 root     root         1143 Nov  1 15:39 vt100-am
+
+/var:
+drwx--x--x   2 root     root         1024 Nov  1 15:39 log
+drwx--x--x   2 root     root         1024 Nov  1 15:39 run
+drwx--x--x   2 root     root         1024 Nov  1 15:39 tmp
+
+/var/log:
+-rw-------   1 root     root            0 Nov  1 15:39 wtmp
+
+/var/run:
+-rw-------   1 root     root            0 Nov  1 15:39 utmp
+
+/var/tmp:
+</screen>
+ </appendix>
+
+ <appendix xml:id="bootdisk-howto_utilitylist">
+  <title>Uygulamalar disketi dizin listesi örneği</title>
+  <indexterm linkend="bootdisk-howto_cp">
+   <primary>uygulamalar disketi</primary></indexterm>
+<screen>total 579
+-rwxr-xr-x   1 root     root        42333 Jul 28 19:05 cpio
+-rwxr-xr-x   1 root     root        32844 Aug 28 19:50 debugfs
+-rwxr-xr-x   1 root     root       103560 Jul 29 21:31 elvis
+-rwxr-xr-x   1 root     root        29536 Jul 28 19:04 fdisk
+-rw-r-r---   1 root     root       128254 Jul 28 19:03 ftape.o
+-rwxr-xr-x   1 root     root        17564 Jul 25 03:21 ftmt
+-rwxr-xr-x   1 root     root        64161 Jul 29 20:47 grep
+-rwxr-xr-x   1 root     root        45309 Jul 29 20:48 gzip
+-rwxr-xr-x   1 root     root        23560 Jul 28 19:04 insmod
+-rwxr-xr-x   1 root     root          118 Jul 28 19:04 lsmod
+lrwxrwxrwx   1 root     root            5 Jul 28 19:04 mt -&gt; mt-st
+-rwxr-xr-x   1 root     root         9573 Jul 28 19:03 mt-st
+lrwxrwxrwx   1 root     root            6 Jul 28 19:05 rmmod -&gt; insmod
+-rwxr-xr-x   1 root     root       104085 Jul 28 19:05 tar
+lrwxrwxrwx   1 root     root            5 Jul 29 21:35 vi -&gt; elvis
+</screen>
+ </appendix>
+
+ <index xml:id="bootdisk-howto_cp" condition="multi-index">
+  <title>Kavramlar Dizini</title>
+ </index>
+</article>
