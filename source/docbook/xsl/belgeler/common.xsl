@@ -103,6 +103,7 @@ set       toc,title
  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
  <link rel="stylesheet" type="text/css" href="/style/belgeler.css"/>
  <link rel="stylesheet" type="text/css" href="/style/nav.css"/>
+ <link rel="icon" type="image/png" href="/images/belgeler-logo.png"/>
 </xsl:template>
 
 <xsl:template name="root.attributes">
@@ -185,6 +186,7 @@ set       toc,title
   <div>
     <xsl:call-template name="common.html.attributes">
       <xsl:with-param name="inherit" select="1"/>
+      <xsl:with-param name="class" select="concat('admon ', local-name(.))"/>
     </xsl:call-template>
     <xsl:call-template name="id.attribute"/>
     <xsl:if test="$admon.style != '' and $make.clean.html = 0">
@@ -194,7 +196,7 @@ set       toc,title
     </xsl:if>
 
     <xsl:if test="$admon.textlabel != 0 or d:title or d:info/d:title">
-      <h3 class="title">
+      <h3 class="admon-title">
         <xsl:call-template name="anchor"/>
         <xsl:apply-templates select="." mode="object.title.markup"/>
       </h3>
@@ -291,7 +293,14 @@ set       toc,title
   <xsl:param name="class" select="local-name(.)"/>
   <!-- permit customization of class value only -->
   <!-- Use element name by default -->
-  <xsl:value-of select="concat($class, ' ', @class)"/>
+  <xsl:choose>
+    <xsl:when test="(@class)">
+      <xsl:value-of select="concat($class, ' ', @class)"/>
+    </xsl:when>
+    <xsl:otherwise>
+       <xsl:value-of select="$class"/>
+    </xsl:otherwise>
+  </xsl:choose>
 </xsl:template>
 
 <xsl:template match="d:glossterm/d:glossterm[position()>1]">
@@ -736,7 +745,7 @@ footnote text gets an id of #ftn.@id. They cross link to each other. -->
   </div>
 </xsl:template>
 
-<xsl:template match="d:uri[(ancestor::d:refentry) and not (child::node())]">
+<xsl:template match="d:uri[not (child::node())]">
   <xsl:param name="xlink.targets" select="key('id',@xlink:href)"/>
   <xsl:param name="target" select="$xlink.targets[1]"/>
 

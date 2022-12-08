@@ -197,7 +197,7 @@ xmlns="http://www.w3.org/1999/xhtml" version="1.0">
   <xsl:call-template name="make.toc">
     <xsl:with-param name="toc-context" select="$toc-context"/>
     <xsl:with-param name="toc.title.p" select="$toc.title.p"/>
-    <xsl:with-param name="nodes" select="d:part|d:reference                                          |d:preface|d:chapter|d:appendix                                          |d:article                                          |d:topic                                          |d:bibliography|d:glossary|d:index                                          |d:refentry                                          |d:bridgehead[$bridgehead.in.toc != 0]"/>
+    <xsl:with-param name="nodes" select="d:part|d:reference"/><!--                                          |d:preface|d:chapter|d:appendix                                          |d:article                                          |d:topic                                          |d:bibliography|d:glossary|d:index                                          |d:refentry                                          |d:bridgehead[$bridgehead.in.toc != 0]"/>-->
 
   </xsl:call-template>
 </xsl:template>

@@ -85,12 +85,12 @@ element label.</para>
       <xsl:if test="$component.label.includes.part.label != 0 and
                       ancestor::d:part">
         <xsl:variable name="part.label">
-          <xsl:apply-templates select="ancestor::d:part" 
+          <xsl:apply-templates select="ancestor::d:part"
                                mode="label.markup"/>
         </xsl:variable>
         <xsl:if test="$part.label != ''">
           <xsl:value-of select="$part.label"/>
-          <xsl:apply-templates select="ancestor::d:part" 
+          <xsl:apply-templates select="ancestor::d:part"
                                mode="intralabel.punctuation">
             <xsl:with-param name="object" select="."/>
           </xsl:apply-templates>
@@ -122,12 +122,12 @@ element label.</para>
       <xsl:if test="$component.label.includes.part.label != 0 and
                       ancestor::d:part">
         <xsl:variable name="part.label">
-          <xsl:apply-templates select="ancestor::d:part" 
+          <xsl:apply-templates select="ancestor::d:part"
                                mode="label.markup"/>
         </xsl:variable>
         <xsl:if test="$part.label != ''">
           <xsl:value-of select="$part.label"/>
-          <xsl:apply-templates select="ancestor::d:part" 
+          <xsl:apply-templates select="ancestor::d:part"
                                mode="intralabel.punctuation">
             <xsl:with-param name="object" select="."/>
           </xsl:apply-templates>
@@ -159,12 +159,12 @@ element label.</para>
       <xsl:if test="$component.label.includes.part.label != 0 and
                       ancestor::d:part">
         <xsl:variable name="part.label">
-          <xsl:apply-templates select="ancestor::d:part" 
+          <xsl:apply-templates select="ancestor::d:part"
                                mode="label.markup"/>
         </xsl:variable>
         <xsl:if test="$part.label != ''">
           <xsl:value-of select="$part.label"/>
-          <xsl:apply-templates select="ancestor::d:part" 
+          <xsl:apply-templates select="ancestor::d:part"
                                mode="intralabel.punctuation">
             <xsl:with-param name="object" select="."/>
           </xsl:apply-templates>
@@ -209,12 +209,12 @@ element label.</para>
       <xsl:if test="$component.label.includes.part.label != 0 and
                       ancestor::d:part">
         <xsl:variable name="part.label">
-          <xsl:apply-templates select="ancestor::d:part" 
+          <xsl:apply-templates select="ancestor::d:part"
                                mode="label.markup"/>
         </xsl:variable>
         <xsl:if test="$part.label != ''">
           <xsl:value-of select="$part.label"/>
-          <xsl:apply-templates select="ancestor::d:part" 
+          <xsl:apply-templates select="ancestor::d:part"
                                mode="intralabel.punctuation">
             <xsl:with-param name="object" select="."/>
           </xsl:apply-templates>
@@ -296,7 +296,7 @@ element label.</para>
     <xsl:when test="@label">
       <xsl:value-of select="@label"/>
     </xsl:when>
-    <xsl:when test="$label != 0">      
+    <xsl:when test="$label != 0">
       <xsl:variable name="format">
         <xsl:call-template name="autolabel.format">
           <xsl:with-param name="format" select="$section.autolabel"/>
@@ -734,11 +734,11 @@ element label.</para>
               <xsl:with-param name="object" select="."/>
             </xsl:apply-templates>
           </xsl:if>
-          <xsl:number count="d:procedure[d:title|d:blockinfo/d:title|d:info/d:title]" format="1" 
+          <xsl:number count="d:procedure[d:title|d:blockinfo/d:title|d:info/d:title]" format="1"
                       from="d:chapter|d:appendix" level="any"/>
         </xsl:when>
         <xsl:otherwise>
-          <xsl:number count="d:procedure[d:title|d:blockinfo/d:title|d:info/d:title]" format="1" 
+          <xsl:number count="d:procedure[d:title|d:blockinfo/d:title|d:info/d:title]" format="1"
                       from="d:book|d:article" level="any"/>
         </xsl:otherwise>
       </xsl:choose>
@@ -771,11 +771,11 @@ element label.</para>
               <xsl:with-param name="object" select="."/>
             </xsl:apply-templates>
           </xsl:if>
-          <xsl:number format="1" count="d:equation" 
+          <xsl:number format="1" count="d:equation"
                       from="d:chapter|d:appendix" level="any"/>
         </xsl:when>
         <xsl:otherwise>
-          <xsl:number format="1" count="d:equation" 
+          <xsl:number format="1" count="d:equation"
                       from="d:book|d:article" level="any"/>
         </xsl:otherwise>
       </xsl:choose>
@@ -847,7 +847,7 @@ element label.</para>
   <xsl:choose>
     <!-- bridgeheads are not numbered -->
     <xsl:when test="$section/self::d:bridgehead">0</xsl:when>
-    <xsl:when test="$level &lt;= $section.autolabel.max.depth">      
+    <xsl:when test="$level &lt;= $section.autolabel.max.depth">
       <xsl:value-of select="$section.autolabel"/>
     </xsl:when>
     <xsl:otherwise>0</xsl:otherwise>
@@ -858,7 +858,7 @@ element label.</para>
 <refpurpose>Returns true if $section should be labelled</refpurpose>
 <refdescription id="label.this.section-desc">
 <para>Returns true if the specified section should be labelled.
-By default, this template returns zero unless 
+By default, this template returns zero unless
 the section level is less than or equal to the value of the
 <literal>$section.autolabel.max.depth</literal> parameter, in
 which case it returns
@@ -879,9 +879,9 @@ Custom stylesheets may override it to get more selective behavior.</para>
       <xsl:value-of select="'I'"/>
     </xsl:when>
     <xsl:otherwise>1</xsl:otherwise>
-  </xsl:choose>  
+  </xsl:choose>
 </xsl:template>
-  
+
 <xsl:template name="autolabel.format">
   <xsl:param name="context" select="."/>
   <xsl:param name="format"/>
@@ -901,7 +901,7 @@ Custom stylesheets may override it to get more selective behavior.</para>
         </xsl:when>
         <xsl:when test="$format='upperroman' or $format='I'">
           <xsl:value-of select="'I'"/>
-        </xsl:when>      
+        </xsl:when>
         <xsl:when test="$format='arabicindic' or $format='&#x661;'">
           <xsl:value-of select="'&#x661;'"/>
         </xsl:when>
@@ -921,9 +921,9 @@ Custom stylesheets may override it to get more selective behavior.</para>
 <refpurpose>Returns format for autolabel parameters</refpurpose>
 <refdescription id="autolabel.format-desc">
 <para>Returns format passed as parameter if non zero. Supported
-  format are 'arabic' or '1', 'loweralpha' or 'a', 'lowerroman' or 'i', 
+  format are 'arabic' or '1', 'loweralpha' or 'a', 'lowerroman' or 'i',
   'upperlapha' or 'A', 'upperroman' or 'I', 'arabicindic' or '&#x661;'.
-  If its not one of these then 
+  If its not one of these then
   returns the default format.</para>
 </refdescription>
 </doc:template>
