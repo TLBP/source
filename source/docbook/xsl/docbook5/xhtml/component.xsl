@@ -183,6 +183,7 @@ xmlns="http://www.w3.org/1999/xhtml" version="1.0">
 
     <xsl:call-template name="component.separator"/>
     <xsl:call-template name="preface.titlepage"/>
+    <xsl:apply-templates select="d:preliminary" mode="preliminary"/>
 
     <xsl:variable name="toc.params">
       <xsl:call-template name="find.path.params">
@@ -234,6 +235,7 @@ xmlns="http://www.w3.org/1999/xhtml" version="1.0">
 
     <xsl:call-template name="component.separator"/>
     <xsl:call-template name="chapter.titlepage"/>
+    <xsl:apply-templates select="d:preliminary" mode="preliminary"/>
 
     <xsl:variable name="toc.params">
       <xsl:call-template name="find.path.params">
@@ -298,6 +300,7 @@ xmlns="http://www.w3.org/1999/xhtml" version="1.0">
       <xsl:otherwise>
         <xsl:call-template name="component.separator"/>
         <xsl:call-template name="appendix.titlepage"/>
+        <xsl:apply-templates select="d:preliminary" mode="preliminary"/>
       </xsl:otherwise>
     </xsl:choose>
 
@@ -354,6 +357,7 @@ xmlns="http://www.w3.org/1999/xhtml" version="1.0">
     </xsl:call-template>
 
     <xsl:call-template name="article.titlepage"/>
+    <xsl:apply-templates select="d:preliminary" mode="preliminary"/>
 
     <xsl:variable name="toc.params">
       <xsl:call-template name="find.path.params">

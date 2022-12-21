@@ -33,15 +33,17 @@
   <xsl:param name="toc-context" select="."/>
   <xsl:param name="toc.title.p" select="true()"/>
 
-  <xsl:call-template name="make.toc">
-    <xsl:with-param name="toc-context" select="$toc-context"/>
-    <xsl:with-param name="toc.title.p" select="$toc.title.p"/>
-    <xsl:with-param name="nodes" select="d:section|d:sect1
-                    |d:simplesect[$simplesect.in.toc != 0]|d:refentry
-                    |d:article|d:bibliography|d:glossary|d:appendix|d:index
-                    |d:bridgehead[not(@renderas) and $bridgehead.in.toc != 0]
-                    |.//d:bridgehead[@renderas='sect1' and $bridgehead.in.toc != 0]"/>
-  </xsl:call-template>
+  <xsl:if test="not ($toc-context[@userlevel]) or $toc-context[@userlevel!='notoc']">
+   <xsl:call-template name="make.toc">
+     <xsl:with-param name="toc-context" select="$toc-context"/>
+     <xsl:with-param name="toc.title.p" select="$toc.title.p"/>
+     <xsl:with-param name="nodes" select="d:section|d:sect1
+                     |d:simplesect[$simplesect.in.toc != 0]|d:refentry
+                     |d:article|d:bibliography|d:glossary|d:appendix|d:index
+                     |d:bridgehead[not(@renderas) and $bridgehead.in.toc != 0]
+                     |.//d:bridgehead[@renderas='sect1' and $bridgehead.in.toc != 0]"/>
+   </xsl:call-template>
+  </xsl:if>
 </xsl:template>
 
 <xsl:template name="section.toc">
@@ -122,11 +124,10 @@
     </xsl:attribute>
       <xsl:apply-templates select="." mode="title.markup"/>
     </a>
+    <xsl:apply-templates mode="subtoc.titleabbrev"/>
   </xsl:element>
 
     <xsl:variable name="role" select="''"/>
-
-    <xsl:apply-templates mode="subtoc.titleabbrev"/>
 
     <xsl:if test="(./*/d:abstract) and name($toc-context) != name(.)
                  and (name($toc-context) = 'book' or name($toc-context) = 'set' or name($toc-context) = 'part')">
@@ -173,6 +174,17 @@
                     name($nodes)='chapter' or
                     name($nodes)='appendix' or
                     name($nodes)='reference')">
+          <xsl:copy-of select="$subtoc.list"/>
+        </xsl:when>
+        <xsl:when test="name($toc-context) = 'book' and
+                  ($toc-context[@userlevel='onelevel']) and
+                    (name($nodes)='part' or
+                    name($nodes)='preface' or
+                    name($nodes)='article' or
+                    name($nodes)='chapter' or
+                    name($nodes)='appendix' or
+                    name($nodes)='reference' or
+                          name($nodes) = 'sect1')">
           <xsl:copy-of select="$subtoc.list"/>
         </xsl:when>
         <xsl:when test="name($toc-context) = 'book' and

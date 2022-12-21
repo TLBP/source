@@ -59,7 +59,7 @@ d:informalfigure d:informaltable d:inlineequation d:inlinemediaobject
 d:itemizedlist d:itermset d:keycombo d:keywordset d:legalnotice d:listitem d:lot
 d:mediaobject d:mediaobjectco d:menuchoice d:msg d:msgentry d:msgexplan d:msginfo
 d:msgmain d:msgrel d:msgset d:msgsub d:msgtext d:note d:objectinfo
-d:orderedlist d:othercredit d:part d:partintro d:preface d:printhistory d:procedure
+d:orderedlist d:othercredit d:part d:partintro d:preface d:preliminary d:printhistory d:procedure
 d:programlistingco d:publisher d:qandadiv d:qandaentry d:qandaset d:question
 d:refentry d:reference d:refmeta d:refnamediv d:refsection d:refsect1 d:refsect1info d:refsect2
 d:refsect2info d:refsect3 d:refsect3info d:refsynopsisdiv d:refsynopsisdivinfo
@@ -370,24 +370,24 @@ Defaults to the context node.</para>
 
          (parsect  (ancestor-member node (section-element-list)))
 
-         (defnum   (if (and %qanda-inherit-numeration% 
+         (defnum   (if (and %qanda-inherit-numeration%
                             %section-autolabel%)
                        (if (node-list-empty? parsect)
                            (section-autolabel-prefix node)
                            (section-autolabel parsect))
                        ""))
 
-         (hnumber  (let loop ((numlist hnr) (number defnum) 
+         (hnumber  (let loop ((numlist hnr) (number defnum)
                               (sep (if (equal? defnum "") "" ".")))
                      (if (null? numlist)
                          number
-                         (loop (cdr numlist) 
+                         (loop (cdr numlist)
                                (string-append number
                                               sep
                                               (number->string (car numlist)))
                                "."))))
          (cnumber  (child-number (parent node)))
-         (number   (string-append hnumber 
+         (number   (string-append hnumber
                                   (if (equal? hnumber "")
                                       ""
                                       ".")
@@ -833,7 +833,7 @@ Defaults to the context node.</para>
 children of a mediaobject or inlinemediaobject) and processes
 the "right" object.</para>
 
-<para>This template relies on a template named 
+<para>This template relies on a template named
 "select.mediaobject.index" to determine which object
 in the list is appropriate.</para>
 
@@ -859,7 +859,7 @@ in the list is appropriate.</para>
   <xsl:param name="olist"
              select="d:imageobject|d:imageobjectco
                      |d:videoobject|d:audioobject|d:textobject"/>
-  
+
   <xsl:variable name="mediaobject.index">
     <xsl:call-template name="select.mediaobject.index">
       <xsl:with-param name="olist" select="$olist"/>
@@ -906,7 +906,7 @@ of media objects is that the first acceptable graphic should be used.
 </varlistentry>
 <varlistentry><term>count</term>
 <listitem>
-<para>The position in the list currently being considered by the 
+<para>The position in the list currently being considered by the
 recursive process.</para>
 </listitem>
 </varlistentry>
@@ -926,73 +926,73 @@ recursive process.</para>
 
   <xsl:choose>
     <!-- Test for objects preferred by role -->
-    <xsl:when test="$use.role.for.mediaobject != 0 
+    <xsl:when test="$use.role.for.mediaobject != 0
                and $preferred.mediaobject.role != ''
-               and $olist[@role = $preferred.mediaobject.role]"> 
-      
+               and $olist[@role = $preferred.mediaobject.role]">
+
       <!-- Get the first hit's position index -->
       <xsl:for-each select="$olist">
         <xsl:if test="@role = $preferred.mediaobject.role and
-             not(preceding-sibling::*[@role = $preferred.mediaobject.role])"> 
-          <xsl:value-of select="position()"/> 
+             not(preceding-sibling::*[@role = $preferred.mediaobject.role])">
+          <xsl:value-of select="position()"/>
         </xsl:if>
       </xsl:for-each>
     </xsl:when>
 
-    <xsl:when test="$use.role.for.mediaobject != 0 
+    <xsl:when test="$use.role.for.mediaobject != 0
                and $olist[@role = $stylesheet.result.type]">
       <!-- Get the first hit's position index -->
       <xsl:for-each select="$olist">
-        <xsl:if test="@role = $stylesheet.result.type and 
-              not(preceding-sibling::*[@role = $stylesheet.result.type])"> 
-          <xsl:value-of select="position()"/> 
+        <xsl:if test="@role = $stylesheet.result.type and
+              not(preceding-sibling::*[@role = $stylesheet.result.type])">
+          <xsl:value-of select="position()"/>
         </xsl:if>
       </xsl:for-each>
     </xsl:when>
     <!-- Accept 'html' for $stylesheet.result.type = 'xhtml' -->
-    <xsl:when test="$use.role.for.mediaobject != 0 
+    <xsl:when test="$use.role.for.mediaobject != 0
                and $stylesheet.result.type = 'xhtml'
                and $olist[@role = 'html']">
       <!-- Get the first hit's position index -->
       <xsl:for-each select="$olist">
-        <xsl:if test="@role = 'html' and 
-              not(preceding-sibling::*[@role = 'html'])"> 
-          <xsl:value-of select="position()"/> 
+        <xsl:if test="@role = 'html' and
+              not(preceding-sibling::*[@role = 'html'])">
+          <xsl:value-of select="position()"/>
         </xsl:if>
       </xsl:for-each>
     </xsl:when>
 
     <!-- If no selection by role, and there is only one object, use it -->
     <xsl:when test="count($olist) = 1 and $count = 1">
-      <xsl:value-of select="$count"/> 
+      <xsl:value-of select="$count"/>
     </xsl:when>
 
     <xsl:otherwise>
       <!-- Otherwise select first acceptable object -->
       <xsl:if test="$count &lt;= count($olist)">
         <xsl:variable name="object" select="$olist[position()=$count]"/>
-    
+
         <xsl:variable name="useobject">
           <xsl:choose>
             <!-- select videoobject or audioobject before textobject -->
             <xsl:when test="local-name($object) = 'videoobject'">
-              <xsl:text>1</xsl:text> 
+              <xsl:text>1</xsl:text>
             </xsl:when>
             <xsl:when test="local-name($object) = 'audioobject'">
-              <xsl:text>1</xsl:text> 
+              <xsl:text>1</xsl:text>
             </xsl:when>
             <!-- skip textobject if also video, audio, or image out of order -->
             <xsl:when test="local-name($object) = 'textobject' and
                             ../d:imageobject or
                             ../d:audioobject or
                             ../d:videoobject">
-              <xsl:text>0</xsl:text> 
+              <xsl:text>0</xsl:text>
             </xsl:when>
             <!-- The phrase is used only when contains TeX Math and output is FO -->
             <xsl:when test="local-name($object)='textobject' and $object/d:phrase
                             and $object/@role='tex' and $stylesheet.result.type = 'fo'
                             and $tex.math.in.alt != ''">
-              <xsl:text>1</xsl:text> 
+              <xsl:text>1</xsl:text>
             </xsl:when>
             <!-- The phrase is never used -->
             <xsl:when test="local-name($object)='textobject' and $object/d:phrase">
@@ -1009,9 +1009,9 @@ recursive process.</para>
                             and $object[not(@role) or @role!='tex']">
               <xsl:text>1</xsl:text>
             </xsl:when>
-            <!-- don't use graphic when output is FO, TeX Math is used 
+            <!-- don't use graphic when output is FO, TeX Math is used
                  and there is math in alt element -->
-            <xsl:when test="$object/ancestor::d:equation and 
+            <xsl:when test="$object/ancestor::d:equation and
                             $object/ancestor::d:equation/d:alt[@role='tex']
                             and $stylesheet.result.type = 'fo'
                             and $tex.math.in.alt != ''">
@@ -1039,7 +1039,7 @@ recursive process.</para>
             </xsl:otherwise>
           </xsl:choose>
         </xsl:variable>
-    
+
         <xsl:choose>
           <xsl:when test="$useobject='1'">
             <xsl:value-of select="$count"/>
@@ -1353,7 +1353,7 @@ pointed to by the link is one of the elements listed in
     </xsl:when>
     <xsl:otherwise>
       <!-- match on previous list at same nesting level -->
-      <xsl:variable name="prevlist" 
+      <xsl:variable name="prevlist"
        select="$list/preceding::d:orderedlist
                 [count($list/ancestor::d:orderedlist) = count(ancestor::d:orderedlist)][1]"/>
       <xsl:choose>
@@ -1594,7 +1594,7 @@ year range is <quote>1991-1992</quote> but discretely it's
     <xsl:text>)</xsl:text>
   </xsl:message>
   -->
-    
+
   <xsl:choose>
     <xsl:when test="$print.ranges = 0 and count($years) &gt; 0">
       <xsl:choose>
@@ -1757,12 +1757,12 @@ node location.</para>
 <xsl:template name="relative-uri">
   <xsl:param name="filename" select="."/>
   <xsl:param name="destdir" select="''"/>
-  
+
   <xsl:variable name="srcurl">
     <xsl:call-template name="strippath">
       <xsl:with-param name="filename">
         <xsl:call-template name="xml.base.dirs">
-          <xsl:with-param name="base.elem" 
+          <xsl:with-param name="base.elem"
                           select="$filename/ancestor-or-self::*
                                    [@xml:base != ''][1]"/>
         </xsl:call-template>
@@ -1806,12 +1806,12 @@ node location.</para>
 <xsl:template name="xml.base.dirs">
   <xsl:param name="base.elem" select="NONODE"/>
 
-  <!-- Recursively resolve xml:base attributes, up to a 
+  <!-- Recursively resolve xml:base attributes, up to a
        full path with : in uri -->
   <xsl:if test="$base.elem/ancestor::*[@xml:base != ''] and
                 not(contains($base.elem/@xml:base, ':'))">
     <xsl:call-template name="xml.base.dirs">
-      <xsl:with-param name="base.elem" 
+      <xsl:with-param name="base.elem"
                       select="$base.elem/ancestor::*[@xml:base != ''][1]"/>
     </xsl:call-template>
   </xsl:if>
@@ -2103,7 +2103,7 @@ engine does not support it.
     <xsl:when test="$upperformat = 'OGG'">video/ogg</xsl:when>
     <xsl:when test="$upperformat = 'WEBM'">video/webm</xsl:when>
     <xsl:otherwise>
-        <xsl:value-of select="concat('image/', $upperformat)"/> 
+        <xsl:value-of select="concat('image/', $upperformat)"/>
     </xsl:otherwise>
   </xsl:choose>
 </xsl:template>
@@ -2116,7 +2116,7 @@ engine does not support it.
   <!-- normally uses the @xrefstyle attribute in xref, but could
        be customized based on the target element type -->
   <xsl:choose>
-    <xsl:when test="@role and not(@xrefstyle) 
+    <xsl:when test="@role and not(@xrefstyle)
                     and $use.role.as.xrefstyle != 0">
       <xsl:value-of select="@role"/>
     </xsl:when>

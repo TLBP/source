@@ -36,6 +36,7 @@ xmlns="http://www.w3.org/1999/xhtml" version="1.0">
     </xsl:if>
 
     <xsl:call-template name="set.titlepage"/>
+    <xsl:apply-templates select="d:preliminary" mode="preliminary"/>
 
     <xsl:variable name="toc.params">
       <xsl:call-template name="find.path.params">
@@ -74,6 +75,7 @@ xmlns="http://www.w3.org/1999/xhtml" version="1.0">
 
     <xsl:call-template name="book.titlepage"/>
 
+    <xsl:apply-templates select="d:preliminary" mode="preliminary"/>
     <xsl:apply-templates select="d:dedication" mode="dedication"/>
     <xsl:apply-templates select="d:acknowledgements" mode="acknowledgements"/>
 
@@ -114,6 +116,7 @@ xmlns="http://www.w3.org/1999/xhtml" version="1.0">
     </xsl:call-template>
 
     <xsl:call-template name="part.titlepage"/>
+    <xsl:apply-templates select="d:preliminary" mode="preliminary"/>
 
     <xsl:variable name="toc.params">
       <xsl:call-template name="find.path.params">

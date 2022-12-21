@@ -264,7 +264,7 @@ xmlns="http://www.w3.org/1999/xhtml" version="1.0">
     <xsl:if test="parent::d:refentryinfo">
       <h2>Authors</h2>
     </xsl:if>
-      
+
     <xsl:call-template name="anchor"/>
     <xsl:apply-templates mode="titlepage.mode"/>
   </div>
@@ -576,7 +576,7 @@ xmlns="http://www.w3.org/1999/xhtml" version="1.0">
 
   <xsl:choose>
     <xsl:when test="$generate.legalnotice.link != 0">
-      
+
       <!-- Compute name of legalnotice file -->
       <xsl:variable name="file">
 	<xsl:call-template name="ln.or.rh.filename"/>
@@ -854,10 +854,10 @@ xmlns="http://www.w3.org/1999/xhtml" version="1.0">
       </table>
     </div>
   </xsl:variable>
-  
+
   <xsl:choose>
     <xsl:when test="$generate.revhistory.link != 0">
-      
+
       <!-- Compute name of revhistory file -->
       <xsl:variable name="file">
 	<xsl:call-template name="ln.or.rh.filename">
@@ -1079,7 +1079,7 @@ xmlns="http://www.w3.org/1999/xhtml" version="1.0">
       <xsl:with-param name="node" select="$node"/>
     </xsl:call-template>
   </xsl:variable>
- 
+
   <xsl:choose>
     <!--  1. If there is a dbhtml_filename PI, use that -->
     <xsl:when test="$dbhtml-filename != ''">
@@ -1112,7 +1112,7 @@ xmlns="http://www.w3.org/1999/xhtml" version="1.0">
     </xsl:when>
   </xsl:choose>
 </xsl:template>
-    
+
 <!-- ==================================================================== -->
 
 </xsl:stylesheet>

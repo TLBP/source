@@ -40,6 +40,7 @@
 <xsl:import href="multindex.xsl"/>
 <xsl:import href="index-lists.xsl"/>
 <xsl:import href="tlbp-qandaset.xsl"/>
+<xsl:import href="preliminary.xsl"/>
 <xsl:import href="reftoc.xsl"/>
 <xsl:import href="maketoc.xsl"/>
 <!-- rastgele id üretimi durduruldu. Gereksiz güncellemeler yaratıyor.
@@ -67,16 +68,27 @@ bunu yapmak yerine xml:id'lerle değişmez id'ler oluşturmak daha iyidir. -->
 <xsl:param name="chunk.sections">1</xsl:param>
 <xsl:param name="chunk.first.sections">1</xsl:param>
 <xsl:param name="chunk.section.depth">1</xsl:param>
+<!-- Bölümleme durdurulabiliyor. Kök altındaki
+chapter appendix, article gibi elemanların ilk satırına
+  <?dbhtml stop-chunking?>
+yerleştirilirse o elamanın içeriği tek sayfada üretilir.
+Henüz bu yolla tek sayfalık bir book oluşturulamıyor. -->
 <xsl:param name="toc.section.depth">1</xsl:param>
 <xsl:param name="toc.max.depth">1</xsl:param>
 <xsl:param name="toc.list.type">dl</xsl:param>
+<!-- İçindekiler listesi @userlevel öğesi ile özelleştirilebiliyor:
+notoc: toc üretilmez
+longtoc: sect5'e kadar inilir
+onelevel: ilk başlık ve 1. seviye (genelde sect1'e kadar).
+set ve book öntanımlı olarak ilk başlıkları listeler.
+-->
 <xsl:param name="root.filename"/>
 <xsl:param name="use.id.as.filename">1</xsl:param>
 <xsl:param name="admon.graphics.path">images/xsl/</xsl:param>
 <xsl:param name="callout.graphics.path">images/xsl/callouts/</xsl:param>
 <xsl:param name="navig.graphics.path">images/xsl/</xsl:param>
 <xsl:param name="generate.toc">
-appendix  nop
+appendix  toc,title
 article/appendix  nop
 article   toc,title
 book      toc,title
@@ -111,7 +123,7 @@ set       toc,title
  <xsl:attribute name="xml:lang">tr</xsl:attribute>
 </xsl:template>
 
-<!-- Belgelerdeki tüm eposta adresleri kaldırıldı (Şubat 2022) -->
+<!-- Belgelerden kişisel eposta adresleri kaldırıldı (Şubat 2022) -->
 <xsl:template match="d:email">
  <xsl:value-of select="concat('&lt;',.,'&gt;')"/>
 </xsl:template>
@@ -188,7 +200,13 @@ set       toc,title
       <xsl:with-param name="inherit" select="1"/>
       <xsl:with-param name="class" select="concat('admon ', local-name(.))"/>
     </xsl:call-template>
-    <xsl:call-template name="id.attribute"/>
+    <xsl:if test="@xml:id">
+     <xsl:attribute name="id">
+       <xsl:call-template name="object.id">
+         <xsl:with-param name="object" select="."/>
+       </xsl:call-template>
+     </xsl:attribute>
+    </xsl:if>
     <xsl:if test="$admon.style != '' and $make.clean.html = 0">
       <xsl:attribute name="style">
         <xsl:value-of select="$admon.style"/>
@@ -214,7 +232,7 @@ set       toc,title
   <xsl:variable name="revauthor" select="d:authorinitials|d:author"/>
   <xsl:variable name="revremark" select="d:revremark|d:revdescription"/>
   <tr>
-    <td style="line-height: 1rem;" align="{$direction.align.start}">
+    <td style="line-height: 1rem;" align="left" width="20%">
       <xsl:if test="$revnumber">
         <xsl:call-template name="gentext">
           <xsl:with-param name="key" select="'Revision'"/>
@@ -223,12 +241,12 @@ set       toc,title
         <xsl:apply-templates select="$revnumber[1]" mode="titlepage.mode"/>
       </xsl:if>
     </td>
-    <td style="line-height: 1rem;" align="{$direction.align.start}">
+    <td style="line-height: 1rem;" align="right" width="30%">
       <xsl:apply-templates select="$revdate[1]" mode="titlepage.mode"/>
     </td>
     <xsl:choose>
       <xsl:when test="$revauthor">
-        <td style="line-height: 1rem;" align="{$direction.align.start}">
+        <td style="line-height: 1rem;" align="center" width="50%">
           <xsl:for-each select="$revauthor">
             <xsl:apply-templates select="." mode="titlepage.mode"/>
             <xsl:if test="position() != last()">
@@ -255,6 +273,10 @@ set       toc,title
      </tr>
     </xsl:if>
   </xsl:if>
+</xsl:template>
+
+<xsl:template match="d:revhistory/d:revision/d:author" mode="titlepage.mode">
+ <xsl:apply-templates/>
 </xsl:template>
 
 <xsl:template match="d:cmdsynopsis">
@@ -429,9 +451,13 @@ set       toc,title
   <div class="simpara">
     <xsl:apply-templates/>
   </div>
-  <xsl:if test="name(following-sibling::*[1]) != 'simpara'">
+  <xsl:if test="following-sibling::* and name(following-sibling::*[1]) != 'simpara'">
    <p/>
   </xsl:if>
+</xsl:template>
+
+<xsl:template match="d:simpara[name(..) = 'para']">
+  <br/><xsl:apply-templates/>
 </xsl:template>
 
 <xsl:template match="d:simpara[name(..) = 'revdescription']">
@@ -505,14 +531,8 @@ footnote text gets an id of #ftn.@id. They cross link to each other. -->
     <xsl:value-of select="$name"/>
   </xsl:variable>
 
-  <a href="{$href}">
+  <a id="{$name}" href="{$href}">
     <xsl:apply-templates select="." mode="class.attribute"/>
-    <xsl:if test="$generate.id.attributes = 0">
-      <xsl:attribute name="id">
-        <xsl:value-of select="$name"/>
-      </xsl:attribute>
-    </xsl:if>
-
     <sup>
       <xsl:apply-templates select="." mode="class.attribute"/>
       <xsl:if test="not(parent::d:para)">
@@ -525,6 +545,23 @@ footnote text gets an id of #ftn.@id. They cross link to each other. -->
       <xsl:text>]</xsl:text>
     </sup>
   </a>
+</xsl:template>
+
+<xsl:template match="d:footnote" mode="footnote.number">
+  <xsl:choose>
+    <xsl:when test="ancestor::d:table or ancestor::d:informaltable">
+      <xsl:number level="any" from="table|informaltable" format="a"/>
+    </xsl:when>
+    <xsl:when test="ancestor::d:refentry">
+      <xsl:number level="any" from="refentry" format="1"/>
+    </xsl:when>
+    <xsl:when test="ancestor::d:book">
+      <xsl:number level="any" from="book" format="1"/>
+    </xsl:when>
+    <xsl:otherwise>
+      <xsl:number level="any" format="1"/>
+    </xsl:otherwise>
+  </xsl:choose>
 </xsl:template>
 
 <xsl:template match="d:formalpara">

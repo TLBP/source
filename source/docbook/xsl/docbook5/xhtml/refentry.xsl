@@ -30,6 +30,7 @@ xmlns="http://www.w3.org/1999/xhtml" version="1.0">
     </xsl:call-template>
 
     <xsl:call-template name="reference.titlepage"/>
+    <xsl:apply-templates select="d:preliminary" mode="preliminary"/>
 
     <xsl:variable name="toc.params">
       <xsl:call-template name="find.path.params">
@@ -120,6 +121,7 @@ xmlns="http://www.w3.org/1999/xhtml" version="1.0">
     </xsl:call-template>
     <xsl:call-template name="refentry.header"/>
     <xsl:call-template name="refentry.titlepage"/>
+    <xsl:apply-templates select="d:preliminary" mode="preliminary"/>
     <xsl:apply-templates/>
     <xsl:apply-templates select="d:refmeta" mode="refentry.footer"/>
     <xsl:call-template name="process.footnotes"/>
@@ -271,6 +273,7 @@ xmlns="http://www.w3.org/1999/xhtml" version="1.0">
         </xsl:otherwise>
       </xsl:choose>
     </h2>
+    <xsl:apply-templates select="d:preliminary" mode="preliminary"/>
     <xsl:apply-templates/>
   </div>
 </xsl:template>

@@ -36,7 +36,7 @@ footnote text gets an id of #ftn.@id. They cross link to each other. -->
         <xsl:value-of select="$name"/>
       </xsl:attribute>
     </xsl:if>
-    
+
     <sup>
       <xsl:apply-templates select="." mode="class.attribute"/>
       <xsl:call-template name="id.attribute">
@@ -55,8 +55,8 @@ footnote text gets an id of #ftn.@id. They cross link to each other. -->
 
   <xsl:if test="not(local-name($footnote) = 'footnote')">
    <xsl:message terminate="yes">
-ERROR: A footnoteref element has a linkend that points to an element that is not a footnote. 
-Typically this happens when an id attribute is accidentally applied to the child of a footnote element. 
+ERROR: A footnoteref element has a linkend that points to an element that is not a footnote.
+Typically this happens when an id attribute is accidentally applied to the child of a footnote element.
 target element: <xsl:value-of select="local-name($footnote)"/>
 linkend/id: <xsl:value-of select="@linkend"/>
    </xsl:message>
