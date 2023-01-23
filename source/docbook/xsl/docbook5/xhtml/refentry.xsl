@@ -167,7 +167,7 @@ xmlns="http://www.w3.org/1999/xhtml" version="1.0">
 <xsl:template match="d:manvolnum"/>
 <xsl:template match="d:refentrytitle|d:refnamediv"/>
 
-<xsl:template match="d:refnamediv[not (@role)]">
+<xsl:template match="d:refnamediv[not (@role) or @role!='symbolic']">
   <div>
     <xsl:call-template name="common.html.attributes">
       <xsl:with-param name="inherit" select="1"/>
@@ -206,7 +206,7 @@ xmlns="http://www.w3.org/1999/xhtml" version="1.0">
   </div>
 </xsl:template>
 
-<xsl:template match="d:refname[not (../@role)]">
+<xsl:template match="d:refname[not (../@role) or ../@role!='symbolic']">
   <xsl:if test="not(preceding-sibling::d:refdescriptor)">
     <xsl:apply-templates/>
     <xsl:if test="following-sibling::d:refname">
@@ -215,7 +215,7 @@ xmlns="http://www.w3.org/1999/xhtml" version="1.0">
   </xsl:if>
 </xsl:template>
 
-<xsl:template match="d:refpurpose[not (../@role)]">
+<xsl:template match="d:refpurpose[not (../@role) or ../@role!='symbolic']">
   <xsl:if test="node()">
     <xsl:text> </xsl:text>
     <xsl:call-template name="dingbat">

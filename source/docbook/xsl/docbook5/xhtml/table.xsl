@@ -664,7 +664,7 @@ xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" xmlns:stbl="http://nwalsh.co
           <xsl:with-param name="spans" select="$spans"/>
         </xsl:apply-templates>
       </xsl:variable>
-  
+
       <xsl:apply-templates select="following-sibling::d:row[1]">
         <xsl:with-param name="spans" select="$nextspans"/>
         <xsl:with-param name="browserows" select="$browserows"/>
@@ -1102,7 +1102,7 @@ xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" xmlns:stbl="http://nwalsh.co
                 <xsl:value-of select="$colspec/@char"/>
               </xsl:attribute>
             </xsl:if>
-            
+
             <xsl:if test="$colspec/@charoff">
               <xsl:attribute name="charoff">
                 <xsl:value-of select="$colspec/@charoff"/>

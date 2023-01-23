@@ -24,7 +24,7 @@
 <!ENTITY allcases "'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'">
 <!ENTITY sortcases "'ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZ'">
 
-<!ENTITY refname 'concat(d:refname/@sortas, d:refname)'>
+<!ENTITY refname "d:refname[not (../@role) or ../@role!='dontshow']">
 
 ]>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"

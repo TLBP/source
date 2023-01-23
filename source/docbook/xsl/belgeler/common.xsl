@@ -414,7 +414,19 @@ set       toc,title
 </xsl:template>
 
 <xsl:template match="d:keyword">
-  <xsl:call-template name="inline.boldseq"/>
+  <code class="keyword"><xsl:apply-templates/></code>
+</xsl:template>
+
+<xsl:template match="d:operator">
+  <code class="operator"><xsl:apply-templates/></code>
+</xsl:template>
+
+<xsl:template match="d:statement">
+  <code class="statement"><xsl:apply-templates/></code>
+</xsl:template>
+
+<xsl:template match="d:varname">
+  <code class="varname"><xsl:apply-templates/></code>
 </xsl:template>
 
 <xsl:template name="string.replace">
@@ -841,18 +853,18 @@ footnote text gets an id of #ftn.@id. They cross link to each other. -->
   </tt>
 </xsl:template>
 
-<xsl:template match="d:simplelist[not (ancestor::d:refentry)]">
+<xsl:template match="d:simplelist">
   <div>
    <ul>
     <xsl:call-template name="common.html.attributes"/>
     <xsl:call-template name="id.attribute"/>
     <xsl:call-template name="anchor"/>
-    <xsl:apply-templates mode="tlbp"/>
+    <xsl:apply-templates mode="simplelist.tlbp"/>
    </ul>
   </div>
 </xsl:template>
 
-<xsl:template match="d:member" mode="tlbp">
+<xsl:template match="d:member" mode="simplelist.tlbp">
     <li>
      <xsl:call-template name="common.html.attributes"/>
      <xsl:call-template name="id.attribute"/>
