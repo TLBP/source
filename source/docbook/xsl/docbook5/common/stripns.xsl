@@ -5,7 +5,7 @@
                 xmlns:saxon="http://icl.com/saxon"
                 xmlns:NodeInfo="http://org.apache.xalan.lib.NodeInfo"
                 xmlns:exsl="http://exslt.org/common"
-		xmlns:xlink="http://www.w3.org/1999/xlink"
+		xmlns:xl="http://www.w3.org/1999/xlink"
                 exclude-result-prefixes="db ng exsl saxon NodeInfo xlink"
                 version='1.0'>
 
@@ -162,8 +162,8 @@
 
 <xsl:template match="ng:tag|db:tag" mode="stripNS">
   <xsl:choose>
-    <xsl:when test="@xlink:href">
-      <ulink url="{@xlink:href}">
+    <xsl:when test="@xl:href">
+      <ulink url="{@xl:href}">
 	<sgmltag>
 	  <xsl:copy-of select="@*[not(name(.) = 'xml:id')
 			       and not(name(.) = 'version')
@@ -192,8 +192,8 @@
   </xsl:choose>
 </xsl:template>
 
-<xsl:template match="db:link[@xlink:href]" mode="stripNS">
-  <ulink url="{@xlink:href}">
+<xsl:template match="db:link[@xl:href]" mode="stripNS">
+  <ulink url="{@xl:href}">
     <xsl:if test="@role">
       <xsl:attribute name="role">
         <xsl:value-of select="@role"/>
@@ -203,8 +203,8 @@
   </ulink>
 </xsl:template>
 
-<xsl:template match="db:citetitle[@xlink:href]" mode="stripNS">
-  <ulink url="{@xlink:href}">
+<xsl:template match="db:citetitle[@xl:href]" mode="stripNS">
+  <ulink url="{@xl:href}">
     <citetitle>
       <xsl:copy-of select="@*[not(name(.) = 'xml:id')
 			   and not(name(.) = 'version')

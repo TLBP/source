@@ -26,7 +26,9 @@ do
 # Boş satırları sil (grep)
 # Groff'a özel ascii karakterleri UTF-8 benzerleriyle değiştir (sed)
 # Bu tek tırnak karakterleri genelde satır başında sorun çıkarıyor.
-    cat $j | grep . | sed -e "s/'/’/g" -e "s/\`/’/g" > $j.tmp;
+    cat $j | grep . | sed \
+	-e "s/'/\\\\\\&'/g" > $j.tmp;
+#	-e "s/\`/\\\\\\&'/g" > $j.tmp;
     rm $j;
     mv $j.tmp $j;
   done

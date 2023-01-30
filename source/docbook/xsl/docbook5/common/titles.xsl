@@ -2,7 +2,7 @@
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
                 xmlns:d="http://docbook.org/ns/docbook"
 xmlns:doc="http://nwalsh.com/xsl/documentation/1.0"
-                xmlns:xlink="http://www.w3.org/1999/xlink"
+                xmlns:xl="http://www.w3.org/1999/xlink"
                 exclude-result-prefixes="doc d"
                 version='1.0'>
 
@@ -750,7 +750,7 @@ title of the element. This does not include the label.
 
 <xsl:template match="d:xref" mode="no.anchor.mode">
   <xsl:variable name="referrer" select="."/>
-  <xsl:variable name="targets" select="key('id',@linkend)|key('id',substring-after(@xlink:href,'#'))"/>
+  <xsl:variable name="targets" select="key('id',@linkend)|key('id',substring-after(@xl:href,'#'))"/>
   <xsl:variable name="target" select="$targets[1]"/>
   <xsl:variable name="refelem" select="local-name($target)"/>
   <xsl:variable name="xrefstyle">
@@ -769,7 +769,7 @@ title of the element. This does not include the label.
       <xsl:message>
         <xsl:text>XRef to nonexistent id: </xsl:text>
         <xsl:value-of select="@linkend"/> 
-        <xsl:value-of select="@xlink:href"/>
+        <xsl:value-of select="@xl:href"/>
       </xsl:message>
       <xsl:text>???</xsl:text>
     </xsl:when>

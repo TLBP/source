@@ -87,6 +87,7 @@ xmlns="http://www.w3.org/1999/xhtml" version="1.0">
     <xsl:call-template name="dedication.titlepage"/>
     <xsl:apply-templates/>
     <xsl:call-template name="process.footnotes"/>
+    <hr/>
   </div>
 </xsl:template>
 

@@ -53,10 +53,10 @@
 ]>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:d="http://docbook.org/ns/docbook"
 xmlns:exslt="http://exslt.org/common"
-xmlns:xlink="http://www.w3.org/1999/xlink"
+xmlns:xl="http://www.w3.org/1999/xlink"
 xmlns="http://www.w3.org/1999/xhtml"
 extension-element-prefixes="exslt"
-exclude-result-prefixes="xlink exslt d"
+exclude-result-prefixes="xl exslt d"
 version="1.0">
 
 <!-- ==================================================================== -->

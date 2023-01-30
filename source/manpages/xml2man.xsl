@@ -22,7 +22,7 @@
 <xsl:stylesheet
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
   xmlns:d="http://docbook.org/ns/docbook"
-  xmlns:xlink="http://www.w3.org/1999/xlink"
+  xmlns:xl="http://www.w3.org/1999/xlink"
   extension-element-prefixes="d xlink"
   version='1.0'>
 
@@ -173,6 +173,9 @@
 </xsl:template>
 
 <xsl:template match="d:refsect3">
+  <xsl:if test="preceding-sibling::d:refsect3">
+    <xsl:value-of select="'&#10;.sp'"/>
+  </xsl:if>
  <xsl:choose>
   <xsl:when test="./d:title/@userlevel='notbold'">
    <xsl:value-of select="concat('&#10;', d:title)"/>
@@ -451,7 +454,7 @@
     <xsl:value-of select="concat('&#10;.IP &#34;',$title, '&#34; 4&#10;')"/>
    </xsl:when>
    <xsl:otherwise>
-    <xsl:value-of select="concat('&#10;.IP &#34;Örnek ', $num, $title, '&#34; 4&#10;')"/>
+    <xsl:value-of select="concat('&#10;.IP &#34;Örnek ', $num, normalize-space($title), '&#34; 4&#10;')"/>
    </xsl:otherwise>
   </xsl:choose>
   <xsl:apply-templates select="./*[name(.)!='title']"/>
@@ -484,6 +487,9 @@
    <xsl:when test="(@userlevel)">
      <xsl:value-of select="concat('.RS ', @userlevel, '&#10;')"/>
    </xsl:when>
+   <xsl:when test="name(..)='entry'">
+     <xsl:value-of select="'.RS -4&#10;'"/>
+   </xsl:when>
    <xsl:otherwise>
     <xsl:value-of select="'.RS 4&#10;'"/>
    </xsl:otherwise>
@@ -495,8 +501,11 @@
    <xsl:apply-templates/>
   </xsl:with-param>
 </xsl:call-template>
-<xsl:text>.fi
-.sp
+<xsl:text>.fi</xsl:text>
+  <xsl:if test="name(..)!='entry'">
+   <xsl:value-of select="'&#10;.sp'"/>
+  </xsl:if>
+<xsl:text>
 .RE</xsl:text>
   <xsl:if test="(&indented;)">
    <xsl:value-of select="'&#10;.RE&#10;.IP'"/>
@@ -574,8 +583,8 @@
   </xsl:choose>
 </xsl:template>
 
-<xsl:template match="d:itemizedlist|d:orderedlist">
- <xsl:if test="not (@spacing)">
+<xsl:template match="d:itemizedlist|d:orderedlist|d:simplelist">
+ <xsl:if test="not (@spacing) and name(.)!='simplelist'">
    <xsl:value-of select="'&#10;.PD 1'"/>
  </xsl:if>
 
@@ -609,7 +618,7 @@
       <xsl:text>&#10;.sp&#10;.RE</xsl:text>
     </xsl:otherwise>
   </xsl:choose>
- <xsl:if test="not (@spacing)">
+ <xsl:if test="not (@spacing) and name(.)!='simplelist'">
    <xsl:value-of select="'&#10;.PD 0'"/>
  </xsl:if>
 </xsl:template>
@@ -680,6 +689,14 @@
     </xsl:otherwise>
   </xsl:choose>
   <xsl:apply-templates/>
+</xsl:template>
+
+<xsl:template match="d:member">
+<xsl:text>
+\(bu  </xsl:text>
+  <xsl:apply-templates/>
+<xsl:text>
+.br</xsl:text>
 </xsl:template>
 
 <xsl:template match="d:orderedlist/d:listitem">
@@ -761,10 +778,10 @@
 
 <xsl:template match="d:uri">
   <xsl:variable name="ext">
-    <xsl:value-of select="substring-before(substring-after(@xlink:href,'man'), '-')"/>
+    <xsl:value-of select="substring-before(substring-after(@xl:href,'man'), '-')"/>
   </xsl:variable>
   <xsl:variable name="base">
-    <xsl:value-of select="substring-after(@xlink:href, concat('man', $ext, '-'))"/>
+    <xsl:value-of select="substring-after(@xl:href, concat('man', $ext, '-'))"/>
   </xsl:variable>
   <xsl:variable name="statement">
     <xsl:value-of select="."/>
@@ -788,43 +805,42 @@
   <xsl:value-of select="concat('\fB', $target,'\fR')"/>
 </xsl:template>
 
-<xsl:template match="d:acronym|d:classname|d:literal|d:productname|d:prompt|d:statement|d:symbol|d:type">
+<xsl:template match="d:acronym|d:classname|d:literal|d:productname|d:prompt|d:symbol|d:type|d:verbatim">
   <xsl:apply-templates/>
 </xsl:template>
 
-<xsl:template match="d:application|d:code|d:command|d:constant|d:emphasis|d:envar|d:filename|d:function|d:keyword|d:option|d:parameter|d:replaceable|d:structname|d:structfield|d:userinput|d:quote|d:small|d:tag|d:type|d:varname|d:wordasword">
+<xsl:template match="d:quote">
+  <xsl:text>"</xsl:text><xsl:apply-templates/><xsl:text>"</xsl:text>
+</xsl:template>
+
+<xsl:template match="d:small">
   <xsl:variable name="p">
     <xsl:apply-templates/>
   </xsl:variable>
-  <xsl:choose>
-    <xsl:when test="name(.)='application' or
-                    name(.)='command' or
-                    name(.)='code' or
-                    name(.)='constant' or
-                    name(.)='envar' or
-                    name(.)='function' or
-                    name(.)='keyword' or
-                    name(.)='option' or
-                    (name(.)='systemitem' and @class='username') or                                      name(.)='tag' or
-                    name(.)='userinput' or
-                    ((name(.)='emphasis' or
-                    name(.)='type') and @role='bold')
-">
-<xsl:value-of select="concat('\fB', $p, '\fR')"/>
-    </xsl:when>
-    <xsl:when test="name(.)='quote'">
-<xsl:text>"</xsl:text>
-<xsl:value-of select="$p"/>
-<xsl:text>"</xsl:text>
-    </xsl:when>
-    <xsl:when test="name(.)='small'">
-<xsl:value-of select="concat('\s-1', $p, '\s0')"/>
-    </xsl:when>
-    <xsl:otherwise><!-- italic -->
-<xsl:value-of select="concat('\fI', $p, '\fR')"/>
-    </xsl:otherwise>
-  </xsl:choose>
+  <xsl:value-of select="concat('\s-1', $p, '\s0')"/>
 </xsl:template>
+
+<xsl:template match="d:emphasis|d:filename|d:parameter|d:quote|d:replaceable|d:small|d:structname|d:structfield|d:varname|d:wordasword">
+  <xsl:variable name="p">
+    <xsl:apply-templates/>
+  </xsl:variable>
+  <xsl:value-of select="concat('\fI', $p, '\fR')"/>
+
+</xsl:template>
+
+<xsl:template match="d:application
+              |d:code|d:command|d:constant
+              |d:emphasis[@role='bold']|d:envar
+              |d:function|d:keyword|d:option|d:operator
+              |d:statement|d:tag|d:userinput
+              |d:systemitem[ @class='username']
+              |d:type[@role='bold']">
+  <xsl:variable name="p">
+    <xsl:apply-templates/>
+  </xsl:variable>
+  <xsl:value-of select="concat('\fB', $p, '\fR')"/>
+</xsl:template>
+
 
 <xsl:template match="d:email">
   <xsl:variable name="p">
@@ -837,13 +853,13 @@
   </xsl:call-template>
 </xsl:template>
 
-<xsl:template match="d:link[@xlink:href]">
+<xsl:template match="d:link[@xl:href]">
   <xsl:choose>
     <xsl:when test="count(child::node())=0">
-     <xsl:value-of select="@xlink:href"/>
+     <xsl:value-of select="@xl:href"/>
     </xsl:when>
     <xsl:otherwise>
-     <xsl:value-of select="concat('&lt;', @xlink:href, '&gt;: ')"/>
+     <xsl:value-of select="concat('&lt;', @xl:href, '&gt;: ')"/>
      <xsl:apply-templates/>
     </xsl:otherwise>
   </xsl:choose>
@@ -857,42 +873,66 @@
 </xsl:template>
 
 <xsl:template match="d:informaltable|d:table">
-
+ <!-- @startsize ve colspec->@role=expand ilişkilidir.
+  expand sütununun daima en sağdaki sütun olacağı varsayılmıştır,
+  (ancak expand'ın yerleşeceği sütun farklı olursa bu ayrıca ele alınacaktır).
+  startsize, en fazla, expand sütununun solunda kalan karakter sayısı -7
+  olmalıdır. Formül sütun genişliğini buna göre oluşturacaktır. -->
+ <xsl:if test="@startsize">
+    <xsl:value-of select="concat('.nr ColSize ((\n[.l] - \n[.i]) / 1n - ', @startsize,')')"/>
+  </xsl:if>
   <xsl:if test="name(.)='table' and (./d:title)">
 <xsl:text>
 .B </xsl:text><xsl:value-of select="d:title"/>
   </xsl:if>
 
+  <xsl:variable name="indent">
+   <xsl:choose>
+     <xsl:when test="(&indented;) and @userlevel">
+       <xsl:value-of select="@userlevel + 4"/>
+     </xsl:when>
+     <xsl:when test="@userlevel">
+       <xsl:value-of select="@userlevel"/>
+     </xsl:when>
+     <xsl:otherwise>
+       <xsl:text>0</xsl:text>
+     </xsl:otherwise>
+   </xsl:choose>
+  </xsl:variable>
   <xsl:choose>
     <xsl:when test="(&indented;)">
-<xsl:text>
-.RS
-.TS
-tab(:);</xsl:text>
-      <xsl:apply-templates/>
-<xsl:text>
-.TE
-.RE
-.IP</xsl:text>
+      <xsl:value-of select="concat('&#10;.RS ', $indent)"/>
+      <xsl:call-template name="table.tlbp"/>
+      <xsl:text>&#10;.sp&#10;.RE&#10;.IP</xsl:text>
+    </xsl:when>
+    <xsl:when test="@userlevel">
+      <xsl:value-of select="concat('&#10;.RS ', $indent)"/>
+      <xsl:call-template name="table.tlbp"/>
+      <xsl:text>&#10;.sp&#10;.RE</xsl:text>
     </xsl:when>
     <xsl:otherwise>
+      <xsl:call-template name="table.tlbp"/>
+      <xsl:text>&#10;.sp&#10;.RE</xsl:text>
+    </xsl:otherwise>
+  </xsl:choose>
+</xsl:template>
+
+<xsl:template name="table.tlbp">
 <xsl:text>
 .TS
 </xsl:text>
   <xsl:choose>
-    <xsl:when test="@colwidth = '0'">
-     <xsl:text>tab(:);</xsl:text>
+    <xsl:when test="@userlevel='box'">
+     <xsl:text>tab(:) allbox;</xsl:text>
     </xsl:when>
     <xsl:otherwise>
-     <xsl:text>tab(:) allbox;</xsl:text>
+     <xsl:text>tab(:);</xsl:text>
     </xsl:otherwise>
   </xsl:choose>
       <xsl:apply-templates/>
 <xsl:text>
 .TE
-.sp</xsl:text>
-    </xsl:otherwise>
-  </xsl:choose>
+</xsl:text>
 </xsl:template>
 
 <xsl:template match="d:tgroup">
@@ -905,18 +945,43 @@ tab(:);</xsl:text>
 </xsl:template>
 
 <xsl:template match="d:colspec">
-  <xsl:choose>
-    <xsl:when test="contains(@colwidth, '*') and not (preceding-sibling::d:colspec)">
-     <xsl:text>l1</xsl:text>
+  <xsl:variable name="align">
+   <xsl:choose>
+    <xsl:when test="@align='center'">
+     <xsl:text>c</xsl:text>
     </xsl:when>
-    <xsl:when test="contains(@colwidth, '*') and not (following-sibling::d:colspec)">
-     <xsl:text>1l</xsl:text>
-    </xsl:when>
-    <xsl:when test="contains(@colwidth, '*') and preceding-sibling::d:colspec">
-     <xsl:text>1l1</xsl:text>
+    <xsl:when test="@align='right'">
+     <xsl:text>r</xsl:text>
     </xsl:when>
     <xsl:otherwise>
-     <xsl:value-of select="concat('lw', @colwidth)"/>
+     <xsl:text>l</xsl:text>
+    </xsl:otherwise>
+   </xsl:choose>
+  </xsl:variable>
+
+  <xsl:variable name="width">
+   <xsl:choose>
+    <xsl:when test="@colwidth != '*'">
+     <xsl:value-of select="concat(@manfont, 'w', @colwidth)"/>
+    </xsl:when>
+    <xsl:when test="@colwidth = '*' and @role='expand'">
+     <xsl:value-of select="concat(@manfont, 'w(\n[ColSize]n)')"/>
+    </xsl:when>
+    <xsl:when test="not (following-sibling::d:colspec)">
+     <xsl:value-of select="@manfont"/>
+    </xsl:when>
+    <xsl:otherwise>
+     <xsl:value-of select="concat('1', @manfont)"/>
+    </xsl:otherwise>
+   </xsl:choose>
+  </xsl:variable>
+
+  <xsl:choose>
+    <xsl:when test="not (preceding-sibling::d:colspec)">
+     <xsl:value-of select="concat($align, $width)"/>
+    </xsl:when>
+    <xsl:otherwise>
+     <xsl:value-of select="concat('1', $align, $width)"/>
     </xsl:otherwise>
   </xsl:choose>
   <xsl:if test="following-sibling::d:colspec">
@@ -976,6 +1041,16 @@ tab(:);</xsl:text>
      </xsl:choose>
     </xsl:otherwise>
   </xsl:choose>
+</xsl:template>
+
+<xsl:template match="d:para" mode="legalnotice">
+ <xsl:variable name="p">
+  <xsl:apply-templates/>
+ </xsl:variable>
+ <xsl:call-template name="lines">
+   <xsl:with-param name="string" select="$p"/>
+ </xsl:call-template>
+
 </xsl:template>
 
 </xsl:stylesheet>

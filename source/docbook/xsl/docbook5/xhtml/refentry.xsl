@@ -156,7 +156,14 @@ xmlns="http://www.w3.org/1999/xhtml" version="1.0">
       <xsl:copy-of select="$title"/>
     </div>
     <div class="reflegal">
-     <xsl:apply-templates  mode="refentry.footer"/>
+     <xsl:choose>
+      <xsl:when test="d:screen">
+       <xsl:apply-templates  mode="refentry.footer"/>
+      </xsl:when>
+      <xsl:otherwise>
+       <xsl:apply-templates/>
+      </xsl:otherwise>
+     </xsl:choose>
     </div>
   </div>
 </xsl:template>

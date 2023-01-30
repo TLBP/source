@@ -2,7 +2,7 @@
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
                 xmlns:exsl="http://exslt.org/common"
                 xmlns:fo="http://www.w3.org/1999/XSL/Format"
-                xmlns:xlink="http://www.w3.org/1999/xlink"
+                xmlns:xl="http://www.w3.org/1999/xlink"
                 xmlns:d="http://docbook.org/ns/docbook"
                 xmlns:saxon="http://icl.com/saxon"
                 xmlns:NodeInfo="http://org.apache.xalan.lib.NodeInfo"

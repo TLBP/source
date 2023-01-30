@@ -5,7 +5,7 @@
 xmlns:doc="http://nwalsh.com/xsl/documentation/1.0"
   xmlns:date="http://exslt.org/dates-and-times"
   xmlns:exsl="http://exslt.org/common"
-  xmlns:xlink="http://www.w3.org/1999/xlink"
+  xmlns:xl="http://www.w3.org/1999/xlink"
   exclude-result-prefixes="doc date exsl d"
   extension-element-prefixes="date exsl"
   version='1.0'>
@@ -106,7 +106,7 @@ xmlns:doc="http://nwalsh.com/xsl/documentation/1.0"
             output</para>
         <note>
           <para>For details of the content of the format string,
-            see <link role="tcg" xlink:href="Datetime.html"
+            see <link role="tcg" xl:href="Datetime.html"
               >Date and time</link>.</para>
         </note>
         </listitem>

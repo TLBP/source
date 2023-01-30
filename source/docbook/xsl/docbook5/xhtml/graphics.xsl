@@ -1,8 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--This file was created automatically by html2xhtml-->
 <!--from the HTML stylesheets.-->
-<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:d="http://docbook.org/ns/docbook"
-xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:stext="http://nwalsh.com/xslt/ext/com.nwalsh.saxon.TextFactory" xmlns:simg="http://nwalsh.com/xslt/ext/com.nwalsh.saxon.ImageIntrinsics" xmlns:ximg="xalan://com.nwalsh.xalan.ImageIntrinsics" xmlns:xtext="xalan://com.nwalsh.xalan.Text" xmlns:lxslt="http://xml.apache.org/xslt" xmlns="http://www.w3.org/1999/xhtml" exclude-result-prefixes="xlink stext xtext lxslt simg ximg d" extension-element-prefixes="stext xtext" version="1.0">
+<xsl:stylesheet
+xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+xmlns:d="http://docbook.org/ns/docbook"
+xmlns:xl="http://www.w3.org/1999/xlink"
+xmlns:stext="http://nwalsh.com/xslt/ext/com.nwalsh.saxon.TextFactory" xmlns:simg="http://nwalsh.com/xslt/ext/com.nwalsh.saxon.ImageIntrinsics" xmlns:ximg="xalan://com.nwalsh.xalan.ImageIntrinsics"
+xmlns:xtext="xalan://com.nwalsh.xalan.Text"
+xmlns:lxslt="http://xml.apache.org/xslt"
+xmlns="http://www.w3.org/1999/xhtml"
+exclude-result-prefixes="xl stext xtext lxslt simg ximg d"
+extension-element-prefixes="stext xtext" version="1.0">
 
 <!-- ********************************************************************
      $Id: graphics.xsl 9939 2014-09-06 08:14:22Z bobstayton $
@@ -762,11 +770,11 @@ valign: <xsl:value-of select="@valign"/></xsl:message>
 
               <xsl:variable name="href">
                 <xsl:choose>
-                  <xsl:when test="@xlink:href">
-                    <xsl:value-of select="@xlink:href"/>
+                  <xsl:when test="@xl:href">
+                    <xsl:value-of select="@xl:href"/>
                   </xsl:when>
                   <xsl:otherwise>
-                    <xsl:value-of select="../@xlink:href"/>
+                    <xsl:value-of select="../@xl:href"/>
                   </xsl:otherwise>
                 </xsl:choose>
               </xsl:variable>
@@ -1194,7 +1202,7 @@ valign: <xsl:value-of select="@valign"/></xsl:message>
           </xsl:choose>
         </xsl:when>
         <xsl:otherwise>
-          <a xlink:type="simple" xlink:show="embed" xlink:actuate="onLoad" href="{$filename}"/>
+          <a xl:type="simple" xl:show="embed" xl:actuate="onLoad" href="{$filename}"/>
         </xsl:otherwise>
       </xsl:choose>
     </xsl:when>

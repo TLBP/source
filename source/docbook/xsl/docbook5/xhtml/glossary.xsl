@@ -1,8 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--This file was created automatically by html2xhtml-->
 <!--from the HTML stylesheets.-->
-<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:d="http://docbook.org/ns/docbook"
-xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/1999/xhtml" exclude-result-prefixes="xlink d" version="1.0">
+<xsl:stylesheet
+xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+xmlns:d="http://docbook.org/ns/docbook"
+xmlns:xl="http://www.w3.org/1999/xlink"
+xmlns="http://www.w3.org/1999/xhtml"
+exclude-result-prefixes="xl d" version="1.0">
 
 <!-- ********************************************************************
      $Id: glossary.xsl 9922 2014-07-31 17:33:43Z bobstayton $
@@ -17,7 +21,7 @@ xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/1999/xhtml" 
 <!-- ==================================================================== -->
 
 <xsl:template match="d:glossary">
-  
+
 <xsl:variable name="language">
   <xsl:call-template name="l10n.language"/>
 </xsl:variable>
@@ -94,7 +98,7 @@ xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/1999/xhtml" 
 <!-- ==================================================================== -->
 
 <xsl:template match="d:glosslist">
-  
+
 <xsl:variable name="language">
   <xsl:call-template name="l10n.language"/>
 </xsl:variable>
@@ -136,7 +140,7 @@ xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/1999/xhtml" 
 <!-- ==================================================================== -->
 
 <xsl:template match="d:glossdiv">
-  
+
 <xsl:variable name="language">
   <xsl:call-template name="l10n.language"/>
 </xsl:variable>
@@ -312,7 +316,7 @@ GlossEntry ::=
   <xsl:variable name="otherterm" select="@otherterm"/>
   <xsl:variable name="targets" select="key('id', $otherterm)"/>
   <xsl:variable name="target" select="$targets[1]"/>
-  <xsl:variable name="xlink" select="@xlink:href"/>
+  <xsl:variable name="xlink" select="@xl:href"/>
 
   <dd>
     <p>
@@ -395,7 +399,7 @@ GlossEntry ::=
   <xsl:variable name="otherterm" select="@otherterm"/>
   <xsl:variable name="targets" select="key('id', $otherterm)"/>
   <xsl:variable name="target" select="$targets[1]"/>
-  <xsl:variable name="xlink" select="@xlink:href"/>
+  <xsl:variable name="xlink" select="@xl:href"/>
 
   <xsl:choose>
     <xsl:when test="$target">
@@ -445,7 +449,7 @@ GlossEntry ::=
 <!-- Glossary collection -->
 
 <xsl:template match="d:glossary[@role='auto']" priority="2">
-  
+
 <xsl:variable name="language">
   <xsl:call-template name="l10n.language"/>
 </xsl:variable>
@@ -550,7 +554,7 @@ GlossEntry ::=
 <xsl:template match="d:glossdiv" mode="auto-glossary">
   <xsl:param name="terms" select="."/>
 
-  
+
 <xsl:variable name="language">
   <xsl:call-template name="l10n.language"/>
 </xsl:variable>

@@ -6,8 +6,8 @@
  xmlns:exsl="http://exslt.org/common"
  xmlns:cf="http://docbook.sourceforge.net/xmlns/chunkfast/1.0"
  xmlns:suwl="http://nwalsh.com/xslt/ext/com.nwalsh.saxon.UnwrapLinks"
- xmlns:xlink="http://www.w3.org/1999/xlink"
- exclude-result-prefixes="d exsl cf suwl xlink"
+ xmlns:xl="http://www.w3.org/1999/xlink"
+ exclude-result-prefixes="d exsl cf suwl xl"
  version="1.0">
 
  <xsl:template match="d:index">
@@ -1624,10 +1624,10 @@
     <xsl:apply-templates/>
   </xsl:param>
   <xsl:param name="linkend" select="$node/@linkend"/>
-  <xsl:param name="xhref" select="$node/@xlink:href"/>
+  <xsl:param name="xhref" select="$node/@xl:href"/>
 
   <!-- check for nested links, which are undefined in the output -->
-  <xsl:if test="($linkend or $xhref) and $node/ancestor::*[@xlink:href or @linkend]">
+  <xsl:if test="($linkend or $xhref) and $node/ancestor::*[@xl:href or @linkend]">
     <xsl:message>
       <xsl:text>WARNING: nested link may be undefined in output: </xsl:text>
       <xsl:text>&lt;</xsl:text>
@@ -1640,7 +1640,7 @@
           <xsl:text>'&gt;</xsl:text>
         </xsl:when>
         <xsl:when test="$xhref">
-          <xsl:text>@xlink:href = '</xsl:text>
+          <xsl:text>@xl:href = '</xsl:text>
           <xsl:value-of select="$xhref"/>
           <xsl:text>'&gt;</xsl:text>
         </xsl:when>
@@ -1650,11 +1650,11 @@
     </xsl:message>
   </xsl:if>
 
-  <!-- Support for @xlink:show -->
+  <!-- Support for @xl:show -->
   <xsl:variable name="target.show">
     <xsl:choose>
-      <xsl:when test="$node/@xlink:show = 'new'">_blank</xsl:when>
-      <xsl:when test="$node/@xlink:show = 'replace'">_top</xsl:when>
+      <xsl:when test="$node/@xl:show = 'new'">_blank</xsl:when>
+      <xsl:when test="$node/@xl:show = 'replace'">_top</xsl:when>
       <xsl:otherwise/>
     </xsl:choose>
   </xsl:variable>
@@ -1662,8 +1662,8 @@
   <xsl:variable name="link">
     <xsl:choose>
       <xsl:when test="$xhref and
-                      (not($node/@xlink:type) or
-                      $node/@xlink:type='simple')">
+                      (not($node/@xl:type) or
+                      $node/@xl:type='simple')">
 
         <!-- Is it a local idref or a uri? -->
         <xsl:variable name="is.idref">
@@ -1680,9 +1680,9 @@
         <!-- Is it an olink ? -->
         <xsl:variable name="is.olink">
           <xsl:choose>
-            <!-- If xlink:role="http://docbook.org/xlink/role/olink" -->
+            <!-- If xl:role="http://docbook.org/xlink/role/olink" -->
             <!-- and if the href contains # -->
-            <xsl:when test="contains($xhref,'#') and                  @xlink:role = $xolink.role">1</xsl:when>
+            <xsl:when test="contains($xhref,'#') and                  @xl:role = $xolink.role">1</xsl:when>
             <xsl:otherwise>0</xsl:otherwise>
           </xsl:choose>
         </xsl:variable>
@@ -1734,9 +1734,9 @@
                   </xsl:attribute>
 
                   <xsl:choose>
-                    <xsl:when test="$node/@xlink:title">
+                    <xsl:when test="$node/@xl:title">
                       <xsl:attribute name="title">
-                        <xsl:value-of select="$node/@xlink:title"/>
+                        <xsl:value-of select="$node/@xl:title"/>
                       </xsl:attribute>
                     </xsl:when>
                     <xsl:otherwise>
@@ -1765,13 +1765,13 @@
               <xsl:attribute name="href">
                 <xsl:value-of select="$xhref"/>
               </xsl:attribute>
-              <xsl:if test="$node/@xlink:title">
+              <xsl:if test="$node/@xl:title">
                 <xsl:attribute name="title">
-                  <xsl:value-of select="$node/@xlink:title"/>
+                  <xsl:value-of select="$node/@xl:title"/>
                 </xsl:attribute>
               </xsl:if>
 
-              <!-- For URIs, use @xlink:show if defined, otherwise use ulink.target -->
+              <!-- For URIs, use @xl:show if defined, otherwise use ulink.target -->
               <xsl:choose>
                 <xsl:when test="$target.show !=''">
                   <xsl:attribute name="target">

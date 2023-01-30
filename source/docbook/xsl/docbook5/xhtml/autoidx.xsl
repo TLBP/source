@@ -2,7 +2,7 @@
 <!--This file was created automatically by html2xhtml-->
 <!--from the HTML stylesheets.-->
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:d="http://docbook.org/ns/docbook"
-xmlns:exslt="http://exslt.org/common" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/1999/xhtml" extension-element-prefixes="exslt" exclude-result-prefixes="exslt d" version="1.0">
+xmlns:exslt="http://exslt.org/common" xmlns:xl="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/1999/xhtml" extension-element-prefixes="exslt" exclude-result-prefixes="exslt d" version="1.0">
 
 <!-- ********************************************************************
      $Id: autoidx.xsl 9853 2014-01-19 22:49:20Z bobstayton $
@@ -678,7 +678,7 @@ xmlns:exslt="http://exslt.org/common" xmlns:xlink="http://www.w3.org/1999/xlink"
   <xsl:text> </xsl:text>
   <xsl:choose>
     <!-- manual links have precedence -->
-    <xsl:when test="d:see/@linkend or d:see/@xlink:href">
+    <xsl:when test="d:see/@linkend or d:see/@xl:href">
       <xsl:call-template name="simple.xlink">
         <xsl:with-param name="node" select="d:see"/>
         <xsl:with-param name="content" select="$see"/>
@@ -738,7 +738,7 @@ xmlns:exslt="http://exslt.org/common" xmlns:xlink="http://www.w3.org/1999/xlink"
       <xsl:text> </xsl:text>
       <xsl:choose>
         <!-- manual links have precedence -->
-        <xsl:when test="@linkend or @xlink:href">
+        <xsl:when test="@linkend or @xl:href">
           <xsl:call-template name="simple.xlink">
             <xsl:with-param name="node" select="."/>
             <xsl:with-param name="content" select="$seealso"/>

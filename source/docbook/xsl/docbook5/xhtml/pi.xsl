@@ -2,7 +2,7 @@
 <!--This file was created automatically by html2xhtml-->
 <!--from the HTML stylesheets.-->
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:d="http://docbook.org/ns/docbook"
-xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/1999/xhtml" exclude-result-prefixes="doc d" version="1.0">
+xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" xmlns:xl="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/1999/xhtml" exclude-result-prefixes="doc d" version="1.0">
 
 <!-- ********************************************************************
      $Id: pi.xsl 9848 2014-01-17 22:44:39Z bobstayton $
@@ -59,7 +59,7 @@ xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" xmlns:xlink="http://www.w3.o
     </variablelist>
   </refparameter>
   <refsee xmlns="http://www.w3.org/1999/xhtml" role="tcg">
-    <para><link role="tcg" xlink:href="BGcolor.html">Background color</link></para>
+    <para><link role="tcg" xl:href="BGcolor.html">Background color</link></para>
   </refsee>
 </doc:pi>
 <xsl:template name="pi.dbhtml_background-color">
@@ -89,7 +89,7 @@ xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" xmlns:xlink="http://www.w3.o
     </variablelist>
   </refparameter>
   <refsee xmlns="http://www.w3.org/1999/xhtml" role="tcg">
-    <para><link role="tcg" xlink:href="BGtableColor.html#CellBGColor">Cell background color</link></para>
+    <para><link role="tcg" xl:href="BGtableColor.html#CellBGColor">Cell background color</link></para>
   </refsee>
 </doc:pi>
 <xsl:template name="pi.dbhtml_bgcolor">
@@ -124,8 +124,8 @@ xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" xmlns:xlink="http://www.w3.o
     <para><parameter>html.cellpadding</parameter></para>
   </refsee>
   <refsee xmlns="http://www.w3.org/1999/xhtml" role="tcg">
-    <para><link role="tcg" xlink:href="CellSpacing.html">Cell spacing and cell padding</link>,
-      <link role="tcg" xlink:href="QandAformat.html">Q and A formatting</link></para>
+    <para><link role="tcg" xl:href="CellSpacing.html">Cell spacing and cell padding</link>,
+      <link role="tcg" xl:href="QandAformat.html">Q and A formatting</link></para>
   </refsee>
 </doc:pi>
 <xsl:template name="pi.dbhtml_cellpadding">
@@ -160,8 +160,8 @@ xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" xmlns:xlink="http://www.w3.o
     <para><parameter>html.cellspacing</parameter></para>
   </refsee>
   <refsee xmlns="http://www.w3.org/1999/xhtml" role="tcg">
-    <para><link role="tcg" xlink:href="CellSpacing.html">Cell spacing and cell padding</link>,
-      <link role="tcg" xlink:href="QandAformat.html">Q and A formatting</link></para>
+    <para><link role="tcg" xl:href="CellSpacing.html">Cell spacing and cell padding</link>,
+      <link role="tcg" xl:href="QandAformat.html">Q and A formatting</link></para>
     </refsee>
 </doc:pi>
 <xsl:template name="pi.dbhtml_cellspacing">
@@ -192,7 +192,7 @@ xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" xmlns:xlink="http://www.w3.o
     </variablelist>
   </refparameter>
   <refsee xmlns="http://www.w3.org/1999/xhtml" role="tcg">
-    <para><link role="tcg" xlink:href="CSSTableCells.html">Table styles in HTML output</link></para>
+    <para><link role="tcg" xl:href="CSSTableCells.html">Table styles in HTML output</link></para>
   </refsee>
 </doc:pi>
 <xsl:template name="pi.dbhtml_class">
@@ -254,7 +254,7 @@ at the same level, use:</para>
     <para><parameter>base.dir</parameter></para>
   </refsee>
   <refsee xmlns="http://www.w3.org/1999/xhtml" role="tcg">
-    <para><link role="tcg" xlink:href="Chunking.html#dbhtmlDirPI">dbhtml dir processing instruction</link></para>
+    <para><link role="tcg" xl:href="Chunking.html#dbhtmlDirPI">dbhtml dir processing instruction</link></para>
   </refsee>
 </doc:pi>
 <xsl:template name="pi.dbhtml_dir">
@@ -296,7 +296,7 @@ specifications in one processing instruction:
     <para><parameter>use.id.as.filename</parameter></para>
   </refsee>
   <refsee xmlns="http://www.w3.org/1999/xhtml" role="tcg">
-    <para><link role="tcg" xlink:href="Chunking.html#DbhtmlFilenames">dbhtml filenames</link></para>
+    <para><link role="tcg" xl:href="Chunking.html#DbhtmlFilenames">dbhtml filenames</link></para>
   </refsee>
 </doc:pi>
 <xsl:template name="pi.dbhtml_filename">
@@ -372,7 +372,7 @@ specifications in one processing instruction:
     <para><parameter>img.src.path</parameter></para>
   </refsee>
   <refsee xmlns="http://www.w3.org/1999/xhtml" role="tcg">
-    <para><link role="tcg" xlink:href="GraphicsLocations.html#UsingFileref">Using fileref</link></para>
+    <para><link role="tcg" xl:href="GraphicsLocations.html#UsingFileref">Using fileref</link></para>
   </refsee>
 </doc:pi>
 <xsl:template name="pi.dbhtml_img.src.path">
@@ -402,7 +402,7 @@ specifications in one processing instruction:
     </variablelist>
   </refparameter>
   <refsee xmlns="http://www.w3.org/1999/xhtml" role="tcg">
-    <para><link role="tcg" xlink:href="QandAformat.html">Q and A formatting</link></para>
+    <para><link role="tcg" xl:href="QandAformat.html">Q and A formatting</link></para>
   </refsee>
 </doc:pi>
 <xsl:template name="pi.dbhtml_label-width">
@@ -438,7 +438,7 @@ specifications in one processing instruction:
     <para><parameter>linenumbering.everyNth</parameter></para>
   </refsee>
   <refsee xmlns="http://www.w3.org/1999/xhtml" role="tcg">
-    <para><link role="tcg" xlink:href="AnnotateListing.html#LineNumbering">Line numbering</link></para>
+    <para><link role="tcg" xl:href="AnnotateListing.html#LineNumbering">Line numbering</link></para>
   </refsee>
 </doc:pi>
 <xsl:template name="pi.dbhtml_linenumbering.everyNth">
@@ -473,7 +473,7 @@ specifications in one processing instruction:
     <para><parameter>linenumbering.separator</parameter></para>
   </refsee>
   <refsee xmlns="http://www.w3.org/1999/xhtml" role="tcg">
-    <para><link role="tcg" xlink:href="AnnotateListing.html#LineNumbering">Line numbering</link></para>
+    <para><link role="tcg" xl:href="AnnotateListing.html#LineNumbering">Line numbering</link></para>
   </refsee>
 </doc:pi>
 <xsl:template name="pi.dbhtml_linenumbering.separator">
@@ -508,7 +508,7 @@ specifications in one processing instruction:
     <para><parameter>linenumbering.width</parameter></para>
   </refsee>
   <refsee xmlns="http://www.w3.org/1999/xhtml" role="tcg">
-    <para><link role="tcg" xlink:href="AnnotateListing.html#LineNumbering">Line numbering</link></para>
+    <para><link role="tcg" xl:href="AnnotateListing.html#LineNumbering">Line numbering</link></para>
   </refsee>
 </doc:pi>
 <xsl:template name="pi.dbhtml_linenumbering.width">
@@ -556,7 +556,7 @@ specifications in one processing instruction:
     </itemizedlist>
   </refsee>
   <refsee xmlns="http://www.w3.org/1999/xhtml" role="tcg">
-    <para><link role="tcg" xlink:href="Variablelists.html#VarListFormatting">Variable list formatting in HTML</link></para>
+    <para><link role="tcg" xl:href="Variablelists.html#VarListFormatting">Variable list formatting in HTML</link></para>
   </refsee>
 </doc:pi>
 <xsl:template name="pi.dbhtml_list-presentation">
@@ -587,7 +587,7 @@ specifications in one processing instruction:
     </variablelist>
   </refparameter>
   <refsee xmlns="http://www.w3.org/1999/xhtml" role="tcg">
-    <para><link role="tcg" xlink:href="Variablelists.html#VarListFormatting">Variable list formatting in HTML</link></para>
+    <para><link role="tcg" xl:href="Variablelists.html#VarListFormatting">Variable list formatting in HTML</link></para>
   </refsee>
 </doc:pi>
 <xsl:template name="pi.dbhtml_list-width">
@@ -617,7 +617,7 @@ specifications in one processing instruction:
     </variablelist>
   </refparameter>
   <refsee xmlns="http://www.w3.org/1999/xhtml" role="tcg">
-    <para><link role="tcg" xlink:href="RowHeight.html">Row height</link></para>
+    <para><link role="tcg" xl:href="RowHeight.html">Row height</link></para>
   </refsee>
 </doc:pi>
 <xsl:template name="pi.dbhtml_row-height">
@@ -653,7 +653,7 @@ specifications in one processing instruction:
     </variablelist>
   </refparameter>
   <refsee xmlns="http://www.w3.org/1999/xhtml" role="tcg">
-    <para><link role="tcg" xlink:href="Orderedlists.html#ListStartNum">List starting number</link></para>
+    <para><link role="tcg" xl:href="Orderedlists.html#ListStartNum">List starting number</link></para>
   </refsee>
 </doc:pi>
 <xsl:template name="pi.dbhtml_start">
@@ -681,7 +681,7 @@ specifications in one processing instruction:
     <synopsis><tag class="xmlpi">dbhtml stop-chunking</tag></synopsis>
   </refsynopsisdiv>	
   <refsee xmlns="http://www.w3.org/1999/xhtml" role="tcg">
-    <para><link role="tcg" xlink:href="Chunking.html">Chunking into multiple HTML files</link></para>
+    <para><link role="tcg" xl:href="Chunking.html">Chunking into multiple HTML files</link></para>
   </refsee>
   </doc:pi>
   <!-- The code that handles the stop-chunking pi is in chunk-common.xsl -->
@@ -708,8 +708,8 @@ specifications in one processing instruction:
     </variablelist>
   </refparameter>
   <refsee xmlns="http://www.w3.org/1999/xhtml" role="tcg">
-    <para><link role="tcg" xlink:href="Variablelists.html#VarListFormatting">Variable list formatting in HTML</link>,
-      <link role="tcg" xlink:href="TableSummary.html">Table summary text</link></para>
+    <para><link role="tcg" xl:href="Variablelists.html#VarListFormatting">Variable list formatting in HTML</link>,
+      <link role="tcg" xl:href="TableSummary.html">Table summary text</link></para>
   </refsee>
 </doc:pi>
 <xsl:template name="pi.dbhtml_table-summary">
@@ -743,7 +743,7 @@ specifications in one processing instruction:
     <para><parameter>default.table.width</parameter></para>
   </refsee>
   <refsee xmlns="http://www.w3.org/1999/xhtml" role="tcg">
-    <para><link role="tcg" xlink:href="Tables.html#TableWidth">Table width</link></para>
+    <para><link role="tcg" xl:href="Tables.html#TableWidth">Table width</link></para>
   </refsee>
 </doc:pi>
 <xsl:template name="pi.dbhtml_table-width">
@@ -784,7 +784,7 @@ specifications in one processing instruction:
     </variablelist>
   </refparameter>
   <refsee xmlns="http://www.w3.org/1999/xhtml" role="tcg">
-    <para><link role="tcg" xlink:href="Variablelists.html#VarListFormatting">Variable list formatting in HTML</link></para>
+    <para><link role="tcg" xl:href="Variablelists.html#VarListFormatting">Variable list formatting in HTML</link></para>
   </refsee>
 </doc:pi>
 <xsl:template name="pi.dbhtml_term-presentation">
@@ -818,7 +818,7 @@ specifications in one processing instruction:
     <para><parameter>variablelist.term.separator</parameter></para>
   </refsee>
   <refsee xmlns="http://www.w3.org/1999/xhtml" role="tcg">
-    <para><link role="tcg" xlink:href="Variablelists.html#VarListFormatting">Variable list formatting in HTML</link></para>
+    <para><link role="tcg" xl:href="Variablelists.html#VarListFormatting">Variable list formatting in HTML</link></para>
   </refsee>
 </doc:pi>
 <xsl:template name="pi.dbhtml_term-separator">
@@ -849,7 +849,7 @@ specifications in one processing instruction:
     </variablelist>
   </refparameter>
   <refsee xmlns="http://www.w3.org/1999/xhtml" role="tcg">
-    <para><link role="tcg" xlink:href="Variablelists.html#VarListFormatting">Variable list formatting in HTML</link></para>
+    <para><link role="tcg" xl:href="Variablelists.html#VarListFormatting">Variable list formatting in HTML</link></para>
   </refsee>
 </doc:pi>
 <xsl:template name="pi.dbhtml_term-width">
@@ -886,8 +886,8 @@ specifications in one processing instruction:
     </variablelist>
   </refparameter>
   <refsee xmlns="http://www.w3.org/1999/xhtml" role="tcg">
-    <para><link role="tcg" xlink:href="QandAtoc.html">Q and A list of questions</link>,
-      <link role="tcg" xlink:href="QandAformat.html">Q and A formatting</link></para>
+    <para><link role="tcg" xl:href="QandAtoc.html">Q and A list of questions</link>,
+      <link role="tcg" xl:href="QandAformat.html">Q and A formatting</link></para>
   </refsee>
 </doc:pi>
 <xsl:template name="pi.dbhtml_toc">
@@ -1006,8 +1006,8 @@ specifications in one processing instruction:
     <para><parameter>textinsert.extension</parameter></para>
   </refsee>
   <refsee xmlns="http://www.w3.org/1999/xhtml" role="tcg">
-    <para><link role="tcg" xlink:href="InsertExtHtml.html">Inserting external HTML code</link>,
-      <link role="tcg" xlink:href="ExternalCode.html">External code files</link></para>
+    <para><link role="tcg" xl:href="InsertExtHtml.html">Inserting external HTML code</link>,
+      <link role="tcg" xl:href="ExternalCode.html">External code files</link></para>
   </refsee>
 </doc:pi>
 <xsl:template name="pi.dbhtml-include">
@@ -1074,7 +1074,7 @@ specifications in one processing instruction:
     </variablelist>
   </refparameter>
   <refsee xmlns="http://www.w3.org/1999/xhtml" role="tcg">
-    <para><link role="tcg" xlink:href="HtmlHelp.html#HHContextHelp">Context-sensitive help</link></para>
+    <para><link role="tcg" xl:href="HtmlHelp.html#HHContextHelp">Context-sensitive help</link></para>
   </refsee>
 </doc:pi>
 

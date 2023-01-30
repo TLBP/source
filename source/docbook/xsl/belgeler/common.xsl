@@ -29,10 +29,10 @@
   xmlns="http://www.w3.org/1999/xhtml"
   xmlns:d="http://docbook.org/ns/docbook"
   xmlns:exsl="http://exslt.org/common"
-  xmlns:xlink="http://www.w3.org/1999/xlink"
+  xmlns:xl="http://www.w3.org/1999/xlink"
   xmlns:l="http://docbook.sourceforge.net/xmlns/l10n/1.0"
   xmlns:t="http://tlbp.gen.tr/ns/tlbp"
-  exclude-result-prefixes="d exsl xlink l t"
+  exclude-result-prefixes="d exsl xl l t"
   version="1.0">
 
 <!-- özelleştirilmiş xslt betikleri -->
@@ -589,6 +589,14 @@ footnote text gets an id of #ftn.@id. They cross link to each other. -->
   <xsl:apply-templates/>
 </xsl:template>
 
+<xsl:template match="d:funcsynopsis[@remap='libc']">
+  <div>
+    <xsl:apply-templates select="." mode="common.html.attributes"/>
+    <xsl:call-template name="id.attribute"/>
+    <xsl:apply-templates mode="libc"/>
+  </div>
+</xsl:template>
+
 <xsl:template match="d:funcsynopsisinfo">
   <xsl:variable name="rtf">
     <xsl:apply-templates/>
@@ -795,7 +803,7 @@ footnote text gets an id of #ftn.@id. They cross link to each other. -->
 </xsl:template>
 
 <xsl:template match="d:uri[not (child::node())]">
-  <xsl:param name="xlink.targets" select="key('id',@xlink:href)"/>
+  <xsl:param name="xlink.targets" select="key('id',@xl:href)"/>
   <xsl:param name="target" select="$xlink.targets[1]"/>
 
   <xsl:variable name="name">
@@ -803,7 +811,7 @@ footnote text gets an id of #ftn.@id. They cross link to each other. -->
   </xsl:variable>
 
   <xsl:variable name="volnum">
-    <xsl:value-of select="substring-before(substring-after(@xlink:href, 'man'), '-')"/>
+    <xsl:value-of select="substring-before(substring-after(@xl:href, 'man'), '-')"/>
   </xsl:variable>
 
   <xsl:variable name="im">
@@ -811,7 +819,7 @@ footnote text gets an id of #ftn.@id. They cross link to each other. -->
   </xsl:variable>
 
   <xsl:variable name="fname">
-    <xsl:value-of select="substring-after(@xlink:href, $im)"/>
+    <xsl:value-of select="substring-after(@xl:href, $im)"/>
   </xsl:variable>
 
   <tt>

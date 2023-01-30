@@ -1,8 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--This file was created automatically by html2xhtml-->
 <!--from the HTML stylesheets.-->
-<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:d="http://docbook.org/ns/docbook"
-xmlns:suwl="http://nwalsh.com/xslt/ext/com.nwalsh.saxon.UnwrapLinks" xmlns:exsl="http://exslt.org/common" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/1999/xhtml" exclude-result-prefixes="suwl exsl xlink d" version="1.0">
+<xsl:stylesheet
+xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+xmlns:d="http://docbook.org/ns/docbook"
+xmlns:suwl="http://nwalsh.com/xslt/ext/com.nwalsh.saxon.UnwrapLinks" xmlns:exsl="http://exslt.org/common"
+xmlns:xl="http://www.w3.org/1999/xlink"
+xmlns="http://www.w3.org/1999/xhtml"
+exclude-result-prefixes="suwl exsl xl d" version="1.0">
 
 <!-- ********************************************************************
      $Id: xref.xsl 9947 2014-10-16 01:01:39Z bobstayton $
@@ -35,8 +40,8 @@ xmlns:suwl="http://nwalsh.com/xslt/ext/com.nwalsh.saxon.UnwrapLinks" xmlns:exsl=
 <!-- ==================================================================== -->
 
 <xsl:template match="d:xref" name="xref">
-  <xsl:param name="xhref" select="@xlink:href"/>
-  <!-- is the @xlink:href a local idref link? -->
+  <xsl:param name="xhref" select="@xl:href"/>
+  <!-- is the @xl:href a local idref link? -->
   <xsl:param name="xlink.idref">
     <xsl:if test="starts-with($xhref,'#')                   and (not(contains($xhref,'('))                   or starts-with($xhref, '#xpointer(id('))">
       <xsl:call-template name="xpointer.idref">
@@ -109,7 +114,7 @@ xmlns:suwl="http://nwalsh.com/xslt/ext/com.nwalsh.saxon.UnwrapLinks" xmlns:exsl=
       <xsl:otherwise>
         <xsl:message>
           <xsl:text>ERROR: xref linking to </xsl:text>
-          <xsl:value-of select="@linkend|@xlink:href"/>
+          <xsl:value-of select="@linkend|@xl:href"/>
           <xsl:text> has no generated link text.</xsl:text>
         </xsl:message>
         <xsl:text>???</xsl:text>
@@ -946,7 +951,7 @@ xmlns:suwl="http://nwalsh.com/xslt/ext/com.nwalsh.saxon.UnwrapLinks" xmlns:exsl=
 <xsl:template match="d:link" name="link">
   <xsl:param name="linkend" select="@linkend"/>
   <xsl:param name="a.target"/>
-  <xsl:param name="xhref" select="@xlink:href"/>
+  <xsl:param name="xhref" select="@xl:href"/>
 
   <xsl:variable name="content">
     <xsl:call-template name="anchor"/>
@@ -973,15 +978,15 @@ xmlns:suwl="http://nwalsh.com/xslt/ext/com.nwalsh.saxon.UnwrapLinks" xmlns:exsl=
           </xsl:otherwise>
         </xsl:choose>
       </xsl:when>
-      <!-- Use the xlink:href if no other text -->
-      <xsl:when test="@xlink:href">
-        <xsl:value-of select="@xlink:href"/>
+      <!-- Use the xl:href if no other text -->
+      <xsl:when test="@xl:href">
+        <xsl:value-of select="@xl:href"/>
       </xsl:when>
       <xsl:otherwise>
         <xsl:message>
           <xsl:text>Link element has no content and no Endterm. </xsl:text>
           <xsl:text>Nothing to show in the link to </xsl:text>
-          <xsl:value-of select="(@xlink:href|@linkend)[1]"/>
+          <xsl:value-of select="(@xl:href|@linkend)[1]"/>
         </xsl:message>
         <xsl:text>???</xsl:text>
       </xsl:otherwise>
@@ -1069,15 +1074,15 @@ xmlns:suwl="http://nwalsh.com/xslt/ext/com.nwalsh.saxon.UnwrapLinks" xmlns:exsl=
 
   <xsl:choose>
     <!-- olinks resolved by stylesheet and target database -->
-    <xsl:when test="@targetdoc or @targetptr or                     (@xlink:role=$xolink.role and                      contains(@xlink:href, '#') )">
+    <xsl:when test="@targetdoc or @targetptr or                     (@xl:role=$xolink.role and                      contains(@xl:href, '#') )">
 
       <xsl:variable name="targetdoc.att">
         <xsl:choose>
           <xsl:when test="@targetdoc != ''">
             <xsl:value-of select="@targetdoc"/>
           </xsl:when>
-          <xsl:when test="@xlink:role=$xolink.role and                        contains(@xlink:href, '#')">
-            <xsl:value-of select="substring-before(@xlink:href, '#')"/>
+          <xsl:when test="@xl:role=$xolink.role and                        contains(@xl:href, '#')">
+            <xsl:value-of select="substring-before(@xl:href, '#')"/>
           </xsl:when>
         </xsl:choose>
       </xsl:variable>
@@ -1087,8 +1092,8 @@ xmlns:suwl="http://nwalsh.com/xslt/ext/com.nwalsh.saxon.UnwrapLinks" xmlns:exsl=
           <xsl:when test="@targetptr != ''">
             <xsl:value-of select="@targetptr"/>
           </xsl:when>
-          <xsl:when test="@xlink:role=$xolink.role and                        contains(@xlink:href, '#')">
-            <xsl:value-of select="substring-after(@xlink:href, '#')"/>
+          <xsl:when test="@xl:role=$xolink.role and                        contains(@xl:href, '#')">
+            <xsl:value-of select="substring-after(@xl:href, '#')"/>
           </xsl:when>
         </xsl:choose>
       </xsl:variable>

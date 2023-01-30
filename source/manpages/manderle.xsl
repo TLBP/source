@@ -44,13 +44,18 @@
  * https://github.com/TLBP/manpages-tr
  *
 </xsl:text>
-<xsl:if test="d:refmeta/d:legalnotice">
- <xsl:call-template name="verbatim">
-   <xsl:with-param name="p">
-    <xsl:apply-templates select="d:refmeta/d:legalnotice/d:screen"/>
-   </xsl:with-param>
- </xsl:call-template>
-</xsl:if>
+<xsl:choose>
+ <xsl:when test="d:refmeta/d:legalnotice/screen">
+  <xsl:call-template name="verbatim">
+    <xsl:with-param name="p">
+     <xsl:apply-templates select="d:refmeta/d:legalnotice/d:screen"/>
+    </xsl:with-param>
+  </xsl:call-template>
+ </xsl:when>
+ <xsl:otherwise>
+  <xsl:apply-templates mode="legalnotice"/>
+ </xsl:otherwise>
+</xsl:choose>
 <xsl:text>..
 .\" Derlenme zamanı: </xsl:text>
   <xsl:value-of select="date:date-time()"/>

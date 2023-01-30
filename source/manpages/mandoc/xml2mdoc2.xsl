@@ -24,7 +24,7 @@
 <xsl:stylesheet
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
   xmlns:d="http://docbook.org/ns/docbook"
-  xmlns:xlink="http://www.w3.org/1999/xlink"
+  xmlns:xl="http://www.w3.org/1999/xlink"
   xmlns:t="http://tlbp.gen.tr/ns/tlbp"
   extension-element-prefixes="d xlink t"
   version='1.0'>
@@ -663,10 +663,10 @@
 
 <xsl:template match="d:uri">
   <xsl:variable name="ext">
-    <xsl:value-of select="substring-before(substring-after(@xlink:href,'man'), '-')"/>
+    <xsl:value-of select="substring-before(substring-after(@xl:href,'man'), '-')"/>
   </xsl:variable>
   <xsl:variable name="base">
-    <xsl:value-of select="substring-after(@xlink:href, concat('man', $ext, '-'))"/>
+    <xsl:value-of select="substring-after(@xl:href, concat('man', $ext, '-'))"/>
   </xsl:variable>
   <xsl:variable name="statement">
     <xsl:value-of select="."/>
@@ -735,13 +735,13 @@
   </xsl:call-template>
 </xsl:template>
 
-<xsl:template match="d:link[@xlink:href]">
+<xsl:template match="d:link[@xl:href]">
   <xsl:choose>
     <xsl:when test="count(child::node())=0">
-     <xsl:value-of select="@xlink:href"/>
+     <xsl:value-of select="@xl:href"/>
     </xsl:when>
     <xsl:otherwise>
-     <xsl:value-of select="concat('&lt;', @xlink:href, '&gt;: ')"/>
+     <xsl:value-of select="concat('&lt;', @xl:href, '&gt;: ')"/>
      <xsl:apply-templates/>
     </xsl:otherwise>
   </xsl:choose>

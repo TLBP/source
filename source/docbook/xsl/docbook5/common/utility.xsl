@@ -4,7 +4,7 @@
 xmlns:doc="http://nwalsh.com/xsl/documentation/1.0"
                 xmlns:dyn="http://exslt.org/dynamic"
                 xmlns:saxon="http://icl.com/saxon"
-                xmlns:xlink="http://www.w3.org/1999/xlink"
+                xmlns:xl="http://www.w3.org/1999/xlink"
                 exclude-result-prefixes="doc dyn saxon d"
                 version='1.0'>
 
@@ -243,9 +243,9 @@ xmlns:doc="http://nwalsh.com/xsl/documentation/1.0"
     <note>
       <para>This function began as a copy of Nate Austin's
         <function>prepend-pad</function> function in the <link
-          xlink:href="http://www.dpawson.co.uk/xsl/sect2/padding.html" >Padding
+          xl:href="http://www.dpawson.co.uk/xsl/sect2/padding.html" >Padding
           Content</link> section of Dave Pawson's <link
-          xlink:href="http://www.dpawson.co.uk/xsl/index.html" >XSLT
+          xl:href="http://www.dpawson.co.uk/xsl/index.html" >XSLT
           FAQ</link>.</para>
     </note>
   </refdescription>
