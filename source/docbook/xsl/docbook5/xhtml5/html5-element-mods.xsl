@@ -3,8 +3,8 @@
 <!ENTITY % common.entities SYSTEM "../common/entities.ent">
 %common.entities;
 ]>
-<xsl:stylesheet 
-  xmlns:xsl="http://www.w3.org/1999/XSL/Transform" 
+<xsl:stylesheet
+  xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
   xmlns:d="http://docbook.org/ns/docbook"
 xmlns:exsl="http://exslt.org/common"
   xmlns="http://www.w3.org/1999/xhtml"
@@ -36,11 +36,11 @@ xmlns:exsl="http://exslt.org/common"
 <!--  Customized templates                                        -->
 <!--==============================================================-->
 
-<!-- HTML5: needs special doctype -->
+<!-- HTML5: needs special doctype
 <xsl:template name="user.preroot">
   <xsl:text disable-output-escaping="yes">&lt;!DOCTYPE html&gt;</xsl:text>
 </xsl:template>
-
+ -->
 <!-- HTML5: Replace HTML acronum with abbr for HTML 5 -->
 <xsl:template match="d:acronym">
   <xsl:call-template name="inline.charseq">
@@ -451,7 +451,7 @@ xmlns:exsl="http://exslt.org/common"
 
   <xsl:param name="spans"/>
 
-  
+
   <!-- Process with stock template -->
   <xsl:variable name="cell">
     <xsl:call-template name="entry">
@@ -552,7 +552,7 @@ xmlns:exsl="http://exslt.org/common"
     </body>
   </html>
   <xsl:value-of select="$html.append"/>
-  
+
   <!-- Generate any css files only once, not once per chunk -->
   <xsl:call-template name="generate.css.files"/>
 </xsl:template>
@@ -702,7 +702,7 @@ xmlns:exsl="http://exslt.org/common"
     <xsl:apply-templates select="@format" mode="source.attribute"/>
 
     <xsl:apply-templates select="d:multimediaparam" mode="source.attribute"/>
-    
+
   </source>
 </xsl:template>
 
@@ -725,7 +725,7 @@ xmlns:exsl="http://exslt.org/common"
     <xsl:apply-templates select="@format" mode="source.attribute"/>
 
     <xsl:apply-templates select="d:multimediaparam" mode="source.attribute"/>
-    
+
   </source>
 </xsl:template>
 
@@ -743,13 +743,13 @@ xmlns:exsl="http://exslt.org/common"
 <!-- use only an imageobject with @role = 'poster' -->
 <xsl:template name="video.poster">
   <!-- context is videoobject -->
-  <xsl:variable name="imageobject" 
-                select="../../d:imageobject[@role = 'poster'][1] | 
+  <xsl:variable name="imageobject"
+                select="../../d:imageobject[@role = 'poster'][1] |
                            ../d:imageobject[@role = 'poster'][1]"/>
   <xsl:if test="$imageobject">
     <xsl:attribute name="poster">
       <xsl:value-of select="$imageobject/d:imagedata/@fileref"/>
-    </xsl:attribute> 
+    </xsl:attribute>
   </xsl:if>
 </xsl:template>
 
@@ -767,7 +767,7 @@ xmlns:exsl="http://exslt.org/common"
 
 <xsl:template match="d:audiodata/@fileref" mode="audio.attribute"/>
 
-<xsl:template match="d:videodata/@contentwidth | d:videodata/@width" 
+<xsl:template match="d:videodata/@contentwidth | d:videodata/@width"
               mode="video.attribute">
   <xsl:attribute name="width">
     <xsl:value-of select="."/>
@@ -895,7 +895,7 @@ xmlns:exsl="http://exslt.org/common"
   <div>
     <xsl:apply-templates select="." mode="class.attribute"/>
     <xsl:apply-templates/>
-  </div> 
+  </div>
 </xsl:template>
 
 <!-- HTML5: no body attributes -->

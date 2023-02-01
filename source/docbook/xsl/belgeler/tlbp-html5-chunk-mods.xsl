@@ -44,13 +44,13 @@ xmlns:exsl="http://exslt.org/common"
       </section>
 
       <xsl:call-template name="user.footer.content"/>
-
+<!--
       <xsl:call-template name="html5.footer.navigation">
         <xsl:with-param name="prev" select="$prev"/>
         <xsl:with-param name="next" select="$next"/>
         <xsl:with-param name="nav.context" select="$nav.context"/>
       </xsl:call-template>
-
+-->
     </body>
   </html>
   <xsl:value-of select="$chunk.append"/>

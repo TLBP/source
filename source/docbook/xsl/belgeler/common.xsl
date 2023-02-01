@@ -53,6 +53,9 @@ bunu yapmak yerine xml:id'lerle değişmez id'ler oluşturmak daha iyidir. -->
 <xsl:param name="html.ext">.html</xsl:param>
 <xsl:param name="VERSION">-special (derived from DocBook XSL v1.79.1 for Turkish Linux Documentation Project by Nilgün Belma Bugüner - nilgun (at) tlbp.org.tr)</xsl:param>
 <xsl:param name="chunker.output.encoding">UTF-8</xsl:param>
+<xsl:param name="chunker.output.omit-xml-declaration" select="'yes'"/>
+<xsl:param name="chunker.output.doctype-public" select="'-//W3C//DTD XHTML 1.0 Transitional//EN'"/>
+<xsl:param name="chunker.output.doctype-system" select="'http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd'"/>
 <!-- hata ayıklama/geliştirme için "yes" sunumda "no" olmalı" -->
 <xsl:param name="chunker.output.indent">yes</xsl:param>
 <xsl:param name="l10n.xml" select="document('y11e.xml')"/>
