@@ -13,7 +13,7 @@
   <xsl:call-template name="make.toc">
     <xsl:with-param name="toc-context" select="$toc-context"/>
     <xsl:with-param name="toc.title.p" select="$toc.title.p"/>
-    <xsl:with-param name="nodes" select="d:book|d:setindex|d:set"/>
+    <xsl:with-param name="nodes" select="d:book|d:setindex|d:set|d:dictionary"/>
   </xsl:call-template>
 </xsl:template>
 
@@ -50,11 +50,17 @@
   <xsl:param name="toc-context" select="."/>
   <xsl:param name="toc.title.p" select="true()"/>
 
+ <xsl:if test="normalize-space(processing-instruction('dbhtml')) = 'chunkthis'">
+  <div class="toc-title">İçindekiler</div>
+ </xsl:if>
+
   <xsl:call-template name="make.toc">
     <xsl:with-param name="toc-context" select="$toc-context"/>
     <xsl:with-param name="toc.title.p" select="$toc.title.p"/>
-    <xsl:with-param name="nodes" select="d:section|d:sect1|d:sect2|d:sect3|d:sect4|d:sect5
-                                 |d:refentry|d:bridgehead[$bridgehead.in.toc != 0]"/>
+    <xsl:with-param name="nodes" select="d:section|d:sect1
+    |d:sect2[normalize-space(parent::d:sect1/processing-instruction('dbhtml')) = 'chunkthis'][not(@userlevel)]
+    |d:sect3|d:sect4|d:sect5
+    |d:refentry|d:bridgehead[$bridgehead.in.toc != 0]"/>
 
   </xsl:call-template>
 </xsl:template>

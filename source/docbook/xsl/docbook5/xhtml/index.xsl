@@ -17,6 +17,29 @@ xmlns="http://www.w3.org/1999/xhtml" version="1.0">
 
 <!-- ==================================================================== -->
 
+<xsl:template match="d:dictionary">
+  <!-- TLBP sözlüğü -->
+
+  <section class="{name(.)}">
+    <xsl:apply-templates select="." mode="common.html.attributes"/>
+    <xsl:call-template name="id.attribute">
+      <xsl:with-param name="conditional" select="0"/>
+    </xsl:call-template>
+    
+    <xsl:call-template name="dictionary.titlepage"/>
+    <xsl:apply-templates/>
+
+    <xsl:choose>
+      <xsl:when test="@remap = 'dict-en'">
+        <xsl:call-template name="generate-en-dict"/>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:call-template name="generate-tr-dict"/>
+      </xsl:otherwise>
+    </xsl:choose>
+  </section>
+</xsl:template>
+
 <xsl:template match="d:index">
   <!-- some implementations use completely empty index tags to indicate -->
   <!-- where an automatically generated index should be inserted. so -->

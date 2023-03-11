@@ -3,7 +3,7 @@
       docbooc/xsl/belgeler/common.xsl
      ********************************************************************-->
 <!--
-   Copyright © 2002-2021 Nilgün Belma Bugüner <nilgun@tlbp·gen·tr>
+   Copyright © 2002-2021 Nilgün Belma Bugüner <https://github.com/nilgun>
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU Affero General Public License as published
    by the Free Software Foundation, either version 3 of the License, or
@@ -43,6 +43,8 @@
 <xsl:import href="preliminary.xsl"/>
 <xsl:import href="reftoc.xsl"/>
 <xsl:import href="maketoc.xsl"/>
+<xsl:import href="proto.xsl"/>
+<xsl:import href="autodict.xsl"/>
 <!-- rastgele id üretimi durduruldu. Gereksiz güncellemeler yaratıyor.
 Açmak gerekirse tlbp-chunk-common.xsl içinde href.target.uri template
 içinde 820.satırda "and $object/@xml:id" koşulunu ve (tlbp) reftoc.xsl
@@ -90,6 +92,7 @@ set ve book öntanımlı olarak ilk başlıkları listeler.
 <xsl:param name="admon.graphics.path">images/xsl/</xsl:param>
 <xsl:param name="callout.graphics.path">images/xsl/callouts/</xsl:param>
 <xsl:param name="navig.graphics.path">images/xsl/</xsl:param>
+<xsl:param name="generate.section.toc.level" select="2"/>
 <xsl:param name="generate.toc">
 appendix  toc,title
 article/appendix  nop
@@ -109,7 +112,16 @@ sect5     nop
 section   nop
 set       toc,title
 </xsl:param>
+<!-- Seçimlik olarak sect1 altında <?dbhtml chunkthis?> pi ile sect2'leri
+chunk edebiliyoruz. (yukarıda sect1 nop olsa bile). Yalnız chunk edilen sect1'lerde
+toc üretiyoruz. Toc'un metnin alt veya üstünde kalması preliminary etiketi ile
+ayarlanabiliyor (varsa toc metnin altında, yoksa üstünde). İlk sect2 @userlevel
+varlığına bağlı olarak (değeri önemsiz, notchunk yazdığını varsayıyoruz)
+@userlevel varsa o ilk sect2 chunk edilmiyor, yoksa o ilk sect2 chunk ediliyor.
+Navigation bunlara uygun olarak değişiyor. -->
+<xsl:param name="part.autolabel">1</xsl:param>
 <xsl:param name="label.from.part">1</xsl:param>
+<xsl:param name="component.label.includes.part.label" select="1"/>
 <!-- sözlük yapılandırılınca silinecek -->
 <xsl:template match="d:dicterm|d:english|d:turkish"/>
 
@@ -417,19 +429,19 @@ set       toc,title
 </xsl:template>
 
 <xsl:template match="d:keyword">
-  <code class="keyword"><xsl:apply-templates/></code>
+  <xsl:call-template name="inline.monoseq"/>
 </xsl:template>
 
 <xsl:template match="d:operator">
-  <code class="operator"><xsl:apply-templates/></code>
+  <xsl:call-template name="inline.boldmonoseq"/>
+</xsl:template>
+
+<xsl:template match="d:type">
+  <xsl:call-template name="inline.monoseq"/>
 </xsl:template>
 
 <xsl:template match="d:statement">
-  <code class="statement"><xsl:apply-templates/></code>
-</xsl:template>
-
-<xsl:template match="d:varname">
-  <code class="varname"><xsl:apply-templates/></code>
+  <xsl:call-template name="inline.boldmonoseq"/>
 </xsl:template>
 
 <xsl:template name="string.replace">
@@ -979,10 +991,6 @@ footnote text gets an id of #ftn.@id. They cross link to each other. -->
   <tt><xsl:apply-templates/></tt>
 </xsl:template>
 
-<xsl:template match="d:structname">
- <code><xsl:call-template name="inline.boldseq"/></code>
-</xsl:template>
-
 <xsl:template match="d:optional|d:structfield">
   <tt><xsl:apply-templates/></tt>
 </xsl:template>
@@ -995,5 +1003,6 @@ subtitle|turkish|titleabbrev"/>
    <xsl:apply-templates/>
  </pre>
 </xsl:template>
+
 
 </xsl:stylesheet>

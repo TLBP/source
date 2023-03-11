@@ -76,6 +76,14 @@ element label.</para>
   <!-- no label -->
 </xsl:template>
 
+<xsl:template match="d:dictionary" mode="label.markup">
+  <!-- no label -->
+  <xsl:if test="not (preceding-sibling::d:dictionary)">
+  <para/><hr/>
+  </xsl:if>
+
+</xsl:template>
+
 <xsl:template match="d:preface" mode="label.markup">
   <xsl:choose>
     <xsl:when test="@label">

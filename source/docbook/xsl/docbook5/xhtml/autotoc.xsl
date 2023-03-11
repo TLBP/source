@@ -502,7 +502,7 @@ xmlns="http://www.w3.org/1999/xhtml" version="1.0">
   </xsl:call-template>
 </xsl:template>
 
-<xsl:template match="d:index" mode="toc">
+<xsl:template match="d:index|d:dictionary" mode="toc">
   <xsl:param name="toc-context" select="."/>
 
   <!-- If the index tag is not empty, it should be it in the TOC -->

@@ -372,6 +372,25 @@ xmlns:exsl="http://exslt.org/common" xmlns:cf="http://docbook.sourceforge.net/xm
       </xsl:if>
     </xsl:when>
 
+    <xsl:when test="self::d:dictionary">
+      <xsl:choose>
+        <xsl:when test="/d:set">
+          <!-- in a set, make sure we inherit the right book info... -->
+          <xsl:apply-templates mode="recursive-chunk-filename" select="parent::*">
+            <xsl:with-param name="recursive" select="true()"/>
+          </xsl:apply-templates>
+        </xsl:when>
+        <xsl:otherwise>
+        </xsl:otherwise>
+      </xsl:choose>
+      
+      <xsl:text>dc</xsl:text>
+      <xsl:number level="any" format="01"/>
+      <xsl:if test="not($recursive)">
+        <xsl:value-of select="$html.ext"/>
+      </xsl:if>
+    </xsl:when>
+    
     <xsl:when test="self::d:topic">
       <xsl:choose>
         <xsl:when test="/d:set">
@@ -548,7 +567,7 @@ xmlns:exsl="http://exslt.org/common" xmlns:cf="http://docbook.sourceforge.net/xm
   </xsl:choose>
 </xsl:template>
 
-<xsl:template match="d:setindex                      |d:book/d:index                      |d:article/d:index                      |d:part/d:index">
+<xsl:template match="d:dictionary|d:setindex                      |d:book/d:index                      |d:article/d:index                      |d:part/d:index">
   <!-- some implementations use completely empty index tags to indicate -->
   <!-- where an automatically generated index should be inserted. so -->
   <!-- if the index is completely empty, skip it. -->

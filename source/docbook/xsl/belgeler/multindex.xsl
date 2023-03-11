@@ -4,7 +4,7 @@
 <!ENTITY lowercase "'abcçdefgğhıijklmnoöpqrsştuüvwxyz'">
 <!ENTITY uppercase "'ABCÇDEFGĞHIİJKLMNOÖPQRSŞTUÜVWXYZ'">
 <!ENTITY allcases  "'abcçdefgğhıijklmnoöpqrsştuüvwxyzABCÇDEFGĞHIİJKLMNOÖPQRSŞTUÜVWXYZ'">
-<!ENTITY sortcases "'ABCCDEFGGHIIJKLMNOOPQRSSTUUVWXYZABCCDEFGGHIIJKLMNOOPQRSSTUUVWXYZ'">
+<!ENTITY sortcases "'abcçdefgğhıijklmnoöpqrsştuüvwxyzABCÇDEFGĞHIİJKLMNOÖPQRSŞTUÜVWXYZ'">
 
 <!ENTITY primary   'concat(d:primary/@sortas, d:primary, d:see/@sortas, d:see)'>
 <!ENTITY scope     'concat($target, d:primary/@sortas, d:primary, d:see/@sortas, d:see)'>
@@ -13,19 +13,20 @@
 <!ENTITY fourth    'concat(d:fourth/@sortas, d:fourth)'>
 
 <!-- Ayrı bir dosya oluşturabilenler -->
-<!ENTITY section   '(ancestor-or-self::d:set
+<!ENTITY section    '(ancestor-or-self::d:set
                      |ancestor-or-self::d:book
                      |ancestor-or-self::d:part
                      |ancestor-or-self::d:reference
                      |ancestor-or-self::d:chapter
                      |ancestor-or-self::d:appendix
                      |ancestor-or-self::d:preface
+                     |ancestor-or-self::d:article
                      |ancestor-or-self::d:sect1
-                     |ancestor-or-self::d:sect2[@userlevel="chunkthis"]
                      |ancestor-or-self::d:refentry
                      |ancestor-or-self::d:bibliography
                      |ancestor-or-self::d:glossary
-                     |ancestor-or-self::d:index)[last()]'>
+                     |ancestor-or-self::d:index
+                     |ancestor-or-self::d:sect2[normalize-space(parent::d:sect1/processing-instruction("dbhtml")) = "chunkthis"][not(@userlevel)])[last()]'>
 
 <!-- Bir title'ı olanlar -->
 <!ENTITY section.t  '(ancestor-or-self::d:set
@@ -51,7 +52,8 @@
 
 <!ENTITY sep '" "'>
 ]>
-<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:d="http://docbook.org/ns/docbook"
+<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" 
+xmlns:d="http://docbook.org/ns/docbook"
 xmlns:exslt="http://exslt.org/common"
 xmlns:xl="http://www.w3.org/1999/xlink"
 xmlns="http://www.w3.org/1999/xhtml"
@@ -60,9 +62,6 @@ exclude-result-prefixes="xl exslt d"
 version="1.0">
 
 <!-- ==================================================================== -->
-<!-- Jeni Tennison gets all the credit for what follows.
-     I think I understand it :-) Anyway, I've hacked it a bit, so the
-     bugs are mine. -->
 <xsl:key name="term"
          match="d:indexterm"
          use="@linkend"/>
@@ -113,13 +112,18 @@ version="1.0">
 
 <xsl:key name="sections" match="*[@id or @xml:id]" use="@id|@xml:id"/>
 
-
 <xsl:template name="generate-multi-index">
   <xsl:param name="target"></xsl:param>
   <xsl:variable name="others"
     select="key('term', $target)[not(contains(&allcases;, substring(&primary;, 1, 1)))]"/>
 
   <div class="index">
+    <div class="letters">
+      <xsl:call-template name="multi-index.toc.letters">
+        <xsl:with-param name="target" select="$target"/>
+        <xsl:with-param name="letternum" select="0"/>
+      </xsl:call-template>
+    </div>
     <xsl:if test="$others">
       <div class="indexdiv">
         <h3>
@@ -133,7 +137,7 @@ version="1.0">
 
             <xsl:with-param name="is.first" select="1"/>
             <xsl:with-param name="target" select="$target"/>
-            <xsl:sort select="&primary;"/>
+            <xsl:sort select="concat(&primary;, &sep;, &secondary;, &sep;, &tertiary;)"/>
           </xsl:apply-templates>
         </dl>
       </div>
@@ -142,6 +146,31 @@ version="1.0">
       <xsl:with-param name="target" select="$target"/>
     </xsl:call-template>
   </div>
+</xsl:template>
+
+<xsl:template name="multi-index.toc.letters">
+  <xsl:param name="target"></xsl:param>
+  <xsl:param name="letternum" select="0"/>
+
+  <xsl:if test="string-length(&uppercase;) > $letternum">
+   <xsl:variable name="letter" select="substring(&uppercase;,$letternum + 1,1)"/>
+   <xsl:variable name="burdakiler" select="key('term', $target)"/>
+   <xsl:variable name="harftekiler" select="$burdakiler[translate(substring(&primary;, 1, 1),&lowercase;,&uppercase;)=$letter]"/>
+
+    <xsl:if test="count($harftekiler) > 0">
+     <a>
+      <xsl:attribute name="href">
+       <xsl:value-of select="concat('#', $target, '-ltr-',$letter)"/>
+      </xsl:attribute>
+      <xsl:value-of select="concat('&#160;',$letter, '&#160;')"/>
+     </a><xsl:text>&#160;&#160;&#160;</xsl:text>
+    </xsl:if>
+
+    <xsl:call-template name="multi-index.toc.letters">
+      <xsl:with-param name="letternum" select="$letternum + 1"/>
+      <xsl:with-param name="target" select="$target"/>
+    </xsl:call-template>
+  </xsl:if>
 </xsl:template>
 
 <xsl:template name="alphabetical-index">
@@ -156,17 +185,20 @@ version="1.0">
 
     <xsl:if test="count($harftekiler) > 0">
       <div class="indexdiv">
+        <xsl:attribute name="id">
+         <xsl:value-of select="concat(@xml:id, '-ltr-',$letter)"/>
+        </xsl:attribute>
         <h3><xsl:value-of select="$letter"/></h3>
         <dl>
 <!--xsl:message>
 <xsl:value-of select="$letter"/>; <xsl:value-of select="count($burdakiler)"/>; <xsl:value-of select="count($harftekiler)"/>;
 </xsl:message-->
-              <xsl:apply-templates select="$harftekiler[count(.|key('scope', &scope;)[1]) = 1]"
-                                      mode="index-primary">
-                <xsl:with-param name="is.first" select="1"/>
-                <xsl:with-param name="target" select="$target"/>
-                <xsl:sort select="translate(&primary;,&allcases;,&sortcases;)"/>
-              </xsl:apply-templates>
+         <xsl:apply-templates select="$harftekiler[count(.|key('scope', &scope;)[1]) = 1]"
+                                 mode="index-primary">
+           <xsl:with-param name="is.first" select="1"/>
+           <xsl:with-param name="target" select="$target"/>
+           <xsl:sort select="concat(&primary;, &sep;, &secondary;, &sep;, &tertiary;)"/>
+         </xsl:apply-templates>
         </dl>
       </div>
     </xsl:if>
@@ -239,7 +271,7 @@ version="1.0">
         <xsl:apply-templates select="$refs[d:secondary and count(.|key('secondary', concat(&primary;, &sep;, &secondary;))[1]) = 1]"
                              mode="index-secondary">
           <xsl:with-param name="target" select="$target"/>
-          <xsl:sort select="translate(&secondary;,&allcases;,&sortcases;)"/>
+          <xsl:sort select="&secondary;"/>
         </xsl:apply-templates>
       </dl>
     </dd>
@@ -259,7 +291,7 @@ version="1.0">
 </xsl:template>
 
 <xsl:template match="d:secondary" mode="alphabetic-index-s">
-  <span class="indexterm">
+  <span name="{.}" class="indexterm">
     <xsl:apply-templates/>
   </span>
 </xsl:template>
@@ -311,7 +343,7 @@ version="1.0">
         <xsl:apply-templates select="$refs[d:tertiary and count(.|key('tertiary', concat($key, &sep;, &tertiary;))[1]) = 1]"
                              mode="index-tertiary">
           <xsl:with-param name="target" select="$target"/>
-          <xsl:sort select="translate(&tertiary;,&allcases;,&sortcases;)"/>
+          <xsl:sort select="&tertiary;"/>
         </xsl:apply-templates>
       </dl>
     </dd>
@@ -355,7 +387,7 @@ version="1.0">
         <xsl:apply-templates select="$refs[d:fourth and count(.|key('fourth', concat($key, &sep;, &fourth;))[1]) = 1]"
                              mode="index-fourth">
           <xsl:with-param name="target" select="$target"/>
-          <xsl:sort select="translate(&fourth;,&allcases;,&sortcases;)"/>
+          <xsl:sort select="&fourth;"/>
         </xsl:apply-templates>
       </dl>
     </dd>
@@ -403,25 +435,20 @@ version="1.0">
 <xsl:template match="d:indexterm" mode="reference-b">
   <xsl:param name="target"/>
   <xsl:if test="@linkend = $target">
-  <xsl:variable name="targets" select="key('id',@linkend)"/>
-  <xsl:variable name="this" select="$targets[1]"/>
-  <xsl:variable name="title">
-    <xsl:apply-templates select="&section.t;" mode="title.markup"/>
-  </xsl:variable>
+   <xsl:variable name="targets" select="key('id',@linkend)"/>
+   <xsl:variable name="this" select="$targets[1]"/>
+   <xsl:variable name="title">
+     <xsl:apply-templates select="&section.t;" mode="title.markup"/>
+   </xsl:variable>
 
-  <xsl:variable name="basename">
-    <xsl:apply-templates mode="chunk-filename" select="&section;"/>
-  </xsl:variable>
-
-  <a>
-    <xsl:attribute name="href">
-      <xsl:value-of select="concat($basename, '#')"/>
-      <xsl:call-template name="object.id">
-        <xsl:with-param name="object" select="."/>
-      </xsl:call-template>
-    </xsl:attribute>
-    <xsl:value-of select="$title"/> <!-- text only -->
-  </a>
+   <a>
+     <xsl:attribute name="href">
+       <xsl:call-template name="href.target">
+         <xsl:with-param name="object" select="."/>
+       </xsl:call-template>
+     </xsl:attribute>
+     <xsl:value-of select="$title"/> <!-- text only -->
+   </a>
   </xsl:if>
 </xsl:template>
 <!--

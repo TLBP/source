@@ -156,7 +156,7 @@ xmlns:doc="http://nwalsh.com/xsl/documentation/1.0"
   <xsl:value-of select="'0'"/>
 </xsl:template>
 
-<xsl:template match="d:section|d:sect1|d:sect2|d:sect3|d:sect4|d:sect5" 
+<xsl:template match="d:section|d:sect1|d:sect2|d:sect3|d:sect4|d:sect5"
               mode="is.autonumber">
   <xsl:call-template name="label.this.section"/>
 </xsl:template>
@@ -240,12 +240,12 @@ xmlns:doc="http://nwalsh.com/xsl/documentation/1.0"
       <xsl:when test="self::d:equation and not(d:title) and not(d:info/d:title)">
          <xsl:value-of select="'xref-number'"/>
       </xsl:when>
-      <xsl:when test="string($autonumber) != 0 
+      <xsl:when test="string($autonumber) != 0
                       and $number-and-title-template != 0
                       and $xref.with.number.and.title != 0">
          <xsl:value-of select="'xref-number-and-title'"/>
       </xsl:when>
-      <xsl:when test="string($autonumber) != 0 
+      <xsl:when test="string($autonumber) != 0
                       and $number-template != 0">
          <xsl:value-of select="'xref-number'"/>
       </xsl:when>
@@ -352,7 +352,7 @@ xmlns:doc="http://nwalsh.com/xsl/documentation/1.0"
     </xsl:choose>
   </xsl:variable>
 
-<!-- 
+<!--
   <xsl:message>
     <xsl:text>object.xref.markup: </xsl:text>
     <xsl:value-of select="local-name(.)"/>
@@ -480,7 +480,9 @@ xmlns:doc="http://nwalsh.com/xsl/documentation/1.0"
                   <xsl:copy-of select="$title"/>
                 </xsl:when>
                 <xsl:when test="$purpose = 'xref'">
-                  <xsl:apply-templates select="." mode="titleabbrev.markup">
+                  <!--xsl:apply-templates select="." mode="titleabbrev.markup"
+                  titleabbrev etiketini titledescr gibi kullanıyoruz! 20230212-nbb -->
+                  <xsl:apply-templates select="." mode="title.markup">
                     <xsl:with-param name="allow-anchors" select="$allow-anchors"/>
                     <xsl:with-param name="verbose" select="$verbose"/>
                   </xsl:apply-templates>
@@ -790,11 +792,11 @@ xmlns:doc="http://nwalsh.com/xsl/documentation/1.0"
       </xsl:when>
     </xsl:choose>
   </xsl:if>
-  
+
   <!-- special case: use regular xref template if just turning off page -->
   <xsl:if test="($pagetype = 'nopage' or $docnametype = 'nodocname')
                   and $referrer.local.name != 'olink'
-                  and $labeltype = '' 
+                  and $labeltype = ''
                   and $titletype = ''">
     <xsl:apply-templates select="." mode="object.xref.template">
       <xsl:with-param name="purpose" select="$purpose"/>
@@ -849,7 +851,7 @@ xmlns:doc="http://nwalsh.com/xsl/documentation/1.0"
     </xsl:choose>
 
   </xsl:if>
-  
+
 </xsl:template>
 
 </xsl:stylesheet>

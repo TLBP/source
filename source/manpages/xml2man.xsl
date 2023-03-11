@@ -23,7 +23,7 @@
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
   xmlns:d="http://docbook.org/ns/docbook"
   xmlns:xl="http://www.w3.org/1999/xlink"
-  extension-element-prefixes="d xlink"
+  extension-element-prefixes="d xl"
   version='1.0'>
 
 <xsl:key name="id" match="*" use="@id|@xml:id"/>
@@ -1041,16 +1041,6 @@
      </xsl:choose>
     </xsl:otherwise>
   </xsl:choose>
-</xsl:template>
-
-<xsl:template match="d:para" mode="legalnotice">
- <xsl:variable name="p">
-  <xsl:apply-templates/>
- </xsl:variable>
- <xsl:call-template name="lines">
-   <xsl:with-param name="string" select="$p"/>
- </xsl:call-template>
-
 </xsl:template>
 
 </xsl:stylesheet>

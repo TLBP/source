@@ -29,9 +29,8 @@
 ]>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
  xmlns:d="http://docbook.org/ns/docbook"
- xmlns:t="http://tlbp.gen.tr/ns/tlbp"
  xmlns="http://www.w3.org/1999/xhtml"
- exclude-result-prefixes="d t" version='1.0'>
+ exclude-result-prefixes="d" version='1.0'>
 
 <xsl:key name="ref-letter"
          match="d:refnamediv"

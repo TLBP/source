@@ -128,7 +128,9 @@ xmlns="http://www.w3.org/1999/xhtml" version="1.0">
       </xsl:call-template>
     </xsl:variable>
 
-    <xsl:if test="contains($toc.params, 'toc')                   and $generate.section.toc.level &gt;= 1">
+    <xsl:if test="$generate.section.toc.level &gt;= 1 and
+                  (contains($toc.params, 'toc') or
+                  normalize-space(processing-instruction('dbhtml')) = 'chunkthis')">
       <xsl:call-template name="section.toc">
         <xsl:with-param name="toc.title.p" select="contains($toc.params, 'title')"/>
       </xsl:call-template>
