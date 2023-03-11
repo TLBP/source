@@ -22,10 +22,10 @@ xmlns:exsl="http://exslt.org/common"
 
   <html>
     <xsl:call-template name="root.attributes"/>
-    <xsl:call-template name="html.head">
+    <xsl:call-template name="html.head"/><!--
       <xsl:with-param name="prev" select="$prev"/>
       <xsl:with-param name="next" select="$next"/>
-    </xsl:call-template>
+    </xsl:call-template-->
 
     <body>
       <xsl:call-template name="body.attributes"/>

@@ -234,7 +234,7 @@
   |preceding::d:index[$generate.index != 0] [parent::d:article or parent::d:book or parent::d:part][1]
   |preceding::d:setindex[$generate.index != 0][1]
   |preceding::d:dictionary[1]
-  |ancestor::d:set
+  |ancestor::d:set[1]
   |ancestor::d:book[1]
   |ancestor::d:preface[1]
   |ancestor::d:chapter[1]
@@ -278,8 +278,8 @@
   |descendant::d:part[1]
   |descendant::d:reference[1]
   |descendant::d:refentry[1]
-  |$next-v1              |
-  $next-v2)[1]"/>
+  |$next-v1
+  |$next-v2)[1]"/>
 
   <xsl:call-template name="process-chunk">
     <xsl:with-param name="prev" select="$prev"/>
@@ -1022,7 +1022,7 @@
      <div class="dropdown" style="width:33%">
       <xsl:variable name="href">
        <xsl:choose>
-        <xsl:when test="name(.)!='book' and count($prev)&gt;0">
+        <xsl:when test="name(.)!='set' and name(.)!='book' and count($prev)&gt;0">
          <xsl:call-template name="href.target">
           <xsl:with-param name="object" select="$prev"/>
          </xsl:call-template>
@@ -1034,7 +1034,7 @@
       </xsl:variable>
       <button type="button" class="dropbtn" onclick="window.location.assign('{$href}')">
        <xsl:choose>
-        <xsl:when test="name(.)!='book' and count($prev)&gt;0">
+        <xsl:when test="name(.)!='set' and name(.)!='book' and count($prev)&gt;0">
          <xsl:text>Önceki</xsl:text>
         </xsl:when>
         <xsl:otherwise>
@@ -1042,7 +1042,7 @@
         </xsl:otherwise>
        </xsl:choose>
       </button>
-      <xsl:if test="name(.)!='book' and count($prev)&gt;0">
+      <xsl:if test="name(.)!='set' and name(.)!='book' and count($prev)&gt;0">
        <div class="dropdown-content">
          <xsl:apply-templates select="$prev" mode="object.title.markup"/>
        </div>
@@ -1079,7 +1079,7 @@
      <div class="dropdown" style="width:33%">
       <xsl:variable name="href">
        <xsl:choose>
-        <xsl:when test="name($next)!='book' and count($next)&gt;0">
+        <xsl:when test="name($next)!='set' and name($next)!='book' and count($next)&gt;0">
          <xsl:call-template name="href.target">
           <xsl:with-param name="object" select="$next"/>
          </xsl:call-template>
@@ -1091,7 +1091,7 @@
       </xsl:variable>
       <button type="button" class="dropbtn" onclick="window.location.assign('{$href}')">
        <xsl:choose>
-        <xsl:when test="name($next)!='book' and count($next)&gt;0">
+        <xsl:when test="name($next)!='set' and name($next)!='book' and count($next)&gt;0">
          <xsl:text>Sonraki</xsl:text>
         </xsl:when>
         <xsl:otherwise>
@@ -1099,7 +1099,7 @@
         </xsl:otherwise>
        </xsl:choose>
       </button>
-      <xsl:if test="name($next)!='book' and count($next)&gt;0">
+      <xsl:if test="name($next)!='set' and name($next)!='book' and count($next)&gt;0">
        <div class="dropdown-content">
          <xsl:apply-templates select="$next" mode="object.title.markup"/>
        </div>
