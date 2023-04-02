@@ -319,8 +319,13 @@
   |preceding::d:index[$generate.index != 0][parent::d:article or parent::d:book or parent::d:part][1]
   |preceding::d:setindex[$generate.index != 0][1]
   |preceding::d:dictionary[1]
-  |$prev-v1
-  |$prev-v2)[last()]"/>
+  |$prev-v2
+  |preceding::d:sect1[1]
+  )[last()]"/>
+  <!--Önceki dalın en ucuna değil önceki en uzun dalın en ucuna gidiyor
+  Örneğin, 3.2.5'e değil 3.2.2.11'e gidiyor.
+  (Doğrusu: atası önceki ata dal olan en küçük çocuk veya torun)
+  |$prev-v1)[last()]"/>-->
 
   <xsl:variable name="next-v1" select="(following::d:sect1[$chunk.section.depth &gt; 0 and not(ancestor::*/processing-instruction('dbhtml')[normalize-space(.) ='stop-chunking'])][1]              |following::d:sect2[$chunk.section.depth &gt; 1 and not(ancestor::*/processing-instruction('dbhtml')[normalize-space(.) ='stop-chunking']) and count(preceding-sibling::d:sect2) &gt; 0][1]              |following::d:sect2[normalize-space(parent::d:sect1/processing-instruction('dbhtml')) = 'chunkthis'][1]   |following::d:sect3[$chunk.section.depth &gt; 2 and not(ancestor::*/processing-instruction('dbhtml')[normalize-space(.) ='stop-chunking'])][1]              |following::d:sect4[$chunk.section.depth &gt; 3 and not(ancestor::*/processing-instruction('dbhtml')[normalize-space(.) ='stop-chunking'])][1]              |following::d:sect5[$chunk.section.depth &gt; 4 and not(ancestor::*/processing-instruction('dbhtml')[normalize-space(.) ='stop-chunking'])][1]              |following::d:section[$chunk.section.depth &gt; count(ancestor::d:section) and not(ancestor::*/processing-instruction('dbhtml')[normalize-space(.) ='stop-chunking'])][1])[1]"/>
 

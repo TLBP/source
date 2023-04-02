@@ -52,7 +52,7 @@
 
 <!ENTITY sep '" "'>
 ]>
-<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" 
+<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
 xmlns:d="http://docbook.org/ns/docbook"
 xmlns:exslt="http://exslt.org/common"
 xmlns:xl="http://www.w3.org/1999/xlink"
@@ -435,19 +435,17 @@ version="1.0">
 <xsl:template match="d:indexterm" mode="reference-b">
   <xsl:param name="target"/>
   <xsl:if test="@linkend = $target">
-   <xsl:variable name="targets" select="key('id',@linkend)"/>
-   <xsl:variable name="this" select="$targets[1]"/>
    <xsl:variable name="title">
      <xsl:apply-templates select="&section.t;" mode="title.markup"/>
    </xsl:variable>
-
    <a>
-     <xsl:attribute name="href">
-       <xsl:call-template name="href.target">
-         <xsl:with-param name="object" select="."/>
-       </xsl:call-template>
-     </xsl:attribute>
-     <xsl:value-of select="$title"/> <!-- text only -->
+    <xsl:attribute name="href">
+     <xsl:call-template name="href.target">
+      <xsl:with-param name="toc-context" select="$target"/>
+      <xsl:with-param name="object" select="."/>
+     </xsl:call-template>
+    </xsl:attribute>
+    <xsl:value-of select="$title"/> <!-- text only -->
    </a>
   </xsl:if>
 </xsl:template>

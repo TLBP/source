@@ -136,7 +136,7 @@
     <xsl:variable name="role" select="''"/>
 
     <xsl:if test="(./*/d:abstract) and name($toc-context) != name(.)
-                 and (name($toc-context) = 'book' or name($toc-context) = 'set' or name($toc-context) = 'part')">
+                 and (name($toc-context) = 'book' or name($toc-context) = 'part')">
      <xsl:if test="(./*/d:titleabbrev)">
        <xsl:text>  -  </xsl:text>
        <xsl:value-of select="./*/d:titleabbrev"/>
@@ -256,5 +256,6 @@
     </xsl:when>
   </xsl:choose>
 </xsl:template>
+
 
 </xsl:stylesheet>

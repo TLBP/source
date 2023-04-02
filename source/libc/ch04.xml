@@ -3,6 +3,937 @@
         glibc/ch04.xml,v2.36, GFDL,LGPL, NBB, 2023
      ******************************************************************** -->
 <part xml:id="glibc-Character-Handling">
-  <title>Karakterle Çalışma</title>
-  <titleabbrev>Karakter sınama ve dönüşüm işlevleri.</titleabbrev>
+ <title>Karakterle Çalışma</title>
+ <titleabbrev>Karakter sınama ve dönüşüm işlevleri.</titleabbrev>
+ <preliminary>
+  <para>
+   <indexterm linkend="glibc-pg"><primary>ctype.h</primary></indexterm>
+   Karakterler ve dizgelerle çalışan yazılımların genellikle bir karakteri, alfabetik, rakam, boşluk, vs. olarak sınıflandırması ve karakterler üzerinde büyük-küçük harf dönüşümleri gerçekleştirmesi gerekir. &ctype.h; başlık dosyasındaki işlevler bu amaç içindir.
+  </para>
+  <para>
+   Yerel ve karakter kümesi seçimi karakter kodlarının sınflandırmalarını değiştirebildiğinden bu işlevlerin tümü geçerli yerelden etkilenir. Daha teknik bir söylemle bu işlevler, <link linkend="glibc-Locale-Categories">yerel sınıflardan</link> karakter sınıflandırması ile ilgili olan <varname>LC_CTYPE</varname> sınıfından etkilenir.
+  </para>
+  <para>
+   &isoc; standardı iki farklı işlev kümesi belirtir. Bu işlev kümelerinden biri <type>char</type> türünden tek baytlık karakterlerle diğeri <type>wchar_t</type> türünden çok baytlı (geniş) karakterlerle çalışır. (Bkz. <xref linkend="glibc-Extended-Char-Intro"/>).
+  </para>
+ </preliminary>
+ <chapter xml:id="glibc-Classification-of-Characters">
+  <title>Karakterlerin Sınıflandırılması</title>
+  <titleabbrev>Karakterlerin harf mi, rakam mı, noktalama işareti mi, vs. diye sınanması.</titleabbrev>
+  <para>
+   <indexterm linkend="glibc-cp"><primary>karakterler</primary><secondary>sınanması</secondary></indexterm>
+   <indexterm linkend="glibc-cp"><primary>karakterler</primary><secondary>sınıflandırılması</secondary></indexterm>
+   <indexterm linkend="glibc-cp"><primary>sınıflandırılma</primary><secondary>karakterler</secondary></indexterm>
+   <indexterm linkend="glibc-cp"><primary>karakterler</primary><secondary>niteleyiciler</secondary></indexterm>
+   <indexterm linkend="glibc-cp"><primary>niteleyiciler</primary><secondary>karakterler</secondary></indexterm>
+   Bu kısımda karakterlerin sınıflandırılmasında kullanılan işlevler açıklanmıştır.  Örneğin <function>isalpha</function> işlevi bir karakterin alfabetik karakterlerden biri olup olmadığına bakar. Bağımsız değişken olarak bir karakter alır ve bu karakter alfabetik karakterlerden biri ise sıfırdan farklı bir tamsayı, değilse sıfır ile döner. Aşağıdaki gibi kullanılabilir:
+  </para>
+  <example>
+   <screen>if (isalpha (c))
+printf (&quot;`%c' abecesel karakterdir.\n&quot;, c);
+</screen>
+  </example>
+  <para>
+   Bu kısımdaki her işlev bir karakterin belli bir sınıfa üye olup olmadığına bakar ve bu işlevlerin isimleri daima <code>is</code> ile başlar. Herbiri bağımsız değişken olarak tek bir (ASCII) karakter alır ve mantıksal bir değer olarak değerlendirilebilen <type>int</type> türünden bir değerle döner. Karakter bağımsız değişkeni <type>int</type> türünden olmalıdır (tek bir bayt!, çok baytlı, UTF-8 karakterler başka bölümde işlenmiştir). Gerçek karakter yerine <varname>EOF</varname> gibi bir sabit de verilebilir.
+  </para>
+  <para>
+   Her karakterin öznitelikleri yerele göre değişiklik gösterir. Yereller hakkında daha fazla bilgi <xref linkend="glibc-Locales"/> bölümünde bulunabilir.
+  </para>
+  <para>
+   <indexterm linkend="glibc-pg"><primary>ctype.h</primary></indexterm>
+   Bu işlevler &ctype.h; başlık dosyasında bildirilmiştir.
+  </para>
+  <indexterm linkend="glibc-cp" xml:id="glibc-cp-islower"><primary>karakterler</primary><secondary>küçük harf</secondary></indexterm>
+  <csynopsis>
+   <indexterm linkend="glibc-fn" xml:id="glibc-fn-islower"><primary>islower</primary></indexterm>
+   <csproto type="işlev">
+    <csname><type>int</type><function>islower</function></csname>
+    <csparam><type>int</type><parameter>c</parameter></csparam>
+   </csproto>
+   <conceptlist>
+    <concept>&mtsafe;</concept>
+    <concept>&assafe;</concept>
+    <concept>&acsafe;</concept>
+   </conceptlist>
+   <para>
+    <parameter>c</parameter> küçük harf ise sıfırdan farklı bir değerle döner. Harfin Latin abecesinden olması şart değildir, herhangi bir abeceden olabilir.
+   </para>
+   <header>&ctype.h;</header>
+  </csynopsis>
+  <csynopsis>
+   <indexterm linkend="glibc-fn" xml:id="glibc-fn-isupper"><primary>isupper</primary></indexterm>
+   <indexterm linkend="glibc-cp" xml:id="glibc-cp-isupper"><primary>karakterler</primary><secondary>büyük harf</secondary></indexterm>
+   <csproto type="işlev">
+    <csname><type>int</type><function>isupper</function></csname>
+    <csparam><type>int</type><parameter>c</parameter></csparam>
+   </csproto>
+   <conceptlist>
+    <concept>&mtsafe;</concept>
+    <concept>&assafe;</concept>
+    <concept>&acsafe;</concept>
+   </conceptlist>
+   <para>
+    <parameter>c</parameter> büyük harf ise sıfırdan farklı bir değerle döner. Harfin Latin abecesinden olması şart değildir, herhangi bir abeceden olabilir.
+   </para>
+   <header>&ctype.h;</header>
+  </csynopsis>
+  <csynopsis>
+   <indexterm linkend="glibc-fn" xml:id="glibc-fn-isalpha"><primary>isalpha</primary></indexterm>
+   <indexterm linkend="glibc-cp" xml:id="glibc-cp-isalpha"><primary>karakterler</primary><secondary>abecesel</secondary></indexterm>
+   <csproto type="işlev">
+    <csname><type>int</type><function>isalpha</function></csname>
+    <csparam><type>int</type><parameter>c</parameter></csparam>
+   </csproto>
+   <conceptlist>
+    <concept>&mtsafe;</concept>
+    <concept>&assafe;</concept>
+    <concept>&acsafe;</concept>
+   </conceptlist>
+   <para>
+    <parameter>c</parameter> abecesel karakterlerden biri (bir harf) ise sıfırdan farklı bir değerle döner. <function>islower</function> veya <function>isupper</function> işlevi sayısal doğru değeri ile dönüyorsa <code>isalpha</code> işlevi de sayısal doğru değeri ile döner.
+   </para>
+   <para>
+    Bazı yereller ne büyük ne de küçük harf olan ve <code>isalpha</code> işlevinin doğru ile döndüğü ek karakterler içerir. Standart <wordasword>&quot;C&quot;</wordasword> yerelinde böyle bir karakter yoktur.
+   </para>
+   <header>&ctype.h;</header>
+  </csynopsis>
+  <csynopsis>
+   <indexterm linkend="glibc-fn" xml:id="glibc-fn-isdigit"><primary>isdigit</primary></indexterm>
+   <indexterm linkend="glibc-cp" xml:id="glibc-cp-isdigit"><primary>karakterler</primary><secondary>rakam</secondary></indexterm>
+   <indexterm linkend="glibc-cp" xml:id="glibc-cp-isdigita"><primary>rakamlar</primary><secondary>onluk</secondary></indexterm>
+   <indexterm linkend="glibc-cp" xml:id="glibc-cp-isdigitb"><primary>karakterler</primary><secondary>onluk rakamlar</secondary></indexterm>
+   <csproto type="işlev">
+    <csname><type>int</type><function>isdigit</function></csname>
+    <csparam><type>int</type><parameter>c</parameter></csparam>
+   </csproto>
+   <conceptlist>
+    <concept>&mtsafe;</concept>
+    <concept>&assafe;</concept>
+    <concept>&acsafe;</concept>
+   </conceptlist>
+   <para>
+    <parameter>c</parameter> değişkeninin değeri <code>0</code> ile <code>9</code> arasında bir rakam karakteri ise doğru ile döner.
+   </para>
+   <header>&ctype.h;</header>
+  </csynopsis>
+  <csynopsis>
+   <indexterm linkend="glibc-fn" xml:id="glibc-fn-isalnum"><primary>isalnum</primary></indexterm>
+   <indexterm linkend="glibc-cp" xml:id="glibc-cp-isalnum"><primary>karakterler</primary><secondary>abecesayısal</secondary></indexterm>
+   <indexterm linkend="glibc-cp" xml:id="glibc-cp-isalnuma"><primary>karakterler</primary><secondary>alfasayısal</secondary></indexterm>
+   <csproto type="işlev">
+    <csname><type>int</type><function>isalnum</function></csname>
+    <csparam><type>int</type><parameter>c</parameter></csparam>
+   </csproto>
+   <conceptlist>
+    <concept>&mtsafe;</concept>
+    <concept>&assafe;</concept>
+    <concept>&acsafe;</concept>
+   </conceptlist>
+   <para>
+    <parameter>c</parameter> abecesayısal karakter (bir harf veya rakam) ise sıfırdan  farklı bir  değerle döner. Başka bir ifade ile, <function>isalpha</function> veya <function>isdigit</function> doğru ise <code>isalpha</code> da doğrudur.
+   </para>
+   <header>&ctype.h;</header>
+  </csynopsis>
+  <csynopsis>
+   <indexterm linkend="glibc-fn" xml:id="glibc-fn-isxdigit"><primary>isxdigit</primary></indexterm>
+   <indexterm linkend="glibc-cp" xml:id="glibc-cp-isxdigit"><primary>karakterler</primary><secondary>onaltılık rakamlar</secondary></indexterm>
+   <indexterm linkend="glibc-cp" xml:id="glibc-cp-isxdigita"><primary>rakamlar</primary><secondary>onaltılık</secondary></indexterm>
+   <indexterm linkend="glibc-cp" xml:id="glibc-cp-isxdigitb"><primary>onaltılık rakamlar</primary></indexterm>
+   <csproto type="işlev">
+    <csname><type>int</type><function>isxdigit</function></csname>
+    <csparam><type>int</type><parameter>c</parameter></csparam>
+   </csproto>
+   <conceptlist>
+    <concept>&mtsafe;</concept>
+    <concept>&assafe;</concept>
+    <concept>&acsafe;</concept>
+   </conceptlist>
+   <para>
+    <parameter>c</parameter> değişkeninin değeri <code>0</code> ile <code>9</code> arasında bir rakam karakteri veya <code>A</code> ile <code>F</code> arasında büyük ya da <code>a</code> ile <code>f</code> arasında küçük bir harf ise sıfırdan farklı bir değerle döner.
+   </para>
+   <header>&ctype.h;</header>
+  </csynopsis>
+  <csynopsis>
+   <indexterm linkend="glibc-fn" xml:id="glibc-fn-ispunct"><primary>ispunct</primary></indexterm>
+   <indexterm linkend="glibc-cp" xml:id="glibc-cp-ispunct"><primary>karakterler</primary><secondary>noktalama imleri</secondary></indexterm>
+   <indexterm linkend="glibc-cp" xml:id="glibc-cp-ispuncta"><primary>noktalama imleri</primary></indexterm>
+   <csproto type="işlev">
+    <csname><type>int</type><function>ispunct</function></csname>
+    <csparam><type>int</type><parameter>c</parameter></csparam>
+   </csproto>
+   <conceptlist>
+    <concept>&mtsafe;</concept>
+    <concept>&assafe;</concept>
+    <concept>&acsafe;</concept>
+   </conceptlist>
+   <para>
+    <parameter>c</parameter> noktalama imlerinden biri ise doğru ile döner. Noktalama imleri, abecesayısal veya boşluk olmayan görsel karakterlerdir.
+   </para>
+   <header>&ctype.h;</header>
+  </csynopsis>
+  <csynopsis>
+   <indexterm linkend="glibc-fn" xml:id="glibc-fn-isspace"><primary>isspace</primary></indexterm>
+   <indexterm linkend="glibc-cp" xml:id="glibc-cp-isspace"><primary>karakterler</primary><secondary>boşluk karakterleri</secondary></indexterm>
+   <indexterm linkend="glibc-cp" xml:id="glibc-cp-isspacea"><primary>boşluk karakterleri</primary></indexterm>
+   <csproto type="işlev">
+    <csname><type>int</type><function>isspace</function></csname>
+    <csparam><type>int</type><parameter>c</parameter></csparam>
+   </csproto>
+   <conceptlist>
+    <concept>&mtsafe;</concept>
+    <concept>&assafe;</concept>
+    <concept>&acsafe;</concept>
+   </conceptlist>
+   <para>
+    <parameter>c</parameter> bir boşluk karakteri ise doğru ile döner. <wordasword>&quot;C&quot;</wordasword> yerelinde yalnızca aşağıdaki karakterler için doğru döner:
+   </para>
+   <literallayout class="monospaced"><code>' '</code>  (boşluk)
+<code>'\f'</code> (sayfa ileri)
+<code>'\n'</code> (satır sonu)
+<code>'\r'</code> (satır başı)
+<code>'\t'</code> (yatay sekme)
+<code>'\v'</code> (düşey sekme)
+</literallayout>
+   <header>&ctype.h;</header>
+  </csynopsis>
+  <csynopsis>
+   <indexterm linkend="glibc-fn" xml:id="glibc-fn-isblank"><primary>isblank</primary></indexterm>
+   <indexterm linkend="glibc-cp" xml:id="glibc-cp-isblank"><primary>karakterler</primary><secondary>boşluk</secondary></indexterm>
+   <indexterm linkend="glibc-cp" xml:id="glibc-cp-isblanka"><primary>boşluk</primary></indexterm>
+   <csproto type="işlev">
+    <csname><type>int</type><function>isblank</function></csname>
+    <csparam><type>int</type><parameter>c</parameter></csparam>
+   </csproto>
+   <conceptlist>
+    <concept>&mtsafe;</concept>
+    <concept>&assafe;</concept>
+    <concept>&acsafe;</concept>
+   </conceptlist>
+   <para>
+    <parameter>c</parameter> bir boşluk veya sekme karakteri ise doğru ile döner. Bu işlev bir GNU oluşumudur, fakat &isoc;99'a da eklenmiştir.
+   </para>
+   <header>&ctype.h;</header>
+  </csynopsis>
+  <csynopsis>
+   <indexterm linkend="glibc-fn" xml:id="glibc-fn-isgraph"><primary>isgraph</primary></indexterm>
+   <indexterm linkend="glibc-cp" xml:id="glibc-cp-isgraph"><primary>karakterler</primary><secondary>çizgesel karakterler</secondary></indexterm>
+   <indexterm linkend="glibc-cp" xml:id="glibc-cp-isgrapha"><primary>çizgesel karakterler</primary></indexterm>
+   <csproto type="işlev">
+    <csname><type>int</type><function>isgraph</function></csname>
+    <csparam><type>int</type><parameter>c</parameter></csparam>
+   </csproto>
+   <conceptlist>
+    <concept>&mtsafe;</concept>
+    <concept>&assafe;</concept>
+    <concept>&acsafe;</concept>
+   </conceptlist>
+   <para>
+    <parameter>c</parameter> çizgesel karakterlerden biri ise doğru ile döner. Çizgesel karakterler, metin ekranında önalan renginde en az bir pikseli olan karakterlerdir. Boşluk karakterleri çizgesel karakter değildir
+   </para>
+   <header>&ctype.h;</header>
+  </csynopsis>
+  <csynopsis>
+   <indexterm linkend="glibc-fn" xml:id="glibc-fn-isprint"><primary>isprint</primary></indexterm>
+   <indexterm xml:id="glibc-cp-isprint" linkend="glibc-cp"><primary>karakterler</primary><secondary>görsel karakterler</secondary></indexterm>
+   <indexterm xml:id="glibc-cp-isprinta" linkend="glibc-cp"><primary>görsel karakterler</primary></indexterm>
+   <csproto type="işlev">
+    <csname><type>int</type><function>isprint</function></csname>
+    <csparam><type>int</type><parameter>c</parameter></csparam>
+   </csproto>
+   <conceptlist>
+    <concept>&mtsafe;</concept>
+    <concept>&assafe;</concept>
+    <concept>&acsafe;</concept>
+   </conceptlist>
+   <para>
+    <parameter>c</parameter> görsel karakterlerden biri ise, başka bir deyişle çizgesel karakterlerinden biri veya boşluk (‘ ’) ise doğru ile döner.
+   </para>
+   <header>&ctype.h;</header>
+  </csynopsis>
+  <csynopsis>
+   <indexterm linkend="glibc-fn" xml:id="glibc-fn-iscntrl"><primary>iscntrl</primary></indexterm>
+   <indexterm xml:id="glibc-cp-iscntrl" linkend="glibc-cp"><primary>karakterler</primary><secondary>denetim karakterleri</secondary></indexterm>
+   <indexterm xml:id="glibc-cp-iscntrla" linkend="glibc-cp"><primary>denetim karakterleri</primary></indexterm>
+   <csproto type="işlev">
+    <csname><type>int</type><function>iscntrl</function></csname>
+    <csparam><type>int</type><parameter>c</parameter></csparam>
+   </csproto>
+   <conceptlist>
+    <concept>&mtsafe;</concept>
+    <concept>&assafe;</concept>
+    <concept>&acsafe;</concept>
+   </conceptlist>
+   <para>
+    <parameter>c</parameter> denetim karakterlerinden biri ise (görsel karakter değilse) sıfırdan farklı bir değerle döner.
+   </para>
+   <header>&ctype.h;</header>
+  </csynopsis>
+  <csynopsis>
+   <indexterm linkend="glibc-fn" xml:id="glibc-fn-isascii"><primary>isascii</primary></indexterm>
+   <indexterm xml:id="glibc-cp-isascii" linkend="glibc-cp"><primary>karakterler</primary><secondary>denetim karakterleri</secondary></indexterm>
+   <indexterm xml:id="glibc-cp-isasciia" linkend="glibc-cp"><primary>denetim karakterleri</primary></indexterm>
+   <csproto type="işlev">
+    <csname><type>int</type><function>isascii</function></csname>
+    <csparam><type>int</type><parameter>c</parameter></csparam>
+   </csproto>
+   <conceptlist>
+    <concept>&mtsafe;</concept>
+    <concept>&assafe;</concept>
+    <concept>&acsafe;</concept>
+   </conceptlist>
+   <para>
+    <parameter>c</parameter> 7 bitlik <type>unsigned char</type> türünden ASCII karakter kümesindeki karakterlerden biri ise sıfırdan farklı bir değerle döner. Bu işlev BSD ve SVID oluşumudur.
+   </para>
+   <header>&ctype.h;</header>
+  </csynopsis>
+ </chapter>
+ <chapter xml:id="glibc-Case-Conversion">
+  <title>Büyük-Küçük Harf Dönüşümleri</title>
+  <titleabbrev>Harfleri büyüklüklerine göre eşleme.</titleabbrev>
+  <para>
+   <indexterm linkend="glibc-cp"><primary>karakterler</primary><secondary>büyük-küçük harf dönüşümleri</secondary></indexterm>
+   <indexterm linkend="glibc-cp"><primary>harfler</primary><secondary>büyük-küçük harf dönüşümleri</secondary></indexterm>
+   <indexterm linkend="glibc-cp"><primary>büyük-küçük harf dönüşümleri</primary></indexterm>
+   Bu kısımda karakterler üzerinde harf büyüklüklerine göre dönüşüm işlemlerinden bahsedilmiştir. Örneğin, <function>toupper</function> işlevi bir karakteri mümkünse büyük harfe dönüştürmek için kullanılır. Eğer karakter dönüştürülemiyosa <function>toupper</function> işlevi karakteri değiştirmez.
+  </para>
+  <para>
+   Bu işlevler karakteri <type>int</type> türünden bir bağımsız değişken olarak alır ve dönüştürülen karakteri <type>int</type> türünden geri döndürür. Verilen bağımsız değişkene dönüşüm uygulanabilir değilse verilen bağımsız değişken değiştirilmeden döner.
+  </para>
+  <note><title>Uyumluluk Bilgisi:</title>
+   <para>
+    &isoc; öncesi oluşumlarda, bu işlevler başarısız olduklarında verilen bağımsız değişken ile dönmez, sadece başarısız olurlardı. Uyumluluk açısından <code>toupper(c)</code> yerine <code>islower(c)&#160;?&#160;toupper(c)&#160;:&#160;c</code> yazmak gerekebilir.
+   </para>
+  </note>
+  <para>
+   <indexterm linkend="glibc-pg"><primary>ctype.h</primary></indexterm>
+   Bu işlevler &ctype.h; başlık dosyasında bildirilmiştir.
+  </para>
+  <csynopsis>
+   <indexterm linkend="glibc-fn" xml:id="glibc-fn-tolower"><primary>tolower</primary></indexterm>
+   <csproto type="işlev">
+    <csname><type>int</type><function>tolower</function></csname>
+    <csparam><type>int</type><parameter>c</parameter></csparam>
+   </csproto>
+   <conceptlist>
+    <concept>&mtsafe;</concept>
+    <concept>&assafe;</concept>
+    <concept>&acsafe;</concept>
+   </conceptlist>
+   <para>
+    <parameter>c</parameter> büyük harf ise, işlev ona karşılık gelen küçük harf ile döner. <parameter>c</parameter> büyük harf değilse işlev hiçbir değişiklik yapmadan <parameter>c</parameter> karakteri ile döner.
+   </para>
+   <header>&ctype.h;</header>
+  </csynopsis>
+  <csynopsis>
+   <indexterm linkend="glibc-fn" xml:id="glibc-fn-toupper"><primary>toupper</primary></indexterm>
+   <csproto type="işlev">
+    <csname><type>int</type><function>toupper</function></csname>
+    <csparam><type>int</type><parameter>c</parameter></csparam>
+   </csproto>
+   <conceptlist>
+    <concept>&mtsafe;</concept>
+    <concept>&assafe;</concept>
+    <concept>&acsafe;</concept>
+   </conceptlist>
+   <para>
+    <parameter>c</parameter> küçük harf ise, işlev ona karşılık gelen büyük harf ile döner. <parameter>c</parameter> küçük harf değilse işlev hiçbir değişiklik yapmadan <parameter>c</parameter> karakteri ile döner.
+   </para>
+   <header>&ctype.h;</header>
+  </csynopsis>
+  <csynopsis>
+   <indexterm linkend="glibc-fn" xml:id="glibc-fn-toascii"><primary>toascii</primary></indexterm>
+   <csproto type="işlev">
+    <csname><type>int</type><function>toascii</function></csname>
+    <csparam><type>int</type><parameter>c</parameter></csparam>
+   </csproto>
+   <conceptlist>
+    <concept>&mtsafe;</concept>
+    <concept>&assafe;</concept>
+    <concept>&acsafe;</concept>
+   </conceptlist>
+   <para>
+    Bu işlev karakterin yüksek seviyeli bitini temizleyerek ASCII karakter kümesindeki  7 bitlik <type>unsigned char</type> türünden karşılığını döndürür. Bu işlev BSD ve SVID oluşumudur.
+   </para>
+   <header>&ctype.h;</header>
+  </csynopsis>
+  <csynopsis>
+   <indexterm linkend="glibc-fn" xml:id="glibc-fn-_tolower"><primary sortas="tolower">_tolower</primary></indexterm>
+   <csproto type="işlev">
+    <csname><type>int</type><function>_tolower</function></csname>
+    <csparam><type>int</type><parameter>c</parameter></csparam>
+   </csproto>
+   <conceptlist>
+    <concept>&mtsafe;</concept>
+    <concept>&assafe;</concept>
+    <concept>&acsafe;</concept>
+   </conceptlist>
+   <para>
+    Bu işlev <function>tolower</function> işlevinin eşdeğeri olup <link  linkend="glibc-SVID">SVID</link> ile uyumluluk için bulunmaktadır.
+   </para>
+   <header>&ctype.h;</header>
+  </csynopsis>
+  <csynopsis>
+   <indexterm linkend="glibc-fn" xml:id="glibc-fn-_toupper"><primary sortas="tolower">_toupper</primary></indexterm>
+   <csproto type="işlev">
+    <csname><type>int</type><function>_toupper</function></csname>
+    <csparam><type>int</type><parameter>c</parameter></csparam>
+   </csproto>
+   <conceptlist>
+    <concept>&mtsafe;</concept>
+    <concept>&assafe;</concept>
+    <concept>&acsafe;</concept>
+   </conceptlist>
+   <para>
+    Bu işlev <function>toupper</function> işlevinin eşdeğeri olup <link  linkend="glibc-SVID">SVID</link> ile uyumluluk için bulunmaktadır.
+   </para>
+   <header>&ctype.h;</header>
+  </csynopsis>
+ </chapter>
+ <chapter xml:id="glibc-Classification-of-Wide-Characters">
+  <title>Geniş Karakterlerin Sınıflandırılması</title>
+  <titleabbrev>Geniş karakterlerin karakter sınıflarının saptanması</titleabbrev>
+  <para>
+   <indexterm linkend="glibc-cp"><primary>geniş karakterler</primary><secondary>sınanması</secondary></indexterm>
+   <indexterm linkend="glibc-cp"><primary>geniş karakterler</primary><secondary>sınıflandırılması</secondary></indexterm>
+   <indexterm linkend="glibc-cp"><primary>sınıflandırılma</primary><secondary>geniş karakterler</secondary></indexterm>
+   <indexterm linkend="glibc-cp"><primary>geniş karakterler</primary><secondary>niteleyiciler</secondary></indexterm>
+   <indexterm linkend="glibc-cp"><primary>niteleyiciler</primary><secondary>geniş karakterler</secondary></indexterm>
+   &isoc;90 standardının 1. düzeltmesi, geniş karakterleri sınıflandıran işlevler  tanımlar. Özgün &isoc;90 standardında <type>wchar_t</type> türü tanımlanmışsa da bu tür ile çalışan hiçbir işlev tanımlanmamıştı.
+  </para>
+  <para>
+   Geniş karakterler için sınıflandırma işlevlerinin genel tasarımı daha geneldir. Daima kullanılabilir olanların haricinde kullanılabilir sınıflandırmalar kümesi oluşumlarını mümkün kılar. POSIX standardı oluşumların nasıl yapılacağını belirtir ve bu zaten bir GNU C kütüphanesinde <uri xl:href="man1-localedef"/> komutu ile gerçeklenmiştir.
+  </para>
+  <para>
+   Karakter sınıfı işlevleri normalde her karakter için bir bit kümesi olmak üzere bit kümeleri ile gerçeklenir. Belirtilen karakterin bit kümesi bir tablodan okunur ve anlamlı bitlerin bir olup olmadığına bakılır. Sınanacak bitler sınıf tarafından belirlenir.
+  </para>
+  <para>
+   Geniş karakter sınıflandırma işlevleri için bu görünür yapılır. Sınıflandırma türü için tanımlanmış bir veri türü, belirli bir sınıf için bu değeri alan bir işlev ve sınıflandırma değerini kullanarak belirli bir karakterin bu sınıfa ait olup olmadığını sınayan bir işlev vardır. Bunun da ötesinde, <type>char</type> türünden nesneler için kullanılan normal karakter sınıflandırma işlevleri tanımlanabilir.
+  </para>
+  <csynopsis>
+   <indexterm linkend="glibc-tp" xml:id="glibc-tp-wctype_t"><primary>wctype_t</primary></indexterm>
+   <indexterm xml:id="glibc-cp-wctype_t" linkend="glibc-cp"><primary>geniş karakterler</primary><secondary>veri türü</secondary></indexterm>
+   <indexterm xml:id="glibc-cp-wctype_ta" linkend="glibc-pg"><primary>wctype.h</primary></indexterm>
+   <csproto type="veri türü">
+    <csname><type>wctype_t</type></csname>
+   </csproto>
+   <para>
+    <type>wctype_t</type> veri türü bir karakter sınıfına karşılık gelen değeri tutabilir. Böyle bir değeri üretmenin tanımlanmış tek yolu <function>wctype</function> işlevini kullanmaktır.
+   </para>
+   <header>&wctype.h;</header>
+  </csynopsis>
+  <csynopsis>
+   <indexterm linkend="glibc-fn" xml:id="glibc-fn-wctype"><primary>wctype</primary></indexterm>
+   <indexterm xml:id="glibc-cp-wctype" linkend="glibc-cp"><primary>geniş karakterler</primary><secondary>yerel özellikleri</secondary></indexterm>
+   <indexterm xml:id="glibc-cp-wctypea" linkend="glibc-cp"><primary>geniş karakterler</primary><secondary>LC_CTYPE özellikleri</secondary></indexterm>
+   <csproto type="işlev">
+    <csname><type>wctype_t</type><function>wctype</function></csname>
+    <csparam><ptr>const&#160;char</ptr><parameter>property</parameter></csparam>
+   </csproto>
+   <conceptlist>
+    <concept>&mtsafe; &locale;</concept>
+    <concept>&assafe;</concept>
+    <concept>&acsafe;</concept>
+   </conceptlist>
+   <para>
+    <code>wctype</code> işlevi <parameter>property</parameter> dizgesi ile belirtilen geniş karakter sınıfını ifade eden bir değer ile döner. Bazı standart özelliklerin yanı sıra her yerel ayar kendi özelliklerini tanımlayabilir. <parameter>property</parameter> dizgesi <varname>LC_CTYPE</varname> sınıfı için seçilen geçerli yerelde tanımlanmış özelliklerden biri değilse işlev sıfır değeriyle döner.
+   </para>
+   <para>
+    <indexterm xml:id="glibc-cp-wctypeb" linkend="glibc-cp"><primary>yereller</primary><secondary>LC_CTYPE için standart özellikler</secondary></indexterm>
+    Her yerelde tanımlanabilen standart özellikler:
+   </para>
+   <literallayout class="monospaced">"alnum"	"alpha"	"cntrl"	"digit"
+"graph"	"lower"	"print"	"punct"
+"space"	"upper"	"xdigit"
+</literallayout>
+   <header>&wctype.h;</header>
+  </csynopsis>
+  <para>
+   <indexterm xml:id="glibc-cp-wctypec" linkend="glibc-cp"><primary>yereller</primary><secondary>LC_CTYPE için standart dışı özellikler</secondary></indexterm>
+   Bir karakterin standart dışı sınıflardan birine üyeliğini sınamak için &isoc; standardı tamamen yeni bir işlev tanımlar.
+  </para>
+  <csynopsis>
+   <indexterm linkend="glibc-fn" xml:id="glibc-fn-iswctype"><primary>iswctype</primary></indexterm>
+   <csproto type="işlev">
+    <csname><type>int</type><function>iswctype</function></csname>
+    <csparam><type>wctype_t</type><parameter>wc</parameter></csparam>
+    <csparam><type>wctype_t</type><parameter>desc</parameter></csparam>
+   </csproto>
+   <conceptlist>
+    <concept>&mtsafe;</concept>
+    <concept>&assafe;</concept>
+    <concept>&acsafe;</concept>
+   </conceptlist>
+   <para>
+    Bu işlev, <parameter>wc</parameter> karakteri <parameter>desc</parameter> ile belirtilen sınıfa ait ise sıfırdan farklı bir değerle döner. <parameter>desc</parameter> önceki başarılı bir <function>wctype</function> çağrısından döndürülmüş olmalıdır.
+   </para>
+   <header>&wctype.h;</header>
+  </csynopsis>
+  <para>
+   <indexterm xml:id="glibc-cp-iswctype" linkend="glibc-cp"><primary>yereller</primary><secondary>LC_CTYPE için özellik dizgeleri</secondary></indexterm>
+   Çok kullanılan sınıflandırma işlevleri, kullanımı kolaylaştırmak için C kütüphanesinde tanımlanmıştır. <parameter>property</parameter> dizgesi bilinen karakter sınıflarından biriyse bu işlevler için <function>wctype</function> işlevini kullanmaya gerek yoktur. Ancak bazı durumlarda <parameter>property</parameter> dizgelerini oluşturup bunlardan standart sınıfları elde etmek de önem kazanır.
+  </para>
+  <csynopsis>
+   <indexterm linkend="glibc-fn" xml:id="glibc-fn-iswalnum"><primary>iswalnum</primary></indexterm>
+   <indexterm xml:id="glibc-cp-iswalnum" linkend="glibc-cp"><primary>geniş karakterler</primary><secondary>abecesayısal</secondary></indexterm>
+   <csproto type="işlev">
+    <csname><type>int</type><function>iswalnum</function></csname>
+    <csparam><type>wctype_t</type><parameter>wc</parameter></csparam>
+   </csproto>
+   <conceptlist>
+    <concept>&mtsafe; &locale;</concept>
+    <concept>&assafe;</concept>
+    <concept>&acsafe;</concept>
+   </conceptlist>
+   <para>
+    <parameter>wc</parameter> bir abecesayısal karakter (bir harf ya da rakam) ise sıfırdan  farklı bir  değerle döner. Başka bir ifade ile, <function>iswalpha</function> ya da <function>iswdigit</function> karakter için doğru ise <code>iswalnum</code>'da doğrudur.
+   </para>
+   <para>
+    Bu işlev şöyle de gerçeklenebilir:
+   </para>
+   <example>
+    <screen>iswctype (<parameter>wc</parameter>, wctype ("alnum"))
+</screen>
+   </example>
+   <header>&wctype.h;</header>
+  </csynopsis>
+  <csynopsis>
+   <indexterm linkend="glibc-fn" xml:id="glibc-fn-iswalpha"><primary>iswalpha</primary></indexterm>
+   <indexterm xml:id="glibc-cp-iswalpha" linkend="glibc-cp"><primary>geniş karakterler</primary><secondary>abecesel</secondary></indexterm>
+   <csproto type="işlev">
+    <csname><type>int</type><function>iswalpha</function></csname>
+    <csparam><type>wctype_t</type><parameter>wc</parameter></csparam>
+   </csproto>
+   <conceptlist>
+    <concept>&mtsafe; &locale;</concept>
+    <concept>&assafe;</concept>
+    <concept>&acsafe;</concept>
+   </conceptlist>
+   <para>
+    <parameter>wc</parameter> bir alfabetik karakter (bir harf) ise sıfırdan farklı bir değerle döner. <function>iswlower</function> veya <function>iswupper</function> işlevi doğru ile dönüyorsa <code>iswalpha</code> işlevi de doğru ile döner.
+   </para>
+   <para>
+    Bazı yereller ne büyük ne de küçük harf olan ve <code>iswalpha</code> işlevinin doğru ile döndüğü ek karakterler içerir. Standart <wordasword>&quot;C&quot;</wordasword> yerelinde böyle bir karakter yoktur.
+   </para>
+   <para>
+    Bu işlev şöyle de gerçeklenebilir:
+   </para>
+   <example>
+    <screen>iswctype (<parameter>wc</parameter>, wctype ("alpha"))
+</screen>
+   </example>
+   <header>&wctype.h;</header>
+  </csynopsis>
+  <csynopsis>
+   <indexterm linkend="glibc-fn" xml:id="glibc-fn-iswcntrl"><primary>iswcntrl</primary></indexterm>
+   <indexterm xml:id="glibc-cp-iswcntrl" linkend="glibc-cp"><primary>geniş karakterler</primary><secondary>denetim</secondary></indexterm>
+   <csproto type="işlev">
+    <csname><type>int</type><function>iswcntrl</function></csname>
+    <csparam><type>wctype_t</type><parameter>wc</parameter></csparam>
+   </csproto>
+   <conceptlist>
+    <concept>&mtsafe; &locale;</concept>
+    <concept>&assafe;</concept>
+    <concept>&acsafe;</concept>
+   </conceptlist>
+   <para>
+    <parameter>wc</parameter> bir denetim karakteri ise (görsel bir karakter değilse) sıfırdan farklı bir değerle döner.
+   </para>
+   <para>
+    Bu işlev şöyle de gerçeklenebilir:
+   </para>
+   <example>
+    <screen>iswctype (<parameter>wc</parameter>, wctype ("cntrl"))
+</screen>
+   </example>
+   <header>&wctype.h;</header>
+  </csynopsis>
+  <csynopsis>
+   <indexterm linkend="glibc-fn" xml:id="glibc-fn-iswdigit"><primary>iswdigit</primary></indexterm>
+   <indexterm xml:id="glibc-cp-iswdigit" linkend="glibc-cp"><primary>geniş karakterler</primary><secondary>sayısal</secondary><tertiary>onluk</tertiary></indexterm>
+   <csproto type="işlev">
+    <csname><type>int</type><function>iswdigit</function></csname>
+    <csparam><type>wctype_t</type><parameter>wc</parameter></csparam>
+   </csproto>
+   <conceptlist>
+    <concept>&mtsafe; &locale;</concept>
+    <concept>&assafe;</concept>
+    <concept>&acsafe;</concept>
+   </conceptlist>
+   <para>
+    <parameter>wc</parameter> değişkeninin değeri <code>0</code> ile <code>9</code> arasında bir rakam karakteri ise sıfırdan farklı bir değerle döner.
+   </para>
+   <note>
+    <para>
+     Bu işlev sadece onluk sistemdeki rakamlar için değil, tüm rakam çeşitleri için sıfırdan farklı bir değerle döner. Bu bakımdan aşağıdaki gibi bir kod koşulsuz olarak <emphasis>çalışmayacaktır</emphasis>:
+    </para>
+    <screen>n = 0;
+while (iswdigit (*wc))
+  {
+    n *= 10;
+    n += *wc++ - L'0';
+  }
+</screen>
+   </note>
+   <para>
+    Bu işlev şöyle de gerçeklenebilir:
+   </para>
+   <example>
+    <screen>iswctype (<parameter>wc</parameter>, wctype ("digit"))
+</screen>
+   </example>
+   <header>&wctype.h;</header>
+  </csynopsis>
+  <csynopsis>
+   <indexterm linkend="glibc-fn" xml:id="glibc-fn-iswgraph"><primary>iswgraph</primary></indexterm>
+   <indexterm xml:id="glibc-cp-iswgraph" linkend="glibc-cp"><primary>geniş karakterler</primary><secondary>çizgesel</secondary></indexterm>
+   <csproto type="işlev">
+    <csname><type>int</type><function>iswgraph</function></csname>
+    <csparam><type>wctype_t</type><parameter>wc</parameter></csparam>
+   </csproto>
+   <conceptlist>
+    <concept>&mtsafe; &locale;</concept>
+    <concept>&assafe;</concept>
+    <concept>&acsafe;</concept>
+   </conceptlist>
+   <para>
+    <parameter>wc</parameter> bir çizgesel karakter ise sıfırdan farklı bir değerle döner. Çizgesel karakterler, metin ekranında pencere çizmek amacıyla kullanılan karakterlerin benzeri karakterlerdir. Boşluk karakterleri çizgesel karakter değildir.
+   </para>
+   <para>
+    Bu işlev şöyle de gerçeklenebilir:
+   </para>
+   <example>
+    <screen>iswctype (<parameter>wc</parameter>, wctype ("graph"))
+</screen>
+   </example>
+   <header>&wctype.h;</header>
+  </csynopsis>
+  <csynopsis>
+   <indexterm linkend="glibc-fn" xml:id="glibc-fn-iswlower"><primary>iswlower</primary></indexterm>
+   <indexterm xml:id="glibc-cp-iswlower" linkend="glibc-cp"><primary>geniş karakterler</primary><secondary>küçük harf</secondary></indexterm>
+   <csproto type="işlev">
+    <csname><type>int</type><function>iswlower</function></csname>
+    <csparam><type>wctype_t</type><parameter>wc</parameter></csparam>
+   </csproto>
+   <conceptlist>
+    <concept>&mtsafe; &locale;</concept>
+    <concept>&assafe;</concept>
+    <concept>&acsafe;</concept>
+   </conceptlist>
+   <para>
+    <parameter>wc</parameter> küçük harf ise sıfırdan farklı bir değerle döner. Harfin Latin abecesinden olması şart değildir, herhangi bir abeceden olabilir.
+   </para>
+   <para>
+    Bu işlev şöyle de gerçeklenebilir:
+   </para>
+   <example>
+    <screen>iswctype (<parameter>wc</parameter>, wctype ("lower"))
+</screen>
+   </example>
+   <header>&wctype.h;</header>
+  </csynopsis>
+  <csynopsis>
+   <indexterm linkend="glibc-fn" xml:id="glibc-fn-iswprint"><primary>iswprint</primary></indexterm>
+   <indexterm linkend="glibc-cp" xml:id="glibc-cp-iswprint"><primary>geniş karakterler</primary><secondary>görsel</secondary></indexterm>
+   <csproto type="işlev">
+    <csname><type>int</type><function>iswprint</function></csname>
+    <csparam><type>wctype_t</type><parameter>wc</parameter></csparam>
+   </csproto>
+   <conceptlist>
+    <concept>&mtsafe; &locale;</concept>
+    <concept>&assafe;</concept>
+    <concept>&acsafe;</concept>
+   </conceptlist>
+   <para>
+    <parameter>wc</parameter> görsel karakterlerden biri ise, başka bir deyişle çizgesel karakterlerinden biri veya boşluk (‘ ’) ise doğru ile döner.
+   </para>
+   <para>
+    Bu işlev şöyle de gerçeklenebilir:
+   </para>
+   <example>
+    <screen>iswctype (<parameter>wc</parameter>, wctype ("print"))
+</screen>
+   </example>
+   <header>&wctype.h;</header>
+  </csynopsis>
+  <csynopsis>
+   <indexterm linkend="glibc-fn" xml:id="glibc-fn-iswpunct"><primary>iswpunct</primary></indexterm>
+   <indexterm linkend="glibc-cp" xml:id="glibc-cp-iswpunct"><primary>geniş karakterler</primary><secondary>noktalama imleri</secondary></indexterm>
+   <csproto type="işlev">
+    <csname><type>int</type><function>iswpunct</function></csname>
+    <csparam><type>wctype_t</type><parameter>wc</parameter></csparam>
+   </csproto>
+   <conceptlist>
+    <concept>&mtsafe; &locale;</concept>
+    <concept>&assafe;</concept>
+    <concept>&acsafe;</concept>
+   </conceptlist>
+   <para>
+    <parameter>wc</parameter> bir noktalama imi ise sıfırdan farklı bir  değerle döner. Noktalama imleri, 'abecesayısal ve boşluk' olmayan görsel karakterlerdir.
+   </para>
+   <para>
+    Bu işlev şöyle de gerçeklenebilir:
+   </para>
+   <example>
+    <screen>iswctype (<parameter>wc</parameter>, wctype ("punct"))
+</screen>
+   </example>
+   <header>&wctype.h;</header>
+  </csynopsis>
+  <csynopsis>
+   <indexterm linkend="glibc-fn" xml:id="glibc-fn-iswspace"><primary>iswspace</primary></indexterm>
+   <indexterm linkend="glibc-cp" xml:id="glibc-cp-iswspace"><primary>geniş karakterler</primary><secondary>noktalama imleri</secondary></indexterm>
+   <csproto type="işlev">
+    <csname><type>int</type><function>iswspace</function></csname>
+    <csparam><type>wctype_t</type><parameter>wc</parameter></csparam>
+   </csproto>
+   <conceptlist>
+    <concept>&mtsafe; &locale;</concept>
+    <concept>&assafe;</concept>
+    <concept>&acsafe;</concept>
+   </conceptlist>
+   <para>
+    <parameter>wc</parameter> bir boşluk karakteri ise doğru ile döner. <wordasword>&quot;C&quot;</wordasword> yerelinde yalnızca aşağıdaki karakterler için doğru döner:
+   </para>
+   <literallayout class="monospaced"><code>' '</code>  (boşluk)
+<code>'\f'</code> (sayfa ileri)
+<code>'\n'</code> (satır sonu)
+<code>'\r'</code> (satır başı)
+<code>'\t'</code> (yatay sekme)
+<code>'\v'</code> (düşey sekme)
+</literallayout>
+   <para>
+    Bu işlev şöyle de gerçeklenebilir:
+   </para>
+   <example>
+    <screen>iswctype (<parameter>wc</parameter>, wctype ("space"))
+</screen>
+   </example>
+   <header>&wctype.h;</header>
+  </csynopsis>
+  <csynopsis>
+   <indexterm linkend="glibc-fn" xml:id="glibc-fn-iswupper"><primary>iswupper</primary></indexterm>
+   <indexterm linkend="glibc-cp" xml:id="glibc-cp-iswupper"><primary>geniş karakterler</primary><secondary>büyük harf</secondary></indexterm>
+   <csproto type="işlev">
+    <csname><type>int</type><function>iswupper</function></csname>
+    <csparam><type>wctype_t</type><parameter>wc</parameter></csparam>
+   </csproto>
+   <conceptlist>
+    <concept>&mtsafe; &locale;</concept>
+    <concept>&assafe;</concept>
+    <concept>&acsafe;</concept>
+   </conceptlist>
+   <para>
+    <parameter>wc</parameter> büyük harf ise sıfırdan farklı bir değerle döner. Harfin Latin alfabesinden olması şart değildir, herhangi bir alfabeden olabilir.
+   </para>
+   <para>
+    Bu işlev şöyle de gerçeklenebilir:
+   </para>
+   <example>
+    <screen>iswctype (<parameter>wc</parameter>, wctype ("upper"))
+</screen>
+   </example>
+   <header>&wctype.h;</header>
+  </csynopsis>
+  <csynopsis>
+   <indexterm linkend="glibc-fn" xml:id="glibc-fn-iswxdigit"><primary>iswxdigit</primary></indexterm>
+   <indexterm linkend="glibc-cp" xml:id="glibc-cp-iswxdigit"><primary>geniş karakterler</primary><secondary>rakam</secondary><tertiary>onaltılık</tertiary></indexterm>
+   <csproto type="işlev">
+    <csname><type>int</type><function>iswxdigit</function></csname>
+    <csparam><type>wctype_t</type><parameter>wc</parameter></csparam>
+   </csproto>
+   <conceptlist>
+    <concept>&mtsafe; &locale;</concept>
+    <concept>&assafe;</concept>
+    <concept>&acsafe;</concept>
+   </conceptlist>
+   <para>
+    <parameter>wc</parameter> oaltılık tabanda bir rakam ise doğru döner. Onaltılık rakamlar <code>0</code>'dan <code>9</code>'a kadar normal onluk rakamlardan ve <code>A</code>'dan <code>F</code>'ye kadar veya <code>a</code>'dan <code>f</code>'ye kadar harflerden oluşur.
+   </para>
+   <para>
+    Bu işlev şöyle de gerçeklenebilir:
+   </para>
+   <example>
+    <screen>iswctype (<parameter>wc</parameter>, wctype ("xdigit"))
+</screen>
+   </example>
+   <header>&wctype.h;</header>
+  </csynopsis>
+  <csynopsis>
+   <indexterm linkend="glibc-fn" xml:id="glibc-fn-iswblank"><primary>iswblank</primary></indexterm>
+   <indexterm linkend="glibc-cp" xml:id="glibc-cp-iswblank"><primary>geniş karakterler</primary><secondary>boşluk ve sekme</secondary></indexterm>
+   <csproto type="işlev">
+    <csname><type>int</type><function>iswblank</function></csname>
+    <csparam><type>wctype_t</type><parameter>wc</parameter></csparam>
+   </csproto>
+   <conceptlist>
+    <concept>&mtsafe; &locale;</concept>
+    <concept>&assafe;</concept>
+    <concept>&acsafe;</concept>
+   </conceptlist>
+   <para>
+    <parameter>wc</parameter> bir boşluk ya da sekme karakteri ise sıfırdan farklı bir değerle döner. Bu işlev bir GNU oluşumudur, fakat &isoc;99'a da eklenmiştir.
+   </para>
+   <header>&wctype.h;</header>
+  </csynopsis>
+ </chapter>
+ <chapter xml:id="glibc-Using-Wide-Char-Classes">
+  <title>Geniş Karakter Sınıflarının Kullanılması</title>
+  <titleabbrev>Geniş karakterlerin kullanımına ilişkin uyarılar</titleabbrev>
+  <para>
+   İlk uyarı, şüphesiz şaşırtıcı değil ama hala arasıra sorun çıkarmaktadır. <code>isw<replaceable>XXX</replaceable></code> işlevleri makrolarla gerçeklenebilir ve GNU  C kütüphanesi böyle yapar. Gerçek işlev olarak kullanılabilir olsalar bile &wctype.h; başlık dosyası içerildiğinde makroları kullanılacaktır. Bu durum, bu işlevlerin <type>char</type> türünde olanları için de aynıdır.
+  </para>
+  <para>
+   İkincisi daha yeni bir bilgidir. En iyisi bir örnekle açıklamak. Kodun ilk parçası özgün koddan (biraz kısaltarak) şöyle seçilmiş olsun.
+  </para>
+  <example>
+   <screen>int
+is_in_class (int c, const char *class)
+{
+  if (strcmp (class, "alnum") == 0)
+    return isalnum (c);
+  if (strcmp (class, "alpha") == 0)
+    return isalpha (c);
+  if (strcmp (class, "cntrl") == 0)
+    return iscntrl (c);
+  …
+  return 0;
+}
+</screen>
+   <para>
+    <function>wctype</function> ve <function>iswctype</function> ile <code>if</code> merdiveni artık gerekmeyecek, ancak aşağıdaki gibi bir kod yanlış olacaktır:
+   </para>
+   <screen>int
+is_in_class (int c, const char *class)
+{
+  wctype_t desc = wctype (class);
+  return desc ? iswctype ((wint_t) c, desc) : 0;
+}
+</screen>
+   <para>
+    Burada sorun, tek baytlık bir karakterin geniş karakter karşılığının tür dönüşümü ile elde edilebilirliğinin garantili olmayışıdır. Doğru çözüm, kodu aşağıdaki gibi yazmaktır:
+   </para>
+   <screen>int
+is_in_class (int c, const char *class)
+{
+  wctype_t desc = wctype (class);
+  return desc ? iswctype (btowc (c), desc) : 0;
+}
+</screen>
+  </example>
+  <para>
+   <function>btowc</function> işlevi hakkında <xref linkend="glibc-Converting-a-Character"/> bölümünde daha fazla bilgi bulunabilir. Burada, <function>wctype</function> işlevi hala bir dizge karşılaştırması yaptığından yazılımın başarımı arttırılmış olmayacaktır. <code>is_in_class</code> işlevi aynı sınıf ismi için defalarca çağrılırsa durum gerçekten ilginç olur. Bu durumda, <varname>desc</varname> değişkeninin bir kere hesaplanıp tüm çağrılarda kullanılması gerekirdi. Bu nedenle işlevin yukardaki tanımının işlevin son hali olmayacağı açıktır.
+  </para>
+ </chapter>
+ <chapter xml:id="glibc-Wide-Character-Case-Conversion">
+  <title>Geniş Karakterlerde Büyük-küçük Harf Dönüşümleri</title>
+  <titleabbrev>Geniş karakterlerde harfleri büyüklüklerine göre eşleme.</titleabbrev>
+  <para>
+   <indexterm linkend="glibc-cp"><primary>geniş karakterler</primary><secondary>büyük-küçük harf dönüşümleri</secondary></indexterm>
+   Sınıflandırma işlevleri &isoc; standardı tarafından ayrıca genelleştirilmiştir. İki standardın eşleştirilmesi yerine bir yerelin diğerlerini içermesi sağlanabilir. <uri xl:href="man1-localedef"/> komutu yerel veri dosyalarının bu yolla üretilmesini zaten desteklemektedir.
+  </para>
+  <csynopsis>
+   <indexterm linkend="glibc-tp" xml:id="glibc-tp-wctrans_t"><primary>wctrans_t</primary></indexterm>
+   <indexterm linkend="glibc-cp" xml:id="glibc-cp-wctrans_t"><primary>geniş karakterler</primary><secondary>yerele bağlı eşleşmeler</secondary></indexterm>
+   <csproto type="veri türü">
+    <csname><type>wctrans_t</type></csname>
+   </csproto>
+   <para>
+    Bu veri türü, yerele bağımlı karakter eşleşmelerini ifade eden bir değeri tutabilen ölçeklenebilir bir veri türü olarak tanımlanmıştır. Böyle bir değeri <function>wctrans</function> işlevinden dönen bir değer olarak yapılandırmaktan başka bir yol yoktur.
+   </para>
+   <header>&wctype.h;</header>
+  </csynopsis>
+  <csynopsis>
+   <indexterm linkend="glibc-fn" xml:id="glibc-fn-wctrans"><primary>wctrans</primary></indexterm>
+   <indexterm linkend="glibc-cp" xml:id="glibc-cp-wctrans"><primary>geniş karakterler</primary><secondary>büyük-küçük harf eşleşmeleri</secondary></indexterm>
+   <csproto type="işlev">
+    <csname><type>wctrans_t</type><function>wctrans</function></csname>
+    <csparam><ptr>const&#160;char</ptr><parameter>property</parameter></csparam>
+   </csproto>
+   <conceptlist>
+    <concept>&mtsafe; &locale;</concept>
+    <concept>&assafe;</concept>
+    <concept>&acsafe;</concept>
+   </conceptlist>
+   <para>
+    <code>wctrans</code> işlevi, <varname>LC_CTYPE</varname> sınıfı için seçilen yerelde tanımlı, ismi <parameter>property</parameter> ile belirtilen bir eşleşme varsa bulmakta kullanılır. Sıfırdan farklı bir değer dönmüşse bu değer bir <function>towctrans</function> çağrısında kullanılabilir. Dönen değer sıfırsa yerelde böyle bir eşleşmenin bulunmadığı anlaşılır.
+   </para>
+   <para>
+    Her yerelde eşleşmeyi garanti eden iki eşleşme aşağıda verilmiştir:
+   </para>
+   <literallayout class="monospaced">"tolower"	"toupper"
+</literallayout>
+   <header>&wctype.h;</header>
+  </csynopsis>
+  <csynopsis>
+   <indexterm linkend="glibc-fn" xml:id="glibc-fn-towctrans"><primary>towctrans</primary></indexterm>
+   <csproto type="işlev">
+    <csname><type>wint_t</type><function>towctrans</function></csname>
+    <csparam><type>wint_t</type><parameter>wc</parameter></csparam>
+    <csparam><type>wctrans_t</type><parameter>desc</parameter></csparam>
+   </csproto>
+   <conceptlist>
+    <concept>&mtsafe;</concept>
+    <concept>&assafe;</concept>
+    <concept>&acsafe;</concept>
+   </conceptlist>
+   <para>
+    <parameter>wc</parameter> karakterinin <parameter>desc</parameter> ile  belirtilen eşleşme kuralına uygun karşılığını bulur ve bu değerle döner. <parameter>desc</parameter> önceki başarılı bir <function>wctrans</function> çağrısından döndürülmüş olmalıdır.
+   </para>
+   <header>&wctype.h;</header>
+  </csynopsis>
+  <para>
+   Genel olarak kullanılabilen eşleşmeler için &isoc; standardı <function>wctrans</function> çağrısını gerektirmeyen kısayollar tanımlamıştır.
+  </para>
+  <csynopsis>
+   <indexterm linkend="glibc-fn" xml:id="glibc-fn-towlower"><primary>towlower</primary></indexterm>
+   <indexterm linkend="glibc-cp" xml:id="glibc-cp-towlower"><primary>geniş karakterler</primary><secondary>küçük harfe dönüşüm</secondary></indexterm>
+   <csproto type="işlev">
+    <csname><type>wint_t</type><function>towlower</function></csname>
+    <csparam><type>wint_t</type><parameter>wc</parameter></csparam>
+   </csproto>
+   <conceptlist>
+    <concept>&mtsafe; &locale;</concept>
+    <concept>&assafe;</concept>
+    <concept>&acsafe;</concept>
+   </conceptlist>
+   <para>
+    <parameter>wc</parameter> büyük harf ise, işlev ona karşılık gelen küçük harf ile döner. <parameter>wc</parameter> büyük harf değilse işlev hiçbir değişiklik yapmadan <parameter>wc</parameter> ile döner.
+   </para>
+   <para>
+    Bu işlev şöyle de gerçeklenebilir:
+   </para>
+   <example>
+    <screen>towctrans (<parameter>wc</parameter>, wctrans ("tolower"))
+</screen>
+   </example>
+   <header>&wctype.h;</header>
+  </csynopsis>
+  <csynopsis>
+   <indexterm linkend="glibc-fn" xml:id="glibc-fn-towupper"><primary>towupper</primary></indexterm>
+   <indexterm linkend="glibc-cp" xml:id="glibc-cp-towupper"><primary>geniş karakterler</primary><secondary>büyük harfe dönüşüm</secondary></indexterm>
+   <csproto type="işlev">
+    <csname><type>wint_t</type><function>towupper</function></csname>
+    <csparam><type>wint_t</type><parameter>wc</parameter></csparam>
+   </csproto>
+   <conceptlist>
+    <concept>&mtsafe; &locale;</concept>
+    <concept>&assafe;</concept>
+    <concept>&acsafe;</concept>
+   </conceptlist>
+   <para>
+    <parameter>wc</parameter> küçük harf ise, işlev ona karşılık gelen büyük harf ile döner. <parameter>wc</parameter> küçük harf değilse işlev hiçbir değişiklik yapmadan <parameter>wc</parameter> ile döner.
+   </para>
+   <para>
+    Bu işlev şöyle de gerçeklenebilir:
+   </para>
+   <example>
+    <screen>towctrans (<parameter>wc</parameter>, wctrans ("toupper"))
+</screen>
+   </example>
+   <header>&wctype.h;</header>
+  </csynopsis>
+  <para>
+   Geniş karakterlerin kullanımına ilişkin önceki bölümdeki uyarılar burada da geçerlidir. <type>char</type> türünden bir değer, tür dönüşümü ile <type>wint_t</type> türüne dönüştürülerek <function>towctrans</function> çağrılarında bağımsız değişken olarak kullanılamaz.
+  </para>
+ </chapter>
 </part>

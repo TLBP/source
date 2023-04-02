@@ -87,6 +87,15 @@
 <xsl:template match="d:csproto">
   <div class="csproto">
    <table border="0" class="csprototab" style="cellspacing: 0; cellpadding: 0;">
+   <xsl:if test="../d:header">
+    <tr>
+     <td colspan="2">
+      <code>#include &lt;</code>
+       <xsl:apply-templates select="../d:header" mode="ansi-tabular"/>
+      <code>&gt;</code>
+     </td>
+    </tr>
+   </xsl:if>
    <tr>
      <td style="vertical-align: text-top;">
        <xsl:apply-templates select="d:csname" mode="ansi-tabular"/>
@@ -176,8 +185,14 @@
 </xsl:template>
 
 <xsl:template match="d:concept">
-  <br/><xsl:value-of select="' | '"/>
+  <xsl:value-of select="' | '"/>
    <xsl:apply-templates/>
+</xsl:template>
+
+<xsl:template match="d:header"/>
+
+<xsl:template match="d:header" mode="ansi-tabular">
+  <xsl:apply-templates/>
 </xsl:template>
 
 <xsl:template match="d:structname">

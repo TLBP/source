@@ -284,7 +284,7 @@ title of the element. This does not include the label.
 </xsl:template>
 
 <xsl:template match="d:bridgehead" mode="title.markup">
-  <xsl:apply-templates/> 
+  <xsl:apply-templates/>
 </xsl:template>
 
 <xsl:template match="d:refsynopsisdiv" mode="title.markup">
@@ -759,7 +759,7 @@ title of the element. This does not include the label.
       <xsl:with-param name="referrer" select="$referrer"/>
     </xsl:apply-templates>
   </xsl:variable>
-  
+
   <xsl:call-template name="check.id.unique">
     <xsl:with-param name="linkend" select="@linkend"/>
   </xsl:call-template>
@@ -768,7 +768,7 @@ title of the element. This does not include the label.
     <xsl:when test="count($target) = 0">
       <xsl:message>
         <xsl:text>XRef to nonexistent id: </xsl:text>
-        <xsl:value-of select="@linkend"/> 
+        <xsl:value-of select="@linkend"/>
         <xsl:value-of select="@xl:href"/>
       </xsl:message>
       <xsl:text>???</xsl:text>
@@ -799,9 +799,9 @@ title of the element. This does not include the label.
     </xsl:when>
 
     <xsl:otherwise>
-   
+
       <xsl:choose>
-	<!-- Watch out for the case when there is a xref or link inside 
+	<!-- Watch out for the case when there is a xref or link inside
 	     a title. See bugs #1811721 and #1838136. -->
 	<xsl:when test="not(ancestor::*[@id = $target/@id] or ancestor::*[@xml:id = $target/@xml:id])">
 
@@ -809,22 +809,22 @@ title of the element. This does not include the label.
 	    <xsl:with-param name="referrer" select="."/>
 	    <xsl:with-param name="xrefstyle" select="$xrefstyle"/>
 	  </xsl:apply-templates>
-	  
+
 	  <xsl:apply-templates select="$target" mode="xref-to">
 	    <xsl:with-param name="referrer" select="."/>
 	    <xsl:with-param name="xrefstyle" select="$xrefstyle"/>
 	  </xsl:apply-templates>
-	  
+
 	  <xsl:apply-templates select="$target" mode="xref-to-suffix">
 	    <xsl:with-param name="referrer" select="."/>
 	    <xsl:with-param name="xrefstyle" select="$xrefstyle"/>
 	  </xsl:apply-templates>
 	</xsl:when>
-	
+
 	<xsl:otherwise>
 	  <xsl:apply-templates/>
 	</xsl:otherwise>
-      
+
       </xsl:choose>
     </xsl:otherwise>
   </xsl:choose>

@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding="UTF-8"?>
 <!-- ********************************************************************
-      source/docbook/xsl/belgeler/multipage-start.xsl
+       scripts/bookless.xsl
      ********************************************************************
 
     Copyright ©  2021  Nilgün Belma Bugüner <https://github.com/nilgun>
@@ -18,19 +18,12 @@
     You should have received a copy of the GNU Affero General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 -->
-<xsl:stylesheet
-  xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-  xmlns:d="http://docbook.org/ns/docbook"
-  xmlns:exsl="http://exslt.org/common"
-  xmlns="http://www.w3.org/1999/xhtml"
-  xmlns:stbl="http://nwalsh.com/xslt/ext/com.nwalsh.saxon.Table"
-  xmlns:xtbl="xalan://com.nwalsh.xalan.Table"
-  xmlns:lxslt="http://xml.apache.org/xslt"
-  xmlns:ptbl="http://nwalsh.com/xslt/ext/xsltproc/python/Table"
-  exclude-result-prefixes="exsl stbl xtbl lxslt ptbl d"
-  version="1.0">
+<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+xmlns:d="http://docbook.org/ns/docbook" exclude-result-prefixes="d" version='1.0'>
 
-<xsl:import href="tlbp-chunk.xsl"/>
-<xsl:import href="common.xsl"/>
+<xsl:import href="../docbook/xsl/belgeler/tlbp-chunk.xsl"/>
+<xsl:import href="../docbook/xsl/belgeler/common.xsl"/>
+
+<xsl:template match="d:book"/>
 
 </xsl:stylesheet>
