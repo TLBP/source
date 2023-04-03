@@ -30,7 +30,7 @@
   exclude-result-prefixes="exsl stbl xtbl lxslt ptbl d"
   version="1.0">
 
-<xsl:import href="tlbp-chunk.xsl"/>
+<xsl:import href="chunkfast.xsl"/><!--../docbook5/xhtml5/-->
 <xsl:import href="common.xsl"/>
 
 </xsl:stylesheet>

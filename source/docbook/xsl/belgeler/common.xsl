@@ -72,7 +72,7 @@ bunu yapmak yerine xml:id'lerle değişmez id'ler oluşturmak daha iyidir. -->
 <!-- eskiler -->
 <xsl:param name="chunk.sections">1</xsl:param>
 <xsl:param name="chunk.first.sections">1</xsl:param>
-<xsl:param name="chunk.section.depth">1</xsl:param>
+<xsl:param name="chunk.section.depth">2</xsl:param>
 <!-- Bölümleme durdurulabiliyor. Kök altındaki
 chapter appendix, article gibi elemanların ilk satırına
   <?dbhtml stop-chunking?>
@@ -104,7 +104,7 @@ preface   nop
 qandadiv  nop
 qandaset  toc
 reference toc,title
-sect1     nop
+sect1     toc,title
 sect2     nop
 sect3     nop
 sect4     nop

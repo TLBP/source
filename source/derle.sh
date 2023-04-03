@@ -1,0 +1,1 @@
+xsltproc --xinclude docbook/xsl/belgeler/multipage-start.xsl belgeler.xml

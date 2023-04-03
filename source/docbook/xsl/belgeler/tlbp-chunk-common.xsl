@@ -73,9 +73,11 @@
 
 <xsl:param name="onechunk" select="0"/>
 <xsl:param name="refentry.separator" select="0"/>
-<xsl:param name="chunk.fast" select="0"/>
+<xsl:param name="chunk.fast" select="1"/>
 
 <xsl:key name="genid" match="*" use="generate-id()"/>
+
+<xsl:variable name="chunks" select="exsl:node-set($chunk.hierarchy)//cf:div"/>
 
 <!-- ==================================================================== -->
 
@@ -85,7 +87,7 @@
       <!-- Do we need to fix namespace? -->
       <xsl:when test="$exsl.node.set.available != 0 and                      namespace-uri(/*) != 'http://docbook.org/ns/docbook'">
         <xsl:if test="$chunk.quietly = 0">
-          <xsl:message>Computing chunks...</xsl:message>
+          <xsl:message>Computing chunks......</xsl:message>
         </xsl:if>
         <xsl:apply-templates mode="find.chunks" select="exsl:node-set($with.namespace)"/>
       </xsl:when>
@@ -292,19 +294,28 @@
   <xsl:param name="content">
     <xsl:apply-imports/>
   </xsl:param>
-
-  <xsl:variable name="prev-v1" select="(preceding::d:sect1[$chunk.section.depth &gt; 0 and not(ancestor::*/processing-instruction('dbhtml')[normalize-space(.) ='stop-chunking'])][1]              |preceding::d:sect2[$chunk.section.depth &gt; 1 and not(ancestor::*/processing-instruction('dbhtml')[normalize-space(.) ='stop-chunking'])][1]              | preceding::d:sect2[normalize-space(parent::d:sect1/processing-instruction('dbhtml')) = 'chunkthis'][not(@userlevel)][1]       |preceding::d:sect3[$chunk.section.depth &gt; 2 and not(ancestor::*/processing-instruction('dbhtml')[normalize-space(.) ='stop-chunking'])][1]              |preceding::d:sect4[$chunk.section.depth &gt; 3 and not(ancestor::*/processing-instruction('dbhtml')[normalize-space(.) ='stop-chunking'])][1]              |preceding::d:sect5[$chunk.section.depth &gt; 4 and not(ancestor::*/processing-instruction('dbhtml')[normalize-space(.) ='stop-chunking'])][1]              |preceding::d:section[$chunk.section.depth &gt; count(ancestor::d:section) and not(ancestor::*/processing-instruction('dbhtml')[normalize-space(.) ='stop-chunking'])][1])[last()]"/>
+<!--
+  <xsl:variable name="prev-v1" select="(preceding::d:sect1[$chunk.section.depth &gt; 0 and not(ancestor::*/processing-instruction('dbhtml')[normalize-space(.) ='stop-chunking'])][1]
+  |preceding::d:sect2[$chunk.section.depth &gt; 1 and not(ancestor::*/processing-instruction('dbhtml')[normalize-space(.) ='stop-chunking'])][1]
+  | preceding::d:sect2[normalize-space(parent::d:sect1/processing-instruction('dbhtml')) = 'chunkthis'][not(@userlevel)][1]
+  |preceding::d:sect3[$chunk.section.depth &gt; 2 and not(ancestor::*/processing-instruction('dbhtml')[normalize-space(.) ='stop-chunking'])][1]
+  |preceding::d:sect4[$chunk.section.depth &gt; 3 and not(ancestor::*/processing-instruction('dbhtml')[normalize-space(.) ='stop-chunking'])][1]
+  |preceding::d:sect5[$chunk.section.depth &gt; 4 and not(ancestor::*/processing-instruction('dbhtml')[normalize-space(.) ='stop-chunking'])][1]
+  |preceding::d:section[$chunk.section.depth &gt; count(ancestor::d:section) and not(ancestor::*/processing-instruction('dbhtml')[normalize-space(.) ='stop-chunking'])][1])[last()]"/>
 
   <xsl:variable name="prev-v2" select="(ancestor::d:sect1[$chunk.section.depth &gt; 0 and not(ancestor::*/processing-instruction('dbhtml')[normalize-space(.) ='stop-chunking'])][1]              |ancestor::d:sect2[$chunk.section.depth &gt; 1 and not(ancestor::*/processing-instruction('dbhtml')[normalize-space(.) ='stop-chunking'])][1]              |ancestor::d:sect3[$chunk.section.depth &gt; 2 and not(ancestor::*/processing-instruction('dbhtml')[normalize-space(.) ='stop-chunking'])][1]              |ancestor::d:sect4[$chunk.section.depth &gt; 3 and not(ancestor::*/processing-instruction('dbhtml')[normalize-space(.) ='stop-chunking'])][1]              |ancestor::d:sect5[$chunk.section.depth &gt; 4 and not(ancestor::*/processing-instruction('dbhtml')[normalize-space(.) ='stop-chunking'])][1]              |ancestor::d:section[$chunk.section.depth &gt; count(ancestor::d:section) and not(ancestor::*/processing-instruction('dbhtml')[normalize-space(.) ='stop-chunking'])][1])[last()]"/>
-
-  <xsl:variable name="prev" select="(ancestor::d:set |ancestor::d:book[1]
-  |ancestor::d:preface[1]
+-->
+<!--
+  <xsl:variable name="prev" select="(ancestor::d:book[1]|ancestor::d:preface[1]
   |ancestor::d:chapter[1]
   |ancestor::d:appendix[1]
   |ancestor::d:part[1]
   |ancestor::d:reference[1]
   |ancestor::d:article[1]
   |ancestor::d:topic[1]
+  |ancestor::d:sect1[1]
+  |preceding::d:setindex[$generate.index != 0][1]
+  |preceding::d:dictionary[1]
   |preceding::d:preface[1]
   |preceding::d:chapter[1]
   |preceding::d:appendix[1]
@@ -317,15 +328,10 @@
   |preceding::d:bibliography[parent::d:article or parent::d:book or parent::d:part][1]
   |preceding::d:glossary[parent::d:article or parent::d:book or parent::d:part][1]
   |preceding::d:index[$generate.index != 0][parent::d:article or parent::d:book or parent::d:part][1]
-  |preceding::d:setindex[$generate.index != 0][1]
-  |preceding::d:dictionary[1]
-  |$prev-v2
   |preceding::d:sect1[1]
-  )[last()]"/>
-  <!--Önceki dalın en ucuna değil önceki en uzun dalın en ucuna gidiyor
-  Örneğin, 3.2.5'e değil 3.2.2.11'e gidiyor.
-  (Doğrusu: atası önceki ata dal olan en küçük çocuk veya torun)
-  |$prev-v1)[last()]"/>-->
+  |preceding::d:sect2[1]
+  )[last()]"/-->
+  <!--|$prev-v1)[last()]"/>-->
 
   <xsl:variable name="next-v1" select="(following::d:sect1[$chunk.section.depth &gt; 0 and not(ancestor::*/processing-instruction('dbhtml')[normalize-space(.) ='stop-chunking'])][1]              |following::d:sect2[$chunk.section.depth &gt; 1 and not(ancestor::*/processing-instruction('dbhtml')[normalize-space(.) ='stop-chunking']) and count(preceding-sibling::d:sect2) &gt; 0][1]              |following::d:sect2[normalize-space(parent::d:sect1/processing-instruction('dbhtml')) = 'chunkthis'][1]   |following::d:sect3[$chunk.section.depth &gt; 2 and not(ancestor::*/processing-instruction('dbhtml')[normalize-space(.) ='stop-chunking'])][1]              |following::d:sect4[$chunk.section.depth &gt; 3 and not(ancestor::*/processing-instruction('dbhtml')[normalize-space(.) ='stop-chunking'])][1]              |following::d:sect5[$chunk.section.depth &gt; 4 and not(ancestor::*/processing-instruction('dbhtml')[normalize-space(.) ='stop-chunking'])][1]              |following::d:section[$chunk.section.depth &gt; count(ancestor::d:section) and not(ancestor::*/processing-instruction('dbhtml')[normalize-space(.) ='stop-chunking'])][1])[1]"/>
 
