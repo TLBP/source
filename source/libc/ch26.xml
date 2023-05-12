@@ -5,4 +5,1040 @@
 <part xml:id="glibc-Processes">
   <title>Süreçler</title>
   <titleabbrev>Süreçler nasıl oluşturulur ve diğer yazılımlar nasıl çalıştırılır.</titleabbrev>
+ <preliminary>
+
+<!--span xml:id="glibc-index-process-1"></span-->
+<para><emphasis>Processes</emphasis> are the primitive units for allocation of system
+resources.  Each process has its own address space and (usually) one
+thread of control.  A process executes a program; you can have multiple
+processes executing the same program, but each process has its own copy
+of the program within its own address space and executes it
+independently of the other copies.
+</para>
+<!--span xml:id="glibc-index-child-process-1"></span>
+<span xml:id="glibc-index-parent-process"></span-->
+<para>Processes are organized hierarchically.  Each process has a <emphasis>parent
+process</emphasis> which explicitly arranged to create it.  The processes created
+by a given parent are called its <emphasis>child processes</emphasis>.  A child
+inherits many of its attributes from the parent process.
+</para>
+<para>This chapter describes how a program can create, terminate, and control
+child processes.  Actually, there are three distinct operations
+involved: creating a new child process, causing the new process to
+execute a program, and coordinating the completion of the child process
+with the original program.
+</para>
+<para>The <code>system</code> function provides a simple, portable mechanism for
+running another program; it does all three steps automatically.  If you
+need more control over the details of how this is done, you can use the
+primitive functions to do each step individually instead.
+</para>
+ </preliminary><!--
+<sect xml:id="glibc-Running-a-Command">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Process-Creation-Concepts" accesskey="n" rel="next">Process Creation Concepts</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Processes" accesskey="u" rel="up">Processes</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Running-a-Command-1"></span><h3 class="section">26.1 Running a Command</title>
+<span xml:id="glibc-index-running-a-command"></span>
+
+<para>The easy way to run another program is to use the <code>system</code>
+function.  This function does all the work of running a subprogram, but
+it doesn’t give you much control over the details: you have to wait
+until the subprogram terminates before you can do anything else.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-system"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>system</strong> <emphasis>(const char *<var>command</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-system" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<span xml:id="glibc-index-sh"></span>
+<para>Preliminary:
+| MT-Safe
+| AS-Unsafe plugin heap lock
+| AC-Unsafe lock mem
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This function executes <var>command</var> as a shell command.  In the GNU C Library,
+it always uses the default shell <code>sh</code> to run the command.
+In particular, it searches the directories in <code>PATH</code> to find
+programs to execute.  The return value is <code>-1</code> if it wasn’t
+possible to create the shell process, and otherwise is the status of the
+shell process.  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Process-Completion">Process Completion</a>, for details on how this
+status code can be interpreted.
+</para>
+<para>If the <var>command</var> argument is a null pointer, a return value of zero
+indicates that no command processor is available.
+</para>
+<para>This function is a cancellation point in multi-threaded programs.  This
+is a problem if the thread allocates some resources (like memory, file
+descriptors, semaphores or whatever) at the time <code>system</code> is
+called.  If the thread gets canceled these resources stay allocated
+until the program ends.  To avoid this calls to <code>system</code> should be
+protected using cancellation handlers.
+</para>
+<span xml:id="glibc-index-stdlib_002eh-24"></span>
+<para>The <code>system</code> function is declared in the header file
+<filename>stdlib.h</filename>.
+</para></dd></dl>
+
+<para><strong>Portability Note:</strong> Some C implementations may not have any
+notion of a command processor that can execute other programs.  You can
+determine whether a command processor exists by executing
+<code>system&nbsp;(NULL)</code>; if the return value is nonzero, a command
+processor is available.
+</para>
+<para>The <code>popen</code> and <code>pclose</code> functions (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Pipe-to-a-Subprocess">Pipe to a Subprocess</a>) are closely related to the <code>system</code> function.  They
+allow the parent process to communicate with the standard input and
+output channels of the command being executed.
+</para>
+<hr>
+</div>
+<sect xml:id="glibc-Process-Creation-Concepts">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Process-Identification" accesskey="n" rel="next">Process Identification</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Running-a-Command" accesskey="p" rel="prev">Running a Command</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Processes" accesskey="u" rel="up">Processes</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Process-Creation-Concepts-1"></span><h3 class="section">26.2 Process Creation Concepts</title>
+
+<para>This section gives an overview of processes and of the steps involved in
+creating a process and making it run another program.
+</para>
+<span xml:id="glibc-index-creating-a-process"></span>
+<span xml:id="glibc-index-forking-a-process"></span>
+<span xml:id="glibc-index-child-process-2"></span>
+<span xml:id="glibc-index-parent-process-1"></span>
+<span xml:id="glibc-index-subprocess"></span>
+<para>A new processes is created when one of the functions
+<code>posix_spawn</code>, <code>fork</code>, <code>_Fork</code> or <code>vfork</code> is called.
+(The <code>system</code> and <code>popen</code> also create new processes internally.)
+Due to the name of the <code>fork</code> function, the act of creating a new
+process is sometimes called <emphasis>forking</emphasis> a process.  Each new process
+(the <emphasis>child process</emphasis> or <emphasis>subprocess</emphasis>) is allocated a process
+ID, distinct from the process ID of the parent process.  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Process-Identification">Process Identification</a>.
+</para>
+<para>After forking a child process, both the parent and child processes
+continue to execute normally.  If you want your program to wait for a
+child process to finish executing before continuing, you must do this
+explicitly after the fork operation, by calling <code>wait</code> or
+<code>waitpid</code> (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Process-Completion">Process Completion</a>).  These functions give you
+limited information about why the child terminated—for example, its
+exit status code.
+</para>
+<para>A newly forked child process continues to execute the same program as
+its parent process, at the point where the <code>fork</code> or <code>_Fork</code>
+call returns.  You can use the return value from <code>fork</code> or
+<code>_Fork</code> to tell whether the program is running in the parent process
+or the child.
+</para>
+<span xml:id="glibc-index-process-image"></span>
+<para>Having several processes run the same program is only occasionally
+useful.  But the child can execute another program using one of the
+<code>exec</code> functions; see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Executing-a-File">Executing a File</a>.  The program that the
+process is executing is called its <emphasis>process image</emphasis>.  Starting
+execution of a new program causes the process to forget all about its
+previous process image; when the new program exits, the process exits
+too, instead of returning to the previous process image.
+</para>
+<hr>
+</div>
+<sect xml:id="glibc-Process-Identification">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Creating-a-Process" accesskey="n" rel="next">Creating a Process</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Process-Creation-Concepts" accesskey="p" rel="prev">Process Creation Concepts</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Processes" accesskey="u" rel="up">Processes</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Process-Identification-1"></span><h3 class="section">26.3 Process Identification</title>
+
+<span xml:id="glibc-index-process-ID"></span>
+<para>Each process is named by a <emphasis>process ID</emphasis> number, a value of type
+<code>pid_t</code>.  A process ID is allocated to each process when it is
+created.  Process IDs are reused over time.  The lifetime of a process
+ends when the parent process of the corresponding process waits on the
+process ID after the process has terminated.  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Process-Completion">Process Completion</a>.  (The parent process can arrange for such waiting to
+happen implicitly.)  A process ID uniquely identifies a process only
+during the lifetime of the process.  As a rule of thumb, this means
+that the process must still be running.
+</para>
+<para>Process IDs can also denote process groups and sessions.
+See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Job-Control">Job Control</a>.
+</para>
+<span xml:id="glibc-index-thread-ID"></span>
+<span xml:id="glibc-index-task-ID"></span>
+<span xml:id="glibc-index-thread-group"></span>
+<para>On Linux, threads created by <code>pthread_create</code> also receive a
+<emphasis>thread ID</emphasis>.  The thread ID of the initial (main) thread is the
+same as the process ID of the entire process.  Thread IDs for
+subsequently created threads are distinct.  They are allocated from
+the same numbering space as process IDs.  Process IDs and thread IDs
+are sometimes also referred to collectively as <emphasis>task IDs</emphasis>.  In
+contrast to processes, threads are never waited for explicitly, so a
+thread ID becomes eligible for reuse as soon as a thread exits or is
+canceled.  This is true even for joinable threads, not just detached
+threads.  Threads are assigned to a <emphasis>thread group</emphasis>.  In
+the GNU C Library implementation running on Linux, the process ID is the
+thread group ID of all threads in the process.
+</para>
+<para>You can get the process ID of a process by calling <code>getpid</code>.  The
+function <code>getppid</code> returns the process ID of the parent of the
+current process (this is also known as the <emphasis>parent process ID</emphasis>).
+Your program should include the header files <filename>unistd.h</filename> and
+<filename>sys/types.h</filename> to use these functions.
+<span xml:id="glibc-index-sys_002ftypes_002eh-1"></span>
+<span xml:id="glibc-index-unistd_002eh-17"></span>
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-pid_005ft"><span class="category">Data Type: </span><span><strong>pid_t</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-pid_005ft" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>The <code>pid_t</code> data type is a signed integer type which is capable
+of representing a process ID.  In the GNU C Library, this is an <code>int</code>.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-getpid"><span class="category">Function: </span><span><emphasis>pid_t</emphasis> <strong>getpid</strong> <emphasis>(void)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-getpid" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>getpid</code> function returns the process ID of the current process.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-getppid"><span class="category">Function: </span><span><emphasis>pid_t</emphasis> <strong>getppid</strong> <emphasis>(void)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-getppid" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>getppid</code> function returns the process ID of the parent of the
+current process.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-gettid"><span class="category">Function: </span><span><emphasis>pid_t</emphasis> <strong>gettid</strong> <emphasis>(void)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-gettid" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>gettid</code> function returns the thread ID of the current
+thread.  The returned value is obtained from the Linux kernel and is
+not subject to caching.  See the discussion of thread IDs above,
+especially regarding reuse of the IDs of threads which have exited.
+</para>
+<para>This function is specific to Linux.
+</para></dd></dl>
+
+<hr>
+</div>
+<sect xml:id="glibc-Creating-a-Process">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Executing-a-File" accesskey="n" rel="next">Executing a File</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Process-Identification" accesskey="p" rel="prev">Process Identification</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Processes" accesskey="u" rel="up">Processes</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Creating-a-Process-1"></span><h3 class="section">26.4 Creating a Process</title>
+
+<para>The <code>fork</code> function is the primitive for creating a process.
+It is declared in the header file <filename>unistd.h</filename>.
+<span xml:id="glibc-index-unistd_002eh-18"></span>
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-fork"><span class="category">Function: </span><span><emphasis>pid_t</emphasis> <strong>fork</strong> <emphasis>(void)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-fork" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Unsafe plugin
+| AC-Unsafe lock
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>fork</code> function creates a new process.
+</para>
+<para>If the operation is successful, there are then both parent and child
+processes and both see <code>fork</code> return, but with different values: it
+returns a value of <code>0</code> in the child process and returns the child’s
+process ID in the parent process.
+</para>
+<para>If process creation failed, <code>fork</code> returns a value of <code>-1</code> in
+the parent process.  The following <code>errno</code> error conditions are
+defined for <code>fork</code>:
+</para>
+<dl compact="compact">
+<dt><span><code>EAGAIN</code></span></dt>
+<dd><para>There aren’t enough system resources to create another process, or the
+user already has too many processes running.  This means exceeding the
+<code>RLIMIT_NPROC</code> resource limit, which can usually be increased;
+see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Limits-on-Resources">Limiting Resource Usage</a>.
+</para>
+</dd>
+<dt><span><code>ENOMEM</code></span></dt>
+<dd><para>The process requires more space than the system can supply.
+</para></dd>
+</dl>
+</dd></dl>
+
+<para>The specific attributes of the child process that differ from the
+parent process are:
+</para>
+<ul>
+<li> The child process has its own unique process ID.
+
+</li><li> The parent process ID of the child process is the process ID of its
+parent process.
+
+</li><li> The child process gets its own copies of the parent process’s open file
+descriptors.  Subsequently changing attributes of the file descriptors
+in the parent process won’t affect the file descriptors in the child,
+and vice versa.  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Control-Operations">Control Operations on Files</a>.  However, the file position
+associated with each descriptor is shared by both processes;
+see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#File-Position">File Position</a>.
+
+</li><li> The elapsed processor times for the child process are set to zero;
+see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Processor-Time">Processor Time Inquiry</a>.
+
+</li><li> The child doesn’t inherit file locks set by the parent process.
+See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Control-Operations">Control Operations on Files</a>.
+
+</li><li> The child doesn’t inherit alarms set by the parent process.
+See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Setting-an-Alarm">Setting an Alarm</a>.
+
+</li><li> The set of pending signals (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Delivery-of-Signal">How Signals Are Delivered</a>) for the child
+process is cleared.  (The child process inherits its mask of blocked
+signals and signal actions from the parent process.)
+</li></ul>
+
+<dl class="def">
+<dt xml:id="glibc-index-_005fFork"><span class="category">Function: </span><span><emphasis>pid_t</emphasis> <strong>_Fork</strong> <emphasis>(void)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-_005fFork" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>_Fork</code> function is similar to <code>fork</code>, but it does not invoke
+any callbacks registered with <code>pthread_atfork</code>, nor does it reset
+any internal state or locks (such as the <code>malloc</code> locks).  In the
+new subprocess, only async-signal-safe functions may be called, such as
+<code>dup2</code> or <code>execve</code>.
+</para>
+<para>The <code>_Fork</code> function is an async-signal-safe replacement of <code>fork</code>.
+It is a GNU extension.
+</para>
+</dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-vfork"><span class="category">Function: </span><span><emphasis>pid_t</emphasis> <strong>vfork</strong> <emphasis>(void)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-vfork" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Unsafe plugin
+| AC-Unsafe lock
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>vfork</code> function is similar to <code>fork</code> but on some systems
+it is more efficient; however, there are restrictions you must follow to
+use it safely.
+</para>
+<para>While <code>fork</code> makes a complete copy of the calling process’s address
+space and allows both the parent and child to execute independently,
+<code>vfork</code> does not make this copy.  Instead, the child process
+created with <code>vfork</code> shares its parent’s address space until it
+calls <code>_exit</code> or one of the <code>exec</code> functions.  In the
+meantime, the parent process suspends execution.
+</para>
+<para>You must be very careful not to allow the child process created with
+<code>vfork</code> to modify any global data or even local variables shared
+with the parent.  Furthermore, the child process cannot return from (or
+do a long jump out of) the function that called <code>vfork</code>!  This
+would leave the parent process’s control information very confused.  If
+in doubt, use <code>fork</code> instead.
+</para>
+<para>Some operating systems don’t really implement <code>vfork</code>.  The GNU C Library
+permits you to use <code>vfork</code> on all systems, but actually
+executes <code>fork</code> if <code>vfork</code> isn’t available.  If you follow
+the proper precautions for using <code>vfork</code>, your program will still
+work even if the system uses <code>fork</code> instead.
+</para></dd></dl>
+
+<hr>
+</div>
+<sect xml:id="glibc-Executing-a-File">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Process-Completion" accesskey="n" rel="next">Process Completion</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Creating-a-Process" accesskey="p" rel="prev">Creating a Process</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Processes" accesskey="u" rel="up">Processes</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Executing-a-File-1"></span><h3 class="section">26.5 Executing a File</title>
+<span xml:id="glibc-index-executing-a-file"></span>
+<span xml:id="glibc-index-exec-functions"></span>
+
+<para>This section describes the <code>exec</code> family of functions, for executing
+a file as a process image.  You can use these functions to make a child
+process execute a new program after it has been forked.
+</para>
+<para>To see the effects of <code>exec</code> from the point of view of the called
+program, see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Program-Basics">The Basic Program/System Interface</a>.
+</para>
+<span xml:id="glibc-index-unistd_002eh-19"></span>
+<para>The functions in this family differ in how you specify the arguments,
+but otherwise they all do the same thing.  They are declared in the
+header file <filename>unistd.h</filename>.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-execv"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>execv</strong> <emphasis>(const char *<var>filename</var>, char *const <var>argv</var><tt>[]</tt>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-execv" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>execv</code> function executes the file named by <var>filename</var> as a
+new process image.
+</para>
+<para>The <var>argv</var> argument is an array of null-terminated strings that is
+used to provide a value for the <code>argv</code> argument to the <code>main</code>
+function of the program to be executed.  The last element of this array
+must be a null pointer.  By convention, the first element of this array
+is the file name of the program sans directory names.  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Program-Arguments">Program Arguments</a>, for full details on how programs can access these arguments.
+</para>
+<para>The environment for the new process image is taken from the
+<code>environ</code> variable of the current process image; see
+<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Environment-Variables">Environment Variables</a>, for information about environments.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-execl"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>execl</strong> <emphasis>(const char *<var>filename</var>, const char *<var>arg0</var>, …)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-execl" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Unsafe heap
+| AC-Unsafe mem
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This is similar to <code>execv</code>, but the <var>argv</var> strings are
+specified individually instead of as an array.  A null pointer must be
+passed as the last such argument.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-execve"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>execve</strong> <emphasis>(const char *<var>filename</var>, char *const <var>argv</var><tt>[]</tt>, char *const <var>env</var><tt>[]</tt>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-execve" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This is similar to <code>execv</code>, but permits you to specify the environment
+for the new program explicitly as the <var>env</var> argument.  This should
+be an array of strings in the same format as for the <code>environ</code>
+variable; see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Environment-Access">Environment Access</a>.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-fexecve"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>fexecve</strong> <emphasis>(int <var>fd</var>,  char *const <var>argv</var><tt>[]</tt>, char *const <var>env</var><tt>[]</tt>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-fexecve" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This is similar to <code>execve</code>, but instead of identifying the program
+executable by its pathname, the file descriptor <var>fd</var> is used.  The
+descriptor must have been opened with the <code>O_RDONLY</code> flag or (on
+Linux) the <code>O_PATH</code> flag.
+</para>
+<para>On Linux, <code>fexecve</code> can fail with an error of <code>ENOSYS</code> if
+<filename>/proc</filename> has not been mounted and the kernel lacks support for the
+underlying <code>execveat</code> system call.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-execle"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>execle</strong> <emphasis>(const char *<var>filename</var>, const char *<var>arg0</var>, …, char *const <var>env</var><tt>[]</tt>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-execle" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Unsafe heap
+| AC-Unsafe mem
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This is similar to <code>execl</code>, but permits you to specify the
+environment for the new program explicitly.  The environment argument is
+passed following the null pointer that marks the last <var>argv</var>
+argument, and should be an array of strings in the same format as for
+the <code>environ</code> variable.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-execvp"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>execvp</strong> <emphasis>(const char *<var>filename</var>, char *const <var>argv</var><tt>[]</tt>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-execvp" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe env
+| AS-Unsafe heap
+| AC-Unsafe mem
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>execvp</code> function is similar to <code>execv</code>, except that it
+searches the directories listed in the <code>PATH</code> environment variable
+(see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Standard-Environment">Standard Environment Variables</a>) to find the full file name of a
+file from <var>filename</var> if <var>filename</var> does not contain a slash.
+</para>
+<para>This function is useful for executing system utility programs, because
+it looks for them in the places that the user has chosen.  Shells use it
+to run the commands that users type.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-execlp"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>execlp</strong> <emphasis>(const char *<var>filename</var>, const char *<var>arg0</var>, …)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-execlp" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe env
+| AS-Unsafe heap
+| AC-Unsafe mem
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This function is like <code>execl</code>, except that it performs the same
+file name searching as the <code>execvp</code> function.
+</para></dd></dl>
+
+<para>The size of the argument list and environment list taken together must
+not be greater than <code>ARG_MAX</code> bytes.  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#General-Limits">General Capacity Limits</a>.  On
+GNU/Hurd systems, the size (which compares against <code>ARG_MAX</code>)
+includes, for each string, the number of characters in the string, plus
+the size of a <code>char *</code>, plus one, rounded up to a multiple of the
+size of a <code>char *</code>.  Other systems may have somewhat different
+rules for counting.
+</para>
+<para>These functions normally don’t return, since execution of a new program
+causes the currently executing program to go away completely.  A value
+of <code>-1</code> is returned in the event of a failure.  In addition to the
+usual file name errors (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#File-Name-Errors">File Name Errors</a>), the following
+<code>errno</code> error conditions are defined for these functions:
+</para>
+<dl compact="compact">
+<dt><span><code>E2BIG</code></span></dt>
+<dd><para>The combined size of the new program’s argument list and environment
+list is larger than <code>ARG_MAX</code> bytes.  GNU/Hurd systems have no
+specific limit on the argument list size, so this error code cannot
+result, but you may get <code>ENOMEM</code> instead if the arguments are too
+big for available memory.
+</para>
+</dd>
+<dt><span><code>ENOEXEC</code></span></dt>
+<dd><para>The specified file can’t be executed because it isn’t in the right format.
+</para>
+</dd>
+<dt><span><code>ENOMEM</code></span></dt>
+<dd><para>Executing the specified file requires more storage than is available.
+</para></dd>
+</dl>
+
+<para>If execution of the new file succeeds, it updates the access time field
+of the file as if the file had been read.  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#File-Times">File Times</a>, for more
+details about access times of files.
+</para>
+<para>The point at which the file is closed again is not specified, but
+is at some point before the process exits or before another process
+image is executed.
+</para>
+<para>Executing a new process image completely changes the contents of memory,
+copying only the argument and environment strings to new locations.  But
+many other attributes of the process are unchanged:
+</para>
+<ul>
+<li> The process ID and the parent process ID.  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Process-Creation-Concepts">Process Creation Concepts</a>.
+
+</li><li> Session and process group membership.  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concepts-of-Job-Control">Concepts of Job Control</a>.
+
+</li><li> Real user ID and group ID, and supplementary group IDs.  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Process-Persona">The Persona of a Process</a>.
+
+</li><li> Pending alarms.  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Setting-an-Alarm">Setting an Alarm</a>.
+
+</li><li> Current working directory and root directory.  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Working-Directory">Working Directory</a>.  On GNU/Hurd systems, the root directory is not copied when
+executing a setuid program; instead the system default root directory
+is used for the new program.
+
+</li><li> File mode creation mask.  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Setting-Permissions">Assigning File Permissions</a>.
+
+</li><li> Process signal mask; see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Process-Signal-Mask">Process Signal Mask</a>.
+
+</li><li> Pending signals; see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Blocking-Signals">Blocking Signals</a>.
+
+</li><li> Elapsed processor time associated with the process; see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Processor-Time">Processor Time Inquiry</a>.
+</li></ul>
+
+<para>If the set-user-ID and set-group-ID mode bits of the process image file
+are set, this affects the effective user ID and effective group ID
+(respectively) of the process.  These concepts are discussed in detail
+in <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Process-Persona">The Persona of a Process</a>.
+</para>
+<para>Signals that are set to be ignored in the existing process image are
+also set to be ignored in the new process image.  All other signals are
+set to the default action in the new process image.  For more
+information about signals, see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Signal-Handling">Signal Handling</a>.
+</para>
+<para>File descriptors open in the existing process image remain open in the
+new process image, unless they have the <code>FD_CLOEXEC</code>
+(close-on-exec) flag set.  The files that remain open inherit all
+attributes of the open file descriptors from the existing process image,
+including file locks.  File descriptors are discussed in <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Low_002dLevel-I_002fO">Low-Level Input/Output</a>.
+</para>
+<para>Streams, by contrast, cannot survive through <code>exec</code> functions,
+because they are located in the memory of the process itself.  The new
+process image has no streams except those it creates afresh.  Each of
+the streams in the pre-<code>exec</code> process image has a descriptor inside
+it, and these descriptors do survive through <code>exec</code> (provided that
+they do not have <code>FD_CLOEXEC</code> set).  The new process image can
+reconnect these to new streams using <code>fdopen</code> (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Descriptors-and-Streams">Descriptors and Streams</a>).
+</para>
+<hr>
+</div>
+<sect xml:id="glibc-Process-Completion">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Process-Completion-Status" accesskey="n" rel="next">Process Completion Status</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Executing-a-File" accesskey="p" rel="prev">Executing a File</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Processes" accesskey="u" rel="up">Processes</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Process-Completion-1"></span><h3 class="section">26.6 Process Completion</title>
+<span xml:id="glibc-index-process-completion"></span>
+<span xml:id="glibc-index-waiting-for-completion-of-child-process"></span>
+<span xml:id="glibc-index-testing-exit-status-of-child-process"></span>
+
+<para>The functions described in this section are used to wait for a child
+process to terminate or stop, and determine its status.  These functions
+are declared in the header file <filename>sys/wait.h</filename>.
+<span xml:id="glibc-index-sys_002fwait_002eh"></span>
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-waitpid"><span class="category">Function: </span><span><emphasis>pid_t</emphasis> <strong>waitpid</strong> <emphasis>(pid_t <var>pid</var>, int *<var>status-ptr</var>, int <var>options</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-waitpid" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>waitpid</code> function is used to request status information from a
+child process whose process ID is <var>pid</var>.  Normally, the calling
+process is suspended until the child process makes status information
+available by terminating.
+</para>
+<para>Other values for the <var>pid</var> argument have special interpretations.  A
+value of <code>-1</code> or <code>WAIT_ANY</code> requests status information for
+any child process; a value of <code>0</code> or <code>WAIT_MYPGRP</code> requests
+information for any child process in the same process group as the
+calling process; and any other negative value - <var>pgid</var>
+requests information for any child process whose process group ID is
+<var>pgid</var>.
+</para>
+<para>If status information for a child process is available immediately, this
+function returns immediately without waiting.  If more than one eligible
+child process has status information available, one of them is chosen
+randomly, and its status is returned immediately.  To get the status
+from the other eligible child processes, you need to call <code>waitpid</code>
+again.
+</para>
+<para>The <var>options</var> argument is a bit mask.  Its value should be the
+bitwise OR (that is, the ‘<filename>|</filename>’ operator) of zero or more of the
+<code>WNOHANG</code> and <code>WUNTRACED</code> flags.  You can use the
+<code>WNOHANG</code> flag to indicate that the parent process shouldn’t wait;
+and the <code>WUNTRACED</code> flag to request status information from stopped
+processes as well as processes that have terminated.
+</para>
+<para>The status information from the child process is stored in the object
+that <var>status-ptr</var> points to, unless <var>status-ptr</var> is a null pointer.
+</para>
+<para>This function is a cancellation point in multi-threaded programs.  This
+is a problem if the thread allocates some resources (like memory, file
+descriptors, semaphores or whatever) at the time <code>waitpid</code> is
+called.  If the thread gets canceled these resources stay allocated
+until the program ends.  To avoid this calls to <code>waitpid</code> should be
+protected using cancellation handlers.
+</para>
+<para>The return value is normally the process ID of the child process whose
+status is reported.  If there are child processes but none of them is
+waiting to be noticed, <code>waitpid</code> will block until one is.  However,
+if the <code>WNOHANG</code> option was specified, <code>waitpid</code> will return
+zero instead of blocking.
+</para>
+<para>If a specific PID to wait for was given to <code>waitpid</code>, it will
+ignore all other children (if any).  Therefore if there are children
+waiting to be noticed but the child whose PID was specified is not one
+of them, <code>waitpid</code> will block or return zero as described above.
+</para>
+<para>A value of <code>-1</code> is returned in case of error.  The following
+<code>errno</code> error conditions are defined for this function:
+</para>
+<dl compact="compact">
+<dt><span><code>EINTR</code></span></dt>
+<dd><para>The function was interrupted by delivery of a signal to the calling
+process.  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Interrupted-Primitives">Primitives Interrupted by Signals</a>.
+</para>
+</dd>
+<dt><span><code>ECHILD</code></span></dt>
+<dd><para>There are no child processes to wait for, or the specified <var>pid</var>
+is not a child of the calling process.
+</para>
+</dd>
+<dt><span><code>EINVAL</code></span></dt>
+<dd><para>An invalid value was provided for the <var>options</var> argument.
+</para></dd>
+</dl>
+</dd></dl>
+
+<para>These symbolic constants are defined as values for the <var>pid</var> argument
+to the <code>waitpid</code> function.
+</para>
+<dl compact="compact">
+<dt xml:id="glibc-index-WAIT_005fANY"><span><code>WAIT_ANY</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-WAIT_005fANY" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>This constant macro (whose value is <code>-1</code>) specifies that
+<code>waitpid</code> should return status information about any child process.
+</para>
+
+</dd>
+<dt xml:id="glibc-index-WAIT_005fMYPGRP"><span><code>WAIT_MYPGRP</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-WAIT_005fMYPGRP" class="copiable-anchor"> ¶</a></span></dt>
+<dd><para>This constant (with value <code>0</code>) specifies that <code>waitpid</code> should
+return status information about any child process in the same process
+group as the calling process.
+</para></dd>
+</dl>
+
+<para>These symbolic constants are defined as flags for the <var>options</var>
+argument to the <code>waitpid</code> function.  You can bitwise-OR the flags
+together to obtain a value to use as the argument.
+</para>
+<dl compact="compact">
+<dt xml:id="glibc-index-WNOHANG"><span><code>WNOHANG</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-WNOHANG" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>This flag specifies that <code>waitpid</code> should return immediately
+instead of waiting, if there is no child process ready to be noticed.
+</para>
+</dd>
+<dt xml:id="glibc-index-WUNTRACED"><span><code>WUNTRACED</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-WUNTRACED" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>This flag specifies that <code>waitpid</code> should report the status of any
+child processes that have been stopped as well as those that have
+terminated.
+</para></dd>
+</dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-wait"><span class="category">Function: </span><span><emphasis>pid_t</emphasis> <strong>wait</strong> <emphasis>(int *<var>status-ptr</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-wait" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This is a simplified version of <code>waitpid</code>, and is used to wait
+until any one child process terminates.  The call:
+</para>
+<div class="example">
+<pre class="example">wait (&amp;status)
+</pre></div>
+
+<para>is exactly equivalent to:
+</para>
+<div class="example">
+<pre class="example">waitpid (-1, &amp;status, 0)
+</pre></div>
+
+<para>This function is a cancellation point in multi-threaded programs.  This
+is a problem if the thread allocates some resources (like memory, file
+descriptors, semaphores or whatever) at the time <code>wait</code> is
+called.  If the thread gets canceled these resources stay allocated
+until the program ends.  To avoid this calls to <code>wait</code> should be
+protected using cancellation handlers.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-wait4"><span class="category">Function: </span><span><emphasis>pid_t</emphasis> <strong>wait4</strong> <emphasis>(pid_t <var>pid</var>, int *<var>status-ptr</var>, int <var>options</var>, struct rusage *<var>usage</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-wait4" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>If <var>usage</var> is a null pointer, <code>wait4</code> is equivalent to
+<code>waitpid (<var>pid</var>, <var>status-ptr</var>, <var>options</var>)</code>.
+</para>
+<para>If <var>usage</var> is not null, <code>wait4</code> stores usage figures for the
+child process in <code>*<var>rusage</var></code> (but only if the child has
+terminated, not if it has stopped).  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Resource-Usage">Resource Usage</a>.
+</para>
+<para>This function is a BSD extension.
+</para></dd></dl>
+
+<para>Here’s an example of how to use <code>waitpid</code> to get the status from
+all child processes that have terminated, without ever waiting.  This
+function is designed to be a handler for <code>SIGCHLD</code>, the signal that
+indicates that at least one child process has terminated.
+</para>
+<div class="example">
+<pre class="example">void
+sigchld_handler (int signum)
+{
+  int pid, status, serrno;
+  serrno = errno;
+  while (1)
+    {
+      pid = waitpid (WAIT_ANY, &amp;status, WNOHANG);
+      if (pid &lt; 0)
+        {
+          perror ("waitpid");
+          break;
+        }
+      if (pid == 0)
+        break;
+      notice_termination (pid, status);
+    }
+  errno = serrno;
+}
+</pre></div>
+
+<hr>
+</div>
+<sect xml:id="glibc-Process-Completion-Status">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#BSD-Wait-Functions" accesskey="n" rel="next">BSD Process Wait Function</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Process-Completion" accesskey="p" rel="prev">Process Completion</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Processes" accesskey="u" rel="up">Processes</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Process-Completion-Status-1"></span><h3 class="section">26.7 Process Completion Status</title>
+
+<para>If the exit status value (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Program-Termination">Program Termination</a>) of the child
+process is zero, then the status value reported by <code>waitpid</code> or
+<code>wait</code> is also zero.  You can test for other kinds of information
+encoded in the returned status value using the following macros.
+These macros are defined in the header file <filename>sys/wait.h</filename>.
+<span xml:id="glibc-index-sys_002fwait_002eh-1"></span>
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-WIFEXITED"><span class="category">Macro: </span><span><emphasis>int</emphasis> <strong>WIFEXITED</strong> <emphasis>(int <var>status</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-WIFEXITED" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This macro returns a nonzero value if the child process terminated
+normally with <code>exit</code> or <code>_exit</code>.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-WEXITSTATUS"><span class="category">Macro: </span><span><emphasis>int</emphasis> <strong>WEXITSTATUS</strong> <emphasis>(int <var>status</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-WEXITSTATUS" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>If <code>WIFEXITED</code> is true of <var>status</var>, this macro returns the
+low-order 8 bits of the exit status value from the child process.
+See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Exit-Status">Exit Status</a>.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-WIFSIGNALED"><span class="category">Macro: </span><span><emphasis>int</emphasis> <strong>WIFSIGNALED</strong> <emphasis>(int <var>status</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-WIFSIGNALED" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This macro returns a nonzero value if the child process terminated
+because it received a signal that was not handled.
+See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Signal-Handling">Signal Handling</a>.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-WTERMSIG"><span class="category">Macro: </span><span><emphasis>int</emphasis> <strong>WTERMSIG</strong> <emphasis>(int <var>status</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-WTERMSIG" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>If <code>WIFSIGNALED</code> is true of <var>status</var>, this macro returns the
+signal number of the signal that terminated the child process.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-WCOREDUMP"><span class="category">Macro: </span><span><emphasis>int</emphasis> <strong>WCOREDUMP</strong> <emphasis>(int <var>status</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-WCOREDUMP" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This macro returns a nonzero value if the child process terminated
+and produced a core dump.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-WIFSTOPPED"><span class="category">Macro: </span><span><emphasis>int</emphasis> <strong>WIFSTOPPED</strong> <emphasis>(int <var>status</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-WIFSTOPPED" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This macro returns a nonzero value if the child process is stopped.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-WSTOPSIG"><span class="category">Macro: </span><span><emphasis>int</emphasis> <strong>WSTOPSIG</strong> <emphasis>(int <var>status</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-WSTOPSIG" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>If <code>WIFSTOPPED</code> is true of <var>status</var>, this macro returns the
+signal number of the signal that caused the child process to stop.
+</para></dd></dl>
+
+
+<hr>
+</div>
+<sect xml:id="glibc-BSD-Wait-Functions">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Process-Creation-Example" accesskey="n" rel="next">Process Creation Example</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Process-Completion-Status" accesskey="p" rel="prev">Process Completion Status</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Processes" accesskey="u" rel="up">Processes</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-BSD-Process-Wait-Function"></span><h3 class="section">26.8 BSD Process Wait Function</title>
+
+<para>The GNU C Library also provides the <code>wait3</code> function for compatibility
+with BSD.  This function is declared in <filename>sys/wait.h</filename>.  It is the
+predecessor to <code>wait4</code>, which is more flexible.  <code>wait3</code> is
+now obsolete.
+<span xml:id="glibc-index-sys_002fwait_002eh-2"></span>
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-wait3"><span class="category">Function: </span><span><emphasis>pid_t</emphasis> <strong>wait3</strong> <emphasis>(int *<var>status-ptr</var>, int <var>options</var>, struct rusage *<var>usage</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-wait3" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>If <var>usage</var> is a null pointer, <code>wait3</code> is equivalent to
+<code>waitpid (-1, <var>status-ptr</var>, <var>options</var>)</code>.
+</para>
+<para>If <var>usage</var> is not null, <code>wait3</code> stores usage figures for the
+child process in <code>*<var>rusage</var></code> (but only if the child has
+terminated, not if it has stopped).  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Resource-Usage">Resource Usage</a>.
+</para></dd></dl>
+
+<hr>
+</div>
+<sect xml:id="glibc-Process-Creation-Example">
+<div class="header">
+<para>
+Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#BSD-Wait-Functions" accesskey="p" rel="prev">BSD Process Wait Function</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Processes" accesskey="u" rel="up">Processes</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Process-Creation-Example-1"></span><h3 class="section">26.9 Process Creation Example</title>
+
+<para>Here is an example program showing how you might write a function
+similar to the built-in <code>system</code>.  It executes its <var>command</var>
+argument using the equivalent of ‘<filename>sh -c <var>command</var></filename>’.
+</para>
+<div class="example">
+<pre class="example">#include &lt;stddef.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;unistd.h&gt;
+#include &lt;sys/types.h&gt;
+#include &lt;sys/wait.h&gt;
+
+/* <span class="roman">Execute the command using this shell program.</span>  */
+#define SHELL "/bin/sh"
+
+</pre><pre class="example">int
+my_system (const char *command)
+{
+  int status;
+  pid_t pid;
+</pre><pre class="example">
+  pid = fork ();
+  if (pid == 0)
+    {
+      /* <span class="roman">This is the child process.  Execute the shell command.</span> */
+      execl (SHELL, SHELL, "-c", command, NULL);
+      _exit (EXIT_FAILURE);
+    }
+  else if (pid &lt; 0)
+    /* <span class="roman">The fork failed.  Report failure.</span>  */
+    status = -1;
+  else
+    /* <span class="roman">This is the parent process.  Wait for the child to complete.</span>  */
+    if (waitpid (pid, &amp;status, 0) != pid)
+      status = -1;
+  return status;
+}
+</pre></div>
+
+
+<para>There are a couple of things you should pay attention to in this
+example.
+</para>
+<para>Remember that the first <code>argv</code> argument supplied to the program
+represents the name of the program being executed.  That is why, in the
+call to <code>execl</code>, <code>SHELL</code> is supplied once to name the program
+to execute and a second time to supply a value for <code>argv[0]</code>.
+</para>
+<para>The <code>execl</code> call in the child process doesn’t return if it is
+successful.  If it fails, you must do something to make the child
+process terminate.  Just returning a bad status code with <code>return</code>
+would leave two processes running the original program.  Instead, the
+right behavior is for the child process to report failure to its parent
+process.
+</para>
+<para>Call <code>_exit</code> to accomplish this.  The reason for using <code>_exit</code>
+instead of <code>exit</code> is to avoid flushing fully buffered streams such
+as <code>stdout</code>.  The buffers of these streams probably contain data
+that was copied from the parent process by the <code>fork</code>, data that
+will be output eventually by the parent process.  Calling <code>exit</code> in
+the child would output the data twice.  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Termination-Internals">Termination Internals</a>.
+</para><hr>
+</div>
+</div-->
 </part>

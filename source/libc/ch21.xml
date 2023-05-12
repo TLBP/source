@@ -5,4 +5,3284 @@
 <part xml:id="glibc-Date-and-Time">
   <title>Tarih ve Zaman</title>
   <titleabbrev>Tarih ve saati öğrenmek ve biçimlemek için kullanılan işlevler.</titleabbrev>
+ <preliminary>
+
+<para>This chapter describes functions for manipulating dates and times,
+including functions for determining what time it is and conversion
+between different time representations.
+</para>
+ </preliminary><!--
+<sect xml:id="glibc-Time-Basics">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Time-Types" accesskey="n" rel="next">Time Types</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Date-and-Time" accesskey="u" rel="up">Date and Time</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Time-Basics-1"></span><h3 class="section">21.1 Time Basics</title>
+<span xml:id="glibc-index-time"></span>
+
+<para>Discussing time in a technical manual can be difficult because the word
+“time” in English refers to lots of different things.  In this manual,
+we use a rigorous terminology to avoid confusion, and the only thing we
+use the simple word “time” for is to talk about the abstract concept.
+</para>
+<para>A <emphasis>calendar time</emphasis> is a point in the time continuum, for example
+November 4, 1990, at 18:02.5 UTC.  Sometimes this is called “absolute
+time”.
+<span xml:id="glibc-index-calendar-time"></span>
+</para>
+<para>We don’t speak of a “date”, because that is inherent in a calendar
+time.
+<span xml:id="glibc-index-date"></span>
+</para>
+<para>An <emphasis>interval</emphasis> is a contiguous part of the time continuum between two
+calendar times, for example the hour between 9:00 and 10:00 on July 4,
+1980.
+<span xml:id="glibc-index-interval"></span>
+</para>
+<para>An <emphasis>elapsed time</emphasis> is the length of an interval, for example, 35
+minutes.  People sometimes sloppily use the word “interval” to refer
+to the elapsed time of some interval.
+<span xml:id="glibc-index-elapsed-time"></span>
+<span xml:id="glibc-index-time_002c-elapsed"></span>
+</para>
+<para>An <emphasis>amount of time</emphasis> is a sum of elapsed times, which need not be of
+any specific intervals.  For example, the amount of time it takes to
+read a book might be 9 hours, independently of when and in how many
+sittings it is read.
+</para>
+<para>A <emphasis>period</emphasis> is the elapsed time of an interval between two events,
+especially when they are part of a sequence of regularly repeating
+events.
+<span xml:id="glibc-index-period-of-time"></span>
+</para>
+<para>A <emphasis>simple calendar time</emphasis> is a calendar time represented as an
+elapsed time since a fixed, implementation-specific calendar time
+called the <emphasis>epoch</emphasis>.  This representation is convenient for doing
+calculations on calendar times, such as finding the elapsed time
+between two calendar times.  Simple calendar times are independent of
+time zone; they represent the same instant in time regardless of where
+on the globe the computer is.
+</para>
+<para>POSIX says that simple calendar times do not include leap seconds, but
+some (otherwise POSIX-conformant) systems can be configured to include
+leap seconds in simple calendar times.
+<span xml:id="glibc-index-leap-seconds"></span>
+<span xml:id="glibc-index-seconds_002c-leap"></span>
+<span xml:id="glibc-index-simple-time"></span>
+<span xml:id="glibc-index-simple-calendar-time"></span>
+<span xml:id="glibc-index-calendar-time_002c-simple"></span>
+<span xml:id="glibc-index-epoch"></span>
+</para>
+<para>A <emphasis>broken-down time</emphasis> is a calendar time represented by its
+components in the Gregorian calendar: year, month, day, hour, minute,
+and second.  A broken-down time value is relative to a specific time
+zone, and so it is also sometimes called a <emphasis>local time</emphasis>.
+Broken-down times are most useful for input and output, as they are
+easier for people to understand, but more difficult to calculate with.
+<span xml:id="glibc-index-broken_002ddown-time"></span>
+<span xml:id="glibc-index-local-time"></span>
+<span xml:id="glibc-index-Gregorian-calendar"></span>
+<span xml:id="glibc-index-calendar_002c-Gregorian"></span>
+</para>
+<para><emphasis>CPU time</emphasis> measures the amount of time that a single process has
+actively used a CPU to perform computations.  It does not include the
+time that process has spent waiting for external events.  The system
+tracks the CPU time used by each process separately.
+<span xml:id="glibc-index-CPU-time"></span>
+</para>
+<para><emphasis>Processor time</emphasis> measures the amount of time <emphasis>any</emphasis> CPU has
+been in use by <emphasis>any</emphasis> process.  It is a basic system resource,
+since there’s a limit to how much can exist in any given interval (the
+elapsed time of the interval times the number of CPUs in the computer)
+</para>
+<para>People often call this CPU time, but we reserve the latter term in
+this manual for the definition above.
+<span xml:id="glibc-index-processor-time"></span>
+</para>
+<hr>
+</div>
+<sect xml:id="glibc-Time-Types">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Calculating-Elapsed-Time" accesskey="n" rel="next">Calculating Elapsed Time</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Time-Basics" accesskey="p" rel="prev">Time Basics</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Date-and-Time" accesskey="u" rel="up">Date and Time</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Time-Types-1"></span><h3 class="section">21.2 Time Types</title>
+
+<para>&isoc; and POSIX define several data types for representing elapsed
+times, simple calendar times, and broken-down times.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-clock_005ft"><span class="category">Data Type: </span><span><strong>clock_t</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-clock_005ft" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para><code>clock_t</code> is used to measure processor and CPU time.
+It may be an integer or a floating-point type.
+Its values are counts of <emphasis>clock ticks</emphasis> since some arbitrary event
+in the past.
+The number of clock ticks per second is system-specific.
+See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Processor-And-CPU-Time">Processor And CPU Time</a>, for further detail.
+<span xml:id="glibc-index-clock-ticks"></span>
+<span xml:id="glibc-index-ticks_002c-clock"></span>
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-time_005ft"><span class="category">Data Type: </span><span><strong>time_t</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-time_005ft" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para><code>time_t</code> is the simplest data type used to represent simple
+calendar time.
+</para>
+<para>In &isoc;, <code>time_t</code> can be either an integer or a floating-point
+type, and the meaning of <code>time_t</code> values is not specified.  The
+only things a strictly conforming program can do with <code>time_t</code>
+values are: pass them to <code>difftime</code> to get the elapsed time
+between two simple calendar times (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Calculating-Elapsed-Time">Calculating Elapsed Time</a>),
+and pass them to the functions that convert them to broken-down time
+(see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Broken_002ddown-Time">Broken-down Time</a>).
+</para>
+<para>On POSIX-conformant systems, <code>time_t</code> is an integer type and its
+values represent the number of seconds elapsed since the <emphasis>epoch</emphasis>,
+which is 00:00:00 on January 1, 1970, Coordinated Universal Time.
+</para>
+<para>The GNU C Library additionally guarantees that <code>time_t</code> is a signed
+type, and that all of its functions operate correctly on negative
+<code>time_t</code> values, which are interpreted as times before the epoch.
+<span xml:id="glibc-index-epoch-1"></span>
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-struct-timespec"><span class="category">Data Type: </span><span><strong>struct timespec</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-struct-timespec" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<span xml:id="glibc-index-timespec"></span>
+<para><code>struct timespec</code> represents a simple calendar time, or an
+elapsed time, with sub-second resolution.  It is declared in
+<filename>time.h</filename> and has the following members:
+</para>
+<dl compact="compact">
+<dt><span><code>time_t tv_sec</code></span></dt>
+<dd><para>The number of whole seconds elapsed since the epoch (for a simple
+calendar time) or since some other starting point (for an elapsed
+time).
+</para>
+</dd>
+<dt><span><code>long int tv_nsec</code></span></dt>
+<dd><para>The number of nanoseconds elapsed since the time given by the
+<code>tv_sec</code> member.
+</para>
+<para>When <code>struct timespec</code> values are produced by GNU C Library
+functions, the value in this field will always be greater than or
+equal to zero, and less than 1,000,000,000.
+When <code>struct timespec</code> values are supplied to GNU C Library
+functions, the value in this field must be in the same range.
+</para></dd>
+</dl>
+</dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-struct-timeval"><span class="category">Data Type: </span><span><strong>struct timeval</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-struct-timeval" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<span xml:id="glibc-index-timeval"></span>
+<para><code>struct timeval</code> is an older type for representing a simple
+calendar time, or an elapsed time, with sub-second resolution. It is
+almost the same as <code>struct timespec</code>, but provides only
+microsecond resolution.  It is declared in <filename>sys/time.h</filename> and has
+the following members:
+</para>
+<dl compact="compact">
+<dt><span><code>time_t tv_sec</code></span></dt>
+<dd><para>The number of whole seconds elapsed since the epoch (for a simple
+calendar time) or since some other starting point (for an elapsed
+time).
+</para>
+</dd>
+<dt><span><code>long int tv_usec</code></span></dt>
+<dd><para>The number of microseconds elapsed since the time given by the
+<code>tv_sec</code> member.
+</para>
+<para>When <code>struct timeval</code> values are produced by GNU C Library
+functions, the value in this field will always be greater than or
+equal to zero, and less than 1,000,000.
+When <code>struct timeval</code> values are supplied to GNU C Library
+functions, the value in this field must be in the same range.
+</para></dd>
+</dl>
+</dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-struct-tm"><span class="category">Data Type: </span><span><strong>struct tm</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-struct-tm" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>This is the data type used to represent a broken-down time.  It has
+separate fields for year, month, day, and so on.
+See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Broken_002ddown-Time">Broken-down Time</a>, for further details.
+</para></dd></dl>
+
+<hr>
+</div>
+<sect xml:id="glibc-Calculating-Elapsed-Time">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Processor-And-CPU-Time" accesskey="n" rel="next">Processor And CPU Time</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Time-Types" accesskey="p" rel="prev">Time Types</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Date-and-Time" accesskey="u" rel="up">Date and Time</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Calculating-Elapsed-Time-1"></span><h3 class="section">21.3 Calculating Elapsed Time</title>
+
+<para>Often, one wishes to calculate an elapsed time as the difference
+between two simple calendar times.  The GNU C Library provides only one
+function for this purpose.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-difftime"><span class="category">Function: </span><span><emphasis>double</emphasis> <strong>difftime</strong> <emphasis>(time_t <var>end</var>, time_t <var>begin</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-difftime" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>difftime</code> function returns the number of seconds of elapsed
+time from calendar time <var>begin</var> to calendar time <var>end</var>, as
+a value of type <code>double</code>.
+</para>
+<para>On POSIX-conformant systems, the advantage of using
+‘<filename>difftime (<var>end</var>, <var>begin</var>)</filename>’ over ‘<filename><var>end</var> - <var>begin</var></filename>’
+is that it will produce the mathematically correct result even if
+<var>end</var> and <var>begin</var> are so far apart that a simple subtraction
+would overflow.  However, if they are so far apart that a <code>double</code>
+cannot exactly represent the difference, the result will be inexact.
+</para>
+<para>On other systems, <code>time_t</code> values might be encoded in a way that
+prevents subtraction from working directly, and then <code>difftime</code>
+would be the only way to compute their difference.
+</para></dd></dl>
+
+<para>The GNU C Library does not provide any functions for computing the
+difference between two values of type <code>struct&nbsp;timeval</code> or
+<code>struct&nbsp;timespec</code>.  Here is the recommended way to do this
+calculation by hand.  It works even on some peculiar operating systems
+where the <code>tv_sec</code> member has an unsigned type.
+</para>
+<div class="example">
+<pre class="example">
+/* <span class="roman">Subtract the ‘struct timeval’ values X and Y,
+   storing the result in RESULT.
+   Return 1 if the difference is negative, otherwise 0.</span> */
+
+int
+timeval_subtract (struct timeval *result, struct timeval *x, struct timeval *y)
+{
+  /* <span class="roman">Perform the carry for the later subtraction by updating <var>y</var>.</span> */
+  if (x-&gt;tv_usec &lt; y-&gt;tv_usec) {
+    int nsec = (y-&gt;tv_usec - x-&gt;tv_usec) / 1000000 + 1;
+    y-&gt;tv_usec -= 1000000 * nsec;
+    y-&gt;tv_sec += nsec;
+  }
+  if (x-&gt;tv_usec - y-&gt;tv_usec &gt; 1000000) {
+    int nsec = (x-&gt;tv_usec - y-&gt;tv_usec) / 1000000;
+    y-&gt;tv_usec += 1000000 * nsec;
+    y-&gt;tv_sec -= nsec;
+  }
+
+  /* <span class="roman">Compute the time remaining to wait.
+     <code>tv_usec</code> is certainly positive.</span> */
+  result-&gt;tv_sec = x-&gt;tv_sec - y-&gt;tv_sec;
+  result-&gt;tv_usec = x-&gt;tv_usec - y-&gt;tv_usec;
+
+  /* <span class="roman">Return 1 if result is negative.</span> */
+  return x-&gt;tv_sec &lt; y-&gt;tv_sec;
+}
+</pre></div>
+
+<hr>
+</div>
+<sect xml:id="glibc-Processor-And-CPU-Time">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Calendar-Time" accesskey="n" rel="next">Calendar Time</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Calculating-Elapsed-Time" accesskey="p" rel="prev">Calculating Elapsed Time</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Date-and-Time" accesskey="u" rel="up">Date and Time</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Processor-And-CPU-Time-1"></span><h3 class="section">21.4 Processor And CPU Time</title>
+
+<para>If you’re trying to optimize your program or measure its efficiency,
+it’s very useful to know how much processor time it uses.  For that,
+calendar time and elapsed times are useless because a process may spend
+time waiting for I/O or for other processes to use the CPU.  However,
+you can get the information with the functions in this section.
+</para>
+<para>CPU time (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Time-Basics">Time Basics</a>) is represented by the data type
+<code>clock_t</code>, which is a number of <emphasis>clock ticks</emphasis>.  It gives the
+total amount of time a process has actively used a CPU since some
+arbitrary event.  On GNU systems, that event is the creation of the
+process.  While arbitrary in general, the event is always the same event
+for any particular process, so you can always measure how much time on
+the CPU a particular computation takes by examining the process’ CPU
+time before and after the computation.
+<span xml:id="glibc-index-CPU-time-1"></span>
+<span xml:id="glibc-index-clock-ticks-1"></span>
+<span xml:id="glibc-index-ticks_002c-clock-1"></span>
+</para>
+<para>On GNU/Linux and GNU/Hurd systems, <code>clock_t</code> is equivalent to <code>long int</code> and
+<code>CLOCKS_PER_SEC</code> is an integer value.  But in other systems, both
+<code>clock_t</code> and the macro <code>CLOCKS_PER_SEC</code> can be either integer
+or floating-point types.  Casting CPU time values to <code>double</code>, as
+in the example above, makes sure that operations such as arithmetic and
+printing work properly and consistently no matter what the underlying
+representation is.
+</para>
+<para>Note that the clock can wrap around.  On a 32bit system with
+<code>CLOCKS_PER_SEC</code> set to one million this function will return the
+same value approximately every 72 minutes.
+</para>
+<para>For additional functions to examine a process’ use of processor time,
+and to control it, see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Resource-Usage-And-Limitation">Resource Usage And Limitation</a>.
+</para>
+
+
+<ul class="section-toc">
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#CPU-Time" accesskey="1">CPU Time Inquiry</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Processor-Time" accesskey="2">Processor Time Inquiry</a></li>
+</ul>
+<hr>
+<div class="subsection" xml:id="glibc-CPU-Time">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Processor-Time" accesskey="n" rel="next">Processor Time Inquiry</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Processor-And-CPU-Time" accesskey="u" rel="up">Processor And CPU Time</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-CPU-Time-Inquiry"></span><h4 class="subsection">21.4.1 CPU Time Inquiry</title>
+
+<para>To get a process’ CPU time, you can use the <code>clock</code> function.  This
+facility is declared in the header file <filename>time.h</filename>.
+<span xml:id="glibc-index-time_002eh-1"></span>
+</para>
+<para>In typical usage, you call the <code>clock</code> function at the beginning
+and end of the interval you want to time, subtract the values, and then
+divide by <code>CLOCKS_PER_SEC</code> (the number of clock ticks per second)
+to get processor time, like this:
+</para>
+<div class="example">
+<pre class="example">#include &lt;time.h&gt;
+
+clock_t start, end;
+double cpu_time_used;
+
+start = clock();
+… /* <span class="roman">Do the work.</span> */
+end = clock();
+cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
+</pre></div>
+
+<para>Do not use a single CPU time as an amount of time; it doesn’t work that
+way.  Either do a subtraction as shown above or query processor time
+directly.  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Processor-Time">Processor Time Inquiry</a>.
+</para>
+<para>Different computers and operating systems vary wildly in how they keep
+track of CPU time.  It’s common for the internal processor clock
+to have a resolution somewhere between a hundredth and millionth of a
+second.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-CLOCKS_005fPER_005fSEC"><span class="category">Macro: </span><span><emphasis>int</emphasis> <strong>CLOCKS_PER_SEC</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-CLOCKS_005fPER_005fSEC" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>The value of this macro is the number of clock ticks per second measured
+by the <code>clock</code> function.  POSIX requires that this value be one
+million independent of the actual resolution.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-clock"><span class="category">Function: </span><span><emphasis>clock_t</emphasis> <strong>clock</strong> <emphasis>(void)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-clock" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This function returns the calling process’ current CPU time.  If the CPU
+time is not available or cannot be represented, <code>clock</code> returns the
+value <code>(clock_t)(-1)</code>.
+</para></dd></dl>
+
+
+<hr>
+</div>
+<div class="subsection" xml:id="glibc-Processor-Time">
+<div class="header">
+<para>
+Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#CPU-Time" accesskey="p" rel="prev">CPU Time Inquiry</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Processor-And-CPU-Time" accesskey="u" rel="up">Processor And CPU Time</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Processor-Time-Inquiry"></span><h4 class="subsection">21.4.2 Processor Time Inquiry</title>
+
+<para>The <code>times</code> function returns information about a process’
+consumption of processor time in a <code>struct&nbsp;tms</code> object, in
+addition to the process’ CPU time.  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Time-Basics">Time Basics</a>.  You should
+include the header file <filename>sys/times.h</filename> to use this facility.
+<span xml:id="glibc-index-processor-time-1"></span>
+<span xml:id="glibc-index-CPU-time-2"></span>
+<span xml:id="glibc-index-sys_002ftimes_002eh-1"></span>
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-struct-tms"><span class="category">Data Type: </span><span><strong>struct tms</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-struct-tms" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>The <code>tms</code> structure is used to return information about process
+times.  It contains at least the following members:
+</para>
+<dl compact="compact">
+<dt><span><code>clock_t tms_utime</code></span></dt>
+<dd><para>This is the total processor time the calling process has used in
+executing the instructions of its program.
+</para>
+</dd>
+<dt><span><code>clock_t tms_stime</code></span></dt>
+<dd><para>This is the processor time the system has used on behalf of the calling
+process.
+</para>
+</dd>
+<dt><span><code>clock_t tms_cutime</code></span></dt>
+<dd><para>This is the sum of the <code>tms_utime</code> values and the <code>tms_cutime</code>
+values of all terminated child processes of the calling process, whose
+status has been reported to the parent process by <code>wait</code> or
+<code>waitpid</code>; see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Process-Completion">Process Completion</a>.  In other words, it
+represents the total processor time used in executing the instructions
+of all the terminated child processes of the calling process, excluding
+child processes which have not yet been reported by <code>wait</code> or
+<code>waitpid</code>.
+<span xml:id="glibc-index-child-process"></span>
+</para>
+</dd>
+<dt><span><code>clock_t tms_cstime</code></span></dt>
+<dd><para>This is similar to <code>tms_cutime</code>, but represents the total processor
+time the system has used on behalf of all the terminated child processes
+of the calling process.
+</para></dd>
+</dl>
+
+<para>All of the times are given in numbers of clock ticks.  Unlike CPU time,
+these are the actual amounts of time; not relative to any event.
+See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Creating-a-Process">Creating a Process</a>.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-CLK_005fTCK"><span class="category">Macro: </span><span><emphasis>int</emphasis> <strong>CLK_TCK</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-CLK_005fTCK" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>This is an obsolete name for the number of clock ticks per second.  Use
+<code>sysconf (_SC_CLK_TCK)</code> instead.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-times"><span class="category">Function: </span><span><emphasis>clock_t</emphasis> <strong>times</strong> <emphasis>(struct tms *<var>buffer</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-times" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>times</code> function stores the processor time information for
+the calling process in <var>buffer</var>.
+</para>
+<para>The return value is the number of clock ticks since an arbitrary point
+in the past, e.g. since system start-up.  <code>times</code> returns
+<code>(clock_t)(-1)</code> to indicate failure.
+</para></dd></dl>
+
+<para><strong>Portability Note:</strong> The <code>clock</code> function described in
+<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#CPU-Time">CPU Time Inquiry</a> is specified by the &isoc; standard.  The
+<code>times</code> function is a feature of POSIX.1.  On GNU systems, the
+CPU time is defined to be equivalent to the sum of the <code>tms_utime</code>
+and <code>tms_stime</code> fields returned by <code>times</code>.
+</para>
+<hr>
+</div>
+</div>
+<sect xml:id="glibc-Calendar-Time">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Setting-an-Alarm" accesskey="n" rel="next">Setting an Alarm</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Processor-And-CPU-Time" accesskey="p" rel="prev">Processor And CPU Time</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Date-and-Time" accesskey="u" rel="up">Date and Time</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Calendar-Time-1"></span><h3 class="section">21.5 Calendar Time</title>
+
+<para>This section describes the functions for getting, setting, and
+manipulating calendar times.
+</para>
+
+<ul class="section-toc">
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Getting-the-Time" accesskey="1">Getting the Time</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Setting-and-Adjusting-the-Time" accesskey="2">Setting and Adjusting the Time</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Broken_002ddown-Time" accesskey="3">Broken-down Time</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Formatting-Calendar-Time" accesskey="4">Formatting Calendar Time</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Parsing-Date-and-Time" accesskey="5">Convert textual time and date information back</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#TZ-Variable" accesskey="6">Specifying the Time Zone with <code>TZ</code></a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Time-Zone-Functions" accesskey="7">Functions and Variables for Time Zones</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Time-Functions-Example" accesskey="8">Time Functions Example</a></li>
+</ul>
+<hr>
+<div class="subsection" xml:id="glibc-Getting-the-Time">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Setting-and-Adjusting-the-Time" accesskey="n" rel="next">Setting and Adjusting the Time</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Calendar-Time" accesskey="u" rel="up">Calendar Time</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Getting-the-Time-1"></span><h4 class="subsection">21.5.1 Getting the Time</title>
+
+<para>The GNU C Library provides several functions for getting the current
+calendar time, with different levels of resolution.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-time-1"><span class="category">Function: </span><span><emphasis>time_t</emphasis> <strong>time</strong> <emphasis>(time_t *<var>result</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-time-1" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This is the simplest function for getting the current calendar time.
+It returns the calendar time as a value of type <code>time_t</code>; on
+POSIX systems, that means it has a resolution of one second.  It
+uses the same clock as ‘<filename><span class="nolinebreak">clock_gettime</span>&nbsp;<span class="nolinebreak">(CLOCK_REALTIME_COARSE)</span></filename>’,
+when the clock is available or ‘<filename><span class="nolinebreak">clock_gettime</span>&nbsp;<span class="nolinebreak">(CLOCK_REALTIME)</span></filename>’
+otherwise.
+</para>
+<para>If the argument <var>result</var> is not a null pointer, the calendar time
+value is also stored in <code>*<var>result</var></code>.
+</para>
+<para>This function cannot fail.
+</para></dd></dl>
+
+<para>Some applications need more precise timekeeping than is possible with
+a <code>time_t</code> alone.  Some applications also need more control over
+what is meant by “the current time.”  For these applications, POSIX
+provides a function <code>clock_gettime</code> that can retrieve the time
+with up to nanosecond precision, from a variety of different clocks.
+Clocks can be system-wide, measuring time the same for all processes;
+or they can be per-process or per-thread, measuring CPU time consumed
+by a particular process, or some other similar resource.  Each clock
+has its own resolution and epoch.  You can find the resolution of a
+clock with the function <code>clock_getres</code>.  There is no function to
+get the epoch for a clock; either it is fixed and documented, or the
+clock is not meant to be used to measure absolute times.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-clockid_005ft"><span class="category">Data Type: </span><span><strong>clockid_t</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-clockid_005ft" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>The type <code>clockid_t</code> is used for constants that indicate which of
+several system clocks one wishes to use.
+</para></dd></dl>
+
+<para>All systems that support this family of functions will define at least
+this clock constant:
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-CLOCK_005fREALTIME"><span class="category">Macro: </span><span><emphasis>clockid_t</emphasis> <strong>CLOCK_REALTIME</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-CLOCK_005fREALTIME" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>This clock uses the POSIX epoch, 00:00:00 on January 1, 1970, Coordinated
+Universal Time. It is close to, but not necessarily in lock-step with, the
+clocks of <code>time</code> (above) and of <code>gettimeofday</code> (below).
+</para></dd></dl>
+
+<span xml:id="glibc-index-monotonic-time"></span>
+<para>A second clock constant which is not universal, but still very common,
+is for a clock measuring <emphasis>monotonic time</emphasis>.  Monotonic time is
+useful for measuring elapsed times, because it guarantees that those
+measurements are not affected by changes to the system clock.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-CLOCK_005fMONOTONIC"><span class="category">Macro: </span><span><emphasis>clockid_t</emphasis> <strong>CLOCK_MONOTONIC</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-CLOCK_005fMONOTONIC" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>System-wide clock that continuously measures the advancement of
+calendar time, ignoring discontinuous changes to the system’s
+setting for absolute calendar time.
+</para>
+<para>The epoch for this clock is an unspecified point in the past.
+The epoch may change if the system is rebooted or suspended.
+Therefore, <code>CLOCK_MONOTONIC</code> cannot be used to measure
+absolute time, only elapsed time.
+</para></dd></dl>
+
+<para>Systems may support more than just these two clocks.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-clock_005fgettime"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>clock_gettime</strong> <emphasis>(clockid_t <var>clock</var>, struct timespec *<var>ts</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-clock_005fgettime" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Get the current time accoding to the clock identified by <var>clock</var>,
+storing it as seconds and nanoseconds in <code>*<var>ts</var></code>.
+See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Time-Types">Time Types</a>, for a description of <code>struct timespec</code>.
+</para>
+<para>The return value is <code>0</code> on success and <code>-1</code> on failure.  The
+following <code>errno</code> error condition is defined for this function:
+</para>
+<dl compact="compact">
+<dt><span><code>EINVAL</code></span></dt>
+<dd><para>The clock identified by <var>clock</var> is not supported.
+</para></dd>
+</dl>
+</dd></dl>
+
+<para><code>clock_gettime</code> reports the time scaled to seconds and
+nanoseconds, but the actual resolution of each clock may not be as
+fine as one nanosecond, and may not be the same for all clocks.  POSIX
+also provides a function for finding out the actual resolution of a
+clock:
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-clock_005fgetres"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>clock_getres</strong> <emphasis>(clockid_t <var>clock</var>, struct timespec *<var>res</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-clock_005fgetres" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Get the actual resolution of the clock identified by <var>clock</var>,
+storing it in <code>*<var>ts</var></code>.
+</para>
+<para>For instance, if the clock hardware for <code>CLOCK_REALTIME</code>
+uses a quartz crystal that oscillates at 32.768 kHz,
+then its resolution would be 30.518 microseconds,
+and ‘<filename><span class="nolinebreak">clock_getres</span>&nbsp;<span class="nolinebreak">(CLOCK_REALTIME,</span>&nbsp;&amp;r)</filename>’ would set
+<code>r.tv_sec</code> to 0 and <code>r.tv_nsec</code> to 30518.
+</para>
+<para>The return value is <code>0</code> on success and <code>-1</code> on failure.  The
+following <code>errno</code> error condition is defined for this function:
+</para>
+<dl compact="compact">
+<dt><span><code>EINVAL</code></span></dt>
+<dd><para>The clock identified by <var>clock</var> is not supported.
+</para></dd>
+</dl>
+</dd></dl>
+
+<para>These functions, and the constants that identify particular clocks,
+are declared in <filename>time.h</filename>.
+</para>
+<para><strong>Portability Note:</strong> On some systems, including systems that use
+older versions of the GNU C Library, programs that use <code>clock_gettime</code>
+or <code>clock_setres</code> must be linked with the <code>-lrt</code> library.
+This has not been necessary with the GNU C Library since version 2.17.
+</para>
+<para>The GNU C Library also provides an older, but still widely used, function
+for getting the current time with a resolution of microseconds.  This
+function is declared in <filename>sys/time.h</filename>.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-gettimeofday"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>gettimeofday</strong> <emphasis>(struct timeval *<var>tp</var>, void *<var>tzp</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-gettimeofday" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>Get the current calendar time, storing it as seconds and microseconds
+in <code>*<var>tp</var></code>.  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Time-Types">Time Types</a>, for a description of
+<code>struct timeval</code>.  The clock of <code>gettimeofday</code> is close to,
+but not necessarily in lock-step with, the clocks of <code>time</code> and of
+‘<filename><span class="nolinebreak">clock_gettime</span>&nbsp;<span class="nolinebreak">(CLOCK_REALTIME)</span></filename>’ (see above).
+</para>
+<para>On some historic systems, if <var>tzp</var> was not a null pointer,
+information about a system-wide time zone would be written to
+<code>*<var>tzp</var></code>.  This feature is obsolete and not supported on
+GNU systems.  You should always supply a null pointer for this
+argument.  Instead, use the facilities described in <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Time-Zone-Functions">Functions and Variables for Time Zones</a> and in <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Broken_002ddown-Time">Broken-down Time</a> for working with time zones.
+</para>
+<para>This function cannot fail, and its return value is always <code>0</code>.
+</para>
+<para><strong>Portability Note:</strong> As of the 2008 revision of POSIX, this
+function is considered obsolete.  The GNU C Library will continue to provide
+this function indefinitely, but new programs should use
+<code>clock_gettime</code> instead.
+</para></dd></dl>
+
+<hr>
+</div>
+<div class="subsection" xml:id="glibc-Setting-and-Adjusting-the-Time">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Broken_002ddown-Time" accesskey="n" rel="next">Broken-down Time</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Getting-the-Time" accesskey="p" rel="prev">Getting the Time</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Calendar-Time" accesskey="u" rel="up">Calendar Time</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Setting-and-Adjusting-the-Time-1"></span><h4 class="subsection">21.5.2 Setting and Adjusting the Time</title>
+
+<para>The clock hardware inside a modern computer is quite reliable, but it
+can still be wrong.  The functions in this section allow one to set
+the system’s idea of the current calendar time, and to adjust the rate
+at which the system counts seconds, so that the calendar time will
+both be accurate, and remain accurate.
+</para>
+<para>The functions in this section require special privileges to use.
+See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Users-and-Groups">Users and Groups</a>.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-clock_005fsettime"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>clock_settime</strong> <emphasis>(clockid_t <var>clock</var>, const struct timespec *<var>ts</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-clock_005fsettime" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>Change the current calendar time, according to the clock identified by
+<var>clock</var>, to be the simple calendar time in <code>*<var>ts</var></code>.
+</para>
+<para>Not all of the system’s clocks can be changed.  For instance, the
+<code>CLOCK_REALTIME</code> clock can be changed (with the appropriate
+privileges), but the <code>CLOCK_MONOTONIC</code> clock cannot.
+</para>
+<para>Because simple calendar times are independent of time zone, this
+function should not be used when the time zone changes (e.g. if the
+computer is physically moved from one zone to another).  Instead, use
+the facilities described in <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Time-Zone-Functions">Functions and Variables for Time Zones</a>.
+</para>
+<para><code>clock_settime</code> causes the clock to jump forwards or backwards,
+which can cause a variety of problems.  Changing the
+<code>CLOCK_REALTIME</code> clock with <code>clock_settime</code> does not affect
+when timers expire (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Setting-an-Alarm">Setting an Alarm</a>) or when sleeping
+processes wake up (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Sleeping">Sleeping</a>), which avoids some of the
+problems.  Still, for small changes made while the system is running,
+it is better to use <code>ntp_adjtime</code> (below) to make a smooth
+transition from one time to another.
+</para>
+<para>The return value is <code>0</code> on success and <code>-1</code> on failure.  The
+following <code>errno</code> error conditions are defined for this function:
+</para>
+<dl compact="compact">
+<dt><span><code>EINVAL</code></span></dt>
+<dd><para>The clock identified by <var>clock</var> is not supported or cannot be set
+at all, or the simple calendar time in <code>*<var>ts</var></code> is invalid
+(for instance, <code>ts-&gt;tv_nsec</code> is negative or greater than 999,999,999).
+</para>
+</dd>
+<dt><span><code>EPERM</code></span></dt>
+<dd><para>This process does not have the privileges required to set the clock
+identified by <var>clock</var>.
+</para></dd>
+</dl>
+
+<para><strong>Portability Note</strong>: On some systems, including systems that use
+older versions of the GNU C Library, programs that use <code>clock_settime</code>
+must be linked with the <code>-lrt</code> library.  This has not been
+necessary with the GNU C Library since version 2.17.
+</para></dd></dl>
+
+<span xml:id="glibc-index-time_002c-high-precision"></span>
+<span xml:id="glibc-index-clock_002c-high-accuracy"></span>
+<span xml:id="glibc-index-clock_002c-disciplining"></span>
+<span xml:id="glibc-index-sys_002ftimex_002eh"></span>
+<para>For systems that remain up and running for long periods, it is not
+enough to set the time once; one should also <emphasis>discipline</emphasis> the
+clock so that it does not drift away from the true calendar time.
+</para>
+<para>The <code>ntp_gettime</code> and <code>ntp_adjtime</code> functions provide an
+interface to monitor and discipline the system clock.  For example,
+you can fine-tune the rate at which the clock “ticks,” and make
+small adjustments to the current reported calendar time smoothly, by
+temporarily speeding up or slowing down the clock.
+</para>
+<para>These functions’ names begin with ‘<filename>ntp_</filename>’ because they were
+designed for use by programs implementing the Network Time Protocol to
+synchronize a system’s clock with other systems’ clocks and/or with
+external high-precision clock hardware.
+</para>
+<para>These functions, and the constants and structures they use, are
+declared in <filename>sys/timex.h</filename>.
+</para>
+<span xml:id="glibc-index-struct-ntptimeval"></span>
+<dl class="def">
+<dt xml:id="glibc-index-struct-ntptimeval-1"><span class="category">Data Type: </span><span><strong>struct ntptimeval</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-struct-ntptimeval-1" class="copiable-anchor"> ¶</a></span></dt>
+<dd><para>This structure is used to report information about the system clock.
+It contains the following members:
+</para><dl compact="compact">
+<dt><span><code>struct timeval time</code></span></dt>
+<dd><para>The current calendar time, as if retrieved by <code>gettimeofday</code>.
+The <code>struct timeval</code> data type is described in
+<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Time-Types">Time Types</a>.
+</para>
+</dd>
+<dt><span><code>long int maxerror</code></span></dt>
+<dd><para>This is the maximum error, measured in microseconds.  Unless updated
+via <code>ntp_adjtime</code> periodically, this value will reach some
+platform-specific maximum value.
+</para>
+</dd>
+<dt><span><code>long int esterror</code></span></dt>
+<dd><para>This is the estimated error, measured in microseconds.  This value can
+be set by <code>ntp_adjtime</code> to indicate the estimated offset of the
+system clock from the true calendar time.
+</para></dd>
+</dl>
+</dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-ntp_005fgettime"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>ntp_gettime</strong> <emphasis>(struct ntptimeval *<var>tptr</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-ntp_005fgettime" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>ntp_gettime</code> function sets the structure pointed to by
+<var>tptr</var> to current values.  The elements of the structure afterwards
+contain the values the timer implementation in the kernel assumes.  They
+might or might not be correct.  If they are not, an <code>ntp_adjtime</code>
+call is necessary.
+</para>
+<para>The return value is <code>0</code> on success and other values on failure.  The
+following <code>errno</code> error conditions are defined for this function:
+</para>
+<dl compact="compact">
+<dt xml:id="glibc-index-TIME_005fERROR"><span><code>TIME_ERROR</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-TIME_005fERROR" class="copiable-anchor"> ¶</a></span></dt>
+<dd><para>The precision clock model is not properly set up at the moment, thus the
+clock must be considered unsynchronized, and the values should be
+treated with care.
+</para></dd>
+</dl>
+</dd></dl>
+
+<span xml:id="glibc-index-struct-timex"></span>
+<dl class="def">
+<dt xml:id="glibc-index-struct-timex-1"><span class="category">Data Type: </span><span><strong>struct timex</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-struct-timex-1" class="copiable-anchor"> ¶</a></span></dt>
+<dd><para>This structure is used to control and monitor the system clock.  It
+contains the following members:
+</para><dl compact="compact">
+<dt><span><code>unsigned int modes</code></span></dt>
+<dd><para>This variable controls whether and which values are set.  Several
+symbolic constants have to be combined with <emphasis>binary or</emphasis> to specify
+the effective mode.  These constants start with <code>MOD_</code>.
+</para>
+</dd>
+<dt><span><code>long int offset</code></span></dt>
+<dd><para>This value indicates the current offset of the system clock from the true
+calendar time.  The value is given in microseconds.  If bit
+<code>MOD_OFFSET</code> is set in <code>modes</code>, the offset (and possibly other
+dependent values) can be set.  The offset’s absolute value must not
+exceed <code>MAXPHASE</code>.
+</para>
+
+</dd>
+<dt><span><code>long int frequency</code></span></dt>
+<dd><para>This value indicates the difference in frequency between the true
+calendar time and the system clock.  The value is expressed as scaled
+PPM (parts per million, 0.0001%).  The scaling is <code>1 &lt;&lt;
+SHIFT_USEC</code>.  The value can be set with bit <code>MOD_FREQUENCY</code>, but
+the absolute value must not exceed <code>MAXFREQ</code>.
+</para>
+</dd>
+<dt><span><code>long int maxerror</code></span></dt>
+<dd><para>This is the maximum error, measured in microseconds.  A new value can be
+set using bit <code>MOD_MAXERROR</code>.  Unless updated via
+<code>ntp_adjtime</code> periodically, this value will increase steadily
+and reach some platform-specific maximum value.
+</para>
+</dd>
+<dt><span><code>long int esterror</code></span></dt>
+<dd><para>This is the estimated error, measured in microseconds.  This value can
+be set using bit <code>MOD_ESTERROR</code>.
+</para>
+</dd>
+<dt><span><code>int status</code></span></dt>
+<dd><para>This variable reflects the various states of the clock machinery.  There
+are symbolic constants for the significant bits, starting with
+<code>STA_</code>.  Some of these flags can be updated using the
+<code>MOD_STATUS</code> bit.
+</para>
+</dd>
+<dt><span><code>long int constant</code></span></dt>
+<dd><para>This value represents the bandwidth or stiffness of the PLL (phase
+locked loop) implemented in the kernel.  The value can be changed using
+bit <code>MOD_TIMECONST</code>.
+</para>
+</dd>
+<dt><span><code>long int precision</code></span></dt>
+<dd><para>This value represents the accuracy or the maximum error when reading the
+system clock.  The value is expressed in microseconds.
+</para>
+</dd>
+<dt><span><code>long int tolerance</code></span></dt>
+<dd><para>This value represents the maximum frequency error of the system clock in
+scaled PPM.  This value is used to increase the <code>maxerror</code> every
+second.
+</para>
+</dd>
+<dt><span><code>struct timeval time</code></span></dt>
+<dd><para>The current calendar time.
+</para>
+</dd>
+<dt><span><code>long int tick</code></span></dt>
+<dd><para>The elapsed time between clock ticks in microseconds.  A clock tick is a
+periodic timer interrupt on which the system clock is based.
+</para>
+</dd>
+<dt><span><code>long int ppsfreq</code></span></dt>
+<dd><para>This is the first of a few optional variables that are present only if
+the system clock can use a PPS (pulse per second) signal to discipline
+the system clock.  The value is expressed in scaled PPM and it denotes
+the difference in frequency between the system clock and the PPS signal.
+</para>
+</dd>
+<dt><span><code>long int jitter</code></span></dt>
+<dd><para>This value expresses a median filtered average of the PPS signal’s
+dispersion in microseconds.
+</para>
+</dd>
+<dt><span><code>int shift</code></span></dt>
+<dd><para>This value is a binary exponent for the duration of the PPS calibration
+interval, ranging from <code>PPS_SHIFT</code> to <code>PPS_SHIFTMAX</code>.
+</para>
+</dd>
+<dt><span><code>long int stabil</code></span></dt>
+<dd><para>This value represents the median filtered dispersion of the PPS
+frequency in scaled PPM.
+</para>
+</dd>
+<dt><span><code>long int jitcnt</code></span></dt>
+<dd><para>This counter represents the number of pulses where the jitter exceeded
+the allowed maximum <code>MAXTIME</code>.
+</para>
+</dd>
+<dt><span><code>long int calcnt</code></span></dt>
+<dd><para>This counter reflects the number of successful calibration intervals.
+</para>
+</dd>
+<dt><span><code>long int errcnt</code></span></dt>
+<dd><para>This counter represents the number of calibration errors (caused by
+large offsets or jitter).
+</para>
+</dd>
+<dt><span><code>long int stbcnt</code></span></dt>
+<dd><para>This counter denotes the number of calibrations where the stability
+exceeded the threshold.
+</para></dd>
+</dl>
+</dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-ntp_005fadjtime"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>ntp_adjtime</strong> <emphasis>(struct timex *<var>tptr</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-ntp_005fadjtime" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>ntp_adjtime</code> function sets the structure specified by
+<var>tptr</var> to current values.
+</para>
+<para>In addition, <code>ntp_adjtime</code> updates some settings to match what
+you pass to it in <code>*<var>tptr</var></code>.  Use the <code>modes</code> element of
+<code>*<var>tptr</var></code> to select what settings to update.  You can set
+<code>offset</code>, <code>freq</code>, <code>maxerror</code>, <code>esterror</code>,
+<code>status</code>, <code>constant</code>, and <code>tick</code>.
+</para>
+<para><code>modes</code> = zero means set nothing.
+</para>
+<para>Only the superuser can update settings.
+</para>
+
+<para>The return value is <code>0</code> on success and other values on failure.  The
+following <code>errno</code> error conditions are defined for this function:
+</para>
+<dl compact="compact">
+<dt><span><code>TIME_ERROR</code></span></dt>
+<dd><para>The high accuracy clock model is not properly set up at the moment, thus the
+clock must be considered unsynchronized, and the values should be
+treated with care.  Another reason could be that the specified new values
+are not allowed.
+</para>
+</dd>
+<dt><span><code>EPERM</code></span></dt>
+<dd><para>The process specified a settings update, but is not superuser.
+</para>
+</dd>
+</dl>
+
+<para>For more details see RFC1305 (Network Time Protocol, Version 3) and
+related documents.
+</para>
+<para><strong>Portability note:</strong> Early versions of the GNU C Library did not
+have this function, but did have the synonymous <code>adjtimex</code>.
+</para></dd></dl>
+
+
+<dl class="def">
+<dt xml:id="glibc-index-adjtime"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>adjtime</strong> <emphasis>(const struct timeval *<var>delta</var>, struct timeval *<var>olddelta</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-adjtime" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This simpler version of <code>ntp_adjtime</code> speeds up or slows down the
+system clock for a short time, in order to correct it by a small
+amount.  This avoids a discontinuous change in the calendar time
+reported by the <code>CLOCK_REALTIME</code> clock, at the price of having to
+wait longer for the time to become correct.
+</para>
+<para>The <var>delta</var> argument specifies a relative adjustment to be made to
+the clock time.  If negative, the system clock is slowed down for a
+while until it has lost this much elapsed time.  If positive, the system
+clock is speeded up for a while.
+</para>
+<para>If the <var>olddelta</var> argument is not a null pointer, the <code>adjtime</code>
+function returns information about any previous time adjustment that
+has not yet completed.
+</para>
+<para>The return value is <code>0</code> on success and <code>-1</code> on failure.  The
+following <code>errno</code> error condition is defined for this function:
+</para>
+<dl compact="compact">
+<dt><span><code>EPERM</code></span></dt>
+<dd><para>This process does not have the privileges required to adjust the
+<code>CLOCK_REALTIME</code> clock.
+</para></dd>
+</dl>
+</dd></dl>
+
+<para>For compatibility, the GNU C Library also provides several older functions
+for controlling the system time.  New programs should prefer to use
+the functions above.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-stime"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>stime</strong> <emphasis>(const time_t *<var>newtime</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-stime" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>Change the <code>CLOCK_REALTIME</code> calendar time to be the simple
+calendar time in <code>*<var>newtime</var></code>.  Calling this function is
+exactly the same as calling ‘<filename><span class="nolinebreak">clock_settime</span>&nbsp;<span class="nolinebreak">(CLOCK_REALTIME)</span></filename>’,
+except that the new time can only be set to a precision of one second.
+</para>
+<para>This function is no longer available on GNU systems, but it may be
+the <emphasis>only</emphasis> way to set the time on very old Unix systems, so we
+continue to document it.  If it is available, it is declared in
+<filename>time.h</filename>.
+</para>
+<para>The return value is <code>0</code> on success and <code>-1</code> on failure.  The
+following <code>errno</code> error condition is defined for this function:
+</para>
+<dl compact="compact">
+<dt><span><code>EPERM</code></span></dt>
+<dd><para>This process does not have the privileges required to adjust the
+<code>CLOCK_REALTIME</code> clock.
+</para></dd>
+</dl>
+</dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-adjtimex"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>adjtimex</strong> <emphasis>(struct timex *<var>timex</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-adjtimex" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para><code>adjtimex</code> is an older name for <code>ntp_adjtime</code>.
+This function is only available on GNU/Linux systems.
+It is declared in <filename>sys/timex.h</filename>.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-settimeofday"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>settimeofday</strong> <emphasis>(const struct timeval *<var>tp</var>, const void *<var>tzp</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-settimeofday" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>Change the <code>CLOCK_REALTIME</code> calendar time to be the simple
+calendar time in <code>*<var>newtime</var></code>.  This function is declared in
+<filename>sys/time.h</filename>.
+</para>
+<para>When <var>tzp</var> is a null pointer, calling this function is exactly the
+same as calling ‘<filename><span class="nolinebreak">clock_settime</span>&nbsp;<span class="nolinebreak">(CLOCK_REALTIME)</span></filename>’, except that
+the new time can only be set to a precision of one microsecond.
+</para>
+<para>When <var>tzp</var> is not a null pointer, the data it points to <emphasis>may</emphasis>
+be used to set a system-wide idea of the current timezone.  This
+feature is obsolete and not supported on GNU systems.  Instead, use
+the facilities described in <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Time-Zone-Functions">Functions and Variables for Time Zones</a> and in
+<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Broken_002ddown-Time">Broken-down Time</a> for working with time zones.
+</para>
+<para>The return value is <code>0</code> on success and <code>-1</code> on failure.  The
+following <code>errno</code> error conditions are defined for this function:
+</para>
+<dl compact="compact">
+<dt><span><code>EPERM</code></span></dt>
+<dd><para>This process does not have the privileges required to set the
+<code>CLOCK_REALTIME</code> clock.
+</para>
+</dd>
+<dt><span><code>EINVAL</code></span></dt>
+<dd><para>Neither <var>tp</var> nor <var>tzp</var> is a null pointer.  (For historical
+reasons, it is not possible to set the current time and the current
+time zone in the same call.)
+</para>
+</dd>
+<dt><span><code>ENOSYS</code></span></dt>
+<dd><para>The operating system does not support setting time zone information, and
+<var>tzp</var> is not a null pointer.
+</para></dd>
+</dl>
+</dd></dl>
+
+<hr>
+</div>
+<div class="subsection" xml:id="glibc-Broken_002ddown-Time">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Formatting-Calendar-Time" accesskey="n" rel="next">Formatting Calendar Time</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Setting-and-Adjusting-the-Time" accesskey="p" rel="prev">Setting and Adjusting the Time</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Calendar-Time" accesskey="u" rel="up">Calendar Time</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Broken_002ddown-Time-1"></span><h4 class="subsection">21.5.3 Broken-down Time</title>
+<span xml:id="glibc-index-broken_002ddown-time-1"></span>
+<span xml:id="glibc-index-calendar-time-and-broken_002ddown-time"></span>
+
+<para>Simple calendar times represent absolute times as elapsed times since
+an epoch.  This is convenient for computation, but has no relation to
+the way people normally think of calendar time.  By contrast,
+<emphasis>broken-down time</emphasis> is a binary representation of calendar time
+separated into year, month, day, and so on.  Broken-down time values
+are not useful for calculations, but they are useful for printing
+human readable time information.
+</para>
+<para>A broken-down time value is always relative to a choice of time
+zone, and it also indicates which time zone that is.
+</para>
+<para>The symbols in this section are declared in the header file <filename>time.h</filename>.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-struct-tm-1"><span class="category">Data Type: </span><span><strong>struct tm</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-struct-tm-1" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>This is the data type used to represent a broken-down time.  The structure
+contains at least the following members, which can appear in any order.
+</para>
+<dl compact="compact">
+<dt><span><code>int tm_sec</code></span></dt>
+<dd><para>This is the number of full seconds since the top of the minute (normally
+in the range <code>0</code> through <code>59</code>, but the actual upper limit is
+<code>60</code>, to allow for leap seconds if leap second support is
+available).
+<span xml:id="glibc-index-leap-second"></span>
+</para>
+</dd>
+<dt><span><code>int tm_min</code></span></dt>
+<dd><para>This is the number of full minutes since the top of the hour (in the
+range <code>0</code> through <code>59</code>).
+</para>
+</dd>
+<dt><span><code>int tm_hour</code></span></dt>
+<dd><para>This is the number of full hours past midnight (in the range <code>0</code> through
+<code>23</code>).
+</para>
+</dd>
+<dt><span><code>int tm_mday</code></span></dt>
+<dd><para>This is the ordinal day of the month (in the range <code>1</code> through <code>31</code>).
+Watch out for this one!  As the only ordinal number in the structure, it is
+inconsistent with the rest of the structure.
+</para>
+</dd>
+<dt><span><code>int tm_mon</code></span></dt>
+<dd><para>This is the number of full calendar months since the beginning of the
+year (in the range <code>0</code> through <code>11</code>).  Watch out for this one!
+People usually use ordinal numbers for month-of-year (where January = 1).
+</para>
+</dd>
+<dt><span><code>int tm_year</code></span></dt>
+<dd><para>This is the number of full calendar years since 1900.
+</para>
+</dd>
+<dt><span><code>int tm_wday</code></span></dt>
+<dd><para>This is the number of full days since Sunday (in the range <code>0</code> through
+<code>6</code>).
+</para>
+</dd>
+<dt><span><code>int tm_yday</code></span></dt>
+<dd><para>This is the number of full days since the beginning of the year (in the
+range <code>0</code> through <code>365</code>).
+</para>
+</dd>
+<dt xml:id="glibc-index-Daylight-Saving-Time"><span><code>int tm_isdst</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-Daylight-Saving-Time" class="copiable-anchor"> ¶</a></span></dt>
+<dd><span xml:id="glibc-index-summer-time"></span>
+<para>This is a flag that indicates whether Daylight Saving Time is (or was, or
+will be) in effect at the time described.  The value is positive if
+Daylight Saving Time is in effect, zero if it is not, and negative if the
+information is not available.
+</para>
+</dd>
+<dt><span><code>long int tm_gmtoff</code></span></dt>
+<dd><para>This field describes the time zone that was used to compute this
+broken-down time value, including any adjustment for daylight saving; it
+is the number of seconds that you must add to UTC to get local time.
+You can also think of this as the number of seconds east of UTC.  For
+example, for U.S. Eastern Standard Time, the value is <code>-5*60*60</code>.
+The <code>tm_gmtoff</code> field is derived from BSD and is a GNU library
+extension; it is not visible in a strict &isoc; environment.
+</para>
+</dd>
+<dt><span><code>const char *tm_zone</code></span></dt>
+<dd><para>This field is the name for the time zone that was used to compute this
+broken-down time value.  Like <code>tm_gmtoff</code>, this field is a BSD and
+GNU extension, and is not visible in a strict &isoc; environment.
+</para></dd>
+</dl>
+</dd></dl>
+
+
+<dl class="def">
+<dt xml:id="glibc-index-localtime"><span class="category">Function: </span><span><emphasis>struct tm *</emphasis> <strong>localtime</strong> <emphasis>(const time_t *<var>time</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-localtime" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Unsafe race:tmbuf env locale
+| AS-Unsafe heap lock
+| AC-Unsafe lock mem fd
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>localtime</code> function converts the simple time pointed to by
+<var>time</var> to broken-down time representation, expressed relative to the
+user’s specified time zone.
+</para>
+<para>The return value is a pointer to a static broken-down time structure, which
+might be overwritten by subsequent calls to <code>ctime</code>, <code>gmtime</code>,
+or <code>localtime</code>.  (But no other library function overwrites the contents
+of this object.)
+</para>
+<para>The return value is the null pointer if <var>time</var> cannot be represented
+as a broken-down time; typically this is because the year cannot fit into
+an <code>int</code>.
+</para>
+<para>Calling <code>localtime</code> also sets the current time zone as if
+<code>tzset</code> were called.  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Time-Zone-Functions">Functions and Variables for Time Zones</a>.
+</para></dd></dl>
+
+<para>Using the <code>localtime</code> function is a big problem in multi-threaded
+programs.  The result is returned in a static buffer and this is used in
+all threads.  POSIX.1c introduced a variant of this function.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-localtime_005fr"><span class="category">Function: </span><span><emphasis>struct tm *</emphasis> <strong>localtime_r</strong> <emphasis>(const time_t *<var>time</var>, struct tm *<var>resultp</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-localtime_005fr" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe env locale
+| AS-Unsafe heap lock
+| AC-Unsafe lock mem fd
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+
+<para>The <code>localtime_r</code> function works just like the <code>localtime</code>
+function.  It takes a pointer to a variable containing a simple time
+and converts it to the broken-down time format.
+</para>
+<para>But the result is not placed in a static buffer.  Instead it is placed
+in the object of type <code>struct tm</code> to which the parameter
+<var>resultp</var> points.
+</para>
+<para>If the conversion is successful the function returns a pointer to the
+object the result was written into, i.e., it returns <var>resultp</var>.
+</para></dd></dl>
+
+
+<dl class="def">
+<dt xml:id="glibc-index-gmtime"><span class="category">Function: </span><span><emphasis>struct tm *</emphasis> <strong>gmtime</strong> <emphasis>(const time_t *<var>time</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-gmtime" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Unsafe race:tmbuf env locale
+| AS-Unsafe heap lock
+| AC-Unsafe lock mem fd
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This function is similar to <code>localtime</code>, except that the broken-down
+time is expressed as Coordinated Universal Time (UTC) (formerly called
+Greenwich Mean Time (GMT)) rather than relative to a local time zone.
+</para>
+</dd></dl>
+
+<para>As for the <code>localtime</code> function we have the problem that the result
+is placed in a static variable.  POSIX.1c also provides a replacement for
+<code>gmtime</code>.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-gmtime_005fr"><span class="category">Function: </span><span><emphasis>struct tm *</emphasis> <strong>gmtime_r</strong> <emphasis>(const time_t *<var>time</var>, struct tm *<var>resultp</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-gmtime_005fr" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe env locale
+| AS-Unsafe heap lock
+| AC-Unsafe lock mem fd
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This function is similar to <code>localtime_r</code>, except that it converts
+just like <code>gmtime</code> the given time as Coordinated Universal Time.
+</para>
+<para>If the conversion is successful the function returns a pointer to the
+object the result was written into, i.e., it returns <var>resultp</var>.
+</para></dd></dl>
+
+
+<dl class="def">
+<dt xml:id="glibc-index-mktime"><span class="category">Function: </span><span><emphasis>time_t</emphasis> <strong>mktime</strong> <emphasis>(struct tm *<var>brokentime</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-mktime" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe env locale
+| AS-Unsafe heap lock
+| AC-Unsafe lock mem fd
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>mktime</code> function converts a broken-down time structure to a
+simple time representation.  It also normalizes the contents of the
+broken-down time structure, and fills in some components based on the
+values of the others.
+</para>
+<para>The <code>mktime</code> function ignores the specified contents of the
+<code>tm_wday</code>, <code>tm_yday</code>, <code>tm_gmtoff</code>, and <code>tm_zone</code>
+members of the broken-down time
+structure.  It uses the values of the other components to determine the
+calendar time; it’s permissible for these components to have
+unnormalized values outside their normal ranges.  The last thing that
+<code>mktime</code> does is adjust the components of the <var>brokentime</var>
+structure, including the members that were initially ignored.
+</para>
+<para>If the specified broken-down time cannot be represented as a simple time,
+<code>mktime</code> returns a value of <code>(time_t)(-1)</code> and does not modify
+the contents of <var>brokentime</var>.
+</para>
+<para>Calling <code>mktime</code> also sets the current time zone as if
+<code>tzset</code> were called; <code>mktime</code> uses this information instead
+of <var>brokentime</var>’s initial <code>tm_gmtoff</code> and <code>tm_zone</code>
+members.  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Time-Zone-Functions">Functions and Variables for Time Zones</a>.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-timelocal"><span class="category">Function: </span><span><emphasis>time_t</emphasis> <strong>timelocal</strong> <emphasis>(struct tm *<var>brokentime</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-timelocal" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe env locale
+| AS-Unsafe heap lock
+| AC-Unsafe lock mem fd
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+
+<para><code>timelocal</code> is functionally identical to <code>mktime</code>, but more
+mnemonically named.  Note that it is the inverse of the <code>localtime</code>
+function.
+</para>
+<para><strong>Portability note:</strong>  <code>mktime</code> is essentially universally
+available.  <code>timelocal</code> is rather rare.
+</para>
+</dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-timegm"><span class="category">Function: </span><span><emphasis>time_t</emphasis> <strong>timegm</strong> <emphasis>(struct tm *<var>brokentime</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-timegm" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe env locale
+| AS-Unsafe heap lock
+| AC-Unsafe lock mem fd
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+
+<para><code>timegm</code> is functionally identical to <code>mktime</code> except it
+always takes the input values to be Coordinated Universal Time (UTC)
+regardless of any local time zone setting.
+</para>
+<para>Note that <code>timegm</code> is the inverse of <code>gmtime</code>.
+</para>
+<para><strong>Portability note:</strong>  <code>mktime</code> is essentially universally
+available.  <code>timegm</code> is rather rare.  For the most portable
+conversion from a UTC broken-down time to a simple time, set
+the <code>TZ</code> environment variable to UTC, call <code>mktime</code>, then set
+<code>TZ</code> back.
+</para>
+</dd></dl>
+
+
+
+<hr>
+</div>
+<div class="subsection" xml:id="glibc-Formatting-Calendar-Time">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Parsing-Date-and-Time" accesskey="n" rel="next">Convert textual time and date information back</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Broken_002ddown-Time" accesskey="p" rel="prev">Broken-down Time</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Calendar-Time" accesskey="u" rel="up">Calendar Time</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Formatting-Calendar-Time-1"></span><h4 class="subsection">21.5.4 Formatting Calendar Time</title>
+
+<para>The functions described in this section format calendar time values as
+strings.  These functions are declared in the header file <filename>time.h</filename>.
+<span xml:id="glibc-index-time_002eh-2"></span>
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-asctime"><span class="category">Function: </span><span><emphasis>char *</emphasis> <strong>asctime</strong> <emphasis>(const struct tm *<var>brokentime</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-asctime" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Unsafe race:asctime locale
+| AS-Unsafe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>asctime</code> function converts the broken-down time value that
+<var>brokentime</var> points to into a string in a standard format:
+</para>
+<div class="example">
+<pre class="example">"Tue May 21 13:46:22 1991\n"
+</pre></div>
+
+<para>The abbreviations for the days of week are: ‘<filename>Sun</filename>’, ‘<filename>Mon</filename>’,
+‘<filename>Tue</filename>’, ‘<filename>Wed</filename>’, ‘<filename>Thu</filename>’, ‘<filename>Fri</filename>’, and ‘<filename>Sat</filename>’.
+</para>
+<para>The abbreviations for the months are: ‘<filename>Jan</filename>’, ‘<filename>Feb</filename>’,
+‘<filename>Mar</filename>’, ‘<filename>Apr</filename>’, ‘<filename>May</filename>’, ‘<filename>Jun</filename>’, ‘<filename>Jul</filename>’, ‘<filename>Aug</filename>’,
+‘<filename>Sep</filename>’, ‘<filename>Oct</filename>’, ‘<filename>Nov</filename>’, and ‘<filename>Dec</filename>’.
+</para>
+<para>The return value points to a statically allocated string, which might be
+overwritten by subsequent calls to <code>asctime</code> or <code>ctime</code>.
+(But no other library function overwrites the contents of this
+string.)
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-asctime_005fr"><span class="category">Function: </span><span><emphasis>char *</emphasis> <strong>asctime_r</strong> <emphasis>(const struct tm *<var>brokentime</var>, char *<var>buffer</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-asctime_005fr" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe locale
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This function is similar to <code>asctime</code> but instead of placing the
+result in a static buffer it writes the string in the buffer pointed to
+by the parameter <var>buffer</var>.  This buffer should have room
+for at least 26 bytes, including the terminating null.
+</para>
+<para>If no error occurred the function returns a pointer to the string the
+result was written into, i.e., it returns <var>buffer</var>.  Otherwise
+it returns <code>NULL</code>.
+</para></dd></dl>
+
+
+<dl class="def">
+<dt xml:id="glibc-index-ctime"><span class="category">Function: </span><span><emphasis>char *</emphasis> <strong>ctime</strong> <emphasis>(const time_t *<var>time</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-ctime" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Unsafe race:tmbuf race:asctime env locale
+| AS-Unsafe heap lock
+| AC-Unsafe lock mem fd
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>ctime</code> function is similar to <code>asctime</code>, except that you
+specify the calendar time argument as a <code>time_t</code> simple time value
+rather than in broken-down local time format.  It is equivalent to
+</para>
+<div class="example">
+<pre class="example">asctime (localtime (<var>time</var>))
+</pre></div>
+
+<para>Calling <code>ctime</code> also sets the current time zone as if
+<code>tzset</code> were called.  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Time-Zone-Functions">Functions and Variables for Time Zones</a>.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-ctime_005fr"><span class="category">Function: </span><span><emphasis>char *</emphasis> <strong>ctime_r</strong> <emphasis>(const time_t *<var>time</var>, char *<var>buffer</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-ctime_005fr" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe env locale
+| AS-Unsafe heap lock
+| AC-Unsafe lock mem fd
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This function is similar to <code>ctime</code>, but places the result in the
+string pointed to by <var>buffer</var>.  It is equivalent to (written using
+gcc extensions, see <a data-manual="gcc" href="https://gcc.gnu.org/onlinedocs/gcc/Statement-Exprs.html#Statement-Exprs">Statement Exprs</a> in <cite>Porting and Using gcc</cite>):
+</para>
+<div class="example">
+<pre class="example">({ struct tm tm; asctime_r (localtime_r (time, &amp;tm), buf); })
+</pre></div>
+
+<para>If no error occurred the function returns a pointer to the string the
+result was written into, i.e., it returns <var>buffer</var>.  Otherwise
+it returns <code>NULL</code>.
+</para></dd></dl>
+
+
+<dl class="def">
+<dt xml:id="glibc-index-strftime"><span class="category">Function: </span><span><emphasis>size_t</emphasis> <strong>strftime</strong> <emphasis>(char *<var>s</var>, size_t <var>size</var>, const char *<var>template</var>, const struct tm *<var>brokentime</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-strftime" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe env locale
+| AS-Unsafe corrupt heap lock dlopen
+| AC-Unsafe corrupt lock mem fd
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This function is similar to the <code>sprintf</code> function (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Formatted-Input">Formatted Input</a>), but the conversion specifications that can appear in the format
+template <var>template</var> are specialized for printing components of the date
+and time <var>brokentime</var> according to the locale currently specified for
+time conversion (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Locales">Locales and Internationalization</a>) and the current time zone
+(see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Time-Zone-Functions">Functions and Variables for Time Zones</a>).
+</para>
+<para>Ordinary characters appearing in the <var>template</var> are copied to the
+output string <var>s</var>; this can include multibyte character sequences.
+Conversion specifiers are introduced by a ‘<filename>%</filename>’ character, followed
+by an optional flag which can be one of the following.  These flags
+are all GNU extensions.  The first three affect only the output of
+numbers:
+</para>
+<dl compact="compact">
+<dt><span><code>_</code></span></dt>
+<dd><para>The number is padded with spaces.
+</para>
+</dd>
+<dt><span><code>-</code></span></dt>
+<dd><para>The number is not padded at all.
+</para>
+</dd>
+<dt><span><code>0</code></span></dt>
+<dd><para>The number is padded with zeros even if the format specifies padding
+with spaces.
+</para>
+</dd>
+<dt><span><code>^</code></span></dt>
+<dd><para>The output uses uppercase characters, but only if this is possible
+(see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Case-Conversion">Case Conversion</a>).
+</para></dd>
+</dl>
+
+<para>The default action is to pad the number with zeros to keep it a constant
+width.  Numbers that do not have a range indicated below are never
+padded, since there is no natural width for them.
+</para>
+<para>Following the flag an optional specification of the width is possible.
+This is specified in decimal notation.  If the natural size of the
+output of the field has less than the specified number of characters,
+the result is written right adjusted and space padded to the given
+size.
+</para>
+<para>An optional modifier can follow the optional flag and width
+specification.  The modifiers, which were first standardized by
+POSIX.2-1992 and by &isoc;99, are:
+</para>
+<dl compact="compact">
+<dt><span><code>E</code></span></dt>
+<dd><para>Use the locale’s alternative representation for date and time.  This
+modifier applies to the <code>%c</code>, <code>%C</code>, <code>%x</code>, <code>%X</code>,
+<code>%y</code> and <code>%Y</code> format specifiers.  In a Japanese locale, for
+example, <code>%Ex</code> might yield a date format based on the Japanese
+Emperors’ reigns.
+</para>
+</dd>
+<dt><span><code>O</code></span></dt>
+<dd><para>With all format specifiers that produce numbers: use the locale’s
+alternative numeric symbols.
+</para>
+<para>With <code>%B</code>, <code>%b</code>, and <code>%h</code>: use the grammatical form for
+month names that is appropriate when the month is named by itself,
+rather than the form that is appropriate when the month is used as
+part of a complete date.  The <code>%OB</code> and <code>%Ob</code> formats are a
+C2X feature, specified in C2X to use the locale’s ‘alternative’ month
+name; the GNU C Library extends this specification to say that the form used
+in a complete date is the default and the form naming the month by
+itself is the alternative.
+</para></dd>
+</dl>
+
+<para>If the format supports the modifier but no alternative representation
+is available, it is ignored.
+</para>
+<para>The conversion specifier ends with a format specifier taken from the
+following list.  The whole ‘<filename>%</filename>’ sequence is replaced in the output
+string as follows:
+</para>
+<dl compact="compact">
+<dt><span><code>%a</code></span></dt>
+<dd><para>The abbreviated weekday name according to the current locale.
+</para>
+</dd>
+<dt><span><code>%A</code></span></dt>
+<dd><para>The full weekday name according to the current locale.
+</para>
+</dd>
+<dt><span><code>%b</code></span></dt>
+<dd><para>The abbreviated month name according to the current locale, in the
+grammatical form used when the month is part of a complete date.
+As a C2X feature (with a more detailed specification in the GNU C Library),
+the <code>O</code> modifier can be used (<code>%Ob</code>) to get the grammatical
+form used when the month is named by itself.
+</para>
+</dd>
+<dt><span><code>%B</code></span></dt>
+<dd><para>The full month name according to the current locale, in the
+grammatical form used when the month is part of a complete date.
+As a C2X feature (with a more detailed specification in the GNU C Library),
+the <code>O</code> modifier can be used (<code>%OB</code>) to get the grammatical
+form used when the month is named by itself.
+</para>
+<para>Note that not all languages need two different forms of the month
+names, so the text produced by <code>%B</code> and <code>%OB</code>, and by
+<code>%b</code> and <code>%Ob</code>, may or may not be the same, depending on
+the locale.
+</para>
+</dd>
+<dt><span><code>%c</code></span></dt>
+<dd><para>The preferred calendar time representation for the current locale.
+</para>
+</dd>
+<dt><span><code>%C</code></span></dt>
+<dd><para>The century of the year.  This is equivalent to the greatest integer not
+greater than the year divided by 100.
+</para>
+<para>If the <code>E</code> modifier is specified (<code>%EC</code>), instead produces
+the name of the period for the year (e.g. an era name) in the
+locale’s alternative calendar.
+</para>
+<para>This format was first standardized by POSIX.2-1992 and by &isoc;99.
+</para>
+</dd>
+<dt><span><code>%d</code></span></dt>
+<dd><para>The day of the month as a decimal number (range <code>01</code> through <code>31</code>).
+</para>
+</dd>
+<dt><span><code>%D</code></span></dt>
+<dd><para>The date using the format <code>%m/%d/%y</code>.
+</para>
+<para>This format was first standardized by POSIX.2-1992 and by &isoc;99.
+</para>
+</dd>
+<dt><span><code>%e</code></span></dt>
+<dd><para>The day of the month like with <code>%d</code>, but padded with spaces (range
+<code> 1</code> through <code>31</code>).
+</para>
+<para>This format was first standardized by POSIX.2-1992 and by &isoc;99.
+</para>
+</dd>
+<dt><span><code>%F</code></span></dt>
+<dd><para>The date using the format <code>%Y-%m-%d</code>.  This is the form specified
+in the ISO&nbsp;8601 standard and is the preferred form for all uses.
+</para>
+<para>This format was first standardized by &isoc;99 and by POSIX.1-2001.
+</para>
+</dd>
+<dt><span><code>%g</code></span></dt>
+<dd><para>The year corresponding to the ISO week number, but without the century
+(range <code>00</code> through <code>99</code>).  This has the same format and value
+as <code>%y</code>, except that if the ISO week number (see <code>%V</code>) belongs
+to the previous or next year, that year is used instead.
+</para>
+<para>This format was first standardized by &isoc;99 and by POSIX.1-2001.
+</para>
+</dd>
+<dt><span><code>%G</code></span></dt>
+<dd><para>The year corresponding to the ISO week number.  This has the same format
+and value as <code>%Y</code>, except that if the ISO week number (see
+<code>%V</code>) belongs to the previous or next year, that year is used
+instead.
+</para>
+<para>This format was first standardized by &isoc;99 and by POSIX.1-2001
+but was previously available as a GNU extension.
+</para>
+</dd>
+<dt><span><code>%h</code></span></dt>
+<dd><para>The abbreviated month name according to the current locale.  The action
+is the same as for <code>%b</code>.
+</para>
+<para>This format was first standardized by POSIX.2-1992 and by &isoc;99.
+</para>
+</dd>
+<dt><span><code>%H</code></span></dt>
+<dd><para>The hour as a decimal number, using a 24-hour clock (range <code>00</code> through
+<code>23</code>).
+</para>
+</dd>
+<dt><span><code>%I</code></span></dt>
+<dd><para>The hour as a decimal number, using a 12-hour clock (range <code>01</code> through
+<code>12</code>).
+</para>
+</dd>
+<dt><span><code>%j</code></span></dt>
+<dd><para>The day of the year as a decimal number (range <code>001</code> through <code>366</code>).
+</para>
+</dd>
+<dt><span><code>%k</code></span></dt>
+<dd><para>The hour as a decimal number, using a 24-hour clock like <code>%H</code>, but
+padded with spaces (range <code> 0</code> through <code>23</code>).
+</para>
+<para>This format is a GNU extension.
+</para>
+</dd>
+<dt><span><code>%l</code></span></dt>
+<dd><para>The hour as a decimal number, using a 12-hour clock like <code>%I</code>, but
+padded with spaces (range <code> 1</code> through <code>12</code>).
+</para>
+<para>This format is a GNU extension.
+</para>
+</dd>
+<dt><span><code>%m</code></span></dt>
+<dd><para>The month as a decimal number (range <code>01</code> through <code>12</code>).
+</para>
+</dd>
+<dt><span><code>%M</code></span></dt>
+<dd><para>The minute as a decimal number (range <code>00</code> through <code>59</code>).
+</para>
+</dd>
+<dt><span><code>%n</code></span></dt>
+<dd><para>A single ‘<filename>\n</filename>’ (newline) character.
+</para>
+<para>This format was first standardized by POSIX.2-1992 and by &isoc;99.
+</para>
+</dd>
+<dt><span><code>%p</code></span></dt>
+<dd><para>Either ‘<filename>AM</filename>’ or ‘<filename>PM</filename>’, according to the given time value; or the
+corresponding strings for the current locale.  Noon is treated as
+‘<filename>PM</filename>’ and midnight as ‘<filename>AM</filename>’.  In most locales
+‘<filename>AM</filename>’/‘<filename>PM</filename>’ format is not supported, in such cases <code>"%p"</code>
+yields an empty string.
+</para>
+</dd>
+<dt><span><code>%P</code></span></dt>
+<dd><para>Either ‘<filename>am</filename>’ or ‘<filename>pm</filename>’, according to the given time value; or the
+corresponding strings for the current locale, printed in lowercase
+characters.  Noon is treated as ‘<filename>pm</filename>’ and midnight as ‘<filename>am</filename>’.  In
+most locales ‘<filename>AM</filename>’/‘<filename>PM</filename>’ format is not supported, in such cases
+<code>"%P"</code> yields an empty string.
+</para>
+<para>This format is a GNU extension.
+</para>
+</dd>
+<dt><span><code>%r</code></span></dt>
+<dd><para>The complete calendar time using the AM/PM format of the current locale.
+</para>
+<para>This format was first standardized by POSIX.2-1992 and by &isoc;99.
+In the POSIX locale, this format is equivalent to <code>%I:%M:%S %p</code>.
+</para>
+</dd>
+<dt><span><code>%R</code></span></dt>
+<dd><para>The hour and minute in decimal numbers using the format <code>%H:%M</code>.
+</para>
+<para>This format was first standardized by &isoc;99 and by POSIX.1-2001
+but was previously available as a GNU extension.
+</para>
+</dd>
+<dt><span><code>%s</code></span></dt>
+<dd><para>The number of seconds since the epoch, i.e., since 1970-01-01 00:00:00 UTC.
+Leap seconds are not counted unless leap second support is available.
+</para>
+<para>This format is a GNU extension.
+</para>
+</dd>
+<dt><span><code>%S</code></span></dt>
+<dd><para>The seconds as a decimal number (range <code>00</code> through <code>60</code>).
+</para>
+</dd>
+<dt><span><code>%t</code></span></dt>
+<dd><para>A single ‘<filename>\t</filename>’ (tabulator) character.
+</para>
+<para>This format was first standardized by POSIX.2-1992 and by &isoc;99.
+</para>
+</dd>
+<dt><span><code>%T</code></span></dt>
+<dd><para>The time of day using decimal numbers using the format <code>%H:%M:%S</code>.
+</para>
+<para>This format was first standardized by POSIX.2-1992 and by &isoc;99.
+</para>
+</dd>
+<dt><span><code>%u</code></span></dt>
+<dd><para>The day of the week as a decimal number (range <code>1</code> through
+<code>7</code>), Monday being <code>1</code>.
+</para>
+<para>This format was first standardized by POSIX.2-1992 and by &isoc;99.
+</para>
+</dd>
+<dt><span><code>%U</code></span></dt>
+<dd><para>The week number of the current year as a decimal number (range <code>00</code>
+through <code>53</code>), starting with the first Sunday as the first day of
+the first week.  Days preceding the first Sunday in the year are
+considered to be in week <code>00</code>.
+</para>
+</dd>
+<dt><span><code>%V</code></span></dt>
+<dd><para>The ISO&nbsp;8601:1988 week number as a decimal number (range <code>01</code>
+through <code>53</code>).  ISO weeks start with Monday and end with Sunday.
+Week <code>01</code> of a year is the first week which has the majority of its
+days in that year; this is equivalent to the week containing the year’s
+first Thursday, and it is also equivalent to the week containing January
+4.  Week <code>01</code> of a year can contain days from the previous year.
+The week before week <code>01</code> of a year is the last week (<code>52</code> or
+<code>53</code>) of the previous year even if it contains days from the new
+year.
+</para>
+<para>This format was first standardized by POSIX.2-1992 and by &isoc;99.
+</para>
+</dd>
+<dt><span><code>%w</code></span></dt>
+<dd><para>The day of the week as a decimal number (range <code>0</code> through
+<code>6</code>), Sunday being <code>0</code>.
+</para>
+</dd>
+<dt><span><code>%W</code></span></dt>
+<dd><para>The week number of the current year as a decimal number (range <code>00</code>
+through <code>53</code>), starting with the first Monday as the first day of
+the first week.  All days preceding the first Monday in the year are
+considered to be in week <code>00</code>.
+</para>
+</dd>
+<dt><span><code>%x</code></span></dt>
+<dd><para>The preferred date representation for the current locale.
+</para>
+</dd>
+<dt><span><code>%X</code></span></dt>
+<dd><para>The preferred time of day representation for the current locale.
+</para>
+</dd>
+<dt><span><code>%y</code></span></dt>
+<dd><para>The year without a century as a decimal number (range <code>00</code> through
+<code>99</code>).  This is equivalent to the year modulo 100.
+</para>
+<para>If the <code>E</code> modifier is specified (<code>%Ey</code>), instead produces
+the year number according to a locale-specific alternative calendar.
+Unlike <code>%y</code>, the number is <emphasis>not</emphasis> reduced modulo 100.
+However, by default it is zero-padded to a minimum of two digits (this
+can be overridden by an explicit field width or by the <code>_</code> and
+<code>-</code> flags).
+</para>
+</dd>
+<dt><span><code>%Y</code></span></dt>
+<dd><para>The year as a decimal number, using the Gregorian calendar.  Years
+before the year <code>1</code> are numbered <code>0</code>, <code>-1</code>, and so on.
+</para>
+<para>If the <code>E</code> modifier is specified (<code>%EY</code>), instead produces a
+complete representation of the year according to the locale’s
+alternative calendar.  Generally this will be some combination of the
+information produced by <code>%EC</code> and <code>%Ey</code>.  As a GNU
+extension, the formatting flags <code>_</code> or <code>-</code> may be used with
+this conversion specifier; they affect how the year number is printed.
+</para>
+</dd>
+<dt><span><code>%z</code></span></dt>
+<dd><para>RFC&nbsp;822/ISO&nbsp;8601:1988 style numeric time zone (e.g.,
+<code>-0600</code> or <code>+0100</code>), or nothing if no time zone is
+determinable.
+</para>
+<para>This format was first standardized by &isoc;99 and by POSIX.1-2001
+but was previously available as a GNU extension.
+</para>
+<para>In the POSIX locale, a full RFC&nbsp;822 timestamp is generated by the format
+‘<filename>"%a,&nbsp;%d&nbsp;%b&nbsp;%Y&nbsp;%H:%M:%S&nbsp;%z"</filename>’ (or the equivalent
+‘<filename>"%a,&nbsp;%d&nbsp;%b&nbsp;%Y&nbsp;%T&nbsp;%z"</filename>’).
+</para>
+</dd>
+<dt><span><code>%Z</code></span></dt>
+<dd><para>The time zone abbreviation (empty if the time zone can’t be determined).
+</para>
+</dd>
+<dt><span><code>%%</code></span></dt>
+<dd><para>A literal ‘<filename>%</filename>’ character.
+</para></dd>
+</dl>
+
+<para>The <var>size</var> parameter can be used to specify the maximum number of
+characters to be stored in the array <var>s</var>, including the terminating
+null character.  If the formatted time requires more than <var>size</var>
+characters, <code>strftime</code> returns zero and the contents of the array
+<var>s</var> are undefined.  Otherwise the return value indicates the
+number of characters placed in the array <var>s</var>, not including the
+terminating null character.
+</para>
+<para><emphasis>Warning:</emphasis> This convention for the return value which is prescribed
+in &isoc; can lead to problems in some situations.  For certain
+format strings and certain locales the output really can be the empty
+string and this cannot be discovered by testing the return value only.
+E.g., in most locales the AM/PM time format is not supported (most of
+the world uses the 24 hour time representation).  In such locales
+<code>"%p"</code> will return the empty string, i.e., the return value is
+zero.  To detect situations like this something similar to the following
+code should be used:
+</para>
+<div class="example">
+<pre class="example">buf[0] = '\1';
+len = strftime (buf, bufsize, format, tp);
+if (len == 0 &amp;&amp; buf[0] != '\0')
+  {
+    /* Something went wrong in the strftime call.  */
+    …
+  }
+</pre></div>
+
+<para>If <var>s</var> is a null pointer, <code>strftime</code> does not actually write
+anything, but instead returns the number of characters it would have written.
+</para>
+<para>Calling <code>strftime</code> also sets the current time zone as if
+<code>tzset</code> were called; <code>strftime</code> uses this information
+instead of <var>brokentime</var>’s <code>tm_gmtoff</code> and <code>tm_zone</code>
+members.  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Time-Zone-Functions">Functions and Variables for Time Zones</a>.
+</para>
+<para>For an example of <code>strftime</code>, see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Time-Functions-Example">Time Functions Example</a>.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-wcsftime"><span class="category">Function: </span><span><emphasis>size_t</emphasis> <strong>wcsftime</strong> <emphasis>(wchar_t *<var>s</var>, size_t <var>size</var>, const wchar_t *<var>template</var>, const struct tm *<var>brokentime</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-wcsftime" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe env locale
+| AS-Unsafe corrupt heap lock dlopen
+| AC-Unsafe corrupt lock mem fd
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>wcsftime</code> function is equivalent to the <code>strftime</code>
+function with the difference that it operates on wide character
+strings.  The buffer where the result is stored, pointed to by <var>s</var>,
+must be an array of wide characters.  The parameter <var>size</var> which
+specifies the size of the output buffer gives the number of wide
+characters, not the number of bytes.
+</para>
+<para>Also the format string <var>template</var> is a wide character string.  Since
+all characters needed to specify the format string are in the basic
+character set it is portably possible to write format strings in the C
+source code using the <code>L"…"</code> notation.  The parameter
+<var>brokentime</var> has the same meaning as in the <code>strftime</code> call.
+</para>
+<para>The <code>wcsftime</code> function supports the same flags, modifiers, and
+format specifiers as the <code>strftime</code> function.
+</para>
+<para>The return value of <code>wcsftime</code> is the number of wide characters
+stored in <code>s</code>.  When more characters would have to be written than
+can be placed in the buffer <var>s</var> the return value is zero, with the
+same problems indicated in the <code>strftime</code> documentation.
+</para></dd></dl>
+
+<hr>
+</div>
+<div class="subsection" xml:id="glibc-Parsing-Date-and-Time">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#TZ-Variable" accesskey="n" rel="next">Specifying the Time Zone with <code>TZ</code></a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Formatting-Calendar-Time" accesskey="p" rel="prev">Formatting Calendar Time</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Calendar-Time" accesskey="u" rel="up">Calendar Time</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Convert-textual-time-and-date-information-back"></span><h4 class="subsection">21.5.5 Convert textual time and date information back</title>
+
+<para>The &isoc; standard does not specify any functions which can convert
+the output of the <code>strftime</code> function back into a binary format.
+This led to a variety of more-or-less successful implementations with
+different interfaces over the years.  Then the Unix standard was
+extended by the addition of two functions: <code>strptime</code> and
+<code>getdate</code>.  Both have strange interfaces but at least they are
+widely available.
+</para>
+
+<ul class="section-toc">
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Low_002dLevel-Time-String-Parsing" accesskey="1">Interpret string according to given format</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#General-Time-String-Parsing" accesskey="2">A More User-friendly Way to Parse Times and Dates</a></li>
+</ul>
+<hr>
+<div class="subsubsection" xml:id="glibc-Low_002dLevel-Time-String-Parsing">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#General-Time-String-Parsing" accesskey="n" rel="next">A More User-friendly Way to Parse Times and Dates</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Parsing-Date-and-Time" accesskey="u" rel="up">Convert textual time and date information back</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Interpret-string-according-to-given-format"></span><h4 class="subsubsection">21.5.5.1 Interpret string according to given format</title>
+
+<para>The first function is rather low-level.  It is nevertheless frequently
+used in software since it is better known.  Its interface and
+implementation are heavily influenced by the <code>getdate</code> function,
+which is defined and implemented in terms of calls to <code>strptime</code>.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-strptime"><span class="category">Function: </span><span><emphasis>char *</emphasis> <strong>strptime</strong> <emphasis>(const char *<var>s</var>, const char *<var>fmt</var>, struct tm *<var>tp</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-strptime" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe env locale
+| AS-Unsafe heap lock
+| AC-Unsafe lock mem fd
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>strptime</code> function parses the input string <var>s</var> according
+to the format string <var>fmt</var> and stores its results in the
+structure <var>tp</var>.
+</para>
+<para>The input string could be generated by a <code>strftime</code> call or
+obtained any other way.  It does not need to be in a human-recognizable
+format; e.g. a date passed as <code>"02:1999:9"</code> is acceptable, even
+though it is ambiguous without context.  As long as the format string
+<var>fmt</var> matches the input string the function will succeed.
+</para>
+<para>The user has to make sure, though, that the input can be parsed in a
+unambiguous way.  The string <code>"1999112"</code> can be parsed using the
+format <code>"%Y%m%d"</code> as 1999-1-12, 1999-11-2, or even 19991-1-2.  It
+is necessary to add appropriate separators to reliably get results.
+</para>
+<para>The format string consists of the same components as the format string
+of the <code>strftime</code> function.  The only difference is that the flags
+<code>_</code>, <code>-</code>, <code>0</code>, and <code>^</code> are not allowed.
+Several of the distinct formats of <code>strftime</code> do the same work in
+<code>strptime</code> since differences like case of the input do not matter.
+For reasons of symmetry all formats are supported, though.
+</para>
+<para>The modifiers <code>E</code> and <code>O</code> are also allowed everywhere the
+<code>strftime</code> function allows them.
+</para>
+<para>The formats are:
+</para>
+<dl compact="compact">
+<dt><span><code>%a</code></span></dt>
+<dt><span><code>%A</code></span></dt>
+<dd><para>The weekday name according to the current locale, in abbreviated form or
+the full name.
+</para>
+</dd>
+<dt><span><code>%b</code></span></dt>
+<dt><span><code>%B</code></span></dt>
+<dt><span><code>%h</code></span></dt>
+<dd><para>A month name according to the current locale.  All three specifiers
+will recognize both abbreviated and full month names.  If the
+locale provides two different grammatical forms of month names,
+all three specifiers will recognize both forms.
+</para>
+<para>As a GNU extension, the <code>O</code> modifier can be used with these
+specifiers; it has no effect, as both grammatical forms of month
+names are recognized.
+</para>
+</dd>
+<dt><span><code>%c</code></span></dt>
+<dd><para>The date and time representation for the current locale.
+</para>
+</dd>
+<dt><span><code>%Ec</code></span></dt>
+<dd><para>Like <code>%c</code> but the locale’s alternative date and time format is used.
+</para>
+</dd>
+<dt><span><code>%C</code></span></dt>
+<dd><para>The century of the year.
+</para>
+<para>It makes sense to use this format only if the format string also
+contains the <code>%y</code> format.
+</para>
+</dd>
+<dt><span><code>%EC</code></span></dt>
+<dd><para>The locale’s representation of the period.
+</para>
+<para>Unlike <code>%C</code> it sometimes makes sense to use this format since some
+cultures represent years relative to the beginning of eras instead of
+using the Gregorian years.
+</para>
+</dd>
+<dt><span><code>%d</code></span></dt>
+<dt><span><code>%e</code></span></dt>
+<dd><para>The day of the month as a decimal number (range <code>1</code> through <code>31</code>).
+Leading zeroes are permitted but not required.
+</para>
+</dd>
+<dt><span><code>%Od</code></span></dt>
+<dt><span><code>%Oe</code></span></dt>
+<dd><para>Same as <code>%d</code> but using the locale’s alternative numeric symbols.
+</para>
+<para>Leading zeroes are permitted but not required.
+</para>
+</dd>
+<dt><span><code>%D</code></span></dt>
+<dd><para>Equivalent to <code>%m/%d/%y</code>.
+</para>
+</dd>
+<dt><span><code>%F</code></span></dt>
+<dd><para>Equivalent to <code>%Y-%m-%d</code>, which is the ISO&nbsp;8601 date
+format.
+</para>
+<para>This is a GNU extension following an &isoc;99 extension to
+<code>strftime</code>.
+</para>
+</dd>
+<dt><span><code>%g</code></span></dt>
+<dd><para>The year corresponding to the ISO week number, but without the century
+(range <code>00</code> through <code>99</code>).
+</para>
+<para><emphasis>Note:</emphasis> Currently, this is not fully implemented.  The format is
+recognized, input is consumed but no field in <var>tm</var> is set.
+</para>
+<para>This format is a GNU extension following a GNU extension of <code>strftime</code>.
+</para>
+</dd>
+<dt><span><code>%G</code></span></dt>
+<dd><para>The year corresponding to the ISO week number.
+</para>
+<para><emphasis>Note:</emphasis> Currently, this is not fully implemented.  The format is
+recognized, input is consumed but no field in <var>tm</var> is set.
+</para>
+<para>This format is a GNU extension following a GNU extension of <code>strftime</code>.
+</para>
+</dd>
+<dt><span><code>%H</code></span></dt>
+<dt><span><code>%k</code></span></dt>
+<dd><para>The hour as a decimal number, using a 24-hour clock (range <code>00</code> through
+<code>23</code>).
+</para>
+<para><code>%k</code> is a GNU extension following a GNU extension of <code>strftime</code>.
+</para>
+</dd>
+<dt><span><code>%OH</code></span></dt>
+<dd><para>Same as <code>%H</code> but using the locale’s alternative numeric symbols.
+</para>
+</dd>
+<dt><span><code>%I</code></span></dt>
+<dt><span><code>%l</code></span></dt>
+<dd><para>The hour as a decimal number, using a 12-hour clock (range <code>01</code> through
+<code>12</code>).
+</para>
+<para><code>%l</code> is a GNU extension following a GNU extension of <code>strftime</code>.
+</para>
+</dd>
+<dt><span><code>%OI</code></span></dt>
+<dd><para>Same as <code>%I</code> but using the locale’s alternative numeric symbols.
+</para>
+</dd>
+<dt><span><code>%j</code></span></dt>
+<dd><para>The day of the year as a decimal number (range <code>1</code> through <code>366</code>).
+</para>
+<para>Leading zeroes are permitted but not required.
+</para>
+</dd>
+<dt><span><code>%m</code></span></dt>
+<dd><para>The month as a decimal number (range <code>1</code> through <code>12</code>).
+</para>
+<para>Leading zeroes are permitted but not required.
+</para>
+</dd>
+<dt><span><code>%Om</code></span></dt>
+<dd><para>Same as <code>%m</code> but using the locale’s alternative numeric symbols.
+</para>
+</dd>
+<dt><span><code>%M</code></span></dt>
+<dd><para>The minute as a decimal number (range <code>0</code> through <code>59</code>).
+</para>
+<para>Leading zeroes are permitted but not required.
+</para>
+</dd>
+<dt><span><code>%OM</code></span></dt>
+<dd><para>Same as <code>%M</code> but using the locale’s alternative numeric symbols.
+</para>
+</dd>
+<dt><span><code>%n</code></span></dt>
+<dt><span><code>%t</code></span></dt>
+<dd><para>Matches any white space.
+</para>
+</dd>
+<dt><span><code>%p</code></span></dt>
+<dt><span><code>%P</code></span></dt>
+<dd><para>The locale-dependent equivalent to ‘<filename>AM</filename>’ or ‘<filename>PM</filename>’.
+</para>
+<para>This format is not useful unless <code>%I</code> or <code>%l</code> is also used.
+Another complication is that the locale might not define these values at
+all and therefore the conversion fails.
+</para>
+<para><code>%P</code> is a GNU extension following a GNU extension to <code>strftime</code>.
+</para>
+</dd>
+<dt><span><code>%r</code></span></dt>
+<dd><para>The complete time using the AM/PM format of the current locale.
+</para>
+<para>A complication is that the locale might not define this format at all
+and therefore the conversion fails.
+</para>
+</dd>
+<dt><span><code>%R</code></span></dt>
+<dd><para>The hour and minute in decimal numbers using the format <code>%H:%M</code>.
+</para>
+<para><code>%R</code> is a GNU extension following a GNU extension to <code>strftime</code>.
+</para>
+</dd>
+<dt><span><code>%s</code></span></dt>
+<dd><para>The number of seconds since the epoch, i.e., since 1970-01-01 00:00:00 UTC.
+Leap seconds are not counted unless leap second support is available.
+</para>
+<para><code>%s</code> is a GNU extension following a GNU extension to <code>strftime</code>.
+</para>
+</dd>
+<dt><span><code>%S</code></span></dt>
+<dd><para>The seconds as a decimal number (range <code>0</code> through <code>60</code>).
+</para>
+<para>Leading zeroes are permitted but not required.
+</para>
+<para><strong>NB:</strong> The Unix specification says the upper bound on this value
+is <code>61</code>, a result of a decision to allow double leap seconds.  You
+will not see the value <code>61</code> because no minute has more than one
+leap second, but the myth persists.
+</para>
+</dd>
+<dt><span><code>%OS</code></span></dt>
+<dd><para>Same as <code>%S</code> but using the locale’s alternative numeric symbols.
+</para>
+</dd>
+<dt><span><code>%T</code></span></dt>
+<dd><para>Equivalent to the use of <code>%H:%M:%S</code> in this place.
+</para>
+</dd>
+<dt><span><code>%u</code></span></dt>
+<dd><para>The day of the week as a decimal number (range <code>1</code> through
+<code>7</code>), Monday being <code>1</code>.
+</para>
+<para>Leading zeroes are permitted but not required.
+</para>
+<para><emphasis>Note:</emphasis> Currently, this is not fully implemented.  The format is
+recognized, input is consumed but no field in <var>tm</var> is set.
+</para>
+</dd>
+<dt><span><code>%U</code></span></dt>
+<dd><para>The week number of the current year as a decimal number (range <code>0</code>
+through <code>53</code>).
+</para>
+<para>Leading zeroes are permitted but not required.
+</para>
+</dd>
+<dt><span><code>%OU</code></span></dt>
+<dd><para>Same as <code>%U</code> but using the locale’s alternative numeric symbols.
+</para>
+</dd>
+<dt><span><code>%V</code></span></dt>
+<dd><para>The ISO&nbsp;8601:1988 week number as a decimal number (range <code>1</code>
+through <code>53</code>).
+</para>
+<para>Leading zeroes are permitted but not required.
+</para>
+<para><emphasis>Note:</emphasis> Currently, this is not fully implemented.  The format is
+recognized, input is consumed but no field in <var>tm</var> is set.
+</para>
+</dd>
+<dt><span><code>%w</code></span></dt>
+<dd><para>The day of the week as a decimal number (range <code>0</code> through
+<code>6</code>), Sunday being <code>0</code>.
+</para>
+<para>Leading zeroes are permitted but not required.
+</para>
+<para><emphasis>Note:</emphasis> Currently, this is not fully implemented.  The format is
+recognized, input is consumed but no field in <var>tm</var> is set.
+</para>
+</dd>
+<dt><span><code>%Ow</code></span></dt>
+<dd><para>Same as <code>%w</code> but using the locale’s alternative numeric symbols.
+</para>
+</dd>
+<dt><span><code>%W</code></span></dt>
+<dd><para>The week number of the current year as a decimal number (range <code>0</code>
+through <code>53</code>).
+</para>
+<para>Leading zeroes are permitted but not required.
+</para>
+<para><emphasis>Note:</emphasis> Currently, this is not fully implemented.  The format is
+recognized, input is consumed but no field in <var>tm</var> is set.
+</para>
+</dd>
+<dt><span><code>%OW</code></span></dt>
+<dd><para>Same as <code>%W</code> but using the locale’s alternative numeric symbols.
+</para>
+</dd>
+<dt><span><code>%x</code></span></dt>
+<dd><para>The date using the locale’s date format.
+</para>
+</dd>
+<dt><span><code>%Ex</code></span></dt>
+<dd><para>Like <code>%x</code> but the locale’s alternative data representation is used.
+</para>
+</dd>
+<dt><span><code>%X</code></span></dt>
+<dd><para>The time using the locale’s time format.
+</para>
+</dd>
+<dt><span><code>%EX</code></span></dt>
+<dd><para>Like <code>%X</code> but the locale’s alternative time representation is used.
+</para>
+</dd>
+<dt><span><code>%y</code></span></dt>
+<dd><para>The year without a century as a decimal number (range <code>0</code> through
+<code>99</code>).
+</para>
+<para>Leading zeroes are permitted but not required.
+</para>
+<para>Note that it is questionable to use this format without
+the <code>%C</code> format.  The <code>strptime</code> function does regard input
+values in the range <em class="math">68</emphasis> to <em class="math">99</emphasis> as the years <em class="math">1969</emphasis> to
+<em class="math">1999</emphasis> and the values <em class="math">0</emphasis> to <em class="math">68</emphasis> as the years
+<em class="math">2000</emphasis> to <em class="math">2068</emphasis>.  But maybe this heuristic fails for some
+input data.
+</para>
+<para>Therefore it is best to avoid <code>%y</code> completely and use <code>%Y</code>
+instead.
+</para>
+</dd>
+<dt><span><code>%Ey</code></span></dt>
+<dd><para>The offset from <code>%EC</code> in the locale’s alternative representation.
+</para>
+</dd>
+<dt><span><code>%Oy</code></span></dt>
+<dd><para>The offset of the year (from <code>%C</code>) using the locale’s alternative
+numeric symbols.
+</para>
+</dd>
+<dt><span><code>%Y</code></span></dt>
+<dd><para>The year as a decimal number, using the Gregorian calendar.
+</para>
+</dd>
+<dt><span><code>%EY</code></span></dt>
+<dd><para>The full alternative year representation.
+</para>
+</dd>
+<dt><span><code>%z</code></span></dt>
+<dd><para>The offset from GMT in ISO&nbsp;8601/RFC822 format.
+</para>
+</dd>
+<dt><span><code>%Z</code></span></dt>
+<dd><para>The timezone name.
+</para>
+<para><emphasis>Note:</emphasis> Currently, this is not fully implemented.  The format is
+recognized, input is consumed but no field in <var>tm</var> is set.
+</para>
+</dd>
+<dt><span><code>%%</code></span></dt>
+<dd><para>A literal ‘<filename>%</filename>’ character.
+</para></dd>
+</dl>
+
+<para>All other characters in the format string must have a matching character
+in the input string.  Exceptions are white spaces in the input string
+which can match zero or more whitespace characters in the format string.
+</para>
+<para><strong>Portability Note:</strong> The XPG standard advises applications to use
+at least one whitespace character (as specified by <code>isspace</code>) or
+other non-alphanumeric characters between any two conversion
+specifications.  The GNU C Library does not have this limitation but
+other libraries might have trouble parsing formats like
+<code>"%d%m%Y%H%M%S"</code>.
+</para>
+<para>The <code>strptime</code> function processes the input string from right to
+left.  Each of the three possible input elements (white space, literal,
+or format) are handled one after the other.  If the input cannot be
+matched to the format string the function stops.  The remainder of the
+format and input strings are not processed.
+</para>
+<para>The function returns a pointer to the first character it was unable to
+process.  If the input string contains more characters than required by
+the format string the return value points right after the last consumed
+input character.  If the whole input string is consumed the return value
+points to the <code>NULL</code> byte at the end of the string.  If an error
+occurs, i.e., <code>strptime</code> fails to match all of the format string,
+the function returns <code>NULL</code>.
+</para></dd></dl>
+
+<para>The specification of the function in the XPG standard is rather vague,
+leaving out a few important pieces of information.  Most importantly, it
+does not specify what happens to those elements of <var>tm</var> which are
+not directly initialized by the different formats.  The
+implementations on different Unix systems vary here.
+</para>
+<para>The GNU C Library implementation does not touch those fields which are not
+directly initialized.  Exceptions are the <code>tm_wday</code> and
+<code>tm_yday</code> elements, which are recomputed if any of the year, month,
+or date elements changed.  This has two implications:
+</para>
+<ul>
+<li> Before calling the <code>strptime</code> function for a new input string, you
+should prepare the <var>tm</var> structure you pass.  Normally this will mean
+initializing all values to zero.  Alternatively, you can set all
+fields to values like <code>INT_MAX</code>, allowing you to determine which
+elements were set by the function call.  Zero does not work here since
+it is a valid value for many of the fields.
+
+<para>Careful initialization is necessary if you want to find out whether a
+certain field in <var>tm</var> was initialized by the function call.
+</para>
+</li><li> You can construct a <code>struct tm</code> value with several consecutive
+<code>strptime</code> calls.  A useful application of this is e.g. the parsing
+of two separate strings, one containing date information and the other
+time information.  By parsing one after the other without clearing the
+structure in-between, you can construct a complete broken-down time.
+</li></ul>
+
+<para>The following example shows a function which parses a string which
+contains the date information in either US style or ISO&nbsp;8601 form:
+</para>
+<div class="example">
+<pre class="example">const char *
+parse_date (const char *input, struct tm *tm)
+{
+  const char *cp;
+
+  /* <span class="roman">First clear the result structure.</span>  */
+  memset (tm, '\0', sizeof (*tm));
+
+  /* <span class="roman">Try the ISO format first.</span>  */
+  cp = strptime (input, "%F", tm);
+  if (cp == NULL)
+    {
+      /* <span class="roman">Does not match.  Try the US form.</span>  */
+      cp = strptime (input, "%D", tm);
+    }
+
+  return cp;
+}
+</pre></div>
+
+<hr>
+</div>
+<div class="subsubsection" xml:id="glibc-General-Time-String-Parsing">
+<div class="header">
+<para>
+Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Low_002dLevel-Time-String-Parsing" accesskey="p" rel="prev">Interpret string according to given format</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Parsing-Date-and-Time" accesskey="u" rel="up">Convert textual time and date information back</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-A-More-User_002dfriendly-Way-to-Parse-Times-and-Dates"></span><h4 class="subsubsection">21.5.5.2 A More User-friendly Way to Parse Times and Dates</title>
+
+<para>The Unix standard defines another function for parsing date strings.
+The interface is weird, but if the function happens to suit your
+application it is just fine.  It is problematic to use this function
+in multi-threaded programs or libraries, since it returns a pointer to
+a static variable, and uses a global variable and global state (an
+environment variable).
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-getdate_005ferr"><span class="category">Variable: </span><span><strong>getdate_err</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-getdate_005ferr" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>This variable of type <code>int</code> contains the error code of the last
+unsuccessful call to <code>getdate</code>.  Defined values are:
+</para>
+<dl compact="compact">
+<dt><span><em class="math">1</emphasis></span></dt>
+<dd><para>The environment variable <code>DATEMSK</code> is not defined or null.
+</para></dd>
+<dt><span><em class="math">2</emphasis></span></dt>
+<dd><para>The template file denoted by the <code>DATEMSK</code> environment variable
+cannot be opened.
+</para></dd>
+<dt><span><em class="math">3</emphasis></span></dt>
+<dd><para>Information about the template file cannot retrieved.
+</para></dd>
+<dt><span><em class="math">4</emphasis></span></dt>
+<dd><para>The template file is not a regular file.
+</para></dd>
+<dt><span><em class="math">5</emphasis></span></dt>
+<dd><para>An I/O error occurred while reading the template file.
+</para></dd>
+<dt><span><em class="math">6</emphasis></span></dt>
+<dd><para>Not enough memory available to execute the function.
+</para></dd>
+<dt><span><em class="math">7</emphasis></span></dt>
+<dd><para>The template file contains no matching template.
+</para></dd>
+<dt><span><em class="math">8</emphasis></span></dt>
+<dd><para>The input date is invalid, but would match a template otherwise.  This
+includes dates like February 31st, and dates which cannot be represented
+in a <code>time_t</code> variable.
+</para></dd>
+</dl>
+</dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-getdate"><span class="category">Function: </span><span><emphasis>struct tm *</emphasis> <strong>getdate</strong> <emphasis>(const char *<var>string</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-getdate" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Unsafe race:getdate env locale
+| AS-Unsafe heap lock
+| AC-Unsafe lock mem fd
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The interface to <code>getdate</code> is the simplest possible for a function
+to parse a string and return the value.  <var>string</var> is the input
+string and the result is returned in a statically-allocated variable.
+</para>
+<para>The details about how the string is processed are hidden from the user.
+In fact, they can be outside the control of the program.  Which formats
+are recognized is controlled by the file named by the environment
+variable <code>DATEMSK</code>.  This file should contain
+lines of valid format strings which could be passed to <code>strptime</code>.
+</para>
+<para>The <code>getdate</code> function reads these format strings one after the
+other and tries to match the input string.  The first line which
+completely matches the input string is used.
+</para>
+<para>Elements not initialized through the format string retain the values
+present at the time of the <code>getdate</code> function call.
+</para>
+<para>The formats recognized by <code>getdate</code> are the same as for
+<code>strptime</code>.  See above for an explanation.  There are only a few
+extensions to the <code>strptime</code> behavior:
+</para>
+<ul>
+<li> If the <code>%Z</code> format is given the broken-down time is based on the
+current time of the timezone matched, not of the current timezone of the
+runtime environment.
+
+<para><emphasis>Note</emphasis>: This is not implemented (currently).  The problem is that
+timezone names are not unique.  If a fixed timezone is assumed for a
+given string (say <code>EST</code> meaning US East Coast time), then uses for
+countries other than the USA will fail.  So far we have found no good
+solution to this.
+</para>
+</li><li> If only the weekday is specified the selected day depends on the current
+date.  If the current weekday is greater than or equal to the <code>tm_wday</code>
+value the current week’s day is chosen, otherwise the day next week is chosen.
+
+</li><li> A similar heuristic is used when only the month is given and not the
+year.  If the month is greater than or equal to the current month, then
+the current year is used.  Otherwise it wraps to next year.  The first
+day of the month is assumed if one is not explicitly specified.
+
+</li><li> The current hour, minute, and second are used if the appropriate value is
+not set through the format.
+
+</li><li> If no date is given tomorrow’s date is used if the time is
+smaller than the current time.  Otherwise today’s date is taken.
+</li></ul>
+
+<para>It should be noted that the format in the template file need not only
+contain format elements.  The following is a list of possible format
+strings (taken from the Unix standard):
+</para>
+<div class="example">
+<pre class="example">%m
+%A %B %d, %Y %H:%M:%S
+%A
+%B
+%m/%d/%y %I %p
+%d,%m,%Y %H:%M
+at %A the %dst of %B in %Y
+run job at %I %p,%B %dnd
+%A den %d. %B %Y %H.%M Uhr
+</pre></div>
+
+<para>As you can see, the template list can contain very specific strings like
+<code>run job at %I %p,%B %dnd</code>.  Using the above list of templates and
+assuming the current time is Mon Sep 22 12:19:47 EDT 1986, we can obtain the
+following results for the given input.
+</para>
+<table>
+<tbody><tr><td>Input</td><td>Match</td><td>Result</td></tr>
+<tr><td>Mon</td><td>%a</td><td>Mon Sep 22 12:19:47 EDT 1986</td></tr>
+<tr><td>Sun</td><td>%a</td><td>Sun Sep 28 12:19:47 EDT 1986</td></tr>
+<tr><td>Fri</td><td>%a</td><td>Fri Sep 26 12:19:47 EDT 1986</td></tr>
+<tr><td>September</td><td>%B</td><td>Mon Sep 1 12:19:47 EDT 1986</td></tr>
+<tr><td>January</td><td>%B</td><td>Thu Jan 1 12:19:47 EST 1987</td></tr>
+<tr><td>December</td><td>%B</td><td>Mon Dec 1 12:19:47 EST 1986</td></tr>
+<tr><td>Sep Mon</td><td>%b %a</td><td>Mon Sep 1 12:19:47 EDT 1986</td></tr>
+<tr><td>Jan Fri</td><td>%b %a</td><td>Fri Jan 2 12:19:47 EST 1987</td></tr>
+<tr><td>Dec Mon</td><td>%b %a</td><td>Mon Dec 1 12:19:47 EST 1986</td></tr>
+<tr><td>Jan Wed 1989</td><td>%b %a %Y</td><td>Wed Jan 4 12:19:47 EST 1989</td></tr>
+<tr><td>Fri 9</td><td>%a %H</td><td>Fri Sep 26 09:00:00 EDT 1986</td></tr>
+<tr><td>Feb 10:30</td><td>%b %H:%S</td><td>Sun Feb 1 10:00:30 EST 1987</td></tr>
+<tr><td>10:30</td><td>%H:%M</td><td>Tue Sep 23 10:30:00 EDT 1986</td></tr>
+<tr><td>13:30</td><td>%H:%M</td><td>Mon Sep 22 13:30:00 EDT 1986</td></tr>
+</tbody></table>
+
+<para>The return value of the function is a pointer to a static variable of
+type <code>struct&nbsp;tm</code>, or a null pointer if an error occurred.  The
+result is only valid until the next <code>getdate</code> call, making this
+function unusable in multi-threaded applications.
+</para>
+<para>The <code>errno</code> variable is <emphasis>not</emphasis> changed.  Error conditions are
+stored in the global variable <code>getdate_err</code>.  See the
+description above for a list of the possible error values.
+</para>
+<para><emphasis>Warning:</emphasis> The <code>getdate</code> function should <emphasis>never</emphasis> be
+used in SUID-programs.  The reason is obvious: using the
+<code>DATEMSK</code> environment variable you can get the function to open
+any arbitrary file and chances are high that with some bogus input
+(such as a binary file) the program will crash.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-getdate_005fr"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>getdate_r</strong> <emphasis>(const char *<var>string</var>, struct tm *<var>tp</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-getdate_005fr" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe env locale
+| AS-Unsafe heap lock
+| AC-Unsafe lock mem fd
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>getdate_r</code> function is the reentrant counterpart of
+<code>getdate</code>.  It does not use the global variable <code>getdate_err</code>
+to signal an error, but instead returns an error code.  The same error
+codes as described in the <code>getdate_err</code> documentation above are
+used, with 0 meaning success.
+</para>
+<para>Moreover, <code>getdate_r</code> stores the broken-down time in the variable
+of type <code>struct tm</code> pointed to by the second argument, rather than
+in a static variable.
+</para>
+<para>This function is not defined in the Unix standard.  Nevertheless it is
+available on some other Unix systems as well.
+</para>
+<para>The warning against using <code>getdate</code> in SUID-programs applies to
+<code>getdate_r</code> as well.
+</para></dd></dl>
+
+<hr>
+</div>
+</div>
+<div class="subsection" xml:id="glibc-TZ-Variable">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Time-Zone-Functions" accesskey="n" rel="next">Functions and Variables for Time Zones</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Parsing-Date-and-Time" accesskey="p" rel="prev">Convert textual time and date information back</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Calendar-Time" accesskey="u" rel="up">Calendar Time</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Specifying-the-Time-Zone-with-TZ"></span><h4 class="subsection">21.5.6 Specifying the Time Zone with <code>TZ</code></title>
+
+<para>In POSIX systems, a user can specify the time zone by means of the
+<code>TZ</code> environment variable.  For information about how to set
+environment variables, see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Environment-Variables">Environment Variables</a>.  The functions
+for accessing the time zone are declared in <filename>time.h</filename>.
+<span xml:id="glibc-index-time_002eh-3"></span>
+<span xml:id="glibc-index-time-zone"></span>
+</para>
+<para>You should not normally need to set <code>TZ</code>.  If the system is
+configured properly, the default time zone will be correct.  You might
+set <code>TZ</code> if you are using a computer over a network from a
+different time zone, and would like times reported to you in the time
+zone local to you, rather than what is local to the computer.
+</para>
+<para>In POSIX.1 systems the value of the <code>TZ</code> variable can be in one of
+three formats.  With the GNU C Library, the most common format is the
+last one, which can specify a selection from a large database of time
+zone information for many regions of the world.  The first two formats
+are used to describe the time zone information directly, which is both
+more cumbersome and less precise.  But the POSIX.1 standard only
+specifies the details of the first two formats, so it is good to be
+familiar with them in case you come across a POSIX.1 system that doesn’t
+support a time zone information database.
+</para>
+<para>The first format is used when there is no Daylight Saving Time (or
+summer time) in the local time zone:
+</para>
+<div class="example">
+<pre class="example"><span class="roman"><var>std</var> <var>offset</var></span>
+</pre></div>
+
+<para>The <var>std</var> string specifies the name of the time zone.  It must be
+three or more characters long and must not contain a leading colon,
+embedded digits, commas, nor plus and minus signs.  There is no space
+character separating the time zone name from the <var>offset</var>, so these
+restrictions are necessary to parse the specification correctly.
+</para>
+<para>The <var>offset</var> specifies the time value you must add to the local time
+to get a Coordinated Universal Time value.  It has syntax like
+[<code>+</code>|<code>-</code>]<var>hh</var>[<code>:</code><var>mm</var>[<code>:</code><var>ss</var>]].  This
+is positive if the local time zone is west of the Prime Meridian and
+negative if it is east.  The hour must be between <code>0</code> and
+<code>24</code>, and the minute and seconds between <code>0</code> and <code>59</code>.
+</para>
+<para>For example, here is how we would specify Eastern Standard Time, but
+without any Daylight Saving Time alternative:
+</para>
+<div class="example">
+<pre class="example">EST+5
+</pre></div>
+
+<para>The second format is used when there is Daylight Saving Time:
+</para>
+<div class="example">
+<pre class="example"><span class="roman"><var>std</var> <var>offset</var> <var>dst</var> [<var>offset</var>]<code>,</code><var>start</var>[<code>/</code><var>time</var>]<code>,</code><var>end</var>[<code>/</code><var>time</var>]</span>
+</pre></div>
+
+<para>The initial <var>std</var> and <var>offset</var> specify the standard time zone, as
+described above.  The <var>dst</var> string and <var>offset</var> specify the name
+and offset for the corresponding Daylight Saving Time zone; if the
+<var>offset</var> is omitted, it defaults to one hour ahead of standard time.
+</para>
+<para>The remainder of the specification describes when Daylight Saving Time is
+in effect.  The <var>start</var> field is when Daylight Saving Time goes into
+effect and the <var>end</var> field is when the change is made back to standard
+time.  The following formats are recognized for these fields:
+</para>
+<dl compact="compact">
+<dt><span><code>J<var>n</var></code></span></dt>
+<dd><para>This specifies the Julian day, with <var>n</var> between <code>1</code> and <code>365</code>.
+February 29 is never counted, even in leap years.
+</para>
+</dd>
+<dt><span><code><var>n</var></code></span></dt>
+<dd><para>This specifies the Julian day, with <var>n</var> between <code>0</code> and <code>365</code>.
+February 29 is counted in leap years.
+</para>
+</dd>
+<dt><span><code>M<var>m</var>.<var>w</var>.<var>d</var></code></span></dt>
+<dd><para>This specifies day <var>d</var> of week <var>w</var> of month <var>m</var>.  The day
+<var>d</var> must be between <code>0</code> (Sunday) and <code>6</code>.  The week
+<var>w</var> must be between <code>1</code> and <code>5</code>; week <code>1</code> is the
+first week in which day <var>d</var> occurs, and week <code>5</code> specifies the
+<emphasis>last</emphasis> <var>d</var> day in the month.  The month <var>m</var> should be
+between <code>1</code> and <code>12</code>.
+</para></dd>
+</dl>
+
+<para>The <var>time</var> fields specify when, in the local time currently in
+effect, the change to the other time occurs.  If omitted, the default is
+<code>02:00:00</code>.  The hours part of the time fields can range from
+-167 through 167; this is an extension to POSIX.1, which allows
+only the range 0 through 24.
+</para>
+<para>Here are some example <code>TZ</code> values, including the appropriate
+Daylight Saving Time and its dates of applicability.  In North
+American Eastern Standard Time (EST) and Eastern Daylight Time (EDT),
+the normal offset from UTC is 5 hours; since this is
+west of the prime meridian, the sign is positive.  Summer time begins on
+March’s second Sunday at 2:00am, and ends on November’s first Sunday
+at 2:00am.
+</para>
+<div class="example">
+<pre class="example">EST+5EDT,M3.2.0/2,M11.1.0/2
+</pre></div>
+
+<para>Israel Standard Time (IST) and Israel Daylight Time (IDT) are 2 hours
+ahead of the prime meridian in winter, springing forward an hour on
+March’s fourth Thursday at 26:00 (i.e., 02:00 on the first Friday on or
+after March 23), and falling back on October’s last Sunday at 02:00.
+</para>
+<div class="example">
+<pre class="example">IST-2IDT,M3.4.4/26,M10.5.0
+</pre></div>
+
+<para>Western Argentina Summer Time (WARST) is 3 hours behind the prime
+meridian all year.  There is a dummy fall-back transition on December
+31 at 25:00 daylight saving time (i.e., 24:00 standard time,
+equivalent to January 1 at 00:00 standard time), and a simultaneous
+spring-forward transition on January 1 at 00:00 standard time, so
+daylight saving time is in effect all year and the initial <code>WART</code>
+is a placeholder.
+</para>
+<div class="example">
+<pre class="example">WART4WARST,J1/0,J365/25
+</pre></div>
+
+<para>Western Greenland Time (WGT) and Western Greenland Summer Time (WGST)
+are 3 hours behind UTC in the winter.  Its clocks follow the European
+Union rules of springing forward by one hour on March’s last Sunday at
+01:00 UTC (-02:00 local time) and falling back on October’s
+last Sunday at 01:00 UTC (-01:00 local time).
+</para>
+<div class="example">
+<pre class="example">WGT3WGST,M3.5.0/-2,M10.5.0/-1
+</pre></div>
+
+<para>The schedule of Daylight Saving Time in any particular jurisdiction has
+changed over the years.  To be strictly correct, the conversion of dates
+and times in the past should be based on the schedule that was in effect
+then.  However, this format has no facilities to let you specify how the
+schedule has changed from year to year.  The most you can do is specify
+one particular schedule—usually the present day schedule—and this is
+used to convert any date, no matter when.  For precise time zone
+specifications, it is best to use the time zone information database
+(see below).
+</para>
+<para>The third format looks like this:
+</para>
+<div class="example">
+<pre class="example">:<var>characters</var>
+</pre></div>
+
+<para>Each operating system interprets this format differently; in
+the GNU C Library, <var>characters</var> is the name of a file which describes the time
+zone.
+</para>
+<span xml:id="glibc-index-_002fetc_002flocaltime"></span>
+<span xml:id="glibc-index-localtime-1"></span>
+<para>If the <code>TZ</code> environment variable does not have a value, the
+operation chooses a time zone by default.  In the GNU C Library, the
+default time zone is like the specification ‘<filename>TZ=:/etc/localtime</filename>’
+(or ‘<filename>TZ=:/usr/local/etc/localtime</filename>’, depending on how the GNU C Library
+was configured; see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Installation">Installing the GNU C Library</a>).  Other C libraries use their own
+rule for choosing the default time zone, so there is little we can say
+about them.
+</para>
+<span xml:id="glibc-index-time-zone-database"></span>
+<span xml:id="glibc-index-_002fusr_002fshare_002fzoneinfo"></span>
+<span xml:id="glibc-index-zoneinfo"></span>
+<para>If <var>characters</var> begins with a slash, it is an absolute file name;
+otherwise the library looks for the file
+<filename>/usr/share/zoneinfo/<var>characters</var></filename>.  The <filename>zoneinfo</filename>
+directory contains data files describing local time zones in many
+different parts of the world.  The names represent major cities, with
+subdirectories for geographical areas; for example,
+<filename>America/New_York</filename>, <filename>Europe/London</filename>, <filename>Asia/Hong_Kong</filename>.
+These data files are installed by the system administrator, who also
+sets <filename>/etc/localtime</filename> to point to the data file for the local time
+zone.  The files typically come from the <a href="http://www.iana.org/time-zones">Time Zone Database</a> of time zone and daylight saving time
+information for most regions of the world, which is maintained by a
+community of volunteers and put in the public domain.
+</para>
+<hr>
+</div>
+<div class="subsection" xml:id="glibc-Time-Zone-Functions">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Time-Functions-Example" accesskey="n" rel="next">Time Functions Example</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#TZ-Variable" accesskey="p" rel="prev">Specifying the Time Zone with <code>TZ</code></a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Calendar-Time" accesskey="u" rel="up">Calendar Time</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Functions-and-Variables-for-Time-Zones"></span><h4 class="subsection">21.5.7 Functions and Variables for Time Zones</title>
+
+<dl class="def">
+<dt xml:id="glibc-index-tzname"><span class="category">Variable: </span><span><emphasis>char *</emphasis> <strong>tzname</strong> <emphasis>[2]</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-tzname" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>The array <code>tzname</code> contains two strings, which are the standard
+names of the pair of time zones (standard and Daylight
+Saving) that the user has selected.  <code>tzname[0]</code> is the name of
+the standard time zone (for example, <code>"EST"</code>), and <code>tzname[1]</code>
+is the name for the time zone when Daylight Saving Time is in use (for
+example, <code>"EDT"</code>).  These correspond to the <var>std</var> and <var>dst</var>
+strings (respectively) from the <code>TZ</code> environment variable.  If
+Daylight Saving Time is never used, <code>tzname[1]</code> is the empty string.
+</para>
+<para>The <code>tzname</code> array is initialized from the <code>TZ</code> environment
+variable whenever <code>tzset</code>, <code>ctime</code>, <code>strftime</code>,
+<code>mktime</code>, or <code>localtime</code> is called.  If multiple abbreviations
+have been used (e.g. <code>"EWT"</code> and <code>"EDT"</code> for U.S. Eastern War
+Time and Eastern Daylight Time), the array contains the most recent
+abbreviation.
+</para>
+<para>The <code>tzname</code> array is required for POSIX.1 compatibility, but in
+GNU programs it is better to use the <code>tm_zone</code> member of the
+broken-down time structure, since <code>tm_zone</code> reports the correct
+abbreviation even when it is not the latest one.
+</para>
+<para>Though the strings are declared as <code>char *</code> the user must refrain
+from modifying these strings.  Modifying the strings will almost certainly
+lead to trouble.
+</para>
+</dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-tzset"><span class="category">Function: </span><span><emphasis>void</emphasis> <strong>tzset</strong> <emphasis>(void)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-tzset" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe env locale
+| AS-Unsafe heap lock
+| AC-Unsafe lock mem fd
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>tzset</code> function initializes the <code>tzname</code> variable from
+the value of the <code>TZ</code> environment variable.  It is not usually
+necessary for your program to call this function, because it is called
+automatically when you use the other time conversion functions that
+depend on the time zone.
+</para></dd></dl>
+
+<para>The following variables are defined for compatibility with System V
+Unix.  Like <code>tzname</code>, these variables are set by calling
+<code>tzset</code> or the other time conversion functions.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-timezone"><span class="category">Variable: </span><span><emphasis>long int</emphasis> <strong>timezone</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-timezone" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>This contains the difference between UTC and the latest local standard
+time, in seconds west of UTC.  For example, in the U.S. Eastern time
+zone, the value is <code>5*60*60</code>.  Unlike the <code>tm_gmtoff</code> member
+of the broken-down time structure, this value is not adjusted for
+daylight saving, and its sign is reversed.  In GNU programs it is better
+to use <code>tm_gmtoff</code>, since it contains the correct offset even when
+it is not the latest one.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-daylight"><span class="category">Variable: </span><span><emphasis>int</emphasis> <strong>daylight</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-daylight" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>This variable has a nonzero value if Daylight Saving Time rules apply.
+A nonzero value does not necessarily mean that Daylight Saving Time is
+now in effect; it means only that Daylight Saving Time is sometimes in
+effect.
+</para></dd></dl>
+
+<hr>
+</div>
+<div class="subsection" xml:id="glibc-Time-Functions-Example">
+<div class="header">
+<para>
+Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Time-Zone-Functions" accesskey="p" rel="prev">Functions and Variables for Time Zones</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Calendar-Time" accesskey="u" rel="up">Calendar Time</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Time-Functions-Example-1"></span><h4 class="subsection">21.5.8 Time Functions Example</title>
+
+<para>Here is an example program showing the use of some of the calendar time
+functions.
+</para>
+<div class="example">
+<pre class="example">
+#include &lt;time.h&gt;
+#include &lt;stdio.h&gt;
+
+#define SIZE 256
+
+int
+main (void)
+{
+  char buffer[SIZE];
+  time_t curtime;
+  struct tm *loctime;
+
+  /* <span class="roman">Get the current time.</span> */
+  curtime = time (NULL);
+
+  /* <span class="roman">Convert it to local time representation.</span> */
+  loctime = localtime (&amp;curtime);
+
+  /* <span class="roman">Print out the date and time in the standard format.</span> */
+  fputs (asctime (loctime), stdout);
+
+</pre><pre class="example">  /* <span class="roman">Print it out in a nice format.</span> */
+  strftime (buffer, SIZE, "Today is %A, %B %d.\n", loctime);
+  fputs (buffer, stdout);
+  strftime (buffer, SIZE, "The time is %I:%M %p.\n", loctime);
+  fputs (buffer, stdout);
+
+  return 0;
+}
+</pre></div>
+
+<para>It produces output like this:
+</para>
+<div class="example">
+<pre class="example">Wed Jul 31 13:02:36 1991
+Today is Wednesday, July 31.
+The time is 01:02 PM.
+</pre></div>
+
+
+<hr>
+</div>
+</div>
+<sect xml:id="glibc-Setting-an-Alarm">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Sleeping" accesskey="n" rel="next">Sleeping</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Calendar-Time" accesskey="p" rel="prev">Calendar Time</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Date-and-Time" accesskey="u" rel="up">Date and Time</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Setting-an-Alarm-1"></span><h3 class="section">21.6 Setting an Alarm</title>
+
+<para>The <code>alarm</code> and <code>setitimer</code> functions provide a mechanism for a
+process to interrupt itself in the future.  They do this by setting a
+timer; when the timer expires, the process receives a signal.
+</para>
+<span xml:id="glibc-index-setting-an-alarm"></span>
+<span xml:id="glibc-index-interval-timer_002c-setting"></span>
+<span xml:id="glibc-index-alarms_002c-setting"></span>
+<span xml:id="glibc-index-timers_002c-setting"></span>
+<para>Each process has three independent interval timers available:
+</para>
+<ul>
+<li> A real-time timer that counts elapsed time.  This timer sends a
+<code>SIGALRM</code> signal to the process when it expires.
+<span xml:id="glibc-index-real_002dtime-timer"></span>
+<span xml:id="glibc-index-timer_002c-real_002dtime"></span>
+
+</li><li> A virtual timer that counts processor time used by the process.  This timer
+sends a <code>SIGVTALRM</code> signal to the process when it expires.
+<span xml:id="glibc-index-virtual-timer"></span>
+<span xml:id="glibc-index-timer_002c-virtual"></span>
+
+</li><li> A profiling timer that counts both processor time used by the process,
+and processor time spent in system calls on behalf of the process.  This
+timer sends a <code>SIGPROF</code> signal to the process when it expires.
+<span xml:id="glibc-index-profiling-timer"></span>
+<span xml:id="glibc-index-timer_002c-profiling"></span>
+
+<para>This timer is useful for profiling in interpreters.  The interval timer
+mechanism does not have the fine granularity necessary for profiling
+native code.
+</para></li></ul>
+
+<para>You can only have one timer of each kind set at any given time.  If you
+set a timer that has not yet expired, that timer is simply reset to the
+new value.
+</para>
+<para>You should establish a handler for the appropriate alarm signal using
+<code>signal</code> or <code>sigaction</code> before issuing a call to
+<code>setitimer</code> or <code>alarm</code>.  Otherwise, an unusual chain of events
+could cause the timer to expire before your program establishes the
+handler.  In this case it would be terminated, since termination is the
+default action for the alarm signals.  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Signal-Handling">Signal Handling</a>.
+</para>
+<para>To be able to use the alarm function to interrupt a system call which
+might block otherwise indefinitely it is important to <emphasis>not</emphasis> set the
+<code>SA_RESTART</code> flag when registering the signal handler using
+<code>sigaction</code>.  When not using <code>sigaction</code> things get even
+uglier: the <code>signal</code> function has fixed semantics with respect
+to restarts.  The BSD semantics for this function is to set the flag.
+Therefore, if <code>sigaction</code> for whatever reason cannot be used, it is
+necessary to use <code>sysv_signal</code> and not <code>signal</code>.
+</para>
+<para>The <code>setitimer</code> function is the primary means for setting an alarm.
+This facility is declared in the header file <filename>sys/time.h</filename>.  The
+<code>alarm</code> function, declared in <filename>unistd.h</filename>, provides a somewhat
+simpler interface for setting the real-time timer.
+<span xml:id="glibc-index-unistd_002eh-14"></span>
+<span xml:id="glibc-index-sys_002ftime_002eh-1"></span>
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-struct-itimerval"><span class="category">Data Type: </span><span><strong>struct itimerval</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-struct-itimerval" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>This structure is used to specify when a timer should expire.  It contains
+the following members:
+</para><dl compact="compact">
+<dt><span><code>struct timeval it_interval</code></span></dt>
+<dd><para>This is the period between successive timer interrupts.  If zero, the
+alarm will only be sent once.
+</para>
+</dd>
+<dt><span><code>struct timeval it_value</code></span></dt>
+<dd><para>This is the period between now and the first timer interrupt.  If zero,
+the alarm is disabled.
+</para></dd>
+</dl>
+
+<para>The <code>struct timeval</code> data type is described in <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Time-Types">Time Types</a>.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-setitimer"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>setitimer</strong> <emphasis>(int <var>which</var>, const struct itimerval *<var>new</var>, struct itimerval *<var>old</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-setitimer" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe timer
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>setitimer</code> function sets the timer specified by <var>which</var>
+according to <var>new</var>.  The <var>which</var> argument can have a value of
+<code>ITIMER_REAL</code>, <code>ITIMER_VIRTUAL</code>, or <code>ITIMER_PROF</code>.
+</para>
+<para>If <var>old</var> is not a null pointer, <code>setitimer</code> returns information
+about any previous unexpired timer of the same kind in the structure it
+points to.
+</para>
+<para>The return value is <code>0</code> on success and <code>-1</code> on failure.  The
+following <code>errno</code> error conditions are defined for this function:
+</para>
+<dl compact="compact">
+<dt><span><code>EINVAL</code></span></dt>
+<dd><para>The timer period is too large.
+</para></dd>
+</dl>
+</dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-getitimer"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>getitimer</strong> <emphasis>(int <var>which</var>, struct itimerval *<var>old</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-getitimer" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>getitimer</code> function stores information about the timer specified
+by <var>which</var> in the structure pointed at by <var>old</var>.
+</para>
+<para>The return value and error conditions are the same as for <code>setitimer</code>.
+</para></dd></dl>
+
+<dl compact="compact">
+<dt xml:id="glibc-index-ITIMER_005fREAL"><span><code>ITIMER_REAL</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-ITIMER_005fREAL" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>This constant can be used as the <var>which</var> argument to the
+<code>setitimer</code> and <code>getitimer</code> functions to specify the real-time
+timer.
+</para>
+</dd>
+<dt xml:id="glibc-index-ITIMER_005fVIRTUAL"><span><code>ITIMER_VIRTUAL</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-ITIMER_005fVIRTUAL" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>This constant can be used as the <var>which</var> argument to the
+<code>setitimer</code> and <code>getitimer</code> functions to specify the virtual
+timer.
+</para>
+</dd>
+<dt xml:id="glibc-index-ITIMER_005fPROF"><span><code>ITIMER_PROF</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-ITIMER_005fPROF" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>This constant can be used as the <var>which</var> argument to the
+<code>setitimer</code> and <code>getitimer</code> functions to specify the profiling
+timer.
+</para></dd>
+</dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-alarm"><span class="category">Function: </span><span><emphasis>unsigned int</emphasis> <strong>alarm</strong> <emphasis>(unsigned int <var>seconds</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-alarm" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe timer
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>alarm</code> function sets the real-time timer to expire in
+<var>seconds</var> seconds.  If you want to cancel any existing alarm, you
+can do this by calling <code>alarm</code> with a <var>seconds</var> argument of
+zero.
+</para>
+<para>The return value indicates how many seconds remain before the previous
+alarm would have been sent.  If there was no previous alarm, <code>alarm</code>
+returns zero.
+</para></dd></dl>
+
+<para>The <code>alarm</code> function could be defined in terms of <code>setitimer</code>
+like this:
+</para>
+<div class="example">
+<pre class="example">unsigned int
+alarm (unsigned int seconds)
+{
+  struct itimerval old, new;
+  new.it_interval.tv_usec = 0;
+  new.it_interval.tv_sec = 0;
+  new.it_value.tv_usec = 0;
+  new.it_value.tv_sec = (long int) seconds;
+  if (setitimer (ITIMER_REAL, &amp;new, &amp;old) &lt; 0)
+    return 0;
+  else
+    return old.it_value.tv_sec;
+}
+</pre></div>
+
+<para>There is an example showing the use of the <code>alarm</code> function in
+<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Handler-Returns">Signal Handlers that Return</a>.
+</para>
+<para>If you simply want your process to wait for a given number of seconds,
+you should use the <code>sleep</code> function.  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Sleeping">Sleeping</a>.
+</para>
+<para>You shouldn’t count on the signal arriving precisely when the timer
+expires.  In a multiprocessing environment there is typically some
+amount of delay involved.
+</para>
+<para><strong>Portability Note:</strong> The <code>setitimer</code> and <code>getitimer</code>
+functions are derived from BSD Unix, while the <code>alarm</code> function is
+specified by the POSIX.1 standard.  <code>setitimer</code> is more powerful than
+<code>alarm</code>, but <code>alarm</code> is more widely used.
+</para>
+<hr>
+</div>
+<sect xml:id="glibc-Sleeping">
+<div class="header">
+<para>
+Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Setting-an-Alarm" accesskey="p" rel="prev">Setting an Alarm</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Date-and-Time" accesskey="u" rel="up">Date and Time</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Sleeping-1"></span><h3 class="section">21.7 Sleeping</title>
+
+<para>The function <code>sleep</code> gives a simple way to make the program wait
+for a short interval.  If your program doesn’t use signals (except to
+terminate), then you can expect <code>sleep</code> to wait reliably throughout
+the specified interval.  Otherwise, <code>sleep</code> can return sooner if a
+signal arrives; if you want to wait for a given interval regardless of
+signals, use <code>select</code> (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Waiting-for-I_002fO">Waiting for Input or Output</a>) and don’t specify
+any descriptors to wait for.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-sleep"><span class="category">Function: </span><span><emphasis>unsigned int</emphasis> <strong>sleep</strong> <emphasis>(unsigned int <var>seconds</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-sleep" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Unsafe sig:SIGCHLD/linux
+| AS-Unsafe
+| AC-Unsafe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>sleep</code> function waits for <var>seconds</var> seconds or until a signal
+is delivered, whichever happens first.
+</para>
+<para>If <code>sleep</code> returns because the requested interval is over,
+it returns a value of zero.  If it returns because of delivery of a
+signal, its return value is the remaining time in the sleep interval.
+</para>
+<para>The <code>sleep</code> function is declared in <filename>unistd.h</filename>.
+</para></dd></dl>
+
+<para>Resist the temptation to implement a sleep for a fixed amount of time by
+using the return value of <code>sleep</code>, when nonzero, to call
+<code>sleep</code> again.  This will work with a certain amount of accuracy as
+long as signals arrive infrequently.  But each signal can cause the
+eventual wakeup time to be off by an additional second or so.  Suppose a
+few signals happen to arrive in rapid succession by bad luck—there is
+no limit on how much this could shorten or lengthen the wait.
+</para>
+<para>Instead, compute the calendar time at which the program should stop
+waiting, and keep trying to wait until that calendar time.  This won’t
+be off by more than a second.  With just a little more work, you can use
+<code>select</code> and make the waiting period quite accurate.  (Of course,
+heavy system load can cause additional unavoidable delays—unless the
+machine is dedicated to one application, there is no way you can avoid
+this.)
+</para>
+<para>On some systems, <code>sleep</code> can do strange things if your program uses
+<code>SIGALRM</code> explicitly.  Even if <code>SIGALRM</code> signals are being
+ignored or blocked when <code>sleep</code> is called, <code>sleep</code> might
+return prematurely on delivery of a <code>SIGALRM</code> signal.  If you have
+established a handler for <code>SIGALRM</code> signals and a <code>SIGALRM</code>
+signal is delivered while the process is sleeping, the action taken
+might be just to cause <code>sleep</code> to return instead of invoking your
+handler.  And, if <code>sleep</code> is interrupted by delivery of a signal
+whose handler requests an alarm or alters the handling of <code>SIGALRM</code>,
+this handler and <code>sleep</code> will interfere.
+</para>
+<para>On GNU systems, it is safe to use <code>sleep</code> and <code>SIGALRM</code> in
+the same program, because <code>sleep</code> does not work by means of
+<code>SIGALRM</code>.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-nanosleep"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>nanosleep</strong> <emphasis>(const struct timespec *<var>requested_time</var>, struct timespec *<var>remaining</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-nanosleep" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>If resolution to seconds is not enough the <code>nanosleep</code> function can
+be used.  As the name suggests the sleep interval can be specified in
+nanoseconds.  The actual elapsed time of the sleep interval might be
+longer since the system rounds the elapsed time you request up to the
+next integer multiple of the actual resolution the system can deliver.
+</para>
+<para><code>*<var>requested_time</var></code> is the elapsed time of the interval you
+want to sleep.
+</para>
+<para>The function returns as <code>*<var>remaining</var></code> the elapsed time left
+in the interval for which you requested to sleep.  If the interval
+completed without getting interrupted by a signal, this is zero.
+</para>
+<para><code>struct timespec</code> is described in <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Time-Types">Time Types</a>.
+</para>
+<para>If the function returns because the interval is over the return value is
+zero.  If the function returns <em class="math">-1</emphasis> the global variable <code>errno</code>
+is set to the following values:
+</para>
+<dl compact="compact">
+<dt><span><code>EINTR</code></span></dt>
+<dd><para>The call was interrupted because a signal was delivered to the thread.
+If the <var>remaining</var> parameter is not the null pointer the structure
+pointed to by <var>remaining</var> is updated to contain the remaining
+elapsed time.
+</para>
+</dd>
+<dt><span><code>EINVAL</code></span></dt>
+<dd><para>The nanosecond value in the <var>requested_time</var> parameter contains an
+illegal value.  Either the value is negative or greater than or equal to
+1000 million.
+</para></dd>
+</dl>
+
+<para>This function is a cancellation point in multi-threaded programs.  This
+is a problem if the thread allocates some resources (like memory, file
+descriptors, semaphores or whatever) at the time <code>nanosleep</code> is
+called.  If the thread gets canceled these resources stay allocated
+until the program ends.  To avoid this calls to <code>nanosleep</code> should
+be protected using cancellation handlers.
+</para>
+<para>The <code>nanosleep</code> function is declared in <filename>time.h</filename>.
+</para></dd></dl>
+<hr>
+</div>
+</div-->
 </part>

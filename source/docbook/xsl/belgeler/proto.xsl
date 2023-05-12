@@ -29,7 +29,7 @@
          use="d:primary"/>
 
 <!-- İç bağlantılar şimdilik yalnızca glibc içeriğini gösteriyor. -->
-<xsl:template match="d:function|d:varname">
+<xsl:template match="d:constant|d:function|d:operator|d:statement|d:type|d:varname">
  <xsl:variable name="target" select="key('primary', .)"/>
 
  <xsl:choose>
@@ -45,7 +45,14 @@
     </a>
   </xsl:when>
   <xsl:otherwise>
-   <xsl:call-template name="inline.boldmonoseq"/>
+   <xsl:choose>
+    <xsl:when test="name(.) = 'type' or name(.) = 'varname'">
+     <xsl:call-template name="inline.monoseq"/>
+    </xsl:when>
+    <xsl:otherwise>
+     <xsl:call-template name="inline.boldmonoseq"/>
+    </xsl:otherwise>
+   </xsl:choose>
   </xsl:otherwise>
  </xsl:choose>
 </xsl:template>
@@ -58,6 +65,12 @@
    </xsl:when>
    <xsl:when test="d:csproto/@type='makro'">
     <xsl:text>&#160;&#160;&#160;&#160;&#160;&#160;makro</xsl:text>
+   </xsl:when>
+   <xsl:when test="d:csproto/@type='sonda'">
+    <xsl:text>&#160;&#160;&#160;&#160;&#160;&#160;sonda</xsl:text>
+   </xsl:when>
+   <xsl:when test="d:csproto/@type='ayar'">
+    <xsl:text>&#160;&#160;&#160;&#160;&#160;&#160;ayar&#160;</xsl:text>
    </xsl:when>
    <xsl:when test="d:csproto/@type='ortam'">
     <xsl:text>&#160;&#160;ortam&#160;değ</xsl:text>
@@ -84,10 +97,39 @@
   </div>
 </xsl:template>
 
-<xsl:template match="d:csproto">
+<xsl:template match="d:csproto[1]">
   <div class="csproto">
    <table border="0" class="csprototab" style="cellspacing: 0; cellpadding: 0;">
    <xsl:if test="../d:header">
+    <xsl:for-each select="(../d:header)">
+     <tr>
+      <td colspan="2">
+       <code>#include &lt;</code>
+        <xsl:apply-templates select="." mode="ansi-tabular"/>
+       <code>&gt;</code>
+      </td>
+     </tr>
+    </xsl:for-each>
+   </xsl:if>
+   <tr>
+     <td style="vertical-align: text-top;">
+       <xsl:apply-templates select="d:csname" mode="ansi-tabular"/>
+     </td>
+     <td style="vertical-align: text-top;">
+      <xsl:for-each select="(d:void|d:varargs|d:csparam|d:synopsis)">
+       <xsl:apply-templates select="." mode="ansi-tabular"/>
+      </xsl:for-each>
+     </td>
+    </tr>
+   </table>
+  </div>
+</xsl:template>
+
+
+<xsl:template match="d:csproto">
+  <div class="csproto-other">
+   <table border="0" class="csprototab" style="cellspacing: 0; cellpadding: 0;">
+   <xsl:if test="../d:header and not (preceding-sibling::d:csproto)">
     <tr>
      <td colspan="2">
       <code>#include &lt;</code>
@@ -108,6 +150,10 @@
     </tr>
    </table>
   </div>
+</xsl:template>
+
+<xsl:template match="d:void" mode="ansi-tabular">
+  <code>void</code>
 </xsl:template>
 
 <xsl:template match="d:csparam" mode="ansi-tabular">
@@ -163,7 +209,11 @@
 <xsl:template match="d:type|d:ptr|d:pptr" mode="ansi-tabular">
   <code class="type">
     <xsl:apply-templates/>
-    <xsl:text>&#160;</xsl:text>
+    <xsl:if test="following-sibling::d:function
+                 |following-sibling::d:parameter
+                 |following-sibling::d:varname">
+     <xsl:text>&#160;</xsl:text>
+    </xsl:if>
   </code>
 </xsl:template>
 

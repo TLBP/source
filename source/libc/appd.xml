@@ -5,6 +5,686 @@
 <appendix xml:id="glibc-Maintenance">
  <title>Kütüphanenin Sürdürülmesi</title>
  <titleabbrev>GNU C kütüphanesi nasıl genişletilir ve nasıl uyarlanır?</titleabbrev>
- <para/>
+ <para/><!--
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Platform" accesskey="n" rel="next">Platform-specific facilities</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Installation" accesskey="p" rel="prev">Installing the GNU C Library</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Top" accesskey="u" rel="up">Main Menu</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Library-Maintenance"></span><h2 class="appendix">Appendix D Library Maintenance</title>
+
+
+<ul class="section-toc">
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Source-Layout" accesskey="1">Adding New Functions</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Symbol-handling" accesskey="2">Symbol handling in the GNU C Library</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Porting" accesskey="3">Porting the GNU C Library</a></li>
+</ul>
+<hr>
+<div class="appendixsec" xml:id="glibc-Source-Layout">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Symbol-handling" accesskey="n" rel="next">Symbol handling in the GNU C Library</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Maintenance" accesskey="u" rel="up">Library Maintenance</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Adding-New-Functions"></span><h3 class="appendixsec">D.1 Adding New Functions</title>
+
+<para>The process of building the library is driven by the makefiles, which
+make heavy use of special features of GNU <code>make</code>.  The makefiles
+are very complex, and you probably don’t want to try to understand them.
+But what they do is fairly straightforward, and only requires that you
+define a few variables in the right places.
+</para>
+<para>The library sources are divided into subdirectories, grouped by topic.
+</para>
+<para>The <filename>string</filename> subdirectory has all the string-manipulation
+functions, <filename>math</filename> has all the mathematical functions, etc.
+</para>
+<para>Each subdirectory contains a simple makefile, called <filename>Makefile</filename>,
+which defines a few <code>make</code> variables and then includes the global
+makefile <filename>Rules</filename> with a line like:
+</para>
+<div class="example">
+<pre class="example">include ../Rules
+</pre></div>
+
+<para>The basic variables that a subdirectory makefile defines are:
+</para>
+<dl compact="compact">
+<dt><span><code>subdir</code></span></dt>
+<dd><para>The name of the subdirectory, for example <filename>stdio</filename>.
+This variable <strong>must</strong> be defined.
+</para>
+</dd>
+<dt><span><code>headers</code></span></dt>
+<dd><para>The names of the header files in this section of the library,
+such as <filename>stdio.h</filename>.
+</para>
+</dd>
+<dt><span><code>routines</code></span></dt>
+<dt><span><code>aux</code></span></dt>
+<dd><para>The names of the modules (source files) in this section of the library.
+These should be simple names, such as ‘<filename>strlen</filename>’ (rather than
+complete file names, such as <filename>strlen.c</filename>).  Use <code>routines</code> for
+modules that define functions in the library, and <code>aux</code> for
+auxiliary modules containing things like data definitions.  But the
+values of <code>routines</code> and <code>aux</code> are just concatenated, so there
+really is no practical difference.
+</para>
+</dd>
+<dt><span><code>tests</code></span></dt>
+<dd><para>The names of test programs for this section of the library.  These
+should be simple names, such as ‘<filename>tester</filename>’ (rather than complete file
+names, such as <filename>tester.c</filename>).  ‘<filename>make&nbsp;tests</filename>’ will build and
+run all the test programs.  If a test program needs input, put the test
+data in a file called <filename><var>test-program</var>.input</filename>; it will be given to
+the test program on its standard input.  If a test program wants to be
+run with arguments, put the arguments (all on a single line) in a file
+called <filename><var>test-program</var>.args</filename>.  Test programs should exit with
+zero status when the test passes, and nonzero status when the test
+indicates a bug in the library or error in building.
+</para>
+</dd>
+<dt><span><code>others</code></span></dt>
+<dd><para>The names of “other” programs associated with this section of the
+library.  These are programs which are not tests per se, but are other
+small programs included with the library.  They are built by
+‘<filename>make&nbsp;others</filename>’.
+</para>
+</dd>
+<dt><span><code>install-lib</code></span></dt>
+<dt><span><code>install-data</code></span></dt>
+<dt><span><code>install</code></span></dt>
+<dd><para>Files to be installed by ‘<filename>make&nbsp;install</filename>’.  Files listed in
+‘<filename>install-lib</filename>’ are installed in the directory specified by
+‘<filename>libdir</filename>’ in <filename>configparms</filename> or <filename>Makeconfig</filename>
+(see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Installation">Installing the GNU C Library</a>).  Files listed in <code>install-data</code> are
+installed in the directory specified by ‘<filename>datadir</filename>’ in
+<filename>configparms</filename> or <filename>Makeconfig</filename>.  Files listed in <code>install</code>
+are installed in the directory specified by ‘<filename>bindir</filename>’ in
+<filename>configparms</filename> or <filename>Makeconfig</filename>.
+</para>
+</dd>
+<dt><span><code>distribute</code></span></dt>
+<dd><para>Other files from this subdirectory which should be put into a
+distribution tar file.  You need not list here the makefile itself or
+the source and header files listed in the other standard variables.
+Only define <code>distribute</code> if there are files used in an unusual way
+that should go into the distribution.
+</para>
+</dd>
+<dt><span><code>generated</code></span></dt>
+<dd><para>Files which are generated by <filename>Makefile</filename> in this subdirectory.
+These files will be removed by ‘<filename>make&nbsp;clean</filename>’, and they will
+never go into a distribution.
+</para>
+</dd>
+<dt><span><code>extra-objs</code></span></dt>
+<dd><para>Extra object files which are built by <filename>Makefile</filename> in this
+subdirectory.  This should be a list of file names like <filename>foo.o</filename>;
+the files will actually be found in whatever directory object files are
+being built in.  These files will be removed by ‘<filename>make&nbsp;clean</filename>’.
+This variable is used for secondary object files needed to build
+<code>others</code> or <code>tests</code>.
+</para></dd>
+</dl>
+
+
+<ul class="section-toc">
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Adding-Platform_002dspecific" accesskey="1">Platform-specific types, macros and functions</a></li>
+</ul>
+<hr>
+<div class="appendixsubsec" xml:id="glibc-Adding-Platform_002dspecific">
+<div class="header">
+<para>
+Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Source-Layout" accesskey="u" rel="up">Adding New Functions</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Platform_002dspecific-types_002c-macros-and-functions"></span><h4 class="appendixsubsec">D.1.1 Platform-specific types, macros and functions</title>
+
+<para>It’s sometimes necessary to provide nonstandard, platform-specific
+features to developers.  The C library is traditionally the
+lowest library layer, so it makes sense for it to provide these
+low-level features.  However, including these features in the C
+library may be a disadvantage if another package provides them
+as well as there will be two conflicting versions of them.  Also,
+the features won’t be available to projects that do not use
+the GNU C Library but use other GNU tools, like GCC.
+</para>
+<para>The current guidelines are:
+</para><ul>
+<li> If the header file provides features that only make sense on a particular
+machine architecture and have nothing to do with an operating system, then
+the features should ultimately be provided as GCC built-in functions.  Until
+then, the GNU C Library may provide them in the header file.  When the GCC built-in
+functions become available, those provided in the header file should be made
+conditionally available prior to the GCC version in which the built-in
+function was made available.
+
+</li><li> If the header file provides features that are specific to an operating system,
+both GCC and the GNU C Library could provide it, but the GNU C Library is preferred
+as it already has a lot of information about the operating system.
+
+</li><li> If the header file provides features that are specific to an operating system
+but used by the GNU C Library, then the GNU C Library should provide them.
+</li></ul>
+
+<para>The general solution for providing low-level features is to export them as
+follows:
+</para>
+<ul>
+<li> A nonstandard, low-level header file that defines macros and inline
+functions should be called <filename>sys/platform/<var>name</var>.h</filename>.
+
+</li><li> Each header file’s name should include the platform name, to avoid
+users thinking there is anything in common between the different
+header files for different platforms.  For example, a
+<filename>sys/platform/<var>arch</var>.h</filename> name such as
+<filename>sys/platform/ppc.h</filename> is better than <filename>sys/platform.h</filename>.
+
+</li><li> A platform-specific header file provided by the GNU C Library should coordinate
+with GCC such that compiler built-in versions of the functions and macros are
+preferred if available.  This means that user programs will only ever need to
+include <filename>sys/platform/<var>arch</var>.h</filename>, keeping the same names of types,
+macros, and functions for convenience and portability.
+
+</li><li> Each included symbol must have the prefix <code>__<var>arch</var>_</code>, such as
+<code>__ppc_get_timebase</code>.
+</li></ul>
+
+
+<para>The easiest way to provide a header file is to add it to the
+<code>sysdep_headers</code> variable.  For example, the combination of
+Linux-specific header files on PowerPC could be provided like this:
+</para>
+<div class="example">
+<pre class="example">sysdep_headers += sys/platform/ppc.h
+</pre></div>
+
+<para>Then ensure that you have added a <filename>sys/platform/ppc.h</filename>
+header file in the machine-specific directory, e.g.,
+<filename>sysdeps/powerpc/sys/platform/ppc.h</filename>.
+</para>
+
+<hr>
+</div>
+</div>
+<div class="appendixsec" xml:id="glibc-Symbol-handling">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Porting" accesskey="n" rel="next">Porting the GNU C Library</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Source-Layout" accesskey="p" rel="prev">Adding New Functions</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Maintenance" accesskey="u" rel="up">Library Maintenance</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Symbol-handling-in-the-GNU-C-Library"></span><h3 class="appendixsec">D.2 Symbol handling in the GNU C Library</title>
+
+
+<ul class="section-toc">
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#g_t64_002dbit-time-symbol-handling" accesskey="1">64-bit time symbol handling in the GNU C Library</a></li>
+</ul>
+<hr>
+<div class="appendixsubsec" xml:id="glibc-g_t64_002dbit-time-symbol-handling">
+<div class="header">
+<para>
+Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Symbol-handling" accesskey="u" rel="up">Symbol handling in the GNU C Library</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-g_t64_002dbit-time-symbol-handling-in-the-GNU-C-Library"></span><h4 class="appendixsubsec">D.2.1 64-bit time symbol handling in the GNU C Library</title>
+
+<para>With respect to time handling, GNU C Library configurations fall in two
+classes depending on the value of <code>__TIMESIZE</code>:
+</para>
+<dl compact="compact">
+<dt><span><code><code>__TIMESIZE == 32</code></code></span></dt>
+<dd>
+<para>These <emphasis>dual-time</emphasis> configurations have both 32-bit and 64-bit time
+support.  32-bit time support provides type <code>time_t</code> and cannot
+handle dates beyond <emphasis>Y2038</emphasis>.  64-bit time support provides type
+<code>__time64_t</code> and can handle dates beyond <emphasis>Y2038</emphasis>.
+</para>
+<para>In these configurations, time-related types have two declarations,
+a 64-bit one, and a 32-bit one; and time-related functions generally
+have two definitions: a 64-bit one, and a 32-bit one which is a wrapper
+around the former.  Therefore, for every <code>time_t</code>-related symbol,
+there is a corresponding <code>__time64_t</code>-related symbol, the name of
+which is usually the 32-bit symbol’s name with <code>__</code> (a double
+underscore) prepended and <code>64</code> appended.  For instance, the
+64-bit-time counterpart of <code>clock_gettime</code> is
+<code>__clock_gettime64</code>.
+</para>
+</dd>
+<dt><span><code><code>__TIMESIZE == 64</code></code></span></dt>
+<dd>
+<para>These <emphasis>single-time</emphasis> configurations only have a 64-bit <code>time_t</code>
+and related functions, which can handle dates beyond 2038-01-19
+03:14:07 (aka <emphasis>Y2038</emphasis>).
+</para>
+<para>In these configurations, time-related types only have a 64-bit
+declaration; and time-related functions only have one 64-bit definition.
+However, for every <code>time_t</code>-related symbol, there is a
+corresponding <code>__time64_t</code>-related macro, the name of which is
+derived as in the dual-time configuration case, and which expands to
+the symbol’s name.  For instance, the macro <code>__clock_gettime64</code>
+expands to <code>clock_gettime</code>.
+</para>
+<para>These macros are purely internal to the GNU C Library and exist only so that
+a single definition of the 64-bit time functions can be used on both
+single-time and dual-time configurations, and so that glibc code can
+freely call the 64-bit functions internally in all configurations.
+</para>
+</dd>
+</dl>
+
+
+<para>Note: at this point, 64-bit time support in dual-time configurations is
+work-in-progress, so for these configurations, the public API only makes
+the 32-bit time support available.  In a later change, the public API
+will allow user code to choose the time size for a given compilation
+unit.
+</para>
+<para>64-bit variants of time-related types or functions are defined for all
+configurations and use 64-bit-time symbol names (for dual-time
+configurations) or macros (for single-time configurations).
+</para>
+<para>32-bit variants of time-related types or functions are defined only for
+dual-time configurations.
+</para>
+<para>Here is an example with <code>localtime</code>:
+</para>
+<para>Function <code>localtime</code> is declared in <filename>time/time.h</filename> as
+</para><div class="example">
+<pre class="example">extern struct tm *localtime (const time_t *__timer) __THROW;
+libc_hidden_proto (localtime)
+</pre></div>
+
+<para>For single-time configurations, <code>__localtime64</code> is a macro which
+evaluates to <code>localtime</code>; for dual-time configurations,
+<code>__localtime64</code> is a function similar to <code>localtime</code> except
+it uses Y2038-proof types:
+</para><div class="example">
+<pre class="example">#if __TIMESIZE == 64
+# define __localtime64 localtime
+#else
+extern struct tm *__localtime64 (const __time64_t *__timer) __THROW;
+libc_hidden_proto (__localtime64)
+#endif
+</pre></div>
+
+<para>(note: type <code>time_t</code> is replaced with <code>__time64_t</code> because
+<code>time_t</code> is not Y2038-proof, but <code>struct tm</code> is not
+replaced because it is already Y2038-proof.)
+</para>
+<para>The 64-bit-time implementation of <code>localtime</code> is written as follows
+and is compiled for both dual-time and single-time configuration classes.
+</para>
+<div class="example">
+<pre class="example">struct tm *
+__localtime64 (const __time64_t *t)
+{
+  return __tz_convert (*t, 1, &amp;_tmbuf);
+}
+libc_hidden_def (__localtime64)
+</pre></div>
+
+<para>The 32-bit-time implementation is a wrapper and is only compiled for
+dual-time configurations:
+</para>
+<div class="example">
+<pre class="example">#if __TIMESIZE != 64
+
+struct tm *
+localtime (const time_t *t)
+{
+  __time64_t t64 = *t;
+  return __localtime64 (&amp;t64);
+}
+libc_hidden_def (localtime)
+
+#endif
+</pre></div>
+
+<hr>
+</div>
+</div>
+<div class="appendixsec" xml:id="glibc-Porting">
+<div class="header">
+<para>
+Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Symbol-handling" accesskey="p" rel="prev">Symbol handling in the GNU C Library</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Maintenance" accesskey="u" rel="up">Library Maintenance</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Porting-the-GNU-C-Library"></span><h3 class="appendixsec">D.3 Porting the GNU C Library</title>
+
+<para>The GNU C Library is written to be easily portable to a variety of
+machines and operating systems.  Machine- and operating system-dependent
+functions are well separated to make it easy to add implementations for
+new machines or operating systems.  This section describes the layout of
+the library source tree and explains the mechanisms used to select
+machine-dependent code to use.
+</para>
+<para>All the machine-dependent and operating system-dependent files in the
+library are in the subdirectory <filename>sysdeps</filename> under the top-level
+library source directory.  This directory contains a hierarchy of
+subdirectories (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Hierarchy-Conventions">Layout of the <filename>sysdeps</filename> Directory Hierarchy</a>).
+</para>
+<para>Each subdirectory of <filename>sysdeps</filename> contains source files for a
+particular machine or operating system, or for a class of machine or
+operating system (for example, systems by a particular vendor, or all
+machines that use IEEE 754 floating-point format).  A configuration
+specifies an ordered list of these subdirectories.  Each subdirectory
+implicitly appends its parent directory to the list.  For example,
+specifying the list <filename>unix/bsd/vax</filename> is equivalent to specifying the
+list <filename>unix/bsd/vax unix/bsd unix</filename>.  A subdirectory can also specify
+that it implies other subdirectories which are not directly above it in
+the directory hierarchy.  If the file <filename>Implies</filename> exists in a
+subdirectory, it lists other subdirectories of <filename>sysdeps</filename> which are
+appended to the list, appearing after the subdirectory containing the
+<filename>Implies</filename> file.  Lines in an <filename>Implies</filename> file that begin with a
+‘<filename>#</filename>’ character are ignored as comments.  For example,
+<filename>unix/bsd/Implies</filename> contains:
+</para><div class="example">
+<pre class="example"># BSD has Internet-related things.
+unix/inet
+</pre></div>
+<para>and <filename>unix/Implies</filename> contains:
+</para><div class="example">
+<pre class="example">posix
+</pre></div>
+
+<para>So the final list is <filename>unix/bsd/vax unix/bsd unix/inet unix posix</filename>.
+</para>
+<para><filename>sysdeps</filename> has a “special” subdirectory called <filename>generic</filename>.  It
+is always implicitly appended to the list of subdirectories, so you
+needn’t put it in an <filename>Implies</filename> file, and you should not create any
+subdirectories under it intended to be new specific categories.
+<filename>generic</filename> serves two purposes.  First, the makefiles do not bother
+to look for a system-dependent version of a file that’s not in
+<filename>generic</filename>.  This means that any system-dependent source file must
+have an analogue in <filename>generic</filename>, even if the routines defined by that
+file are not implemented on other platforms.  Second, the <filename>generic</filename>
+version of a system-dependent file is used if the makefiles do not find
+a version specific to the system you’re compiling for.
+</para>
+<para>If it is possible to implement the routines in a <filename>generic</filename> file in
+machine-independent C, using only other machine-independent functions in
+the C library, then you should do so.  Otherwise, make them stubs.  A
+<emphasis>stub</emphasis> function is a function which cannot be implemented on a
+particular machine or operating system.  Stub functions always return an
+error, and set <code>errno</code> to <code>ENOSYS</code> (Function not implemented).
+See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Error-Reporting">Error Reporting</a>.  If you define a stub function, you must place
+the statement <code>stub_warning(<var>function</var>)</code>, where <var>function</var>
+is the name of your function, after its definition.  This causes the
+function to be listed in the installed <code>&lt;gnu/stubs.h&gt;</code>, and
+makes GNU ld warn when the function is used.
+</para>
+<para>Some rare functions are only useful on specific systems and aren’t
+defined at all on others; these do not appear anywhere in the
+system-independent source code or makefiles (including the
+<filename>generic</filename> directory), only in the system-dependent <filename>Makefile</filename>
+in the specific system’s subdirectory.
+</para>
+<para>If you come across a file that is in one of the main source directories
+(<filename>string</filename>, <filename>stdio</filename>, etc.), and you want to write a machine- or
+operating system-dependent version of it, move the file into
+<filename>sysdeps/generic</filename> and write your new implementation in the
+appropriate system-specific subdirectory.  Note that if a file is to be
+system-dependent, it <strong>must not</strong> appear in one of the main source
+directories.
+</para>
+<para>There are a few special files that may exist in each subdirectory of
+<filename>sysdeps</filename>:
+</para>
+<dl compact="compact">
+<dt><span><filename>Makefile</filename></span></dt>
+<dd>
+<para>A makefile for this machine or operating system, or class of machine or
+operating system.  This file is included by the library makefile
+<filename>Makerules</filename>, which is used by the top-level makefile and the
+subdirectory makefiles.  It can change the variables set in the
+including makefile or add new rules.  It can use GNU <code>make</code>
+conditional directives based on the variable ‘<filename>subdir</filename>’ (see above) to
+select different sets of variables and rules for different sections of
+the library.  It can also set the <code>make</code> variable
+‘<filename>sysdep-routines</filename>’, to specify extra modules to be included in the
+library.  You should use ‘<filename>sysdep-routines</filename>’ rather than adding
+modules to ‘<filename>routines</filename>’ because the latter is used in determining
+what to distribute for each subdirectory of the main source tree.
+</para>
+<para>Each makefile in a subdirectory in the ordered list of subdirectories to
+be searched is included in order.  Since several system-dependent
+makefiles may be included, each should append to ‘<filename>sysdep-routines</filename>’
+rather than simply setting it:
+</para>
+<div class="example">
+<pre class="example">sysdep-routines := $(sysdep-routines) foo bar
+</pre></div>
+
+</dd>
+<dt><span><filename>Subdirs</filename></span></dt>
+<dd>
+<para>This file contains the names of new whole subdirectories under the
+top-level library source tree that should be included for this system.
+These subdirectories are treated just like the system-independent
+subdirectories in the library source tree, such as <filename>stdio</filename> and
+<filename>math</filename>.
+</para>
+<para>Use this when there are completely new sets of functions and header
+files that should go into the library for the system this subdirectory
+of <filename>sysdeps</filename> implements.  For example,
+<filename>sysdeps/unix/inet/Subdirs</filename> contains <filename>inet</filename>; the <filename>inet</filename>
+directory contains various network-oriented operations which only make
+sense to put in the library on systems that support the Internet.
+</para>
+</dd>
+<dt><span><filename>configure</filename></span></dt>
+<dd>
+<para>This file is a shell script fragment to be run at configuration time.
+The top-level <filename>configure</filename> script uses the shell <code>.</code> command to
+read the <filename>configure</filename> file in each system-dependent directory
+chosen, in order.  The <filename>configure</filename> files are often generated from
+<filename>configure.ac</filename> files using Autoconf.
+</para>
+<para>A system-dependent <filename>configure</filename> script will usually add things to
+the shell variables ‘<filename>DEFS</filename>’ and ‘<filename>config_vars</filename>’; see the
+top-level <filename>configure</filename> script for details.  The script can check for
+‘<filename><span class="nolinebreak">- -with-</span><var>package</var></filename>’ options that were passed to the
+top-level <filename>configure</filename>.  For an option
+‘<filename><span class="nolinebreak">- -with-</span><var>package</var>=<var>value</var></filename>’ <filename>configure</filename> sets the
+shell variable ‘<filename><span class="nolinebreak">with_</span><var>package</var></filename>’ (with any dashes in
+<var>package</var> converted to underscores) to <var>value</var>; if the option is
+just ‘<filename><span class="nolinebreak">- -with-</span><var>package</var></filename>’ (no argument), then it sets
+‘<filename><span class="nolinebreak">with_</span><var>package</var></filename>’ to ‘<filename>yes</filename>’.
+</para>
+</dd>
+<dt><span><filename>configure.ac</filename></span></dt>
+<dd>
+<para>This file is an Autoconf input fragment to be processed into the file
+<filename>configure</filename> in this subdirectory.  See <a data-manual="autoconf.info" href="https://www.gnu.org/software/autoconf/manual/autoconf.html#Introduction">Introduction</a> in <cite>Autoconf: Generating Automatic Configuration Scripts</cite>,
+for a description of Autoconf.  You should write either <filename>configure</filename>
+or <filename>configure.ac</filename>, but not both.  The first line of
+<filename>configure.ac</filename> should invoke the <code>m4</code> macro
+‘<filename>GLIBC_PROVIDES</filename>’.  This macro does several <code>AC_PROVIDE</code> calls
+for Autoconf macros which are used by the top-level <filename>configure</filename>
+script; without this, those macros might be invoked again unnecessarily
+by Autoconf.
+</para></dd>
+</dl>
+
+<para>That is the general system for how system-dependencies are isolated.
+</para>
+
+<ul class="section-toc">
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Hierarchy-Conventions" accesskey="1">Layout of the <filename>sysdeps</filename> Directory Hierarchy</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Porting-to-Unix" accesskey="2">Porting the GNU C Library to Unix Systems</a></li>
+</ul>
+<hr>
+<div class="appendixsubsec" xml:id="glibc-Hierarchy-Conventions">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Porting-to-Unix" accesskey="n" rel="next">Porting the GNU C Library to Unix Systems</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Porting" accesskey="u" rel="up">Porting the GNU C Library</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Layout-of-the-sysdeps-Directory-Hierarchy"></span><h4 class="appendixsubsec">D.3.1 Layout of the <filename>sysdeps</filename> Directory Hierarchy</title>
+
+<para>A GNU configuration name has three parts: the CPU type, the
+manufacturer’s name, and the operating system.  <filename>configure</filename> uses
+these to pick the list of system-dependent directories to look for.  If
+the ‘<filename>- -nfp</filename>’ option is <emphasis>not</emphasis> passed to <filename>configure</filename>, the
+directory <filename><var>machine</var>/fpu</filename> is also used.  The operating system
+often has a <emphasis>base operating system</emphasis>; for example, if the operating
+system is ‘<filename>Linux</filename>’, the base operating system is ‘<filename>unix/sysv</filename>’.
+The algorithm used to pick the list of directories is simple:
+<filename>configure</filename> makes a list of the base operating system,
+manufacturer, CPU type, and operating system, in that order.  It then
+concatenates all these together with slashes in between, to produce a
+directory name; for example, the configuration ‘<filename><span class="nolinebreak">i686-linux-gnu</span></filename>’
+results in <filename>unix/sysv/linux/i386/i686</filename>.  <filename>configure</filename> then
+tries removing each element of the list in turn, so
+<filename>unix/sysv/linux</filename> and <filename>unix/sysv</filename> are also tried, among others.
+Since the precise version number of the operating system is often not
+important, and it would be very inconvenient, for example, to have
+identical <filename>irix6.2</filename> and <filename>irix6.3</filename> directories,
+<filename>configure</filename> tries successively less specific operating system names
+by removing trailing suffixes starting with a period.
+</para>
+<para>As an example, here is the complete list of directories that would be
+tried for the configuration ‘<filename><span class="nolinebreak">i686-linux-gnu</span></filename>’:
+</para>
+<div class="example">
+<pre class="example">sysdeps/i386/elf
+sysdeps/unix/sysv/linux/i386
+sysdeps/unix/sysv/linux
+sysdeps/gnu
+sysdeps/unix/common
+sysdeps/unix/mman
+sysdeps/unix/inet
+sysdeps/unix/sysv/i386/i686
+sysdeps/unix/sysv/i386
+sysdeps/unix/sysv
+sysdeps/unix/i386
+sysdeps/unix
+sysdeps/posix
+sysdeps/i386/i686
+sysdeps/i386/i486
+sysdeps/libm-i387/i686
+sysdeps/i386/fpu
+sysdeps/libm-i387
+sysdeps/i386
+sysdeps/wordsize-32
+sysdeps/ieee754
+sysdeps/libm-ieee754
+sysdeps/generic
+</pre></div>
+
+<para>Different machine architectures are conventionally subdirectories at the
+top level of the <filename>sysdeps</filename> directory tree.  For example,
+<filename>sysdeps/sparc</filename> and <filename>sysdeps/m68k</filename>.  These contain
+files specific to those machine architectures, but not specific to any
+particular operating system.  There might be subdirectories for
+specializations of those architectures, such as
+<filename>sysdeps/m68k/68020</filename>.  Code which is specific to the
+floating-point coprocessor used with a particular machine should go in
+<filename>sysdeps/<var>machine</var>/fpu</filename>.
+</para>
+<para>There are a few directories at the top level of the <filename>sysdeps</filename>
+hierarchy that are not for particular machine architectures.
+</para>
+<dl compact="compact">
+<dt><span><filename>generic</filename></span></dt>
+<dd><para>As described above (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Porting">Porting the GNU C Library</a>), this is the subdirectory
+that every configuration implicitly uses after all others.
+</para>
+</dd>
+<dt><span><filename>ieee754</filename></span></dt>
+<dd><para>This directory is for code using the IEEE 754 floating-point format,
+where the C type <code>float</code> is IEEE 754 single-precision format, and
+<code>double</code> is IEEE 754 double-precision format.  Usually this
+directory is referred to in the <filename>Implies</filename> file in a machine
+architecture-specific directory, such as <filename>m68k/Implies</filename>.
+</para>
+</dd>
+<dt><span><filename>libm-ieee754</filename></span></dt>
+<dd><para>This directory contains an implementation of a mathematical library
+usable on platforms which use IEEE&nbsp;754 conformant floating-point
+arithmetic.
+</para>
+</dd>
+<dt><span><filename>libm-i387</filename></span></dt>
+<dd><para>This is a special case.  Ideally the code should be in
+<filename>sysdeps/i386/fpu</filename> but for various reasons it is kept aside.
+</para>
+</dd>
+<dt><span><filename>posix</filename></span></dt>
+<dd><para>This directory contains implementations of things in the library in
+terms of <small>POSIX.1</small> functions.  This includes some of the <small>POSIX.1</small>
+functions themselves.  Of course, <small>POSIX.1</small> cannot be completely
+implemented in terms of itself, so a configuration using just
+<filename>posix</filename> cannot be complete.
+</para>
+</dd>
+<dt><span><filename>unix</filename></span></dt>
+<dd><para>This is the directory for Unix-like things.  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Porting-to-Unix">Porting the GNU C Library to Unix Systems</a>.
+<filename>unix</filename> implies <filename>posix</filename>.  There are some special-purpose
+subdirectories of <filename>unix</filename>:
+</para>
+<dl compact="compact">
+<dt><span><filename>unix/common</filename></span></dt>
+<dd><para>This directory is for things common to both BSD and System V release 4.
+Both <filename>unix/bsd</filename> and <filename>unix/sysv/sysv4</filename> imply <filename>unix/common</filename>.
+</para>
+</dd>
+<dt><span><filename>unix/inet</filename></span></dt>
+<dd><para>This directory is for <code>socket</code> and related functions on Unix systems.
+<filename>unix/inet/Subdirs</filename> enables the <filename>inet</filename> top-level subdirectory.
+<filename>unix/common</filename> implies <filename>unix/inet</filename>.
+</para></dd>
+</dl>
+
+</dd>
+<dt><span><filename>mach</filename></span></dt>
+<dd><para>This is the directory for things based on the Mach microkernel from CMU
+(including GNU/Hurd systems).  Other basic operating systems
+(VMS, for example) would have their own directories at the top level of
+the <filename>sysdeps</filename> hierarchy, parallel to <filename>unix</filename> and <filename>mach</filename>.
+</para></dd>
+</dl>
+
+<hr>
+</div>
+<div class="appendixsubsec" xml:id="glibc-Porting-to-Unix">
+<div class="header">
+<para>
+Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Hierarchy-Conventions" accesskey="p" rel="prev">Layout of the <filename>sysdeps</filename> Directory Hierarchy</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Porting" accesskey="u" rel="up">Porting the GNU C Library</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Porting-the-GNU-C-Library-to-Unix-Systems"></span><h4 class="appendixsubsec">D.3.2 Porting the GNU C Library to Unix Systems</title>
+
+<para>Most Unix systems are fundamentally very similar.  There are variations
+between different machines, and variations in what facilities are
+provided by the kernel.  But the interface to the operating system
+facilities is, for the most part, pretty uniform and simple.
+</para>
+<para>The code for Unix systems is in the directory <filename>unix</filename>, at the top
+level of the <filename>sysdeps</filename> hierarchy.  This directory contains
+subdirectories (and subdirectory trees) for various Unix variants.
+</para>
+<para>The functions which are system calls in most Unix systems are
+implemented in assembly code, which is generated automatically from
+specifications in files named <filename>syscalls.list</filename>.  There are several
+such files, one in <filename>sysdeps/unix</filename> and others in its subdirectories.
+Some special system calls are implemented in files that are named with a
+suffix of ‘<filename>.S</filename>’; for example, <filename>_exit.S</filename>.  Files ending in
+‘<filename>.S</filename>’ are run through the C preprocessor before being fed to the
+assembler.
+</para>
+<para>These files all use a set of macros that should be defined in
+<filename>sysdep.h</filename>.  The <filename>sysdep.h</filename> file in <filename>sysdeps/unix</filename>
+partially defines them; a <filename>sysdep.h</filename> file in another directory must
+finish defining them for the particular machine and operating system
+variant.  See <filename>sysdeps/unix/sysdep.h</filename> and the machine-specific
+<filename>sysdep.h</filename> implementations to see what these macros are and what
+they should do.
+</para>
+<para>The system-specific makefile for the <filename>unix</filename> directory
+(<filename>sysdeps/unix/Makefile</filename>) gives rules to generate several files
+from the Unix system you are building the library on (which is assumed
+to be the target system you are building the library <emphasis>for</emphasis>).  All
+the generated files are put in the directory where the object files are
+kept; they should not affect the source tree itself.  The files
+generated are <filename>ioctls.h</filename>, <filename>errnos.h</filename>, <filename>sys/param.h</filename>, and
+<filename>errlist.c</filename> (for the <filename>stdio</filename> section of the library).
+</para>
+<hr>
+</div>
+</div>
+</div-->
 
 </appendix>

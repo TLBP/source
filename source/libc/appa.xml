@@ -5,5 +5,1435 @@
 <appendix xml:id="glibc-Language-Features">
  <title>Kütüphanedeki C Dili Oluşumları</title>
  <titleabbrev>Kütüphane tarafından sağlanan C dili oluşumları.</titleabbrev>
- <para/>
+ <para/><!--
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Library-Summary" accesskey="n" rel="next">Summary of Library Facilities</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Tunables" accesskey="p" rel="prev">Tunables</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Top" accesskey="u" rel="up">Main Menu</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-C-Language-Facilities-in-the-Library"></span><h2 class="appendix">Appendix A C Language Facilities in the Library</title>
+
+<para>Some of the facilities implemented by the C library really should be
+thought of as parts of the C language itself.  These facilities ought to
+be documented in the C Language Manual, not in the library manual; but
+since we don’t have the language manual yet, and documentation for these
+features has been written, we are publishing it here.
+</para>
+
+<ul class="section-toc">
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Consistency-Checking" accesskey="1">Explicitly Checking Internal Consistency</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Variadic-Functions" accesskey="2">Variadic Functions</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Null-Pointer-Constant" accesskey="3">Null Pointer Constant</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Important-Data-Types" accesskey="4">Important Data Types</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Data-Type-Measurements" accesskey="5">Data Type Measurements</a></li>
+</ul>
+<hr>
+<sect xml:id="glibc-Consistency-Checking">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Variadic-Functions" accesskey="n" rel="next">Variadic Functions</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Language-Features" accesskey="u" rel="up">C Language Facilities in the Library</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Explicitly-Checking-Internal-Consistency"></span><h3 class="section">A.1 Explicitly Checking Internal Consistency</title>
+<span xml:id="glibc-index-consistency-checking"></span>
+<span xml:id="glibc-index-impossible-events"></span>
+<span xml:id="glibc-index-assertions"></span>
+
+<para>When you’re writing a program, it’s often a good idea to put in checks
+at strategic places for “impossible” errors or violations of basic
+assumptions.  These kinds of checks are helpful in debugging problems
+with the interfaces between different parts of the program, for example.
+</para>
+<span xml:id="glibc-index-assert_002eh"></span>
+<para>The <code>assert</code> macro, defined in the header file <filename>assert.h</filename>,
+provides a convenient way to abort the program while printing a message
+about where in the program the error was detected.
+</para>
+<span xml:id="glibc-index-NDEBUG"></span>
+<para>Once you think your program is debugged, you can disable the error
+checks performed by the <code>assert</code> macro by recompiling with the
+macro <code>NDEBUG</code> defined.  This means you don’t actually have to
+change the program source code to disable these checks.
+</para>
+<para>But disabling these consistency checks is undesirable unless they make
+the program significantly slower.  All else being equal, more error
+checking is good no matter who is running the program.  A wise user
+would rather have a program crash, visibly, than have it return nonsense
+without indicating anything might be wrong.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-assert"><span class="category">Macro: </span><span><emphasis>void</emphasis> <strong>assert</strong> <emphasis>(int <var>expression</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-assert" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Unsafe heap corrupt
+| AC-Unsafe mem lock corrupt
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>Verify the programmer’s belief that <var>expression</var> is nonzero at
+this point in the program.
+</para>
+<para>If <code>NDEBUG</code> is not defined, <code>assert</code> tests the value of
+<var>expression</var>.  If it is false (zero), <code>assert</code> aborts the
+program (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Aborting-a-Program">Aborting a Program</a>) after printing a message of the
+form:
+</para>
+<div class="example">
+<pre class="example"><filename><var>file</var></filename>:<var>linenum</var>: <var>function</var>: Assertion `<var>expression</var>' failed.
+</pre></div>
+
+<para>on the standard error stream <code>stderr</code> (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Standard-Streams">Standard Streams</a>).
+The filename and line number are taken from the C preprocessor macros
+<code>__FILE__</code> and <code>__LINE__</code> and specify where the call to
+<code>assert</code> was made.  When using the GNU C compiler, the name of
+the function which calls <code>assert</code> is taken from the built-in
+variable <code>__PRETTY_FUNCTION__</code>; with older compilers, the function
+name and following colon are omitted.
+</para>
+<para>If the preprocessor macro <code>NDEBUG</code> is defined before
+<filename>assert.h</filename> is included, the <code>assert</code> macro is defined to do
+absolutely nothing.
+</para>
+<para><strong>Warning:</strong> Even the argument expression <var>expression</var> is not
+evaluated if <code>NDEBUG</code> is in effect.  So never use <code>assert</code>
+with arguments that involve side effects.  For example, <code>assert
+(++i &gt; 0);</code> is a bad idea, because <code>i</code> will not be incremented if
+<code>NDEBUG</code> is defined.
+</para></dd></dl>
+
+<para>Sometimes the “impossible” condition you want to check for is an error
+return from an operating system function.  Then it is useful to display
+not only where the program crashes, but also what error was returned.
+The <code>assert_perror</code> macro makes this easy.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-assert_005fperror"><span class="category">Macro: </span><span><emphasis>void</emphasis> <strong>assert_perror</strong> <emphasis>(int <var>errnum</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-assert_005fperror" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Unsafe heap corrupt
+| AC-Unsafe mem lock corrupt
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>Similar to <code>assert</code>, but verifies that <var>errnum</var> is zero.
+</para>
+<para>If <code>NDEBUG</code> is not defined, <code>assert_perror</code> tests the value of
+<var>errnum</var>.  If it is nonzero, <code>assert_perror</code> aborts the program
+after printing a message of the form:
+</para>
+<div class="example">
+<pre class="example"><filename><var>file</var></filename>:<var>linenum</var>: <var>function</var>: <var>error text</var>
+</pre></div>
+
+<para>on the standard error stream.  The file name, line number, and function
+name are as for <code>assert</code>.  The error text is the result of
+<code>strerror&nbsp;(<var>errnum</var>)</code>.  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Error-Messages">Error Messages</a>.
+</para>
+<para>Like <code>assert</code>, if <code>NDEBUG</code> is defined before <filename>assert.h</filename>
+is included, the <code>assert_perror</code> macro does absolutely nothing.  It
+does not evaluate the argument, so <var>errnum</var> should not have any side
+effects.  It is best for <var>errnum</var> to be just a simple variable
+reference; often it will be <code>errno</code>.
+</para>
+<para>This macro is a GNU extension.
+</para></dd></dl>
+
+<para><strong>Usage note:</strong> The <code>assert</code> facility is designed for
+detecting <emphasis>internal inconsistency</emphasis>; it is not suitable for
+reporting invalid input or improper usage by the <emphasis>user</emphasis> of the
+program.
+</para>
+<para>The information in the diagnostic messages printed by the <code>assert</code>
+and <code>assert_perror</code> macro is intended to help you, the programmer,
+track down the cause of a bug, but is not really useful for telling a user
+of your program why his or her input was invalid or why a command could not
+be carried out.  What’s more, your program should not abort when given
+invalid input, as <code>assert</code> would do—it should exit with nonzero
+status (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Exit-Status">Exit Status</a>) after printing its error messages, or perhaps
+read another command or move on to the next input file.
+</para>
+<para>See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Error-Messages">Error Messages</a>, for information on printing error messages for
+problems that <emphasis>do not</emphasis> represent bugs in the program.
+</para>
+
+<hr>
+</div>
+<sect xml:id="glibc-Variadic-Functions">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Null-Pointer-Constant" accesskey="n" rel="next">Null Pointer Constant</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Consistency-Checking" accesskey="p" rel="prev">Explicitly Checking Internal Consistency</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Language-Features" accesskey="u" rel="up">C Language Facilities in the Library</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Variadic-Functions-1"></span><h3 class="section">A.2 Variadic Functions</title>
+<span xml:id="glibc-index-variable-number-of-arguments"></span>
+<span xml:id="glibc-index-variadic-functions"></span>
+<span xml:id="glibc-index-optional-arguments"></span>
+
+<para>ISO&nbsp;C defines a syntax for declaring a function to take a variable
+number or type of arguments.  (Such functions are referred to as
+<emphasis>varargs functions</emphasis> or <emphasis>variadic functions</emphasis>.)  However, the
+language itself provides no mechanism for such functions to access their
+non-required arguments; instead, you use the variable arguments macros
+defined in <filename>stdarg.h</filename>.
+</para>
+<para>This section describes how to declare variadic functions, how to write
+them, and how to call them properly.
+</para>
+<para><strong>Compatibility Note:</strong> Many older C dialects provide a similar,
+but incompatible, mechanism for defining functions with variable numbers
+of arguments, using <filename>varargs.h</filename>.
+</para>
+
+<ul class="section-toc">
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Why-Variadic" accesskey="1">Why Variadic Functions are Used</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#How-Variadic" accesskey="2">How Variadic Functions are Defined and Used</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Variadic-Example" accesskey="3">Example of a Variadic Function</a></li>
+</ul>
+<hr>
+<div class="subsection" xml:id="glibc-Why-Variadic">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#How-Variadic" accesskey="n" rel="next">How Variadic Functions are Defined and Used</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Variadic-Functions" accesskey="u" rel="up">Variadic Functions</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Why-Variadic-Functions-are-Used"></span><h4 class="subsection">A.2.1 Why Variadic Functions are Used</title>
+
+<para>Ordinary C functions take a fixed number of arguments.  When you define
+a function, you specify the data type for each argument.  Every call to
+the function should supply the expected number of arguments, with types
+that can be converted to the specified ones.  Thus, if the function
+‘<filename>foo</filename>’ is declared with <code>int foo (int, char *);</code> then you must
+call it with two arguments, a number (any kind will do) and a string
+pointer.
+</para>
+<para>But some functions perform operations that can meaningfully accept an
+unlimited number of arguments.
+</para>
+<para>In some cases a function can handle any number of values by operating on
+all of them as a block.  For example, consider a function that allocates
+a one-dimensional array with <code>malloc</code> to hold a specified set of
+values.  This operation makes sense for any number of values, as long as
+the length of the array corresponds to that number.  Without facilities
+for variable arguments, you would have to define a separate function for
+each possible array size.
+</para>
+<para>The library function <code>printf</code> (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Formatted-Output">Formatted Output</a>) is an
+example of another class of function where variable arguments are
+useful.  This function prints its arguments (which can vary in type as
+well as number) under the control of a format template string.
+</para>
+<para>These are good reasons to define a <emphasis>variadic</emphasis> function which can
+handle as many arguments as the caller chooses to pass.
+</para>
+<para>Some functions such as <code>open</code> take a fixed set of arguments, but
+occasionally ignore the last few.  Strict adherence to ISO&nbsp;C requires
+these functions to be defined as variadic; in practice, however, the GNU
+C compiler and most other C compilers let you define such a function to
+take a fixed set of arguments—the most it can ever use—and then only
+<emphasis>declare</emphasis> the function as variadic (or not declare its arguments
+at all!).
+</para>
+<hr>
+</div>
+<div class="subsection" xml:id="glibc-How-Variadic">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Variadic-Example" accesskey="n" rel="next">Example of a Variadic Function</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Why-Variadic" accesskey="p" rel="prev">Why Variadic Functions are Used</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Variadic-Functions" accesskey="u" rel="up">Variadic Functions</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-How-Variadic-Functions-are-Defined-and-Used"></span><h4 class="subsection">A.2.2 How Variadic Functions are Defined and Used</title>
+
+<para>Defining and using a variadic function involves three steps:
+</para>
+<ul>
+<li> <emphasis>Define</emphasis> the function as variadic, using an ellipsis
+(‘<filename>…</filename>’) in the argument list, and using special macros to
+access the variable arguments.  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Receiving-Arguments">Receiving the Argument Values</a>.
+
+</li><li> <emphasis>Declare</emphasis> the function as variadic, using a prototype with an
+ellipsis (‘<filename>…</filename>’), in all the files which call it.
+See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Variadic-Prototypes">Syntax for Variable Arguments</a>.
+
+</li><li> <emphasis>Call</emphasis> the function by writing the fixed arguments followed by the
+additional variable arguments.  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Calling-Variadics">Calling Variadic Functions</a>.
+</li></ul>
+
+
+<ul class="section-toc">
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Variadic-Prototypes" accesskey="1">Syntax for Variable Arguments</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Receiving-Arguments" accesskey="2">Receiving the Argument Values</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#How-Many-Arguments" accesskey="3">How Many Arguments Were Supplied</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Calling-Variadics" accesskey="4">Calling Variadic Functions</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Argument-Macros" accesskey="5">Argument Access Macros</a></li>
+</ul>
+<hr>
+<div class="subsubsection" xml:id="glibc-Variadic-Prototypes">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Receiving-Arguments" accesskey="n" rel="next">Receiving the Argument Values</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#How-Variadic" accesskey="u" rel="up">How Variadic Functions are Defined and Used</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Syntax-for-Variable-Arguments"></span><h4 class="subsubsection">A.2.2.1 Syntax for Variable Arguments</title>
+<span xml:id="glibc-index-function-prototypes-_0028variadic_0029"></span>
+<span xml:id="glibc-index-prototypes-for-variadic-functions"></span>
+<span xml:id="glibc-index-variadic-function-prototypes"></span>
+
+<para>A function that accepts a variable number of arguments must be declared
+with a prototype that says so.   You write the fixed arguments as usual,
+and then tack on ‘<filename>…</filename>’ to indicate the possibility of
+additional arguments.  The syntax of ISO&nbsp;C requires at least one fixed
+argument before the ‘<filename>…</filename>’.  For example,
+</para>
+<div class="example">
+<pre class="example">int
+func (const char *a, int b, …)
+{
+  …
+}
+</pre></div>
+
+<para>defines a function <code>func</code> which returns an <code>int</code> and takes two
+required arguments, a <code>const char *</code> and an <code>int</code>.  These are
+followed by any number of anonymous arguments.
+</para>
+<para><strong>Portability note:</strong> For some C compilers, the last required
+argument must not be declared <code>register</code> in the function
+definition.  Furthermore, this argument’s type must be
+<emphasis>self-promoting</emphasis>: that is, the default promotions must not change
+its type.  This rules out array and function types, as well as
+<code>float</code>, <code>char</code> (whether signed or not) and <code>short&nbsp;int</code>
+(whether signed or not).  This is actually an ISO&nbsp;C requirement.
+</para>
+<hr>
+</div>
+<div class="subsubsection" xml:id="glibc-Receiving-Arguments">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#How-Many-Arguments" accesskey="n" rel="next">How Many Arguments Were Supplied</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Variadic-Prototypes" accesskey="p" rel="prev">Syntax for Variable Arguments</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#How-Variadic" accesskey="u" rel="up">How Variadic Functions are Defined and Used</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Receiving-the-Argument-Values"></span><h4 class="subsubsection">A.2.2.2 Receiving the Argument Values</title>
+<span xml:id="glibc-index-variadic-function-argument-access"></span>
+<span xml:id="glibc-index-arguments-_0028variadic-functions_0029"></span>
+
+<para>Ordinary fixed arguments have individual names, and you can use these
+names to access their values.  But optional arguments have no
+names—nothing but ‘<filename>…</filename>’.  How can you access them?
+</para>
+<span xml:id="glibc-index-stdarg_002eh"></span>
+<para>The only way to access them is sequentially, in the order they were
+written, and you must use special macros from <filename>stdarg.h</filename> in the
+following three step process:
+</para>
+<ol>
+<li> You initialize an argument pointer variable of type <code>va_list</code> using
+<code>va_start</code>.  The argument pointer when initialized points to the
+first optional argument.
+
+</li><li> You access the optional arguments by successive calls to <code>va_arg</code>.
+The first call to <code>va_arg</code> gives you the first optional argument,
+the next call gives you the second, and so on.
+
+<para>You can stop at any time if you wish to ignore any remaining optional
+arguments.  It is perfectly all right for a function to access fewer
+arguments than were supplied in the call, but you will get garbage
+values if you try to access too many arguments.
+</para>
+</li><li> You indicate that you are finished with the argument pointer variable by
+calling <code>va_end</code>.
+
+<para>(In practice, with most C compilers, calling <code>va_end</code> does nothing.
+This is always true in the GNU C compiler.  But you might as well call
+<code>va_end</code> just in case your program is someday compiled with a peculiar
+compiler.)
+</para></li></ol>
+
+<para>See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Argument-Macros">Argument Access Macros</a>, for the full definitions of <code>va_start</code>,
+<code>va_arg</code> and <code>va_end</code>.
+</para>
+<para>Steps 1 and 3 must be performed in the function that accepts the
+optional arguments.  However, you can pass the <code>va_list</code> variable
+as an argument to another function and perform all or part of step 2
+there.
+</para>
+<para>You can perform the entire sequence of three steps multiple times
+within a single function invocation.  If you want to ignore the optional
+arguments, you can do these steps zero times.
+</para>
+<para>You can have more than one argument pointer variable if you like.  You
+can initialize each variable with <code>va_start</code> when you wish, and
+then you can fetch arguments with each argument pointer as you wish.
+Each argument pointer variable will sequence through the same set of
+argument values, but at its own pace.
+</para>
+<para><strong>Portability note:</strong> With some compilers, once you pass an
+argument pointer value to a subroutine, you must not keep using the same
+argument pointer value after that subroutine returns.  For full
+portability, you should just pass it to <code>va_end</code>.  This is actually
+an ISO&nbsp;C requirement, but most ANSI C compilers work happily
+regardless.
+</para>
+<hr>
+</div>
+<div class="subsubsection" xml:id="glibc-How-Many-Arguments">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Calling-Variadics" accesskey="n" rel="next">Calling Variadic Functions</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Receiving-Arguments" accesskey="p" rel="prev">Receiving the Argument Values</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#How-Variadic" accesskey="u" rel="up">How Variadic Functions are Defined and Used</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-How-Many-Arguments-Were-Supplied"></span><h4 class="subsubsection">A.2.2.3 How Many Arguments Were Supplied</title>
+<span xml:id="glibc-index-number-of-arguments-passed"></span>
+<span xml:id="glibc-index-how-many-arguments"></span>
+<span xml:id="glibc-index-arguments_002c-how-many"></span>
+
+<para>There is no general way for a function to determine the number and type
+of the optional arguments it was called with.  So whoever designs the
+function typically designs a convention for the caller to specify the number
+and type of arguments.  It is up to you to define an appropriate calling
+convention for each variadic function, and write all calls accordingly.
+</para>
+<para>One kind of calling convention is to pass the number of optional
+arguments as one of the fixed arguments.  This convention works provided
+all of the optional arguments are of the same type.
+</para>
+<para>A similar alternative is to have one of the required arguments be a bit
+mask, with a bit for each possible purpose for which an optional
+argument might be supplied.  You would test the bits in a predefined
+sequence; if the bit is set, fetch the value of the next argument,
+otherwise use a default value.
+</para>
+<para>A required argument can be used as a pattern to specify both the number
+and types of the optional arguments.  The format string argument to
+<code>printf</code> is one example of this (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Formatted-Output-Functions">Formatted Output Functions</a>).
+</para>
+<para>Another possibility is to pass an “end marker” value as the last
+optional argument.  For example, for a function that manipulates an
+arbitrary number of pointer arguments, a null pointer might indicate the
+end of the argument list.  (This assumes that a null pointer isn’t
+otherwise meaningful to the function.)  The <code>execl</code> function works
+in just this way; see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Executing-a-File">Executing a File</a>.
+</para>
+
+<hr>
+</div>
+<div class="subsubsection" xml:id="glibc-Calling-Variadics">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Argument-Macros" accesskey="n" rel="next">Argument Access Macros</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#How-Many-Arguments" accesskey="p" rel="prev">How Many Arguments Were Supplied</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#How-Variadic" accesskey="u" rel="up">How Variadic Functions are Defined and Used</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Calling-Variadic-Functions"></span><h4 class="subsubsection">A.2.2.4 Calling Variadic Functions</title>
+<span xml:id="glibc-index-variadic-functions_002c-calling"></span>
+<span xml:id="glibc-index-calling-variadic-functions"></span>
+<span xml:id="glibc-index-declaring-variadic-functions"></span>
+
+<para>You don’t have to do anything special to call a variadic function.
+Just put the arguments (required arguments, followed by optional ones)
+inside parentheses, separated by commas, as usual.  But you must declare
+the function with a prototype and know how the argument values are converted.
+</para>
+<para>In principle, functions that are <emphasis>defined</emphasis> to be variadic must also
+be <emphasis>declared</emphasis> to be variadic using a function prototype whenever
+you call them.  (See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Variadic-Prototypes">Syntax for Variable Arguments</a>, for how.)  This is because
+some C compilers use a different calling convention to pass the same set
+of argument values to a function depending on whether that function
+takes variable arguments or fixed arguments.
+</para>
+<para>In practice, the GNU C compiler always passes a given set of argument
+types in the same way regardless of whether they are optional or
+required.  So, as long as the argument types are self-promoting, you can
+safely omit declaring them.  Usually it is a good idea to declare the
+argument types for variadic functions, and indeed for all functions.
+But there are a few functions which it is extremely convenient not to
+have to declare as variadic—for example, <code>open</code> and
+<code>printf</code>.
+</para>
+<span xml:id="glibc-index-default-argument-promotions"></span>
+<span xml:id="glibc-index-argument-promotion"></span>
+<para>Since the prototype doesn’t specify types for optional arguments, in a
+call to a variadic function the <emphasis>default argument promotions</emphasis> are
+performed on the optional argument values.  This means the objects of
+type <code>char</code> or <code>short&nbsp;int</code> (whether signed or not) are
+promoted to either <code>int</code> or <code>unsigned&nbsp;int</code>, as
+appropriate; and that objects of type <code>float</code> are promoted to type
+<code>double</code>.  So, if the caller passes a <code>char</code> as an optional
+argument, it is promoted to an <code>int</code>, and the function can access
+it with <code>va_arg (<var>ap</var>, int)</code>.
+</para>
+<para>Conversion of the required arguments is controlled by the function
+prototype in the usual way: the argument expression is converted to the
+declared argument type as if it were being assigned to a variable of
+that type.
+</para>
+<hr>
+</div>
+<div class="subsubsection" xml:id="glibc-Argument-Macros">
+<div class="header">
+<para>
+Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Calling-Variadics" accesskey="p" rel="prev">Calling Variadic Functions</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#How-Variadic" accesskey="u" rel="up">How Variadic Functions are Defined and Used</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Argument-Access-Macros"></span><h4 class="subsubsection">A.2.2.5 Argument Access Macros</title>
+
+<para>Here are descriptions of the macros used to retrieve variable arguments.
+These macros are defined in the header file <filename>stdarg.h</filename>.
+<span xml:id="glibc-index-stdarg_002eh-1"></span>
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-va_005flist"><span class="category">Data Type: </span><span><strong>va_list</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-va_005flist" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>The type <code>va_list</code> is used for argument pointer variables.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-va_005fstart"><span class="category">Macro: </span><span><emphasis>void</emphasis> <strong>va_start</strong> <emphasis>(va_list <var>ap</var>, <var>last-required</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-va_005fstart" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This macro initializes the argument pointer variable <var>ap</var> to point
+to the first of the optional arguments of the current function;
+<var>last-required</var> must be the last required argument to the function.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-va_005farg"><span class="category">Macro: </span><span><emphasis><var>type</var></emphasis> <strong>va_arg</strong> <emphasis>(va_list <var>ap</var>, <var>type</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-va_005farg" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe race:ap
+| AS-Safe
+| AC-Unsafe corrupt
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>va_arg</code> macro returns the value of the next optional argument,
+and modifies the value of <var>ap</var> to point to the subsequent argument.
+Thus, successive uses of <code>va_arg</code> return successive optional
+arguments.
+</para>
+<para>The type of the value returned by <code>va_arg</code> is <var>type</var> as
+specified in the call.  <var>type</var> must be a self-promoting type (not
+<code>char</code> or <code>short int</code> or <code>float</code>) that matches the type
+of the actual argument.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-va_005fend"><span class="category">Macro: </span><span><emphasis>void</emphasis> <strong>va_end</strong> <emphasis>(va_list <var>ap</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-va_005fend" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This ends the use of <var>ap</var>.  After a <code>va_end</code> call, further
+<code>va_arg</code> calls with the same <var>ap</var> may not work.  You should invoke
+<code>va_end</code> before returning from the function in which <code>va_start</code>
+was invoked with the same <var>ap</var> argument.
+</para>
+<para>In the GNU C Library, <code>va_end</code> does nothing, and you need not ever
+use it except for reasons of portability.
+</para>
+</dd></dl>
+
+<para>Sometimes it is necessary to parse the list of parameters more than once
+or one wants to remember a certain position in the parameter list.  To
+do this, one will have to make a copy of the current value of the
+argument.  But <code>va_list</code> is an opaque type and one cannot necessarily
+assign the value of one variable of type <code>va_list</code> to another variable
+of the same type.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-va_005fcopy-1"><span class="category">Macro: </span><span><emphasis>void</emphasis> <strong>va_copy</strong> <emphasis>(va_list <var>dest</var>, va_list <var>src</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-va_005fcopy-1" class="copiable-anchor"> ¶</a></span></dt>
+<dt xml:id="glibc-index-_005f_005fva_005fcopy"><span class="category">Macro: </span><span><emphasis>void</emphasis> <strong>__va_copy</strong> <emphasis>(va_list <var>dest</var>, va_list <var>src</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-_005f_005fva_005fcopy" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>va_copy</code> macro allows copying of objects of type
+<code>va_list</code> even if this is not an integral type.  The argument pointer
+in <var>dest</var> is initialized to point to the same argument as the
+pointer in <var>src</var>.
+</para>
+<para><code>va_copy</code> was added in &isoc;99.  When building for strict
+conformance to &isoc;90 (‘<filename>gcc -std=c90</filename>’), it is not available.
+GCC provides <code>__va_copy</code>, as an extension, in any standards mode;
+before GCC 3.0, it was the only macro for this functionality.
+</para>
+<para>These macros are no longer provided by the GNU C Library, but rather by the
+compiler.
+</para></dd></dl>
+
+<para>If you want to use <code>va_copy</code> and be portable to pre-C99 systems,
+you should always be prepared for the
+possibility that this macro will not be available.  On architectures where a
+simple assignment is invalid, hopefully <code>va_copy</code> <emphasis>will</emphasis> be available,
+so one should always write something like this if concerned about
+pre-C99 portability:
+</para>
+<div class="example">
+<pre class="example">{
+  va_list ap, save;
+  …
+#ifdef va_copy
+  va_copy (save, ap);
+#else
+  save = ap;
+#endif
+  …
+}
+</pre></div>
+
+
+<hr>
+</div>
+</div>
+<div class="subsection" xml:id="glibc-Variadic-Example">
+<div class="header">
+<para>
+Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#How-Variadic" accesskey="p" rel="prev">How Variadic Functions are Defined and Used</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Variadic-Functions" accesskey="u" rel="up">Variadic Functions</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Example-of-a-Variadic-Function"></span><h4 class="subsection">A.2.3 Example of a Variadic Function</title>
+
+<para>Here is a complete sample function that accepts a variable number of
+arguments.  The first argument to the function is the count of remaining
+arguments, which are added up and the result returned.  While trivial,
+this function is sufficient to illustrate how to use the variable
+arguments facility.
+</para>
+<div class="example">
+<pre class="example">
+#include &lt;stdarg.h&gt;
+#include &lt;stdio.h&gt;
+
+int
+add_em_up (int count,...)
+{
+  va_list ap;
+  int i, sum;
+
+  va_start (ap, count);         /* <span class="roman">Initialize the argument list.</span> */
+
+  sum = 0;
+  for (i = 0; i &lt; count; i++)
+    sum += va_arg (ap, int);    /* <span class="roman">Get the next argument value.</span> */
+
+  va_end (ap);                  /* <span class="roman">Clean up.</span> */
+  return sum;
+}
+
+int
+main (void)
+{
+  /* <span class="roman">This call prints 16.</span> */
+  printf ("%d\n", add_em_up (3, 5, 5, 6));
+
+  /* <span class="roman">This call prints 55.</span> */
+  printf ("%d\n", add_em_up (10, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10));
+
+  return 0;
+}
+</pre></div>
+
+<hr>
+</div>
+</div>
+<sect xml:id="glibc-Null-Pointer-Constant">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Important-Data-Types" accesskey="n" rel="next">Important Data Types</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Variadic-Functions" accesskey="p" rel="prev">Variadic Functions</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Language-Features" accesskey="u" rel="up">C Language Facilities in the Library</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Null-Pointer-Constant-1"></span><h3 class="section">A.3 Null Pointer Constant</title>
+<span xml:id="glibc-index-null-pointer-constant"></span>
+
+<para>The null pointer constant is guaranteed not to point to any real object.
+You can assign it to any pointer variable since it has type <code>void
+*</code>.  The preferred way to write a null pointer constant is with
+<code>NULL</code>.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-NULL"><span class="category">Macro: </span><span><emphasis>void *</emphasis> <strong>NULL</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-NULL" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>This is a null pointer constant.
+</para></dd></dl>
+
+<para>You can also use <code>0</code> or <code>(void *)0</code> as a null pointer
+constant, but using <code>NULL</code> is cleaner because it makes the purpose
+of the constant more evident.
+</para>
+<para>If you use the null pointer constant as a function argument, then for
+complete portability you should make sure that the function has a
+prototype declaration.  Otherwise, if the target machine has two
+different pointer representations, the compiler won’t know which
+representation to use for that argument.  You can avoid the problem by
+explicitly casting the constant to the proper pointer type, but we
+recommend instead adding a prototype for the function you are calling.
+</para>
+<hr>
+</div>
+<sect xml:id="glibc-Important-Data-Types">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Data-Type-Measurements" accesskey="n" rel="next">Data Type Measurements</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Null-Pointer-Constant" accesskey="p" rel="prev">Null Pointer Constant</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Language-Features" accesskey="u" rel="up">C Language Facilities in the Library</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Important-Data-Types-1"></span><h3 class="section">A.4 Important Data Types</title>
+
+<para>The result of subtracting two pointers in C is always an integer, but the
+precise data type varies from C compiler to C compiler.  Likewise, the
+data type of the result of <code>sizeof</code> also varies between compilers.
+&isoc; defines standard aliases for these two types, so you can refer to
+them in a portable fashion.  They are defined in the header file
+<filename>stddef.h</filename>.
+<span xml:id="glibc-index-stddef_002eh"></span>
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-ptrdiff_005ft"><span class="category">Data Type: </span><span><strong>ptrdiff_t</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-ptrdiff_005ft" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>This is the signed integer type of the result of subtracting two
+pointers.  For example, with the declaration <code>char *p1, *p2;</code>, the
+expression <code>p2 - p1</code> is of type <code>ptrdiff_t</code>.  This will
+probably be one of the standard signed integer types (<code>short&nbsp;int</code>, <code>int</code> or <code>long&nbsp;int</code>), but might be a nonstandard
+type that exists only for this purpose.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-size_005ft"><span class="category">Data Type: </span><span><strong>size_t</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-size_005ft" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>This is an unsigned integer type used to represent the sizes of objects.
+The result of the <code>sizeof</code> operator is of this type, and functions
+such as <code>malloc</code> (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Unconstrained-Allocation">Unconstrained Allocation</a>) and
+<code>memcpy</code> (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Copying-Strings-and-Arrays">Copying Strings and Arrays</a>) accept arguments of
+this type to specify object sizes.  On systems using the GNU C Library, this
+will be <code>unsigned&nbsp;int</code> or <code>unsigned&nbsp;long&nbsp;int</code>.
+</para>
+<para><strong>Usage Note:</strong> <code>size_t</code> is the preferred way to declare any
+arguments or variables that hold the size of an object.
+</para></dd></dl>
+
+<para><strong>Compatibility Note:</strong> Implementations of C before the advent of
+ISO&nbsp;C generally used <code>unsigned int</code> for representing object sizes
+and <code>int</code> for pointer subtraction results.  They did not
+necessarily define either <code>size_t</code> or <code>ptrdiff_t</code>.  Unix
+systems did define <code>size_t</code>, in <filename>sys/types.h</filename>, but the
+definition was usually a signed type.
+</para>
+<hr>
+</div>
+<sect xml:id="glibc-Data-Type-Measurements">
+<div class="header">
+<para>
+Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Important-Data-Types" accesskey="p" rel="prev">Important Data Types</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Language-Features" accesskey="u" rel="up">C Language Facilities in the Library</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Data-Type-Measurements-1"></span><h3 class="section">A.5 Data Type Measurements</title>
+
+<para>Most of the time, if you choose the proper C data type for each object
+in your program, you need not be concerned with just how it is
+represented or how many bits it uses.  When you do need such
+information, the C language itself does not provide a way to get it.
+The header files <filename>limits.h</filename> and <filename>float.h</filename> contain macros
+which give you this information in full detail.
+</para>
+
+<ul class="section-toc">
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Width-of-Type" accesskey="1">Width of an Integer Type</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Range-of-Type" accesskey="2">Range of an Integer Type</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Floating-Type-Macros" accesskey="3">Floating Type Macros</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Structure-Measurement" accesskey="4">Structure Field Offset Measurement</a></li>
+</ul>
+<hr>
+<div class="subsection" xml:id="glibc-Width-of-Type">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Range-of-Type" accesskey="n" rel="next">Range of an Integer Type</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Data-Type-Measurements" accesskey="u" rel="up">Data Type Measurements</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Width-of-an-Integer-Type"></span><h4 class="subsection">A.5.1 Width of an Integer Type</title>
+<span xml:id="glibc-index-integer-type-width"></span>
+<span xml:id="glibc-index-width-of-integer-type"></span>
+<span xml:id="glibc-index-type-measurements_002c-integer"></span>
+<span xml:id="glibc-index-limits_002eh-4"></span>
+
+<para>TS 18661-1:2014 defines macros for the width of integer types (the
+number of value and sign bits).  One benefit of these macros is they
+can be used in <code>#if</code> preprocessor directives, whereas
+<code>sizeof</code> cannot.  The following macros are defined in
+<filename>limits.h</filename>.
+</para>
+<dl compact="compact">
+<dt xml:id="glibc-index-CHAR_005fWIDTH"><span><code>CHAR_WIDTH</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-CHAR_005fWIDTH" class="copiable-anchor"> ¶</a></span></dt>
+<dt xml:id="glibc-index-SCHAR_005fWIDTH"><span><code>SCHAR_WIDTH</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-SCHAR_005fWIDTH" class="copiable-anchor"> ¶</a></span></dt>
+<dt xml:id="glibc-index-UCHAR_005fWIDTH"><span><code>UCHAR_WIDTH</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-UCHAR_005fWIDTH" class="copiable-anchor"> ¶</a></span></dt>
+<dt xml:id="glibc-index-SHRT_005fWIDTH"><span><code>SHRT_WIDTH</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-SHRT_005fWIDTH" class="copiable-anchor"> ¶</a></span></dt>
+<dt xml:id="glibc-index-USHRT_005fWIDTH"><span><code>USHRT_WIDTH</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-USHRT_005fWIDTH" class="copiable-anchor"> ¶</a></span></dt>
+<dt xml:id="glibc-index-INT_005fWIDTH"><span><code>INT_WIDTH</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-INT_005fWIDTH" class="copiable-anchor"> ¶</a></span></dt>
+<dt xml:id="glibc-index-UINT_005fWIDTH"><span><code>UINT_WIDTH</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-UINT_005fWIDTH" class="copiable-anchor"> ¶</a></span></dt>
+<dt xml:id="glibc-index-LONG_005fWIDTH"><span><code>LONG_WIDTH</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LONG_005fWIDTH" class="copiable-anchor"> ¶</a></span></dt>
+<dt xml:id="glibc-index-ULONG_005fWIDTH"><span><code>ULONG_WIDTH</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-ULONG_005fWIDTH" class="copiable-anchor"> ¶</a></span></dt>
+<dt xml:id="glibc-index-LLONG_005fWIDTH"><span><code>LLONG_WIDTH</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LLONG_005fWIDTH" class="copiable-anchor"> ¶</a></span></dt>
+<dt xml:id="glibc-index-ULLONG_005fWIDTH"><span><code>ULLONG_WIDTH</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-ULLONG_005fWIDTH" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>These are the widths of the types <code>char</code>, <code>signed char</code>,
+<code>unsigned char</code>, <code>short int</code>, <code>unsigned short int</code>,
+<code>int</code>, <code>unsigned int</code>, <code>long int</code>, <code>unsigned long
+int</code>, <code>long long int</code> and <code>unsigned long long int</code>,
+respectively.
+</para></dd>
+</dl>
+
+<para>Further such macros are defined in <filename>stdint.h</filename>.  Apart from those
+for types specified by width (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Integers">Integers</a>), the following are
+defined:
+</para>
+<dl compact="compact">
+<dt xml:id="glibc-index-INTPTR_005fWIDTH"><span><code>INTPTR_WIDTH</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-INTPTR_005fWIDTH" class="copiable-anchor"> ¶</a></span></dt>
+<dt xml:id="glibc-index-UINTPTR_005fWIDTH"><span><code>UINTPTR_WIDTH</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-UINTPTR_005fWIDTH" class="copiable-anchor"> ¶</a></span></dt>
+<dt xml:id="glibc-index-PTRDIFF_005fWIDTH"><span><code>PTRDIFF_WIDTH</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-PTRDIFF_005fWIDTH" class="copiable-anchor"> ¶</a></span></dt>
+<dt xml:id="glibc-index-SIG_005fATOMIC_005fWIDTH"><span><code>SIG_ATOMIC_WIDTH</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-SIG_005fATOMIC_005fWIDTH" class="copiable-anchor"> ¶</a></span></dt>
+<dt xml:id="glibc-index-SIZE_005fWIDTH"><span><code>SIZE_WIDTH</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-SIZE_005fWIDTH" class="copiable-anchor"> ¶</a></span></dt>
+<dt xml:id="glibc-index-WCHAR_005fWIDTH"><span><code>WCHAR_WIDTH</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-WCHAR_005fWIDTH" class="copiable-anchor"> ¶</a></span></dt>
+<dt xml:id="glibc-index-WINT_005fWIDTH"><span><code>WINT_WIDTH</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-WINT_005fWIDTH" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>These are the widths of the types <code>intptr_t</code>, <code>uintptr_t</code>,
+<code>ptrdiff_t</code>, <code>sig_atomic_t</code>, <code>size_t</code>, <code>wchar_t</code>
+and <code>wint_t</code>, respectively.
+</para></dd>
+</dl>
+
+<para>A common reason that a program needs to know how many bits are in an
+integer type is for using an array of <code>unsigned long int</code> as a
+bit vector.  You can access the bit at index <var>n</var> with:
+</para>
+<div class="example">
+<pre class="example">vector[<var>n</var> / ULONG_WIDTH] &amp; (1UL &lt;&lt; (<var>n</var> % ULONG_WIDTH))
+</pre></div>
+
+<para>Before <code>ULONG_WIDTH</code> was a part of the C language,
+<code>CHAR_BIT</code> was used to compute the number of bits in an integer
+data type.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-CHAR_005fBIT"><span class="category">Macro: </span><span><emphasis>int</emphasis> <strong>CHAR_BIT</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-CHAR_005fBIT" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>This is the number of bits in a <code>char</code>.  POSIX.1-2001 requires
+this to be 8.
+</para></dd></dl>
+
+<para>The number of bits in any data type <var>type</var> can be computed like
+this:
+</para>
+<div class="example">
+<pre class="example">sizeof (<var>type</var>) * CHAR_BIT
+</pre></div>
+
+<para>That expression includes padding bits as well as value and sign bits.
+On all systems supported by the GNU C Library, standard integer types other
+than <code>_Bool</code> do not have any padding bits.
+</para>
+<para><strong>Portability Note:</strong> One cannot actually easily compute the
+number of usable bits in a portable manner.
+</para>
+<hr>
+</div>
+<div class="subsection" xml:id="glibc-Range-of-Type">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Floating-Type-Macros" accesskey="n" rel="next">Floating Type Macros</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Width-of-Type" accesskey="p" rel="prev">Width of an Integer Type</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Data-Type-Measurements" accesskey="u" rel="up">Data Type Measurements</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Range-of-an-Integer-Type"></span><h4 class="subsection">A.5.2 Range of an Integer Type</title>
+<span xml:id="glibc-index-integer-type-range"></span>
+<span xml:id="glibc-index-range-of-integer-type"></span>
+<span xml:id="glibc-index-limits_002c-integer-types"></span>
+
+<para>Suppose you need to store an integer value which can range from zero to
+one million.  Which is the smallest type you can use?  There is no
+general rule; it depends on the C compiler and target machine.  You can
+use the ‘<filename>MIN</filename>’ and ‘<filename>MAX</filename>’ macros in <filename>limits.h</filename> to determine
+which type will work.
+</para>
+<para>Each signed integer type has a pair of macros which give the smallest
+and largest values that it can hold.  Each unsigned integer type has one
+such macro, for the maximum value; the minimum value is, of course,
+zero.
+</para>
+<para>The values of these macros are all integer constant expressions.  The
+‘<filename>MAX</filename>’ and ‘<filename>MIN</filename>’ macros for <code>char</code> and <code>short&nbsp;int</code> types have values of type <code>int</code>.  The ‘<filename>MAX</filename>’ and
+‘<filename>MIN</filename>’ macros for the other types have values of the same type
+described by the macro—thus, <code>ULONG_MAX</code> has type
+<code>unsigned&nbsp;long&nbsp;int</code>.
+</para>
+<dl compact="compact">
+<dt xml:id="glibc-index-SCHAR_005fMIN"><span><code>SCHAR_MIN</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-SCHAR_005fMIN" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+
+<para>This is the minimum value that can be represented by a <code>signed&nbsp;char</code>.
+</para>
+</dd>
+<dt xml:id="glibc-index-SCHAR_005fMAX"><span><code>SCHAR_MAX</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-SCHAR_005fMAX" class="copiable-anchor"> ¶</a></span></dt>
+<dt xml:id="glibc-index-UCHAR_005fMAX"><span><code>UCHAR_MAX</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-UCHAR_005fMAX" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+
+<para>These are the maximum values that can be represented by a
+<code>signed&nbsp;char</code> and <code>unsigned&nbsp;char</code>, respectively.
+</para>
+</dd>
+<dt xml:id="glibc-index-CHAR_005fMIN"><span><code>CHAR_MIN</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-CHAR_005fMIN" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+
+<para>This is the minimum value that can be represented by a <code>char</code>.
+It’s equal to <code>SCHAR_MIN</code> if <code>char</code> is signed, or zero
+otherwise.
+</para>
+</dd>
+<dt xml:id="glibc-index-CHAR_005fMAX"><span><code>CHAR_MAX</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-CHAR_005fMAX" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+
+<para>This is the maximum value that can be represented by a <code>char</code>.
+It’s equal to <code>SCHAR_MAX</code> if <code>char</code> is signed, or
+<code>UCHAR_MAX</code> otherwise.
+</para>
+</dd>
+<dt xml:id="glibc-index-SHRT_005fMIN"><span><code>SHRT_MIN</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-SHRT_005fMIN" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+
+<para>This is the minimum value that can be represented by a <code>signed&nbsp;short&nbsp;int</code>.  On most machines that the GNU C Library runs on,
+<code>short</code> integers are 16-bit quantities.
+</para>
+</dd>
+<dt xml:id="glibc-index-SHRT_005fMAX"><span><code>SHRT_MAX</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-SHRT_005fMAX" class="copiable-anchor"> ¶</a></span></dt>
+<dt xml:id="glibc-index-USHRT_005fMAX"><span><code>USHRT_MAX</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-USHRT_005fMAX" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+
+<para>These are the maximum values that can be represented by a
+<code>signed&nbsp;short&nbsp;int</code> and <code>unsigned&nbsp;short&nbsp;int</code>,
+respectively.
+</para>
+</dd>
+<dt xml:id="glibc-index-INT_005fMIN"><span><code>INT_MIN</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-INT_005fMIN" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+
+<para>This is the minimum value that can be represented by a <code>signed&nbsp;int</code>.  On most machines that the GNU C Library runs on, an <code>int</code> is
+a 32-bit quantity.
+</para>
+</dd>
+<dt xml:id="glibc-index-INT_005fMAX"><span><code>INT_MAX</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-INT_005fMAX" class="copiable-anchor"> ¶</a></span></dt>
+<dt xml:id="glibc-index-UINT_005fMAX"><span><code>UINT_MAX</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-UINT_005fMAX" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+
+<para>These are the maximum values that can be represented by, respectively,
+the type <code>signed&nbsp;int</code> and the type <code>unsigned&nbsp;int</code>.
+</para>
+</dd>
+<dt xml:id="glibc-index-LONG_005fMIN"><span><code>LONG_MIN</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LONG_005fMIN" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+
+<para>This is the minimum value that can be represented by a <code>signed&nbsp;long&nbsp;int</code>.  On most machines that the GNU C Library runs on, <code>long</code>
+integers are 32-bit quantities, the same size as <code>int</code>.
+</para>
+</dd>
+<dt xml:id="glibc-index-LONG_005fMAX"><span><code>LONG_MAX</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LONG_005fMAX" class="copiable-anchor"> ¶</a></span></dt>
+<dt xml:id="glibc-index-ULONG_005fMAX"><span><code>ULONG_MAX</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-ULONG_005fMAX" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+
+<para>These are the maximum values that can be represented by a
+<code>signed&nbsp;long&nbsp;int</code> and <code>unsigned long int</code>, respectively.
+</para>
+</dd>
+<dt xml:id="glibc-index-LLONG_005fMIN"><span><code>LLONG_MIN</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LLONG_005fMIN" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+
+<para>This is the minimum value that can be represented by a <code>signed&nbsp;long&nbsp;long&nbsp;int</code>.  On most machines that the GNU C Library runs on,
+<code>long&nbsp;long</code> integers are 64-bit quantities.
+</para>
+</dd>
+<dt xml:id="glibc-index-LLONG_005fMAX"><span><code>LLONG_MAX</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LLONG_005fMAX" class="copiable-anchor"> ¶</a></span></dt>
+<dt xml:id="glibc-index-ULLONG_005fMAX"><span><code>ULLONG_MAX</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-ULLONG_005fMAX" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+
+<para>These are the maximum values that can be represented by a <code>signed
+long long int</code> and <code>unsigned long long int</code>, respectively.
+</para>
+</dd>
+<dt xml:id="glibc-index-LONG_005fLONG_005fMIN"><span><code>LONG_LONG_MIN</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LONG_005fLONG_005fMIN" class="copiable-anchor"> ¶</a></span></dt>
+<dt xml:id="glibc-index-LONG_005fLONG_005fMAX"><span><code>LONG_LONG_MAX</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LONG_005fLONG_005fMAX" class="copiable-anchor"> ¶</a></span></dt>
+<dt xml:id="glibc-index-ULONG_005fLONG_005fMAX"><span><code>ULONG_LONG_MAX</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-ULONG_005fLONG_005fMAX" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>These are obsolete names for <code>LLONG_MIN</code>, <code>LLONG_MAX</code>, and
+<code>ULLONG_MAX</code>.  They are only available if <code>_GNU_SOURCE</code> is
+defined (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Feature-Test-Macros">Feature Test Macros</a>).  In GCC versions prior to 3.0,
+these were the only names available.
+</para>
+</dd>
+<dt xml:id="glibc-index-WCHAR_005fMAX-1"><span><code>WCHAR_MAX</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-WCHAR_005fMAX-1" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+
+<para>This is the maximum value that can be represented by a <code>wchar_t</code>.
+See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Extended-Char-Intro">Introduction to Extended Characters</a>.
+</para></dd>
+</dl>
+
+<para>The header file <filename>limits.h</filename> also defines some additional constants
+that parameterize various operating system and file system limits.  These
+constants are described in <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#System-Configuration">System Configuration Parameters</a>.
+</para>
+<hr>
+</div>
+<div class="subsection" xml:id="glibc-Floating-Type-Macros">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Structure-Measurement" accesskey="n" rel="next">Structure Field Offset Measurement</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Range-of-Type" accesskey="p" rel="prev">Range of an Integer Type</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Data-Type-Measurements" accesskey="u" rel="up">Data Type Measurements</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Floating-Type-Macros-1"></span><h4 class="subsection">A.5.3 Floating Type Macros</title>
+<span xml:id="glibc-index-floating-type-measurements"></span>
+<span xml:id="glibc-index-measurements-of-floating-types"></span>
+<span xml:id="glibc-index-type-measurements_002c-floating"></span>
+<span xml:id="glibc-index-limits_002c-floating-types"></span>
+
+<para>The specific representation of floating point numbers varies from
+machine to machine.  Because floating point numbers are represented
+internally as approximate quantities, algorithms for manipulating
+floating point data often need to take account of the precise details of
+the machine’s floating point representation.
+</para>
+<para>Some of the functions in the C library itself need this information; for
+example, the algorithms for printing and reading floating point numbers
+(see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#I_002fO-on-Streams">Input/Output on Streams</a>) and for calculating trigonometric and
+irrational functions (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Mathematics">Mathematics</a>) use it to avoid round-off
+error and loss of accuracy.  User programs that implement numerical
+analysis techniques also often need this information in order to
+minimize or compute error bounds.
+</para>
+<para>The header file <filename>float.h</filename> describes the format used by your
+machine.
+</para>
+
+<ul class="section-toc">
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Floating-Point-Concepts" accesskey="1">Floating Point Representation Concepts</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Floating-Point-Parameters" accesskey="2">Floating Point Parameters</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#IEEE-Floating-Point" accesskey="3">IEEE Floating Point</a></li>
+</ul>
+<hr>
+<div class="subsubsection" xml:id="glibc-Floating-Point-Concepts">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Floating-Point-Parameters" accesskey="n" rel="next">Floating Point Parameters</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Floating-Type-Macros" accesskey="u" rel="up">Floating Type Macros</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Floating-Point-Representation-Concepts"></span><h4 class="subsubsection">A.5.3.1 Floating Point Representation Concepts</title>
+
+<para>This section introduces the terminology for describing floating point
+representations.
+</para>
+<para>You are probably already familiar with most of these concepts in terms
+of scientific or exponential notation for floating point numbers.  For
+example, the number <code>123456.0</code> could be expressed in exponential
+notation as <code>1.23456e+05</code>, a shorthand notation indicating that the
+mantissa <code>1.23456</code> is multiplied by the base <code>10</code> raised to
+power <code>5</code>.
+</para>
+<para>More formally, the internal representation of a floating point number
+can be characterized in terms of the following parameters:
+</para>
+<ul>
+<li> <span xml:id="glibc-index-sign-_0028of-floating-point-number_0029"></span>
+The <emphasis>sign</emphasis> is either <code>-1</code> or <code>1</code>.
+
+</li><li> <span xml:id="glibc-index-base-_0028of-floating-point-number_0029"></span>
+<span xml:id="glibc-index-radix-_0028of-floating-point-number_0029"></span>
+The <emphasis>base</emphasis> or <emphasis>radix</emphasis> for exponentiation, an integer greater
+than <code>1</code>.  This is a constant for a particular representation.
+
+</li><li> <span xml:id="glibc-index-exponent-_0028of-floating-point-number_0029"></span>
+The <emphasis>exponent</emphasis> to which the base is raised.  The upper and lower
+bounds of the exponent value are constants for a particular
+representation.
+
+<span xml:id="glibc-index-bias-_0028of-floating-point-number-exponent_0029"></span>
+<para>Sometimes, in the actual bits representing the floating point number,
+the exponent is <emphasis>biased</emphasis> by adding a constant to it, to make it
+always be represented as an unsigned quantity.  This is only important
+if you have some reason to pick apart the bit fields making up the
+floating point number by hand, which is something for which the GNU C Library
+provides no support.  So this is ignored in the discussion that
+follows.
+</para>
+</li><li> <span xml:id="glibc-index-mantissa-_0028of-floating-point-number_0029"></span>
+<span xml:id="glibc-index-significand-_0028of-floating-point-number_0029"></span>
+The <emphasis>mantissa</emphasis> or <emphasis>significand</emphasis> is an unsigned integer which is a
+part of each floating point number.
+
+</li><li> <span xml:id="glibc-index-precision-_0028of-floating-point-number_0029"></span>
+The <emphasis>precision</emphasis> of the mantissa.  If the base of the representation
+is <var>b</var>, then the precision is the number of base-<var>b</var> digits in
+the mantissa.  This is a constant for a particular representation.
+
+<span xml:id="glibc-index-hidden-bit-_0028of-floating-point-number-mantissa_0029"></span>
+<para>Many floating point representations have an implicit <emphasis>hidden bit</emphasis> in
+the mantissa.  This is a bit which is present virtually in the mantissa,
+but not stored in memory because its value is always 1 in a normalized
+number.  The precision figure (see above) includes any hidden bits.
+</para>
+<para>Again, the GNU C Library provides no facilities for dealing with such
+low-level aspects of the representation.
+</para></li></ul>
+
+<para>The mantissa of a floating point number represents an implicit fraction
+whose denominator is the base raised to the power of the precision.  Since
+the largest representable mantissa is one less than this denominator, the
+value of the fraction is always strictly less than <code>1</code>.  The
+mathematical value of a floating point number is then the product of this
+fraction, the sign, and the base raised to the exponent.
+</para>
+<span xml:id="glibc-index-normalized-floating-point-number"></span>
+<para>We say that the floating point number is <emphasis>normalized</emphasis> if the
+fraction is at least <code>1/<var>b</var></code>, where <var>b</var> is the base.  In
+other words, the mantissa would be too large to fit if it were
+multiplied by the base.  Non-normalized numbers are sometimes called
+<emphasis>denormal</emphasis>; they contain less precision than the representation
+normally can hold.
+</para>
+<para>If the number is not normalized, then you can subtract <code>1</code> from the
+exponent while multiplying the mantissa by the base, and get another
+floating point number with the same value.  <emphasis>Normalization</emphasis> consists
+of doing this repeatedly until the number is normalized.  Two distinct
+normalized floating point numbers cannot be equal in value.
+</para>
+<para>(There is an exception to this rule: if the mantissa is zero, it is
+considered normalized.  Another exception happens on certain machines
+where the exponent is as small as the representation can hold.  Then
+it is impossible to subtract <code>1</code> from the exponent, so a number
+may be normalized even if its fraction is less than <code>1/<var>b</var></code>.)
+</para>
+<hr>
+</div>
+<div class="subsubsection" xml:id="glibc-Floating-Point-Parameters">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#IEEE-Floating-Point" accesskey="n" rel="next">IEEE Floating Point</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Floating-Point-Concepts" accesskey="p" rel="prev">Floating Point Representation Concepts</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Floating-Type-Macros" accesskey="u" rel="up">Floating Type Macros</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Floating-Point-Parameters-1"></span><h4 class="subsubsection">A.5.3.2 Floating Point Parameters</title>
+
+<span xml:id="glibc-index-float_002eh"></span>
+<para>These macro definitions can be accessed by including the header file
+<filename>float.h</filename> in your program.
+</para>
+<para>Macro names starting with ‘<filename>FLT_</filename>’ refer to the <code>float</code> type,
+while names beginning with ‘<filename>DBL_</filename>’ refer to the <code>double</code> type
+and names beginning with ‘<filename>LDBL_</filename>’ refer to the <code>long double</code>
+type.  (If GCC does not support <code>long double</code> as a distinct data
+type on a target machine then the values for the ‘<filename>LDBL_</filename>’ constants
+are equal to the corresponding constants for the <code>double</code> type.)
+</para>
+<para>Of these macros, only <code>FLT_RADIX</code> is guaranteed to be a constant
+expression.  The other macros listed here cannot be reliably used in
+places that require constant expressions, such as ‘<filename>#if</filename>’
+preprocessing directives or in the dimensions of static arrays.
+</para>
+<para>Although the ISO&nbsp;C standard specifies minimum and maximum values for
+most of these parameters, the GNU C implementation uses whatever values
+describe the floating point representation of the target machine.  So in
+principle GNU C actually satisfies the ISO&nbsp;C requirements only if the
+target machine is suitable.  In practice, all the machines currently
+supported are suitable.
+</para>
+<dl compact="compact">
+<dt xml:id="glibc-index-FLT_005fROUNDS"><span><code>FLT_ROUNDS</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-FLT_005fROUNDS" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>This value characterizes the rounding mode for floating point addition.
+The following values indicate standard rounding modes:
+</para>
+
+<dl compact="compact">
+<dt><span><code>-1</code></span></dt>
+<dd><para>The mode is indeterminable.
+</para></dd>
+<dt><span><code>0</code></span></dt>
+<dd><para>Rounding is towards zero.
+</para></dd>
+<dt><span><code>1</code></span></dt>
+<dd><para>Rounding is to the nearest number.
+</para></dd>
+<dt><span><code>2</code></span></dt>
+<dd><para>Rounding is towards positive infinity.
+</para></dd>
+<dt><span><code>3</code></span></dt>
+<dd><para>Rounding is towards negative infinity.
+</para></dd>
+</dl>
+
+<para>Any other value represents a machine-dependent nonstandard rounding
+mode.
+</para>
+<para>On most machines, the value is <code>1</code>, in accordance with the IEEE
+standard for floating point.
+</para>
+<para>Here is a table showing how certain values round for each possible value
+of <code>FLT_ROUNDS</code>, if the other aspects of the representation match
+the IEEE single-precision standard.
+</para>
+<div class="example">
+<pre class="example">                0      1             2             3
+ 1.00000003    1.0    1.0           1.00000012    1.0
+ 1.00000007    1.0    1.00000012    1.00000012    1.0
+-1.00000003   -1.0   -1.0          -1.0          -1.00000012
+-1.00000007   -1.0   -1.00000012   -1.0          -1.00000012
+</pre></div>
+
+</dd>
+<dt xml:id="glibc-index-FLT_005fRADIX"><span><code>FLT_RADIX</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-FLT_005fRADIX" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>This is the value of the base, or radix, of the exponent representation.
+This is guaranteed to be a constant expression, unlike the other macros
+described in this section.  The value is 2 on all machines we know of
+except the IBM 360 and derivatives.
+</para>
+</dd>
+<dt xml:id="glibc-index-FLT_005fMANT_005fDIG"><span><code>FLT_MANT_DIG</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-FLT_005fMANT_005fDIG" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>This is the number of base-<code>FLT_RADIX</code> digits in the floating point
+mantissa for the <code>float</code> data type.  The following expression
+yields <code>1.0</code> (even though mathematically it should not) due to the
+limited number of mantissa digits:
+</para>
+<div class="example">
+<pre class="example">float radix = FLT_RADIX;
+
+1.0f + 1.0f / radix / radix / … / radix
+</pre></div>
+
+<para>where <code>radix</code> appears <code>FLT_MANT_DIG</code> times.
+</para>
+</dd>
+<dt xml:id="glibc-index-DBL_005fMANT_005fDIG"><span><code>DBL_MANT_DIG</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-DBL_005fMANT_005fDIG" class="copiable-anchor"> ¶</a></span></dt>
+<dt xml:id="glibc-index-LDBL_005fMANT_005fDIG"><span><code>LDBL_MANT_DIG</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LDBL_005fMANT_005fDIG" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>This is the number of base-<code>FLT_RADIX</code> digits in the floating point
+mantissa for the data types <code>double</code> and <code>long double</code>,
+respectively.
+</para>
+</dd>
+<dt xml:id="glibc-index-FLT_005fDIG"><span><code>FLT_DIG</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-FLT_005fDIG" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+
+<para>This is the number of decimal digits of precision for the <code>float</code>
+data type.  Technically, if <var>p</var> and <var>b</var> are the precision and
+base (respectively) for the representation, then the decimal precision
+<var>q</var> is the maximum number of decimal digits such that any floating
+point number with <var>q</var> base 10 digits can be rounded to a floating
+point number with <var>p</var> base <var>b</var> digits and back again, without
+change to the <var>q</var> decimal digits.
+</para>
+<para>The value of this macro is supposed to be at least <code>6</code>, to satisfy
+ISO&nbsp;C.
+</para>
+</dd>
+<dt xml:id="glibc-index-DBL_005fDIG"><span><code>DBL_DIG</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-DBL_005fDIG" class="copiable-anchor"> ¶</a></span></dt>
+<dt xml:id="glibc-index-LDBL_005fDIG"><span><code>LDBL_DIG</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LDBL_005fDIG" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+
+<para>These are similar to <code>FLT_DIG</code>, but for the data types
+<code>double</code> and <code>long double</code>, respectively.  The values of these
+macros are supposed to be at least <code>10</code>.
+</para>
+</dd>
+<dt xml:id="glibc-index-FLT_005fMIN_005fEXP"><span><code>FLT_MIN_EXP</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-FLT_005fMIN_005fEXP" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>This is the smallest possible exponent value for type <code>float</code>.
+More precisely, it is the minimum negative integer such that the value
+<code>FLT_RADIX</code> raised to this power minus 1 can be represented as a
+normalized floating point number of type <code>float</code>.
+</para>
+</dd>
+<dt xml:id="glibc-index-DBL_005fMIN_005fEXP"><span><code>DBL_MIN_EXP</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-DBL_005fMIN_005fEXP" class="copiable-anchor"> ¶</a></span></dt>
+<dt xml:id="glibc-index-LDBL_005fMIN_005fEXP"><span><code>LDBL_MIN_EXP</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LDBL_005fMIN_005fEXP" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+
+<para>These are similar to <code>FLT_MIN_EXP</code>, but for the data types
+<code>double</code> and <code>long double</code>, respectively.
+</para>
+</dd>
+<dt xml:id="glibc-index-FLT_005fMIN_005f10_005fEXP"><span><code>FLT_MIN_10_EXP</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-FLT_005fMIN_005f10_005fEXP" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>This is the minimum negative integer such that <code>10</code> raised to this
+power minus 1 can be represented as a normalized floating point number
+of type <code>float</code>.  This is supposed to be <code>-37</code> or even less.
+</para>
+</dd>
+<dt xml:id="glibc-index-DBL_005fMIN_005f10_005fEXP"><span><code>DBL_MIN_10_EXP</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-DBL_005fMIN_005f10_005fEXP" class="copiable-anchor"> ¶</a></span></dt>
+<dt xml:id="glibc-index-LDBL_005fMIN_005f10_005fEXP"><span><code>LDBL_MIN_10_EXP</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LDBL_005fMIN_005f10_005fEXP" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>These are similar to <code>FLT_MIN_10_EXP</code>, but for the data types
+<code>double</code> and <code>long double</code>, respectively.
+</para>
+</dd>
+<dt xml:id="glibc-index-FLT_005fMAX_005fEXP"><span><code>FLT_MAX_EXP</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-FLT_005fMAX_005fEXP" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>This is the largest possible exponent value for type <code>float</code>.  More
+precisely, this is the maximum positive integer such that value
+<code>FLT_RADIX</code> raised to this power minus 1 can be represented as a
+floating point number of type <code>float</code>.
+</para>
+</dd>
+<dt xml:id="glibc-index-DBL_005fMAX_005fEXP"><span><code>DBL_MAX_EXP</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-DBL_005fMAX_005fEXP" class="copiable-anchor"> ¶</a></span></dt>
+<dt xml:id="glibc-index-LDBL_005fMAX_005fEXP"><span><code>LDBL_MAX_EXP</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LDBL_005fMAX_005fEXP" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>These are similar to <code>FLT_MAX_EXP</code>, but for the data types
+<code>double</code> and <code>long double</code>, respectively.
+</para>
+</dd>
+<dt xml:id="glibc-index-FLT_005fMAX_005f10_005fEXP"><span><code>FLT_MAX_10_EXP</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-FLT_005fMAX_005f10_005fEXP" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>This is the maximum positive integer such that <code>10</code> raised to this
+power minus 1 can be represented as a normalized floating point number
+of type <code>float</code>.  This is supposed to be at least <code>37</code>.
+</para>
+</dd>
+<dt xml:id="glibc-index-DBL_005fMAX_005f10_005fEXP"><span><code>DBL_MAX_10_EXP</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-DBL_005fMAX_005f10_005fEXP" class="copiable-anchor"> ¶</a></span></dt>
+<dt xml:id="glibc-index-LDBL_005fMAX_005f10_005fEXP"><span><code>LDBL_MAX_10_EXP</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LDBL_005fMAX_005f10_005fEXP" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>These are similar to <code>FLT_MAX_10_EXP</code>, but for the data types
+<code>double</code> and <code>long double</code>, respectively.
+</para>
+</dd>
+<dt xml:id="glibc-index-FLT_005fMAX"><span><code>FLT_MAX</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-FLT_005fMAX" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+
+<para>The value of this macro is the maximum number representable in type
+<code>float</code>.  It is supposed to be at least <code>1E+37</code>.  The value
+has type <code>float</code>.
+</para>
+<para>The smallest representable number is <code>- FLT_MAX</code>.
+</para>
+</dd>
+<dt xml:id="glibc-index-DBL_005fMAX"><span><code>DBL_MAX</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-DBL_005fMAX" class="copiable-anchor"> ¶</a></span></dt>
+<dt xml:id="glibc-index-LDBL_005fMAX"><span><code>LDBL_MAX</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LDBL_005fMAX" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+
+<para>These are similar to <code>FLT_MAX</code>, but for the data types
+<code>double</code> and <code>long double</code>, respectively.  The type of the
+macro’s value is the same as the type it describes.
+</para>
+</dd>
+<dt xml:id="glibc-index-FLT_005fMIN"><span><code>FLT_MIN</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-FLT_005fMIN" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+
+<para>The value of this macro is the minimum normalized positive floating
+point number that is representable in type <code>float</code>.  It is supposed
+to be no more than <code>1E-37</code>.
+</para>
+</dd>
+<dt xml:id="glibc-index-DBL_005fMIN"><span><code>DBL_MIN</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-DBL_005fMIN" class="copiable-anchor"> ¶</a></span></dt>
+<dt xml:id="glibc-index-LDBL_005fMIN"><span><code>LDBL_MIN</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LDBL_005fMIN" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+
+<para>These are similar to <code>FLT_MIN</code>, but for the data types
+<code>double</code> and <code>long double</code>, respectively.  The type of the
+macro’s value is the same as the type it describes.
+</para>
+</dd>
+<dt xml:id="glibc-index-FLT_005fEPSILON"><span><code>FLT_EPSILON</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-FLT_005fEPSILON" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+
+<para>This is the difference between 1 and the smallest floating point
+number of type <code>float</code> that is greater than 1.  It’s supposed to
+be no greater than <code>1E-5</code>.
+</para>
+</dd>
+<dt xml:id="glibc-index-DBL_005fEPSILON"><span><code>DBL_EPSILON</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-DBL_005fEPSILON" class="copiable-anchor"> ¶</a></span></dt>
+<dt xml:id="glibc-index-LDBL_005fEPSILON"><span><code>LDBL_EPSILON</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LDBL_005fEPSILON" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+
+<para>These are similar to <code>FLT_EPSILON</code>, but for the data types
+<code>double</code> and <code>long double</code>, respectively.  The type of the
+macro’s value is the same as the type it describes.  The values are not
+supposed to be greater than <code>1E-9</code>.
+</para></dd>
+</dl>
+
+<hr>
+</div>
+<div class="subsubsection" xml:id="glibc-IEEE-Floating-Point">
+<div class="header">
+<para>
+Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Floating-Point-Parameters" accesskey="p" rel="prev">Floating Point Parameters</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Floating-Type-Macros" accesskey="u" rel="up">Floating Type Macros</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-IEEE-Floating-Point-1"></span><h4 class="subsubsection">A.5.3.3 IEEE Floating Point</title>
+<span xml:id="glibc-index-IEEE-floating-point-representation"></span>
+<span xml:id="glibc-index-floating-point_002c-IEEE"></span>
+
+<para>Here is an example showing how the floating type measurements come out
+for the most common floating point representation, specified by the
+<cite>IEEE Standard for Binary Floating Point Arithmetic (ANSI/IEEE Std
+754-1985)</cite>.  Nearly all computers designed since the 1980s use this
+format.
+</para>
+<para>The IEEE single-precision float representation uses a base of 2.  There
+is a sign bit, a mantissa with 23 bits plus one hidden bit (so the total
+precision is 24 base-2 digits), and an 8-bit exponent that can represent
+values in the range -125 to 128, inclusive.
+</para>
+<para>So, for an implementation that uses this representation for the
+<code>float</code> data type, appropriate values for the corresponding
+parameters are:
+</para>
+<div class="example">
+<pre class="example">FLT_RADIX                             2
+FLT_MANT_DIG                         24
+FLT_DIG                               6
+FLT_MIN_EXP                        -125
+FLT_MIN_10_EXP                      -37
+FLT_MAX_EXP                         128
+FLT_MAX_10_EXP                      +38
+FLT_MIN                 1.17549435E-38F
+FLT_MAX                 3.40282347E+38F
+FLT_EPSILON             1.19209290E-07F
+</pre></div>
+
+<para>Here are the values for the <code>double</code> data type:
+</para>
+<div class="example">
+<pre class="example">DBL_MANT_DIG                         53
+DBL_DIG                              15
+DBL_MIN_EXP                       -1021
+DBL_MIN_10_EXP                     -307
+DBL_MAX_EXP                        1024
+DBL_MAX_10_EXP                      308
+DBL_MAX         1.7976931348623157E+308
+DBL_MIN         2.2250738585072014E-308
+DBL_EPSILON     2.2204460492503131E-016
+</pre></div>
+
+<hr>
+</div>
+</div>
+<div class="subsection" xml:id="glibc-Structure-Measurement">
+<div class="header">
+<para>
+Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Floating-Type-Macros" accesskey="p" rel="prev">Floating Type Macros</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Data-Type-Measurements" accesskey="u" rel="up">Data Type Measurements</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Structure-Field-Offset-Measurement"></span><h4 class="subsection">A.5.4 Structure Field Offset Measurement</title>
+
+<para>You can use <code>offsetof</code> to measure the location within a structure
+type of a particular structure member.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-offsetof"><span class="category">Macro: </span><span><emphasis>size_t</emphasis> <strong>offsetof</strong> <emphasis>(<var>type</var>, <var>member</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-offsetof" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This expands to an integer constant expression that is the offset of the
+structure member named <var>member</var> in the structure type <var>type</var>.
+For example, <code>offsetof (struct s, elem)</code> is the offset, in bytes,
+of the member <code>elem</code> in a <code>struct s</code>.
+</para>
+<para>This macro won’t work if <var>member</var> is a bit field; you get an error
+from the C compiler in that case.
+</para></dd></dl>
+<hr>
+</div>
+</div>
+</div-->
 </appendix>

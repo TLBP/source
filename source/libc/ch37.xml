@@ -3,6 +3,388 @@
         glibc/ch37.xml,v2.36, GFDL,LGPL, NBB, 2023
      ******************************************************************** -->
 <part xml:id="glibc-Internal-Probes">
-  <title>Dahili Yoklayıcılar</title>
-  <titleabbrev>libc dahili davranışını izlemek için yoklayıcılar.</titleabbrev>
+ <title>Dahili Yoklayıcılar</title>
+ <titleabbrev>libc dahili davranışını izlemek için yoklayıcılar.</titleabbrev>
+ <partintro>
+  <?dbhtml stop-chunking?>
+  <para>
+   <dicterm><english>probe</english><turkish>sonda</turkish></dicterm>
+   <dicterm><english>probe</english><turkish>yoklayıcı</turkish></dicterm>
+   Hata ayıklamaya ve dahili davranışı izlemeye yardımcı olmak için &glibc;, <code>libc</code> (provider) sağlayıcısı ile imli neredeyse sıfır masraflı <link xl:href="https://sourceware.org/systemtap/">SystemTap</link> yoklayıcıları sağlar.
+  </para>
+  <para>
+   Bu yoklayıcılar, &glibc; kararlı ikil uygulama arayüzünün bir parçası değildir ve sürümler arasında değişikliğe uğrayabilir veya kaldırılabilir. Yoklayıcılarla ilgili tek garanti, bir yoklayıcının bağımsız değişkenlerini kaldırmaya veya değiştirmeye ihtiyaç olursa, değiştirilen yoklayıcının farklı bir adı olacağı, böylece eski yoklayıcıya güvenen yazılım izleyicilerin beklenmedik bağımsız değişkenler almayacağıdır.
+  </para>
+  <sect1 xml:id="glibc-Memory-Allocation-Probes">
+   <title>Bellek Tahsis Yoklayıcıları</title>
+   <titleabbrev>Bellek tahsis alt sisteminde yoklayıcılar.</titleabbrev>
+   <para>
+    Bu yoklayıcılar, &glibc;nin sanal bellek alt sistemi içindeki görece alışılmadık durumlara işaret etmek için tasarlanmıştır.
+   </para>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-memory_sbrk_more"><primary>yoklayıcılar</primary><secondary>memory_sbrk_more</secondary></indexterm>
+    <csproto type="sonda">
+     <csname><function>memory_sbrk_more</function></csname>
+     <csparam><ptr>void</ptr><parameter>$arg1</parameter></csparam>
+     <csparam><type>size_t</type><parameter>$arg2</parameter></csparam>
+    </csproto>
+    <para>
+     Bu yoklayıcı, veri bölütü <function>sbrk</function> çağrılarak genişletildikten sonra tetiklenir. <parameter>$arg2</parameter> bağımsız değişkeni, <function>sbrk</function> için istenen ek boyut ile, <parameter>$arg1</parameter>, <function>sbrk</function> ise veri bölütünün sonuna gösterici ile döner.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-memory_sbrk_less"><primary>yoklayıcılar</primary><secondary>memory_sbrk_less</secondary></indexterm>
+    <csproto type="sonda">
+     <csname><function>memory_sbrk_less</function></csname>
+     <csparam><ptr>void</ptr><parameter>$arg1</parameter></csparam>
+     <csparam><type>size_t</type><parameter>$arg2</parameter></csparam>
+    </csproto>
+    <para>
+     Bu yoklayıcı, veri bölütü <function>sbrk</function> çağrılarak daraltıldıktan sonra tetiklenir. <parameter>$arg2</parameter> bağımsız değişkeni, <function>sbrk</function> tarafından bırakılan boyutu (<function>sbrk</function> işlevine aktarılan negatif değer iken bu pozitif değerdir), <parameter>$arg1</parameter> ise <function>sbrk</function> veri bölütünün sonuna gösterici ile döner.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-memory_heap_new"><primary>yoklayıcılar</primary><secondary>memory_heap_new</secondary></indexterm>
+    <csproto type="sonda">
+     <csname><function>memory_heap_new</function></csname>
+     <csparam><ptr>void</ptr><parameter>$arg1</parameter></csparam>
+     <csparam><type>size_t</type><parameter>$arg2</parameter></csparam>
+    </csproto>
+    <para>
+     Bu yoklayıcı <function>mmap</function> tarafından yığın bellekte yeni bir dosya eşlemi oluşturulduktan sonra tetiklenir. <parameter>$arg1</parameter> bağımsız değişkeni <code>heap_info</code> veri yapısının tutulduğu bellek alanının başlangıcına gösterici ile, <parameter>$arg2</parameter> ise alanın boyutu ile döner.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-memory_heap_free"><primary>yoklayıcılar</primary><secondary>memory_heap_free</secondary></indexterm>
+    <csproto type="sonda">
+     <csname><function>memory_heap_free</function></csname>
+     <csparam><ptr>void</ptr><parameter>$arg1</parameter></csparam>
+     <csparam><type>size_t</type><parameter>$arg2</parameter></csparam>
+    </csproto>
+    <para>
+     Bu yoklayıcı dosya eşlemi <function>munmap</function> ile tamamen kaldırılmadan (sbrk ve mmap yoklayıcılarının tersine) önce tetiklenir. <parameter>$arg1</parameter> bağımsız değişkeni bellek alanına gösterici ile, <parameter>$arg2</parameter> ise alanın boyutu ile döner.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-memory_heap_more"><primary>yoklayıcılar</primary><secondary>memory_heap_more</secondary></indexterm>
+    <csproto type="sonda">
+     <csname><function>memory_heap_more</function></csname>
+     <csparam><ptr>void</ptr><parameter>$arg1</parameter></csparam>
+     <csparam><type>size_t</type><parameter>$arg2</parameter></csparam>
+    </csproto>
+    <para>
+     Bu yoklayıcı dosya eşlemi <function>mmap</function> ile uzatıldıktan sonra tetiklenir. <parameter>$arg1</parameter> bağımsız değişkeni bellek alana gösterici ile, <parameter>$arg2</parameter> ile alanın boyutu ile döner.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-memory_heap_less"><primary>yoklayıcılar</primary><secondary>memory_heap_less</secondary></indexterm>
+    <csproto type="sonda">
+     <csname><function>memory_heap_less</function></csname>
+     <csparam><ptr>void</ptr><parameter>$arg1</parameter></csparam>
+     <csparam><type>size_t</type><parameter>$arg2</parameter></csparam>
+    </csproto>
+    <para>
+     Bu yoklayıcı dosya eşlemi <function>mmap</function> ile kısaltıldıktan sonra tetiklenir. <parameter>$arg1</parameter> bağımsız değişkeni bellek alana gösterici ile, <parameter>$arg2</parameter> ile alanın boyutu ile döner.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-memory_malloc_retry"><primary>yoklayıcılar</primary><secondary>memory_malloc_retry</secondary></indexterm>
+    <csproto type="sonda">
+     <csname><function>memory_malloc_retry</function></csname>
+     <csparam><type>size_t</type><parameter>$arg1</parameter></csparam>
+    </csproto>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-memory_realloc_retry"><primary>yoklayıcılar</primary><secondary>memory_realloc_retry</secondary></indexterm>
+    <csproto type="sonda">
+     <csname><function>memory_realloc_retry</function></csname>
+     <csparam><type>size_t</type><parameter>$arg1</parameter></csparam>
+     <csparam><ptr>void</ptr><parameter>$arg2</parameter></csparam>
+    </csproto>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-memory_memalign_retry"><primary>yoklayıcılar</primary><secondary>memory_memalign_retry</secondary></indexterm>
+    <csproto type="sonda">
+     <csname><function>memory_memalign_retry</function></csname>
+     <csparam><type>size_t</type><parameter>$arg1</parameter></csparam>
+     <csparam><type>size_t</type><parameter>$arg2</parameter></csparam>
+    </csproto>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-memory_calloc_retry"><primary>yoklayıcılar</primary><secondary>memory_calloc_retry</secondary></indexterm>
+    <csproto type="sonda">
+     <csname><function>memory_calloc_retry</function></csname>
+     <csparam><type>size_t</type><parameter>$arg1</parameter></csparam>
+    </csproto>
+    <para>
+     Bu yoklayıcılar, tahsisin yeniden deneneceği başka bir arena seçmek için <function>arena_get_retry</function> işlevini çağırmadan önce, ilgili işlevler kullanımdaki arenadan istenen miktarda bellek elde edemediğinde tetiklenir. <parameter>$arg1</parameter> bağımsız değişkeninde, kullanıcı tarafından talep edilen bellek miktar döner; <code>memory_calloc_retry</code> yoklayıcısından dönen değer ise, her iki işlevin bağımsız değişkenlerinden hesaplanan toplam boyuttur.      <code>memory_realloc_retry</code> yoklayıcısı için, <parameter>$arg2</parameter> bağımsız değişkeninde yeniden boyutlandırılan bellek alanına gösterici döner. <code>memory_memalign_retry</code> yoklayıcısında <parameter>$arg2</parameter>, istek için kullanılacak hizalama olup <function>memalign</function> işlevine aktarılan hizalamadan daha sıkı olabilir. <code>memory_memalign_retry</code> yoklayıcısı, ayrıca <function>posix_memalign</function>, <function>valloc</function> ve <function>pvalloc</function> işlevleri tarafından da kullanılır.
+    </para>
+    <para>
+     Bağımsız değişken sırasının diğer iki bağımsız değişkenli işlevlerinkiyle eşleşmediğine dikkat edilmelidir, bu nedenle bu yoklayıcıların tümünde <parameter>$arg1</parameter> kullanıcı tarafından istenen tahsis boyutudur.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-memory_arena_retry"><primary>yoklayıcılar</primary><secondary>memory_arena_retry</secondary></indexterm>
+    <csproto type="sonda">
+     <csname><function>memory_arena_retry</function></csname>
+     <csparam><type>size_t</type><parameter>$arg1</parameter></csparam>
+     <csparam><ptr>void</ptr><parameter>$arg2</parameter></csparam>
+    </csproto>
+    <para>
+     Bu yoklayıcı, başka bir arena seçiminden önce <function>arena_get_retry</function>   (ilk denemede başarısız olan bir tahsisin yeniden deneneceği başka arenayı seçmek için çağrılan işlev) içinde tetiklenir. Bu yoklayıcı gereksizdir, ancak çeşitli bellek ayırma işlevlerinden hangisinin ilk denemede tahsisi yapamadığını belirlemenin önemli olmadığı durumlarda kullanımı çok daha kolaydır. <parameter>$arg1</parameter> bağımsız değişkeni, daha sıkı hizalamayı sağlamak zorunda olan işlevlerin getirdiği ek dolgu alanı dışında, işleve özgü yoklayıcılardakiyle aynıdır. <parameter>$arg2</parameter> bağımsız değişkeninde tahsisin başarız olduğu arenaya gösterici döner.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-memory_arena_new"><primary>yoklayıcılar</primary><secondary>memory_arena_new</secondary></indexterm>
+    <csproto type="sonda">
+     <csname><function>memory_arena_new</function></csname>
+     <csparam><ptr>void</ptr><parameter>$arg1</parameter></csparam>
+     <csparam><type>size_t</type><parameter>$arg2</parameter></csparam>
+    </csproto>
+    <para>
+     Bu yoklayıcı, <function>malloc</function> ek bir arena (ana arena değil) tahsis edip ilklendirdiğinde, ancak arena çalışan evreye atanmadan veya dahili ilintili arenalar listesine eklenmeden önce tetiklenir. Arenanın <type>malloc_state</type> dahili veri yapısı yeni tahsis edilen yığın içinde <parameter>$arg1</parameter> konumunda bulunur ve en az <parameter>$arg2</parameter> baytı tutacak kadar büyük olmalıdır.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-memory_arena_reuse"><primary>yoklayıcılar</primary><secondary>memory_arena_reuse</secondary></indexterm>
+    <csproto type="sonda">
+     <csname><function>memory_arena_reuse</function></csname>
+     <csparam><ptr>void</ptr><parameter>$arg1</parameter></csparam>
+     <csparam><ptr>void</ptr><parameter>$arg2</parameter></csparam>
+    </csproto>
+    <para>
+     Bu yoklayıcı, <function>malloc</function> mevcut bir arenayı yeniden kullanmak üzere seçtiğinde ve (geçici olarak) özel kullanım için ayırdığında tetiklenir. <parameter>$arg1</parameter> bağımsız değişkeni ile yeni seçilen arenaya gösterici, <parameter>$arg2</parameter> ile o evre tarafından daha önce kullanılan arenaya gösterici döner.
+    </para>
+    <para>
+     Bu, yeniden kullanılan arena içinde, <function>memory_arena_reuse_wait</function> yoklayıcısında belirtilen dışlayıcının alınmasından hemen sonra gerçekleşir ve <parameter>$arg1</parameter> bağımsız değişkeni aynı arenayı gösterir. Bu yapılandırmada, bu genellikle evre başına yalnızca bir kez gerçekleşir. Bir evrenin ilk olarak ana arenayı seçmesi ve ana arenadan bir sonraki tahsisin başarısız olması bir istisna olup yalnız ve yalnız o zaman, bu tahsisi yeniden denemek ve o evre içinde daha fazla tahsisat yapmak için başka bir arenaya geçilebilir.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-memory_arena_reuse_wait"><primary>yoklayıcılar</primary><secondary>memory_arena_reuse_wait</secondary></indexterm>
+    <csproto type="sonda">
+     <csname><function>memory_arena_reuse_wait</function></csname>
+     <csparam><ptr>void</ptr><parameter>$arg1</parameter></csparam>
+     <csparam><ptr>void</ptr><parameter>$arg2</parameter></csparam>
+     <csparam><ptr>void</ptr><parameter>$arg3</parameter></csparam>
+    </csproto>
+    <para>
+     Bu yoklayıcı, <function>malloc</function> bir arenanın yeniden kullanılabilir hale gelmesini beklemek üzereyken tetiklenir. <parameter>$arg1</parameter> bağımsız değişkeni ile, evrenin bekleyeceği dışlayıcıya gösterici, <parameter>$arg2</parameter> ile yeniden kullanılmak için seçilen arenaya gösterici ve <parameter>$arg3</parameter> ile evre tarafından daha önce kullanılan arenaya gösterici döner.
+    </para>
+    <para>
+     Bu, yeniden kullanılan arena içinde, bir evre önce belleği tahsis etmeye çalıştığında veya ana arenadan tahsis başarısızlığından sonra yeniden denemeye ihtiyaç duyduğunda, herhangi bir boş alan olmadığında, azami arena sayısına ulaşıldığında, mevcut arena yeniden kullanım için seçildiğinde, fakat dışlayıcısı hemen edinilemediğinde gerçekleşir. <parameter>$arg1</parameter> bağımsız değişkenindeki dışlayıcı seçilen arenanın dışlayıcısıdır.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-memory_arena_reuse_free_list"><primary>yoklayıcılar</primary><secondary>memory_arena_reuse_free_list</secondary></indexterm>
+    <csproto type="sonda">
+     <csname><function>memory_arena_reuse_free_list</function></csname>
+     <csparam><ptr>void</ptr><parameter>$arg1</parameter></csparam>
+    </csproto>
+    <para>
+     Bu yoklayıcı,  <function>malloc</function>, <function>get_free_list</function> işlevi içinde serbest listedeki bir arenayı evre tarafından kullanılmak üzere  seçtiğinde tetiklenir. <parameter>$arg1</parameter> bağımsız değişkeni, seçilen alana gösterici ile döner.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-memory_mallopt"><primary>yoklayıcılar</primary><secondary>memory_mallopt</secondary></indexterm>
+    <csproto type="sonda">
+     <csname><function>memory_mallopt</function></csname>
+     <csparam><type>int</type><parameter>$arg1</parameter></csparam>
+     <csparam><type>int</type><parameter>$arg2</parameter></csparam>
+    </csproto>
+    <para>
+     Bu yoklayıcı, bağımsız değişkenlerinde herhangi bir değişiklik yapılmadan önce <function>malloc</function> dahili yapılandırma değişkenlerini değiştirmek için  <function>mallopt</function> işlevi çağrıldığında tetiklenir. <parameter>$arg1</parameter> ve <parameter>$arg2</parameter> bağımsız değişkenleri <function>mallopt</function> işlevine aktarılan değişkenlerdir.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-memory_mallopt_mxfast"><primary>yoklayıcılar</primary><secondary>memory_mallopt_mxfast</secondary></indexterm>
+    <csproto type="sonda">
+     <csname><function>memory_mallopt_mxfast</function></csname>
+     <csparam><type>int</type><parameter>$arg1</parameter></csparam>
+     <csparam><type>int</type><parameter>$arg2</parameter></csparam>
+    </csproto>
+    <para>
+     Bu yoklayıcı, değiştirilecek bağımsız değişken <varname>M_MXFAST</varname> olduğunda ve istenen değer kabul edilebilir bir aralıkta olduğunda, <function>memory_mallopt</function> yoklayıcısından kısa bir süre sonra tetiklenir. Bağımsız değişken <parameter>$arg1</parameter> istenen değerdir ve <parameter>$arg2</parameter> bu <function>malloc</function> bağımsız değişkeninin önceki değeridir.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-memory_mallopt_trim_threshold"><primary>yoklayıcılar</primary><secondary>memory_mallopt_trim_threshold</secondary></indexterm>
+    <csproto type="sonda">
+     <csname><function>memory_mallopt_trim_threshold</function></csname>
+     <csparam><type>int</type><parameter>$arg1</parameter></csparam>
+     <csparam><type>int</type><parameter>$arg2</parameter></csparam>
+     <csparam><type>int</type><parameter>$arg3</parameter></csparam>
+    </csproto>
+    <para>
+     Bu yoklayıcı, değiştirilecek bağımsız değişken <varname>M_TRIM_THRESHOLD</varname> olduğunda, <function>memory_mallopt</function> yoklayıcısından kısa bir süre sonra tetiklenir. Bağımsız değişken <parameter>$arg1</parameter> istenen değerdir, <parameter>$arg2</parameter> bu <function>malloc</function> bağımsız değişkeninin önceki değeridir ve <parameter>$arg3</parameter> özdevimli eşik ayarı zaten devre dışı bırakılmışsa sıfırdan farklıdır.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-memory_mallopt_top_pad"><primary>yoklayıcılar</primary><secondary>memory_mallopt_top_pad</secondary></indexterm>
+    <csproto type="sonda">
+     <csname><function>memory_mallopt_top_pad</function></csname>
+     <csparam><type>int</type><parameter>$arg1</parameter></csparam>
+     <csparam><type>int</type><parameter>$arg2</parameter></csparam>
+     <csparam><type>int</type><parameter>$arg3</parameter></csparam>
+    </csproto>
+    <para>
+     Bu yoklayıcı, değiştirilecek bağımsız değişken <varname>M_TOP_PAD</varname> olduğunda, <function>memory_mallopt</function> yoklayıcısından kısa bir süre sonra tetiklenir. Bağımsız değişken <parameter>$arg1</parameter> istenen değerdir, <parameter>$arg2</parameter> bu <function>malloc</function> bağımsız değişkeninin önceki değeridir ve <parameter>$arg3</parameter> özdevimli eşik ayarı zaten devre dışı bırakılmışsa sıfırdan farklıdır.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-memory_mallopt_mmap_threshold"><primary>yoklayıcılar</primary><secondary>memory_mallopt_mmap_threshold</secondary></indexterm>
+    <csproto type="sonda">
+     <csname><function>memory_mallopt_mmap_threshold</function></csname>
+     <csparam><type>int</type><parameter>$arg1</parameter></csparam>
+     <csparam><type>int</type><parameter>$arg2</parameter></csparam>
+     <csparam><type>int</type><parameter>$arg3</parameter></csparam>
+    </csproto>
+    <para>
+     Bu yoklayıcı, değiştirilecek bağımsız değişken <varname>M_MMAP_THRESHOLD</varname> ve istenen değer kabul edilebilir aralıkta olduğunda, <function>memory_mallopt</function> yoklayıcısından kısa bir süre sonra tetiklenir. Bağımsız değişken <parameter>$arg1</parameter> istenen değerdir, <parameter>$arg2</parameter> bu <function>malloc</function> bağımsız değişkeninin önceki değeridir ve <parameter>$arg3</parameter> özdevimli eşik ayarı zaten devre dışı bırakılmışsa sıfırdan farklıdır.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-memory_mallopt_mmap_max"><primary>yoklayıcılar</primary><secondary>memory_mallopt_mmap_threshold</secondary></indexterm>
+    <csproto type="sonda">
+     <csname><function>memory_mallopt_mmap_threshold</function></csname>
+     <csparam><type>int</type><parameter>$arg1</parameter></csparam>
+     <csparam><type>int</type><parameter>$arg2</parameter></csparam>
+     <csparam><type>int</type><parameter>$arg3</parameter></csparam>
+    </csproto>
+    <para>
+     Bu yoklayıcı, değiştirilecek bağımsız değişken <varname>M_MMAP_MAX</varname> olduğunda, <function>memory_mallopt</function> yoklayıcısından kısa bir süre sonra tetiklenir. Bağımsız değişken <parameter>$arg1</parameter> istenen değerdir, <parameter>$arg2</parameter> bu <function>malloc</function> bağımsız değişkeninin önceki değeridir ve <parameter>$arg3</parameter> özdevimli eşik ayarı zaten devre dışı bırakılmışsa sıfırdan farklıdır.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-memory_mallopt_perturb"><primary>yoklayıcılar</primary><secondary>memory_mallopt_perturb</secondary></indexterm>
+    <csproto type="sonda">
+     <csname><function>memory_mallopt_perturb</function></csname>
+     <csparam><type>int</type><parameter>$arg1</parameter></csparam>
+     <csparam><type>int</type><parameter>$arg2</parameter></csparam>
+    </csproto>
+    <para>
+     Bu yoklayıcı, değiştirilecek bağımsız değişken <varname>M_PERTURB</varname> olduğunda, <function>memory_mallopt</function> yoklayıcısından kısa bir süre sonra tetiklenir. Bağımsız değişken <parameter>$arg1</parameter> istenen değerdir, <parameter>$arg2</parameter> bu <function>malloc</function> bağımsız değişkeninin önceki değeridir.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-memory_mallopt_arena_test"><primary>yoklayıcılar</primary><secondary>memory_mallopt_arena_test</secondary></indexterm>
+    <csproto type="sonda">
+     <csname><function>memory_mallopt_arena_test</function></csname>
+     <csparam><type>int</type><parameter>$arg1</parameter></csparam>
+     <csparam><type>int</type><parameter>$arg2</parameter></csparam>
+    </csproto>
+    <para>
+     Bu yoklayıcı, değiştirilecek bağımsız değişken <varname>M_ARENA_TEST</varname> ve istenen değer kabul edilebilir aralıkta olduğunda, <function>memory_mallopt</function> yoklayıcısından kısa bir süre sonra tetiklenir. Bağımsız değişken <parameter>$arg1</parameter> istenen değerdir, <parameter>$arg2</parameter> bu <function>malloc</function> bağımsız değişkeninin önceki değeridir.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-memory_mallopt_arena_max"><primary>yoklayıcılar</primary><secondary>memory_mallopt_arena_max</secondary></indexterm>
+    <csproto type="sonda">
+     <csname><function>memory_mallopt_arena_max</function></csname>
+     <csparam><type>int</type><parameter>$arg1</parameter></csparam>
+     <csparam><type>int</type><parameter>$arg2</parameter></csparam>
+    </csproto>
+    <para>
+     Bu yoklayıcı, değiştirilecek bağımsız değişken <varname>M_ARENA_MAX</varname> ve istenen değer kabul edilebilir aralıkta olduğunda, <function>memory_mallopt</function> yoklayıcısından kısa bir süre sonra tetiklenir. Bağımsız değişken <parameter>$arg1</parameter> istenen değerdir, <parameter>$arg2</parameter> bu <function>malloc</function> bağımsız değişkeninin önceki değeridir.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-memory_mallopt_free_dyn_thresholds"><primary>yoklayıcılar</primary><secondary>memory_mallopt_free_dyn_thresholds</secondary></indexterm>
+    <csproto type="sonda">
+     <csname><function>memory_mallopt_free_dyn_thresholds</function></csname>
+     <csparam><type>int</type><parameter>$arg1</parameter></csparam>
+     <csparam><type>int</type><parameter>$arg2</parameter></csparam>
+    </csproto>
+    <para>
+     Bu yoklayıcı, <code>free</code> işlevi özdevimli <code>brk/mmap</code> eşiklerini ayarlamaya karar verdiğinde tetiklenir. <parameter>$arg1</parameter> ve <parameter>$arg2</parameter> bağımsız değişkenleri, sırasıyla ayarlanan <code>mmap</code> ve <code>trim</code> eşikleridir.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-memory_tunable_tcache_max_bytes"><primary>yoklayıcılar</primary><secondary>memory_tunable_tcache_max_bytes</secondary></indexterm>
+    <csproto type="sonda">
+     <csname><function>memory_tunable_tcache_max_bytes</function></csname>
+     <csparam><type>int</type><parameter>$arg1</parameter></csparam>
+     <csparam><type>int</type><parameter>$arg2</parameter></csparam>
+    </csproto>
+    <para>
+     Bu yoklayıcı, <varname>glibc.malloc.tcache_max</varname> ayarlanabilirine yeni bir atama yapıldığında tetiklenir. Bağımsız değişken <parameter>$arg1</parameter> istenen değerdir, <parameter>$arg2</parameter> bu ayarlanabilirin önceki değeridir.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-memory_tunable_tcache_count"><primary>yoklayıcılar</primary><secondary>memory_tunable_tcache_count</secondary></indexterm>
+    <csproto type="sonda">
+     <csname><function>memory_tunable_tcache_count</function></csname>
+     <csparam><type>int</type><parameter>$arg1</parameter></csparam>
+     <csparam><type>int</type><parameter>$arg2</parameter></csparam>
+    </csproto>
+    <para>
+     Bu yoklayıcı, <varname>glibc.malloc.tcache_count</varname> ayarlanabilirine yeni bir atama yapıldığında tetiklenir. Bağımsız değişken <parameter>$arg1</parameter> istenen değerdir, <parameter>$arg2</parameter> bu ayarlanabilirin önceki değeridir.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-memory_tunable_tcache_unsorted_limit"><primary>yoklayıcılar</primary><secondary>memory_tunable_tcache_unsorted_limit</secondary></indexterm>
+    <csproto type="sonda">
+     <csname><function>memory_tunable_tcache_unsorted_limit</function></csname>
+     <csparam><type>int</type><parameter>$arg1</parameter></csparam>
+     <csparam><type>int</type><parameter>$arg2</parameter></csparam>
+    </csproto>
+    <para>
+     Bu yoklayıcı, <varname>glibc.malloc.tcache_unsorted_limit</varname> ayarlanabilirine yeni bir atama yapıldığında tetiklenir. Bağımsız değişken <parameter>$arg1</parameter> istenen değerdir, <parameter>$arg2</parameter> bu ayarlanabilirin önceki değeridir.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-memory_tcache_double_free"><primary>yoklayıcılar</primary><secondary>memory_tcache_double_free</secondary></indexterm>
+    <csproto type="sonda">
+     <csname><function>memory_tcache_double_free</function></csname>
+     <csparam><type>int</type><parameter>$arg1</parameter></csparam>
+     <csparam><type>int</type><parameter>$arg2</parameter></csparam>
+    </csproto>
+    <para>
+     Bu yoklayıcı <function>free</function> işlevinin, belleğin muhtemelen zaten serbest bırakıldığını ve evreye özgü önbellekte bulunduğunu belirlediğinde tetiklenir. Çifte serbest bırakmayı algılamak için kullanılan anahtarla eşleşen, tahsisli bellekte kalan rasgele yük verileri nedeniyle bu yoklayıcının tetiklenme ihtimalinin son derece düşük olduğu unutulmamalıdır. Bu yoklayıcı aslında, <code>tcache</code>'de çifte serbest bırakma arayan pahalı bir doğrusal aramanın gerçekleştiğini gösterir. <parameter>$arg1</parameter> bağımsız değişkeni, <function>free</function> işlevine aktarılan bellek konumu, <parameter>$arg2</parameter> bağımsız değişkeni ise, içinde bulunulan <code>tcache</code> kutusudur.
+    </para>
+   </csynopsis>
+  </sect1>
+  <sect1 xml:id="glibc-Non-local-Goto-Probes">
+   <title>Yerel Olmayan Goto Yoklayıcıları</title>
+   <titleabbrev><code>setjmp</code> and <code>longjmp</code> yoklayıcıları.</titleabbrev>
+   <para>
+    Bu yoklayıcılar <function>setjmp</function>, <function>sigsetjmp</function>, <function>longjmp</function> veya <function>siglongjmp</function> çağrılarını işaretlemede kullanılır.
+   </para>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-setjmp"><primary>yoklayıcılar</primary><secondary>setjmp</secondary></indexterm>
+    <csproto type="sonda">
+     <csname><function>setjmp</function></csname>
+     <csparam><ptr>void</ptr><parameter>$arg1</parameter></csparam>
+     <csparam><type>int</type><parameter>$arg2</parameter></csparam>
+     <csparam><ptr>void</ptr><parameter>$arg3</parameter></csparam>
+    </csproto>
+    <para>
+     Bu yoklayıcı, <function>setjmp</function> veya <function>sigsetjmp</function> her çağrıldığında tetiklenir. <parameter>$arg1</parameter> bağımsız değişkeni, <function>setjmp</function> veya <function>sigsetjmp</function> işlevinin ilk bağımsız değişkeni olarak aktarılan <parameter>jmp_buf</parameter> tamponuna gösterici, <parameter>$arg2</parameter> ise, <function>sigsetjmp</function>'in ikinci bağımsız değişkeni veya <function>setjmp</function> durumunda sıfırdır. <parameter>$arg3</parameter> bağımsız değişkeni <parameter>jmp_buf</parameter> tamponunda saklanacak dönüş adresine göstericidir.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-longjmp"><primary>yoklayıcılar</primary><secondary>longjmp</secondary></indexterm>
+    <csproto type="sonda">
+     <csname><function>longjmp</function></csname>
+     <csparam><ptr>void</ptr><parameter>$arg1</parameter></csparam>
+     <csparam><type>int</type><parameter>$arg2</parameter></csparam>
+     <csparam><ptr>void</ptr><parameter>$arg3</parameter></csparam>
+    </csproto>
+    <para>
+     Bu yoklayıcı, <function>longjmp</function> veya <function>siglongjmp</function> her çağrıldığında tetiklenir. <parameter>$arg1</parameter> bağımsız değişkeni, <function>longjmp</function> veya <function>siglongjmp</function> işlevinin ilk bağımsız değişkeni olarak aktarılan <parameter>jmp_buf</parameter> tamponuna gösterici, <parameter>$arg2</parameter> ise, <function>longjmp</function> veya <function>sigsetjmp</function> işlevinin ikinci bağımsız değişkeni olarak aktarılan dönüş değeridir. <parameter>$arg3</parameter> bağımsız değişkeni <function>longjmp</function> veya <function>siglongjmp</function> işlevin döndüreceği dönüş adresine göstericidir.
+    </para>
+    <para>
+     <code>longjmp</code> yoklayıcısı, yazmaçların henüz <parameter>jmp_buf</parameter> tamponundaki değerlere geri yüklenmediği bir noktada tetiklenir ve çözme işlemi, <function>longjmp</function> veya <function>siglongjmp</function> çağrıcısı dahil olmak üzere bir çağrı yığıtını gösterir.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-longjmp_target"><primary>yoklayıcılar</primary><secondary>longjmp_target</secondary></indexterm>
+    <csproto type="sonda">
+     <csname><function>longjmp_target</function></csname>
+     <csparam><ptr>void</ptr><parameter>$arg1</parameter></csparam>
+     <csparam><type>int</type><parameter>$arg2</parameter></csparam>
+     <csparam><ptr>void</ptr><parameter>$arg3</parameter></csparam>
+    </csproto>
+    <para>
+     Bu yoklayıcı, <code>longjmp</code> yoklayıcısı ile aynı bağımsız değişkenlerle ve aynı koşullar altında tetiklenir.
+    </para>
+    <para>
+     <code>longjmp_target</code> yoklayıcısı yazmaçların <parameter>jmp_buf</parameter> tamponundaki değerlere geri yüklendiği bir noktada tetiklenir ve çözme işlemi, <function>setjmp</function> veya <function>sigsetjmp</function> işlevinin çağrıcısı dahil bir çağrı yığıtını gösterir.
+    </para>
+   </csynopsis>
+  </sect1>
+ </partintro>
 </part>

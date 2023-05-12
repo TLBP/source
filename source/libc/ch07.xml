@@ -3,6 +3,1753 @@
         glibc/ch07.xml,v2.36, GFDL,LGPL, NBB, 2023
      ******************************************************************** -->
 <part xml:id="glibc-Locales">
-  <title>Yereller ve Uluslararasılaştırma</title>
-  <titleabbrev>Ülke ve dil kütüphane işlevlerinin davranışlarını etkileyebilir.</titleabbrev>
+ <title>Yereller ve Uluslararasılaştırma</title>
+ <titleabbrev>Ülke ve dil kütüphane işlevlerinin davranışlarını etkileyebilir.</titleabbrev>
+ <preliminary>
+  <para>
+   Farklı ülkeler ve kültürlerin kendi içlerinde iletişim kurma konusunda farklı uzlaşımları vardır. Bu uzlaşımlar tarih ve zaman gösterimleri gibi basit uzlaşımlardan konuşulan dil gibi karmaşık uzlaşımlara kadar değişiklik gösterir.
+  </para>
+  <para>
+   <indexterm linkend="glibc-cp"><primary>uluslararasılaştırma</primary></indexterm>
+   <indexterm linkend="glibc-cp"><primary>yereller</primary></indexterm>
+   Yazılımın <firstterm>uluslararasılaştırma</firstterm>sı denince yazılımın kullanıcının tercih ettiği uzlaşımlara uyarlanması anlaşılır. &isoc;'de, uluslararasılaştırma yerini <firstterm>yereller</firstterm>e bırakır. Her yerel her bir uzlaşımın başka bir amaca yönelik olduğu bir uzlaşımlar bütünüdür. Kullanıcı uzlaşım kümesini bir yerel belirterek (ortam değişkenleri üzerinden) seçer.
+  </para>
+  <para>
+   Bütün yazılımlar seçili yereli kendi ortamlarının bir parçası olarak miras alır. Bu yazılımlar yerel seçimine riayet edecek şekilde yazıldıklarında kullanıcı tarafından tercih edilen uzlaşımlara uyacaktır.
+  </para>
+ </preliminary>
+ <chapter xml:id="glibc-Effects-of-Locale">
+  <title>Yerelin Etkisi</title>
+  <titleabbrev>Yerel seçiminden etkilenen eylemler.</titleabbrev>
+  <para>
+   Her yerel çeşitli amaçlara yönelik uzlaşımlar içerir:
+  </para>
+  <itemizedlist>
+   <listitem>
+    <para>
+     Geçerli çok baytlı karakter dizilimleri ve bunların yorumlanması (<xref linkend="glibc-Character-Set-Handling"/>).
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     Yerel karakter kümesindeki karakterlerin sınıflandırılması; abecesel, büyük ve küçük harfler ile bunlar arasındaki dönüşümlerle ilgili uzlaşımlar (<xref linkend="glibc-Character-Handling"/>).
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     Yerel dil ve karakter kümesi için karşılaştırma dizilimi (<xref linkend="glibc-Collation-Functions"/>).
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     Sayıların ve parasal büyüklüklerin biçimlenmesi (<xref linkend="glibc-General-Numeric"/>).
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     Tarih ve zamanın biçimlenmesi (<xref linkend="glibc-Formatting-Calendar-Time"/>).
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     Çıktı ve hata iletileri için kullanılacak dil (<xref linkend="glibc-Message-Translation"/>).
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     Evet/Hayır yanıtları verilecek sorularda kullanılacak dil (<xref linkend="glibc-Yes-or-No-Questions"/>).
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     Daha karmaşık kullanıcı girdilerinde kullanılacak dil (C kütüphanesi bunun gerçekleştirilmesinde şimdilik size yardımcı olamaz).
+    </para>
+   </listitem>
+  </itemizedlist>
+  <para>
+   Belirtilen yerele uyarlanma ile ilgili bazı şeyler kütüphane yordamlarınca kendiliğinden gerçekleştirilir. Örneğin, yazılımınızda metin karşılaştırmalarının seçili yerele göre yapılması gerekliyse dizgeleri karşılaştırmak için <function>strcoll</function> veya <function>strxfrm</function> işlevi kullanılmalıdır.
+  </para>
+  <para>
+   Bazı şeyler de kütüphanenin kapsamı dışında bırakılmıştır. Örneğin, kütüphane, yazılımınızın çıktıladığı iletileri kendiliğinden çeviremez. Bunu yapmanın tek yolu çıktının kullanıcının diline çevrilmesinin az ya da çok elle yapılmasıdır. C kütüphanesi farklı dillerdeki çevirilerin çıktıya uygulanabilmesini kolaylaştıran işlevlere sahiptir.
+  </para>
+  <para>
+   Bu kısımda kullanımdaki yerelin değiştirilebilmesi için kullanılan mekanizmalardan bahsedilecektir. Yerelin bazı kütüphane işlevlerine etkilerine yeri geldikçe bu işlevlerin açıklamalarında ayrıntılı olarak yer verilmiştir.
+  </para>
+ </chapter>
+ <chapter xml:id="glibc-Choosing-Locale">
+  <title>Yerelin Seçimi</title>
+  <titleabbrev>Kullanıcı bir yereli nasıl belirtir.</titleabbrev>
+  <para>
+   Kullanıcının yerel seçimini belirtmesinin en basit yolu <varname>LANG</varname> ortam değişkeninde bunu belirtmesidir. Bu değişken tüm amaçlar için tek bir yerel belirtir. Örneğin, kullanıcı İspanya'nın çoğunluğunun standart uzlaşımlarını kapsayan <code>espana-castellano</code> isimli bir varsayımsal yereli belirtebilirdi.
+  </para>
+  <para>
+   Desteklenen yereller kullandığınız işletim sistemine bağlıdır ve bu sistemdeki yerel adlarına bağlıdır, ancak <code>C</code> veya <code>POSIX</code> adlı standart yerel her zaman mevcuttur. Bkz. <xref linkend="glibc-Locale-Names"/>
+  </para>
+  <para>
+   Sistemi öntanımlı yereli kullanmaya zorlamak için, kullanıcı <varname>LC_ALL</varname> ortam değişkenine "C" atayabilir.
+  </para>
+  <para>
+   <indexterm linkend="glibc-cp"><primary>yerellerin birleştirilmesi</primary></indexterm>
+   Ayrıca, bir kullanıcı farklı amaçlar için farklı yereller belirtebilme (çok sayıda yerelin bir karışımı olarak) seçeneğine de sahiptir. Bkz. <xref linkend="glibc-Locale-Categories"/>
+  </para>
+  <para>
+   Örneğin, kullanıcı İspanya'da çalışan, para birimi olarak dolar kullanan ve İspanyolca konuşan bir Amerikalı olabilirdi. Bu kullanıcı paraların biçimlenmesi için <code>usa-english</code> yerelini diğer tüm amaçlar için <code>espana-castellano</code> yerelini belirtebilirdi.
+  </para>
+  <para>
+   <code>espana-castellano</code> ve <code>usa-english</code> yerellerinin her ikisi de tüm yereller gibi her amaca uygun uzlaşımları içerir. Bu bakımdan, kullanıcı kendi amaçlarına uygun olan yerelleri karışık olarak seçebilir.
+  </para>
+ </chapter>
+ <chapter xml:id="glibc-Locale-Categories">
+  <title>Yerellerin Etkilediği Eylemlerin Sınıflandırılması</title>
+  <titleabbrev>Bir yereli seçme amaçları.</titleabbrev>
+  <para>
+   <indexterm linkend="glibc-cp"><primary>yerel sınıfları</primary></indexterm>
+   <indexterm linkend="glibc-pg"><primary>locale.h</primary></indexterm>
+   Yereller, kullanım amaçlarına göre <wordasword>sınıflar</wordasword> halinde gruplanmıştır. Böylece kullanıcı veya yazılım yereli bu sınıflara bağlı olarak seçebilir. Aşağıda bu sınıflar listelenmiştir. Her sınıf ismi kullanıcının değer atayabileceği bir ortam değişkeni ismi ve <function>setlocale</function> işlevinde makro ismi olarak kullanılabilir.
+  </para>
+  <para>
+   Ortam değişkeninin içeriği (veya <function>setlocale</function> işlevinin ikinci bağımsız değişkenindeki dizge) geçerli bir yerel ad olmalıdır. Bkz. <xref linkend="glibc-Locale-Names"/>
+  </para>
+  <csynopsis>
+   <indexterm linkend="glibc-vr" xml:id="glibc-vr-LC_COLLATE"><primary>LC_COLLATE</primary></indexterm>
+   <csproto type="makro">
+    <csname><function>LC_COLLATE</function></csname>
+   </csproto>
+   <header>locale.h;</header>
+   <para>
+    Bu sınıf dizgelerin karşılaştırılmasında kullanılan uzlaşımları içerir. <function>strcoll</function> ve <function>strxfrm</function> işlevleri bu amaçla kullanılır; bkz. <xref linkend="glibc-Collation-Functions"/>.
+   </para>
+  </csynopsis>
+  <csynopsis>
+   <indexterm linkend="glibc-vr" xml:id="glibc-vr-LC_CTYPE"><primary>LC_CTYPE</primary></indexterm>
+   <csproto type="makro">
+    <csname><function>LC_CTYPE</function></csname>
+   </csproto>
+   <header>locale.h;</header>
+   <para>
+    Bu sınıf çok baytlı ve geniş karakterlerin sınıflandırılması ve dönüşümleri ile ilgili uzlaşımları içerir; bkz. <xref linkend="glibc-Character-Handling"/> ve <xref linkend="glibc-Character-Set-Handling"/>.
+   </para>
+  </csynopsis>
+  <csynopsis>
+   <indexterm linkend="glibc-vr" xml:id="glibc-vr-LC_MONETARY"><primary>LC_MONETARY</primary></indexterm>
+   <csproto type="makro">
+    <csname><function>LC_MONETARY</function></csname>
+   </csproto>
+   <header>locale.h;</header>
+   <para>
+    Bu sınıf parasal gösterimlerin biçimlenmesi ile ilgili uzlaşımı içerir; bkz. <xref linkend="glibc-General-Numeric"/>.
+   </para>
+  </csynopsis>
+  <csynopsis>
+   <indexterm linkend="glibc-vr" xml:id="glibc-vr-LC_NUMERIC"><primary>LC_NUMERIC</primary></indexterm>
+   <csproto type="makro">
+    <csname><function>LC_NUMERIC</function></csname>
+   </csproto>
+   <header>locale.h;</header>
+   <para>
+    Bu sınıf parasal değil, sayısal gösterimlerin biçimlenmesi ile ilgili uzlaşımı içerir; bkz. <xref linkend="glibc-General-Numeric"/>.
+   </para>
+  </csynopsis>
+  <csynopsis>
+   <indexterm linkend="glibc-vr" xml:id="glibc-vr-LC_TIME"><primary>LC_TIME</primary></indexterm>
+   <csproto type="makro">
+    <csname><function>LC_TIME</function></csname>
+   </csproto>
+   <header>locale.h;</header>
+   <para>
+    Bu sınıf tarih ve zaman gösterimlerinin biçimlenmesi ile ilgili uzlaşımı içerir; bkz. <xref linkend="glibc-Formatting-Calendar-Time"/>.
+   </para>
+  </csynopsis>
+  <csynopsis>
+   <indexterm linkend="glibc-vr" xml:id="glibc-vr-LC_MESSAGES"><primary>LC_MESSAGES</primary></indexterm>
+   <csproto type="makro">
+    <csname><function>LC_MESSAGES</function></csname>
+   </csproto>
+   <header>locale.h;</header>
+   <para>
+    Bu sınıf, kullanıcı arayüzünde ileti çevirisi için kullanılan dilin seçiminde kullanılır. Bkz. <xref linkend="glibc-The-Uniforum-approach"/> ve <xref linkend="glibc-Message-catalogs-a-la-X-Open"/>. Ayrıca, olumlu ve olumsuz yanıtlar için düzenli ifadeler içerir.
+   </para>
+  </csynopsis>
+  <csynopsis>
+   <indexterm linkend="glibc-vr" xml:id="glibc-vr-LC_ALL"><primary>LC_ALL</primary></indexterm>
+   <csproto type="makro">
+    <csname><function>LC_ALL</function></csname>
+   </csproto>
+   <header>locale.h;</header>
+   <para>
+    Bu bir yerel sınıfı değildir. Yalnızca <function>setlocale</function> işlevinde tüm uzlaşımlar için tek bir yerelin belirtilmesi amacıyla kullanılabilen bir makrodur. Bu makroya atanan değer, tüm <code>LC_*</code> ortam değişkenleri ile <varname>LANG</varname> ortam değişkenine atanmış olur.
+   </para>
+  </csynopsis>
+  <csynopsis>
+   <indexterm linkend="glibc-vr" xml:id="glibc-vr-LANG"><primary>LANG</primary></indexterm>
+   <csproto type="ortam">
+    <csname><function>LANG</function></csname>
+   </csproto>
+   <para>
+    Bu ortam değişkeni tanımlıysa, yukarıda belirtilen ortam değişkenleri ile sonradan değiştirilmedikçe tüm uzlaşımlar için kullanılacak yereli belirtir.
+   </para>
+  </csynopsis>
+  <para>
+   İleti çevirileri ile ilgili işlevler geliştirilirken yukarıdaki değişkenlerce sağlanan işlevselliğin yetersizliği hissedildi. Örneğin, birden fazla yerel ismi belirtilebilmeliydi. İngilizce’yi Almanca’dan daha iyi konuşan bir İsviçreli ve yazılımların öntanımlı olarak iletileri İngilizce çıktıladığını varsayalım. İleti çıktılama dili olarak, ilk seçim İsviçrece, ikinci Almanca, bunların başarısızlığı halinde İngilizce belirtilebilmesi mümkün olmalıydı. Bu <varname>LANGUAGE</varname> değişkeni ile mümkündür. Bu GNU oluşumu ile ilgili daha fazla bilgi edinmek için bkz. <xref linkend="glibc-Using-gettextized-software"/>.
+  </para>
+ </chapter>
+ <chapter xml:id="glibc-Setting-the-Locale">
+  <title>Yazılımlarda Yerelin Belirtilmesi</title>
+  <titleabbrev>Bir yazılım kütüphane işlevlerinde kullanılacak yereli nasıl belirtir.</titleabbrev>
+  <para>
+   Bir C yazılımı yerele ilişkin ortam değişkenlerini başlatıldığında miras alır. Bu işlem kendiliğinden gerçekleşir. Ancak bu değişkenler kütüphane işlevlerinde kullanılan yereli belirtmez. Çünkü &isoc; tüm yazılımların öntanımlı olarak standart <code>C</code> yereli ile başlatılması gerektiğinden bahseder. Ortam tarafından belirtilen yerelleri kullanmak için şöyle bir <function>setlocale</function> çağrısının yapılması gerekir:
+  </para>
+  <literallayout class="monospaced">setlocale (LC_ALL, "");
+</literallayout>
+  <para>
+   Bu çağrı ilgili ortam değişkenleri ile kullanıcı tarafından belirtilen uzlaşımların kütüphane tarafından gözönüne alınmasını sağlar.
+  </para>
+  <para>
+   <function>setlocale</function> işlevi belli bir yerel sınıfını ya da genel amaçlı olarak belli bir yereli belirtmek için de kullanılabilir.
+  </para>
+  <para>
+   Bu bölümde bahsedilen tüm simgeler &locale.h; başlık dosyasında tanımlanmıştır.
+  </para>
+  <csynopsis>
+   <indexterm linkend="glibc-fn" xml:id="glibc-fn-setlocale"><primary>setlocale</primary></indexterm>
+   <indexterm linkend="glibc-cp" xml:id="glibc-cp-setlocale"><primary>yereller</primary><secondary>değiştirilmesi</secondary></indexterm>
+   <csproto type="işlev">
+    <csname><ptr>char</ptr><function>setlocale</function></csname>
+    <csparam><type>int</type><parameter>category</parameter></csparam>
+    <csparam><ptr>const&#160;char</ptr><parameter>locale</parameter></csparam>
+   </csproto>
+   <header>&locale.h;</header>
+   <conceptlist>
+    <concept>&mtunsafe; &const;<code linkend="glibc-safety-identifier">:locale</code> &env;</concept>
+    <concept>&asunsafe; &init; &lock; &heap; &corrupt;</concept>
+    <concept>&acunsafe; &init; &corrupt; &lock; &mem; &fd;</concept>
+   </conceptlist>
+   <para>
+    <code>setlocale</code> işlevi <parameter>locale</parameter> ile belirtilen yereli <parameter>category</parameter> sınıfı için geçerli yerel haline getirir.
+   </para>
+   <para>
+    <parameter>category</parameter> için <varname>LC_ALL</varname> değeri, tüm uzlaşımlar için tek bir yerelin belirtilmesini sağlar. Diğer <parameter>category</parameter> değerleri tek bir amaca uygun uzlaşımı belirtir (bkz. <xref linkend="glibc-Locale-Categories"/>).
+   </para>
+   <para>
+    Bu işlev ayrıca, <parameter>locale</parameter> bağımsız değişkeninde boş gösterici aktarılarak belirtilen yerel sınıfına atanmış değeri öğrenmek için de kullanılabilir. Bu durumda <code>setlocale</code> işlevi, <parameter>category</parameter> sınıfı için seçilmiş olan yerelin ismini içeren bir dizge döndürür.
+   </para>
+   <para>
+    <code>setlocale</code> işlevi ile döndürülen bu dizge işlevin sonraki çağrıları ile değiştirilen yerel sınıfının bu ilk duruma getirilmesinde kullanılmak üzere saklanabilir (<xref linkend="glibc-Copying-Strings-and-Arrays"/>). (Standart, kütüphanede kendiliğinden bir <code>setlocale</code> çağrısının asla yapılmayacağını garanti eder.)
+   </para>
+   <para>
+    <code>setlocale</code> ile döndürülen dizgede değişiklik yapılmamalıdır. İlk duruma getirmek için yapılacak çağrıda kullanılacak dizge işlev tarafından döndürülen dizgenin aynısı olmak zorundadır. Ayrıca bu işlemi yaparken yerel dizgesinin alındığı sınıfa atanmasına da dikkat edilmelidir.
+   </para>
+   <para>
+    Bu sorgu <varname>LC_ALL</varname> makrosu için yapılırsa, dönen değer, tüm sınıflar için seçilmiş yerellerin birleşimi olacaktır. Bu durumda dönen değer tek bir yerel ismi içermeyebilir. Aslında değerin nasıl görüneceği ile ilgili bir önkabul yoktur. Ancak işlevin sonraki çağrısında <varname>LC_ALL</varname> makrosu için aynı değer aktarılırsa, aynı yerel birleşimi elde edilir.
+   </para>
+   <para>
+    Dönen dizgenin sonradan kullanmak üzere aynı kalması isteniyorsa dizgenin bir kopyası saklanmalıdır. Dönen göstericinin daima geçerli kalacağı garanti edilmemiştir.
+   </para>
+   <para>
+    <parameter>locale</parameter> boş gösterici değilse, <code>setlocale</code> tarafından döndürülen dizge sınıfa atanan yeni yerele ilişkin olacaktır.
+   </para>
+   <para>
+    <parameter>locale</parameter> bağımsız değişkeninde boş dizge aktarılırsa, ilgili ortam değişkeni okunur ve değeri <parameter>category</parameter> için yereli seçmekte kullanılır.
+   </para>
+   <para>
+    <parameter>locale</parameter> bağımsız değişkeninde boş olmayan bir dizge aktarıldığında, mümkünse yerel için bu değer kullanılır.
+   </para>
+   <para>
+    Etkin yerel adı (<parameter>locale</parameter> değeri ya da <parameter>locale</parameter> boş dizgeyse sürecin ortamından elde edilen ad) geçerli bir yerel adı olmalıdır. Bkz. <xref linkend="glibc-Locale-Names"/>
+   </para>
+   <para>
+    Geçersiz bir yerel ismi belirtilirse, işlev boş gösterici döndürür ve geçerli yereli değiştirmez.
+   </para>
+  </csynopsis>
+  <example>
+   <para>
+    Bu örnekte <function>setlocale</function> işlevinin başka bir yereli geçici olarak etkin kılmak için kullanılması gösterilmiştir:
+   </para>
+   <screen>#include &lt;stddef.h&gt;
+#include &lt;locale.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+
+void
+with_other_locale (char *new_locale,
+                   void (*subroutine) (int),
+                   int argument)
+{
+  char *old_locale, *saved_locale;
+
+  /* <replaceable>Geçerli yereli al.</replaceable>  */
+  old_locale = setlocale (LC_ALL, NULL);
+
+  /* <replaceable>setlocale çağrılarıyla bozulmadan önce ismi kaydet.</replaceable> */
+  saved_locale = strdup (old_locale);
+  if (saved_locale == NULL)
+    fatal ("Bellek yetersiz");
+
+  /* <replaceable>Yereli değiştir ve onunla ilgili işlemleri yap.</replaceable> */
+  setlocale (LC_ALL, new_locale);
+  (*subroutine) (argument);
+
+  /* <replaceable>Yereli eski değerine getir.</replaceable> */
+  setlocale (LC_ALL, saved_locale);
+  free (saved_locale);
+}
+</screen>
+  </example>
+  <note><title>Taşınabilirlik Bilgisi</title>
+   <para>
+    Bazı C sistemleri ek yerel sınıfları tanımlayabilir; kütüphanenin ileri sürümleri bunları içerecektir. Taşınabilirlik için, <code>LC_</code> ile başlayan bu ek simgelerin &locale.h; başlık dosyasında tanımlanabileceği varsayılmalıdır.
+   </para>
+  </note>
+ </chapter>
+ <chapter xml:id="glibc-Standard-Locales">
+  <title>Standart Yereller</title>
+  <titleabbrev>Tüm sistemlerde kullanılabilen yerel isimleri.</titleabbrev>
+  <para>
+   Tüm işletim sistemlerinde bulunabilen yalnızca üç "standart" yerel vardır:
+  </para>
+  <variablelist>
+   <varlistentry>
+    <term><code>&quot;C&quot;</code></term>
+    <listitem>
+     <para>
+      Bu standart C yerelidir. Öznitelikleri ve davranışları &isoc; standardı ile belirlenmiştir. Bir yazılım çalıştırıldığında, kendi içinde öntanımlı olarak bu yereli kullanır.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry>
+    <term><code>&quot;POSIX&quot;</code></term>
+    <listitem>
+     <para>
+      Bu standart POSIX yerelidir.  Şimdilik standart C yerelinin takma adıdır.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry>
+    <term><code>&quot;&quot;</code></term>
+    <listitem>
+     <para>
+      Boş isim yerel seçiminin ortam değişkenlerine göre yapılacağını belirtir. Bkz. <xref linkend="glibc-Locale-Categories"/>.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+  <para>
+   İsimli yerellerin tanımlanması ve kurulması normalde sistem yöneticisinin (veya &glibc;ni kuran kişinin) işidir. Bundan başka her kullanıcının kendi yerellerini belirtmesi de mümkündür. Tüm bunlar araçları tanıtırken daha sonra açıklanacaktır.
+  </para>
+  <para>
+   Bir yazılım <command>C</command> yerelinden farklı birşeylere ihtiyaç duyarsa, standart olabileceği tartışmalı bir isim yerine, taşınabilirlik açısından kullanıcının ortam değişkenleri ile belirttiği yerelin kullanılması daha iyidir. Farklı makinelerde farklı yerel isimlerinin kurulu olabileceği unutulmamalıdır.
+  </para>
+ </chapter>
+ <chapter xml:id="glibc-Locale-Names">
+  <title>Yerel Adları</title>
+  <titleabbrev>Sisteme özgü yerel adlarının biçemi.</titleabbrev>
+  <para>
+   <indexterm linkend="glibc-pg"><primary><code>locale</code> komutu</primary></indexterm>
+   Sistem tarafından desteklenen yereller şu komutla listelenebilir:
+  </para>
+  <screen>$ locale -a</screen>
+  <note><title>Taşınabilirlik Bilgisi</title>
+   <para>
+    '<code>C</code>' ve '<code>POSIX</code>' standart yerel adlarının kayda değer istisnası dışında, yerel adları sisteme özeldir.
+   </para>
+  </note>
+  <para>
+   Çoğu yerel adı XPG sözdizimine uygun olarak dört parçadan oluşur:
+  </para>
+  <literallayout class="monospaced"><code><replaceable>dil</replaceable>[_<replaceable>ülke</replaceable>[.<replaceable>karakter-kümesi</replaceable>]][@<replaceable>değiştirici</replaceable>]</code>
+</literallayout>
+  <para>
+   İlki dışında, hiçbiri belirtilmeyebilir. Tamamı için tanımlı bir yerel bulunamazsa, daha azı için arama yapılır. Arama sırasında parçalar aşağıdaki sırayla çıkarılır:
+  </para>
+  <literallayout>1. <replaceable>karakter-kümesi</replaceable>
+2. normalleştirilmiş <replaceable>karakter-kümesi</replaceable>
+3. <replaceable>ülke</replaceable>
+4. <replaceable>değiştirici</replaceable>
+</literallayout>
+  <para>
+   Örneğin, '<code>de_AT.iso885915@euro</code>' yereli, Avusturya'da yaşayan, karakter kümesi olarak ISO-8859-15 (Latin-9), para birimi olarak Euro'yu kullanan ve Almanca konuşan biri için yerel belirtir.
+  </para>
+  <para>
+   XPG sözdizimine uygun yerel adlarına ek olarak, sistemler ‘<code>german</code>’ gibi takma adlar sağlayabilir. Her iki yerel sınıfının da '<code>/</code>' eğik çizgi karakterini içermemesi gerekir.
+  </para>
+  <para>
+   '<code>/</code>' ile başlayan yerel adları, yapılanırılmış yerel dizinlerine göreli yollar olarak ele alınır. Bkz. <varname>LOCPATH</varname>. Belirtilen yol '<code>..</code>' bileşenini içermemelidir, aksi takdirde <function>setlocale</function> başarısız olur.
+  </para>
+  <note><title>Taşınabilirlik Bilgisi</title>
+   <para>
+    POSIX, bir yerel adının eğik çizgi '/' ile başlaması durumunda mutlak yol olarak çözümlenmesini önerir. Bununla birlikte, &glibc;, bu yerel adını <varname>LOCPATH</varname> ortam değişkeninde listelenen dizinler (veya <varname>LOCPATH</varname> atanmamışsa öntanımlı <filename>locale</filename> dizini) altında göreli bir yol olarak ele alır.
+   </para>
+  </note>
+  <para>
+   Gerçeklenim tarafından tanımlanan sınırdan daha uzun yerel adları geçersizdir ve <function>setlocale</function> işlevinin başarısız olmasına neden olur.
+  </para>
+  <para>
+   Özel bir durum olarak, <varname>LC_ALL</varname> ile kullanılan yerel adları, farklı sınıflar için farklı yerellerin belirtildiği birkaç yereli birleştirebilir.
+  </para>
+  <example>
+   <para>
+    Örneğin, ISO A4 kağıt biçimiyle bir ABD yerel ayarı kullanılmak istenirse, <varname>LANG</varname> için "en_US.UTF-8" ve <varname>LC_PAPER</varname> için "de_DE.UTF-8" belirtilebilir. Bu durumda, <varname>LC_ALL</varname> makrosu
+   </para>
+   <literallayout class="monospaced">LC_CTYPE=en_US.UTF-8;LC_TIME=en_US.UTF-8;LC_PAPER=de_DE.UTF-8;…
+</literallayout>
+   <para>
+    birleşik yereline ek olarak burada gösterilmeyen diğer yerel sınıflarını içerirdi.
+   </para>
+  </example>
+  <csynopsis>
+   <indexterm linkend="glibc-vr" xml:id="glibc-vr-LOCPATH"><primary>LOCPATH</primary></indexterm>
+   <csproto type="ortam">
+    <csname><function>LOCPATH</function></csname>
+   </csproto>
+   <para>
+    Yerel verilerini bulmak için kullanılan yol, <code>LOCPATH</code> ortam değişkenine atanabilir. Bu değişken, iki nokta üst üste '<code>:</code>' ile ayrılmış olarak yerele ilişkin tanımların aranacağı dizinleri listeler.
+   </para>
+   <para>
+    Yerel verileri bulmak için kullanılan öntanımlı yol sisteme özeldir. <code>LOCPATH</code> yokluğunda kullanılan (öntanımlı) dizin
+   </para>
+   <literallayout class="monospaced"><filename>/usr/share/locale</filename>
+</literallayout>
+   <para>
+    olup, <code>LOCPATH</code> değeri, ayrıcalıklı uygulamalar tarafından güvenlik nedenleriyle göz ardı edilir ve yalnızca öntanımlı dizin kullanılır.
+   </para>
+  </csynopsis>
+ </chapter>
+ <chapter xml:id="glibc-Locale-Information">
+  <title>Yerel Bilgisine Erişim</title>
+  <titleabbrev>Yerelle ilgili bilgilere nasıl erişilir.</titleabbrev>
+  <preliminary>
+    <para>
+    Yerel bilgisine erişmenin çeşitli yolları vardır. En basiti C kütüphanesinin kendisinden istemektir. Kütüphanedeki çeşitli işlevlerle yerel bilgisine doğrudan erişilebilir ve o an seçilmiş olan yerelle sağlanan bilgiler kullanılabilir. Burada yerel modelinin normalde nasıl anlamlandırıldığından bahsedilecektir.
+   </para>
+   <para>
+    Bir örnek olarak tarih ve zaman gösterimlerini biçimlendiren (<xref linkend="glibc-Formatting-Calendar-Time"/>) <function>strftime</function> işlevi ele alınmıştır. <varname>LC_TIME</varname> sınıfının standart içeriğinin bir kısmı ay isimlerinden oluşur. Yazılımcı her ay ismi için çevrilmek üzere bir ay isimleri listesi yapmak yerine bu işi zaten yapan <function>strftime</function> işlevini kullanabilir. Biçem dizgesindeki <code>%A</code>, <varname>LC_TIME</varname> ile seçilen yerele özgü gün ismi ile değiştirilir. Bu basit bir örnekti, bu tür işleri yapan başka işlevler de benzer bir yöntem kullanır.
+   </para>
+   <para>
+    Fakat çoğunlukla, bir görevi kendiliğinden yerine getirecek bir işlev bulunmaz. Bu gibi durumlarda yerel bilgisine doğrudan erişebilmek önem kazanır. Bunun için C kütüphanesi iki işlev içerir: <function>localeconv</function> ve <function>nl_langinfo</function>.  İlki &isoc; standardının bir parçasıdır ve taşınabilirdir, ancak kafa karıştırıcı bir arayüzü vardır. İkincisi ise Unix arayüzünün bir parçasıdır ve Unix standardına uyumlu sistemlerde taşınabilirdir.
+   </para>
+  </preliminary>
+  <sect1 xml:id="glibc-The-Lame-Way-to-Locale-Data" userlevel="notoc">
+   <?dbhtml stop-chunking?>
+   <title><code>localeconv</code>: Taşınabilirdir ama …</title>
+   <titleabbrev>Yerel verisine giden zorlu yol: &isoc;'nin <code>localeconv</code> işlevi.</titleabbrev>
+   <para>
+    &isoc; topluluğu <function>localeconv</function> işlevini <function>setlocale</function> işlevi ile birlikte anar. <function>localeconv</function> işlevi, zayıf tasarımın ana parçasıdır. Genişletilebilir olmaması ve <varname>LC_MONETARY</varname> ve <varname>LC_NUMERIC</varname> sınıfları ile ilgili bilgileri sağlamanın dışında herhangi bir bilginin gerekmediği durumlarda kullanımı tercih edilir. Buna rağmen, çok taşınabilir olduğundan özellikle sadece bu durumda  kullanılmalıdır. <function>strfmon</function> işlevi seçili yerele göre bu bilgiyi parasal gösterimleri biçimlemekte kullanır.
+    <indexterm linkend="glibc-pg"><primary>locale.h</primary></indexterm>
+    <indexterm linkend="glibc-cp"><primary>parasal değerlerin biçimlenmesi</primary></indexterm>
+    <indexterm linkend="glibc-cp"><primary>sayısal değerlerin biçimlenmesi</primary></indexterm>
+   </para>
+   <csynopsis>
+    <indexterm linkend="glibc-fn" xml:id="glibc-fn-localeconv"><primary>localeconv</primary></indexterm>
+    <csproto type="işlev">
+     <csname><ptr>struct&#160;lconv</ptr><function>localeconv</function></csname>
+     <csparam><void/></csparam>
+    </csproto>
+    <header>&locale.h;</header>
+    <conceptlist>
+     <concept>&mtunsafe; &race;<code linkend="glibc-safety-identifier">:localeconv</code> &locale;</concept>
+     <concept>&asunsafe;</concept>
+     <concept>&acsafe;</concept>
+    </conceptlist>
+    <para>
+     <code>localeconv</code> işlevi sayısal ve parasal değerlerin o anki yerele göre biçimlenmesi için gereken bilgiyi içeren elemanlardan oluşan bir yapının göstericisi ile döner.
+    </para>
+    <para>
+     Yapıda ve yapının içeriğinde değişiklik yapılmamalıdır. Yapı <code>localeconv</code> veya <function>setlocale</function> işlevlerinin sonraki çağrıları ile tekrar düzeltilir. Fakat bunlar dışında kütüphanede bu yapının içeriğini düzeltecek başka işlev yoktur.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-tp" xml:id="glibc-tp-lconv"><primary sortas="lconv">struct&#160;lconv</primary></indexterm>
+    <csproto type="veri türü">
+     <csname><type>struct</type><function>lconv</function></csname>
+    </csproto>
+    <header>&locale.h;</header>
+    <para>
+     <code>localeconv</code> işlevinin dönüş değerinin türüdür.  Elemanları bundan sonraki alt bölümlerde açıklanmıştır.
+    </para>
+   </csynopsis>
+   <para>
+    <type>struct&#160;lconv</type> yapısının <type>char</type> türünde bir elemanı varsa ve değeri <varname>CHAR_MAX</varname> ise, geçerli yerel bu bağımsız değişken ile ilgili bir değer içermiyor demektir.
+   </para>
+   <sect2 xml:id="glibc-General-Numeric">
+    <title>Genel Sayısal Biçimleme Elemanları</title>
+    <titleabbrev>Sayıları ve para miktarlarını biçimleyen elemanlar.</titleabbrev>
+    <para>
+     Aşağıdakiler <type>struct&#160;lconv</type> yapısının standart elemanlarıdır; başkaları da olabilir:
+    </para>
+    <glosslist>
+     <glossentry>
+      <glossterm>
+       <indexterm linkend="glibc-cp" xml:id="glibc-cp-decimal_point"><primary>yereller</primary><secondary>ondalık ayraç</secondary></indexterm>
+       <glossterm>
+       <type>char&#160;*</type><structfield>decimal_point</structfield>
+      </glossterm><glossterm>
+       <type>char&#160;*</type><structfield>mon_decimal_point</structfield>
+      </glossterm></glossterm>
+      <glossdef>
+       <para>
+        Bunlar sayısal ve parasal gösterimler için ondalık ayraçlardır. <code>C</code> yerelinde <structfield>decimal_point</structfield> değeri <code>&quot;.&quot;</code> iken <structfield>mon_decimal_point</structfield> değeri <code>&quot;&quot;</code>, yani boş dizgedir.
+       </para>
+      </glossdef>
+     </glossentry>
+     <glossentry>
+      <glossterm>
+       <indexterm linkend="glibc-cp" xml:id="glibc-cp-thousands_sep"><primary>yereller</primary><secondary>binlik ayraç</secondary></indexterm>
+       <glossterm>
+       <type>char&#160;*</type><structfield>thousands_sep</structfield>
+      </glossterm><glossterm>
+       <type>char&#160;*</type><structfield>mon_thousands_sep</structfield>
+      </glossterm></glossterm>
+      <glossdef>
+       <para>
+        Bunlar sayısal ve parasal gösterimlerde ondalık ayracın solundaki sayının genellikle binlik gruplara ayrılmasında kullanılan ayraçlardır. <code>C</code>  yerelinde her iki üyeninde değeri <code>&quot;&quot;</code>, yani boş dizgedir.
+       </para>
+      </glossdef>
+     </glossentry>
+     <glossentry>
+      <glossterm>
+       <indexterm linkend="glibc-cp" xml:id="glibc-cp-grouping"><primary>yereller</primary><secondary>rakamların gruplanması</secondary></indexterm>
+       <glossterm>
+       <type>char&#160;*</type><structfield>grouping</structfield>
+      </glossterm><glossterm>
+       <type>char&#160;*</type><structfield>mon_grouping</structfield>
+      </glossterm></glossterm>
+      <glossdef>
+       <para>
+        Bunlar sayısal ve parasal gösterimlerde ondalık ayracın solundaki sayının kaç rakamlık gruplara ayrılacağını belirtmekte kullanılır. <structfield>grouping</structfield> sayısal, <structfield>mon_grouping</structfield> ise parasal gösterimlere uygulanır.
+       </para>
+       <para>
+        Bu dizgelerin içindeki her sayı <type>char</type> türünde bir tamsayı değer olarak yorumlanır. Dizgenin içindeki soldan sağa her sayı grupların (ondalık ayraçtan itibaren sağdan sola) rakam sayısını verir. Son sayı <code>0</code> ise kalan gruplar önceki sayıya göre gruplanır; <varname>CHAR_MAX</varname> ise kalan sayıya gruplama uygulanmaz, başka bir deyişle kalan sayı ayraçsız olabildiğince geniş bir grup olur.
+       </para>
+       <para>
+        Örneğin, <structfield>grouping</structfield> için <code>&quot;\04\03\02&quot;</code> değeri belirtilmişse, <code>123456787654321</code> sayısı <code>12</code>, <code>34</code>, <code>56</code>, <code>78</code>, <code>765</code>, <code>4321</code> şeklinde gruplanır.  Yani sondaki 4'lü bir grup, ondan önceki 3'lü bir grup, ondan öncekiler de 2'li gruplar halinde ayrılır. Gruplama ayracı olarak <code>,</code> belirilmişse sayı <code>12,34,56,78,765,4321</code> olarak basılır.
+       </para>
+       <para>
+        <code>&quot;\03&quot;</code> değeri tekrarlanan 3'lü gruplarla gruplama yapılacağını belirtir. Normalde ABD'de böyle bir gruplama kullanılır.
+       </para>
+       <para>
+        Standart <code>C</code> yerelinde <structfield>grouping</structfield> ve <structfield>mon_grouping</structfield> için her ikisine de gruplama yapılmayacağı anlamına gelen <code>&quot;&quot;</code> değeri belirtilmiştir.
+       </para>
+      </glossdef>
+     </glossentry>
+     <glossentry>
+      <glossterm>
+       <indexterm linkend="glibc-cp" xml:id="glibc-cp-frac_digits"><primary>yereller</primary><secondary>parasal ondalık hane sayısı</secondary></indexterm>
+       <glossterm>
+       <type>char</type> <structfield>int_frac_digits</structfield>
+      </glossterm><glossterm>
+       <type>char</type> <structfield>frac_digits</structfield>
+      </glossterm></glossterm>
+      <glossdef>
+       <para>
+        Bunlar parasal gösterimin sırayla uluslararası ve yerel biçimlendirmesinde ondalık ayracın sağında kaç rakamın gösterileceğini belirtmekte kullanılır. (Çoğunlukla ikisine de aynı değer atanır.)
+       </para>
+       <para>
+        Standart <code>C</code> yerelinde, her iki üye de "belirtilmemiş" anlamına gelen <varname>CHAR_MAX</varname> değerini içerir. &isoc; standardı bu değere rastlandığında ne yapılacağını belirlememiştir; ondalık ayraçtan sonra hiçbir rakam gösterilmeyeceği şeklinde yorumlanması önerilir. (<code>C</code> yerelinin <structfield>mon_decimal_point</structfield> değeri olarak boş dizge belirttiği göz önüne alınırsa bir rakamın gösterilmesi kafa karıştırıcı olurdu!)
+       </para>
+      </glossdef>
+     </glossentry>
+    </glosslist>
+   </sect2>
+   <sect2 xml:id="glibc-Currency-Symbol">
+    <title>Para Simgesinin Basılması</title>
+    <titleabbrev>Para birimi simgesi (örn, ₺) nasıl basılacak.</titleabbrev>
+    <para>
+     <indexterm linkend="glibc-cp"><primary>para simgesi</primary></indexterm>
+     <type>struct&#160;lconv</type> yapısının para simgesi ile ilgili üyeleri para birimini tanımlayan simgeyi basmak için kullanılır. Türk Lirası için yerel simge ₺, uluslararası simge TRY'dir.
+    </para>
+    <para>
+     Her ülkenin iki standart para birimi simgesi vardır. <wordasword>Yerel para simgesi</wordasword> ülke içinde, <wordasword>uluslararası para simgesi</wordasword> ise uluslararası kullanımda yerel simge kullanımının sorun yaratmaması için kullanılan para simgesidir.
+    </para>
+    <para>
+     Örneğin, birçok ülke kendi para birimi olarak dolar kullanır. Yerel kullanımda sorun çıkarmayan bu simge, uluslararası kullanımda Amerikan dolarından ve diğer dolarlardan ayrılması gerekir. Kanada ve Avustralya için böyledir.
+    </para>
+    <glosslist>
+     <glossentry>
+      <glossterm>
+       <indexterm linkend="glibc-cp" xml:id="glibc-cp-currency_symbol"><primary>yereller</primary><secondary>para birimi simgesi</secondary></indexterm>
+       <type>char&#160;*</type><structfield>currency_symbol</structfield>
+      </glossterm>
+      <glossdef>
+       <para>
+        Yerelin yerel para birimi simgesidir.
+       </para>
+       <para>
+        Standart <code>C</code> yerelinde, bu üyenin değeri "belirtilmemiş" anlamına gelen <command>&quot;&quot;</command> boş dizgesidir. &isoc; standardı bu değerin nasıl yorumlanacağını belirlememiştir; aksi belirtilmedikçe boş dizge olarak yorumlanması önerilir.
+       </para>
+      </glossdef>
+     </glossentry>
+     <glossentry>
+      <glossterm>
+       <indexterm linkend="glibc-cp" xml:id="glibc-cp-int_curr_symbol"><primary>yereller</primary><secondary>uluslararası para birimi simgesi</secondary></indexterm>
+       <type>char&#160;*</type><structfield>int_curr_symbol</structfield>
+      </glossterm>
+      <glossdef>
+       <para>
+        Yerelin uluslararası para birimi simgesidir.
+       </para>
+       <para>
+        <code>int_curr_symbol</code> değeri normalde uluslarası standart <citation>ISO 4217 Codes for the Representation of Currency and Funds</citation> (Para ve Fonların gösterimi için ISO 4217 kodları) tarafından belirlenen üç harfli bir kısaltmadır  ve bu kısaltmadan sonra tek karakterlik bir ayraç gelir.
+       </para>
+       <para>
+        Standart <code>C</code> yerelinde, bu üyenin değeri "belirtilmemiş" anlamına gelen <command>&quot;&quot;</command> boş dizgesidir. Boş dizgenin bu değişken tarafından gösterilen diğer herhangi bir dizge gibi yazdırılması önerilir.
+       </para>
+      </glossdef>
+     </glossentry>
+     <glossentry>
+      <glossterm>
+       <indexterm linkend="glibc-cp" xml:id="glibc-cp-p_cs_precedes"><primary>yereller</primary><secondary>para simgesinin yeri</secondary></indexterm>
+       <glossterm>
+        <type>char</type> <structfield>p_cs_precedes</structfield>
+       </glossterm><glossterm>
+        <type>char</type> <structfield>n_cs_precedes</structfield>
+       </glossterm><glossterm>
+        <type>char</type> <structfield>int_p_cs_precedes</structfield>
+       </glossterm><glossterm>
+        <type>char</type> <structfield>int_n_cs_precedes</structfield>
+      </glossterm></glossterm>
+      <glossdef>
+       <para>
+        Para simgesi, bu üyelerin değeri <code>1</code> ise para değerinin önüne, <code>0</code> ise para değerinin sonuna konur. <structfield>p_cs_precedes</structfield> ve <structfield>int_p_cs_precedes</structfield> değerleri pozitif miktarlara, <structfield>n_cs_precedes</structfield> ve <structfield>int_n_cs_precedes</structfield> değerleri ise negatif miktarlara uygulanır.
+       </para>
+       <para>
+        Standart <code>C</code> yerelinde bu üyelerin hepsine "belirtilmemiş" anlamına gelen <varname>CHAR_MAX</varname> değeri atanmıştır. &isoc; standardı bu değerin nasıl yorumlanacağını belirtmemiştir. Çoğu ülkede para simgesinin para miktarının önüne konulmasından hareketle para simgesinin önce basılacağı biçiminde yorumlanması önerilir. Başka bir deyişle, değerin sıfırdan farklı bir değer (<code>1</code>) olarak yorumlanması önerilir.
+       </para>
+       <para>
+        İsimleri <code>int_</code> ile başlayan üyeler <structfield>int_curr_symbol</structfield>'e, diğerleri <structfield>currency_symbol</structfield>'e uygulanır.
+       </para>
+      </glossdef>
+     </glossentry>
+     <glossentry>
+      <glossterm>
+       <indexterm linkend="glibc-cp" xml:id="glibc-cp-p_sep_by_space"><primary>yereller</primary><secondary>para simgesi boşluğu</secondary></indexterm>
+       <glossterm>
+        <type>char</type> <structfield>p_sep_by_space</structfield>
+       </glossterm><glossterm>
+        <type>char</type> <structfield>n_sep_by_space</structfield>
+       </glossterm><glossterm>
+        <type>char</type> <structfield>int_p_sep_by_space</structfield>
+       </glossterm><glossterm>
+        <type>char</type> <structfield>int_n_sep_by_space</structfield>
+      </glossterm></glossterm>
+      <glossdef>
+       <para>
+        Bu üyelerin değeri <code>1</code> ise, para simgesi ile para miktarı arasına boşluk konur, <code>0</code> ise boşluk konmaz. <structfield>p_sep_by_space</structfield> ve <structfield>int_p_sep_by_space</structfield> üyeleri pozitif (veya sıfır) para miktarlarına, <structfield>n_sep_by_space</structfield> ve <structfield>int_n_sep_by_space</structfield> üyeleri ise negatif para miktarlarına uygulanır.
+       </para>
+       <para>
+        Standart <code>C</code> yerelinde bu üyelerin hepsine "belirtilmemiş" anlamına gelen <varname>CHAR_MAX</varname> değeri atanmıştır. &isoc; standardı bu değerin nasıl yorumlanacağını belirtmemiştir. Değerin sıfırdan farklı bir değer (<code>1</code>) olarak yorumlanması yani boşluk konmaması önerilir.
+       </para>
+       <para>
+        İsimleri <code>int_</code> ile başlayan üyeler <structfield>int_curr_symbol</structfield>'e, diğerleri <structfield>currency_symbol</structfield>'e uygulanır. <structfield>int_curr_symbol</structfield> için özel bir durum vardır. Standart uluslararası değerler simgeden sonra bir boşluk içerir (Para simgesinin para miktarından önce kullanılması ve arada boşluk bırakılması için). Bu durumda bu boşluğun basılmasının önlenmesine (bilhassa para simgesinin para miktarından sonra basıldığı durumda) dikkat edilmelidir.
+       </para>
+      </glossdef>
+     </glossentry>
+    </glosslist>
+   </sect2>
+   <sect2 xml:id="glibc-Sign-of-Money-Amount">
+    <title>Para Miktarına İşaret Basılması</title>
+    <titleabbrev>Para miktarlarında pozitif ve negatif işaretler nasıl basılır.</titleabbrev>
+    <para>
+     <type>struct&#160;lconv</type> yapısının bu üyelerinde parasal gösterimde (varsa) işaretin nasıl basılacağını belirtilir.
+    </para>
+    <glosslist>
+     <glossentry>
+      <glossterm>
+       <indexterm linkend="glibc-cp" xml:id="glibc-cp-positive_sign"><primary>yereller</primary><secondary>para miktarında işaret</secondary></indexterm>
+       <glossterm>
+       <type>char&#160;*</type><structfield>positive_sign</structfield>
+      </glossterm><glossterm>
+       <type>char&#160;*</type><structfield>negative_sign</structfield>
+      </glossterm></glossterm>
+      <glossdef>
+       <para>
+        Bunlar pozitif (veya sıfır) ve negatif para miktarlarını belirtmekte kullanılacak işaretleri içeren dizgelerdir.
+       </para>
+       <para>
+        Standart <code>C</code> yerelinde, bu üyelerin her ikisine de "belirtilmemiş" anlamına gelen <command>&quot;&quot;</command> boş dizgesi atanmıştır.
+       </para>
+       <para>
+        &isoc; standardı bu değerlerin nasıl yorumlanacağını belirtmemiştir. Pozitif işareti <structfield>positive_sign</structfield> boş dizge olarak belirtilse dahi bulduğunuz gibi, negatif işareti de <structfield>negative_sign</structfield> boş dizge olarak belirtilse bile <code>-</code> olarak basılmasıdır. (İşareti hiç göstermemek oldukça mantıksız görünüyor.)
+        </para>
+      </glossdef>
+     </glossentry>
+     <glossentry>
+      <glossterm>
+       <indexterm linkend="glibc-cp" xml:id="glibc-cp-p_sign_posn"><primary>yereller</primary><secondary>para miktarı işaretinin yeri</secondary></indexterm>
+       <glossterm>
+        <type>char</type> <structfield>p_sign_posn</structfield>
+       </glossterm><glossterm>
+        <type>char</type> <structfield>n_sign_posn</structfield>
+       </glossterm><glossterm>
+        <type>char</type> <structfield>int_p_sign_posn</structfield>
+       </glossterm><glossterm>
+        <type>char</type> <structfield>int_n_sign_posn</structfield>
+      </glossterm></glossterm>
+      <glossdef>
+       <para>
+        Bu üyeler pozitif ve negatif miktarların işaretlerinin yerini belirtmede kullanılan küçük tamsayılar içerir. (İşaret için <structfield>positive_sign</structfield> ve <structfield>negative_sign</structfield> ile belirtilen dizge kullanılır.) Olası değerler şunlardır:
+       </para>
+       <variablelist>
+        <varlistentry>
+         <term><code>0</code></term>
+         <listitem>
+          <para>
+           Para simgesi ve miktarı yaylı ayraç içine alınır.
+          </para>
+         </listitem>
+        </varlistentry>
+        <varlistentry>
+         <term><code>1</code></term>
+         <listitem>
+          <para>
+           İşaret, para simgesi ve miktarından önce basılır.
+          </para>
+         </listitem>
+        </varlistentry>
+        <varlistentry>
+         <term><code>2</code></term>
+         <listitem>
+          <para>
+           İşaret, para simgesi ve miktarından sonra basılır.
+          </para>
+         </listitem>
+        </varlistentry>
+        <varlistentry>
+         <term><code>3</code></term>
+         <listitem>
+          <para>
+           İşaret, para simgesinden hemen önce basılır.
+          </para>
+         </listitem>
+        </varlistentry>
+        <varlistentry>
+         <term><code>4</code></term>
+         <listitem>
+          <para>
+           İşaret, para simgesinden hemen sonra basılır.
+          </para>
+         </listitem>
+        </varlistentry>
+        <varlistentry>
+         <term><varname>CHAR_MAX</varname></term>
+         <listitem>
+          <para>
+           &quot;Belirsiz&quot;.  Standart <code>C</code> yerelinde her iki üye de bu değere sahiptir.
+          </para>
+         </listitem>
+        </varlistentry>
+       </variablelist>
+       <para>
+        &isoc; standardı değerin <varname>CHAR_MAX</varname> olması halinde ne yapılacağını belirlememiştir. İşaretin para simgesinden sonra basılması önerilir.
+       </para>
+       <para>
+        İsimleri <code>int_</code> ile başlayan üyeler <structfield>int_curr_symbol</structfield> ile diğerleri <structfield>currency_symbol</structfield> ile uygulanır.
+       </para>
+      </glossdef>
+     </glossentry>
+    </glosslist>
+   </sect2>
+  </sect1>
+  <sect1 xml:id="glibc-The-Elegant-and-Fast-Way">
+   <title>Yerel Verisine Noktasal Erişim</title>
+   <titleabbrev>Yerel verisine giden kolay yol: X/Open'ın <code>nl_langinfo</code> işlevi.</titleabbrev>
+   <para>
+    X/Open Taşınabilirlik Kılavuzu yazılırken yazarlar yerele özgü bilgilere erişmek anlamında <function>localeconv</function> işlevinin yetersizliğinde anlaştılar. Yerelde kullanılabilir bilgilere erişmek için (daha sonra POSIX.1 standardında belirtildiği gibi) daha fazla yol gerekir.  <function>nl_langinfo</function> işlevi bunun için tasarlanmıştır.
+   </para>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-nl_langinfo"><primary>yereller</primary><secondary>veriye noktasal erişim</secondary></indexterm>
+    <indexterm linkend="glibc-pg"><primary>langinfo.h</primary></indexterm>
+    <indexterm linkend="glibc-fn" xml:id="glibc-fn-nl_langinfo"><primary>nl_langinfo</primary></indexterm>
+    <csproto type="işlev">
+     <csname><ptr>char</ptr><function>nl_langinfo</function></csname>
+     <csparam><type>nl_item</type><parameter>item</parameter></csparam>
+    </csproto>
+    <header>&langinfo.h;</header>
+    <conceptlist>
+     <concept>&mtsafe; &locale;</concept>
+     <concept>&assafe;</concept>
+     <concept>&acsafe;</concept>
+    </conceptlist>
+    <para>
+     <code>nl_langinfo</code> işlevi yerel sınıflarındaki her elemana tek tek erişmek için kullanılabilir. Tüm bilgiyi döndüren <function>localeconv</function>  işlevinin tersine, <function>nl_langinfo</function> işlevi çağrıcının istediği bilgiyi belirtebilmesini sağlar. Bu çok hızlı yapıldığından işlevin defalarca çağrılması bir soruna yol açmaz.
+    </para>
+    <para>
+     İkinci bir getirisi de sayısal ve parasal gösterim bilgilerine ek olarak <varname>LC_TIME</varname> ve <varname>LC_MESSAGES</varname> sınıflarıyla ilgili bilgilerin de istenebilmesidir.
+    </para>
+    <para>
+     <parameter>item</parameter> bağımsız değişkeni &langinfo.h; dosyasında tanımlı sayısal değerlerden biri olmalıdır. X/Open standardı şu değerleri tanımlar:
+    </para>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-CODESET"><primary>CODESET</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>CODESET</function></csname>
+     </csproto>
+     <header>&langinfo.h;</header>
+     <para>
+      <code>nl_langinfo</code> seçili yerelin karakter kodlaması için kullanılan karakter kümesinin ismini içeren bir dizge ile döner.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-ABDAY_1"><primary>ABDAY_1</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>ABDAY_1</function></csname>
+     </csproto>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-ABDAY_2"><primary>ABDAY_2</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>ABDAY_2</function></csname>
+     </csproto>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-ABDAY_3"><primary>ABDAY_3</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>ABDAY_3</function></csname>
+     </csproto>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-ABDAY_4"><primary>ABDAY_4</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>ABDAY_4</function></csname>
+     </csproto>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-ABDAY_5"><primary>ABDAY_5</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>ABDAY_5</function></csname>
+     </csproto>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-ABDAY_6"><primary>ABDAY_6</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>ABDAY_6</function></csname>
+     </csproto>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-ABDAY_7"><primary>ABDAY_7</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>ABDAY_7</function></csname>
+     </csproto>
+     <header>&langinfo.h;</header>
+     <para>
+      <code>nl_langinfo</code> kısaltılmış gün ismi ile döner. <code>ABDAY_1</code> Pazar gününe karşılıktır.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-DAY_1"><primary>DAY_1</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>DAY_1</function></csname>
+     </csproto>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-DAY_2"><primary>DAY_2</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>DAY_2</function></csname>
+     </csproto>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-DAY_3"><primary>DAY_3</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>DAY_3</function></csname>
+     </csproto>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-DAY_4"><primary>DAY_4</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>DAY_4</function></csname>
+     </csproto>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-DAY_5"><primary>DAY_5</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>DAY_5</function></csname>
+     </csproto>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-DAY_6"><primary>DAY_6</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>DAY_6</function></csname>
+     </csproto>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-DAY_7"><primary>DAY_7</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>DAY_7</function></csname>
+     </csproto>
+     <header>&langinfo.h;</header>
+     <para>
+      <varname>ABDAY_1</varname> ve benzerleri gibidir, farklı olarak kısaltılmamış gün ismi ile döner.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-ABMON_1"><primary>ABMON_1</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>ABMON_1</function></csname>
+     </csproto>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-ABMON_2"><primary>ABMON_2</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>ABMON_2</function></csname>
+     </csproto>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-ABMON_3"><primary>ABMON_3</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>ABMON_3</function></csname>
+     </csproto>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-ABMON_4"><primary>ABMON_4</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>ABMON_4</function></csname>
+     </csproto>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-ABMON_5"><primary>ABMON_5</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>ABMON_5</function></csname>
+     </csproto>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-ABMON_6"><primary>ABMON_6</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>ABMON_6</function></csname>
+     </csproto>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-ABMON_7"><primary>ABMON_7</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>ABMON_7</function></csname>
+     </csproto>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-ABMON_8"><primary>ABMON_8</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>ABMON_8</function></csname>
+     </csproto>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-ABMON_9"><primary>ABMON_9</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>ABMON_9</function></csname>
+     </csproto>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-ABMON_10"><primary>ABMON_10</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>ABMON_10</function></csname>
+     </csproto>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-ABMON_11"><primary>ABMON_11</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>ABMON_11</function></csname>
+     </csproto>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-ABMON_12"><primary>ABMON_12</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>ABMON_12</function></csname>
+     </csproto>
+     <header>&langinfo.h;</header>
+     <para>
+      İşlev kısaltılmış ay ismi ile döner. <code>ABMON_1</code> Ocak ayına karşılıktır.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-MON_1"><primary>MON_1</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>MON_1</function></csname>
+     </csproto>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-MON_2"><primary>MON_2</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>MON_2</function></csname>
+     </csproto>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-MON_3"><primary>MON_3</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>MON_3</function></csname>
+     </csproto>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-MON_4"><primary>MON_4</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>MON_4</function></csname>
+     </csproto>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-MON_5"><primary>MON_5</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>MON_5</function></csname>
+     </csproto>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-MON_6"><primary>MON_6</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>MON_6</function></csname>
+     </csproto>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-MON_7"><primary>MON_7</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>MON_7</function></csname>
+     </csproto>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-MON_8"><primary>MON_8</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>MON_8</function></csname>
+     </csproto>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-MON_9"><primary>MON_9</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>MON_9</function></csname>
+     </csproto>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-MON_10"><primary>MON_10</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>MON_10</function></csname>
+     </csproto>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-MON_11"><primary>MON_11</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>MON_11</function></csname>
+     </csproto>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-MON_12"><primary>MON_12</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>MON_12</function></csname>
+     </csproto>
+     <header>&langinfo.h;</header>
+     <para>
+      <varname>ABMON_1</varname> ve benzerleri gibidir, farklı olarak kısaltılmamış ay ismi ile döner.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-ALTMON_1"><primary>ALTMON_1</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>ALTMON_1</function></csname>
+     </csproto>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-ALTMON_2"><primary>ALTMON_2</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>ALTMON_2</function></csname>
+     </csproto>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-ALTMON_3"><primary>ALTMON_3</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>ALTMON_3</function></csname>
+     </csproto>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-ALTMON_4"><primary>ALTMON_4</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>ALTMON_4</function></csname>
+     </csproto>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-ALTMON_5"><primary>ALTMON_5</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>ALTMON_5</function></csname>
+     </csproto>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-ALTMON_6"><primary>ALTMON_6</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>ALTMON_6</function></csname>
+     </csproto>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-ALTMON_7"><primary>ALTMON_7</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>ALTMON_7</function></csname>
+     </csproto>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-ALTMON_8"><primary>ALTMON_8</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>ALTMON_8</function></csname>
+     </csproto>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-ALTMON_9"><primary>ALTMON_9</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>ALTMON_9</function></csname>
+     </csproto>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-ALTMON_10"><primary>ALTMON_10</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>ALTMON_10</function></csname>
+     </csproto>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-ALTMON_11"><primary>ALTMON_11</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>ALTMON_11</function></csname>
+     </csproto>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-ALTMON_12"><primary>ALTMON_12</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>ALTMON_12</function></csname>
+     </csproto>
+     <header>&langinfo.h;</header>
+     <para>
+      <varname>MON_1</varname> ve benzerleri gibidir, ancak burada ay adları, ay kendi başına adlandırıldığında cümle içindeki yerine göre biçimlenir. <function>strftime</function> işlevleri, <code>%OB</code> dönüşüm belirteci için bu ay adlarını kullanır (bkz. <xref linkend="glibc-Formatting-Calendar-Time"/>).
+     </para>
+     <para>
+      Tüm dillerin iki farklı ay adı biçimine ihtiyaç duymadığına dikkat edilmelidir, bu nedenle <code>MON_…</code> ve <code>ALTMON_…</code> için döndürülen dizgeler, yerele bağlı olarak aynı olabilir veya olmayabilir.
+     </para>
+     <note>
+      <para>
+       <code>%Ob</code> dönüşüm belirtecisine karşılık gelen <code>ABALTMON_…</code> sabitleri şu anda sağlanmamaktadır, ancak gelecekteki bir sürümde olması beklenmektedir. O zamana kadar <code>_NL_ABALTMON_…</code> kullanmak mümkündür.
+      </para>
+     </note>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-AM_STR"><primary>AM_STR</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>AM_STR</function></csname>
+     </csproto>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-PM_STR"><primary>PM_STR</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>PM_STR</function></csname>
+     </csproto>
+     <header>&langinfo.h;</header>
+     <para>
+      İşlev, 12 saatlik zaman gösteriminde kullanılan (sırayla) öğleden önce ve öğleden sonra  kısaltmaları (öö/ös) olarak belirtilmiş dizge ile döner.
+     </para>
+     <para>
+      12 saatlik zaman gösterimi kullanılmayan yerellerde bu dizgeler boş olabilir, bu takdirde 12 saatlik gösterim seçilse bile bu kısaltmalar gösterilmeyecektir.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-D_T_FMT"><primary>D_T_FMT</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>D_T_FMT</function></csname>
+     </csproto>
+     <header>&langinfo.h;</header>
+     <para>
+      Yerele özgü tarih ve zaman gösterimi olarak <function>strftime</function> işlevinde  kullanılabilecek biçem dizgesi ile döner.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-D_FMT"><primary>D_FMT</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>D_FMT</function></csname>
+     </csproto>
+     <header>&langinfo.h;</header>
+     <para>
+      Yerele özgü tarih gösterimi olarak <function>strftime</function> işlevinde  kullanılabilecek biçem dizgesi ile döner.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-T_FMT"><primary>T_FMT</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>T_FMT</function></csname>
+     </csproto>
+     <header>&langinfo.h;</header>
+     <para>
+      Yerele özgü zaman gösterimi olarak <function>strftime</function> işlevinde  kullanılabilecek biçem dizgesi ile döner.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-T_FMT_AMPM"><primary>T_FMT_AMPM</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>T_FMT_AMPM</function></csname>
+     </csproto>
+     <header>&langinfo.h;</header>
+     <para>
+      Yerele özgü öö/ös biçiminde zaman gösterimi olarak <function>strftime</function> işlevinde  kullanılabilecek biçem dizgesi ile döner.
+     </para>
+     <para>
+      öö/ös biçimi seçilmiş yerelde belirlenmemişse dönen değer <varname>T_FMT</varname> için dönen değer ile aynı olabilir.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-ERA"><primary>ERA</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>ERA</function></csname>
+     </csproto>
+     <header>&langinfo.h;</header>
+     <para>
+      Çoğu yerelde bu değer atanmamıştır. Bu değerin atandığı yerellerden biri olarak japonca gösterilebilir. Japonya'da geleneksel tarih gösterimleri imparatorun saltanat dönemine karşı düşen çağ ismini de içerir.
+     </para>
+     <para>
+      Normalde bu değeri doğrudan kullanmak gerekmez. <function>strftime</function> işlevinin biçem dizgesinde <code>E</code> değiştiricisini belirterek bu bilginin kullanılması sağlanabilir. Dönen dizgenin biçimi belirlenmemiştir, bu bakımdan başka sistemlerde aynı dizge elde edilemeyebilir.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-ERA_YEAR"><primary>ERA_YEAR</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>ERA_YEAR</function></csname>
+     </csproto>
+     <header>&langinfo.h;</header>
+     <para>
+      Yerelde belirtilen çağa göre yıl döner. <varname>ERA</varname> gibi bu değeri de doğrudan kullanmak gerekmez.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-ERA_D_T_FMT"><primary>ERA_D_T_FMT</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>ERA_D_T_FMT</function></csname>
+     </csproto>
+     <header>&langinfo.h;</header>
+     <para>
+      Yerele özgü çağa göre tarih ve zaman gösterimi olarak <function>strftime</function> işlevinde  kullanılabilecek biçem dizgesi ile döner.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-ERA_D_FMT"><primary>ERA_D_FMT</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>ERA_D_FMT</function></csname>
+     </csproto>
+     <header>&langinfo.h;</header>
+     <para>
+      Yerele özgü çağa göre tarih gösterimi olarak <function>strftime</function> işlevinde  kullanılabilecek biçem dizgesi ile döner.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-ERA_T_FMT"><primary>ERA_T_FMT</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>ERA_T_FMT</function></csname>
+     </csproto>
+     <header>&langinfo.h;</header>
+     <para>
+      Yerele özgü çağa göre zaman gösterimi olarak <function>strftime</function> işlevinde  kullanılabilecek biçem dizgesi ile döner.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-ALT_DIGITS"><primary>ALT_DIGITS</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>ALT_DIGITS</function></csname>
+     </csproto>
+     <header>&langinfo.h;</header>
+     <para>
+      0-99 arasındaki sayıların gösterimi için kullanılan 100 değerle döner. Bu değer de <varname>ERA</varname> gibi doğrudan  kullanmak için tasarlanmamıştır. <function>strftime</function> işlevinde <code>O</code> değiştiricisi belirtilerek kullanılır. Bu takdirde biçim dizgesindeki saat, dakika, saniye, ayın günü, aylar ve haftalar gibi sayısal değerler buna göre gösterilir.Yerele özgü çağa göre zaman gösterimi olarak <function>strftime</function> işlevinde  kullanılabilecek biçem dizgesi ile döner.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-INT_CURR_SYMBOL"><primary>INT_CURR_SYMBOL</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>INT_CURR_SYMBOL</function></csname>
+     </csproto>
+     <header>&langinfo.h;</header>
+     <para>
+      <function>localeconv</function> işlevi ile dönen <type>struct&#160;lconv</type> yapısının  <structfield>int_curr_symbol</structfield> elemanındaki değer ile döner.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-CURRENCY_SYMBOL"><primary>CURRENCY_SYMBOL</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>CURRENCY_SYMBOL</function></csname>
+     </csproto>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-CRNCYSTR"><primary>CRNCYSTR</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>CRNCYSTR</function></csname>
+     </csproto>
+     <header>&langinfo.h;</header>
+     <para>
+      <function>localeconv</function> işlevi ile dönen <type>struct&#160;lconv</type> yapısının  <structfield>currency_symbol</structfield> elemanındaki değer ile döner.
+     </para>
+     <para>
+      <code>CRNCYSTR</code>,  Unix98 tarafından hala ihtiyaç duyulan artık kullanılmayan bir takma addır.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-MON_DECIMAL_POINT"><primary>MON_DECIMAL_POINT</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>MON_DECIMAL_POINT</function></csname>
+     </csproto>
+     <header>&langinfo.h;</header>
+     <para>
+      <function>localeconv</function> işlevi ile dönen <type>struct&#160;lconv</type> yapısının  <structfield>mon_decimal_point</structfield> elemanındaki değer ile döner.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-MON_THOUSANDS_SEP"><primary>MON_THOUSANDS_SEP</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>MON_THOUSANDS_SEP</function></csname>
+     </csproto>
+     <header>&langinfo.h;</header>
+     <para>
+      <function>localeconv</function> işlevi ile dönen <type>struct&#160;lconv</type> yapısının  <structfield>mon_thousands_sep</structfield> elemanındaki değer ile döner.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-MON_GROUPING"><primary>MON_GROUPING</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>MON_GROUPING</function></csname>
+     </csproto>
+     <header>&langinfo.h;</header>
+     <para>
+      <function>localeconv</function> işlevi ile dönen <type>struct&#160;lconv</type> yapısının  <structfield>mon_grouping</structfield> elemanındaki değer ile döner.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-POSITIVE_SIGN"><primary>POSITIVE_SIGN</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>POSITIVE_SIGN</function></csname>
+     </csproto>
+     <header>&langinfo.h;</header>
+     <para>
+      <function>localeconv</function> işlevi ile dönen <type>struct&#160;lconv</type> yapısının  <structfield>positive_sign</structfield> elemanındaki değer ile döner.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-NEGATIVE_SIGN"><primary>NEGATIVE_SIGN</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>NEGATIVE_SIGN</function></csname>
+     </csproto>
+     <header>&langinfo.h;</header>
+     <para>
+      <function>localeconv</function> işlevi ile dönen <type>struct&#160;lconv</type> yapısının  <structfield>negative_sign</structfield> elemanındaki değer ile döner.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-INT_FRAC_DIGITS"><primary>INT_FRAC_DIGITS</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>INT_FRAC_DIGITS</function></csname>
+     </csproto>
+     <header>&langinfo.h;</header>
+     <para>
+      <function>localeconv</function> işlevi ile dönen <type>struct&#160;lconv</type> yapısının  <structfield>int_frac_digits</structfield> elemanındaki değer ile döner.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-FRAC_DIGITS"><primary>FRAC_DIGITS</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>FRAC_DIGITS</function></csname>
+     </csproto>
+     <header>&langinfo.h;</header>
+     <para>
+      <function>localeconv</function> işlevi ile dönen <type>struct&#160;lconv</type> yapısının  <structfield>frac_digits</structfield> elemanındaki değer ile döner.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-P_CS_PRECEDES"><primary>P_CS_PRECEDES</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>P_CS_PRECEDES</function></csname>
+     </csproto>
+     <header>&langinfo.h;</header>
+     <para>
+      <function>localeconv</function> işlevi ile dönen <type>struct&#160;lconv</type> yapısının  <structfield>p_cs_precedes</structfield> elemanındaki değer ile döner.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-P_SEP_BY_SPACE"><primary>P_SEP_BY_SPACE</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>P_SEP_BY_SPACE</function></csname>
+     </csproto>
+     <header>&langinfo.h;</header>
+     <para>
+      <function>localeconv</function> işlevi ile dönen <type>struct&#160;lconv</type> yapısının  <structfield>p_sep_by_space</structfield> elemanındaki değer ile döner.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-N_CS_PRECEDES"><primary>N_CS_PRECEDES</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>N_CS_PRECEDES</function></csname>
+     </csproto>
+     <header>&langinfo.h;</header>
+     <para>
+      <function>localeconv</function> işlevi ile dönen <type>struct&#160;lconv</type> yapısının  <structfield>n_cs_precedes</structfield> elemanındaki değer ile döner.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-N_SEP_BY_SPACE"><primary>N_SEP_BY_SPACE</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>N_SEP_BY_SPACE</function></csname>
+     </csproto>
+     <header>&langinfo.h;</header>
+     <para>
+      <function>localeconv</function> işlevi ile dönen <type>struct&#160;lconv</type> yapısının <structfield>n_sep_by_space</structfield> elemanındaki değer ile döner.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-P_SIGN_POSN"><primary>P_SIGN_POSN</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>P_SIGN_POSN</function></csname>
+     </csproto>
+     <header>&langinfo.h;</header>
+     <para>
+      <function>localeconv</function> işlevi ile dönen <type>struct&#160;lconv</type> yapısının <structfield>p_sign_posn</structfield> elemanındaki değer ile döner.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-N_SIGN_POSN"><primary>N_SIGN_POSN</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>N_SIGN_POSN</function></csname>
+     </csproto>
+     <header>&langinfo.h;</header>
+     <para>
+      <function>localeconv</function> işlevi ile dönen <type>struct&#160;lconv</type> yapısının <structfield>n_sign_posn</structfield> elemanındaki değer ile döner.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-INT_P_CS_PRECEDES"><primary>INT_P_CS_PRECEDES</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>INT_P_CS_PRECEDES</function></csname>
+     </csproto>
+     <header>&langinfo.h;</header>
+     <para>
+      <function>localeconv</function> işlevi ile dönen <type>struct&#160;lconv</type> yapısının <structfield>int_p_cs_precedes</structfield> elemanındaki değer ile döner.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-INT_P_SEP_BY_SPACE"><primary>INT_P_SEP_BY_SPACE</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>INT_P_SEP_BY_SPACE</function></csname>
+     </csproto>
+     <header>&langinfo.h;</header>
+     <para>
+      <function>localeconv</function> işlevi ile dönen <type>struct&#160;lconv</type> yapısının <structfield>int_p_sep_by_space</structfield> elemanındaki değer ile döner.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-INT_N_CS_PRECEDES"><primary>INT_N_CS_PRECEDES</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>INT_N_CS_PRECEDES</function></csname>
+     </csproto>
+     <header>&langinfo.h;</header>
+     <para>
+      <function>localeconv</function> işlevi ile dönen <type>struct&#160;lconv</type> yapısının <structfield>int_n_cs_precedes</structfield> elemanındaki değer ile döner.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-INT_N_SEP_BY_SPACE"><primary>INT_N_SEP_BY_SPACE</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>INT_N_SEP_BY_SPACE</function></csname>
+     </csproto>
+     <header>&langinfo.h;</header>
+     <para>
+      <function>localeconv</function> işlevi ile dönen <type>struct&#160;lconv</type> yapısının <structfield>int_n_sep_by_space</structfield> elemanındaki değer ile döner.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-INT_P_SIGN_POSN"><primary>INT_P_SIGN_POSN</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>INT_P_SIGN_POSN</function></csname>
+     </csproto>
+     <header>&langinfo.h;</header>
+     <para>
+      <function>localeconv</function> işlevi ile dönen <type>struct&#160;lconv</type> yapısının <structfield>int_p_sign_posn</structfield> elemanındaki değer ile döner.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-INT_N_SIGN_POSN"><primary>INT_N_SIGN_POSN</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>INT_N_SIGN_POSN</function></csname>
+     </csproto>
+     <header>&langinfo.h;</header>
+     <para>
+      <function>localeconv</function> işlevi ile dönen <type>struct&#160;lconv</type> yapısının <structfield>int_n_sign_posn</structfield> elemanındaki değer ile döner.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-DECIMAL_POINT"><primary>DECIMAL_POINT</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>DECIMAL_POINT</function></csname>
+     </csproto>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-RADIXCHAR"><primary>RADIXCHAR</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>RADIXCHAR</function></csname>
+     </csproto>
+     <header>&langinfo.h;</header>
+     <para>
+      <function>localeconv</function> işlevi ile dönen <type>struct&#160;lconv</type> yapısının <structfield>decimal_point</structfield> elemanındaki değer ile döner.
+     </para>
+     <para>
+      <code>RADIXCHAR</code>, Unix98 tarafından hala ihtiyaç duyulan artık kullanılmayan bir takma addır.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-THOUSANDS_SEP"><primary>THOUSANDS_SEP</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>THOUSANDS_SEP</function></csname>
+     </csproto>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-THOUSEP"><primary>THOUSEP</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>THOUSEP</function></csname>
+     </csproto>
+     <header>&langinfo.h;</header>
+     <para>
+      <function>localeconv</function> işlevi ile dönen <type>struct&#160;lconv</type> yapısının <structfield>decimal_point</structfield> elemanındaki değer ile döner.
+     </para>
+     <para>
+      <code>THOUSEP</code>, Unix98 tarafından hala ihtiyaç duyulan artık kullanılmayan bir takma addır.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-GROUPING"><primary>GROUPING</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>GROUPING</function></csname>
+     </csproto>
+     <header>&langinfo.h;</header>
+     <para>
+      <function>localeconv</function> işlevi ile dönen <type>struct&#160;lconv</type> yapısının <structfield>grouping</structfield> elemanındaki değer ile döner.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-YESEXPR"><primary>YESEXPR</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>YESEXPR</function></csname>
+     </csproto>
+     <header>&langinfo.h;</header>
+     <para>
+      Dönen değer, evet/hayır sorusuna olumlu yanıt olarak <function>regex</function> işlevinde kullanılabilen bir düzenli ifadedir. &glibc; uygulamalarda bunu daha da kolaylaştıran <function>rpmatch</function> işlevini içerir.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-NOEXPR"><primary>NOEXPR</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>NOEXPR</function></csname>
+     </csproto>
+     <header>&langinfo.h;</header>
+     <para>
+      Dönen değer, evet/hayır sorusuna olumsuz yanıt olarak <function>regex</function> işlevinde kullanılabilen bir düzenli ifadedir.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-YESSTR"><primary>YESSTR</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>YESSTR</function></csname>
+     </csproto>
+     <header>&langinfo.h;</header>
+     <para>
+      Evet/hayır sorusuna olumlu yanıt olarak yerele özgü dizge ile döner.
+     </para>
+     <para>
+      İleti çevirilerinde çok özel bir durum olduğundan bu değer artık kullanılmamaktadır. İleti çeviri işlevleri ile elde edilmesi daha iyidir (bkz. <xref linkend="glibc-Message-Translation"/>).
+     </para>
+     <para>
+      Bu simge artık kullanılmamaktadır. Onun yerine ileti çevirileri kullanılmalıdır.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-NOSTR"><primary>NOSTR</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>NOSTR</function></csname>
+     </csproto>
+     <header>&langinfo.h;</header>
+     <para>
+      Evet/hayır sorusuna olumsuz yanıt olarak yerele özgü dizge ile döner.
+     </para>
+     <para>
+      İleti çevirilerinde çok özel bir durum olduğundan bu değer artık kullanılmamaktadır. İleti çeviri işlevleri ile elde edilmesi daha iyidir (bkz. <xref linkend="glibc-Message-Translation"/>).
+     </para>
+     <para>
+      Bu simge artık kullanılmamaktadır. Onun yerine ileti çevirileri kullanılmalıdır.
+     </para>
+    </csynopsis>
+    <para>
+     &langinfo.h; dosyası bunlardan başka simgeler de içerir ama bunların pek kullanım alanı yoktur ve kullanılmaları taşınabilirliği ortadan kaldırır. Bu nedenle kullanılmaları tavsiye edilmez.
+    </para>
+    <para>
+     Her geçerli bağımsız değişken için dönen değer tüm durumlarda kullanılabilir (öö/ös biçim kodlarının olası olağandışılığı dahil). Eğer kullanıcı ilgili yerel sınıfı için bir yerel seçimi yapmamışsa <function>nl_langinfo</function> işlevi <code>&quot;C&quot;</code> yerelindeki bilgi ile döner. Bundan dolayı işlevi aşağıdaki örnekte gösterildiği gibi kullanmak mümkündür.
+    </para>
+    <para>
+     <parameter>item</parameter> bağımsız değişkeni geçersizse, boş dizge içeren bir gösterici döner.
+    </para>
+   </csynopsis>
+   <example>
+    <para>
+    Bir <function>nl_langinfo</function> kullanım örneği olarak bir işlev tarih ve zamanı yerele özgü biçimde basmak için kullanılmıştır. Burada, dikkat edilirse, <function>strftime</function> işlevi yerel bilgisini zaten dahili olarak kullandığından biçem dizgesinde yeteri kadar değiştirici kullanılmıştır.
+   </para>
+   <screen>size_t
+i18n_time_n_data (char *s, size_t len, const struct tm *tp)
+{
+  return strftime (s, len, "%X %D", tp);
+}
+</screen>
+   <para>
+    Biçim ne haftanın günü ne de ay ismi içerir, bu nedenle uluslararası olarak kullanılabilir. Yanlış! Çıktı <code>"hh:mm:ss MM/DD/YY"</code> biçiminde üretilir. Bu biçim sadece ABD'de geçerlidir. Diğer ülkeler farklı biçim kullanır. Bu nedenle işlev şöyle yazılmalıydı:
+   </para>
+   <screen>size_t
+i18n_time_n_data (char *s, size_t len, const struct tm *tp)
+{
+  return strftime (s, len, nl_langinfo (D_T_FMT), tp);
+}
+</screen>
+   <para>
+    Artık yazılım çalıştırıldığında seçili yerelin tarih ve zaman biçimi kullanılacaktır. Kullanıcı doğru yereli seçmişse tarih ve zaman ile ilgili yanlış anlamalar olmayacakır.
+   </para>
+  </example>
+ </sect1>
+ </chapter>
+ <chapter xml:id="glibc-Formatting-Numbers">
+  <title>Sayıların Biçimlenmesi</title>
+  <titleabbrev>Sayıları biçimlemeye adanmış bir işlev.</titleabbrev>
+  <para>
+   Gerek <function>localeconv</function> ile dönen yapı ile gerekse <function>nl_langinfo</function> işlevine simge belirterek sayısal ve parasal gösterimleri biçimlemekte kullanılan yerele özgü bilgilerin çeşitli parçalarının elde edilebileceği ve ayrıca temel kuralların da oldukça karmaşık olduğu görülmüştü.
+  </para>
+  <para>
+   Bu nedenle, X/Open standartları bu tür yerel bilgisini kullanan ve sayıları bu kurallara göre biçimlemeyi kullanıcı açısından kolaylaştıran bir işlev tanımlamıştır.
+  </para>
+  <csynopsis>
+   <indexterm linkend="glibc-fn" xml:id="glibc-fn-strfmon"><primary>strfmon</primary></indexterm>
+   <indexterm linkend="glibc-cp" xml:id="glibc-cp-strfmon"><primary>yereller</primary><secondary>sayıların biçimlenmesi</secondary></indexterm>
+   <csproto type="işlev"  varargs="">
+    <csname><type>ssize_t</type><function>strfmon</function></csname>
+    <csparam><ptr>char</ptr><parameter>s</parameter></csparam>
+    <csparam><type>size_t</type><parameter>maxsize</parameter></csparam>
+    <csparam><ptr>const&#160;char</ptr><parameter>format</parameter></csparam>
+   </csproto>
+   <header>&monetary.h;</header>
+   <conceptlist>
+    <concept>&mtsafe; &locale;</concept>
+    <concept>&asunsafe; &heap;</concept>
+    <concept>&acunsafe; &mem;</concept>
+   </conceptlist>
+   <para>
+    <code>strfmon</code> işlevi <function>strftime</function> işlevine benzer. İşlev bir tampon, tampon boyu ve biçem dizgesi alır ve çıktı biçem dizgesi ile belirtildiği gibi biçimlenerek metin olarak tampona yazılır. İşlev, <function>strftime</function> gibi tampona yazılan baytların sayısı ile döner.
+   </para>
+   <para>
+    İki fark vardır: <code>strfmon</code> birden fazla bağımsız değişken alır ve şüphesiz biçem belirtimi farklıdır. <function>strftime</function>'a benzer olarak, biçem dizgesi çıktıda olduğu gibi normal metindir ve biçem belirteçleri <code>%</code> işareti ile belirtilir. <function>printf</function> işlevinde olduğu gibi, <code>%</code> işaretinin ardından, biçem karakterinden önce isteğe bağlı olarak çeşitli seçenekler ve biçimleme bilgileri belirtilebilir:
+   </para>
+   <para>
+    <code>%</code> işaretinin hemen ardından aşağıdaki seçeneklerden biri veya birkaçı belirtilebilir:
+   </para>
+   <variablelist>
+    <varlistentry>
+     <term>'<code>=</code><replaceable>f</replaceable>'</term>
+     <listitem>
+      <para>
+       <replaceable>f</replaceable> karakteri, sayısal dolgu karakteri olarak bu alanda kullanılacak tek baytlık karakterdir. Bu karakterin öntanımlı değeri boşluk karakteridir. Bu karakterin dolgu karakteri olarak kullanılabilmesi için ondalık ayracın solundaki bölüm için genişlik belirtilmiş olmalıdır. Belirtilen alan genişliği dolgu karakteri sayısı değildir.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry>
+    <term>'<code>^</code>'</term>
+    <listitem>
+     <para>
+      Seçili yerelin kurallarına bağlı rakam gruplaması yapılmaz. Öntanımlı olarak yerelde belirtilmiş gruplama yapılır.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry>
+    <term>'<code>+</code>', '<code>(</code>'</term>
+    <listitem>
+     <para>
+      Bu seçeneklerden sadece biri kullanılabilir. Para miktarında işaretin nasıl belirtileceğini belirler. Öntanımlı olarak ve <code>+</code> belirtilmişse +/- için yerelde belirtilen kullanılır. <code>(</code> belirtilmişse, negatif miktarlar yaylı ayraç içine alınır. Tam biçim yazılımın çalışması sırasında seçili yerelin <varname>LC_MONETARY</varname> kategorisindeki değerlere göre saptanır.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry>
+    <term>'<code>!</code>'</term>
+    <listitem>
+     <para>
+      Çıktı para simgesini içermeyecektir.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry>
+    <term>'<code>-</code>'</term>
+    <listitem>
+     <para>
+      Çıktı, alan genişliğinde doldurma yapılacağı belirtilmemişse sağa değil sola yanaşık biçimlenecektir.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+  <para>
+   Belirtimin sonraki parçası isteğe bağlı olan alan genişliğidir. Bir genişlik belirtilmemişse <code>0</code> verilmiş kabul edilir. Çıktılama sırasında, işlev önce ne kadar alan gerektiğini saptar. Eğer gerektiği kadar genişlik belirtilmişse çıktı bu alanı kullanır. Aksi takdirde, belirtilen genişlik dolgu karakteri ile doldurularak çıktılama yapılır. <code>-</code> iminin varlığına veya yokluğuna bağlı olarak işaretin bulunduğu tarafın boşluğu saptanır. Varsa, çıktı sola yanaşık yapılarak boşluk sağa eklenir ya da tersi yapılır.
+  </para>
+  <para>
+   Şimdiye kadar <function>printf</function> ve <function>strftime</function> biçimlerine benzerliğinden dolayı biçem oldukça bildik göründü. Ancak sonraki iki alan biraz yeni. İlki <code>#</code> karakteri ile başlayan bir ondalık sayı dizgesidir. Bu dizge ondalık ayracın solunda kalan rakam (karakter sayısını değil) sayısını belirtir. Bu miktara gruplama karakterleri dahil değildir. Basılacak sayının rakamları bu genişliği dolduramazsa, boş kalan alan <code>=</code> imi ile belirtilmişse o karakterle aksi takdirde boşluk karakteri ile doldurulur. Örneğin alan genişliği 6 ve dolgu karakteri <code>*</code> olarak verilmişse, <code>123</code> sayısı, <code>***123</code> olarak biçimlenecektir.
+  </para>
+  <para>
+   İsteğe bağlı ikinci alan ise <code>.</code> karakteri ile başlayan ondalık sayı dizgesidir. Bu dizge ondalık ayracın sağındaki rakam sayısını belirtir. Öntanımlı değer yerelin <structfield>frac_digits</structfield> ve <structfield>int_frac_digits</structfield> değerleridir (bkz. <xref linkend="glibc-General-Numeric"/>). Eğer belirtilen genişlik bütün haneleri göstermek için yeterli değilse, yuvarlama yapılır. Alan genişliği sıfır olarak belirtilmişse ondalık ayraç basılmaz.
+  </para>
+  <para>
+   Bir GNU oluşumu olarak &glibc;ndeki <code>strfmon</code> gerçeklemesi bu seçeneklerden sonra isteğe bağlı <code>L</code> biçem belirtecini kabul eder. Eğer bu belirteç varsa, belirtilen bağımsız değişkenin değeri <code>double</code> değil <code>long double</code> kabul edilir.
+  </para>
+  <para>
+   Son eleman biçem belirtecidir. Üç belirteç belirtilebilir:
+  </para>
+  <variablelist>
+   <varlistentry>
+    <term><code>i</code></term>
+    <listitem>
+     <para>
+      Bir uluslararası parasal değerin biçimlenmesi için yerelin kuralları kullanılır.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry>
+    <term><code>n</code></term>
+    <listitem>
+     <para>
+      Bir ulusal parasal değerin biçimlenmesi için yerelin kuralları kullanılır.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry>
+    <term><code>%</code></term>
+    <listitem>
+     <para>
+      Çıktıya <code>%</code> işareti basılır. Sadece  <code>%%</code> belirtilebilir, im, seçenek ya da belirteç belirtilmesine izin verilmemiştir.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+  <para>
+   <function>printf</function> işlevinin yaptığı gibi, işlev biçem dizgesini soldan sağa okur ve biçem dizgesinden sonra verilmiş olan değerleri bu dizgeye göre biçimlendirir. Değerler <code>L</code> belirteci varsa  <code>long double</code>, aksi takdirde <code>double</code> türünde kabul edilir. Sonuç, <parameter>s</parameter> ile gösterilen tamponda en fazla <parameter>maxsize</parameter> karakterlik saklanır.
+  </para>
+  <para>
+   İşlevin dönüş değeri <parameter>s</parameter> tamponunda saklanan boş bayt sonlandırmalı dizgenin karakter sayısıdır. Eğer <parameter>s</parameter> içinde saklanacak karakterlerin sayısı <parameter>maxsize</parameter> değerinden büyükse tamponun yetersiz kaldığını belirtmek için işlev <code>-1</code> ile döner. Bu durumda <varname>errno</varname> değişkenine <varname>E2BIG</varname> değeri atanır.
+  </para>
+ </csynopsis>
+ <example>
+  <para>
+   Küçük bir kaç örnekle işlevin nasıl çalıştığı gösterilebilir. Örneklerin ABD yerelinde (<code>en_US</code>) çalıştırıldığı varsayılmıştır. En basit biçim:
+  </para>
+  <screen>strfmon (buf, 100, "@%n@%n@%n@", 123.45, -567.89, 12345.678);
+</screen>
+  <para>
+   Çıktısı şöyle olur (@ karakterlerine dikkat):
+  </para>
+  <screen>"@$123.45@-$567.89@$12,345.68@"
+</screen>
+  <para>
+   Burada birkaç şey fark edilir. İlk olarak, çıktı sayılarının genişlikleri farklıdır. Biçem dizesinde bir genişlik belirtilmedi ve bu şaşırtıcı değil. İkincisi, üçüncü sayı binlik ayraç kullanılarak yazdırıdı. <code>en_US</code> yereli için binlik ayraç virgüldür. Sayı ayrıca yuvarlanmıştır. Biçem kesinlik belirtmediğinden ve yereldeki öntanımlı değer <code>2</code> olduğundan <code>.678</code>, <code>.68</code>'e yuvarlanır. Son olarak, '<code>i</code>' değil '<code>%n</code>' kullanıldığı için ulusal para birimi simgesi yazdırılmıştır. Aşağıda, çıktının nasıl hizalandığı gösterilmiştir.
+  </para>
+  <screen>strfmon (buf, 100, "@%=*11n@%=*11n@%=*11n@", 123.45, -567.89, 12345.678);
+</screen>
+  <para>Çıktısı:</para>
+  <screen>"@    $123.45@   -$567.89@ $12,345.68@"
+</screen>
+  <para>
+   Burada iki şeyden söz edilebilir: İlki, biçem dizgesinde alan genişliği belirtildiğinden ve bu genişlikten daha geniş bir sayı olmadığından tüm alanlar aynı genişlikte çıktılandı (onbir karakter). İkinci önemli nokta ise dolgu karakteri belirtildiği halde çıktıda kullanılmamış olmasıdır. Bunun sebebi, <code>#</code> karakteri ile ondalık noktanın solundaki alan genişliğinin verilmemiş olmasıdır; bu nedenle öntanımlı olarak boşluk kullanılmıştır. Aşağıdaki örnekte bu genişlik belirtilmiştir:
+  </para>
+  <screen>strfmon (buf, 100, "@%=*11#5n@%=*11#5n@%=*11#5n@",
+         123.45, -567.89, 12345.678);
+</screen>
+  <para>Çıktısı:</para>
+  <screen>"@ $***123.45@-$***567.89@ $12,456.68@"
+</screen>
+   <para>
+    Görüldüğü üzere para simgeleri hizalandı ve para simgesi ile sayı arasındaki alan dolgu karakteri ile dolduruldu. Genişlik <code>5</code> seçildiğinden <code>123.45</code> için ondalık ayracın solundaki rakam sayısı bu değerden küçük olduğundan (<code>5</code>'e değil <code>11</code> karaktere tamamlanacak şekilde) artan alan yıldızlarla doldurulmuştur. Son sayıda ise binler ayracının genişliğe dahil olmadığı kanıtlanmaktadır. Aşağıda kalan işlevsellik örneklenmektedir:
+   </para>
+   <screen>strfmon (buf, 100, "@%=0(16#5.3i@%=0(16#5.3i@%=0(16#5.3i@",
+         123.45, -567.89, 12345.678);
+</screen>
+  <para>
+   Bu karmaşık biçem dizgesi şu çıktıyı üretir:
+  </para>
+  <screen>"@ USD 000123,450 @(USD 000567.890)@ USD 12,345.678 @"
+</screen>
+   <para>
+    Burada en önemli değişiklik negatif sayıları göstermekte kullanılan yöntemdir. Finansal çevrelerde bu çoğunlukla yaylı ayraçlar kullanılarak yapılır ve bu <code>(</code> imi ile seçilir. <code>0</code> karakterleri burada sayı için anlamlı haneler olmadıklarından bunlar arasında binler ayracı kullanılmamıştır. Biçim belirteci olarak <code>n</code> değil, <code>i</code> kullanıldığından uluslararası para simgesi görüntülendi. Bu dört karakterlik (<code>&quot;USD &quot;</code>) bir dizgedir. Son nokta ise, ondalık ayracın sağındaki hane sayısı <code>3</code> olarak belirtildiğinden ilk iki sayıda sağa birer sıfır eklenirken, üçüncü sayıda yuvarlama yapılmamıştır.
+   </para>
+  </example>
+ </chapter>
+ <chapter xml:id="glibc-Yes-or-No-Questions">
+  <title>Evet/Hayır Yanıtları</title>
+  <titleabbrev>Yanıtların yerele göre alınması.</titleabbrev>
+  <para>
+   Çizgesel arayüzü olmayan bazı uygulamalarda evet ya da hayır olarak yanıtlanması gereken sorular olur. Eğer iletiler yabancı dillere çevriliyorsa, yanıtlarında yerelleştirilmesi gerekir. Soruyu bir dilde sorup, başka bir dilde (genellikle ingilizce) yanıt istemek tuhaf olur.
+  </para>
+  <para>
+   &glibc; uygulamaların ilgili yerel tanımına kolayca erişebilmesini mümkün kılan <function>rpmatch</function> işlevini içerir.
+  </para>
+  <csynopsis>
+   <indexterm linkend="glibc-fn" xml:id="glibc-fn-rpmatch"><primary>rpmatch</primary></indexterm>
+   <indexterm linkend="glibc-cp" xml:id="glibc-cp-rpmatch"><primary>yereller</primary><secondary>evet/hayır yanıtları</secondary></indexterm>
+   <csproto type="işlev">
+    <csname><type>int</type><function>rpmatch</function></csname>
+    <csparam><ptr>const&#160;char</ptr><parameter>response</parameter></csparam>
+   </csproto>
+   <header>&stdlib.h;</header>
+   <conceptlist>
+    <concept>&mtsafe; &locale;</concept>
+    <concept>&asunsafe; &corrupt; &heap; &lock; &dlopen;</concept>
+    <concept>&acunsafe; &corrupt; &lock; &mem; &fd;</concept>
+   </conceptlist>
+   <para>
+    <code>rpmatch</code> işlevi <parameter>response</parameter> dizgesinde evet ya da hayır dizgelerinden birinin varlığını arar. Bu işlem seçili yerelin <varname>LC_MESSAGES</varname> yerel sınıfının <varname>YESEXPR</varname> ve <varname>NOEXPR</varname> düzenli ifadeleri ile <parameter>response</parameter> dizgesi karşılaştırılarak yapılır. İşlev şu değerlerden biri ile döner:
+   </para>
+   <variablelist>
+    <varlistentry>
+     <term><code>1</code></term>
+     <listitem>
+      <para>
+       Kullanıcı olumlu yanıt verdi.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><code>0</code></term>
+     <listitem>
+      <para>
+       Kullanıcı olumsuz yanıt verdi.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><code>-1</code></term>
+     <listitem>
+      <para>
+       Yanıt ne <varname>YESEXPR</varname> ne de <varname>NOEXPR</varname> düzenli ifadesine uyuyor.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+   <para>
+    Bu işlev standartlaşmamıştır ama &glibc;nde ve IBM AIX kütüphanesinde bulunmaktadır.
+   </para>
+   <para>
+    Bu işlev normalde şöyle kullanılabilir:
+   </para>
+   <example>
+    <screen>  …
+  /* <replaceable>Öntanımlı bir değer olsun.</replaceable>  */
+  _Bool doit = false;
+
+  fputs (gettext ("Do you really want to do this? "), stdout);
+  fflush (stdout);
+  /* <replaceable>getline çağrısını hazırla.</replaceable>  */
+  yanit = NULL;
+  len = 0;
+  while (getline (&amp;line, &amp;len, stdin) &gt;= 0)
+    {
+      /* <replaceable>Yanıta bak.</replaceable>  */
+      int res = rpmatch (yanit);
+      if (res &gt;= 0)
+        {
+          /* <replaceable>Yanıt olumluysa.</replaceable>  */
+          if (res &gt; 0)
+            doit = true;
+          break;
+        }
+    }
+  /* <replaceable>Yanıt tamponunu serbest bırak.</replaceable>  */
+  free (yanit);
+</screen>
+    <para>
+     Döngünün bir hata ya da olumlu veya olumsuz bir yanıt alınıncaya kadar sürdürüldüğüne dikkat edilmelidir.
+    </para>
+   </example>
+  </csynopsis>
+ </chapter>
 </part>

@@ -5,4 +5,1939 @@
 <part xml:id="glibc-Resource-Usage-And-Limitation">
   <title>Özkaynak Kullanımı ve Sınırlaması</title>
   <titleabbrev>Özkaynak kullanımı ile bunlarla ilgili sınırların öğrenilmesi ve belirtilmesi.</titleabbrev>
+ <preliminary>
+<para>This chapter describes functions for examining how much of various kinds of
+resources (CPU time, memory, etc.) a process has used and getting and setting
+limits on future usage.
+</para>
+ </preliminary><!--
+<sect xml:id="glibc-Resource-Usage">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Limits-on-Resources" accesskey="n" rel="next">Limiting Resource Usage</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Resource-Usage-And-Limitation" accesskey="u" rel="up">Resource Usage And Limitation</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Resource-Usage-1"></span><h3 class="section">22.1 Resource Usage</title>
+
+<span xml:id="glibc-index-sys_002fresource_002eh"></span>
+<para>The function <code>getrusage</code> and the data type <code>struct rusage</code>
+are used to examine the resource usage of a process.  They are declared
+in <filename>sys/resource.h</filename>.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-getrusage"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>getrusage</strong> <emphasis>(int <var>processes</var>, struct rusage *<var>rusage</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-getrusage" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This function reports resource usage totals for processes specified by
+<var>processes</var>, storing the information in <code>*<var>rusage</var></code>.
+</para>
+<para>In most systems, <var>processes</var> has only two valid values:
+</para>
+<dl compact="compact">
+<dt xml:id="glibc-index-RUSAGE_005fSELF"><span><code>RUSAGE_SELF</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-RUSAGE_005fSELF" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Just the current process.
+</para>
+</dd>
+<dt xml:id="glibc-index-RUSAGE_005fCHILDREN"><span><code>RUSAGE_CHILDREN</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-RUSAGE_005fCHILDREN" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>All child processes (direct and indirect) that have already terminated.
+</para></dd>
+</dl>
+
+<para>The return value of <code>getrusage</code> is zero for success, and <code>-1</code>
+for failure.
+</para>
+<dl compact="compact">
+<dt><span><code>EINVAL</code></span></dt>
+<dd><para>The argument <var>processes</var> is not valid.
+</para></dd>
+</dl>
+</dd></dl>
+
+<para>One way of getting resource usage for a particular child process is with
+the function <code>wait4</code>, which returns totals for a child when it
+terminates.  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#BSD-Wait-Functions">BSD Process Wait Function</a>.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-struct-rusage"><span class="category">Data Type: </span><span><strong>struct rusage</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-struct-rusage" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>This data type stores various resource usage statistics.  It has the
+following members, and possibly others:
+</para>
+<dl compact="compact">
+<dt><span><code>struct timeval ru_utime</code></span></dt>
+<dd><para>Time spent executing user instructions.
+</para>
+</dd>
+<dt><span><code>struct timeval ru_stime</code></span></dt>
+<dd><para>Time spent in operating system code on behalf of <var>processes</var>.
+</para>
+</dd>
+<dt><span><code>long int ru_maxrss</code></span></dt>
+<dd><para>The maximum resident set size used, in kilobytes.  That is, the maximum
+number of kilobytes of physical memory that <var>processes</var> used
+simultaneously.
+</para>
+</dd>
+<dt><span><code>long int ru_ixrss</code></span></dt>
+<dd><para>An integral value expressed in kilobytes times ticks of execution, which
+indicates the amount of memory used by text that was shared with other
+processes.
+</para>
+</dd>
+<dt><span><code>long int ru_idrss</code></span></dt>
+<dd><para>An integral value expressed the same way, which is the amount of
+unshared memory used for data.
+</para>
+</dd>
+<dt><span><code>long int ru_isrss</code></span></dt>
+<dd><para>An integral value expressed the same way, which is the amount of
+unshared memory used for stack space.
+</para>
+</dd>
+<dt><span><code>long int ru_minflt</code></span></dt>
+<dd><para>The number of page faults which were serviced without requiring any I/O.
+</para>
+</dd>
+<dt><span><code>long int ru_majflt</code></span></dt>
+<dd><para>The number of page faults which were serviced by doing I/O.
+</para>
+</dd>
+<dt><span><code>long int ru_nswap</code></span></dt>
+<dd><para>The number of times <var>processes</var> was swapped entirely out of main memory.
+</para>
+</dd>
+<dt><span><code>long int ru_inblock</code></span></dt>
+<dd><para>The number of times the file system had to read from the disk on behalf
+of <var>processes</var>.
+</para>
+</dd>
+<dt><span><code>long int ru_oublock</code></span></dt>
+<dd><para>The number of times the file system had to write to the disk on behalf
+of <var>processes</var>.
+</para>
+</dd>
+<dt><span><code>long int ru_msgsnd</code></span></dt>
+<dd><para>Number of IPC messages sent.
+</para>
+</dd>
+<dt><span><code>long int ru_msgrcv</code></span></dt>
+<dd><para>Number of IPC messages received.
+</para>
+</dd>
+<dt><span><code>long int ru_nsignals</code></span></dt>
+<dd><para>Number of signals received.
+</para>
+</dd>
+<dt><span><code>long int ru_nvcsw</code></span></dt>
+<dd><para>The number of times <var>processes</var> voluntarily invoked a context switch
+(usually to wait for some service).
+</para>
+</dd>
+<dt><span><code>long int ru_nivcsw</code></span></dt>
+<dd><para>The number of times an involuntary context switch took place (because
+a time slice expired, or another process of higher priority was
+scheduled).
+</para></dd>
+</dl>
+</dd></dl>
+
+<hr>
+</div>
+<sect xml:id="glibc-Limits-on-Resources">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Priority" accesskey="n" rel="next">Process CPU Priority And Scheduling</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Resource-Usage" accesskey="p" rel="prev">Resource Usage</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Resource-Usage-And-Limitation" accesskey="u" rel="up">Resource Usage And Limitation</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Limiting-Resource-Usage"></span><h3 class="section">22.2 Limiting Resource Usage</title>
+<span xml:id="glibc-index-resource-limits"></span>
+<span xml:id="glibc-index-limits-on-resource-usage"></span>
+<span xml:id="glibc-index-usage-limits"></span>
+
+<para>You can specify limits for the resource usage of a process.  When the
+process tries to exceed a limit, it may get a signal, or the system call
+by which it tried to do so may fail, depending on the resource.  Each
+process initially inherits its limit values from its parent, but it can
+subsequently change them.
+</para>
+<para>There are two per-process limits associated with a resource:
+<span xml:id="glibc-index-limit"></span>
+</para>
+<dl compact="compact">
+<dt><span><emphasis>current limit</emphasis></span></dt>
+<dd><para>The current limit is the value the system will not allow usage to
+exceed.  It is also called the “soft limit” because the process being
+limited can generally raise the current limit at will.
+<span xml:id="glibc-index-current-limit"></span>
+<span xml:id="glibc-index-soft-limit"></span>
+</para>
+</dd>
+<dt><span><emphasis>maximum limit</emphasis></span></dt>
+<dd><para>The maximum limit is the maximum value to which a process is allowed to
+set its current limit.  It is also called the “hard limit” because
+there is no way for a process to get around it.  A process may lower
+its own maximum limit, but only the superuser may increase a maximum
+limit.
+<span xml:id="glibc-index-maximum-limit"></span>
+<span xml:id="glibc-index-hard-limit"></span>
+</para></dd>
+</dl>
+
+<span xml:id="glibc-index-sys_002fresource_002eh-1"></span>
+<para>The symbols for use with <code>getrlimit</code>, <code>setrlimit</code>,
+<code>getrlimit64</code>, and <code>setrlimit64</code> are defined in
+<filename>sys/resource.h</filename>.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-getrlimit"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>getrlimit</strong> <emphasis>(int <var>resource</var>, struct rlimit *<var>rlp</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-getrlimit" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>Read the current and maximum limits for the resource <var>resource</var>
+and store them in <code>*<var>rlp</var></code>.
+</para>
+<para>The return value is <code>0</code> on success and <code>-1</code> on failure.  The
+only possible <code>errno</code> error condition is <code>EFAULT</code>.
+</para>
+<para>When the sources are compiled with <code>_FILE_OFFSET_BITS == 64</code> on a
+32-bit system this function is in fact <code>getrlimit64</code>.  Thus, the
+LFS interface transparently replaces the old interface.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-getrlimit64"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>getrlimit64</strong> <emphasis>(int <var>resource</var>, struct rlimit64 *<var>rlp</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-getrlimit64" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This function is similar to <code>getrlimit</code> but its second parameter is
+a pointer to a variable of type <code>struct rlimit64</code>, which allows it
+to read values which wouldn’t fit in the member of a <code>struct
+rlimit</code>.
+</para>
+<para>If the sources are compiled with <code>_FILE_OFFSET_BITS == 64</code> on a
+32-bit machine, this function is available under the name
+<code>getrlimit</code> and so transparently replaces the old interface.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-setrlimit"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>setrlimit</strong> <emphasis>(int <var>resource</var>, const struct rlimit *<var>rlp</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-setrlimit" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>Store the current and maximum limits for the resource <var>resource</var>
+in <code>*<var>rlp</var></code>.
+</para>
+<para>The return value is <code>0</code> on success and <code>-1</code> on failure.  The
+following <code>errno</code> error condition is possible:
+</para>
+<dl compact="compact">
+<dt><span><code>EPERM</code></span></dt>
+<dd><ul>
+<li> The process tried to raise a current limit beyond the maximum limit.
+
+</li><li> The process tried to raise a maximum limit, but is not superuser.
+</li></ul>
+</dd>
+</dl>
+
+<para>When the sources are compiled with <code>_FILE_OFFSET_BITS == 64</code> on a
+32-bit system this function is in fact <code>setrlimit64</code>.  Thus, the
+LFS interface transparently replaces the old interface.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-setrlimit64"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>setrlimit64</strong> <emphasis>(int <var>resource</var>, const struct rlimit64 *<var>rlp</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-setrlimit64" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This function is similar to <code>setrlimit</code> but its second parameter is
+a pointer to a variable of type <code>struct rlimit64</code> which allows it
+to set values which wouldn’t fit in the member of a <code>struct
+rlimit</code>.
+</para>
+<para>If the sources are compiled with <code>_FILE_OFFSET_BITS == 64</code> on a
+32-bit machine this function is available under the name
+<code>setrlimit</code> and so transparently replaces the old interface.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-struct-rlimit"><span class="category">Data Type: </span><span><strong>struct rlimit</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-struct-rlimit" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>This structure is used with <code>getrlimit</code> to receive limit values,
+and with <code>setrlimit</code> to specify limit values for a particular process
+and resource.  It has two fields:
+</para>
+<dl compact="compact">
+<dt><span><code>rlim_t rlim_cur</code></span></dt>
+<dd><para>The current limit
+</para>
+</dd>
+<dt><span><code>rlim_t rlim_max</code></span></dt>
+<dd><para>The maximum limit.
+</para></dd>
+</dl>
+
+<para>For <code>getrlimit</code>, the structure is an output; it receives the current
+values.  For <code>setrlimit</code>, it specifies the new values.
+</para></dd></dl>
+
+<para>For the LFS functions a similar type is defined in <filename>sys/resource.h</filename>.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-struct-rlimit64"><span class="category">Data Type: </span><span><strong>struct rlimit64</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-struct-rlimit64" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>This structure is analogous to the <code>rlimit</code> structure above, but
+its components have wider ranges.  It has two fields:
+</para>
+<dl compact="compact">
+<dt><span><code>rlim64_t rlim_cur</code></span></dt>
+<dd><para>This is analogous to <code>rlimit.rlim_cur</code>, but with a different type.
+</para>
+</dd>
+<dt><span><code>rlim64_t rlim_max</code></span></dt>
+<dd><para>This is analogous to <code>rlimit.rlim_max</code>, but with a different type.
+</para></dd>
+</dl>
+
+</dd></dl>
+
+<para>Here is a list of resources for which you can specify a limit.  Memory
+and file sizes are measured in bytes.
+</para>
+<dl compact="compact">
+<dt xml:id="glibc-index-RLIMIT_005fCPU"><span><code>RLIMIT_CPU</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-RLIMIT_005fCPU" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>The maximum amount of CPU time the process can use.  If it runs for
+longer than this, it gets a signal: <code>SIGXCPU</code>.  The value is
+measured in seconds.  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Operation-Error-Signals">Operation Error Signals</a>.
+</para>
+</dd>
+<dt xml:id="glibc-index-RLIMIT_005fFSIZE"><span><code>RLIMIT_FSIZE</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-RLIMIT_005fFSIZE" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>The maximum size of file the process can create.  Trying to write a
+larger file causes a signal: <code>SIGXFSZ</code>.  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Operation-Error-Signals">Operation Error Signals</a>.
+</para>
+</dd>
+<dt xml:id="glibc-index-RLIMIT_005fDATA"><span><code>RLIMIT_DATA</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-RLIMIT_005fDATA" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>The maximum size of data memory for the process.  If the process tries
+to allocate data memory beyond this amount, the allocation function
+fails.
+</para>
+</dd>
+<dt xml:id="glibc-index-RLIMIT_005fSTACK"><span><code>RLIMIT_STACK</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-RLIMIT_005fSTACK" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>The maximum stack size for the process.  If the process tries to extend
+its stack past this size, it gets a <code>SIGSEGV</code> signal.
+See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Program-Error-Signals">Program Error Signals</a>.
+</para>
+</dd>
+<dt xml:id="glibc-index-RLIMIT_005fCORE"><span><code>RLIMIT_CORE</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-RLIMIT_005fCORE" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>The maximum size core file that this process can create.  If the process
+terminates and would dump a core file larger than this, then no core
+file is created.  So setting this limit to zero prevents core files from
+ever being created.
+</para>
+</dd>
+<dt xml:id="glibc-index-RLIMIT_005fRSS"><span><code>RLIMIT_RSS</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-RLIMIT_005fRSS" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>The maximum amount of physical memory that this process should get.
+This parameter is a guide for the system’s scheduler and memory
+allocator; the system may give the process more memory when there is a
+surplus.
+</para>
+</dd>
+<dt xml:id="glibc-index-RLIMIT_005fMEMLOCK"><span><code>RLIMIT_MEMLOCK</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-RLIMIT_005fMEMLOCK" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>The maximum amount of memory that can be locked into physical memory (so
+it will never be paged out).
+</para>
+</dd>
+<dt xml:id="glibc-index-RLIMIT_005fNPROC"><span><code>RLIMIT_NPROC</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-RLIMIT_005fNPROC" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>The maximum number of processes that can be created with the same user ID.
+If you have reached the limit for your user ID, <code>fork</code> will fail
+with <code>EAGAIN</code>.  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Creating-a-Process">Creating a Process</a>.
+</para>
+</dd>
+<dt xml:id="glibc-index-RLIMIT_005fNOFILE"><span><code>RLIMIT_NOFILE</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-RLIMIT_005fNOFILE" class="copiable-anchor"> ¶</a></span></dt>
+<dt xml:id="glibc-index-RLIMIT_005fOFILE"><span><code>RLIMIT_OFILE</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-RLIMIT_005fOFILE" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>The maximum number of files that the process can open.  If it tries to
+open more files than this, its open attempt fails with <code>errno</code>
+<code>EMFILE</code>.  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Error-Codes">Error Codes</a>.  Not all systems support this limit;
+GNU does, and 4.4 BSD does.
+</para>
+</dd>
+<dt xml:id="glibc-index-RLIMIT_005fAS"><span><code>RLIMIT_AS</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-RLIMIT_005fAS" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>The maximum size of total memory that this process should get.  If the
+process tries to allocate more memory beyond this amount with, for
+example, <code>brk</code>, <code>malloc</code>, <code>mmap</code> or <code>sbrk</code>, the
+allocation function fails.
+</para>
+</dd>
+<dt xml:id="glibc-index-RLIM_005fNLIMITS"><span><code>RLIM_NLIMITS</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-RLIM_005fNLIMITS" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>The number of different resource limits.  Any valid <var>resource</var>
+operand must be less than <code>RLIM_NLIMITS</code>.
+</para></dd>
+</dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-RLIM_005fINFINITY"><span class="category">Constant: </span><span><emphasis>rlim_t</emphasis> <strong>RLIM_INFINITY</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-RLIM_005fINFINITY" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>This constant stands for a value of “infinity” when supplied as
+the limit value in <code>setrlimit</code>.
+</para></dd></dl>
+
+
+<para>The following are historical functions to do some of what the functions
+above do.  The functions above are better choices.
+</para>
+<para><code>ulimit</code> and the command symbols are declared in <filename>ulimit.h</filename>.
+<span xml:id="glibc-index-ulimit_002eh"></span>
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-ulimit"><span class="category">Function: </span><span><emphasis>long int</emphasis> <strong>ulimit</strong> <emphasis>(int <var>cmd</var>, …)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-ulimit" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+
+<para><code>ulimit</code> gets the current limit or sets the current and maximum
+limit for a particular resource for the calling process according to the
+command <var>cmd</var>.
+</para>
+<para>If you are getting a limit, the command argument is the only argument.
+If you are setting a limit, there is a second argument:
+<code>long int</code> <var>limit</var> which is the value to which you are setting
+the limit.
+</para>
+<para>The <var>cmd</var> values and the operations they specify are:
+</para><dl compact="compact">
+<dt xml:id="glibc-index-GETFSIZE"><span><code>GETFSIZE</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-GETFSIZE" class="copiable-anchor"> ¶</a></span></dt>
+<dd><para>Get the current limit on the size of a file, in units of 512 bytes.
+</para>
+</dd>
+<dt xml:id="glibc-index-SETFSIZE"><span><code>SETFSIZE</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-SETFSIZE" class="copiable-anchor"> ¶</a></span></dt>
+<dd><para>Set the current and maximum limit on the size of a file to <var>limit</var> *
+512 bytes.
+</para>
+</dd>
+</dl>
+
+<para>There are also some other <var>cmd</var> values that may do things on some
+systems, but they are not supported.
+</para>
+<para>Only the superuser may increase a maximum limit.
+</para>
+<para>When you successfully get a limit, the return value of <code>ulimit</code> is
+that limit, which is never negative.  When you successfully set a limit,
+the return value is zero.  When the function fails, the return value is
+<code>-1</code> and <code>errno</code> is set according to the reason:
+</para>
+<dl compact="compact">
+<dt><span><code>EPERM</code></span></dt>
+<dd><para>A process tried to increase a maximum limit, but is not superuser.
+</para></dd>
+</dl>
+
+
+</dd></dl>
+
+<para><code>vlimit</code> and its resource symbols are declared in <filename>sys/vlimit.h</filename>.
+<span xml:id="glibc-index-sys_002fvlimit_002eh"></span>
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-vlimit"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>vlimit</strong> <emphasis>(int <var>resource</var>, int <var>limit</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-vlimit" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Unsafe race:setrlimit
+| AS-Unsafe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+
+<para><code>vlimit</code> sets the current limit for a resource for a process.
+</para>
+<para><var>resource</var> identifies the resource:
+</para>
+<dl compact="compact">
+<dt xml:id="glibc-index-LIM_005fCPU"><span><code>LIM_CPU</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LIM_005fCPU" class="copiable-anchor"> ¶</a></span></dt>
+<dd><para>Maximum CPU time.  Same as <code>RLIMIT_CPU</code> for <code>setrlimit</code>.
+</para></dd>
+<dt xml:id="glibc-index-LIM_005fFSIZE"><span><code>LIM_FSIZE</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LIM_005fFSIZE" class="copiable-anchor"> ¶</a></span></dt>
+<dd><para>Maximum file size.  Same as <code>RLIMIT_FSIZE</code> for <code>setrlimit</code>.
+</para></dd>
+<dt xml:id="glibc-index-LIM_005fDATA"><span><code>LIM_DATA</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LIM_005fDATA" class="copiable-anchor"> ¶</a></span></dt>
+<dd><para>Maximum data memory.  Same as <code>RLIMIT_DATA</code> for <code>setrlimit</code>.
+</para></dd>
+<dt xml:id="glibc-index-LIM_005fSTACK"><span><code>LIM_STACK</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LIM_005fSTACK" class="copiable-anchor"> ¶</a></span></dt>
+<dd><para>Maximum stack size.  Same as <code>RLIMIT_STACK</code> for <code>setrlimit</code>.
+</para></dd>
+<dt xml:id="glibc-index-LIM_005fCORE"><span><code>LIM_CORE</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LIM_005fCORE" class="copiable-anchor"> ¶</a></span></dt>
+<dd><para>Maximum core file size.  Same as <code>RLIMIT_COR</code> for <code>setrlimit</code>.
+</para></dd>
+<dt xml:id="glibc-index-LIM_005fMAXRSS"><span><code>LIM_MAXRSS</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LIM_005fMAXRSS" class="copiable-anchor"> ¶</a></span></dt>
+<dd><para>Maximum physical memory.  Same as <code>RLIMIT_RSS</code> for <code>setrlimit</code>.
+</para></dd>
+</dl>
+
+<para>The return value is zero for success, and <code>-1</code> with <code>errno</code> set
+accordingly for failure:
+</para>
+<dl compact="compact">
+<dt><span><code>EPERM</code></span></dt>
+<dd><para>The process tried to set its current limit beyond its maximum limit.
+</para></dd>
+</dl>
+
+</dd></dl>
+
+<hr>
+</div>
+<sect xml:id="glibc-Priority">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Memory-Resources" accesskey="n" rel="next">Querying memory available resources</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Limits-on-Resources" accesskey="p" rel="prev">Limiting Resource Usage</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Resource-Usage-And-Limitation" accesskey="u" rel="up">Resource Usage And Limitation</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Process-CPU-Priority-And-Scheduling"></span><h3 class="section">22.3 Process CPU Priority And Scheduling</title>
+<span xml:id="glibc-index-process-priority"></span>
+<span xml:id="glibc-index-cpu-priority"></span>
+<span xml:id="glibc-index-priority-of-a-process"></span>
+
+<para>When multiple processes simultaneously require CPU time, the system’s
+scheduling policy and process CPU priorities determine which processes
+get it.  This section describes how that determination is made and
+GNU C Library functions to control it.
+</para>
+<para>It is common to refer to CPU scheduling simply as scheduling and a
+process’ CPU priority simply as the process’ priority, with the CPU
+resource being implied.  Bear in mind, though, that CPU time is not the
+only resource a process uses or that processes contend for.  In some
+cases, it is not even particularly important.  Giving a process a high
+“priority” may have very little effect on how fast a process runs with
+respect to other processes.  The priorities discussed in this section
+apply only to CPU time.
+</para>
+<para>CPU scheduling is a complex issue and different systems do it in wildly
+different ways.  New ideas continually develop and find their way into
+the intricacies of the various systems’ scheduling algorithms.  This
+section discusses the general concepts, some specifics of systems
+that commonly use the GNU C Library, and some standards.
+</para>
+<para>For simplicity, we talk about CPU contention as if there is only one CPU
+in the system.  But all the same principles apply when a processor has
+multiple CPUs, and knowing that the number of processes that can run at
+any one time is equal to the number of CPUs, you can easily extrapolate
+the information.
+</para>
+<para>The functions described in this section are all defined by the POSIX.1
+and POSIX.1b standards (the <code>sched…</code> functions are POSIX.1b).
+However, POSIX does not define any semantics for the values that these
+functions get and set.  In this chapter, the semantics are based on the
+Linux kernel’s implementation of the POSIX standard.  As you will see,
+the Linux implementation is quite the inverse of what the authors of the
+POSIX syntax had in mind.
+</para>
+
+
+
+<ul class="section-toc">
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Absolute-Priority" accesskey="1">Absolute Priority</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Realtime-Scheduling" accesskey="2">Realtime Scheduling</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Basic-Scheduling-Functions" accesskey="3">Basic Scheduling Functions</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Traditional-Scheduling" accesskey="4">Traditional Scheduling</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#CPU-Affinity" accesskey="5">Limiting execution to certain CPUs</a></li>
+</ul>
+<hr>
+<div class="subsection" xml:id="glibc-Absolute-Priority">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Realtime-Scheduling" accesskey="n" rel="next">Realtime Scheduling</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Priority" accesskey="u" rel="up">Process CPU Priority And Scheduling</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Absolute-Priority-1"></span><h4 class="subsection">22.3.1 Absolute Priority</title>
+<span xml:id="glibc-index-absolute-priority"></span>
+<span xml:id="glibc-index-priority_002c-absolute"></span>
+
+<para>Every process has an absolute priority, and it is represented by a number.
+The higher the number, the higher the absolute priority.
+</para>
+<span xml:id="glibc-index-realtime-CPU-scheduling"></span>
+<para>On systems of the past, and most systems today, all processes have
+absolute priority 0 and this section is irrelevant.  In that case,
+See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Traditional-Scheduling">Traditional Scheduling</a>.  Absolute priorities were invented to
+accommodate realtime systems, in which it is vital that certain processes
+be able to respond to external events happening in real time, which
+means they cannot wait around while some other process that <emphasis>wants
+to</emphasis>, but doesn’t <emphasis>need to</emphasis> run occupies the CPU.
+</para>
+<span xml:id="glibc-index-ready-to-run"></span>
+<span xml:id="glibc-index-preemptive-scheduling"></span>
+<para>When two processes are in contention to use the CPU at any instant, the
+one with the higher absolute priority always gets it.  This is true even if the
+process with the lower priority is already using the CPU (i.e., the
+scheduling is preemptive).  Of course, we’re only talking about
+processes that are running or “ready to run,” which means they are
+ready to execute instructions right now.  When a process blocks to wait
+for something like I/O, its absolute priority is irrelevant.
+</para>
+<span xml:id="glibc-index-runnable-process"></span>
+<para><strong>NB:</strong>  The term “runnable” is a synonym for “ready to run.”
+</para>
+<para>When two processes are running or ready to run and both have the same
+absolute priority, it’s more interesting.  In that case, who gets the
+CPU is determined by the scheduling policy.  If the processes have
+absolute priority 0, the traditional scheduling policy described in
+<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Traditional-Scheduling">Traditional Scheduling</a> applies.  Otherwise, the policies described
+in <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Realtime-Scheduling">Realtime Scheduling</a> apply.
+</para>
+<para>You normally give an absolute priority above 0 only to a process that
+can be trusted not to hog the CPU.  Such processes are designed to block
+(or terminate) after relatively short CPU runs.
+</para>
+<para>A process begins life with the same absolute priority as its parent
+process.  Functions described in <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Basic-Scheduling-Functions">Basic Scheduling Functions</a> can
+change it.
+</para>
+<para>Only a privileged process can change a process’ absolute priority to
+something other than <code>0</code>.  Only a privileged process or the
+target process’ owner can change its absolute priority at all.
+</para>
+<para>POSIX requires absolute priority values used with the realtime
+scheduling policies to be consecutive with a range of at least 32.  On
+Linux, they are 1 through 99.  The functions
+<code>sched_get_priority_max</code> and <code>sched_set_priority_min</code> portably
+tell you what the range is on a particular system.
+</para>
+
+<ul class="section-toc">
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Using-Absolute-Priority" accesskey="1">Using Absolute Priority</a></li>
+</ul>
+<div class="subsubsection" xml:id="glibc-Using-Absolute-Priority">
+<h4 class="subsubsection">22.3.1.1 Using Absolute Priority</title>
+
+<para>One thing you must keep in mind when designing real time applications is
+that having higher absolute priority than any other process doesn’t
+guarantee the process can run continuously.  Two things that can wreck a
+good CPU run are interrupts and page faults.
+</para>
+<para>Interrupt handlers live in that limbo between processes.  The CPU is
+executing instructions, but they aren’t part of any process.  An
+interrupt will stop even the highest priority process.  So you must
+allow for slight delays and make sure that no device in the system has
+an interrupt handler that could cause too long a delay between
+instructions for your process.
+</para>
+<para>Similarly, a page fault causes what looks like a straightforward
+sequence of instructions to take a long time.  The fact that other
+processes get to run while the page faults in is of no consequence,
+because as soon as the I/O is complete, the higher priority process will
+kick them out and run again, but the wait for the I/O itself could be a
+problem.  To neutralize this threat, use <code>mlock</code> or
+<code>mlockall</code>.
+</para>
+<para>There are a few ramifications of the absoluteness of this priority on a
+single-CPU system that you need to keep in mind when you choose to set a
+priority and also when you’re working on a program that runs with high
+absolute priority.  Consider a process that has higher absolute priority
+than any other process in the system and due to a bug in its program, it
+gets into an infinite loop.  It will never cede the CPU.  You can’t run
+a command to kill it because your command would need to get the CPU in
+order to run.  The errant program is in complete control.  It controls
+the vertical, it controls the horizontal.
+</para>
+<para>There are two ways to avoid this: 1) keep a shell running somewhere with
+a higher absolute priority or 2) keep a controlling terminal attached to
+the high priority process group.  All the priority in the world won’t
+stop an interrupt handler from running and delivering a signal to the
+process if you hit Control-C.
+</para>
+<para>Some systems use absolute priority as a means of allocating a fixed
+percentage of CPU time to a process.  To do this, a super high priority
+privileged process constantly monitors the process’ CPU usage and raises
+its absolute priority when the process isn’t getting its entitled share
+and lowers it when the process is exceeding it.
+</para>
+<para><strong>NB:</strong>  The absolute priority is sometimes called the “static
+priority.”  We don’t use that term in this manual because it misses the
+most important feature of the absolute priority:  its absoluteness.
+</para>
+
+<hr>
+</div>
+</div>
+<div class="subsection" xml:id="glibc-Realtime-Scheduling">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Basic-Scheduling-Functions" accesskey="n" rel="next">Basic Scheduling Functions</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Absolute-Priority" accesskey="p" rel="prev">Absolute Priority</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Priority" accesskey="u" rel="up">Process CPU Priority And Scheduling</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Realtime-Scheduling-1"></span><h4 class="subsection">22.3.2 Realtime Scheduling</title>
+<span xml:id="glibc-index-realtime-scheduling"></span>
+
+<para>Whenever two processes with the same absolute priority are ready to run,
+the kernel has a decision to make, because only one can run at a time.
+If the processes have absolute priority 0, the kernel makes this decision
+as described in <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Traditional-Scheduling">Traditional Scheduling</a>.  Otherwise, the decision
+is as described in this section.
+</para>
+<para>If two processes are ready to run but have different absolute priorities,
+the decision is much simpler, and is described in <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Absolute-Priority">Absolute Priority</a>.
+</para>
+<para>Each process has a scheduling policy.  For processes with absolute
+priority other than zero, there are two available:
+</para>
+<ol>
+<li> First Come First Served
+</li><li> Round Robin
+</li></ol>
+
+<para>The most sensible case is where all the processes with a certain
+absolute priority have the same scheduling policy.  We’ll discuss that
+first.
+</para>
+<para>In Round Robin, processes share the CPU, each one running for a small
+quantum of time (“time slice”) and then yielding to another in a
+circular fashion.  Of course, only processes that are ready to run and
+have the same absolute priority are in this circle.
+</para>
+<para>In First Come First Served, the process that has been waiting the
+longest to run gets the CPU, and it keeps it until it voluntarily
+relinquishes the CPU, runs out of things to do (blocks), or gets
+preempted by a higher priority process.
+</para>
+<para>First Come First Served, along with maximal absolute priority and
+careful control of interrupts and page faults, is the one to use when a
+process absolutely, positively has to run at full CPU speed or not at
+all.
+</para>
+<para>Judicious use of <code>sched_yield</code> function invocations by processes
+with First Come First Served scheduling policy forms a good compromise
+between Round Robin and First Come First Served.
+</para>
+<para>To understand how scheduling works when processes of different scheduling
+policies occupy the same absolute priority, you have to know the nitty
+gritty details of how processes enter and exit the ready to run list.
+</para>
+<para>In both cases, the ready to run list is organized as a true queue, where
+a process gets pushed onto the tail when it becomes ready to run and is
+popped off the head when the scheduler decides to run it.  Note that
+ready to run and running are two mutually exclusive states.  When the
+scheduler runs a process, that process is no longer ready to run and no
+longer in the ready to run list.  When the process stops running, it
+may go back to being ready to run again.
+</para>
+<para>The only difference between a process that is assigned the Round Robin
+scheduling policy and a process that is assigned First Come First Serve
+is that in the former case, the process is automatically booted off the
+CPU after a certain amount of time.  When that happens, the process goes
+back to being ready to run, which means it enters the queue at the tail.
+The time quantum we’re talking about is small.  Really small.  This is
+not your father’s timesharing.  For example, with the Linux kernel, the
+round robin time slice is a thousand times shorter than its typical
+time slice for traditional scheduling.
+</para>
+<para>A process begins life with the same scheduling policy as its parent process.
+Functions described in <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Basic-Scheduling-Functions">Basic Scheduling Functions</a> can change it.
+</para>
+<para>Only a privileged process can set the scheduling policy of a process
+that has absolute priority higher than 0.
+</para>
+<hr>
+</div>
+<div class="subsection" xml:id="glibc-Basic-Scheduling-Functions">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Traditional-Scheduling" accesskey="n" rel="next">Traditional Scheduling</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Realtime-Scheduling" accesskey="p" rel="prev">Realtime Scheduling</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Priority" accesskey="u" rel="up">Process CPU Priority And Scheduling</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Basic-Scheduling-Functions-1"></span><h4 class="subsection">22.3.3 Basic Scheduling Functions</title>
+
+<para>This section describes functions in the GNU C Library for setting the
+absolute priority and scheduling policy of a process.
+</para>
+<para><strong>Portability Note:</strong>  On systems that have the functions in this
+section, the macro _POSIX_PRIORITY_SCHEDULING is defined in
+<filename>&lt;unistd.h&gt;</filename>.
+</para>
+<para>For the case that the scheduling policy is traditional scheduling, more
+functions to fine tune the scheduling are in <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Traditional-Scheduling">Traditional Scheduling</a>.
+</para>
+<para>Don’t try to make too much out of the naming and structure of these
+functions.  They don’t match the concepts described in this manual
+because the functions are as defined by POSIX.1b, but the implementation
+on systems that use the GNU C Library is the inverse of what the POSIX
+structure contemplates.  The POSIX scheme assumes that the primary
+scheduling parameter is the scheduling policy and that the priority
+value, if any, is a parameter of the scheduling policy.  In the
+implementation, though, the priority value is king and the scheduling
+policy, if anything, only fine tunes the effect of that priority.
+</para>
+<para>The symbols in this section are declared by including file <filename>sched.h</filename>.
+</para>
+<para><strong>Portability Note:</strong> In POSIX, the <code>pid_t</code> arguments of the
+functions below refer to process IDs.  On Linux, they are actually
+thread IDs, and control how specific threads are scheduled with
+regards to the entire system.  The resulting behavior does not conform
+to POSIX.  This is why the following description refers to tasks and
+tasks IDs, and not processes and process IDs.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-struct-sched_005fparam"><span class="category">Data Type: </span><span><strong>struct sched_param</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-struct-sched_005fparam" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>This structure describes an absolute priority.
+</para><dl compact="compact">
+<dt><span><code>int sched_priority</code></span></dt>
+<dd><para>absolute priority value
+</para></dd>
+</dl>
+</dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-sched_005fsetscheduler"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>sched_setscheduler</strong> <emphasis>(pid_t <var>pid</var>, int <var>policy</var>, const struct sched_param *<var>param</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-sched_005fsetscheduler" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+
+<para>This function sets both the absolute priority and the scheduling policy
+for a task.
+</para>
+<para>It assigns the absolute priority value given by <var>param</var> and the
+scheduling policy <var>policy</var> to the task with ID <var>pid</var>,
+or the calling task if <var>pid</var> is zero.  If <var>policy</var> is
+negative, <code>sched_setscheduler</code> keeps the existing scheduling policy.
+</para>
+<para>The following macros represent the valid values for <var>policy</var>:
+</para>
+<dl compact="compact">
+<dt xml:id="glibc-index-SCHED_005fOTHER"><span><code>SCHED_OTHER</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-SCHED_005fOTHER" class="copiable-anchor"> ¶</a></span></dt>
+<dd><para>Traditional Scheduling
+</para></dd>
+<dt xml:id="glibc-index-SCHED_005fFIFO"><span><code>SCHED_FIFO</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-SCHED_005fFIFO" class="copiable-anchor"> ¶</a></span></dt>
+<dd><para>First In First Out
+</para></dd>
+<dt xml:id="glibc-index-SCHED_005fRR"><span><code>SCHED_RR</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-SCHED_005fRR" class="copiable-anchor"> ¶</a></span></dt>
+<dd><para>Round Robin
+</para></dd>
+</dl>
+
+
+<para>On success, the return value is <code>0</code>.  Otherwise, it is <code>-1</code>
+and <code>ERRNO</code> is set accordingly.  The <code>errno</code> values specific
+to this function are:
+</para>
+<dl compact="compact">
+<dt><span><code>EPERM</code></span></dt>
+<dd><ul>
+<li> The calling task does not have <code>CAP_SYS_NICE</code> permission and
+<var>policy</var> is not <code>SCHED_OTHER</code> (or it’s negative and the
+existing policy is not <code>SCHED_OTHER</code>.
+
+</li><li> The calling task does not have <code>CAP_SYS_NICE</code> permission and its
+owner is not the target task’s owner.  I.e., the effective uid of the
+calling task is neither the effective nor the real uid of task
+<var>pid</var>.
+</li></ul>
+
+</dd>
+<dt><span><code>ESRCH</code></span></dt>
+<dd><para>There is no task with pid <var>pid</var> and <var>pid</var> is not zero.
+</para>
+</dd>
+<dt><span><code>EINVAL</code></span></dt>
+<dd><ul>
+<li> <var>policy</var> does not identify an existing scheduling policy.
+
+</li><li> The absolute priority value identified by *<var>param</var> is outside the
+valid range for the scheduling policy <var>policy</var> (or the existing
+scheduling policy if <var>policy</var> is negative) or <var>param</var> is
+null.  <code>sched_get_priority_max</code> and <code>sched_get_priority_min</code>
+tell you what the valid range is.
+
+</li><li> <var>pid</var> is negative.
+</li></ul>
+</dd>
+</dl>
+
+</dd></dl>
+
+
+<dl class="def">
+<dt xml:id="glibc-index-sched_005fgetscheduler"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>sched_getscheduler</strong> <emphasis>(pid_t <var>pid</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-sched_005fgetscheduler" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+
+<para>This function returns the scheduling policy assigned to the task with
+ID <var>pid</var>, or the calling task if <var>pid</var> is zero.
+</para>
+<para>The return value is the scheduling policy.  See
+<code>sched_setscheduler</code> for the possible values.
+</para>
+<para>If the function fails, the return value is instead <code>-1</code> and
+<code>errno</code> is set accordingly.
+</para>
+<para>The <code>errno</code> values specific to this function are:
+</para>
+<dl compact="compact">
+<dt><span><code>ESRCH</code></span></dt>
+<dd><para>There is no task with pid <var>pid</var> and it is not zero.
+</para>
+</dd>
+<dt><span><code>EINVAL</code></span></dt>
+<dd><para><var>pid</var> is negative.
+</para>
+</dd>
+</dl>
+
+<para>Note that this function is not an exact mate to <code>sched_setscheduler</code>
+because while that function sets the scheduling policy and the absolute
+priority, this function gets only the scheduling policy.  To get the
+absolute priority, use <code>sched_getparam</code>.
+</para>
+</dd></dl>
+
+
+<dl class="def">
+<dt xml:id="glibc-index-sched_005fsetparam"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>sched_setparam</strong> <emphasis>(pid_t <var>pid</var>, const struct sched_param *<var>param</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-sched_005fsetparam" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+
+<para>This function sets a task’s absolute priority.
+</para>
+<para>It is functionally identical to <code>sched_setscheduler</code> with
+<var>policy</var> = <code>-1</code>.
+</para>
+
+</dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-sched_005fgetparam"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>sched_getparam</strong> <emphasis>(pid_t <var>pid</var>, struct sched_param *<var>param</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-sched_005fgetparam" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+
+<para>This function returns a task’s absolute priority.
+</para>
+<para><var>pid</var> is the task ID of the task whose absolute priority you want
+to know.
+</para>
+<para><var>param</var> is a pointer to a structure in which the function stores the
+absolute priority of the task.
+</para>
+<para>On success, the return value is <code>0</code>.  Otherwise, it is <code>-1</code>
+and <code>errno</code> is set accordingly.  The <code>errno</code> values specific
+to this function are:
+</para>
+<dl compact="compact">
+<dt><span><code>ESRCH</code></span></dt>
+<dd><para>There is no task with ID <var>pid</var> and it is not zero.
+</para>
+</dd>
+<dt><span><code>EINVAL</code></span></dt>
+<dd><para><var>pid</var> is negative.
+</para>
+</dd>
+</dl>
+
+</dd></dl>
+
+
+<dl class="def">
+<dt xml:id="glibc-index-sched_005fget_005fpriority_005fmin"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>sched_get_priority_min</strong> <emphasis>(int <var>policy</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-sched_005fget_005fpriority_005fmin" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+
+<para>This function returns the lowest absolute priority value that is
+allowable for a task with scheduling policy <var>policy</var>.
+</para>
+<para>On Linux, it is 0 for SCHED_OTHER and 1 for everything else.
+</para>
+<para>On success, the return value is <code>0</code>.  Otherwise, it is <code>-1</code>
+and <code>ERRNO</code> is set accordingly.  The <code>errno</code> values specific
+to this function are:
+</para>
+<dl compact="compact">
+<dt><span><code>EINVAL</code></span></dt>
+<dd><para><var>policy</var> does not identify an existing scheduling policy.
+</para></dd>
+</dl>
+
+</dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-sched_005fget_005fpriority_005fmax"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>sched_get_priority_max</strong> <emphasis>(int <var>policy</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-sched_005fget_005fpriority_005fmax" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+
+<para>This function returns the highest absolute priority value that is
+allowable for a task that with scheduling policy <var>policy</var>.
+</para>
+<para>On Linux, it is 0 for SCHED_OTHER and 99 for everything else.
+</para>
+<para>On success, the return value is <code>0</code>.  Otherwise, it is <code>-1</code>
+and <code>ERRNO</code> is set accordingly.  The <code>errno</code> values specific
+to this function are:
+</para>
+<dl compact="compact">
+<dt><span><code>EINVAL</code></span></dt>
+<dd><para><var>policy</var> does not identify an existing scheduling policy.
+</para></dd>
+</dl>
+
+</dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-sched_005frr_005fget_005finterval"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>sched_rr_get_interval</strong> <emphasis>(pid_t <var>pid</var>, struct timespec *<var>interval</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-sched_005frr_005fget_005finterval" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+
+<para>This function returns the length of the quantum (time slice) used with
+the Round Robin scheduling policy, if it is used, for the task with
+task ID <var>pid</var>.
+</para>
+<para>It returns the length of time as <var>interval</var>.
+</para>
+<para>With a Linux kernel, the round robin time slice is always 150
+microseconds, and <var>pid</var> need not even be a real pid.
+</para>
+<para>The return value is <code>0</code> on success and in the pathological case
+that it fails, the return value is <code>-1</code> and <code>errno</code> is set
+accordingly.  There is nothing specific that can go wrong with this
+function, so there are no specific <code>errno</code> values.
+</para>
+</dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-sched_005fyield"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>sched_yield</strong> <emphasis>(void)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-sched_005fyield" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+
+<para>This function voluntarily gives up the task’s claim on the CPU.
+</para>
+<para>Technically, <code>sched_yield</code> causes the calling task to be made
+immediately ready to run (as opposed to running, which is what it was
+before).  This means that if it has absolute priority higher than 0, it
+gets pushed onto the tail of the queue of tasks that share its
+absolute priority and are ready to run, and it will run again when its
+turn next arrives.  If its absolute priority is 0, it is more
+complicated, but still has the effect of yielding the CPU to other
+tasks.
+</para>
+<para>If there are no other tasks that share the calling task’s absolute
+priority, this function doesn’t have any effect.
+</para>
+<para>To the extent that the containing program is oblivious to what other
+processes in the system are doing and how fast it executes, this
+function appears as a no-op.
+</para>
+<para>The return value is <code>0</code> on success and in the pathological case
+that it fails, the return value is <code>-1</code> and <code>errno</code> is set
+accordingly.  There is nothing specific that can go wrong with this
+function, so there are no specific <code>errno</code> values.
+</para>
+</dd></dl>
+
+<hr>
+</div>
+<div class="subsection" xml:id="glibc-Traditional-Scheduling">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#CPU-Affinity" accesskey="n" rel="next">Limiting execution to certain CPUs</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Basic-Scheduling-Functions" accesskey="p" rel="prev">Basic Scheduling Functions</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Priority" accesskey="u" rel="up">Process CPU Priority And Scheduling</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Traditional-Scheduling-1"></span><h4 class="subsection">22.3.4 Traditional Scheduling</title>
+<span xml:id="glibc-index-scheduling_002c-traditional"></span>
+
+<para>This section is about the scheduling among processes whose absolute
+priority is 0.  When the system hands out the scraps of CPU time that
+are left over after the processes with higher absolute priority have
+taken all they want, the scheduling described herein determines who
+among the great unwashed processes gets them.
+</para>
+
+<ul class="section-toc">
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Traditional-Scheduling-Intro" accesskey="1">Introduction To Traditional Scheduling</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Traditional-Scheduling-Functions" accesskey="2">Functions For Traditional Scheduling</a></li>
+</ul>
+<hr>
+<div class="subsubsection" xml:id="glibc-Traditional-Scheduling-Intro">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Traditional-Scheduling-Functions" accesskey="n" rel="next">Functions For Traditional Scheduling</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Traditional-Scheduling" accesskey="u" rel="up">Traditional Scheduling</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Introduction-To-Traditional-Scheduling"></span><h4 class="subsubsection">22.3.4.1 Introduction To Traditional Scheduling</title>
+
+<para>Long before there was absolute priority (See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Absolute-Priority">Absolute Priority</a>),
+Unix systems were scheduling the CPU using this system.  When POSIX came
+in like the Romans and imposed absolute priorities to accommodate the
+needs of realtime processing, it left the indigenous Absolute Priority
+Zero processes to govern themselves by their own familiar scheduling
+policy.
+</para>
+<para>Indeed, absolute priorities higher than zero are not available on many
+systems today and are not typically used when they are, being intended
+mainly for computers that do realtime processing.  So this section
+describes the only scheduling many programmers need to be concerned
+about.
+</para>
+<para>But just to be clear about the scope of this scheduling: Any time a
+process with an absolute priority of 0 and a process with an absolute
+priority higher than 0 are ready to run at the same time, the one with
+absolute priority 0 does not run.  If it’s already running when the
+higher priority ready-to-run process comes into existence, it stops
+immediately.
+</para>
+<para>In addition to its absolute priority of zero, every process has another
+priority, which we will refer to as "dynamic priority" because it changes
+over time.  The dynamic priority is meaningless for processes with
+an absolute priority higher than zero.
+</para>
+<para>The dynamic priority sometimes determines who gets the next turn on the
+CPU.  Sometimes it determines how long turns last.  Sometimes it
+determines whether a process can kick another off the CPU.
+</para>
+<para>In Linux, the value is a combination of these things, but mostly it
+just determines the length of the time slice.  The higher a process’
+dynamic priority, the longer a shot it gets on the CPU when it gets one.
+If it doesn’t use up its time slice before giving up the CPU to do
+something like wait for I/O, it is favored for getting the CPU back when
+it’s ready for it, to finish out its time slice.  Other than that,
+selection of processes for new time slices is basically round robin.
+But the scheduler does throw a bone to the low priority processes: A
+process’ dynamic priority rises every time it is snubbed in the
+scheduling process.  In Linux, even the fat kid gets to play.
+</para>
+<para>The fluctuation of a process’ dynamic priority is regulated by another
+value: The “nice” value.  The nice value is an integer, usually in the
+range -20 to 20, and represents an upper limit on a process’ dynamic
+priority.  The higher the nice number, the lower that limit.
+</para>
+<para>On a typical Linux system, for example, a process with a nice value of
+20 can get only 10 milliseconds on the CPU at a time, whereas a process
+with a nice value of -20 can achieve a high enough priority to get 400
+milliseconds.
+</para>
+<para>The idea of the nice value is deferential courtesy.  In the beginning,
+in the Unix garden of Eden, all processes shared equally in the bounty
+of the computer system.  But not all processes really need the same
+share of CPU time, so the nice value gave a courteous process the
+ability to refuse its equal share of CPU time that others might prosper.
+Hence, the higher a process’ nice value, the nicer the process is.
+(Then a snake came along and offered some process a negative nice value
+and the system became the crass resource allocation system we know
+today.)
+</para>
+<para>Dynamic priorities tend upward and downward with an objective of
+smoothing out allocation of CPU time and giving quick response time to
+infrequent requests.  But they never exceed their nice limits, so on a
+heavily loaded CPU, the nice value effectively determines how fast a
+process runs.
+</para>
+<para>In keeping with the socialistic heritage of Unix process priority, a
+process begins life with the same nice value as its parent process and
+can raise it at will.  A process can also raise the nice value of any
+other process owned by the same user (or effective user).  But only a
+privileged process can lower its nice value.  A privileged process can
+also raise or lower another process’ nice value.
+</para>
+<para>GNU C Library functions for getting and setting nice values are described in
+See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Traditional-Scheduling-Functions">Functions For Traditional Scheduling</a>.
+</para>
+<hr>
+</div>
+<div class="subsubsection" xml:id="glibc-Traditional-Scheduling-Functions">
+<div class="header">
+<para>
+Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Traditional-Scheduling-Intro" accesskey="p" rel="prev">Introduction To Traditional Scheduling</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Traditional-Scheduling" accesskey="u" rel="up">Traditional Scheduling</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Functions-For-Traditional-Scheduling"></span><h4 class="subsubsection">22.3.4.2 Functions For Traditional Scheduling</title>
+
+<span xml:id="glibc-index-sys_002fresource_002eh-2"></span>
+<para>This section describes how you can read and set the nice value of a
+process.  All these symbols are declared in <filename>sys/resource.h</filename>.
+</para>
+<para>The function and macro names are defined by POSIX, and refer to
+"priority," but the functions actually have to do with nice values, as
+the terms are used both in the manual and POSIX.
+</para>
+<para>The range of valid nice values depends on the kernel, but typically it
+runs from <code>-20</code> to <code>20</code>.  A lower nice value corresponds to
+higher priority for the process.  These constants describe the range of
+priority values:
+</para>
+<dl compact="compact">
+<dt xml:id="glibc-index-PRIO_005fMIN"><span><code>PRIO_MIN</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-PRIO_005fMIN" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>The lowest valid nice value.
+</para>
+</dd>
+<dt xml:id="glibc-index-PRIO_005fMAX"><span><code>PRIO_MAX</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-PRIO_005fMAX" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>The highest valid nice value.
+</para></dd>
+</dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-getpriority"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>getpriority</strong> <emphasis>(int <var>class</var>, int <var>id</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-getpriority" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>Return the nice value of a set of processes; <var>class</var> and <var>id</var>
+specify which ones (see below).  If the processes specified do not all
+have the same nice value, this returns the lowest value that any of them
+has.
+</para>
+<para>On success, the return value is <code>0</code>.  Otherwise, it is <code>-1</code>
+and <code>errno</code> is set accordingly.  The <code>errno</code> values specific
+to this function are:
+</para>
+<dl compact="compact">
+<dt><span><code>ESRCH</code></span></dt>
+<dd><para>The combination of <var>class</var> and <var>id</var> does not match any existing
+process.
+</para>
+</dd>
+<dt><span><code>EINVAL</code></span></dt>
+<dd><para>The value of <var>class</var> is not valid.
+</para></dd>
+</dl>
+
+<para>If the return value is <code>-1</code>, it could indicate failure, or it could
+be the nice value.  The only way to make certain is to set <code>errno =
+0</code> before calling <code>getpriority</code>, then use <code>errno != 0</code>
+afterward as the criterion for failure.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-setpriority"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>setpriority</strong> <emphasis>(int <var>class</var>, int <var>id</var>, int <var>niceval</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-setpriority" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>Set the nice value of a set of processes to <var>niceval</var>; <var>class</var>
+and <var>id</var> specify which ones (see below).
+</para>
+<para>The return value is <code>0</code> on success, and <code>-1</code> on
+failure.  The following <code>errno</code> error condition are possible for
+this function:
+</para>
+<dl compact="compact">
+<dt><span><code>ESRCH</code></span></dt>
+<dd><para>The combination of <var>class</var> and <var>id</var> does not match any existing
+process.
+</para>
+</dd>
+<dt><span><code>EINVAL</code></span></dt>
+<dd><para>The value of <var>class</var> is not valid.
+</para>
+</dd>
+<dt><span><code>EPERM</code></span></dt>
+<dd><para>The call would set the nice value of a process which is owned by a different
+user than the calling process (i.e., the target process’ real or effective
+uid does not match the calling process’ effective uid) and the calling
+process does not have <code>CAP_SYS_NICE</code> permission.
+</para>
+</dd>
+<dt><span><code>EACCES</code></span></dt>
+<dd><para>The call would lower the process’ nice value and the process does not have
+<code>CAP_SYS_NICE</code> permission.
+</para></dd>
+</dl>
+
+</dd></dl>
+
+<para>The arguments <var>class</var> and <var>id</var> together specify a set of
+processes in which you are interested.  These are the possible values of
+<var>class</var>:
+</para>
+<dl compact="compact">
+<dt xml:id="glibc-index-PRIO_005fPROCESS"><span><code>PRIO_PROCESS</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-PRIO_005fPROCESS" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>One particular process.  The argument <var>id</var> is a process ID (pid).
+</para>
+</dd>
+<dt xml:id="glibc-index-PRIO_005fPGRP"><span><code>PRIO_PGRP</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-PRIO_005fPGRP" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>All the processes in a particular process group.  The argument <var>id</var> is
+a process group ID (pgid).
+</para>
+</dd>
+<dt xml:id="glibc-index-PRIO_005fUSER"><span><code>PRIO_USER</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-PRIO_005fUSER" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>All the processes owned by a particular user (i.e., whose real uid
+indicates the user).  The argument <var>id</var> is a user ID (uid).
+</para></dd>
+</dl>
+
+<para>If the argument <var>id</var> is 0, it stands for the calling process, its
+process group, or its owner (real uid), according to <var>class</var>.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-nice"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>nice</strong> <emphasis>(int <var>increment</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-nice" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Unsafe race:setpriority
+| AS-Unsafe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>Increment the nice value of the calling process by <var>increment</var>.
+The return value is the new nice value on success, and <code>-1</code> on
+failure.  In the case of failure, <code>errno</code> will be set to the
+same values as for <code>setpriority</code>.
+</para>
+
+<para>Here is an equivalent definition of <code>nice</code>:
+</para>
+<div class="example">
+<pre class="example">int
+nice (int increment)
+{
+  int result, old = getpriority (PRIO_PROCESS, 0);
+  result = setpriority (PRIO_PROCESS, 0, old + increment);
+  if (result != -1)
+      return old + increment;
+  else
+      return -1;
+}
+</pre></div>
+</dd></dl>
+
+
+<hr>
+</div>
+</div>
+<div class="subsection" xml:id="glibc-CPU-Affinity">
+<div class="header">
+<para>
+Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Traditional-Scheduling" accesskey="p" rel="prev">Traditional Scheduling</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Priority" accesskey="u" rel="up">Process CPU Priority And Scheduling</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Limiting-execution-to-certain-CPUs"></span><h4 class="subsection">22.3.5 Limiting execution to certain CPUs</title>
+
+<para>On a multi-processor system the operating system usually distributes
+the different processes which are runnable on all available CPUs in a
+way which allows the system to work most efficiently.  Which processes
+and threads run can be to some extend be control with the scheduling
+functionality described in the last sections.  But which CPU finally
+executes which process or thread is not covered.
+</para>
+<para>There are a number of reasons why a program might want to have control
+over this aspect of the system as well:
+</para>
+<ul>
+<li> One thread or process is responsible for absolutely critical work
+which under no circumstances must be interrupted or hindered from
+making progress by other processes or threads using CPU resources.  In
+this case the special process would be confined to a CPU which no
+other process or thread is allowed to use.
+
+</li><li> The access to certain resources (RAM, I/O ports) has different costs
+from different CPUs.  This is the case in NUMA (Non-Uniform Memory
+Architecture) machines.  Preferably memory should be accessed locally
+but this requirement is usually not visible to the scheduler.
+Therefore forcing a process or thread to the CPUs which have local
+access to the most-used memory helps to significantly boost the
+performance.
+
+</li><li> In controlled runtimes resource allocation and book-keeping work (for
+instance garbage collection) is performance local to processors.  This
+can help to reduce locking costs if the resources do not have to be
+protected from concurrent accesses from different processors.
+</li></ul>
+
+<para>The POSIX standard up to this date is of not much help to solve this
+problem.  The Linux kernel provides a set of interfaces to allow
+specifying <emphasis>affinity sets</emphasis> for a process.  The scheduler will
+schedule the thread or process on CPUs specified by the affinity
+masks.  The interfaces which the GNU C Library define follow to some
+extent the Linux kernel interface.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-cpu_005fset_005ft"><span class="category">Data Type: </span><span><strong>cpu_set_t</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-cpu_005fset_005ft" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>This data set is a bitset where each bit represents a CPU.  How the
+system’s CPUs are mapped to bits in the bitset is system dependent.
+The data type has a fixed size; in the unlikely case that the number
+of bits are not sufficient to describe the CPUs of the system a
+different interface has to be used.
+</para>
+<para>This type is a GNU extension and is defined in <filename>sched.h</filename>.
+</para></dd></dl>
+
+<para>To manipulate the bitset, to set and reset bits, a number of macros are
+defined.  Some of the macros take a CPU number as a parameter.  Here
+it is important to never exceed the size of the bitset.  The following
+macro specifies the number of bits in the <code>cpu_set_t</code> bitset.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-CPU_005fSETSIZE"><span class="category">Macro: </span><span><emphasis>int</emphasis> <strong>CPU_SETSIZE</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-CPU_005fSETSIZE" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>The value of this macro is the maximum number of CPUs which can be
+handled with a <code>cpu_set_t</code> object.
+</para></dd></dl>
+
+<para>The type <code>cpu_set_t</code> should be considered opaque; all
+manipulation should happen via the next four macros.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-CPU_005fZERO"><span class="category">Macro: </span><span><emphasis>void</emphasis> <strong>CPU_ZERO</strong> <emphasis>(cpu_set_t *<var>set</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-CPU_005fZERO" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This macro initializes the CPU set <var>set</var> to be the empty set.
+</para>
+<para>This macro is a GNU extension and is defined in <filename>sched.h</filename>.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-CPU_005fSET"><span class="category">Macro: </span><span><emphasis>void</emphasis> <strong>CPU_SET</strong> <emphasis>(int <var>cpu</var>, cpu_set_t *<var>set</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-CPU_005fSET" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This macro adds <var>cpu</var> to the CPU set <var>set</var>.
+</para>
+<para>The <var>cpu</var> parameter must not have side effects since it is
+evaluated more than once.
+</para>
+<para>This macro is a GNU extension and is defined in <filename>sched.h</filename>.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-CPU_005fCLR"><span class="category">Macro: </span><span><emphasis>void</emphasis> <strong>CPU_CLR</strong> <emphasis>(int <var>cpu</var>, cpu_set_t *<var>set</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-CPU_005fCLR" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This macro removes <var>cpu</var> from the CPU set <var>set</var>.
+</para>
+<para>The <var>cpu</var> parameter must not have side effects since it is
+evaluated more than once.
+</para>
+<para>This macro is a GNU extension and is defined in <filename>sched.h</filename>.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-CPU_005fISSET"><span class="category">Macro: </span><span><emphasis>int</emphasis> <strong>CPU_ISSET</strong> <emphasis>(int <var>cpu</var>, const cpu_set_t *<var>set</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-CPU_005fISSET" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This macro returns a nonzero value (true) if <var>cpu</var> is a member
+of the CPU set <var>set</var>, and zero (false) otherwise.
+</para>
+<para>The <var>cpu</var> parameter must not have side effects since it is
+evaluated more than once.
+</para>
+<para>This macro is a GNU extension and is defined in <filename>sched.h</filename>.
+</para></dd></dl>
+
+
+<para>CPU bitsets can be constructed from scratch or the currently installed
+affinity mask can be retrieved from the system.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-sched_005fgetaffinity"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>sched_getaffinity</strong> <emphasis>(pid_t <var>pid</var>, size_t <var>cpusetsize</var>, cpu_set_t *<var>cpuset</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-sched_005fgetaffinity" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+
+<para>This function stores the CPU affinity mask for the process or thread
+with the ID <var>pid</var> in the <var>cpusetsize</var> bytes long bitmap
+pointed to by <var>cpuset</var>.  If successful, the function always
+initializes all bits in the <code>cpu_set_t</code> object and returns zero.
+</para>
+<para>If <var>pid</var> does not correspond to a process or thread on the system
+the or the function fails for some other reason, it returns <code>-1</code>
+and <code>errno</code> is set to represent the error condition.
+</para>
+<dl compact="compact">
+<dt><span><code>ESRCH</code></span></dt>
+<dd><para>No process or thread with the given ID found.
+</para>
+</dd>
+<dt><span><code>EFAULT</code></span></dt>
+<dd><para>The pointer <var>cpuset</var> does not point to a valid object.
+</para></dd>
+</dl>
+
+<para>This function is a GNU extension and is declared in <filename>sched.h</filename>.
+</para></dd></dl>
+
+<para>Note that it is not portably possible to use this information to
+retrieve the information for different POSIX threads.  A separate
+interface must be provided for that.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-sched_005fsetaffinity"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>sched_setaffinity</strong> <emphasis>(pid_t <var>pid</var>, size_t <var>cpusetsize</var>, const cpu_set_t *<var>cpuset</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-sched_005fsetaffinity" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+
+<para>This function installs the <var>cpusetsize</var> bytes long affinity mask
+pointed to by <var>cpuset</var> for the process or thread with the ID <var>pid</var>.
+If successful the function returns zero and the scheduler will in the future
+take the affinity information into account.
+</para>
+<para>If the function fails it will return <code>-1</code> and <code>errno</code> is set
+to the error code:
+</para>
+<dl compact="compact">
+<dt><span><code>ESRCH</code></span></dt>
+<dd><para>No process or thread with the given ID found.
+</para>
+</dd>
+<dt><span><code>EFAULT</code></span></dt>
+<dd><para>The pointer <var>cpuset</var> does not point to a valid object.
+</para>
+</dd>
+<dt><span><code>EINVAL</code></span></dt>
+<dd><para>The bitset is not valid.  This might mean that the affinity set might
+not leave a processor for the process or thread to run on.
+</para></dd>
+</dl>
+
+<para>This function is a GNU extension and is declared in <filename>sched.h</filename>.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-getcpu"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>getcpu</strong> <emphasis>(unsigned int *cpu, unsigned int *node)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-getcpu" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>getcpu</code> function identifies the processor and node on which
+the calling thread or process is currently running and writes them into
+the integers pointed to by the <var>cpu</var> and <var>node</var> arguments.  The
+processor is a unique nonnegative integer identifying a CPU.  The node
+is a unique nonnegative integer identifying a NUMA node.  When either
+<var>cpu</var> or <var>node</var> is <code>NULL</code>, nothing is written to the
+respective pointer.
+</para>
+<para>The return value is <code>0</code> on success and <code>-1</code> on failure.  The
+following <code>errno</code> error condition is defined for this function:
+</para>
+<dl compact="compact">
+<dt><span><code>ENOSYS</code></span></dt>
+<dd><para>The operating system does not support this function.
+</para></dd>
+</dl>
+
+<para>This function is Linux-specific and is declared in <filename>sched.h</filename>.
+</para></dd></dl>
+
+<hr>
+</div>
+</div>
+<sect xml:id="glibc-Memory-Resources">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Processor-Resources" accesskey="n" rel="next">Learn about the processors available</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Priority" accesskey="p" rel="prev">Process CPU Priority And Scheduling</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Resource-Usage-And-Limitation" accesskey="u" rel="up">Resource Usage And Limitation</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Querying-memory-available-resources"></span><h3 class="section">22.4 Querying memory available resources</title>
+
+<para>The amount of memory available in the system and the way it is organized
+determines oftentimes the way programs can and have to work.  For
+functions like <code>mmap</code> it is necessary to know about the size of
+individual memory pages and knowing how much memory is available enables
+a program to select appropriate sizes for, say, caches.  Before we get
+into these details a few words about memory subsystems in traditional
+Unix systems will be given.
+</para>
+
+<ul class="section-toc">
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Memory-Subsystem" accesskey="1">Overview about traditional Unix memory handling</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Query-Memory-Parameters" accesskey="2">How to get information about the memory subsystem?</a></li>
+</ul>
+<hr>
+<div class="subsection" xml:id="glibc-Memory-Subsystem">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Query-Memory-Parameters" accesskey="n" rel="next">How to get information about the memory subsystem?</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Memory-Resources" accesskey="u" rel="up">Querying memory available resources</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Overview-about-traditional-Unix-memory-handling"></span><h4 class="subsection">22.4.1 Overview about traditional Unix memory handling</title>
+
+<span xml:id="glibc-index-address-space"></span>
+<span xml:id="glibc-index-physical-memory"></span>
+<span xml:id="glibc-index-physical-address"></span>
+<para>Unix systems normally provide processes virtual address spaces.  This
+means that the addresses of the memory regions do not have to correspond
+directly to the addresses of the actual physical memory which stores the
+data.  An extra level of indirection is introduced which translates
+virtual addresses into physical addresses.  This is normally done by the
+hardware of the processor.
+</para>
+<span xml:id="glibc-index-shared-memory"></span>
+<para>Using a virtual address space has several advantages.  The most important
+is process isolation.  The different processes running on the system
+cannot interfere directly with each other.  No process can write into
+the address space of another process (except when shared memory is used
+but then it is wanted and controlled).
+</para>
+<para>Another advantage of virtual memory is that the address space the
+processes see can actually be larger than the physical memory available.
+The physical memory can be extended by storage on an external media
+where the content of currently unused memory regions is stored.  The
+address translation can then intercept accesses to these memory regions
+and make memory content available again by loading the data back into
+memory.  This concept makes it necessary that programs which have to use
+lots of memory know the difference between available virtual address
+space and available physical memory.  If the working set of virtual
+memory of all the processes is larger than the available physical memory
+the system will slow down dramatically due to constant swapping of
+memory content from the memory to the storage media and back.  This is
+called “thrashing”.
+<span xml:id="glibc-index-thrashing"></span>
+</para>
+<span xml:id="glibc-index-memory-page"></span>
+<span xml:id="glibc-index-page_002c-memory"></span>
+<para>A final aspect of virtual memory which is important and follows from
+what is said in the last paragraph is the granularity of the virtual
+address space handling.  When we said that the virtual address handling
+stores memory content externally it cannot do this on a byte-by-byte
+basis.  The administrative overhead does not allow this (leaving alone
+the processor hardware).  Instead several thousand bytes are handled
+together and form a <emphasis>page</emphasis>.  The size of each page is always a power
+of two bytes.  The smallest page size in use today is 4096, with 8192,
+16384, and 65536 being other popular sizes.
+</para>
+<hr>
+</div>
+<div class="subsection" xml:id="glibc-Query-Memory-Parameters">
+<div class="header">
+<para>
+Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Memory-Subsystem" accesskey="p" rel="prev">Overview about traditional Unix memory handling</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Memory-Resources" accesskey="u" rel="up">Querying memory available resources</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-How-to-get-information-about-the-memory-subsystem_003f"></span><h4 class="subsection">22.4.2 How to get information about the memory subsystem?</title>
+
+<para>The page size of the virtual memory the process sees is essential to
+know in several situations.  Some programming interfaces (e.g.,
+<code>mmap</code>, see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Memory_002dmapped-I_002fO">Memory-mapped I/O</a>) require the user to provide
+information adjusted to the page size.  In the case of <code>mmap</code> it is
+necessary to provide a length argument which is a multiple of the page
+size.  Another place where the knowledge about the page size is useful
+is in memory allocation.  If one allocates pieces of memory in larger
+chunks which are then subdivided by the application code it is useful to
+adjust the size of the larger blocks to the page size.  If the total
+memory requirement for the block is close (but not larger) to a multiple
+of the page size the kernel’s memory handling can work more effectively
+since it only has to allocate memory pages which are fully used.  (To do
+this optimization it is necessary to know a bit about the memory
+allocator which will require a bit of memory itself for each block and
+this overhead must not push the total size over the page size multiple.)
+</para>
+<para>The page size traditionally was a compile time constant.  But recent
+development of processors changed this.  Processors now support
+different page sizes and they can possibly even vary among different
+processes on the same system.  Therefore the system should be queried at
+runtime about the current page size and no assumptions (except about it
+being a power of two) should be made.
+</para>
+<span xml:id="glibc-index-_005fSC_005fPAGESIZE-1"></span>
+<para>The correct interface to query about the page size is <code>sysconf</code>
+(see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Sysconf-Definition">Definition of <code>sysconf</code></a>) with the parameter <code>_SC_PAGESIZE</code>.
+There is a much older interface available, too.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-getpagesize"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>getpagesize</strong> <emphasis>(void)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-getpagesize" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>getpagesize</code> function returns the page size of the process.
+This value is fixed for the runtime of the process but can vary in
+different runs of the application.
+</para>
+<para>The function is declared in <filename>unistd.h</filename>.
+</para></dd></dl>
+
+<para>Widely available on System&nbsp;V derived systems is a method to get
+information about the physical memory the system has.  The call
+</para>
+<span xml:id="glibc-index-_005fSC_005fPHYS_005fPAGES"></span>
+<span xml:id="glibc-index-sysconf"></span>
+<div class="example">
+<pre class="example">  sysconf (_SC_PHYS_PAGES)
+</pre></div>
+
+<para>returns the total number of pages of physical memory the system has.
+This does not mean all this memory is available.  This information can
+be found using
+</para>
+<span xml:id="glibc-index-_005fSC_005fAVPHYS_005fPAGES"></span>
+<span xml:id="glibc-index-sysconf-1"></span>
+<div class="example">
+<pre class="example">  sysconf (_SC_AVPHYS_PAGES)
+</pre></div>
+
+<para>These two values help to optimize applications.  The value returned for
+<code>_SC_AVPHYS_PAGES</code> is the amount of memory the application can use
+without hindering any other process (given that no other process
+increases its memory usage).  The value returned for
+<code>_SC_PHYS_PAGES</code> is more or less a hard limit for the working set.
+If all applications together constantly use more than that amount of
+memory the system is in trouble.
+</para>
+<para>The GNU C Library provides in addition to these already described way to
+get this information two functions.  They are declared in the file
+<filename>sys/sysinfo.h</filename>.  Programmers should prefer to use the
+<code>sysconf</code> method described above.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-get_005fphys_005fpages"><span class="category">Function: </span><span><emphasis>long int</emphasis> <strong>get_phys_pages</strong> <emphasis>(void)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-get_005fphys_005fpages" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Unsafe heap lock
+| AC-Unsafe lock fd mem
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>get_phys_pages</code> function returns the total number of pages of
+physical memory the system has.  To get the amount of memory this number has to
+be multiplied by the page size.
+</para>
+<para>This function is a GNU extension.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-get_005favphys_005fpages"><span class="category">Function: </span><span><emphasis>long int</emphasis> <strong>get_avphys_pages</strong> <emphasis>(void)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-get_005favphys_005fpages" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Unsafe heap lock
+| AC-Unsafe lock fd mem
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>get_avphys_pages</code> function returns the number of available pages of
+physical memory the system has.  To get the amount of memory this number has to
+be multiplied by the page size.
+</para>
+<para>This function is a GNU extension.
+</para></dd></dl>
+
+<hr>
+</div>
+</div>
+<sect xml:id="glibc-Processor-Resources">
+<div class="header">
+<para>
+Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Memory-Resources" accesskey="p" rel="prev">Querying memory available resources</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Resource-Usage-And-Limitation" accesskey="u" rel="up">Resource Usage And Limitation</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Learn-about-the-processors-available"></span><h3 class="section">22.5 Learn about the processors available</title>
+
+<para>The use of threads or processes with shared memory allows an application
+to take advantage of all the processing power a system can provide.  If
+the task can be parallelized the optimal way to write an application is
+to have at any time as many processes running as there are processors.
+To determine the number of processors available to the system one can
+run
+</para>
+<span xml:id="glibc-index-_005fSC_005fNPROCESSORS_005fCONF"></span>
+<span xml:id="glibc-index-sysconf-2"></span>
+<div class="example">
+<pre class="example">  sysconf (_SC_NPROCESSORS_CONF)
+</pre></div>
+
+<para>which returns the number of processors the operating system configured.
+But it might be possible for the operating system to disable individual
+processors and so the call
+</para>
+<span xml:id="glibc-index-_005fSC_005fNPROCESSORS_005fONLN"></span>
+<span xml:id="glibc-index-sysconf-3"></span>
+<div class="example">
+<pre class="example">  sysconf (_SC_NPROCESSORS_ONLN)
+</pre></div>
+
+<para>returns the number of processors which are currently online (i.e.,
+available).
+</para>
+<para>For these two pieces of information the GNU C Library also provides
+functions to get the information directly.  The functions are declared
+in <filename>sys/sysinfo.h</filename>.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-get_005fnprocs_005fconf"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>get_nprocs_conf</strong> <emphasis>(void)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-get_005fnprocs_005fconf" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Unsafe heap lock
+| AC-Unsafe lock fd mem
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>get_nprocs_conf</code> function returns the number of processors the
+operating system configured.
+</para>
+<para>This function is a GNU extension.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-get_005fnprocs"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>get_nprocs</strong> <emphasis>(void)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-get_005fnprocs" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe fd
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>get_nprocs</code> function returns the number of available processors.
+</para>
+<para>This function is a GNU extension.
+</para></dd></dl>
+
+<span xml:id="glibc-index-load-average"></span>
+<para>Before starting more threads it should be checked whether the processors
+are not already overused.  Unix systems calculate something called the
+<emphasis>load average</emphasis>.  This is a number indicating how many processes were
+running.  This number is an average over different periods of time
+(normally 1, 5, and 15 minutes).
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-getloadavg"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>getloadavg</strong> <emphasis>(double <var>loadavg</var>[], int <var>nelem</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-getloadavg" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe fd
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This function gets the 1, 5 and 15 minute load averages of the
+system.  The values are placed in <var>loadavg</var>.  <code>getloadavg</code> will
+place at most <var>nelem</var> elements into the array but never more than
+three elements.  The return value is the number of elements written to
+<var>loadavg</var>, or -1 on error.
+</para>
+<para>This function is declared in <filename>stdlib.h</filename>.
+</para></dd></dl>
+<hr>
+</div>
+</div-->
 </part>

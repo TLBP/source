@@ -2,7 +2,1356 @@
 <!-- ********************************************************************
         glibc/ch35.xml,v2.36, GFDL,LGPL, NBB, 2023
      ******************************************************************** -->
-<part xml:id="glibc-Threads">
-  <title>Evreler</title>
-  <titleabbrev>Evrelerle çalışmak için işlevler, sabitler ve veri türleri.</titleabbrev>
+<part xml:id="glibc-Threads" userlevel="longtoc">
+ <title>Evreler</title>
+ <titleabbrev>Evrelerle çalışmak için işlevler, sabitler ve veri türleri.</titleabbrev>
+ <preliminary>
+  <para>
+   <indexterm linkend="glibc-cp"><primary>evreler</primary></indexterm>
+   Bu oylumda, evreleri yönetmek için kullanılan işlevler açıklanmaktadır. GNU C Kitaplığı iki evre gerçeklenimi sağlar:  &isoc; evreleri ve POSIX evreleri
+  </para>
+ </preliminary>
+ <chapter xml:id="glibc-ISO-C-Threads" userlevel="longtoc">
+  <title>&isoc; Evreleri</title>
+  <titleabbrev>&isoc; Belirtimine göre Evreler.</titleabbrev>
+  <preliminary>
+   <para>
+    <indexterm linkend="glibc-cp"><primary>evreler</primary><secondary>&isoc;</secondary></indexterm>
+    <indexterm linkend="glibc-cp"><primary>&isoc; Evreleri</primary></indexterm>
+    <indexterm linkend="glibc-cp"><primary>C Evreleri</primary></indexterm>
+    Bu kısımda, GNU C Kitaplığı &isoc; evreleri gerçeklenimi açıklanmaktadır. Bu arayüzü daha derinliğine anlamak için, özgün olarak &isoc; evrelerinin belirtildiği ISO/IEC 9899:2011, bölüm 7.26'nın okunması şiddetle önerilir. &threads.h; başlık dosyası &time.h; başlık dosyasını içerir, makroları tanımlar, türleri, sayılama sabitlerini ve çok evreli yürütmeyi destekleyen işlevleri bildirir. <varname>__STDC_NO_THREADS__</varname> makrosunu içeren gerçeklenimlerin ne bu başlık dosyasını içermesi ne de herhangi bir oluşumunu desteklemesi gerekir.
+   </para>
+  </preliminary>
+  <sect1 xml:id="glibc-ISO-C-Threads-Return-Values">
+   <title>Dönen Değerler</title>
+   <titleabbrev>İşlev dönüş değerleri için simgesel sabitler.</titleabbrev>
+   <para>
+    <indexterm linkend="glibc-cp"><primary>evreler</primary><secondary>dönüş sabitleri</secondary></indexterm>
+    &isoc; evre belirtimi, arayüzdeki işlevlerin dönüş değerleri için aşağıdaki sayılama sabitlerini sağlar:
+   </para>
+   <csynopsis>
+    <indexterm xml:id="glibc-vr-thrd_timedout" linkend="glibc-vr"><primary>thrd_timedout</primary></indexterm>
+    <csproto type="sabit">
+     <csname><function>thrd_timedout</function></csname>
+    </csproto>
+    <header>&threads.h;</header>
+    <para>
+     Genellikle karşılıklı dışlayıcı veya durum değişkeni olan istenen kaynak alınmadan belirtilen zamana ulaşıldı.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm xml:id="glibc-vr-thrd_success" linkend="glibc-vr"><primary>thrd_success</primary></indexterm>
+    <csproto type="sabit">
+     <csname><function>thrd_success</function></csname>
+    </csproto>
+    <header>&threads.h;</header>
+    <para>
+     İstenen işlem başarılı oldu.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm xml:id="glibc-vr-thrd_busy" linkend="glibc-vr"><primary>thrd_busy</primary></indexterm>
+    <csproto type="sabit">
+     <csname><function>thrd_busy</function></csname>
+    </csproto>
+    <header>&threads.h;</header>
+    <para>
+     İstenen özkaynak kullanımda olduğundan istenen işlem başarısız oldu.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm xml:id="glibc-vr-thrd_error" linkend="glibc-vr"><primary>thrd_error</primary></indexterm>
+    <csproto type="sabit">
+     <csname><function>thrd_error</function></csname>
+    </csproto>
+    <header>&threads.h;</header>
+    <para>
+     İstenen işlem başarısız oldu.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm xml:id="glibc-vr-thrd_nomem" linkend="glibc-vr"><primary>thrd_nomem</primary></indexterm>
+    <csproto type="sabit">
+     <csname><function>thrd_nomem</function></csname>
+    </csproto>
+    <header>&threads.h;</header>
+    <para>
+     Yeterli bellek tahsis edilemediğinden istenen işlem başarısız oldu.
+    </para>
+   </csynopsis>
+  </sect1>
+  <sect1 xml:id="glibc-ISO-C-Thread-Management">
+   <title>Evre Yönetimi</title>
+   <titleabbrev>Evrelerin oluşturulması ve denetimi.</titleabbrev>
+   <para>
+    <indexterm linkend="glibc-cp"><primary>evrelerin yönetimi</primary></indexterm>
+    <indexterm linkend="glibc-cp"><primary>evrelerin oluşturulması</primary></indexterm>
+    <indexterm linkend="glibc-cp"><primary>evrelerin denetimi</primary></indexterm>
+    <indexterm linkend="glibc-cp"><primary>evreler</primary><secondary>yönetim</secondary></indexterm>
+    <indexterm linkend="glibc-cp"><primary>evreler</primary><secondary>oluşturmak</secondary></indexterm>
+    <indexterm linkend="glibc-cp"><primary>evreler</primary><secondary>denetim</secondary></indexterm>
+    &glibc;, kullanıcının evreleri kolayca oluşturmasını ve kullanmasını sağlayan bir dizi işlev içerir. Bu ek işlevsellik evrelerin davranışının denetlenmesiğni sağlar.
+   </para>
+   <para>
+    Aşağıdaki veri türleri, evreleri yönetmek için tanımlanmıştır:
+   </para>
+   <csynopsis>
+    <indexterm xml:id="glibc-tp-thrd_t" linkend="glibc-tp"><primary>thrd_t</primary></indexterm>
+    <csproto type="veri türü">
+     <csname><function>thrd_t</function></csname>
+    </csproto>
+    <header>&threads.h;</header>
+    <para>
+     Bir evreyi tanımlayan eşsiz nesne.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm xml:id="glibc-tp-thrd_start_t" linkend="glibc-tp"><primary>thrd_start_t</primary></indexterm>
+    <csproto type="veri türü">
+     <csname><type>int</type><code> (*<function>thrd_start_t</function>) (void *)</code></csname>
+    </csproto>
+    <header>&threads.h;</header>
+    <para>
+     Yeni bir evre oluşturulurken <function>thrd_create</function> işlevine aktarılan işlevin veri türüdür. Evreyi başlatacak ilk işlevi göstermelidir.
+    </para>
+   </csynopsis>
+   <para>
+    Evrelerle çalışırken kullanılan işlevler:
+   </para>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-thrd_create"><primary>evrelerin oluşturulması</primary></indexterm>
+    <indexterm linkend="glibc-fn" xml:id="glibc-fn-thrd_create"><primary>thrd_create</primary></indexterm>
+    <csproto type="işlev">
+     <csname><type>int</type><function>thrd_create</function></csname>
+     <csparam><ptr>thrd_t</ptr><parameter>thr</parameter></csparam>
+     <csparam><type>thrd_start_t</type><parameter>func</parameter></csparam>
+     <csparam><ptr>void</ptr><parameter>arg</parameter></csparam>
+    </csproto>
+    <header>&threads.h;</header>
+    <conceptlist>
+     <concept>&mtsafe;</concept>
+     <concept>&assafe;</concept>
+     <concept>&acsafe;</concept>
+    </conceptlist>
+    <para>
+     <code>thrd_create</code> işlevi <parameter>func</parameter> işlevini çalıştıran yeni bir evre oluşturur. <parameter>arg</parameter> bağımsız değişkeni <parameter>func</parameter> işlevine aktarılacak bağımsız değişkene göstericidir. İşlev başarılı olursa yeni evrenin tanıtıcısı <parameter>thr</parameter> bağımsız değişkenine atanır.
+    </para>
+    <para>
+     Bu işlev <varname>thrd_success</varname>, <varname>thrd_nomem</varname> veya <varname>thrd_error</varname> ile dönebilir.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-thrd_current"><primary>evre tanıtıcısı</primary></indexterm>
+    <indexterm linkend="glibc-fn" xml:id="glibc-fn-thrd_current"><primary>thrd_current</primary></indexterm>
+    <csproto type="işlev">
+     <csname><type>thrd_t</type><function>thrd_current</function></csname>
+     <csparam><void/></csparam>
+    </csproto>
+    <header>&threads.h;</header>
+    <conceptlist>
+     <concept>&mtsafe;</concept>
+     <concept>&assafe;</concept>
+     <concept>&acsafe;</concept>
+    </conceptlist>
+    <para>
+     Çağrılan evrenin tanıtıcısını döndürür.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-fn" xml:id="glibc-fn-thrd_equal"><primary>thrd_equal</primary></indexterm>
+    <csproto type="işlev">
+     <csname><type>int</type><function>thrd_equal</function></csname>
+     <csparam><type>thrd_t</type><parameter>lhs</parameter></csparam>
+     <csparam><type>thrd_t</type><parameter>rhs</parameter></csparam>
+    </csproto>
+    <header>&threads.h;</header>
+    <conceptlist>
+     <concept>&mtsafe;</concept>
+     <concept>&assafe;</concept>
+     <concept>&acsafe;</concept>
+    </conceptlist>
+    <para>
+     <code>thrd_equal</code> işlevi <parameter>lhs</parameter> ve <parameter>rhs</parameter> bağımsız değişkenlerinin aynı evrenin tanıtıcısı olup olmadığına bakar. <parameter>lhs</parameter> ve <parameter>rhs</parameter> farklı evreler ise <code>0</code> ile değilse sıfırdan farklı bir değer ile döner.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-thrd_sleep"><primary>evrelerin bekletilmesi</primary></indexterm>
+    <indexterm linkend="glibc-fn" xml:id="glibc-fn-thrd_sleep"><primary>thrd_sleep</primary></indexterm>
+    <csproto type="işlev">
+     <csname><type>int</type><function>thrd_sleep</function></csname>
+     <csparam><ptr>const&#160;struct&#160;timespec</ptr><parameter>time_point</parameter></csparam>
+     <csparam><ptr>struct&#160;timespec</ptr><parameter>remaining</parameter></csparam>
+    </csproto>
+    <header>&threads.h;</header>
+    <conceptlist>
+     <concept>&mtsafe;</concept>
+     <concept>&assafe;</concept>
+     <concept>&acsafe;</concept>
+    </conceptlist>
+    <para>
+     <code>thrd_sleep</code> geçerli evrenin yürütülmesini en azından <parameter>time_point</parameter> ile gösterilen süreyle engeller. Bu işlev mutlak bir zaman değil evrenin engellenmesi için gereken süreyi alır. Bkz: <xref linkend="glibc-Time-Basics"/>, <xref linkend="glibc-Time-Types"/>.
+    </para>
+    <para>
+     Yok sayılmayan bir sinyal alınırsa evre erken uyanabilir. Böyle bir durumda, <parameter>remaining</parameter> <varname>NULL</varname> değilse, kalan süre <parameter>remaining</parameter> ile gösterilen nesneye atanır.
+    </para>
+    <para>
+     <code>thrd_sleep</code> en azından <parameter>time_point</parameter> süresince  bekletilebilmişse <code>0</code>, bir sinyal ile kesilmişse <code>-1</code>, başarısız olmuşsa negatif bir sayı ile döner.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-thrd_yield"><primary>evrelerin kurtarılması</primary></indexterm>
+    <indexterm linkend="glibc-fn" xml:id="glibc-fn-thrd_yield"><primary>thrd_yield</primary></indexterm>
+    <csproto type="işlev">
+     <csname><type>void</type><function>thrd_yield</function></csname>
+     <csparam><void/></csparam>
+    </csproto>
+    <header>&threads.h;</header>
+    <conceptlist>
+     <concept>&mtsafe;</concept>
+     <concept>&assafe;</concept>
+     <concept>&acsafe;</concept>
+    </conceptlist>
+    <para>
+     <code>thrd_yield</code> işlevi diğer evrelerin yürütülmesine izin verirken geçerli evrenin yürütülmesini yeniden planlamak için gerçeklenime bir ipucu sağlar.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-thrd_exit"><primary>evrelerin sonlandırılması</primary></indexterm>
+    <indexterm linkend="glibc-fn" xml:id="glibc-fn-thrd_exit"><primary>thrd_exit</primary></indexterm>
+    <csproto type="işlev">
+     <csname><type>_Noreturn void</type><function>thrd_exit</function></csname>
+     <csparam><type>int</type><parameter>res</parameter></csparam>
+    </csproto>
+    <header>&threads.h;</header>
+    <conceptlist>
+     <concept>&mtsafe;</concept>
+     <concept>&assafe;</concept>
+     <concept>&acsafe;</concept>
+    </conceptlist>
+    <para>
+     <code>thrd_exit</code> işlevi çağrılan evrenin yürütmesini sonlandırır ve evrenin sonuç kodunu <parameter>res</parameter> bağımsız değişkenine atar.
+    </para>
+    <para>
+     Bu işlev tek evreli bir süreçten çağrılırsa çağrı <code>EXIT_SUCCESS</code> ile dönen <code>exit</code> çağrısına eşdeğerdir (Bkz. <xref linkend="glibc-Normal-Termination"/>).  Ayrıca, evre başlatmış bir işlevden dönüşün de <code>thrd_exit</code> çağrısına eşdeğer olduğu unutulmamalıdır.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-thrd_detach"><primary>evrelerin ayrılması</primary></indexterm>
+    <indexterm linkend="glibc-fn" xml:id="glibc-fn-thrd_detach"><primary>thrd_detach</primary></indexterm>
+    <csproto type="işlev">
+     <csname><type>int</type><function>thrd_detach</function></csname>
+     <csparam><type>thrd_t</type><parameter>thr</parameter></csparam>
+    </csproto>
+    <header>&threads.h;</header>
+    <conceptlist>
+     <concept>&mtsafe;</concept>
+     <concept>&assafe;</concept>
+     <concept>&acsafe;</concept>
+    </conceptlist>
+    <para>
+     <code>thrd_detach</code> işlevi <parameter>thr</parameter> ile tanımlanan evreyi geçerli evreden ayırır. Ayrılan evre tarafından tutulan kaynaklar, evre çıktıktan sonra özdevinimli olarak serbest bırakılır. Ana evre hiçbir zaman herhangi bir <parameter>thr</parameter> sinyali ile bilgilendirilmez.
+    </para>
+    <para>
+     Evvelce ayrılmış veya başka bir evre tarafından birleştirilmiş bir evredeki bir <code>thrd_detach</code> çağrısının davranışı tanımsızdır.
+    </para>
+    <para>
+     Bu işlev ya <varname>thrd_success</varname> ya da <varname>thrd_error</varname> ile döner.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-thrd_join"><primary>evrelerin eşzamanlanması</primary></indexterm>
+    <indexterm linkend="glibc-fn" xml:id="glibc-fn-thrd_join"><primary>thrd_join</primary></indexterm>
+    <csproto type="işlev">
+     <csname><type>int</type><function>thrd_join</function></csname>
+     <csparam><type>thrd_t</type><parameter>thr</parameter></csparam>
+     <csparam><ptr>int</ptr><parameter>res</parameter></csparam>
+    </csproto>
+    <header>&threads.h;</header>
+    <conceptlist>
+     <concept>&mtsafe;</concept>
+     <concept>&assafe;</concept>
+     <concept>&acsafe;</concept>
+    </conceptlist>
+    <para>
+     <code>thrd_join</code> işlevi <parameter>thr</parameter> ile tanımlanan evre yürütmesini tamamlayana kadar geçerli evrenin yürütmesini engeller. <parameter>res</parameter> boş gösterici değilse evrenin sonuç kodu <parameter>res</parameter> bağımsız değişkenine atanır. Evrenin sonlandırılması, bu işlevin tamamlanmasıyla eşzamanlanır; bu, her iki evrenin de yürütülmesinin ortak bir noktaya ulaştığı anlamına gelir.
+    </para>
+    <para>
+     Evvelce ayrılmış veya başka bir evre tarafından birleştirilmiş bir evredeki bir <code>thrd_join</code> çağrısının davranışı tanımsızdır.
+    </para>
+    <para>
+     Bu işlev ya <varname>thrd_success</varname> ya da <varname>thrd_error</varname> ile döner.
+    </para>
+   </csynopsis>
+  </sect1>
+  <sect1 xml:id="glibc-Call-Once">
+   <title><code>call_once</code> işlevi</title>
+   <titleabbrev><code>call_once</code> işlevi ve makroları.</titleabbrev>
+   <para>
+    <indexterm linkend="glibc-cp"><primary>evreler</primary><secondary>bir kez çağrı işlevi</secondary></indexterm>
+    &glibc;nde, bir işlevin evreler tarafından birden çok kez çağrılması olasılığına karşın, yalnızca bir kez çağrılmasını garanti etmek için <function>call_once</function> işlevi gerçeklenmiştir.
+   </para>
+   <csynopsis>
+    <indexterm xml:id="glibc-tp-once_flag" linkend="glibc-tp"><primary>once_flag</primary></indexterm>
+    <csproto type="veri türü">
+     <csname><type>int</type><function>once_flag</function></csname>
+    </csproto>
+    <header>&threads.h;</header>
+    <para>
+     <function>call_once</function> tarafından kullanılan bir seçeneği tutabilen eksiksiz nesne türü.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-vr" xml:id="glibc-vr-ONCE_FLAG_INIT"><primary>ONCE_FLAG_INIT</primary></indexterm>
+    <csproto type="makro">
+     <csname><function>ONCE_FLAG_INIT</function></csname>
+    </csproto>
+    <header>&threads.h;</header>
+    <para>
+     <type>once_flag</type> türünde bir nesneyi ilklendirmekte kullanılır.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-fn" xml:id="glibc-fn-call_once"><primary>call_once</primary></indexterm>
+    <csproto type="işlev">
+     <csname><type>void</type><function>call_once</function></csname>
+     <csparam><ptr>once_flag</ptr><parameter>flag</parameter></csparam>
+     <csparam><code>void (*<parameter>func</parameter>) (void)</code></csparam>
+    </csproto>
+    <header>&threads.h;</header>
+    <conceptlist>
+     <concept>&mtsafe;</concept>
+     <concept>&assafe;</concept>
+     <concept>&acsafe;</concept>
+    </conceptlist>
+    <para>
+     <code>call_once</code> işlevi çeşitli evreler tarafından çağrılsa bile <parameter>func</parameter> işlevini bir kere çağırır. <parameter>func</parameter> işlevinin tamamlanması, aynı <parameter>flag</parameter> değişkenli tüm önceki ve sonraki <code>call_once</code> çağrılarıyla eşzamanlanır.
+    </para>
+   </csynopsis>
+  </sect1>
+  <sect1 xml:id="glibc-ISO-C-Mutexes">
+   <title>Karşılıklı Dışlayıcılar</title>
+   <titleabbrev>Karşılıklı dışlama için düşük seviyeli bir gerçeklenim.</titleabbrev>
+   <para>
+    <indexterm linkend="glibc-cp"><primary>karşılıklı dışlayıcılar</primary></indexterm>
+    <indexterm linkend="glibc-cp"><primary>evreler</primary><secondary>karşılıklı dışlayıcılar</secondary></indexterm>
+    Özkaynaklar evrelerin erişiminin daha iyi denetlenebilmesi için &glibc;nde, olası yarış koşullarından ve diğer eşzamanlılık sorunlarından kaçınmaya yardımcı olabilecek bir karşılıklı dışlama nesnesi gerçeklenmiştir. "<emphasis>Muteks</emphasis>" terimi ("mutual exclusion" kısaltmasıdır), karşılıklı dışlamayı ifade eder.
+   </para>
+   <para>
+    Karşılıklı dışlayıcı için temel veri türü:
+   </para>
+   <csynopsis>
+    <indexterm xml:id="glibc-tp-mtx_t" linkend="glibc-tp"><primary>mtx_t</primary></indexterm>
+    <csproto type="veri türü">
+     <csname><function>mtx_t</function></csname>
+    </csproto>
+    <header>&threads.h;</header>
+    <para>
+     Karşılıklı dışlama nesnesini tanımlayan eşsiz veri türüdür.
+    </para>
+   </csynopsis>
+   <para>
+    &isoc; standardı çeşitli türde karşılıklı dışlayıcı tanımlamıştır. Bunlar aşağıdaki sabitlerle ifade edilir:
+   </para>
+   <csynopsis>
+    <indexterm xml:id="glibc-vr-mtx_plain" linkend="glibc-vr"><primary>mtx_plain</primary></indexterm>
+    <csproto type="sabit">
+     <csname><function>mtx_plain</function></csname>
+    </csproto>
+    <header>&threads.h;</header>
+    <para>
+     Zaman aşımını ve geri dönüşü desteklemeyen karşılıklı dışlayıcı.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm xml:id="glibc-vr-mtx_recursive" linkend="glibc-vr"><primary>mtx_recursive</primary></indexterm>
+    <csproto type="sabit">
+     <csname><function>mtx_recursive</function></csname>
+    </csproto>
+    <header>&threads.h;</header>
+    <para>
+     Özyinelemeli kilitlemeyi destekleyen karşılıklı dışlayıcı (kilitin sahibi olan evre, bir kısır döngüye sebep olmadan birden fazla kilitleme yapabilir).
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm xml:id="glibc-vr-mtx_timed" linkend="glibc-vr"><primary>mtx_timed</primary></indexterm>
+    <csproto type="sabit">
+     <csname><function>mtx_timed</function></csname>
+    </csproto>
+    <header>&threads.h;</header>
+    <para>
+     Zaman aşımını destekleyen karşılıklı dışlayıcı.
+    </para>
+   </csynopsis>
+   <para>
+    Karşılıklı dışlayıcılarla çalışmak için kullanılan işlevler:
+   </para>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-mtx_init"><primary>karşılıklı dışlayıcılar</primary><secondary>ilklendirme</secondary></indexterm>
+    <indexterm linkend="glibc-fn" xml:id="glibc-fn-mtx_init"><primary>mtx_init</primary></indexterm>
+    <csproto type="işlev">
+     <csname><type>int</type><function>mtx_init</function></csname>
+     <csparam><ptr>mtx_t</ptr><parameter>mutex</parameter></csparam>
+     <csparam><type>int</type><parameter>type</parameter></csparam>
+    </csproto>
+    <header>&threads.h;</header>
+    <conceptlist>
+     <concept>&mtsafe;</concept>
+     <concept>&assafe;</concept>
+     <concept>&acsafe;</concept>
+    </conceptlist>
+    <para>
+     <code>mtx_init</code> işlevi <parameter>type</parameter> türünde yeni bir karşılıklı dışlayıcı oluşturur. Oluşturulan dışlayıcının tanıtıcısı <parameter>mutex</parameter> bağımsız değişkenine atanır.
+    </para>
+    <para>
+     Karşılıklı dışlayıcı türlerinin tüm birleşimleri <parameter>type</parameter> için geçerli değildir. Geçerli olanlar:
+    </para>
+    <glosslist>
+     <glossentry>
+      <glossterm><code>mtx_plain</code></glossterm>
+      <glossdef>
+       <para>
+        Zaman aşımını desteklemeyen özyinelemesiz karşılıklı dışlayıcı.
+       </para>
+      </glossdef>
+     </glossentry>
+     <glossentry>
+      <glossterm><code>mtx_timed</code></glossterm>
+      <glossdef>
+       <para>
+        Zaman aşımını destekleyen özyinelemesiz karşılıklı dışlayıcı.
+       </para>
+      </glossdef>
+     </glossentry>
+     <glossentry>
+      <glossterm><code>mtx_plain | mtx_recursive</code></glossterm>
+      <glossdef>
+       <para>
+        Zaman aşımını desteklemeyen özyinelemeli karşılıklı dışlayıcı.
+       </para>
+      </glossdef>
+     </glossentry>
+     <glossentry>
+      <glossterm><code>mtx_timed | mtx_recursive</code></glossterm>
+      <glossdef>
+       <para>
+        Zaman aşımını destekleyen özyinelemeli karşılıklı dışlayıcı.
+       </para>
+      </glossdef>
+     </glossentry>
+    </glosslist>
+    <para>
+     Bu işlev ya <varname>thrd_success</varname> ya da <varname>thrd_error</varname> ile döner.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-mtx_lock"><primary>karşılıklı dışlayıcılar</primary><secondary>kilitleme</secondary></indexterm>
+    <indexterm linkend="glibc-fn" xml:id="glibc-fn-mtx_lock"><primary>mtx_lock</primary></indexterm>
+    <csproto type="işlev">
+     <csname><type>int</type><function>mtx_lock</function></csname>
+     <csparam><ptr>mtx_t</ptr><parameter>mutex</parameter></csparam>
+    </csproto>
+    <header>&threads.h;</header>
+    <conceptlist>
+     <concept>&mtsafe;</concept>
+     <concept>&asunsafe; &lock;</concept>
+     <concept>&acunsafe; &lock;</concept>
+    </conceptlist>
+    <para>
+     <code>mtx_lock</code> işlevi <parameter>mutex</parameter> ile gösterilen karşılıklı dışlayıcı kilitlenene kadar geçerli evrenin yürütülmesini engeller. Geçerli evre karşılıklı dışlayıcıyı zaten kilitlemişse veya karşılıklı dışlayıcı özyinelemeli değilse işlevin davranışı belirsizdir.
+    </para>
+    <para>
+     Aynı karşılıklı dışlayıcı üzerindeki önceki <code>mtx_unlock</code> çağrıları, bu işlemle eşzamanlanır (bu işlem başarılı olursa) ve herhangi bir karşılıklı dışlayıcı üzerindeki tüm kilitleme/kilit-açma işlemleri, tek bir toplam sıra oluşturur (Toplam sıra, karşılıklı dışlayıcının değişiklik sırası olarak görülebilir.).
+    </para>
+    <para>
+     Bu işlev ya <varname>thrd_success</varname> ya da <varname>thrd_error</varname> ile döner.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-mtx_timedlock"><primary>karşılıklı dışlayıcılar</primary><secondary>kilitleme</secondary></indexterm>
+    <indexterm linkend="glibc-fn" xml:id="glibc-fn-mtx_timedlock"><primary>mtx_timedlock</primary></indexterm>
+    <csproto type="işlev">
+     <csname><type>int</type><function>mtx_timedlock</function></csname>
+     <csparam><type>mtx_t&#160;*restrict</type><parameter>mutex</parameter></csparam>
+     <csparam><type>const&#160;struct&#160;timespec&#160;*restrict</type><parameter>time_point</parameter></csparam>
+    </csproto>
+    <header>&threads.h;</header>
+    <conceptlist>
+     <concept>&mtsafe;</concept>
+     <concept>&asunsafe; &lock;</concept>
+     <concept>&acunsafe; &lock;</concept>
+    </conceptlist>
+    <para>
+     <code>mtx_timedlock</code>  işlevi <parameter>mutex</parameter> ile gösterilen karşılıklı dışlayıcı kilitlenene kadar veya <parameter>time_point</parameter> ile gösterilen takvim zamanına kadar geçerli evrenin yürütülmesini engeller. Bkz: <xref linkend="glibc-Time-Basics"/>, <xref linkend="glibc-Calendar-Time"/>.
+    </para>
+    <para>
+     Geçerli evre karşılıklı dışlayıcıyı zaten kilitlemişse ya da karşılıklı dışlayıcı özyinelemeli değilse veya zaman aşımını desteklemiyorsa işlevin davranışı belirsizdir.
+    </para>
+    <para>
+     Aynı karşılıklı dışlayıcı üzerindeki önceki <code>mtx_unlock</code> çağrıları, bu işlemle eşzamanlanır (bu işlem başarılı olursa) ve herhangi bir karşılıklı dışlayıcı üzerindeki tüm kilitleme/kilit-açma işlemleri, tek bir toplam işlem oluşturur (bölünmez bir işlemde değişiklik sırasına benzer).
+    </para>
+    <para>
+     Bu işlev ya <varname>thrd_success</varname> ya da <varname>thrd_error</varname> ile döner.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-mtx_trylock"><primary>karşılıklı dışlayıcılar</primary><secondary>kilitleme</secondary></indexterm>
+    <indexterm linkend="glibc-fn" xml:id="glibc-fn-mtx_trylock"><primary>mtx_trylock</primary></indexterm>
+    <csproto type="işlev">
+     <csname><type>int</type><function>mtx_trylock</function></csname>
+     <csparam><ptr>mtx_t</ptr><parameter>mutex</parameter></csparam>
+    </csproto>
+    <header>&threads.h;</header>
+    <conceptlist>
+     <concept>&mtsafe;</concept>
+     <concept>&asunsafe; &lock;</concept>
+     <concept>&acunsafe; &lock;</concept>
+    </conceptlist>
+    <para>
+     <code>mtx_trylock</code> işlevi geçerli evrenin yürütülmesini engellemeden <parameter>mutex</parameter> ile gösterilen karşılıklı dışlayıcıyı kilitlemeyi dener. Geçerli evre karşılıklı dışlayıcıyı zaten kilitlemişse işlev hemen döner.
+    </para>
+    <para>
+     Aynı karşılıklı dışlayıcı üzerindeki önceki <code>mtx_unlock</code> çağrıları, bu işlemle eşzamanlanır (bu işlem başarılı olursa) ve herhangi bir karşılıklı dışlayıcı üzerindeki tüm kilitleme/kilit-açma işlemleri, tek bir toplam işlem oluşturur (bölünmez bir işlemde değişiklik sırasına benzer).
+    </para>
+    <para>
+     Bu işlev kilitleme başarılıysa <varname>thrd_success</varname>,  karşılıklı dışlayıcı zaten kilitliyse <varname>thrd_busy</varname>, başarısızlık durumunda <varname>thrd_error</varname> ile döner.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-mtx_unlock"><primary>karşılıklı dışlayıcılar</primary><secondary>kilit açma</secondary></indexterm>
+    <indexterm linkend="glibc-fn" xml:id="glibc-fn-mtx_unlock"><primary>mtx_unlock</primary></indexterm>
+    <csproto type="işlev">
+     <csname><type>int</type><function>mtx_unlock</function></csname>
+     <csparam><ptr>mtx_t</ptr><parameter>mutex</parameter></csparam>
+    </csproto>
+    <header>&threads.h;</header>
+    <conceptlist>
+     <concept>&mtsafe;</concept>
+     <concept>&assafe;</concept>
+     <concept>&acsafe;</concept>
+    </conceptlist>
+    <para>
+     <code>mtx_unlock</code> işlevi <parameter>mutex</parameter> ile gösterilen karşılıklı dışlayıcının kilidini kaldırır. Geçerli evre karşılıklı dışlayıcıyı kilitlememişse işlevin davranışı tanımsızdır.
+    </para>
+    <para>
+     Bu işlev, aynı dışlayıcı üzerindeki sonraki <function>mtx_lock</function>, <function>mtx_trylock</function> ve <function>mtx_timedlock</function> çağrılarıyla eşzamanlanır. Herhangi bir karşılıklı dışlayıcı üzerindeki tüm kilitleme/kilit-açma işlemleri, tek bir toplam işlem oluşturur (bölünmez bir işlemde değişiklik sırasına benzer).
+    </para>
+    <para>
+     Bu işlev ya <varname>thrd_success</varname> ya da <varname>thrd_error</varname> ile döner.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-mtx_destroy"><primary>karşılıklı dışlayıcılar</primary><secondary>silinmesi</secondary></indexterm>
+    <indexterm linkend="glibc-fn" xml:id="glibc-fn-mtx_destroy"><primary>mtx_destroy</primary></indexterm>
+    <csproto type="işlev">
+     <csname><type>void</type><function>mtx_destroy</function></csname>
+     <csparam><ptr>mtx_t</ptr><parameter>mutex</parameter></csparam>
+    </csproto>
+    <header>&threads.h;</header>
+    <conceptlist>
+     <concept>&mtsafe;</concept>
+     <concept>&assafe;</concept>
+     <concept>&acsafe;</concept>
+    </conceptlist>
+    <para>
+     <code>mtx_destroy</code> işlevi <parameter>mutex</parameter> ile gösterilen karşılıklı dışlayıcıyı yok eder. <parameter>mutex</parameter> üzerinde bekleyen herhangi bir evre varsa davranış tanımsızdır.
+    </para>
+   </csynopsis>
+  </sect1>
+  <sect1 xml:id="glibc-ISO-C-Condition-Variables">
+   <title>Koşul Değişkenleri</title>
+   <titleabbrev>Evreleri eşzamanlayan yüksek seviyeli nesneler.</titleabbrev>
+   <para>
+    <indexterm linkend="glibc-cp"><primary>evreler</primary><secondary>koşul değişkenleri</secondary></indexterm>
+    <indexterm linkend="glibc-cp"><primary>koşul değişkenleri</primary></indexterm>
+    Karşılıklı dışlayıcılar, kullanılabilen tek eşzamanlama oluşumu değildir. &glibc; bazı daha karmaşık görevler için yazılımcının karmaşık eşzamanlama sorunlarını çözerken daha yüksek seviyede düşünmesini sağlayan koşul değişkenlerini gerçeklemiştir. Bunlar belirli bir koşulun gerçekleşmesini bekleyen evreleri eşzamanlamak için kullanılır.
+   </para>
+   <para>
+    <code>cnd_t</code> koşul değişkenleri için temel veri türüdür:
+   </para>
+   <csynopsis>
+    <indexterm linkend="glibc-tp" xml:id="glibc-tp-cnd_t"><primary>cnd_t</primary></indexterm>
+    <csproto type="veri türü">
+     <csname><function>cnd_t</function></csname>
+    </csproto>
+    <header>&threads.h;</header>
+    <para>
+     Koşul değişkeni nesnesini tanımlayan eşsiz veri türüdür.
+    </para>
+   </csynopsis>
+   <para>
+    Koşul değişkenlerle çalışırken kullanılan işlevler:
+   </para>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-cnd_init"><primary>evreler</primary><secondary>koşul değişkenleri</secondary><tertiary>ilklendirme</tertiary></indexterm>
+    <indexterm linkend="glibc-fn" xml:id="glibc-fn-cnd_init"><primary>cnd_init</primary></indexterm>
+    <csproto type="işlev">
+     <csname><type>int</type><function>cnd_init</function></csname>
+     <csparam><ptr>cnd_t</ptr><parameter>cond</parameter></csparam>
+    </csproto>
+    <header>&threads.h;</header>
+    <conceptlist>
+     <concept>&mtsafe;</concept>
+     <concept>&assafe;</concept>
+     <concept>&acsafe;</concept>
+    </conceptlist>
+    <para>
+     <code>cnd_init</code> işlevi <parameter>cond</parameter> koşul değişkenini ilklendirir.
+    </para>
+    <para>
+     Bu işlev ya <varname>thrd_success</varname> ya da <varname>thrd_error</varname> ile döner.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-cnd_signal"><primary>evreler</primary><secondary>koşul değişkenleri</secondary><tertiary>sinyalleme</tertiary></indexterm>
+    <indexterm linkend="glibc-fn" xml:id="glibc-fn-cnd_signal"><primary>cnd_signal</primary></indexterm>
+    <csproto type="işlev">
+     <csname><type>int</type><function>cnd_signal</function></csname>
+     <csparam><ptr>cnd_t</ptr><parameter>cond</parameter></csparam>
+    </csproto>
+    <header>&threads.h;</header>
+    <conceptlist>
+     <concept>&mtsafe;</concept>
+     <concept>&assafe;</concept>
+     <concept>&acsafe;</concept>
+    </conceptlist>
+    <para>
+     <code>cnd_signal</code> işlevi <parameter>cond</parameter> koşul değişkeninde beklemekte olan tek bir evrenin engelini kaldırır. Evrenin engeli başarıyla kaldırılmışsa işlev <varname>thrd_success</varname> ile döner. Engellenen evre yoksa işlev hiçbir şey yapmaz ve <varname>thrd_success</varname> ile döner. Aksi takdirde <varname>thrd_error</varname> ile döner.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-cnd_broadcast"><primary>evreler</primary><secondary>koşul değişkenleri</secondary><tertiary>küresel sinyalleme</tertiary></indexterm>
+    <indexterm linkend="glibc-fn" xml:id="glibc-fn-cnd_broadcast"><primary>cnd_broadcast</primary></indexterm>
+    <csproto type="işlev">
+     <csname><type>int</type><function>cnd_broadcast</function></csname>
+     <csparam><ptr>cnd_t</ptr><parameter>cond</parameter></csparam>
+    </csproto>
+    <header>&threads.h;</header>
+    <conceptlist>
+     <concept>&mtsafe;</concept>
+     <concept>&assafe;</concept>
+     <concept>&acsafe;</concept>
+    </conceptlist>
+    <para>
+     <code>cnd_broadcast</code> işlevi <parameter>cond</parameter> koşul değişkeninde beklemekte olan tüm evrelerin engelini kaldırır. başarı durumunda işlev <varname>thrd_success</varname> ile döner. Engellenen evre yoksa işlev hiçbir şey yapmaz ve <varname>thrd_success</varname> ile döner. Aksi takdirde <varname>thrd_error</varname> ile döner.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-cnd_wait"><primary>evreler</primary><secondary>koşul değişkenleri</secondary><tertiary>bekletme</tertiary></indexterm>
+    <indexterm linkend="glibc-fn" xml:id="glibc-fn-cnd_wait"><primary>cnd_wait</primary></indexterm>
+    <csproto type="işlev">
+     <csname><type>int</type><function>cnd_wait</function></csname>
+     <csparam><ptr>cnd_t</ptr><parameter>cond</parameter></csparam>
+     <csparam><ptr>mtx_t</ptr><parameter>mutex</parameter></csparam>
+    </csproto>
+    <header>&threads.h;</header>
+    <conceptlist>
+     <concept>&mtsafe;</concept>
+     <concept>&asunsafe; &lock;</concept>
+     <concept>&acunsafe; &lock;</concept>
+    </conceptlist>
+    <para>
+     <code>cnd_wait</code> işlevi, karşılıklı dışlayıcısı <parameter>mutex</parameter> olan evrenin kilidini kaldırır ve evreyi <function>cnd_signal</function> veya <function>cnd_broadcast</function> ile sinyallenene kadar <parameter>cond</parameter> koşul değişkeninde beklemeye alır. Evre işlev dönmeden hemen önce <parameter>mutex</parameter> karşılıklı dışlayıcısı ile tekrar kilitlenir.
+    </para>
+    <para>
+     Bu işlev ya <varname>thrd_success</varname> ya da <varname>thrd_error</varname> ile döner.
+    </para>
+   </csynopsis>
+  <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-cnd_timedwait"><primary>evreler</primary><secondary>koşul değişkenleri</secondary><tertiary>süreli bekletme</tertiary></indexterm>
+    <indexterm linkend="glibc-fn" xml:id="glibc-fn-cnd_timedwait"><primary>cnd_timedwait</primary></indexterm>
+    <csproto type="işlev">
+     <csname><type>int</type><function>cnd_timedwait</function></csname>
+     <csparam><type>cnd_t&#160;*restrict</type><parameter>cond</parameter></csparam>
+     <csparam><type>mtx_t&#160;*restrict</type><parameter>mutex</parameter></csparam>
+     <csparam><type>const&#160;struct&#160;timespec&#160;*restrict</type><parameter>time_point</parameter></csparam>
+    </csproto>
+    <header>&threads.h;</header>
+    <conceptlist>
+     <concept>&mtsafe;</concept>
+     <concept>&asunsafe; &lock;</concept>
+     <concept>&asunsafe; &lock;</concept>
+    </conceptlist>
+    <para>
+     <code>cnd_timedwait</code> işlevi, karşılıklı dışlayıcısı <parameter>mutex</parameter> olan evrenin kilidini kaldırır ve evreyi <function>cnd_signal</function> veya <function>cnd_broadcast</function> ile sinyallenene kadar <parameter>cond</parameter> koşul değişkeninde veya <parameter>time_point</parameter> ile gösterilen takvim zamanına kadar ya da bilinmeyen bir nedenle engeli kaldırılana kadar beklemeye alır. Evre işlev dönmeden hemen önce <parameter>mutex</parameter> karşılıklı dışlayıcısı ile tekrar kilitlenir.
+    </para>
+    <para>
+     <function>mtx_timedlock</function> işlevindeki gibi, işlev zaman olarak mutlak zaman aldığından süre gerekliyse takvim zamanın elle hesaplanması gerekir. Bkz: <xref linkend="glibc-Time-Basics"/>, <xref linkend="glibc-Calendar-Time"/>.
+    </para>
+    <para>
+     Bu işlev ya <varname>thrd_success</varname> ya da <varname>thrd_error</varname> ile döner.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-cnd_destroy"><primary>evreler</primary><secondary>koşul değişkenleri</secondary><tertiary>silinmesi</tertiary></indexterm>
+    <indexterm linkend="glibc-fn" xml:id="glibc-fn-cnd_destroy"><primary>cnd_destroy</primary></indexterm>
+    <csproto type="işlev">
+     <csname><type>int</type><function>cnd_destroy</function></csname>
+     <csparam><ptr>cnd_t</ptr><parameter>cond</parameter></csparam>
+    </csproto>
+    <header>&threads.h;</header>
+    <conceptlist>
+     <concept>&mtsafe;</concept>
+     <concept>&assafe;</concept>
+     <concept>&acsafe;</concept>
+    </conceptlist>
+    <para>
+     <code>cnd_destroy</code> işlevi <parameter>cond</parameter> koşul değişkenini yok eder. Değişken üzerinde bekleyen evreler varsa davranış tanımsızdır.
+    </para>
+   </csynopsis>
+  </sect1>
+  <sect1 xml:id="glibc-ISO-C-Thread-local-Storage">
+   <title>Evreye Özel Depolama</title>
+   <titleabbrev>Evreye özel depolamayı destekleyen işlevler.</titleabbrev>
+   <para>
+    <indexterm linkend="glibc-cp"><primary>evreye özel depolama</primary></indexterm>
+    <indexterm linkend="glibc-cp"><primary>evreler</primary><secondary>evreye özel depolama</secondary></indexterm>
+    &glibc;, evreye özel depolama sağlamak için bir oluşum gerçeklemiştir. Bu oluşum, değişkenlerin benzersiz evre başına depolama yapabileceği, evre ömrüyle eşleşen yaşam sürelerine ve evre başına benzersiz depolamayı kaldıran yok edicilere sahip olabileceği bir mekanizmadır.
+   </para>
+   <para>
+    Evreye özel depolama ile çalışan veri türleri ve makrolar:
+   </para>
+   <csynopsis>
+    <indexterm linkend="glibc-tp" xml:id="glibc-tp-tss_t"><primary>tss_t</primary></indexterm>
+    <csproto type="veri türü">
+     <csname><function>tss_t</function></csname>
+    </csproto>
+    <header>&threads.h;</header>
+    <para>
+     <code>tss_t</code> veri türü evreye özel depolama nesnesini tanımlar.  Paylaşımlı bile olsa her evre değişkenin kendi örneğine farklı değerlerle sahip olur.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-tp" xml:id="glibc-tp-tss_dtor_t"><primary>tss_dtor_t</primary></indexterm>
+    <csproto type="veri türü">
+     <csname><code>void (*<function>tss_dtor_t</function>) (void*)</code></csname>
+    </csproto>
+    <header>&threads.h;</header>
+    <para>
+     <code>tss_dtor_t</code> evreye özel depolama nesnesinin yok edicisi olarak kullanılan <code>void (*) (void *)</code> türündeki işlevin göstericisidir. İşlev geçerli evre için <function>thrd_exit</function> işlevi ile çağrılır (ancak, asla <function>tss_delete</function> veya <function>exit</function> ile çağrılmaz).
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-vr" xml:id="glibc-vr-thread_local"><primary>thread_local</primary></indexterm>
+    <csproto type="makro">
+     <csname><function>thread_local</function></csname>
+    </csproto>
+    <header>&threads.h;</header>
+    <para>
+     <code>thread_local</code> evreye özel depolama süresince, evrenin başlangıcında oluşturulup sonunda silinen bir değişkeni imlemekte kullanılır.
+    </para>
+    <note>
+     <para>
+      C++, C++11 ve sonrası için <code>thread_local</code> anahtar sözcüğünü kullanmak gerekir.
+     </para>
+    </note>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-vr" xml:id="glibc-vr-TSS_DTOR_ITERATIONS"><primary>TSS_DTOR_ITERATIONS</primary></indexterm>
+    <csproto type="makro">
+     <csname><function>TSS_DTOR_ITERATIONS</function></csname>
+    </csproto>
+    <header>&threads.h;</header>
+    <para>
+     <code>TSS_DTOR_ITERATIONS</code> evrenin sonlandırılması sırasında tüm evreye özgü yok ediciler üzerindeki azami yineleme sayısını ifade eden bir tamsayı sabit ifadesidir. Bu değer, evreye özel depolamanın yok edilmesi için uyulması zorunlu bir sınır sağlar; daha fazla evreye özel depolama alanını yokeden bir yok edici işlev örnek olarak verilebilir.
+    </para>
+   </csynopsis>
+   <para>
+    Evreye özel depolama ile çalışan işlevler:
+   </para>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-tss_create"><primary>evreler</primary><secondary>evreye özel depolama</secondary><tertiary>oluşturulması</tertiary></indexterm>
+    <indexterm linkend="glibc-fn" xml:id="glibc-fn-tss_create"><primary>tss_create</primary></indexterm>
+    <csproto type="işlev">
+     <csname><type>int</type><function>tss_create</function></csname>
+     <csparam><ptr>tss_t</ptr><parameter>tss_key</parameter></csparam>
+     <csparam><type>tss_dtor_t</type><parameter>destructor</parameter></csparam>
+    </csproto>
+    <header>&threads.h;</header>
+    <conceptlist>
+     <concept>&mtsafe;</concept>
+     <concept>&assafe;</concept>
+     <concept>&acsafe;</concept>
+    </conceptlist>
+    <para>
+     <code>tss_create</code> işlevi evreye özel depolama anahtarı oluşturur ve anahtarı <parameter>tss_key</parameter> ile gösterilen nesnede saklar. Aynı anahtar değeri farklı evrelerde kullanılabilirse de <function>tss_set</function> ile anahtara bağlanan değerler evreye özgü olup evrenin ömrü boyunca kalıcıdır.
+    </para>
+    <para>
+     <parameter>destructor</parameter> <varname>NULL</varname> değilse bir yok edici işlev atanır ve evre <function>thrd_exit</function> çağrısı ile sonlandırılırken bu yok edici işlev çağrılır.
+    </para>
+    <para>
+     <parameter>tss_key</parameter> göstericisine başarıyla evre için eşsiz bir değer atanmışsa işlev <varname>thrd_success</varname> ile döner, aksi takdirde <varname>thrd_error</varname> ile döner ve <parameter>tss_key</parameter> değeri tanımsız olur.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-tss_set"><primary>evreler</primary><secondary>evreye özel depolama</secondary><tertiary>anahtar atanması</tertiary></indexterm>
+    <indexterm linkend="glibc-fn" xml:id="glibc-fn-tss_set"><primary>tss_set</primary></indexterm>
+    <csproto type="işlev">
+     <csname><type>int</type><function>tss_set</function></csname>
+     <csparam><type>tss_t</type><parameter>tss_key</parameter></csparam>
+     <csparam><ptr>void</ptr><parameter>val</parameter></csparam>
+    </csproto>
+    <header>&threads.h;</header>
+    <conceptlist>
+     <concept>&mtsafe;</concept>
+     <concept>&assafe;</concept>
+     <concept>&acsafe;</concept>
+    </conceptlist>
+    <para>
+     <code>tss_set</code> işlevi geçerli evre için <parameter>tss_key</parameter> evreye özgü saklama anahtarına <parameter>val</parameter> değerini atar. Farklı evreler aynı anahtara farklı değerler atayabilir.
+    </para>
+    <para>
+     Bu işlev ya <varname>thrd_success</varname> ya da <varname>thrd_error</varname> ile döner.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-tss_get"><primary>evreler</primary><secondary>evreye özel depolama</secondary><tertiary>anahtarın alınması</tertiary></indexterm>
+    <indexterm linkend="glibc-fn" xml:id="glibc-fn-tss_get"><primary>tss_get</primary></indexterm>
+    <csproto type="işlev">
+     <csname><ptr>void</ptr><function>tss_get</function></csname>
+     <csparam><type>tss_t</type><parameter>tss_key</parameter></csparam>
+    </csproto>
+    <header>&threads.h;</header>
+    <conceptlist>
+     <concept>&mtsafe;</concept>
+     <concept>&assafe;</concept>
+     <concept>&acsafe;</concept>
+    </conceptlist>
+    <para>
+     <code>tss_get</code> işlevi, geçerli evre için <parameter>tss_key</parameter> evreye özgü saklama anahtarında tutulan değerle döner. Farklı evreler için aynı anahtar farklı değerler döndürebilir. Başarısızlık durumunda <code>tss_get</code> sıfır döndürür.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-tss_delete"><primary>evreler</primary><secondary>evreye özel depolama</secondary><tertiary>anahtarın silinmesi</tertiary></indexterm>
+    <indexterm linkend="glibc-fn" xml:id="glibc-fn-tss_delete"><primary>tss_delete</primary></indexterm>
+    <csproto type="işlev">
+     <csname><ptr>void</ptr><function>tss_delete</function></csname>
+     <csparam><type>tss_t</type><parameter>tss_key</parameter></csparam>
+    </csproto>
+    <header>&threads.h;</header>
+    <conceptlist>
+     <concept>&mtsafe;</concept>
+     <concept>&assafe;</concept>
+     <concept>&acsafe;</concept>
+    </conceptlist>
+    <para>
+     <code>tss_delete</code> işlevi <parameter>tss_key</parameter> ile tanımlanan evreye özel depolamayı yok eder.
+    </para>
+   </csynopsis>
+  </sect1>
+ </chapter>
+
+ <chapter xml:id="glibc-POSIX-Threads" userlevel="notoc">
+  <?dbhtml stop-chunking?>
+  <title>POSIX Evreleri</title>
+  <titleabbrev>POSIX belirtimine göre evreler.</titleabbrev>
+  <para>
+   <indexterm linkend="glibc-cp"><primary>evreler</primary><secondary>POSIX</secondary></indexterm>
+   <indexterm linkend="glibc-cp"><primary>POSIX evreleri</primary></indexterm>
+   Bu oylumda GNU C Kütühanesinin POSIX Evreleri gerçeklenimi açıklanmıştır.
+  </para>
+  <sect1 xml:id="glibc-Thread-specific-Data">
+   <title>Evreye Özgü Veri</title>
+   <titleabbrev>Evreye özgü verinin oluşturulma ve yönetim desteği.</titleabbrev>
+   <para>
+    <indexterm linkend="glibc-cp"><primary>evreler</primary><secondary>evreye özgü veri</secondary></indexterm>
+    &glibc;, kullanıcıların evreye özgü verileri oluşturmasına ve yönetmesine izin veren işlevler gerçeklemiştir. Böyle veriler, bir yok edici işlev sağlanırsa, evre çıkışında yok edilebilir. Aşağıdaki işlevler tanımlanmıştır:
+   </para>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-pthread_key_create"><primary>evreler</primary><secondary>evreye özgü veri</secondary><tertiary>anahtarın oluşturulması</tertiary></indexterm>
+    <indexterm linkend="glibc-fn" xml:id="glibc-fn-pthread_key_create"><primary>pthread_key_create</primary></indexterm>
+    <csproto type="işlev">
+     <csname><type>int</type><function>pthread_key_create</function></csname>
+     <csparam><ptr>pthread_key_t</ptr><parameter>key</parameter></csparam>
+     <csparam><code>void (*<parameter>destructor</parameter>) (void*)</code></csparam>
+    </csproto>
+    <header>&pthread.h;</header>
+    <conceptlist>
+     <concept>&mtsafe;</concept>
+     <concept>&assafe;</concept>
+     <concept>&acsafe;</concept>
+    </conceptlist>
+    <para>
+     Geçerli evre için  evreye özgü veri anahtarı oluşturur ve anahtarı <parameter>key</parameter> ile gösterilen nesnede saklar.
+    </para>
+    <para>
+     C++11 <code>thread_local</code> anahtar sözcüğü ile bildirilen nesneler evreye özgü veriden önce yok edilir. Bu nedenle evreye özgü veri yok edicilerde kullanılmamalıdır. Ayrıca evreye özgü veri yok edici işleve bağımsız değişken olarak aktarıldığından evreye özgü veri üyeleri olarak bile kullanılmamalıdır.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-pthread_key_delete"><primary>evreler</primary><secondary>evreye özgü veri</secondary><tertiary>anahtarın silinmesi</tertiary></indexterm>
+    <indexterm linkend="glibc-fn" xml:id="glibc-fn-pthread_key_delete"><primary>pthread_key_delete</primary></indexterm>
+    <csproto type="işlev">
+     <csname><type>int</type><function>pthread_key_delete</function></csname>
+     <csparam><ptr>pthread_key_t</ptr><parameter>key</parameter></csparam>
+    </csproto>
+    <header>&pthread.h;</header>
+    <conceptlist>
+     <concept>&mtsafe;</concept>
+     <concept>&assafe;</concept>
+     <concept>&acsafe;</concept>
+    </conceptlist>
+    <para>
+     Geçerli evrede evreye özgü veri anahtarını yok eder. Evreye özgü veriler için yok edici, yok etme sırasında çağrılmadığı gibi evre çıkarken de çağrılmaz.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-pthread_getspecific"><primary>evreler</primary><secondary>evreye özgü veri</secondary><tertiary>alınması</tertiary></indexterm>
+    <indexterm linkend="glibc-fn" xml:id="glibc-fn-pthread_getspecific"><primary>pthread_getspecific</primary></indexterm>
+    <csproto type="işlev">
+     <csname><type>int</type><function>pthread_getspecific</function></csname>
+     <csparam><ptr>pthread_key_t</ptr><parameter>key</parameter></csparam>
+    </csproto>
+    <header>&pthread.h;</header>
+    <conceptlist>
+     <concept>&mtsafe;</concept>
+     <concept>&assafe;</concept>
+     <concept>&acsafe;</concept>
+    </conceptlist>
+    <para>
+     Geçerli evrede <parameter>key</parameter> ile ilişkili evreye özgü veriyle döner.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-pthread_setspecific"><primary>evreler</primary><secondary>evreye özgü veri</secondary><tertiary>atanması</tertiary></indexterm>
+    <indexterm linkend="glibc-fn" xml:id="glibc-fn-pthread_setspecific"><primary>pthread_setspecific</primary></indexterm>
+    <csproto type="işlev">
+     <csname><type>int</type><function>pthread_setspecific</function></csname>
+     <csparam><ptr>pthread_key_t</ptr><parameter>key</parameter></csparam>
+     <csparam><ptr>const&#160;void</ptr><parameter>value</parameter></csparam>
+    </csproto>
+    <header>&pthread.h;</header>
+    <conceptlist>
+     <concept>&mtsafe;</concept>
+     <concept>&asunsafe; &corrupt; &heap;</concept>
+     <concept>&acunsafe; &corrupt; &mem;</concept>
+    </conceptlist>
+    <para>
+     Geçerli evrede <parameter>key</parameter> anahtarını evreye özgü <parameter>value</parameter> değeriyle ilişkilendirir.
+    </para>
+   </csynopsis>
+  </sect1>
+  <sect1 xml:id="glibc-Non-POSIX-Extensions" userlevel="notoc">
+   <title>POSIX-dışı Oluşumlar</title>
+   <titleabbrev>POSIX evre işlevselliğini genişleten ek işlevler.</titleabbrev>
+   <para>
+    <indexterm linkend="glibc-cp"><primary>evreler</primary><secondary>POSIX-dışı işlevler</secondary></indexterm>
+    Evreler için POSIX aryüzünü gerçeklemesine ek olarak, &glibc;, standartta belirtilmeyen işlevselliği sağlamak için de işlevler ve arayüzler gerçeklemiştir.
+   </para>
+   <sect2 xml:id="glibc-Default-Thread-Attributes">
+    <title>Süreç Çapında Öntanımlı Öznitelikler</title>
+    <titleabbrev>Evre özniteliklerine süreç çapında öntanımlıların atanması</titleabbrev>
+    <para>
+     &glibc;, bir süreçte evrelerin oluşturulmasında kullanılan öntanımlı öznitelikleri atamak ve almak için standart-dışı işlevler sağlar.
+    </para>
+    <csynopsis>
+     <indexterm linkend="glibc-cp" xml:id="glibc-cp-pthread_getattr_default_np"><primary>evreler</primary><secondary>öntanımlı öznitelikler</secondary><tertiary>atanması ve alınması</tertiary></indexterm>
+     <indexterm linkend="glibc-fn" xml:id="glibc-fn-pthread_getattr_default_np"><primary>pthread_getattr_default_np</primary></indexterm>
+     <csproto type="işlev">
+      <csname><type>int</type><function>pthread_getattr_default_np</function></csname>
+      <csparam><ptr>pthread_attr_t</ptr><parameter>attr</parameter></csparam>
+     </csproto>
+     <header>&pthread.h;</header>
+     <conceptlist>
+      <concept>&mtsafe;</concept>
+      <concept>&asunsafe; &lock;</concept>
+      <concept>&acunsafe; &lock;</concept>
+     </conceptlist>
+     <para>
+      Öntanımlı öznitelik değerleri döndürülür ve eşleşmeye <parameter>attr</parameter> atanır. Bu işlev, başarı durumunda <code>0</code>, başarısızlık durumunda sıfır olmayan bir hata kodu döndürür.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-cp" xml:id="glibc-cp-pthread_setattr_default_np"><primary>evreler</primary><secondary>öntanımlı öznitelikler</secondary><tertiary>atanması ve alınması</tertiary></indexterm>
+     <indexterm linkend="glibc-fn" xml:id="glibc-fn-pthread_setattr_default_np"><primary>pthread_setattr_default_np</primary></indexterm>
+     <csproto type="işlev">
+      <csname><type>int</type><function>pthread_setattr_default_np</function></csname>
+      <csparam><ptr>pthread_attr_t</ptr><parameter>attr</parameter></csparam>
+     </csproto>
+     <header>&pthread.h;</header>
+     <conceptlist>
+      <concept>&mtsafe;</concept>
+      <concept>&asunsafe; &heap; &lock;</concept>
+      <concept>&acunsafe; &lock; &mem;</concept>
+     </conceptlist>
+     <para>
+      <parameter>attr</parameter> özniteliğindeki değerlerle eşleşmesi için öntanımlı öznitelik değerlerini tanımlar. İşlev, başarı durumunda <code>0</code>, başarısızlık durumunda sıfır olmayan bir hata kodu döndürür. Bu işlev için aşağıdaki hata kodları tanımlanmıştır:
+     </para>
+     <variablelist>
+      <varlistentry>
+       <term><code>EINVAL</code></term>
+       <listitem>
+        <para>
+         <parameter>attr</parameter> özniteliğindeki değerlerden en az biri, nitelikler için geçerli olarak nitelendirilmiyor veya öznitelikte yığıt adresi atanmış.
+        </para>
+       </listitem>
+      </varlistentry>
+      <varlistentry>
+       <term><code>ENOMEM</code></term>
+       <listitem>
+        <para>
+         Sistemde yeterli bellek yok.
+        </para>
+       </listitem>
+      </varlistentry>
+     </variablelist>
+    </csynopsis>
+   </sect2>
+   <sect2 xml:id="glibc-Initial-Thread-Signal-Mask">
+    <title>Sinyal Maskesinin Denetlenmesi</title>
+    <titleabbrev>Yeni bir evrenin ilk sinyal maskesinin denetimi</titleabbrev>
+    <para>
+     &glibc;, <function>pthread_create</function> kullanılarak oluşturulan bir evrenin ilk sinyal maskesini, bu amaçla yapılandırılmış evre öznitelik nesnesini aktarmak suretiyle belirleyecek bir yol sağlar.
+    </para>
+    <csynopsis>
+     <indexterm linkend="glibc-cp" xml:id="glibc-cp-pthread_attr_setsigmask_np"><primary>evreler</primary><secondary>sinyal maskesi</secondary><tertiary>atanması</tertiary></indexterm>
+     <indexterm linkend="glibc-fn" xml:id="glibc-fn-pthread_attr_setsigmask_np"><primary>pthread_attr_setsigmask_np</primary></indexterm>
+     <csproto type="işlev">
+      <csname><type>int</type><function>pthread_attr_setsigmask_np</function></csname>
+      <csparam><ptr>pthread_attr_t</ptr><parameter>attr</parameter></csparam>
+      <csparam><ptr>const&#160;sigset_t</ptr><parameter>sigmask</parameter></csparam>
+     </csproto>
+     <header>&pthread.h;</header>
+     <conceptlist>
+      <concept>&mtsafe;</concept>
+      <concept>&asunsafe; &heap;</concept>
+      <concept>&acunsafe; &mem;</concept>
+     </conceptlist>
+     <para>
+      <parameter>attr</parameter> ile belirtilen ilk sinyal maskesini değiştirir. <parameter>sigmask</parameter> <varname>NULL</varname> değilse, <parameter>attr</parameter> ile oluşturulan evreler için ilk sinyal maskesi *<parameter>sigmask</parameter> olarak atanır. <parameter>sigmask</parameter> <varname>NULL</varname> ise, <parameter>attr</parameter> artık doğrudan bir sinyal maskesi belirtmediğinden yeni evreye ait ilk sinyal maskesi <function>pthread_create</function> işlevini çağıran evreden miras alınır.
+     </para>
+     <para>
+      İşlev, başarı durumunda <code>0</code>, bellek tahsisi başarısız olursa <varname>ENOMEM</varname> ile döner.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-cp" xml:id="glibc-cp-pthread_attr_getsigmask_np"><primary>evreler</primary><secondary>sinyal maskesi</secondary><tertiary>alınması</tertiary></indexterm>
+     <indexterm linkend="glibc-fn" xml:id="glibc-fn-pthread_attr_getsigmask_np"><primary>pthread_attr_getsigmask_np</primary></indexterm>
+     <csproto type="işlev">
+      <csname><type>int</type><function>pthread_attr_getsigmask_np</function></csname>
+      <csparam><ptr>const&#160;pthread_attr_t</ptr><parameter>attr</parameter></csparam>
+      <csparam><ptr>sigset_t</ptr><parameter>sigmask</parameter></csparam>
+     </csproto>
+     <header>&pthread.h;</header>
+     <conceptlist>
+      <concept>&mtsafe;</concept>
+      <concept>&asunsafe; &heap;</concept>
+      <concept>&acunsafe; &mem;</concept>
+     </conceptlist>
+     <para>
+      <parameter>attr</parameter> özniteliğinde saklanan sinyal maskesini alır ve *<parameter>sigmask</parameter>'a kopyalar. Sinyal maskesi atanmamışsa, <varname>PTHREAD_ATTR_NO_SIGMASK_NP</varname> özel sabiti döner, aksi takdirde sıfır döner.
+     </para>
+     <para>
+      Sinyal maskesinin elde edilebilmesi için evvelce <function>pthread_attr_setsigmask_np</function> ile kaydedilmiş olması gerekir. Örneğin, <function>pthread_getattr_np</function> işlevi belirtilen evrenin geçerli sinyal maskesini sağlamaz ve ardından <code>pthread_attr_getsigmask_np</code> sinyal maskesinin atanmamış olduğunu bildirir.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-PTHREAD_ATTR_NO_SIGMASK_NP"><primary>PTHREAD_ATTR_NO_SIGMASK_NP</primary></indexterm>
+     <csproto type="makro">
+      <csname><type>int</type><function>PTHREAD_ATTR_NO_SIGMASK_NP</function></csname>
+     </csproto>
+     <header>&pthread.h;</header>
+     <para>
+      Özniteliğe sinyal maskesinin atanmadığını belirtmek için <function>pthread_attr_setsigmask_np</function> işlevinden dönen özel değer.
+     </para>
+    </csynopsis>
+    <para>
+     Bu işlevleri kullanmadan belirli bir sinyal maskesiyle yeni bir evre oluşturmak mümkündür. <function>pthread_create</function> işlevinin çağrıldığı evrede, genelde gereken adımlar şunlardır:
+    </para>
+    <orderedlist>
+     <listitem>
+      <para>
+       <function>pthread_sigmask</function> işlevini kullanarak tüm sinyalleri maskele ve eski sinyal maskesini kaydet. Bu, yeni evrenin tümü maskeli sinyallerle oluşturulmasını sağlar, böylece istenen sinyal maskesi ayarlanana kadar evreye hiçbir sinyal iletilemez.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       Yeni evreyi oluşturmak için istenen sinyal maskesini evreyi oluşturan yordama aktararak <function>pthread_create</function> işlevini çağır (bu, gerçek evre başlatma yordamı için bir sarmalayıcı işlev olabilir). Yığın bellek üzerinde istenen sinyal maskesinin bir kopyasını yapmak gerekli olabilir, böylece kopyanın ömrü, başlatma yordamının sinyal maskesine eriştiği ana kadar uzar.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       Evrenin sinyal maskesini ilk adımda kaydedilen kümeye geri yükle.
+      </para>
+     </listitem>
+    </orderedlist>
+    <para>
+     Oluşturulan evre için başlatma yordamının istenen sinyal maskesini bulması ve bunu evreye uygulamak için <function>pthread_sigmask</function> işlevini kullanması gerekir. Sinyal maskesi yığın bellekte tahsis edilen bir alana kopyalanmışsa, kopyanın serbest bırakılması gerekir.
+    </para>
+   </sect2>
+   <sect2 xml:id="glibc-Waiting-with-Explicit-Clocks">
+    <title>Bekletme İşlevleri</title>
+    <titleabbrev>Belirli bir saate göre bekleyen işlevler.</titleabbrev>
+    <para>
+     &glibc; <code>clockid_t</code> türünde bir bağımsız değişkeninin aktarılabileceği çeşitli bekletme işlevleri içerir.
+    </para>
+    <csynopsis>
+     <indexterm linkend="glibc-fn" xml:id="glibc-fn-sem_clockwait"><primary>sem_clockwait</primary></indexterm>
+     <csproto type="işlev">
+      <csname><type>int</type><function>sem_clockwait</function></csname>
+      <csparam><ptr>sem_t</ptr><parameter>sem</parameter></csparam>
+      <csparam><type>clockid_t</type><parameter>clockid</parameter></csparam>
+      <csparam><ptr>const&#160;struct&#160;timespec</ptr><parameter>abstime</parameter></csparam>
+     </csproto>
+     <header>&pthread.h;</header>
+     <conceptlist>
+      <concept>&mtsafe;</concept>
+      <concept>&asunsafe; &lock;</concept>
+      <concept>&acunsafe; &lock;</concept>
+     </conceptlist>
+     <para>
+      <function>sem_timedwait</function> gibi davranır, ancak <parameter>abstime</parameter> süresi <varname>CLOCK_REALTIME</varname> yerine <parameter>clockid</parameter> ile belirtilen saate göre ölçülür. Şimdilik, <parameter>clockid</parameter> ya <varname>CLOCK_MONOTONIC</varname> ya da <varname>CLOCK_REALTIME</varname> olmalıdır.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-fn" xml:id="glibc-fn-pthread_cond_clockwait"><primary>pthread_cond_clockwait</primary></indexterm>
+     <csproto type="işlev">
+      <csname><type>int</type><function>pthread_cond_clockwait</function></csname>
+      <csparam><ptr>pthread_cond_t</ptr><parameter>cond</parameter></csparam>
+      <csparam><ptr>pthread_mutex_t</ptr><parameter>mutex</parameter></csparam>
+      <csparam><type>clockid_t</type><parameter>clockid</parameter></csparam>
+      <csparam><ptr>const&#160;struct&#160;timespec</ptr><parameter>abstime</parameter></csparam>
+     </csproto>
+     <header>&pthread.h;</header>
+     <conceptlist>
+      <concept>&mtsafe;</concept>
+      <concept>&asunsafe; &lock;</concept>
+      <concept>&acunsafe; &lock;</concept>
+     </conceptlist>
+     <para>
+      <function>pthread_cond_timedwait</function>  gibi davranır, ancak <parameter>abstime</parameter> süresi <function>pthread_cond_init</function> çağrıldığında belirtilen veya öntanımlı olan saat yerine <parameter>clockid</parameter> ile belirtilen saate göre ölçülür. Şimdilik, <parameter>clockid</parameter> ya <varname>CLOCK_MONOTONIC</varname> ya da <varname>CLOCK_REALTIME</varname> olmalıdır.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-fn" xml:id="glibc-fn-pthread_rwlock_clockrdlock"><primary>pthread_rwlock_clockrdlock</primary></indexterm>
+     <csproto type="işlev">
+      <csname><type>int</type><function>pthread_rwlock_clockrdlock</function></csname>
+      <csparam><ptr>pthread_rwlock_t</ptr><parameter>rwlock</parameter></csparam>
+      <csparam><type>clockid_t</type><parameter>clockid</parameter></csparam>
+      <csparam><ptr>const&#160;struct&#160;timespec</ptr><parameter>abstime</parameter></csparam>
+     </csproto>
+     <header>&pthread.h;</header>
+     <conceptlist>
+      <concept>&mtsafe; </concept>
+      <concept>&asunsafe; &lock;</concept>
+      <concept>&acunsafe; &lock;</concept>
+     </conceptlist>
+     <para>
+      <function>pthread_rwlock_timedrdlock</function> gibi davranır, ancak <parameter>abstime</parameter> süresi <varname>CLOCK_REALTIME</varname> yerine <parameter>clockid</parameter> ile belirtilen saate göre ölçülür. Şimdilik, <parameter>clockid</parameter> ya <varname>CLOCK_MONOTONIC</varname> ya da <varname>CLOCK_REALTIME</varname> olmalıdır, yoksa <varname>EINVAL</varname> döner.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-fn" xml:id="glibc-fn-pthread_rwlock_clockwrlock"><primary>pthread_rwlock_clockwrlock</primary></indexterm>
+     <csproto type="işlev">
+      <csname><type>int</type><function>pthread_rwlock_clockwrlock</function></csname>
+      <csparam><ptr>pthread_rwlock_t</ptr><parameter>rwlock</parameter></csparam>
+      <csparam><type>clockid_t</type><parameter>clockid</parameter></csparam>
+      <csparam><ptr>const&#160;struct&#160;timespec</ptr><parameter>abstime</parameter></csparam>
+     </csproto>
+     <header>&pthread.h;</header>
+     <conceptlist>
+      <concept>&mtsafe;</concept>
+      <concept>&asunsafe; &lock;</concept>
+      <concept>&acunsafe; &lock;</concept>
+     </conceptlist>
+     <para>
+      <function>pthread_rwlock_timedwrlock</function> gibi davranır, ancak <parameter>abstime</parameter> süresi <varname>CLOCK_REALTIME</varname> yerine <parameter>clockid</parameter> ile belirtilen saate göre ölçülür. Şimdilik, <parameter>clockid</parameter> ya <varname>CLOCK_MONOTONIC</varname> ya da <varname>CLOCK_REALTIME</varname> olmalıdır, yoksa <varname>EINVAL</varname> döner.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-fn" xml:id="glibc-fn-pthread_tryjoin_np"><primary>pthread_tryjoin_np</primary></indexterm>
+     <csproto type="işlev">
+      <csname><type>int</type><function>pthread_tryjoin_np</function></csname>
+      <csparam><ptr>pthread_t</ptr><parameter>thread</parameter></csparam>
+      <csparam><pptr>void</pptr><parameter>thread_return</parameter></csparam>
+     </csproto>
+     <header>&pthread.h;</header>
+     <conceptlist>
+      <concept>&mtsafe;</concept>
+      <concept>&asunsafe; &lock;</concept>
+      <concept>&acunsafe; &lock;</concept>
+     </conceptlist>
+     <para>
+      <parameter>thread</parameter> tarafından belirtilen evre henüz sonlandırılmamışsa hemen <varname>EBUSY</varname> döndürmesi dışında <function>pthread_join</function> gibi davranır.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-fn" xml:id="glibc-fn-pthread_timedjoin_np"><primary>pthread_timedjoin_np</primary></indexterm>
+     <csproto type="işlev">
+      <csname><type>int</type><function>pthread_timedjoin_np</function></csname>
+      <csparam><ptr>pthread_t</ptr><parameter>thread</parameter></csparam>
+      <csparam><pptr>void</pptr><parameter>thread_return</parameter></csparam>
+      <csparam><ptr>const&#160;struct&#160;timespec</ptr><parameter>abstime</parameter></csparam>
+     </csproto>
+     <header>&pthread.h;</header>
+     <conceptlist>
+      <concept>&mtsafe;</concept>
+      <concept>&asunsafe; &lock;</concept>
+      <concept>&acunsafe; &lock;</concept>
+     </conceptlist>
+     <para>
+      <function>pthread_tryjoin_np</function> işlevine benzer, ancak evre o zamana kadar sonlandırılmamışsa <varname>CLOCK_REALTIME</varname> ile ölçülen zaman <parameter>abstime</parameter> mutlak zamanına ulaşana kadar engellenir ve işlev <varname>EBUSY</varname> ile döner. <parameter>abstime</parameter>, <varname>NULL</varname> ise, işlev, <function>pthread_join</function> işlevinde olduğu gibi sonsuza kadar bekler.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-fn" xml:id="glibc-fn-pthread_clockjoin_np"><primary>pthread_clockjoin_np</primary></indexterm>
+     <csproto type="işlev">
+      <csname><type>int</type><function>pthread_clockjoin_np</function></csname>
+      <csparam><ptr>pthread_t</ptr><parameter>thread</parameter></csparam>
+      <csparam><pptr>void</pptr><parameter>thread_return</parameter></csparam>
+      <csparam><type>clockid_t</type><parameter>clockid</parameter></csparam>
+      <csparam><ptr>const&#160;struct&#160;timespec</ptr><parameter>abstime</parameter></csparam>
+     </csproto>
+     <header>&pthread.h;</header>
+     <conceptlist>
+      <concept>&mtsafe;</concept>
+      <concept>&asunsafe; &lock;</concept>
+      <concept>&acunsafe; &lock;</concept>
+     </conceptlist>
+     <para>
+      <code>pthread_timedjoin_np</code>  işlevine benzer, ancak <parameter>abstime</parameter> değişkenindeki mutlak zaman <parameter>clockid</parameter> ile belirtilen saate göre ölçülür. Şimdilik, <parameter>clockid</parameter> ya <varname>CLOCK_MONOTONIC</varname> ya da <varname>CLOCK_REALTIME</varname> olmalıdır.
+     </para>
+    </csynopsis>
+   </sect2>
+   <sect2 xml:id="glibc-Single-Threaded">
+    <title>Tek Evrelilik</title>
+    <titleabbrev>Tek evreli yürütmenin saptanması.</titleabbrev>
+    <para>
+     Çok evreli yazılımlar, evreleri arasında eşzamanlamayı gerektirir. Yalnızca tek bir evre olsa ve birden çok işlemci arasında hiçbir veri paylaşılmasa bile bu eşitleme maliyetli olabilir. &glibc;, sürecin tek evreli kipte olup olmadığını saptamak için bir arayüz sunar. Uygulamalar, örneğin belleği yüklemek ve depolamak için düzenli komutlar kullanarak veya daha güçlü bellek sıralaması yerine rahat bellek sıralaması kullanarak bu bilgileri eşzamanlamadan kaçınmak için  kullanabilir.
+    </para>
+    <csynopsis>
+     <indexterm xml:id="glibc-vr-libc_single_threaded" linkend="glibc-vr"><primary sortas="libc_single_threaded">__libc_single_threaded</primary></indexterm>
+     <csproto type="değişken">
+      <csname><type>char</type><varname>__libc_single_threaded</varname></csname>
+     </csproto>
+     <header>&pthread.h;</header>
+     <para>
+      Bu değişken sıfır değilse geçerli süreç kesinlikle tek evrelidir. Sıfır ise, süreç çok evreli olabilir veya &glibc;, yazılımın yürütülmesinin bu noktasında sürecin tek evreli olup olmadığını belirleyemiyordur.
+     </para>
+     <para>
+      Uygulamalar bu değişkene kesinlikle yazmamalıdır.
+     </para>
+    </csynopsis>
+    <para>
+     Çoğu uygulama, daha az eşzamanlama dışında, <varname>__libc_single_threaded</varname> doğru olsa da olmasa da aynı eylemleri gerçekleştirmelidir. Bu kural izlenirse, daha sonra çok evreli hale gelen bir süreç zaten tutarlı bir durumdadır. Örneğin, atıf sayısını artırmak için aşağıdaki kod kullanılabilir:
+    </para>
+    <example>
+     <screen>if (__libc_single_threaded)
+  atomic_fetch_add (&amp;reference_count, 1, memory_order_relaxed);
+else
+  atomic_fetch_add (&amp;reference_count, 1, memory_order_acq_rel);
+</screen>
+     <para>
+      Bu, tek evreli dalda yine de bir tür eşzamanlama gerektirir, bu nedenle atıf sayısını <type>_Atomic</type> olarak bildirmemek ve GCC <code>__atomic</code> yerleşiklerini kullanmak yararlı olabilir. Bkz: GCC belgelerindeki <link xl:href="https://gcc.gnu.org/onlinedocs/gcc/_005f_005fatomic-Builtins.html#g_t_005f_005fatomic-Builtins">Built-in Functions for Memory Model Aware Atomic Operations</link>.  Bundan sonra, bir atıf sayısını artırma kodu şöyle görünür:
+     </para>
+     <screen>if (__libc_single_threaded)
+  ++reference_count;
+else
+  __atomic_fetch_add (&amp;reference_count, 1, __ATOMIC_ACQ_REL);
+</screen>
+     <para>
+      (Atıf sayısıyla ilişkili verilere bağlı olarak, çok evreli dalda daha zayıf olan <varname>__ATOMIC_RELAXED</varname> bellek sıralamasını kullanmak mümkün olabilir.)
+     </para>
+    </example>
+    <para>
+     &glibc;ndeki çeşitli işlevler, <varname>__libc_single_threaded</varname> değişkeninin değerini değiştirebilir. Örneğin, <function>pthread_create</function> veya <function>thrd_create</function> işlevini kullanarak yeni ileti dizileri oluşturmak, değişkene <varname>false</varname> değerini atar. Bu, örneğin bir <function>dlopen</function> çağrısı yoluyla dolaylı olarak da olabilir. Bu nedenle, böyle bir işlev çağrısından sonra davranışın, çağrıdan önceki değerle eşleşmesi gerekiyorsa, uygulamaların <varname>__libc_single_threaded</varname> değerinin bir kopyasını alması gerekir, örneğin:
+    </para>
+    <example>
+     <screen>bool single_threaded = __libc_single_threaded;
+if (single_threaded)
+  prepare_single_threaded ();
+else
+  prepare_multi_thread ();
+
+void *handle = dlopen (shared_library_name, RTLD_NOW);
+lookup_symbols (handle);
+
+if (single_threaded)
+  cleanup_single_threaded ();
+else
+  cleanup_multi_thread ();
+</screen>
+     <para>
+      Yazılımın yürütülmesi sırasında <varname>__libc_single_threaded</varname> değeri <varname>true</varname>'dan <varname>false</varname>'a değişebileceğinden, IFUNC çözümleyicilerinde en iyilenmiş işlev gerçeklenimlerini seçmek için kullanışlı değildir.
+     </para>
+    </example>
+    <para>
+     Bölünmez işlemler, tek evreli işlemler arasında paylaşılan eşlemelerde de kullanılabilir. Bu, bir derleyicinin, belleğin paylaşılmadığını kanıtlayamadığı sürece bölünmez işlemleri en iyilemek için <varname>__libc_single_threaded</varname> kullanmaması gerektiği anlamına gelir.
+    </para>
+    <note><title>Gerçeklenim Bilgisi:</title>
+     <para>
+      <varname>__libc_single_threaded</varname> değişkeni <type>volatile</type> olarak bildirilmez, çünkü örneğin birkaç atıf sayısı güncellenirse, derleyicilerin tek evreli sınamaların sırasını tek bir sınamada en iyilemesi beklenir. &glibc;ndeki mevcut gerçeklenim, bir süreç tekrar tek evreli duruma gelirse, <varname>__libc_single_threaded</varname> değişkenini <varname>true</varname> olarak güncellemez. &glibc;nin gelecek sürümleri bunu yapabilir, ancak yalnızca bir edinim (derleyici) engelini örtük olarak uygulayan işlev çağrılarının sonucu olarak. (Bazı derleyiciler, <function>malloc</function> gibi iyi bilinen işlevlerin genel değişkenlere yazmadığını ve <varname>__libc_single_threaded</varname> değerinin bir veri yarışına ve tanımsız davranışa yol açacağını varsayar.) Her durumda, bir uygulama, sonuncu uygulamayla oluşturulmuş evreye katılmış olsa bile <varname>__libc_single_threaded</varname> değişkenine yazmamalıdır. Çünkü  &glibc;nin gelecek sürümleri, ilk evre oluşturulduktan sonra artalan evreleri oluşturabilir ve uygulamanın bu evrelerin var olduğunu bilmesinin hiçbir yolu yoktur.
+     </para>
+    </note>
+   </sect2>
+   <sect2 xml:id="glibc-Restartable-Sequences">
+    <title>Yeniden Başlatılabilirlik</title>
+    <titleabbrev>Linux'a özgü yeniden başlatılabilirlik.</titleabbrev>
+    <para>
+     Bu bölüm, &glibc; için yeniden başlatılabilir yordamlarla bütünleşmeyi açıklar. Bu işlevsellik yalnızca Linux'ta mevcuttur.
+    </para>
+    <csynopsis>
+     <indexterm linkend="glibc-tp" xml:id="glibc-tp-rseq"><primary>struct&#160;rseq</primary></indexterm>
+     <csproto type="veri türü">
+      <csname><type>struct</type><function>rseq</function></csname>
+     </csproto>
+     <header>&rseq.h;</header>
+     <para>
+      Yeniden başlatılabilir yordamlar alanının türü. Linux'un gelecek sürümleri bu yapının sonuna ek alanlar ekleyebilir.
+     </para>
+     <para>
+      Kullanıcıların, aşağıda açıklanan  <varname>__rseq_offset</varname> değişkenini ve evre göstericisini kullanarak yeniden başlatılabilir yordamlar alanının adresini alması gerekir.
+     </para>
+     <para>
+      Yeniden başlatılabilir yordamlar alanının tek kullanımı, <function>sched_getcpu</function> işlevinin satırlaştırılmış sürümü olarak <structfield>cpu_id</structfield> alanından geçerli işlemci numarasını okumaktır. &glibc;, kayıt başarısız olursa veya açıkça devre dışı bırakılmışsa, <structfield>cpu_id</structfield> alanına <varname>RSEQ_CPU_ID_REGISTRATION_FAILED</varname> değerini atar.
+     </para>
+     <para>
+      Ayrıca, kullanıcılar bir <type>struct&#160;rseq_cs</type> nesnesinin adresini <code>struct rseq</code>'in <structfield>rseq_cs</structfield> alanına kaydedebilir, böylece evrenin yeniden başlatılabilir bir sıra kritik bölümüne girdiğini çekirdeğe bildirir. Bu gösterici ve gösterdiği kod alanları, boşalan veya yeniden kullanılan bellek alanlarını gösterecek şekilde bırakılmamalıdır. Birkaç yaklaşım bunu garanti edebilir. Uygulama veya kütüphane, yapı <structfield>rseq_cs</structfield> alanını tutmak için kullanılan belleğin ve başvuruda bulunduğu kod alanlarının asla serbest bırakılmayacağını veya yeniden kullanılmayacağını garanti edebiliyorsa, özel bir işlem yapılmamalıdır. Aksi takdirde, bu bellek yeniden kullanılmadan veya serbest bırakılmadan önce uygulama, askıdaki atıflarının sızmamasını garantilemek için her evrenin yeniden başlatılabilir yordam alanında <structfield>rseq_cs</structfield> alanına <varname>NULL</varname> atamaktan sorumludur. Uygulamalar genelde kütüphanelerin yeniden başlatılabilir yordamları kullanıp kullanmadığını bilemeyeceğinden, bellekleri boşaltmaya veya yeniden kullanmaya neden olabilen yeniden başlatılabilir yordamları kullanan kitaplıkların, bu yordamları kullanan kütüphane işlevlerinden dönmeden önce <structfield>rseq_cs</structfield> alanına <varname>NULL</varname> ataması önerilir.
+     </para>
+     <para>
+      <uri xl:href="man2-rseq"/> sistem çağrısı için kılavuz sayfası <link xl:href="https://git.kernel.org/pub/scm/libs/librseq/librseq.git/tree/doc/man/rseq.2"/> adresinde bulunabilir.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm xml:id="glibc-vr-rseq_offset" linkend="glibc-vr"><primary sortas="rseq_offset">__rseq_offset</primary></indexterm>
+     <csproto type="değişken">
+      <csname><type>ptrdiff_t</type><varname>__rseq_offset</varname></csname>
+     </csproto>
+     <header>&rseq.h;</header>
+     <para>
+      Bu değişken, evre göstericisi ile (mimari için evre göstericisi kaydı veya <varname>__builtin_thread_pointer</varname> tarafından tanımlandığı gibi) yeniden başlatılabilir yordamlar alanı arasındaki uzaklığı içerir. Bu değer, süreçteki tüm evreler için aynıdır. Yeniden başlatılabilir yordamlar alanı, evre göstericisinin gösterdiği konumdan daha düşük bir adreste bulunuyorsa, değer negatiftir.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm xml:id="glibc-vr-seq_size" linkend="glibc-vr"><primary sortas="rseq_size">__rseq_size</primary></indexterm>
+     <csproto type="değişken">
+      <csname><type>unsigned&#160;int</type><varname>__rseq_size</varname></csname>
+     </csproto>
+     <header>&rseq.h;</header>
+     <para>
+      Bu değişken ya sıfırdır (yeniden başlatılabilir yordam kaydı başarısız olursa veya devre dışı bırakılmışsa) veya yeniden başlatılabilir yordam kaydının boyutudur. Çekirdek kaydın boyutunu genişlettiyse, bu <code>struct&#160;rseq</code> boyutundan farklı olabilir. Kayıt başarılı olursa, <code>__rseq_size</code> en az 32'dir (<type>struct&#160;rseq</type>'in başlangıç boyutu).
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm xml:id="glibc-vr-rseq_flags" linkend="glibc-vr"><primary sortas="rseq_flags">__rseq_flags</primary></indexterm>
+     <csproto type="değişken">
+      <csname><type>unsigned&#160;int</type><varname>__rseq_flags</varname></csname>
+     </csproto>
+     <header>&rseq.h;</header>
+     <para>
+      Yeniden başlatılabilir yordamın çekirdek ile kaydı sırasında kullanılan seçenek sayısı. Şimdilik sıfırdır.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-RSEQ_SIG"><primary>RSEQ_SIG</primary></indexterm>
+     <csproto type="makro">
+      <csname><type>int</type><function>RSEQ_SIG</function></csname>
+     </csproto>
+     <header>&rseq.h;</header>
+     <para>
+      Desteklenen her mimari, <code>RSEQ_SIG</code> makrosunu <link xl:href="https://github.com/torvalds/linux/blob/master/tools/testing/selftests/rseq/rseq-x86.h">sys/rseq.h</link> dosyasında sağlar. Bu makronun, her yeniden başlatılabilir yordam göstericisinin iptal işleyicisinden önce kodda bulunması beklenir. Beklenen makronun sağlanamaması, süreci parçalama arızası ile sonlandırabilir.
+     </para>
+    </csynopsis>
+   </sect2>
+  </sect1>
+ </chapter>
 </part>

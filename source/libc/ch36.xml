@@ -3,6 +3,273 @@
         glibc/ch36.xml,v2.36, GFDL,LGPL, NBB, 2023
      ******************************************************************** -->
 <part xml:id="glibc-Dynamic-Linker">
-  <title>Özdevimli İlintileyici</title>
-  <titleabbrev>Yazılımların ve paylaşımlı nesnelerin yüklenmesi.</titleabbrev>
+ <title>Özdevimli İlintileyici</title>
+ <titleabbrev>Yazılımların ve paylaşımlı nesnelerin yüklenmesi.</titleabbrev>
+ <partintro>
+  <?dbhtml stop-chunking?>
+  <para>
+   <dicterm><english>dynamic linker</english><turkish>özdevimli ilntileyici</turkish></dicterm>
+   <indexterm linkend="glibc-cp"><primary>özdevimli ilntileyici</primary></indexterm>
+   <indexterm linkend="glibc-cp"><primary>özdevimli yükleyici</primary></indexterm>
+   <firstterm>Özdevimli ilintileyici</firstterm> (dynamic linker) özdevimli olarak ilintilenmiş gerçeklenimleri ve bunların bağımlılıklarını (paylaşılan nesneler biçiminde) yüklemekten sorumludur. &glibc;ndeki özdevimli ilntileyici, paylaşılan nesnelerin (eklentiler gibi) daha sonra çalışma zamanında yüklenmesini de destekler.
+  </para>
+  <para>
+   Özdevimli ilintileyiciye bazan <firstterm>özdevimli yükleyici</firstterm> dendiği de olur.
+  </para>
+  <sect1 xml:id="glibc-Dynamic-Linker-Introspection">
+   <title>Özdevimli İlintileyicide İçgözlem</title>
+   <titleabbrev>Eşleme bilgilerini sorgulamak için arabirimler.</titleabbrev>
+   <para>
+    &glibc; özdevimli ilintileyiciden bilgi sorgulamak için çeşitli işlevler sağlar.
+   </para>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-dlinfo"><primary>özdevimli ilntileyici</primary><secondary>listenin edinilmesi</secondary></indexterm>
+    <indexterm linkend="glibc-fn" xml:id="glibc-fn-dlinfo"><primary>dlinfo</primary></indexterm>
+    <csproto type="işlev">
+     <csname><type>int</type><function>dlinfo</function></csname>
+     <csparam><ptr>void</ptr><parameter>handle</parameter></csparam>
+     <csparam><type>int</type><parameter>request</parameter></csparam>
+     <csparam><ptr>void</ptr><parameter>arg</parameter></csparam>
+    </csproto>
+    <header>&dlfcn.h;</header>
+    <conceptlist>
+     <concept>&mtsafe;</concept>
+     <concept>&asunsafe; &corrupt;</concept>
+     <concept>&acunsafe; &corrupt;</concept>
+    </conceptlist>
+    <para>
+     Bu işlev, <parameter>request</parameter> isteğine bağlı olarak <parameter>arg</parameter> bellek konumundaki <parameter>handle</parameter> tanıtıcısı hakkında bilgi döndürür. <parameter>handle</parameter> bağımsız değişkeni, <function>dlopen</function> veya <function>dlmopen</function> tarafından döndürülen bir gösterici olmalı, <function>dlclose</function> tarafından kapatılmış olmamalıdır.
+    </para>
+    <para>
+     Başarılı olduğunda, <code>dlinfo</code>  çoğu istek türü için <code>0</code>  döndürür; istisnalar aşağıda belirtilmiştir. Bir hata varsa, işlev <code>-1</code> döndürür ve karşılık gelen bir hata iletisini elde etmek için <function>dlerror</function> kullanılabilir.
+    </para>
+    <para>
+     Aşağıdaki işlemler <parameter>request</parameter> ile kullanım için tanımlanmıştır:
+    </para>
+    <csynopsis>
+     <indexterm xml:id="glibc-vr-RTLD_DI_LINKMAP" linkend="glibc-vr"><primary>RTLD_DI_LINKMAP</primary></indexterm>
+     <csproto type="sabit">
+      <csname><function>RTLD_DI_LINKMAP</function></csname>
+     </csproto>
+     <header>&dlfcn.h;</header>
+     <para>
+      <parameter>handle</parameter> için karşılık gelen <type>struct&#160;link_map</type> göstericisi *<parameter>arg</parameter> bağımsız değişkenine yazılır. <parameter>arg</parameter> bağımsız değişkeni, <type>struct&#160;link_map *</type>  türündeki bir nesnenin adresi olmalıdır.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm xml:id="glibc-vr-RTLD_DI_LMID" linkend="glibc-vr"><primary>RTLD_DI_LMID</primary></indexterm>
+     <csproto type="sabit">
+      <csname><function>RTLD_DI_LMID</function></csname>
+     </csproto>
+     <header>&dlfcn.h;</header>
+     <para>
+      <parameter>handle</parameter> için ad alanı tanımlayıcısı *<parameter>arg</parameter> bağımsız değişkenine yazılır. *<parameter>arg</parameter> bağımsız değişkeni, <type>Lmid_t</type> türündeki bir nesnenin adresi olmalıdır.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm xml:id="glibc-vr-RTLD_DI_ORIGIN" linkend="glibc-vr"><primary>RTLD_DI_ORIGIN</primary></indexterm>
+     <csproto type="sabit">
+      <csname><function>RTLD_DI_ORIGIN</function></csname>
+     </csproto>
+     <header>&dlfcn.h;</header>
+     <para>
+      <parameter>handle</parameter> için <varname>$ORIGIN</varname> özdevimli dizge belirtecinin değeri, <parameter>arg</parameter> göstericisinde başlayan karakter dizisine boş karakter sonlandırmalı dizge olarak yazılır.
+     </para>
+     <para>
+      Bu istek türü, tampon taşmalarına eğilimli olduğundan kullanılmamalıdır.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm xml:id="glibc-vr-RTLD_DI_SERINFO" linkend="glibc-vr"><primary>RTLD_DI_SERINFO</primary></indexterm>
+     <csproto type="sabit">
+      <csname><function>RTLD_DI_SERINFO</function></csname>
+     </csproto>
+     <indexterm xml:id="glibc-vr-RTLD_DI_SERINFOSIZE" linkend="glibc-vr"><primary>RTLD_DI_SERINFOSIZE</primary></indexterm>
+     <csproto type="sabit">
+      <csname><function>RTLD_DI_SERINFOSIZE</function></csname>
+     </csproto>
+     <header>&dlfcn.h;</header>
+     <para>
+      Bu istekler, <parameter>handle</parameter> için arama yolu bilgilerinin edinilmesinde kullanılabilir. Her iki istek için de <parameter>handle</parameter>, <type>Dl_serinfo</type> türünde bir nesneye gösterici olmalıdır. Önce <code>RTLD_DI_SERINFOSIZE</code> isteği yapılmalıdır; böylece <type>Dl_serinfo</type> nesnesinin <structfield>dls_size</structfield> ve <structfield>dls_cnt</structfield> üyeleri güncellenir. Çağrıcı daha sonra en az <structfield>dls_size</structfield> bayt depolamak için bellek tahsis etmeli ve bu tamponu bir <code>RTLD_DI_SERINFO</code> isteğine aktarmalıdır. Bu ikinci istek, <structfield>dls_serpath</structfield> dizisini doldurur. Dizi elemanlarının sayısı ilk <code>RTLD_DI_SERINFOSIZE</code> isteğinde <structfield>dls_cnt</structfield> üyesinde döndürülür. Çağrıcı, tahsis edilen tamponu serbest bırakmaktan sorumludur.
+     </para>
+     <para>
+      Gerekli boyut <code>RTLD_DI_SERINFOSIZE</code> ve <code>RTLD_DI_SERINFO</code> istekleri arasında değişebileceğinden, bu arayüz çok evreli işlemlerde tampon taşmalarına eğilimlidir.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm xml:id="glibc-vr-RTLD_DI_TLS_DATA" linkend="glibc-vr"><primary>RTLD_DI_TLS_DATA</primary></indexterm>
+     <csproto type="sabit">
+      <csname><function>RTLD_DI_TLS_DATA</function></csname>
+     </csproto>
+     <header>&dlfcn.h;</header>
+     <para>
+      Bu istek, <parameter>handle</parameter> tarafından tanımlanan paylaşımlı nesne için TLS bloğunun adresini (geçerli evreye) *<parameter>arg</parameter> göstericisine yazar. <parameter>arg</parameter> bağımsız değişkeni, <type>void *</type> türünden bir nesnenin adresi olmalıdır. Nesnenin ilişkili herhangi bir TLS bloğu yoksa, boş gösterici yazılır.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm xml:id="glibc-vr-RTLD_DI_TLS_MODID" linkend="glibc-vr"><primary>RTLD_DI_TLS_MODID</primary></indexterm>
+     <csproto type="sabit">
+      <csname><function>RTLD_DI_TLS_MODID</function></csname>
+     </csproto>
+     <header>&dlfcn.h;</header>
+     <para>
+      Bu istek, <parameter>handle</parameter> paylaşımlı nesnesinin TLS modül kimliğini *<parameter>arg</parameter> konumuna yazar. <parameter>arg</parameter> bağımsız değişkeni, <type>size_t</type> türündeki bir nesnenin adresi olmalıdır. Nesnenin ilişkili bir TLS bloğu yoksa modül kimliği sıfırdır.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm xml:id="glibc-vr-RTLD_DI_PHDR" linkend="glibc-vr"><primary>RTLD_DI_PHDR</primary></indexterm>
+     <csproto type="sabit">
+      <csname><function>RTLD_DI_PHDR</function></csname>
+     </csproto>
+     <header>&dlfcn.h;</header>
+     <para>
+      Bu istek, yazılım başlık dizisinin adresini *<parameter>arg</parameter> konumuna yazar. <parameter>arg</parameter> bağımsız değişkeni, <type>const ElfW(Phdr) *</type> türündeki bir nesnenin adresi olmalıdır (yani, mevcut mimariye uygun olarak <type>const Elf32_Phdr *</type> veya <type>const Elf64_Phdr *</type> ). Bu istek için <code>dlinfo</code> tarafından döndürülen değer, yazılım başlık dizisindeki yazılım başlıklarının sayısıdır.
+     </para>
+    </csynopsis>
+    <para>
+     <code>dlinfo</code> bir GNU oluşumudur.
+    </para>
+   </csynopsis>
+   <para>
+    Bu bölümün geri kalanı, <function>_dl_find_object</function> işlevini ve destekleyici türleri ve sabitleri belgelendirir.
+   </para>
+   <csynopsis>
+    <indexterm xml:id="glibc-tp-dl_find_object" linkend="glibc-tp"><primary sortas="dl_find_object">struct&#160;dl_find_object</primary></indexterm>
+    <csproto type="veri türü">
+     <csname><type>struct</type><function>dl_find_object</function></csname>
+    </csproto>
+    <header>&dlfcn.h;</header>
+    <para>
+     Bu yapı, asıl yazılım veya yüklenen nesne hakkında bilgi içerir. Sonuç verilerini çağrıcıya döndürmek için <function>_dl_find_object</function> işlevi kullanır.
+    </para>
+    <glosslist>
+     <glossentry>
+      <glossterm>
+       <type>unsigned&#160;long&#160;long&#160;int&#160;</type><structfield>dlfo_flags</structfield>
+      </glossterm>
+      <glossdef>
+       <para>
+        Şu anda kullanılmıyor ve her zaman <code>0</code>.
+       </para>
+      </glossdef>
+     </glossentry>
+     <glossentry>
+      <glossterm>
+       <type>void&#160;*</type><structfield>dlfo_map_start</structfield>
+      </glossterm>
+      <glossdef>
+       <para>
+        Adresi içeren eşlemin başlangıç adresi. Bu bilgi, yazılım başlığından gelir, bu nedenle onun kuralına uyar ve adresin mutlaka sayfa hizalı olması gerekmez.
+       </para>
+      </glossdef>
+     </glossentry>
+     <glossentry>
+      <glossterm>
+       <type>void&#160;*</type><structfield>dlfo_map_end</structfield>
+      </glossterm>
+      <glossdef>
+       <para>
+        Eşlemin bitiş adresi.
+       </para>
+      </glossdef>
+     </glossentry>
+     <glossentry>
+      <glossterm>
+       <type>struct&#160;link_map&#160;*</type><structfield>dlfo_link_map</structfield>
+      </glossterm>
+      <glossdef>
+       <para>
+        Nesnenin ilintileme eşlemine gösterici içerir.
+       </para>
+      </glossdef>
+     </glossentry>
+     <glossentry>
+      <glossterm>
+       <type>void&#160;*</type><structfield>dlfo_eh_frame</structfield>
+      </glossterm>
+      <glossdef>
+       <para>
+        Bu üye, nesnenin istisna işleme verilerine gösterici içerir.  Bkz: <varname>DLFO_EH_SEGMENT_TYPE</varname>.
+       </para>
+      </glossdef>
+     </glossentry>
+    </glosslist>
+    <para>
+     Bu yapı GNU oluşumudur.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-vr" xml:id="glibc-vr-DLFO_STRUCT_HAS_EH_DBASE"><primary>DLFO_STRUCT_HAS_EH_DBASE</primary></indexterm>
+    <csproto type="makro">
+     <csname><function>DLFO_STRUCT_HAS_EH_DBASE</function></csname>
+    </csproto>
+    <header>&dlfcn.h;</header>
+    <para>
+     Çoğu hedefte bu makro <code>0</code> olarak tanımlanır. <code>1</code> olarak tanımlanmışsa, <type>struct&#160;dl_find_object</type>, <type>void *</type> türünde ek bir <structfield>dlfo_eh_dbase</structfield> üyesi içerir. Bu konuma yönelik <varname>DW_EH_PE_datarel</varname> DWARF kodlamaları için temel adrestir.
+    </para>
+    <para>
+     Bu makro GNU oluşumudur.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-vr" xml:id="glibc-vr-DLFO_STRUCT_HAS_EH_COUNT"><primary>DLFO_STRUCT_HAS_EH_COUNT</primary></indexterm>
+    <csproto type="makro">
+     <csname><function>DLFO_STRUCT_HAS_EH_COUNT</function></csname>
+    </csproto>
+    <header>&dlfcn.h;</header>
+    <para>
+     Çoğu hedefte bu makro <code>0</code> olarak tanımlanır. <code>1</code> olarak tanımlanmışsa, <type>struct&#160;dl_find_object</type>, <type>int</type> türünde ek bir <structfield>dlfo_eh_count</structfield> üyesi içerir. <structfield>dlfo_eh_frame</structfield> üyesi tarafından tanımlanan EH çerçeve bölütündeki istisna işleme girdilerinin sayısıdır.
+    </para>
+    <para>
+     Bu makro GNU oluşumudur.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-vr" xml:id="glibc-vr-DLFO_EH_SEGMENT_TYPE"><primary>DLFO_EH_SEGMENT_TYPE</primary></indexterm>
+    <csproto type="makro">
+     <csname><function>DLFO_EH_SEGMENT_TYPE</function></csname>
+    </csproto>
+    <header>&dlfcn.h;</header>
+    <para>
+     DWARF tabanlı istisna genişletmesi kullanılan hedeflerde, bu makro <varname>PT_GNU_EH_FRAME</varname> olarak genişler. Bu, <type>struct&#160;dl_find_object</type> içindeki <structfield>dlfo_eh_frame</structfield> öğesinin nesnenin <varname>PT_GNU_EH_FRAME</varname> bölütünü gösterdiğini belirtir. Diğer genişletme biçimlerini kullanan hedeflerde, makro, genişletme verileri için yazılım başlık tipine genişler.
+    </para>
+    <para>
+     Bu makro GNU oluşumudur.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-dl_find_object"><primary>özdevimli ilntileyici</primary><secondary>listenin edinilmesi</secondary></indexterm>
+    <indexterm linkend="glibc-fn" xml:id="glibc-fn-dl_find_object"><primary sortas="dl_find_object">_dl_find_object</primary></indexterm>
+    <csproto type="işlev">
+     <csname><type>int</type><function>_dl_find_object</function></csname>
+     <csparam><ptr>void</ptr><parameter>address</parameter></csparam>
+     <csparam><type>struct&#160;dl_find_object</type><parameter>result</parameter></csparam>
+    </csproto>
+    <header>&dlfcn.h;</header>
+    <conceptlist>
+     <concept>&mtsafe;</concept>
+     <concept>&assafe;</concept>
+     <concept>&acsafe;</concept>
+    </conceptlist>
+    <para>
+     Başarılı olduğunda, bu işlev <code>0</code> döndürür ve <parameter>address</parameter> adresini sarmalayan nesne hakkında veriyi *<parameter>result</parameter> göstericisine kaydeder. Başarısızlık durumunda <code>-1</code> döner.
+    </para>
+    <para>
+     <parameter>address</parameter> bir kod adresi veya veri adresi olabilir. İşlev tanıtıcıları kullanılan mimarilerde, işlev tanıtıcının kodunu çözmek için hiçbir girişimde bulunulmaz. Bu tanıtıcıların nasıl uygulandığına bağlı olarak <code>_dl_find_object</code>, işlev tanıtıcısını tanımlayan nesneyi döndürebilir (işlevi uygulayan kodu içeren nesneyi değil) veya hiçbir nesneyi bulamayabilir.
+    </para>
+    <para>
+     Başarılı olduğunda <parameter>address</parameter>, <parameter>result</parameter><code>-&gt;</code><structfield>dlfo_map_start</structfield> değerinden büyük veya buna eşit ve <parameter>result</parameter><code>-&gt;</code><structfield>dlfo_map_end</structfield> değerinden küçüktür, yani sağlanan kod adresi, bildirilen eşlem içinde bulunur.
+    </para>
+    <para>
+     Bu işlev, yazılım kodunun <parameter>address</parameter> adresini  <parameter>result</parameter><code>-&gt;</code><structfield>dlfo_eh_frame</structfield> olarak içeren nesne için genişletme bilgilerine gösterici döndürür. Platform, DWARF genişletme bilgilerini kullanıyorsa, bu, <varname>PT_GNU_EH_FRAME</varname> bölütünün bellek içi adresidir. Bkz: <varname>DLFO_EH_SEGMENT_TYPE</varname>. <parameter>address</parameter>, genişletme bilgisinden yoksun bir nesnede bulunuyorsa, işlev yine de 0 döndürür, ancak <parameter>result</parameter><code>-&gt;</code><structfield>dlfo_eh_frame</structfield> öğesine boş gösterici atar.
+    </para>
+    <para>
+     <code>_dl_find_object</code> işlevinin kendisi evreler açısından güvenlidir. Ancak uygulama <parameter>address</parameter> içeren nesne için <function>dlclose</function> işlevini <code>_dl_find_object</code> ile aynı anda veya çağrı geri döndükten sonra çağırırsa, o nesne için genişletme verilerine erişmek (<parameter>result</parameter><code>-&gt;</code><structfield>dlfo_link_map</structfield> aracılığıyla) güvenli değildir. Bu nedenle, uygulamanın, genişletme bilgileri işlenirken <parameter>address</parameter> bağımsız değişkeninin geçerli bir kod adresi olarak kalmasını başka yollarla (örn. kural yoluyla) sağlaması gerekir.
+    </para>
+    <para>
+     Bu işlev GNU oluşumudur.
+    </para>
+   </csynopsis>
+  </sect1>
+ </partintro>
 </part>

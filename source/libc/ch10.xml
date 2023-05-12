@@ -2,7 +2,1878 @@
 <!-- ********************************************************************
         glibc/ch10.xml,v2.36, GFDL,LGPL, NBB, 2023
      ******************************************************************** -->
-<part xml:id="glibc-Pattern-Matching">
-  <title>Şablon Eşleme</title>
-  <titleabbrev>Kabuk yorumları ve düzenli ifadeler.</titleabbrev>
+<part xml:id="glibc-Pattern-Matching" userlevel="longtoc">
+ <title>Şablon Eşleme</title>
+ <titleabbrev>Kabuk yorumları ve düzenli ifadeler.</titleabbrev>
+ <preliminary>
+  <para>
+   &glibc; iki çeşit kalıp için şablon eşleme oluşumu içerir: Düzenli ifadeler ve dosya isimleri için özel kalıplar. Kütüphane ayrıca, kabuğun yaptığı değişken yorumlama, komut kullanımı ve metnin sözcüklere ayrılması için oluşumlar da içerir.
+  </para>
+ </preliminary>
+ <chapter xml:id="glibc-Wildcard-Matching">
+  <title>Dosya İsmi Kalıpları</title>
+  <titleabbrev>Bir dizgenin bir kalıp ile eşleşmesi.</titleabbrev>
+  <para>
+   <indexterm linkend="glibc-pg"><primary>fnmatch.h</primary></indexterm>
+   Bu bölümde belli bir dizgenin bir kalıp ile nasıl eşleştirildiği anlatılacaktır. Sonuç bir evet ya da hayır yanıtıdır: Dizge bir kalıpla ya eşleşir ya da eşleşmez. Bu bölümde bahsedilen simgelerin hepsi &fnmatch.h; başlık dosyasında bildirilmiştir.
+  </para>
+  <csynopsis>
+   <indexterm linkend="glibc-fn" xml:id="glibc-fn-fnmatch"><primary>fnmatch</primary></indexterm>
+   <indexterm linkend="glibc-cp" xml:id="glibc-cp-fnmatch"><primary>düzenli ifadeler</primary><secondary>dosya kalıpları</secondary></indexterm>
+   <csproto type="işlev">
+    <csname><type>int</type><function>fnmatch</function></csname>
+    <csparam><ptr>const&#160;char</ptr><parameter>pattern</parameter></csparam>
+    <csparam><ptr>const&#160;char</ptr><parameter>string</parameter></csparam>
+    <csparam><type>int</type><parameter>flags</parameter></csparam>
+   </csproto>
+   <header>&fnmatch.h;</header>
+   <conceptlist>
+    <concept>&mtsafe; &env; &locale;</concept>
+    <concept>&asunsafe; &heap;</concept>
+    <concept>&acunsafe; &mem;</concept>
+   </conceptlist>
+   <para>
+    Bu işlev <parameter>string</parameter> dizgesi ile <parameter>pattern</parameter> kalıbının eşleşip eşleşmediğine bakar. Eğer eşleşiyorlarsa <code>0</code> ile döner, aksi takdirde sıfırdan farklı <varname>FNM_NOMATCH</varname> değeri ile döner. <parameter>pattern</parameter> ve <parameter>string</parameter> bağımsız değişkenlerinin her ikisi de dizgedir.
+   </para>
+   <para>
+    <parameter>flags</parameter> ile eşleşme ile ilgili ayrıntıları değiştiren seçenek bitleri belirtilir. Belirtilebilecek seçeneklerin listesi için aşağıya bakınız.
+   </para>
+   <para>
+    &glibc;nde, <code>fnmatch</code> işlevi  kimi zaman hata raporlayabilir. Bu durumda dönen değerler <varname>FNM_NOMATCH</varname> değerinden ve sıfırdan farklı olacaktır.
+   </para>
+   <para>
+    <parameter>flags</parameter> bağımsız değişkeninde belirtilebilecek seçenekler:
+   </para>
+   <csynopsis>
+   <indexterm linkend="glibc-tp" xml:id="glibc-tp-FNM_FILE_NAME"><primary>FNM_FILE_NAME</primary></indexterm>
+   <csproto type="makro">
+    <csname><function>FNM_FILE_NAME</function></csname>
+   </csproto>
+   <header>&fnmatch.h;</header>
+   <para>
+    ‘<filename>/</filename>’ karakteri dosya isimlerinde özel olarak ele alınır. Bu seçenek etkinse, <parameter>pattern</parameter>, <parameter>string</parameter> içindeki‘<filename>/</filename>’ karakteri ile eşleşemez. Eşleştirmenin tek yolu <parameter>pattern</parameter> dizgesinin ‘<filename>/</filename>’ karakterini içermesidir.
+   </para>
+  </csynopsis>
+  <csynopsis>
+   <indexterm linkend="glibc-tp" xml:id="glibc-tp-FNM_PATHNAME"><primary>FNM_PATHNAME</primary></indexterm>
+   <csproto type="makro">
+    <csname><function>FNM_PATHNAME</function></csname>
+   </csproto>
+   <header>&fnmatch.h;</header>
+   <para>
+    <command>FNM_FILE_NAME</command> için takma ad olup POSIX.2 ile gelir. Bu belgede dosya isimleri için dosya yolu (pathname), terimi kullanılmadığından kullanımı önerilmemektedir.
+   </para>
+  </csynopsis>
+  <csynopsis>
+   <indexterm linkend="glibc-tp" xml:id="glibc-tp-FNM_PERIOD"><primary>FNM_PERIOD</primary></indexterm>
+   <csproto type="makro">
+    <csname><function>FNM_PERIOD</function></csname>
+   </csproto>
+   <header>&fnmatch.h;</header>
+   <para>
+    ‘<filename>.</filename>’ karakteri dosya isimlerinin başında ise özel olarak ele alınır. Bu seçenek etkinse ve ‘<filename>.</filename>’ karakteri <parameter>string</parameter> dizgesinin ilk karakteri ise <parameter>pattern</parameter> ile eşleşmez.
+   </para>
+   <para>
+    <code>FNM_PERIOD</code> ve <varname>FNM_FILE_NAME</varname> birlikte belirtilmişse, ‘<filename>.</filename>’ karakterinin <parameter>string</parameter> dizgesinin başında olmasının yanında ardında ‘<filename>/</filename>’ karakteri bulunması durumda da eşleşme seğlanır. (Kabuk <code>FNM_PERIOD</code> ve <varname>FNM_FILE_NAME</varname> seçeneklerini dosya isimleriyle eşleşme ararken birlikte kullanır.)
+   </para>
+  </csynopsis>
+  <csynopsis>
+   <indexterm linkend="glibc-tp" xml:id="glibc-tp-FNM_NOESCAPE"><primary>FNM_NOESCAPE</primary></indexterm>
+   <csproto type="makro">
+    <csname><function>FNM_NOESCAPE</function></csname>
+   </csproto>
+   <header>&fnmatch.h;</header>
+   <para>
+    ‘<filename>\</filename>’ karakteri kalıplarda özel olarak ele alınmaz. Normalde, ‘<filename>\</filename>’ kendinden sonraki karakteri önceler; bu seçenek etkinse bu özellik kapatılır, böylece yalnızca kendisiyle eşleşebilir. Önceleme etkin olduğunda, ‘<filename>\?</filename>’ kalıbı sadece ‘<filename>?</filename>’ karakteri ile eşleşir, çünkü kalıp içindeki soru işareti sıradan bir karakter gibi işlem görür.
+   </para>
+   <para>
+    Eğer <code>FNM_NOESCAPE</code> seçeneği etkinse, ‘<filename>\</filename>’ bir sıradan karakterdir.
+   </para>
+  </csynopsis>
+  <csynopsis>
+   <indexterm linkend="glibc-tp" xml:id="glibc-tp-FNM_LEADING_DIR"><primary>FNM_LEADING_DIR</primary></indexterm>
+   <csproto type="makro">
+    <csname><function>FNM_LEADING_DIR</function></csname>
+   </csproto>
+   <header>&fnmatch.h;</header>
+   <para>
+    <parameter>string</parameter> içinde ‘<filename>/</filename>’ karakterini izleyen karakterler yoksayılır; başka bir deyişle <parameter>pattern</parameter> dizgesi <parameter>string</parameter> dizisinin başındaki bir dizin ismi mi diye bakılır.
+   </para>
+   <para>
+    Bu seçenek etkinse, <filename>foo*</filename> ya da <filename>foobar</filename> bir kalıp olarak <filename>foobar/frobozz</filename> dizgesi ile eşleşir.
+   </para>
+  </csynopsis>
+  <csynopsis>
+   <indexterm linkend="glibc-tp" xml:id="glibc-tp-FNM_CASEFOLD"><primary>FNM_CASEFOLD</primary></indexterm>
+   <csproto type="makro">
+    <csname><function>FNM_CASEFOLD</function></csname>
+   </csproto>
+   <header>&fnmatch.h;</header>
+   <para>
+    <parameter>string</parameter> ile <parameter>pattern</parameter> karşılaştırılırken harf büyüklüğüne bakılmaz.
+   </para>
+  </csynopsis>
+  <csynopsis>
+   <indexterm linkend="glibc-cp" xml:id="glibc-cp-FNM_EXTMATCH"><primary>Korn Kabuğu</primary></indexterm>
+   <indexterm linkend="glibc-pg" xml:id="glibc-pg-FNM_EXTMATCH"><primary>ksh</primary></indexterm>
+   <indexterm linkend="glibc-tp" xml:id="glibc-tp-FNM_EXTMATCH"><primary>FNM_EXTMATCH</primary></indexterm>
+   <csproto type="makro">
+    <csname><function>FNM_EXTMATCH</function></csname>
+   </csproto>
+   <header>&fnmatch.h;</header>
+   <para>
+    Normal kalıplardan başka <uri xl:href="man1-ksh"/> kabuğunda bahsedilen ek kalıplar da tanınır. Aşağıdaki listedeki <replaceable>kalıp-listesi</replaceable>, <code>|</code> karakterinin ayraç olarak kullanıldığı bir kalıp listesidir.
+   </para>
+   <glosslist>
+    <glossentry>
+     <glossterm>
+      <code>?(<replaceable>kalıp-listesi</replaceable>)</code>
+     </glossterm>
+     <glossdef>
+      <para>
+       <replaceable>kalıp-listesi</replaceable> ile belirtilen kalıplar girdi dizgesiyle hiç eşleşmeyebilir ya da bir kere eşleşebilir.
+      </para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <code>*(<replaceable>kalıp-listesi</replaceable>)</code>
+     </glossterm>
+     <glossdef>
+      <para>
+       <replaceable>kalıp-listesi</replaceable> ile belirtilen kalıplar girdi dizgesiyle hiç eşleşmeyebilir ya da defalarca eşleşebilir.
+      </para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <code>+(<replaceable>kalıp-listesi</replaceable>)</code>
+     </glossterm>
+     <glossdef>
+      <para>
+       <replaceable>kalıp-listesi</replaceable> ile belirtilen kalıplar girdi dizgesiyle ya en azından bir kere ya da defalarca eşleşebilir.
+      </para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <code>@(<replaceable>kalıp-listesi</replaceable>)</code>
+     </glossterm>
+     <glossdef>
+      <para>
+       <replaceable>kalıp-listesi</replaceable> ile belirtilen kalıplar girdi dizgesiyle sadece bir kere eşleşebilir.
+      </para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <code>!(<replaceable>kalıp-listesi</replaceable>)</code>
+     </glossterm>
+     <glossdef>
+      <para>
+       <replaceable>kalıp-listesi</replaceable> ile belirtilen kalıplar girdi dizgesiyle hiç eşleşmiyorsa eşleşme sağlanmış demektir.
+      </para>
+     </glossdef>
+    </glossentry>
+   </glosslist>
+  </csynopsis></csynopsis>
+ </chapter>
+ <chapter xml:id="glibc-Globbing" userlevel="notoc">
+  <?dbhtml stop-chunking?>
+  <title>Genelleme</title>
+  <titleabbrev>Dosya ismi kalıbı ile eşleşen dosyaların bulunması.</titleabbrev>
+  <para>
+   <indexterm linkend="glibc-pg"><primary>glob.h</primary></indexterm>
+   <indexterm linkend="glibc-cp"><primary>genelleme</primary></indexterm>
+   Kalıpların çok genel bir kullanımı bir dizindeki dosyalarda eşleşme aramak ve eşleşenleri listelemektir. Bu işleme <wordasword>genelleme</wordasword> denir.
+  </para>
+  <para>
+   Bu işlem yazılımcı tarafından bir dizindeki dosya isimleri tek tek <function>fnmatch</function> ile sınanarak da yapılabilirdi ama yavaş olurdu (bu işlemin alt dizinlere de ayrı ayrı uygulanması gerekeceğinden).
+  </para>
+  <para>
+   Kütüphane özellikle bu işi yapan bir işlev içerir: <function>glob</function>.
+  </para>
+  <para>
+   <function>glob</function> ve bu kısımdaki diğer tüm simgeler &glob.h; başlık dosyasında bildirilmiştir.
+  </para>
+  <sect1 xml:id="glibc-Calling-Glob">
+   <title><code>glob</code> çağrısı</title>
+   <titleabbrev><code>glob</code> işlevinin temel kullanımı.</titleabbrev>
+   <para>
+    Genelleme işleminin sonucu dosya isimleri göstericileri dizisidir. Bu diziyi döndürmek için  <function>glob</function> işlevi aslında bir yapı olan özel bir veri türü, <type>glob_t</type> kullanır.  <function>glob</function> işlevine yapının adresi aktarılırsa, işlev, sonucu yapının alanlarına yazar.
+   </para>
+   <csynopsis>
+    <indexterm linkend="glibc-tp" xml:id="glibc-tp-glob_t"><primary>glob_t</primary></indexterm>
+    <csproto type="veri türü">
+     <csname><function>glob_t</function></csname>
+    </csproto>
+    <header>&glob.h;</header>
+    <para>
+     Bu veri türü dizge göstericileri dizisine gösterici tutar. Daha açıkçası, bu dizinin adresini ve boyutunu kaydeder. GNU gerçeklenimi standart dışı olarak biraz daha fazla alan içerir.
+    </para>
+    <glosslist>
+     <glossentry>
+      <glossterm>
+       <type>size_t&#160;</type><structfield>gl_pathc</structfield>
+      </glossterm>
+      <glossdef>
+       <para>
+        Gösterici dizisindeki eleman sayısı; <varname>GLOB_DOOFFS</varname> seçeneği kullanılmışsa baştaki boş girdiler hariç (aşağıdaki <structfield>gl_offs</structfield> açıklamasına bakınız).
+       </para>
+      </glossdef>
+     </glossentry>
+     <glossentry>
+      <glossterm>
+       <type>char&#160;**</type><structfield>gl_pathv</structfield>
+      </glossterm>
+      <glossdef>
+       <para>
+        Gösterici dizisinin adresi.
+       </para>
+      </glossdef>
+     </glossentry>
+     <glossentry>
+      <glossterm>
+       <type>int&#160;</type><structfield>gl_offs</structfield>
+      </glossterm>
+      <glossdef>
+       <para>
+        <structfield>gl_pathv</structfield> alanındaki adresten itibaren ilk gerçek elemanın konumu. Diğer alanların tersine bu alan <function>glob</function> işlevi için daima bir girdidir (diğer alanları işlev doldurur).
+       </para>
+       <para>
+        Eğer sıfırdan farklı bir konum belirtilirse, gösterici dizisinin başlangıcından itibaren bazı elemanlar boş kalacaktır. (<function>glob</function> işlevi oraları boş göstericilerle doldurur.)
+       </para>
+       <para>
+        <code>gl_offs</code> alanı sadece <varname>GLOB_DOOFFS</varname> seçeneği etkinse anlamlıdır.  Aksi takdirde bu alanın ne içerdiğine bakılmaksızın konumun sıfır olduğu varsayılır, yani ilk eleman gösterici dizisinin başına konur.
+       </para>
+      </glossdef>
+     </glossentry>
+     <glossentry>
+      <glossterm>
+       <type>int&#160;</type><structfield>gl_flags</structfield>
+      </glossterm>
+      <glossdef>
+       <para>
+        Glob çağrıldığında kullanılan bayraklar. Ek olarak, <varname>GLOB_MAGCHAR</varname> atanmış olabilir. Daha fazla ayrıntı  <xref linkend="glibc-Flags-for-Globbing"/> bölümünde bulunabilir.
+       </para>
+       <para>
+        Bu alan bir GNU oluşumudur.
+       </para>
+      </glossdef>
+     </glossentry>
+     <glossentry>
+      <glossterm>
+       <type>void&nbsp;</type><structfield>(*gl_closedir)</structfield><type>(void&nbsp;*)</type>
+      </glossterm>
+      <glossdef>
+       <para>
+        <function>closedir</function> işlevinin başka bir gerçekleniminin adresi. <varname>GLOB_ALTDIRFUNC</varname> seçeneği etkinse kullanılır.
+       </para>
+       <para>
+        Bu alan bir GNU oluşumudur.
+       </para>
+      </glossdef>
+     </glossentry>
+     <glossentry>
+      <glossterm>
+       <type>struct&nbsp;dirent&nbsp;*</type><structfield>(*gl_readdir)</structfield><type>(void&nbsp;*)</type>
+      </glossterm>
+      <glossdef>
+       <para>
+        Bir dizinin içeriğini okumakta kullanılan <function>readdir</function> işlevinin başka bir gerçekleniminin adresi. <varname>GLOB_ALTDIRFUNC</varname> seçeneği etkinse kullanılır.
+       </para>
+       <para>
+        Bu alan bir GNU oluşumudur ve <type>struct&nbsp;dirent</type> yapısının aşağıdaki alanlarının ilklendirilmesini gerektirir:
+       </para>
+       <glosslist>
+        <glossentry>
+         <glossterm><structfield>d_type</structfield></glossterm>
+         <glossdef>
+          <para>
+           Bu üyeye, biliniyorsa girdinin dosya türü atanmalıdır. Aksi takdirde <varname>DT_UNKNOWN</varname> değeri kullanılabilir. <function>glob</function> işlevi, dosya türünün verilerin gerekli olmadığını gösterdiği durumlarda geri çağırımları önlemek için belirtilen dosya türünü kullanabilir.
+          </para>
+         </glossdef>
+        </glossentry>
+        <glossentry>
+         <glossterm><structfield>d_ino</structfield></glossterm>
+         <glossdef>
+          <para>
+           Bu üyenin sıfırdan farklı olması gerekir, aksi takdirde <function>glob</function> işlevi mevcut girdiyi atlayabilir ve başka bir girdiyi almak için <structfield>gl_readdir</structfield> geri çağırım işlevini tekrar çağırabilir.
+          </para>
+         </glossdef>
+        </glossentry>
+        <glossentry>
+         <glossterm><structfield>d_name</structfield></glossterm>
+         <glossdef>
+          <para>
+           Bu üyeye, girdinin adı atanmalıdır. Dizge boş karakter sonlandırmalı olmalıdır.
+          </para>
+         </glossdef>
+        </glossentry>
+       </glosslist>
+       <example>
+        <para>
+         Aşağıdaki örnek, belirli bir adı içeren bir <type>struct&nbsp;dirent</type> nesnesinin nasıl tahsis edileceğini göstermektedir.
+        </para>
+        <screen>#include &lt;dirent.h&gt;
+#include &lt;errno.h&gt;
+#include &lt;stddef.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+
+struct dirent *
+mkdirent (const char *name)
+{
+  size_t dirent_size = offsetof (struct dirent, d_name) + 1;
+  size_t name_length = strlen (name);
+  size_t total_size = dirent_size + name_length;
+  if (total_size &lt; dirent_size)
+    {
+      errno = ENOMEM;
+      return NULL;
+    }
+  struct dirent *result = malloc (total_size);
+  if (result == NULL)
+    return NULL;
+  result-&gt;d_type = DT_UNKNOWN;
+  result-&gt;d_ino = 1;            /* <replaceable>Bu girdiyi atla.</replaceable> */
+  memcpy (result-&gt;d_name, name, name_length + 1);
+  return result;
+}
+</screen>
+       </example>
+       <para>
+        <function>glob</function> işlevi, yukarıda listelenen <type>struct&nbsp;dirent</type> üyelerini okur ve <structfield>gl_readdir</structfield> geri çağırım işlevi geri döndükten hemen sonra <structfield>d_name</structfield> üyesindeki dosya adının bir kopyasını oluşturur. Geri çağırım işlevlerinden herhangi birinin gelecekteki çağrıları tamponu serbest bırakabilir veya yeniden kullanabilir. Tamponu <function>glob</function> çağrısı çevresinde veya geri çağırım işlevlerini kullanarak tahsis etmek ve serbest bırakmak, <function>glob</function> işlevini çağıranın sorumluluğundadır. Örneğin, bir uygulama tamponu <structfield>gl_readdir</structfield> geri çağırım işlevinde tahsis edebilir ve <structfield>gl_closedir</structfield> geri çağırım işlevinde serbest bırakabilir.
+       </para>
+      </glossdef>
+     </glossentry>
+     <glossentry>
+      <glossterm>
+       <type>void&nbsp;*</type><structfield>(*gl_opendir)</structfield><type>(const&nbsp;char&nbsp;*)</type>
+      </glossterm>
+      <glossdef>
+       <para>
+        <function>opendir</function>  işlevinin başka bir gerçekleniminin adresi. <varname>GLOB_ALTDIRFUNC</varname> seçeneği etkinse kullanılır.
+       </para>
+       <para>
+        Bu alan bir GNU oluşumudur.
+       </para>
+      </glossdef>
+     </glossentry>
+     <glossentry>
+      <glossterm>
+       <type>int&nbsp;</type><structfield>(*gl_stat)</structfield><type>(const&nbsp;char&nbsp;*, struct&nbsp;stat&nbsp;*)</type>
+      </glossterm>
+      <glossdef>
+       <para>
+        Dosya sistemindeki bir nesne hakkında bilgi döndüren <function>lstat</function> işlevinin başka bir gerçekleniminin adresi. <varname>GLOB_ALTDIRFUNC</varname> seçeneği etkinse kullanılır.
+       </para>
+       <para>
+        Bu alan bir GNU oluşumudur.
+       </para>
+      </glossdef>
+     </glossentry>
+     <glossentry>
+      <glossterm>
+       <type>int&nbsp;</type><structfield>(*gl_lstat)</structfield><type>(const&nbsp;char&nbsp;*, struct&nbsp;stat&nbsp;*)</type>
+      </glossterm>
+      <glossdef>
+       <para>
+        Dosya sistemindeki bir nesne hakkında bilgi döndüren, ancak simgesel bağları izlemeyen <function>lstat</function> işlevinin başka bir gerçekleniminin adresi. <varname>GLOB_ALTDIRFUNC</varname> seçeneği etkinse kullanılır.
+       </para>
+       <para>
+        Bu alan bir GNU oluşumudur.
+       </para>
+      </glossdef>
+     </glossentry>
+    </glosslist>
+   </csynopsis>
+   <para>
+    <function>glob64</function> işlevinde kullanmak üzere &glob.h; başlık dosyası bu türe çok benzer bir başka tanım daha içerir.  <type>glob64_t</type> türü <type>glob_t</type> türünden sadece  <structfield>gl_readdir</structfield>, <structfield>gl_stat</structfield> ve <structfield>gl_lstat</structfield> elemanlarının farklı türde olması ile farklıdır.
+   </para>
+   <csynopsis>
+    <indexterm linkend="glibc-tp" xml:id="glibc-tp-glob64_t"><primary>glob64_t</primary></indexterm>
+    <csproto type="veri türü">
+     <csname><function>glob64_t</function></csname>
+    </csproto>
+    <header>&glob.h;</header>
+    <para>
+     Bu veri türü dizge göstericileri dizisine gösterici tutar. Daha açıkçası, bu dizinin adresini ve boyutunu kaydeder. GNU gerçeklenimi standart dışı olarak biraz daha fazla alan içerir.
+    </para>
+    <glosslist>
+     <glossentry>
+      <glossterm>
+       <type>size_t&#160;</type><structfield>gl_pathc</structfield>
+      </glossterm>
+      <glossdef>
+       <para>
+        Gösterici dizisindeki eleman sayısı; <varname>GLOB_DOOFFS</varname> seçeneği kullanılmışsa baştaki boş girdiler hariç (aşağıdaki <structfield>gl_offs</structfield> açıklamasına bakınız).
+       </para>
+      </glossdef>
+     </glossentry>
+     <glossentry>
+      <glossterm>
+       <type>char&#160;**</type><structfield>gl_pathv</structfield>
+      </glossterm>
+      <glossdef>
+       <para>
+        Gösterici dizisinin adresi.
+       </para>
+      </glossdef>
+     </glossentry>
+     <glossentry>
+      <glossterm>
+       <type>int&nbsp;</type><structfield>gl_offs</structfield>
+      </glossterm>
+      <glossdef>
+       <para>
+        <structfield>gl_pathv</structfield> alanındaki adresten itibaren ilk gerçek elemanın konumu. Diğer alanların tersine bu alan <function>glob</function> işlevi için daima bir girdidir (diğer alanları işlev doldurur).
+       </para>
+       <para>
+        Eğer sıfırdan farklı bir konum belirtilirse, gösterici dizisinin başlangıcından itibaren bazı elemanlar boş kalacaktır. (<function>glob</function> işlevi oraları boş göstericilerle doldurur.)
+       </para>
+       <para>
+        <code>gl_offs</code> alanı sadece <varname>GLOB_DOOFFS</varname> seçeneği etkinse anlamlıdır.  Aksi takdirde bu alanın ne içerdiğine bakılmaksızın konumun sıfır olduğu varsayılır, yani ilk eleman gösterici dizisinin başına konur.
+       </para>
+      </glossdef>
+     </glossentry>
+     <glossentry>
+      <glossterm>
+       <type>int&nbsp;</type><structfield>gl_flags</structfield>
+      </glossterm>
+      <glossdef>
+       <para>
+        Glob çağrıldığında kullanılan bayraklar. Ek olarak, <varname>GLOB_MAGCHAR</varname> atanmış olabilir. Daha fazla ayrıntı  <xref linkend="glibc-Flags-for-Globbing"/> bölümünde bulunabilir.
+       </para>
+       <para>
+        Bu alan bir GNU oluşumudur.
+       </para>
+      </glossdef>
+     </glossentry>
+     <glossentry>
+      <glossterm>
+       <type>void&nbsp;</type><structfield>(*gl_closedir)</structfield><type>(void&nbsp;*)</type>
+      </glossterm>
+      <glossdef>
+       <para>
+        <function>closedir</function> işlevinin başka bir gerçekleniminin adresi. <varname>GLOB_ALTDIRFUNC</varname> seçeneği etkinse kullanılır.
+       </para>
+       <para>
+        Bu alan bir GNU oluşumudur.
+       </para>
+      </glossdef>
+     </glossentry>
+     <glossentry>
+      <glossterm>
+       <type>struct&nbsp;dirent64&nbsp;*</type><structfield>(*gl_readdir)</structfield><type>(void&nbsp;*)</type>
+      </glossterm>
+      <glossdef>
+       <para>
+        Bir dizinin içeriğini okumakta kullanılan <function>readdir</function> işlevinin başka bir gerçekleniminin adresi. <varname>GLOB_ALTDIRFUNC</varname> seçeneği etkinse kullanılır.
+       </para>
+       <para>
+        Bu alan bir GNU oluşumudur ve <type>struct&nbsp;dirent</type> yapısının aşağıdaki alanlarının ilklendirilmesini gerektirir:
+       </para>
+      </glossdef>
+     </glossentry>
+     <glossentry>
+      <glossterm>
+       <type>void&nbsp;*</type><structfield>(*gl_opendir)</structfield><type>(const&nbsp;char&nbsp;*)</type>
+      </glossterm>
+      <glossdef>
+       <para>
+        <function>opendir</function>  işlevinin başka bir gerçekleniminin adresi. <varname>GLOB_ALTDIRFUNC</varname> seçeneği etkinse kullanılır.
+       </para>
+       <para>
+        Bu alan bir GNU oluşumudur.
+       </para>
+      </glossdef>
+     </glossentry>
+     <glossentry>
+      <glossterm>
+       <type>int&nbsp;</type><structfield>(*gl_stat)</structfield><type>(const&nbsp;char&nbsp;*, struct&nbsp;stat64&nbsp;*)</type>
+      </glossterm>
+      <glossdef>
+       <para>
+        Dosya sistemindeki bir nesne hakkında bilgi döndüren <function>lstat</function> işlevinin başka bir gerçekleniminin adresi. <varname>GLOB_ALTDIRFUNC</varname> seçeneği etkinse kullanılır.
+       </para>
+       <para>
+        Bu alan bir GNU oluşumudur.
+       </para>
+      </glossdef>
+     </glossentry>
+     <glossentry>
+      <glossterm>
+       <type>int&nbsp;</type><structfield>(*gl_lstat)</structfield><type>(const&nbsp;char&nbsp;*, struct&nbsp;stat64&nbsp;*)</type>
+      </glossterm>
+      <glossdef>
+       <para>
+        Dosya sistemindeki bir nesne hakkında bilgi döndüren, ancak simgesel bağları izlemeyen <function>lstat</function> işlevinin başka bir gerçekleniminin adresi. <varname>GLOB_ALTDIRFUNC</varname> seçeneği etkinse kullanılır.
+       </para>
+       <para>
+        Bu alan bir GNU oluşumudur.
+       </para>
+      </glossdef>
+     </glossentry>
+    </glosslist>
+   </csynopsis>
+  <csynopsis>
+   <indexterm linkend="glibc-fn" xml:id="glibc-fn-glob"><primary>glob</primary></indexterm>
+   <csproto type="işlev">
+    <csname><type>int</type><function>glob</function></csname>
+    <csparam><ptr>const&#160;char</ptr><parameter>pattern</parameter></csparam>
+    <csparam><type>int</type><parameter>flags</parameter></csparam>
+    <csparam><code>int (*<parameter>errfunc</parameter>)
+    (const&#160;char&#160;*<parameter>filename</parameter>, int&#160;<parameter>error-code</parameter>)</code></csparam>
+    <csparam><ptr>glob_t</ptr><parameter>vector-ptr</parameter></csparam>
+   </csproto>
+   <header>&glob.h;</header>
+   <conceptlist>
+    <concept>&mtunsafe; &race;<code linkend="glibc-safety-identifier">:utent</code> &env; &sig;<code linkend="glibc-safety-identifier">:ALRM</code> &timer; &locale;</concept>
+    <concept>&asunsafe; &dlopen; &plugin; &corrupt; &heap; &lock;</concept>
+    <concept>&acunsafe; &corrupt; &lock; &fd; &mem;</concept>
+   </conceptlist>
+   <para>
+    <code>glob</code> işlevi <parameter>pattern</parameter> kalıbını kullanarak geçerli dizin içinde genelleme yapar. Sonuçları yeni ayırdığı gösterici dizisine yerleştirir ve bu dizinin adresi ile boyutunu  <parameter>vector-ptr</parameter> içine koyar.  <parameter>flags</parameter> bağımsız değişkeni seçenek bitlerinin birleşimidir; bu seçenekler hakkında ayrıntılı bilgi <xref linkend="glibc-Flags-for-Globbing"/> bölümünde bulunabilir.
+   </para>
+   <para>
+    Genellemenin sonucu dosya isimleri dizisidir. <code>glob</code> işlevi her sonuç dizgesi için bir dizge ve bu dizgelerin adreslerini saklamak için <type>char ** </type> türünde bir gösterici dizisi ayırır. Dizinin son elemanı boş göstericidir. Bu gösterici dizisine <firstterm>dizge göstericileri dizisi</firstterm> denir.
+    </para>
+    <para>
+     Bu diziyi döndürmek için dizinin adres ve uzunluğu (sonlandırıcı boş gösterici dışında dizge gösterici sayısı) *<parameter>vector-ptr</parameter> içinde saklanır.
+    </para>
+    <para>
+     Normalde, <code>glob</code> işlevi dosya isimlerini döndürmeden önce abecesel sıraya sokar. Bu <varname>GLOB_NOSORT</varname> seçeneği kullanılmadan yapılabilir ve sonuç daha çabuk alınabilir. Genellikle, sıralamayı  <code>glob</code> işlevine yaptırmak daha iyidir. Eğer dosyalar abecesel sırayla görüntülenirse, kullanıcı işlem hızının  yazılımdan kaynaklandığını sanacaktır.
+    </para>
+    <para>
+     <code>glob</code> başarılı olursa <code>0</code> ile döner.  Aksi takdirde şu hata kodlarından biri ile döner:
+    </para>
+    <variablelist>
+     <varlistentry>
+      <term><code>GLOB_ABORTED</code></term>
+      <listitem>
+       <para>
+        Bir dizini açarken bir hata oluşmuş ya <command>GLOB_ERR</command> seçeneği kullanılmış ya da <varname>hata-işlevi</varname>'nin sıfırdan farklı bir değer döndürmesi sağlanmış. <command>GLOB_ERR</command> seçeneği ve <varname>hata-işlevi</varname> ile ilgili açıklamalar için <xref linkend="glibc-Flags-for-Globbing"/> bölümüne bakınız.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><code>GLOB_NOMATCH</code></term>
+      <listitem>
+       <para>
+        Kalıp mevcut dosyaların hiçbiriyle eşleşmedi. <command>GLOB_NOCHECK</command> seçeneğini belirtirseniz bu hatayı asla almazsınız, çünkü bu seçenek <command>glob</command>'a en azından bir dosya eşleşmiş <emphasis>gibi</emphasis> davranmasını söyler.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><code>GLOB_NOSPACE</code></term>
+      <listitem>
+       <para>
+        Sonuçlar için ayrılacak bellek yok.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+    <para>
+     Bir hata durumunda <code>glob</code>, bulduğu tüm eşleşmeler hakkındaki bilgiyi <code>*<parameter>vector-ptr</parameter></code> dosyasında saklar.
+    </para>
+    <para>
+     LFS arabirimleri olmadan işlenemeyen dizinler veya dosyalarla karşılaştığında <code>glob</code> işlevinin başarısız olmayacağını fark etmek önemlidir. <code>glob</code> gerçekleniminin bu işlevleri dahili olarak kullanması beklenir. En azından Unix standardı bunun böyle olacağını varsayar. Kullanıcının kendi dizin işleme ve istatistik işlevlerini sağlamasına izin veren GNU oluşumu, işleri biraz daha karmaşık duruma getirir. Bu geri çağırım işlevleri kullanılırsa ve büyük bir dosya veya dizinle karşılaşılırsa, <code>glob</code> başarısız olabilir.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-fn" xml:id="glibc-fn-glob64"><primary>glob64</primary></indexterm>
+    <csproto type="işlev">
+     <csname><type>int</type><function>glob64</function></csname>
+     <csparam><ptr>const&#160;char</ptr><parameter>pattern</parameter></csparam>
+     <csparam><type>int</type><parameter>flags</parameter></csparam>
+     <csparam><code>int (*<parameter>errfunc</parameter>)
+     (const&#160;char&#160;*<parameter>filename</parameter>, int&#160;<parameter>error-code</parameter>)</code></csparam>
+     <csparam><ptr>glob64_t</ptr><parameter>vector-ptr</parameter></csparam>
+    </csproto>
+    <header>&glob.h;</header>
+    <conceptlist>
+     <concept>&mtunsafe; &race;<code linkend="glibc-safety-identifier">:utent</code> &env; &sig;<code linkend="glibc-safety-identifier">:ALRM</code> &timer; &locale;</concept>
+     <concept>&asunsafe; &dlopen; &corrupt; &heap; &lock;</concept>
+     <concept>&acunsafe; &corrupt; &lock; &fd; &mem;</concept>
+    </conceptlist>
+    <para>
+     <code>glob64</code> işlevi büyük dosya arayüzünün parçası olarak eklenmiştir, ancak kullanılan arayüz özgün LFS arayüzü değildir. Bunun sebebi basittir: Gereksizdir. <code>glob64</code> işlevi için gerekli olan herşey GNU oluşumunun kullanıcıya kendi dizin elde etme yöntemini sağlamasıyla ve <function>stat</function> işlevleriyle eklenmiştir. <type>struct&#160;dirent</type> ve <type>struct&#160;stat</type> veri türleri <varname>_FILE_OFFSET_BITS</varname> seçimine bağlı olduğundan <function>readdir</function> ve <function>stat</function> işlevleri bu seçime bağlı olarak çalışır.
+    </para>
+    <para>
+     Bu farkların dışında <code>glob64</code> tamamen <function>glob</function> gibi çalışır.
+    </para>
+    <para>
+     Bu işlev bir GNU oluşumudur.
+    </para>
+   </csynopsis>
+  </sect1>
+  <sect1 xml:id="glibc-Flags-for-Globbing">
+   <title>Genelleme Seçenekleri</title>
+   <titleabbrev><code>glob</code> işlevinin davranışını etkileyen seçenekler.</titleabbrev>
+   <para>
+    Bu bölümde <function>glob</function> işlevinin <parameter>flags</parameter> bağımsız değişkeninde belirtilebilecek seçenekler açıklanmıştır. Seçenekler C'nin bit seviyesi VEYA işleci olan <command>|</command> işleci kullanılarak birlikte belirtilebilir.
+   </para>
+   <para>
+    GNU oluşumu olarak bu seçeneklerden başka <xref linkend="glibc-More-Flags-for-Globbing"/> de vardır.
+   </para>
+   <csynopsis>
+    <indexterm xml:id="glibc-vr-GLOB_APPEND" linkend="glibc-vr"><primary>GLOB_APPEND</primary></indexterm>
+    <csproto type="makro">
+     <csname><function>GLOB_APPEND</function></csname>
+    </csproto>
+    <header>&glob.h;</header>
+    <para>
+     Önceki bir <function>glob</function> çağrısı ile üretilen dizge göstericileri dizisine bu genişletmeden dizgeler eklenir. İşlem bir dizgeye aralarında boşluklar bırakarak yeni sözcükler eklenmesi gibidir.
+    </para>
+    <para>
+     Ekleme işlemi sırasında, <function>glob</function> çağrısından önce dizge göstericileri dizisine ilişkin bilgileri içeren yapının içeriğinde değişiklik yapılmamalıdır. Eğer ilk çağrıda <varname>GLOB_DOOFFS</varname> seçeneği kullanılmışsa, ekleme amacıyla yapılan çağrıda da bu seçenek kullanılmalıdır.
+    </para>
+    <para>
+     Yapının <structfield>gl_pathv</structfield> üyesindeki gösterici ikinci <function>glob</function> çağrısından sonra artık geçerli olmayacaktır, çünkü <function>glob</function> işlevi diziyi yeniden ayırır. Böylece her <function>glob</function> çağrısından sonra <type>glob_t</type> yapısının <structfield>gl_pathv</structfield> üyesinden doğru gösterici elde edilir; çağrılar arasında gösterici <wordasword>asla</wordasword> saklanmamalıdır.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm xml:id="glibc-vr-GLOB_DOOFFS" linkend="glibc-vr"><primary>GLOB_DOOFFS</primary></indexterm>
+    <csproto type="makro">
+     <csname><function>GLOB_DOOFFS</function></csname>
+    </csproto>
+    <header>&glob.h;</header>
+    <para>
+     Gösterici dizisinin başlangıcında boş elemanlar bırakır. <structfield>gl_offs</structfield> alanında bunun sayısı belirtilir. Boş elemanlar boş gösterici içerir.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm xml:id="glibc-vr-GLOB_ERR" linkend="glibc-vr"><primary>GLOB_ERR</primary></indexterm>
+    <csproto type="makro">
+     <csname><function>GLOB_ERR</function></csname>
+    </csproto>
+    <header>&glob.h;</header>
+    <para>
+     Eğer <parameter>pattern</parameter> kalıbının eşleştirilmesi sırasında okunması gereken dizinlerin okunmasında zorluk varsa, bir hata bildirilir ve hemen çıkılır. Okunmak istenen dizinin erişim izinlerinin yetersizliği bu zorluklardan biridir.
+    </para>
+    <para>
+     <function>glob</function> çağrısında hataları elde edebilen bir <parameter>errfunc</parameter> işlevi belirterek bu hatalar üzerinde daha fazla denetim sağlanabilir. <parameter>errfunc</parameter> olarak boş gösterici belirtilmemişse, <function>glob</function> bir dizini okuyamadığında hemen çıkmaz, iki bağımsız değişken ile şuna benzer biçimde <parameter>errfunc</parameter> işlevini çağırır:
+    </para>
+    <literallayout class="monospaced">(*<parameter>errfunc</parameter>) (<parameter>dosyaismi</parameter>, <parameter>hatakodu</parameter>)
+</literallayout>
+    <para>
+     <parameter>dosyaismi</parameter> <function>glob</function> işlevinin açamadığı ya da okuyamadığı dizinin ismidir, <parameter>hatakodu</parameter> ise <function>glob</function> tarafından raporlanan <varname>errno</varname> değeridir.
+    </para>
+    <para>
+     Hata işleyici işlev sıfırdan farklı bir değerle dönerse <function>glob</function> hemen döner, aksi takdirde işleme devam eder.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm xml:id="glibc-vr-GLOB_MARK" linkend="glibc-vr"><primary>GLOB_MARK</primary></indexterm>
+    <csproto type="makro">
+     <csname><function>GLOB_MARK</function></csname>
+    </csproto>
+    <header>&glob.h;</header>
+    <para>
+     Kalıp dizin ismiyle eşleşirse, dizin ismi döndürülürken ismine ‘<filename>/</filename>’ eklenir.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm xml:id="glibc-vr-GLOB_NOCHECK" linkend="glibc-vr"><primary>GLOB_NOCHECK</primary></indexterm>
+    <csproto type="makro">
+     <csname><function>GLOB_NOCHECK</function></csname>
+    </csproto>
+    <header>&glob.h;</header>
+    <para>
+     Eğer kalıp hiçbir dosya ismiyle eşleşmezse, <function>glob</function> sanki bir eşleşme bulunmuş gibi döner. (Normalde, kalıp hiçbir şeyle eşleşmemişse <function>glob</function> eşleşme bulunmadığını belirtecek şekilde döner.)
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm xml:id="glibc-vr-GLOB_NOESCAPE" linkend="glibc-vr"><primary>GLOB_NOESCAPE</primary></indexterm>
+    <csproto type="makro">
+     <csname><function>GLOB_NOESCAPE</function></csname>
+    </csproto>
+    <header>&glob.h;</header>
+    <para>
+     Kalıpta ‘<filename>\</filename>’ karakteri özel olarak değil kendisi olarak ele alınır. Normalde, ‘<filename>\</filename>’ başka bir karakteri öncelemek için kullanılır. Bu seçenek bu şekilde yorumlanmasını engeller. Önceleme etkinse, ‘<filename>\?</filename>’ kalıbı sadece ‘<filename>?</filename>’ dizgesiyle eşleşir, çünkü bu biçimde belirtilen soru işareti kalıpta sıradan bir karakter olarak işlem görür.
+    </para>
+    <para>
+     <varname>GLOB_NOESCAPE</varname> seçeneği etkinse, ‘<filename>\</filename>’ bir sıradan karakterdir.
+    </para>
+    <para>
+     <function>glob</function> işlevi <function>fnmatch</function> işlevini defalarca çağırarak çalışır.  <varname>GLOB_NOESCAPE</varname> seçeneğini <function>fnmatch</function> çağrılarında <varname>FNM_NOESCAPE</varname> seçeneğini etkinleştirmek için kullanır.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm xml:id="glibc-vr-GLOB_NOSORT" linkend="glibc-vr"><primary>GLOB_NOSORT</primary></indexterm>
+    <csproto type="makro">
+     <csname><function>GLOB_NOSORT</function></csname>
+    </csproto>
+    <header>&glob.h;</header>
+    <para>
+     Dosya isimleri abecesel olarak sıralanmaz; okundukları sırada döndürülür. (Uygulamada sıralama, dosyaların dizine giriş sırasına bağlıdır.) Sıralama yapılmak istenmemesinin tek sebebi <emphasis>zaman kazanmak</emphasis> olabilir.
+    </para>
+   </csynopsis>
+  </sect1>
+  <sect1 xml:id="glibc-More-Flags-for-Globbing">
+   <title>Diğer Genelleme Seçenekleri</title>
+   <titleabbrev>GNU <code>glob</code> seçenekleri.</titleabbrev>
+   <para>
+    Önceki bölümde açıklanan seçeneklerin yanında <function>glob</function> işlevinin GNU gerçekleniminde geçerli başka seçenekler de vardır. Bu seçenekler &glob.h; başlık dosyasında tanımlanmıştır.  Bu seçeneklerin bazıları günümüzdeki kabuk gerçeklenimlerinde kullanılan işlevselliği sağlar.
+   </para>
+   <csynopsis>
+    <indexterm xml:id="glibc-vr-GLOB_PERIOD" linkend="glibc-vr"><primary>GLOB_PERIOD</primary></indexterm>
+    <csproto type="makro">
+     <csname><function>GLOB_PERIOD</function></csname>
+    </csproto>
+    <header>&glob.h;</header>
+    <para>
+     <code>.</code> (nokta) karakteri özel karakter olarak ele alınır. Bu durumda özel kalıp karakteri olarak eşleştirilmez. Bkz: <varname>FNM_PERIOD</varname>
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm xml:id="glibc-vr-GLOB_MAGCHAR" linkend="glibc-vr"><primary>GLOB_MAGCHAR</primary></indexterm>
+    <csproto type="makro">
+     <csname><function>GLOB_MAGCHAR</function></csname>
+    </csproto>
+    <header>&glob.h;</header>
+    <para>
+     <code>GLOB_MAGCHAR</code> seçeneği <function>glob</function> işlevinin <parameter>flags</parameter> bağımsız değişkeninde kullanmak için değildir.  <function>glob</function> işlevi bu seçeneği, eğer kalıp, özel kalıp karakterleri içeriyorsa sonucun bu yolla elde edileceğini belirtmek için <type>glob_t</type> yapısının <structfield>gl_flags</structfield> üyesinde kullanır.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm xml:id="glibc-vr-GLOB_ALTDIRFUNC" linkend="glibc-vr"><primary>GLOB_ALTDIRFUNC</primary></indexterm>
+    <csproto type="makro">
+     <csname><function>GLOB_ALTDIRFUNC</function></csname>
+    </csproto>
+    <header>&glob.h;</header>
+    <para>
+     Bu seçenek etkinse, <function>glob</function> gerçeklenimi dosya sistemine erişmek için kütüphanedeki işlevleri değil, kullanıcı tarafından <parameter>vector-ptr</parameter> ile gösterilen yapı içinde belirtilen işlevleri kullanır. Dizinlere erişim için kullanılan işlevler <xref linkend="glibc-Accessing-Directories"/> ve <xref linkend="glibc-Reading-Attributes"/> bölümlerinde açıklanmıştır.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm xml:id="glibc-vr-GLOB_BRACE" linkend="glibc-vr"><primary>GLOB_BRACE</primary></indexterm>
+    <csproto type="makro">
+     <csname><function>GLOB_BRACE</function></csname>
+    </csproto>
+    <header>&glob.h;</header>
+    <para>
+     Bu seçenek etkinse kaşlı ayraçlar özel olarak ele alınır. Bu durumda kaşlı ayraçların doğru gruplanması gerekir. Yani kaşlı ayraçlar çiftler halinde olmalıdır. İç içe gruplamalar yapılabilir. Böylece bir gruplama bir diğerini tanımlamakta kullanılabilir. Bir kaşlı ayraç ifadesi, başka bir kaşlı ayraç ifadesinin içinde tanımlanmışsa onun dışına çıkmaması gerektiğine dikkat edilmelidir.
+    </para>
+    <para>
+     Bir kaşlı ayraç grubundaki dizgeler, virgüllerle ayrılarak ayrı ifadeler haline getirilebilir. Bu durumda virgüllerin bu amaçla kullanıldıkları ve dizgelerin virgül içermedikleri varsayılır. Virgül kullanılarak ayrılan ifadeler aynı seviyede olmalıdır. Alt ifadeler kaşlı ayraç içine alınmışsa bunların içindeki virgüller eşleştirilmez.  Kaşlı ayraçlı alt gruplar da daha derin seviyeleri elde etmede kullanılır. Bir kullanım örneği:
+    </para>
+    <example>
+     <screen>glob ("{foo/{,bar,biz},baz}", GLOB_BRACE, NULL, &amp;result)
+</screen>
+     <para>
+     Hatalar gözönüne alınmazsa, şuna eşdeğerdir:
+     </para>
+     <screen>glob ("foo/", GLOB_BRACE, NULL, &amp;result)
+glob ("foo/bar", GLOB_BRACE|GLOB_APPEND, NULL, &amp;result)
+glob ("foo/biz", GLOB_BRACE|GLOB_APPEND, NULL, &amp;result)
+glob ("baz", GLOB_BRACE|GLOB_APPEND, NULL, &amp;result)
+</screen>
+    </example>
+   </csynopsis>
+   <csynopsis>
+    <indexterm xml:id="glibc-vr-GLOB_NOMAGIC" linkend="glibc-vr"><primary>GLOB_NOMAGIC</primary></indexterm>
+    <csproto type="makro">
+     <csname><function>GLOB_NOMAGIC</function></csname>
+    </csproto>
+    <header>&glob.h;</header>
+    <para>
+     Eğer kalıp herhangi bir özel kalıp karakteri içermiyorsa (doğrudan dosya ismi verilmişse), bu isimde bir dosya yoksa bile bu kalıp dizgesi döndürülür.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm xml:id="glibc-vr-GLOB_TILDE" linkend="glibc-vr"><primary>GLOB_TILDE</primary></indexterm>
+    <csproto type="makro">
+     <csname><function>GLOB_TILDE</function></csname>
+    </csproto>
+    <para>
+     Bu seçenek etkinse ve kalıp yaklaşık işareti (<code>~</code>) ile başlıyorsa, bu karakter özel olarak ele alınır. Bu durumda yaklaşık işaretinin kullanıcının ev dizinini gösterdiği varsayılır.
+    </para>
+    <para>
+     Eğer <code>~</code> kalıptaki tek karakterse ya da onu bir <code>/</code> (eğik çizgi) izliyorsa, bu kalıp sürecin sahibinin ev dizini ile eşleştirilir. Bilgi, <function>getlogin</function> ve <function>getpwnam</function> işlevleri kullanılarak sistem veritabanlarından okunur.
+    </para>
+    <example>
+     <para>
+      Örneğin, ev dizini <filename>/home/bart</filename> olan <code>bart</code> kullanıcısı için çağrı şöyle olurdu:
+     </para>
+     <screen>glob ("~/bin/*", GLOB_TILDE, NULL, &amp;result)
+</screen>
+     <para>
+      Bu çağrıdan <filename>/home/bart/bin</filename> döner. Burada başka bir kullanıcının ev dizini de belirtilebilirdi. Bunun için yaklaşık işaretinden sonra kullanıcının ismini belirtmek yeterlidir.
+     </para>
+     <screen>glob ("~homer/bin/*", GLOB_TILDE, NULL, &amp;result)
+</screen>
+     <para>
+      Eğer kullanıcı ismi geçersizse ya da ev dizini bir nedenle saptanamamışsa kalıba dokunulmaksızın kalıp dizgesi sonuç olarak döndürülür. Son örnekte, <code>homer</code> isminde bir kullanıcı yoksa işlev <filename>~homer</filename> dizinini aramaz ve sonuç olarak <filename>&quot;~homer/bin/*&quot;</filename> dizgesini döndürür.
+     </para>
+     <para>
+      Bu işlevsellik C kabuklarında <option>nonomatch</option> seçeneğinin etkin olduğu duruma eşdeğerdir.
+     </para>
+    </example>
+   </csynopsis>
+   <csynopsis>
+    <indexterm xml:id="glibc-vr-GLOB_TILDE_CHECK" linkend="glibc-vr"><primary>GLOB_TILDE_CHECK</primary></indexterm>
+    <csproto type="makro">
+     <csname><function>GLOB_TILDE_CHECK</function></csname>
+    </csproto>
+    <header>&glob.h;</header>
+    <para>
+     Bu seçenek belirtilmişse <function>glob</function> işlevi <varname>GLOB_TILDE</varname> seçeneği verilmiş gibi davranır. Tek fark, belirtilen kullanıcı yoksa ya da bir ev dizini saptanamamışsa kalıp dizgesi döndürülmez ve işlem bir hata ile sonuçlanır.
+    </para>
+    <para>
+     Bu işlevsellik C kabuklarında <option>nonomatch</option> seçeneğinin etkin olmadığı duruma eşdeğerdir.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm xml:id="glibc-vr-GLOB_ONLYDIR" linkend="glibc-vr"><primary>GLOB_ONLYDIR</primary></indexterm>
+    <csproto type="makro">
+     <csname><function>GLOB_ONLYDIR</function></csname>
+    </csproto>
+    <header>&glob.h;</header>
+    <para>
+     Bu seçenek belirtilmişse, bu, çağrıcının sadece kalıpla eşleşen dizinle ilgilendiğine dair bir <emphasis>ipucu</emphasis> olarak değerlendirilir. Eğer dosya hakkında saptanan bilgi onun bir dizin olmadığını belirtiyorsa bunlar reddedilir ama bunların türünü saptamak için ek bir çalışma yapılmaz. Yani çağrıcı hala bir süzme çalışması yapabilir.
+    </para>
+    <para>
+     Bu işlevsellik sadece GNU <function>glob</function> gerçeklenimi ile kullanılabilir. Aslında dahili kullanım için düşünülmüşse de kullanıcı için de yararlı olabileceğinden burada belgelenmiştir.
+    </para>
+   </csynopsis>
+   <para>
+    <function>glob</function> çağrısı çoğu durumda döndürdüğü sonucu saklamak için özkaynak ayırır. <function>glob</function> işlevi hep aynı <type>glob_t</type> nesnesi ile çağrılsa bile her çağrıda özkaynaklar önce serbest bırakılıp sonra tekrar tahsis edildiğinden bir kaçak oluşmaz. Fakat bu işlem her çağrıda hep aynı süre içinde olmaz.
+   </para>
+   <csynopsis>
+    <indexterm linkend="glibc-fn" xml:id="glibc-fn-globfree"><primary>globfree</primary></indexterm>
+    <csproto type="işlev">
+     <csname><type>void</type><function>globfree</function></csname>
+     <csparam><ptr>glob_t</ptr><parameter>pglob</parameter></csparam>
+    </csproto>
+    <header>&search.h;</header>
+    <conceptlist>
+     <concept>&mtsafe;</concept>
+     <concept>&asunsafe; &corrupt; &heap;</concept>
+     <concept>&acunsafe; &corrupt; &mem;</concept>
+    </conceptlist>
+    <para>
+     <code>globfree</code> işlevi önceki <function>glob</function> çağrılarında <parameter>pglob</parameter> ile gösterilen nesne için ayrılan yeri serbest bırakır. Bu <type>glob_t</type> türündeki nesne artık kullanılmayacaksa bu işlev çağrılarak bu alan serbest bırakılmalıdır.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-fn" xml:id="glibc-fn-globfree64"><primary>globfree64</primary></indexterm>
+    <csproto type="işlev">
+     <csname><type>void</type><function>globfree64</function></csname>
+     <csparam><ptr>glob64_t</ptr><parameter>pglob</parameter></csparam>
+    </csproto>
+    <header>&search.h;</header>
+    <conceptlist>
+     <concept>&mtsafe;</concept>
+     <concept>&asunsafe; &corrupt; &lock;</concept>
+     <concept>&acunsafe; &corrupt; &lock; &fd; &mem;</concept>
+    </conceptlist>
+    <para>
+    Bu işlev <function>globfree</function> işlevinin benzeridir, farklı olarak <function>glob64</function> işlevi ile ayrılan bir <type>glob64_t</type> nesnesini serbest bırakmak için kullanılır.
+    </para>
+   </csynopsis>
+  </sect1>
+  </chapter>
+  <chapter xml:id="glibc-Regular-Expressions">
+   <title>Düzenli İfade Eşleştirme</title>
+   <titleabbrev>Düzenli ifadelerin dizgelerle eşleştirilmesi.</titleabbrev>
+   <preliminary>
+    <para>
+     &glibc; düzenli ifade eşleştirmesi için iki arayüz içerir. Biri standart POSIX.2 arayüzü, diğeri ise yıllardır GNU sistemlerinde kullanılan arayüzdür.
+   </para>
+   <para>
+    Her iki arayüz de &regex.h; başlık dosyasında bildirilmiştir. Eğer <varname>_POSIX_C_SOURCE</varname> makrosunu tanımlanırsa, sadece POSIX.2 işlevleri, yapıları ve sabitleri bildirilir.
+   </para>
+   <para>
+    Düzenli ifadeler ile ilgili daha ayrıntılı bilgi için <xref linkend="regexinfo"/> kitabına bakılabilir.
+   </para>
+  </preliminary>
+  <sect1 xml:id="glibc-POSIX-Regexp-Compilation">
+   <title>POSIX Düzenli İfadelerinin Derlenmesi</title>
+   <titleabbrev>Eşlemeye hazırlamak için <code>regcomp</code> kullanımı.</titleabbrev>
+   <para>
+    Bir düzenli ifadeyi eşleştirme amacıyla kulanmadan önce düzenli ifadenin <emphasis>derlenmesi</emphasis> gerekir. Bu tam anlamıyla bir derleme işlemi değildir. Derleme sonucunda bir takım makine kodları değil, özel bir veri yapısı üretilir. Fakat derlemenin amacı aynı kalır, amaç daha hızlı işlem yapmaktır. (Derlenmiş düzenli ifadelerin nasıl eşleştirildiği <xref linkend="glibc-Matching-POSIX-Regexps"/> bölümünde anlatılmıştır.)
+   </para>
+   <para>
+    Derlenmiş düzenli ifadeler için özel bir veri türü vardır:
+   </para>
+   <csynopsis>
+    <indexterm linkend="glibc-pg"><primary>regex.h</primary></indexterm>
+    <indexterm linkend="glibc-tp" xml:id="glibc-tp-regex_t"><primary>regex_t</primary></indexterm>
+    <csproto type="veri türü">
+     <csname><function>regex_t</function></csname>
+    </csproto>
+    <header>&regex.h;</header>
+    <para>
+     Bir derlenmiş düzenli ifadeyi barındıran nesnenin türüdür. Aslında veri yapısıdır. Bakılacak tek alan vardır:
+    </para>
+    <variablelist>
+     <varlistentry>
+      <term><type>size_t</type> <structfield>re_nsub</structfield></term>
+      <listitem>
+       <para>
+        Derlenmiş düzenli ifadenin yaylı ayraçlar içindeki alt ifadelerinin sayısıdır.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+    <para>
+     Yapının başka alanları da vardır, yalnızca kütüphane içindeki işlevler tarafından kullanıldığından onlardan burada bahsedilmeyecektir.
+    </para>
+   </csynopsis>
+   <para>
+    <type>regex_t</type> nesnesi oluşturulduktan sonra düzenli ifade  <function>regcomp</function> çağrısı ile derlenmelidir.
+   </para>
+   <csynopsis>
+    <indexterm linkend="glibc-fn" xml:id="glibc-fn-regcomp"><primary>regcomp</primary></indexterm>
+    <csproto type="işlev">
+     <csname><type>int</type><function>regcomp</function></csname>
+     <csparam><type>regex_t&#160;*restrict</type><parameter>compiled</parameter></csparam>
+    <csparam><type>const&#160;char&#160;*restrict</type><parameter>pattern</parameter></csparam>
+    <csparam><type>int</type><parameter>cflags</parameter></csparam>
+    </csproto>
+    <header>&regex.h;</header>
+    <conceptlist>
+     <concept>&mtsafe; &locale;</concept>
+     <concept>&asunsafe; &corrupt; &heap; &lock; &dlopen;</concept>
+     <concept>&acunsafe; &corrupt; &lock; &mem; &fd;</concept>
+    </conceptlist>
+    <para>
+     <code>regcomp</code> işlevi, bir dizgeyle eşleştirmek üzere <function>regexec</function> işlevinde kullanmak için bir düzenli ifadeyi veri yapısına derler. Derlenmiş düzenli ifadenin biçimi verimli bir eşleştirmeyi mümkün kılacak şekilde tasarlanmıştır. Derlenen düzenli ifadeyi işlev <code>*</code><parameter>compiled</parameter> nesnesine yerleştirir.
+    </para>
+    <para>
+     <type>regex_t</type> türünde bir nesne için yer tahsis edip bunun adresini işleve aktarmak yazılımcının görevidir.
+    </para>
+    <para>
+     <parameter>cflags</parameter> bağımsız değişkeni düzenli ifadelerin sözdizimini ve anlamsal bütünlüğünü denetleyen bazı seçenekleri belirtmek için kullanılır. Bkz. <xref linkend="glibc-Flags-for-POSIX-Regexps"/>.
+    </para>
+    <para>
+     <varname>REG_NOSUB</varname> seçeneği belirtilmişse, <code>regcomp</code> işlevi derlenen düzenli ifadeye alt ifadelerin nasıl eşleştirileceği bilgisini yerleştirmez. Bu durumda,  <function>regexec</function> çağrısında <parameter>matchptr</parameter> ve <parameter>nmatch</parameter> bağımsız değişkenlerine <code>0</code> değeri aktarılmalıdır.
+    </para>
+    <para>
+     <varname>REG_NOSUB</varname> seçeneği belirtilmezse, derlenen düzenli ifade alt ifadelerin nasıl eşleştirileceği bilgisini de içerir. Ayrıca,  <code>regcomp</code> işlevi <parameter>pattern</parameter> ifadesinin kaç alt ifade içerdiğini <parameter>compiled</parameter><structfield>-&gt;re_nsub</structfield> üyesine yazar. Bu bilgi alt ifade eşleştirmesinde tutulacak bilgi için ayrılacak dizinin uzunluğuna karar vermek için kullanılabilir.
+    </para>
+    <para>
+     <code>regcomp</code> işlevi düzenli ifadeyi başarıyla derleyebilmişse <code>0</code> ile döner; aksi takdirde, sıfırdan farklı bir hata kodu ile döner (aşağıya bakınız). Dönen hata kodundan hata dizgesini üretmek için  <function>regerror</function> işlevi kullanılabilir; bkz. <xref linkend="glibc-Regexp-Cleanup"/>.
+    </para>
+    <para>
+     <code>regcomp</code> işlevinin döndürdüğü sıfırdan farklı değerler:
+    </para>
+    <csynopsis>
+     <indexterm xml:id="glibc-vr-REG_BADBR" linkend="glibc-vr"><primary>REG_BADBR</primary></indexterm>
+     <csproto type="sabit">
+      <csname><function>REG_BADBR</function></csname>
+     </csproto>
+     <para>
+      Düzenli ifade içinde geçersiz bir <code>\{…\}</code> yapısı var. Geçerli bir <code>\{…\}</code> yapısı ya tek bir sayı ya da virgülle ayrılmış iki sayı içermelidir.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm xml:id="glibc-vr-REG_BADPAT" linkend="glibc-vr"><primary>REG_BADPAT</primary></indexterm>
+     <csproto type="sabit">
+      <csname><function>REG_BADPAT</function></csname>
+     </csproto>
+     <para>
+      Düzenli ifade içinde sözdizimi hatası var.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm xml:id="glibc-vr-REG_BADRPT" linkend="glibc-vr"><primary>REG_BADRPT</primary></indexterm>
+     <csproto type="sabit">
+      <csname><function>REG_BADRPT</function></csname>
+     </csproto>
+     <para>
+      ‘<filename>?</filename>’ veya ‘<filename>*</filename>’ gibi yineleme işleçleri yanlış yerde (bu işleçlerden önce üzerinde işlem yapılacak bir alt ifade olmalıdır).
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm xml:id="glibc-vr-REG_ECOLLATE" linkend="glibc-vr"><primary>REG_ECOLLATE</primary></indexterm>
+     <csproto type="sabit">
+      <csname><function>REG_ECOLLATE</function></csname>
+     </csproto>
+     <para>
+      Düzenli ifade geçersiz bir karakter karşılaştırma elemanı içeriyor (geçerli yerelde tanımlı olanlardan biri değil). Bkz.  <xref linkend="glibc-Locale-Categories"/>.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm xml:id="glibc-vr-REG_ECTYPE" linkend="glibc-vr"><primary>REG_ECTYPE</primary></indexterm>
+     <csproto type="sabit">
+      <csname><function>REG_ECTYPE</function></csname>
+     </csproto>
+     <para>
+      Düzenli ifade geçersiz bir karakter sınıfı ismi içeriyor.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm xml:id="glibc-vr-REG_EESCAPE" linkend="glibc-vr"><primary>REG_EESCAPE</primary></indexterm>
+     <csproto type="sabit">
+      <csname><function>REG_EESCAPE</function></csname>
+     </csproto>
+     <para>
+      Düzenli ifade ‘<filename>\</filename>’ ile bitiyor.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm xml:id="glibc-vr-REG_ESUBREG" linkend="glibc-vr"><primary>REG_ESUBREG</primary></indexterm>
+     <csproto type="sabit">
+      <csname><function>REG_ESUBREG</function></csname>
+     </csproto>
+     <para>
+      Geçersiz sayıda <code>\</code><replaceable>rakam</replaceable> yapısı var.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm xml:id="glibc-vr-REG_EBRACK" linkend="glibc-vr"><primary>REG_EBRACK</primary></indexterm>
+     <csproto type="sabit">
+      <csname><function>REG_EBRACK</function></csname>
+     </csproto>
+     <para>
+      Düzenli ifade eşleşmeyen köşeli ayraçlar içeriyor.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm xml:id="glibc-vr-REG_EPAREN" linkend="glibc-vr"><primary>REG_EPAREN</primary></indexterm>
+     <csproto type="sabit">
+      <csname><function>REG_EPAREN</function></csname>
+     </csproto>
+     <para>
+      Düzenli ifade eşleşmeyen yaylı ayraçlar içeriyor ya da ‘<filename>\(</filename>’ ve ‘<filename>\)</filename>’ sarmalayıcılarından biri eksik.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm xml:id="glibc-vr-REG_EBRACE" linkend="glibc-vr"><primary>REG_EBRACE</primary></indexterm>
+     <csproto type="sabit">
+      <csname><function>REG_EBRACE</function></csname>
+     </csproto>
+     <para>
+      Düzenli ifadede <command>\{</command> ve <command>\}</command> sarmalayıcılardan biri eksik.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm xml:id="glibc-vr-REG_ERANGE" linkend="glibc-vr"><primary>REG_ERANGE</primary></indexterm>
+     <csproto type="sabit">
+      <csname><function>REG_ERANGE</function></csname>
+     </csproto>
+     <para>
+      Bir aralık ifadesindeki sonlandırıcılardan biri geçersiz.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm xml:id="glibc-vr-REG_ESPACE" linkend="glibc-vr"><primary>REG_ESPACE</primary></indexterm>
+     <csproto type="sabit">
+      <csname><function>REG_ESPACE</function></csname>
+     </csproto>
+     <para>
+      <code>regcomp</code> için bellek yetersiz.
+     </para>
+    </csynopsis>
+   </csynopsis>
+  </sect1>
+  <sect1 xml:id="glibc-Flags-for-POSIX-Regexps">
+   <title>POSIX Düzenli İfade Seçenekleri</title>
+   <titleabbrev><code>regcomp</code> için sözdizimi çeşitleri.</titleabbrev>
+   <para>
+    Bunlar bir düzenli ifadeyi <function>regcomp</function> ile derlerken <parameter>cflags</parameter> bağımsız değişkeninde belirtilebilecek bit değerli seçeneklerdir.
+   </para>
+   <csynopsis>
+    <indexterm xml:id="glibc-vr-REG_EXTENDED" linkend="glibc-vr"><primary>REG_EXTENDED</primary></indexterm>
+    <csproto type="makro">
+     <csname><function>REG_EXTENDED</function></csname>
+    </csproto>
+    <para>
+     Şablon temel bir düzenli ifadenin değil, gelişmiş bir düzenli ifadenin karşılığı olarak oluşturulur.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm xml:id="glibc-vr-REG_ICASE" linkend="glibc-vr"><primary>REG_ICASE</primary></indexterm>
+    <csproto type="makro">
+     <csname><function>REG_ICASE</function></csname>
+    </csproto>
+    <para>
+     Harfler eşleştirilirken harf büyüklüğüne bakılmaz.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm xml:id="glibc-vr-REG_NOSUB" linkend="glibc-vr"><primary>REG_NOSUB</primary></indexterm>
+    <csproto type="makro">
+     <csname><function>REG_NOSUB</function></csname>
+    </csproto>
+    <para>
+     <parameter>matchptr</parameter> dizisinin içeriği için birşey yapılmaz.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm xml:id="glibc-vr-REG_NEWLINE" linkend="glibc-vr"><primary>REG_NEWLINE</primary></indexterm>
+    <csproto type="makro">
+     <csname><function>REG_NEWLINE</function></csname>
+    </csproto>
+    <para>
+     <parameter>string</parameter> içindeki satır sonu karakterleri dizgeyi satırlara bölmek için kullanılır. Böylece bir satır sonu karakterinden önceki ‘<filename>$</filename>’ karakteri ve satır sonu karakterinden sonraki ‘<filename>^</filename>’ karakteri eşleştirilebilir. Ayrıca, ‘<filename>.</filename>’ (nokta) veya ‘<filename>[^…]</filename>’ ifadesinin satır sonu karakteri ile eşleşmesine izin verilmez.
+    </para>
+    <para>
+     Aksi takdirde satır sonu karakteri sıradan bir karakter olarak işlem görür.
+    </para>
+   </csynopsis>
+  </sect1>
+  <sect1 xml:id="glibc-Matching-POSIX-Regexps">
+   <title>Derlenmiş POSIX Düzenli İfadelerinin Eşleştirilmesi</title>
+   <titleabbrev><code>regcomp</code> ile elde edilen şablonun <code>regexec</code> ile eşleştirilmesi.</titleabbrev>
+   <para>
+    Bir düzenli ifade <xref linkend="glibc-POSIX-Regexp-Compilation"/> bölümünde açıklandığı gibi derlendikten sonra <function>regexec</function> işlevinde dizgelerle karşılaştırılarak eşleşmeler aranabilir. Bir düzenli ifade demirleme işleçlerini (‘<filename>^</filename>’ veya ‘<filename>$</filename>’) içermedikçe bir dizge içinde bulunan her eşleşme başarılı sayılır.
+   </para>
+   <csynopsis>
+    <indexterm linkend="glibc-fn" xml:id="glibc-fn-regexec"><primary>regexec</primary></indexterm>
+    <csproto type="işlev">
+     <csname><type>int</type><function>regexec</function></csname>
+     <csparam><type>const&#160;regex_t&#160;*restrict</type><parameter>compiled</parameter></csparam>
+    <csparam><type>const&#160;char&#160;*restrict</type><parameter>string</parameter></csparam>
+    <csparam><ptr>size_t</ptr><parameter>nmatch</parameter></csparam>
+    <csparam><type>regmatch_t</type><parameter>matchptr</parameter><code>[restrict]</code></csparam>
+    <csparam><type>int</type><parameter>eflags</parameter></csparam>
+    </csproto>
+    <header>&regex.h;</header>
+    <conceptlist>
+     <concept>&mtsafe; &locale;</concept>
+     <concept>&asunsafe; &corrupt; &heap; &lock; &dlopen;</concept>
+     <concept>&acunsafe; &corrupt; &lock; &mem; &fd;</concept>
+    </conceptlist>
+    <para>
+     Bu işlev derlenmiş düzenli ifadeyi içeren *<parameter>compiled</parameter> ile  <parameter>string</parameter> dizgesini eşlemeye çalışır.
+    </para>
+    <para>
+     <code>regexec</code> işlevi düzenli ifade eşleştirilebilmişse <code>0</code> ile aksi takdirde sıfırdan farklı bir değerle döner. Sıfırdan farklı dönüş değerlerinin listesi aşağıdadır. Sıfırdan farklı değerlerin hata iletilerini üretmek için <function>regerror</function> işlevi kullanılabilir; bkz. <xref linkend="glibc-Regexp-Cleanup"/>.
+    </para>
+    <para>
+     <parameter>eflags</parameter> bağımsız değişkeni ile bit değerli seçeneklerden biri veya bir kaçı belirtilebilir.
+    </para>
+    <para>
+     Düzenli ifade ya da alt düzenli ifadelerle eşleşen <parameter>string</parameter> parçaları hakkında bilgi edinmek için <parameter>matchptr</parameter> ve <parameter>nmatch</parameter> bağımsız değişkenleri kullanılabilir.  Aksi takdirde <parameter>nmatch</parameter> için <code>0</code>, <parameter>matchptr</parameter> için <varname>NULL</varname> değeri belirtilmelidir. Bkz. <xref linkend="glibc-Regexp-Subexpressions"/>.
+    </para>
+    <para>
+     Eşleşme aramak için kullanılan derlenmiş düzenli ifade hangi yerel için derlenmişse, arama işleminde de aynı yerel kullanılmalıdır.
+    </para>
+    <para>
+     <code>regexec</code> işlevinin <parameter>eflags</parameter> bağımsız değişkeninde kullanılabilecek seçenekler:
+    </para>
+    <csynopsis>
+     <indexterm xml:id="glibc-vr-REG_NOTBOL" linkend="glibc-vr"><primary>REG_NOTBOL</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>REG_NOTBOL</function></csname>
+     </csproto>
+     <para>
+      Belirtilen dizgenin başlangıcı satırın başlangıcı sayılmaz; daha genel olarak, dizgeden önce bir metnin bulunduğu varsayılmaz.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm xml:id="glibc-vr-REG_NOTEOL" linkend="glibc-vr"><primary>REG_NOTEOL</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>REG_NOTEOL</function></csname>
+     </csproto>
+     <para>
+      Belirtilen dizgenin sonu satırın sonu sayılmaz; daha genel olarak, dizgeden sonra bir metin bulunduğu varsayılmaz.
+     </para>
+    </csynopsis>
+    <para>
+     <code>regexec</code> işlevinden dönebilecek sıfırdan farklı değerler:
+    </para>
+    <csynopsis>
+     <indexterm xml:id="glibc-vr-REG_NOMATCH" linkend="glibc-vr"><primary>REG_NOMATCH</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>REG_NOMATCH</function></csname>
+     </csproto>
+     <para>
+      Şablon dizge ile eşleşmedi. Bu aslında bir hata değildir.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <csproto type="makro">
+      <csname><function>REG_ESPACE</function></csname>
+     </csproto>
+     <para>
+      <code>regexec</code> için bellek yetersiz.
+     </para>
+    </csynopsis>
+   </csynopsis>
+  </sect1>
+  <sect1 xml:id="glibc-Regexp-Subexpressions">
+   <title>Alt İfadelerle Eşleşmeler</title>
+   <titleabbrev>Dizgenin eşleşen parçalarının bulunması.</titleabbrev>
+   <para>
+    <function>regexec</function> işlevi <parameter>pattern</parameter> içindeki yaylı ayraçlı alt ifadeleri eşleştirmek amacıyla kullanıldığında eşleşen <parameter>string</parameter> parçalarını kaydeder. Sonuçları <type>regmatch_t</type> türündeki yapı dizgesi ile döndürür. Dizinin ilk elemanı (indisi <code>0</code> olan eleman) düzenli ifadenin tamamıyla eşleşen dizge parçasını içerir. Dizinin diğer elemanlarının herbirine tek bir yaylı ayraçlı alt ifade ile eşleşen dizge parçasının başlangıcı ve sonu kaydedilir.
+   </para>
+   <csynopsis>
+    <indexterm xml:id="glibc-tp-regmatch_t" linkend="glibc-tp"><primary>regmatch_t</primary></indexterm>
+    <csproto type="veri türü">
+     <csname><function>regmatch_t</function></csname>
+    </csproto>
+    <header>&regex.h;</header>
+    <para>
+     <code>regexec</code> işlevine aktarılan <parameter>matchptr</parameter> dizisinin veri türüdür. İki yapı üyesi içerir:
+    </para>
+    <variablelist>
+     <varlistentry>
+      <term><type>regoff_t&#160;</type><structfield>rm_so</structfield></term>
+      <listitem>
+       <para>
+        Alt dizgenin <parameter>string</parameter> içindeki başlangıç konumu. Bu değeri <parameter>string</parameter>'e ekleyerek alt dizgenin adresini bulabilirsiniz.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><type>regoff_t&#160;</type><structfield>rm_eo</structfield></term>
+      <listitem>
+       <para>
+        Alt dizgenin <parameter>string</parameter> içindeki bitiş konumu.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </csynopsis>
+   <csynopsis>
+    <indexterm xml:id="glibc-tp-regoff_t" linkend="glibc-tp"><primary>regoff_t</primary></indexterm>
+    <csproto type="veri türü">
+     <csname><function>regoff_t</function></csname>
+    </csproto>
+    <header>&regex.h;</header>
+    <para>
+     <code>regoff_t</code> işaretli tamsayı tür için takma isimdir. <type>regmatch_t</type> yapısının alanları <code>regoff_t</code> türündedir.
+    </para>
+   </csynopsis>
+   <para>
+    <type>regmatch_t</type> elemanları konumsal alt ifadelere karşılıktır; ilk elemanda (indisi <code>1</code> olan eleman) eşleşen ilk alt ifade, ikincisinde ikinci alt ifade,... kayıtlıdır.  Alt ifadelerin sırası ifadede bulundukları sıraya göredir.
+   </para>
+   <para>
+    <function>regexec</function> işlevine <parameter>matchptr</parameter> dizisinde kaç eşleşme saklanacağı <parameter>nmatch</parameter> ile belirtilebilir. Eğer asıl ifade  <parameter>nmatch</parameter> ile belirtilenden fazla alt ifade içeriyorsa, kalan alt ifadelerin konumları hakkında bilgi edinilemez. Fakat bu şablonun belli bir dizge ile eşleşip eşleşmemesini etkilemez.
+   </para>
+   <para>
+    <function>regexec</function> işlevinin eşleşen alt ifadenin yeri hakkında bilgi döndürmesi istenmiyorsa ya <parameter>nmatch</parameter> ile <code>0</code> değeri aktarılmalı ya da düzenli ifadeyi derlerken <function>regcomp</function> işlevi <varname>REG_NOSUB</varname> seçeneği ile kullanılmalıdır.
+   </para>
+  </sect1>
+  <sect1 xml:id="glibc-Subexpression-Complications">
+   <title>Alt ifade Eşlemesindeki Zorluklar</title>
+   <titleabbrev>Eşleşen parçaların yerlerinin bulunması.</titleabbrev>
+   <para>
+    Kimi zaman bir alt ifade hiçbir karakter içermeyen bir altdizge ile eşleşebilir. Bu durum örneğin <code>fum</code> dizgesi <code>f\(o*\)</code> ifadesiyle eşleştiğinde ortaya çıkar. (Aslında sadece <code>f</code> eşleşir.) Bu durumda, konumların her ikisi de bulunan boş alt dizgeleri gösterir. Bu örnekte her iki konum da <code>1</code>'dir.
+   </para>
+   <para>
+    Kimi zaman bir düzenli ifade, alt ifadeler hiç kullanılmadan eşleşir; örneğin, <code>ba\(na\)*</code> ifadesi <code>ba</code> dizgesiyle eşleşirken yaylı ayraçlı alt ifade kullanılmaz. Bu durumda bu alt ifadenin elemanındaki her iki alan da <code>-1</code> içerir.
+   </para>
+   <para>
+    Kimi zaman düzenli ifadenin tamamının eşleştirilmesinde belli bir alt ifade defalarca eşleşebilir; örneğin, <code>ba\(na\)*</code> ifadesi <code>bananana</code> dizgesi ile eşleştirilirken yaylı ayraçlı alt ifade üç kere eşleştirilir. Bu durumda <function>regexec</function> çağrısı alt ifade ile eşleşen son dizge parçasının konumlarını kaydeder; <code>bananana</code> için bu komumlar <code>6</code> ve <code>8</code>'dir.
+   </para>
+   <para>
+    Fakat son eşleşme daima seçilenlerden biri olmaz. Eşleşme için en elverişli olanın öncelikli olanlardan biri olduğu söylenebilir. Yani, bir alt ifade bir diğerinin içinde görünüyorsa sonuçlar son eşleşen dış alt ifadedeki eşleşmeyi ifade eden içteki alt ifade için raporlanır. Örneğin, <code>\(ba\(na\)*s \)*</code> ifadesinin <code>"bananas bas "</code> dizgesi ile eşleştiği varsayılsın.
+    Son defasında içteki ifade aslında ilk sözcüğün sonuna doğru eşlenir. Ancak ikinci sözcüğün tekrar eşleşeceği varsayıldığında eşleme başarısız olur. <function>regexec</function>, <code>&quot;na&quot;</code> alt ifadesinin kullanılmadığını raporlar.
+   </para>
+   <para>
+    Bu kuralın uygulandığı başka bir örnek:
+   </para>
+   <literallayout class="monospaced">\(ba\(na\)*s \|nefer\(ti\)* \)*
+</literallayout>
+   <para>
+    Bu ifade <code>bananas nefertiti</code> ile eşleşir.  İlk sözcükte <code>&quot;na&quot;</code> alt ifadesi eşleşir, ama ikinci sözcükte bu alt ifade değil, onun benzeri olan alt ifade eşleşir. Bir kere daha, dış alt ifadenin ikinci yinelemesi birincinin üzerine yazar ve bu ikinci yinelemede <code>&quot;na&quot;</code> alt ifadesi kullanılmaz. Bu durumda, <function>regexec</function>, <code>&quot;na&quot;</code> alt ifadesinin kullanılmadığını raporlar.
+   </para>
+  </sect1>
+  <sect1 xml:id="glibc-Regexp-Cleanup">
+   <title>POSIX Şablonunun Temizlenmesi</title>
+   <titleabbrev>Derlenmiş düzenli ifade için ayrılan yerin serbest bırakılması ve hataların raporlanması.</titleabbrev>
+   <para>
+    Bir derlenmiş düzenli ifade artık kullanılmayacaksa, bir <function>regfree</function> çağrısı ile bu düzenli ifadeye tahsis edilen bellek serbest bırakılabilir.
+   </para>
+   <csynopsis>
+    <indexterm linkend="glibc-fn" xml:id="glibc-fn-regfree"><primary>regfree</primary></indexterm>
+    <csproto type="işlev">
+     <csname><type>void</type><function>regfree</function></csname>
+     <csparam><ptr>regex_t</ptr><parameter>compiled</parameter></csparam>
+    </csproto>
+    <header>&regex.h;</header>
+    <conceptlist>
+     <concept>&mtsafe;</concept>
+     <concept>&asunsafe; &heap;</concept>
+     <concept>&acunsafe; &mem;</concept>
+    </conceptlist>
+    <para>
+     <code>regfree</code> çağrısı *<parameter>compiled</parameter> ile gösterilen derlenmiş düzenli ifadeye ayrılan belleği serbest bırakır. Bu alan, bu kılavuzda üyelerinin hepsinin açıklanmadığı <type>regex_t</type> yapısının çeşitli iç alanlarını içerir.
+    </para>
+    <para>
+     <code>regfree</code> işlevi *<parameter>compiled</parameter> nesnesinin kendisini serbest bırakmaz.
+    </para>
+   </csynopsis>
+   <para>
+    Başka bir düzenli ifadeyi <type>regex_t</type> yapısında derlemeden önce bu yapı için ayrlan alan <function>regfree</function> ile serbest bırakılmalıdır.
+   </para>
+   <para>
+    <function>regcomp</function> veya <function>regexec</function> işlevi bir hata raporladığında, bunu hata dizgesine dönüştürmek için <function>regerror</function> işlevi kullanılabilir.
+   </para>
+   <csynopsis>
+    <indexterm linkend="glibc-fn" xml:id="glibc-fn-regerror"><primary>regerror</primary></indexterm>
+    <csproto type="işlev">
+     <csname><type>size_t</type><function>regerror</function></csname>
+     <csparam><type>int</type><parameter>errcode</parameter></csparam>
+     <csparam><type>const&#160;regex_t&#160;*restrict</type><parameter>compiled</parameter></csparam>
+    <csparam><type>char&#160;*restrict</type><parameter>buffer</parameter></csparam>
+    <csparam><type>size_t</type><parameter>length</parameter></csparam>
+    </csproto>
+    <header>&regex.h;</header>
+    <conceptlist>
+     <concept>&mtsafe; &env;</concept>
+     <concept>&asunsafe; &corrupt; &heap; &lock; &dlopen;</concept>
+     <concept>&acunsafe; &corrupt; &lock; &fd; &mem;</concept>
+    </conceptlist>
+    <para>
+     Bu işlev <parameter>errcode</parameter> ile belirtilen hata kodu için bir hata iletisi üretir ve bunu <parameter>buffer</parameter> adresinden başlayan <parameter>length</parameter> baytlık dizgeye yerleştirir. <parameter>compiled</parameter> bağımsız değişkeni ile belirtilen derlenmiş düzenli ifade hatanın oluştuğu <function>regcomp</function> veya <function>regexec</function> işlevinde kullanılmış olan nesne olmalıdır. <parameter>compiled</parameter> bağımsız değişkeninde değer olarak <varname>NULL</varname>'da belirtilebilir ve anlamlı bir hata iletisi alınabilir, ama alınan hata iletisi ayrıntılı olmaz.
+    </para>
+    <para>
+     Hata iletisi belirtilen <parameter>length</parameter> bayta sığmazsa, <code>regerror</code> hata iletisinin sığdığı kadarını yerleştirir. İşlev, ister tam dizgeyi ister kırpılmış dizgeyi döndürsün, daima dizgeyi boş karakterle sonlandırır.
+    </para>
+    <para>
+     İşlevin dönüş değeri hata iletisinin tamamının uzunluğudur. Bu değer <parameter>length</parameter> bayttan küçükse dizge kırpılmamış demektir, bu dizge kullanılabilir, aksi takdirde işlevin daha büyük bir tamponla yeniden çağrılması gerekir.
+    </para>
+    <example>
+     <para>
+      Bu örnekte kullanılan <code>regerror</code> çağrısında hata iletisi için gereken alan özdevimli olarak ayrılmaktadır:
+     </para>
+     <screen>char *get_regerror (int errcode, regex_t *compiled)
+{
+  size_t length = regerror (errcode, compiled, NULL, 0);
+  char *buffer = xmalloc (length);
+  (void) regerror (errcode, compiled, buffer, length);
+  return buffer;
+}
+</screen>
+    </example>
+   </csynopsis>
+  </sect1>
+ </chapter>
+ <chapter xml:id="glibc-Word-Expansion" userlevel="notoc">
+  <?dbhtml stop-chunking?>
+  <title>Kabuk Usulü Sözcük Yorumlama</title>
+  <titleabbrev>Kabuk değişkenlerinin, iç içe komutların, aritmetik ifadelerin ve dosya ismi kalıplarının yorumlanması.</titleabbrev>
+  <para>
+   <indexterm linkend="glibc-cp"><primary>sözcük yorumlama</primary></indexterm>
+   <indexterm linkend="glibc-cp"><primary>kabukta sözcük yorumlama</primary></indexterm>
+   <wordasword>Sözcük yorumlama</wordasword>, kabuğun yaptığı gibi değişkenleri, komutları ve dosya ismi kalıplarını sözcüklerine ayırma ve bunların yerine bazı ikameler yapma işlemlerini ifade eder.
+  </para>
+  <para>
+   Örneğin, kabuğa <command>ls -l foo.c</command> yazılırsa bu dizgeyi kabuk üç sözcüğe ayırır: <command>ls</command>, <option>-l</option> ve <filename>foo.c</filename>. Bu sözcük yorumlamanın en temel işlemidir.
+  </para>
+  <para>
+   <command>ls *.c</command> yazılırsa, bu dizge çok sayıda sözcüğe ayrışır, çünkü <filename>*.c</filename> sözcüğü çok sayıda dosya ismiyle değiştirilecektir. Bu işleme <wordasword>dosya ismi yorumlaması</wordasword> denir ve sözcük yorumlamanın bir parçasıdır.
+  </para>
+  <para>
+   <command>echo $PATH</command> yazılırsa, dosya yolu basılır. Burada sözcük yorumlamanın başka bir parçası olan <wordasword>değişken ikamesi</wordasword>'nden yararlanılır.
+  </para>
+  <para>
+   Sıradan yazılımlar kabuğun uyguladığı gibi sözcük yorumlaması uygulamak için bir kütüphane işlevi olan <function>wordexp</function> işlevini kullanabilir.
+  </para>
+  <sect1 xml:id="glibc-Expansion-Stages">
+   <title>Sözcük Yorumlama Katmanları</title>
+   <titleabbrev>Sözcük yorumlamada bir dizgeye neler yapılır?</titleabbrev>
+   <para>
+    Bir sözcük dizilimine sözcük yorumlaması uygulandığında, sırayla aşağıdaki dönüşümler yapılır:
+   </para>
+   <orderedlist>
+    <listitem>
+     <para>
+      <indexterm linkend="glibc-cp"><primary>yaklaşık (~) yorumlaması</primary></indexterm>
+      <wordasword>Yaklaşık yorumlaması</wordasword>: ‘<filename>~foo</filename>’ dizgesinin ‘<filename>foo</filename>’ kullanıcısının ev dizini ismi ile değiştirilmesi.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      Bundan sonra, aynı adımda soldan sağa 3 adımda şu dönüşümler uygulanır:
+     </para>
+     <itemizedlist>
+      <listitem>
+       <para>
+        <indexterm linkend="glibc-cp"><primary>değişken ikamesi</primary></indexterm>
+        <indexterm linkend="glibc-cp"><primary>komut ikamesi</primary></indexterm>
+        <wordasword>Değişken ikamesi</wordasword>: ‘<filename>$foo</filename>’ gibi başvurular için ortam değişkenleri ikame edilir.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+        <indexterm linkend="glibc-cp"><primary>komut ikamesi</primary></indexterm>
+        <wordasword>Komut İkamesi</wordasword>: <command>`cat foo`</command> gibi bir dizge ya da eşdeğeri olan <command>$(cat foo)</command> dizgesi kullanıldığında kabuk içteki dizgeyi komut olarak çalıştırır ve bu dizgeyi komutun çıktısı ile değiştirir.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+        <indexterm linkend="glibc-cp"><primary>aritmetik yorumlama</primary></indexterm>
+        <wordasword>Aritmetik yorumlama</wordasword>: <code>$(($x-1))</code> gibi bir dizge, ifadenin sonucu ile değiştirilir.
+       </para>
+      </listitem>
+     </itemizedlist>
+    </listitem>
+    <listitem>
+     <para>
+      <indexterm linkend="glibc-cp"><primary>sözcüklere ayırma</primary></indexterm>
+      <wordasword>Sözcüklere ayırma</wordasword>: Dizgenin sözcüklerine ayrılması.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      <indexterm linkend="glibc-cp"><primary>dosya ismi yorumlaması</primary></indexterm>
+      <wordasword>Dosya ismi yorumlaması</wordasword>: ‘<filename>*.c</filename>’ gibi bir sözcük, uzantısı ‘<filename>.c</filename>’ olan dosyaların listesi ile değiştirilir. Dosya ismi yorumlaması sözcüğün tamamına bir defada uygulanır ve sözcük kendisiyle eşleşen sıfır ya da daha fazla dosya ismiyle değiştirilir.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      <indexterm linkend="glibc-cp"><primary>tırnak kaldırma</primary></indexterm>
+      <wordasword>Tırnak kaldırma</wordasword>: Dizgeyi sarmalayan tırnakları kaldırılması; yukarıdaki yorumlamalar uygulandıktan sonra yukarıdaki yorumlamaların sonucu olmayan ve öncelenmemiş tüm <code>\</code>, <code>'</code> ve <code>"</code> karakterleri kaldırılır.
+     </para>
+    </listitem>
+   </orderedlist>
+   <para>
+    Bu dönüşümler hakkında daha ayrıntılı bilgi GNU Bash Başvuru Kılavuzunun <xref linkend="bashref_shell.expansions"/> kısmında bulunabilir.
+   </para>
+  </sect1>
+  <sect1 xml:id="glibc-Calling-Wordexp">
+   <title><literal>wordexp</literal> çağrısı</title>
+   <titleabbrev><code>wordexp</code> çağrısı nasıl yapılır?</titleabbrev>
+   <para>
+    Sözcük yorumlaması ile ilgili tüm işlevler, sabitler ve veri türleri &wordexp.h; başlık dosyasında bulunur.
+   </para>
+   <para>
+    Sözcük yorumlaması sonuç olarak bir dizge göstericileri dizisi üretir. Bu dizgeyi döndürmek için <function>wordexp</function> işlevi bir yapı olan özel bir veri türü, <type>wordexp_t</type> kullanır.  <function>wordexp</function> işlevine bu yapının adresi aktarılırsa, işlev sonuç hakkında bilgiyi, bu yapının elemanlarına kaydederek döndürür.
+   </para>
+   <csynopsis>
+    <indexterm xml:id="glibc-tp-wordexp_t" linkend="glibc-tp"><primary>wordexp_t</primary></indexterm>
+    <csproto type="veri türü">
+     <csname><function>wordexp_t</function></csname>
+    </csproto>
+    <header>&wordexp.h;</header>
+    <para>
+     Bu veri türü, sözcük göstericileri dizisine gösterici tutar. Daha açık ifade etmek gerekirse, sözcük göstericileri dizisinin adresini ve eleman sayısının kaydını tutar.
+    </para>
+    <glosslist>
+     <glossentry>
+      <glossterm>
+       <type>size_t&#160;</type><structfield>we_wordc</structfield>
+      </glossterm>
+      <glossdef>
+       <para>
+        Gösterici dizisinin eleman sayısı.
+       </para>
+      </glossdef>
+     </glossentry>
+     <glossentry>
+      <glossterm>
+       <type>char&#160;**</type><structfield>we_wordv</structfield>
+      </glossterm>
+      <glossdef>
+       <para>
+        Gösterici dizisinin adresi.
+       </para>
+      </glossdef>
+     </glossentry>
+     <glossentry>
+      <glossterm>
+       <type>size_t&#160;</type><structfield>we_offs</structfield>
+      </glossterm>
+      <glossdef>
+       <para>
+        Gösterici dizisindeki ilk gerçek elemanın konumu veya ilk gerçek elemana erişmek için <structfield>we_wordv</structfield> alanındaki adrese eklenecek sayı. Diğer alanların aksine bu alan işlev için bir girdidir; işlev diğer alanları çıktıyı döndürmek için kullanır.
+       </para>
+       <para>
+        Konum olarak sıfırdan farklı bir değer belirtilirse, dizinin bu elemanından önceki elemanları boş kalır (işlev, bu konumları boş göstericilerle doldurur).
+       </para>
+       <para>
+        <structfield>we_offs</structfield> alanı sadece <varname>WRDE_DOOFFS</varname> seçeneği etkinse anlamlıdır. Aksi takdirde bu alanın içerdiği değere bakılmaksızın gösterici dizisinin ilk elemanının sıfırıncı eleman olduğu varsayılır.
+       </para>
+      </glossdef>
+     </glossentry>
+    </glosslist>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-fn" xml:id="glibc-fn-wordexp"><primary>wordexp</primary></indexterm>
+    <csproto type="işlev">
+     <csname><type>int</type><function>wordexp</function></csname>
+     <csparam><ptr>const&#160;char</ptr><parameter>words</parameter></csparam>
+     <csparam><ptr>wordexp_t</ptr><parameter>word-vector-ptr</parameter></csparam>
+     <csparam><type>int</type><parameter>flags</parameter></csparam>
+    </csproto>
+    <header>&wordexp.h;</header>
+    <conceptlist>
+     <concept>&mtunsafe; &race;<code linkend="glibc-safety-identifier">:utent</code> &const;<code linkend="glibc-safety-identifier">:env</code> &env; &sig;<code linkend="glibc-safety-identifier">:ALRM</code> &timer; &locale;</concept>
+     <concept>&asunsafe; &dlopen; &plugin; &i18n; &heap; &corrupt; &lock;</concept>
+     <concept>&acunsafe; &corrupt; &lock; &fd; &mem;</concept>
+    </conceptlist>
+    <para>
+     İşlev, <parameter>words</parameter> dizgesine sözcük yorumlaması uygular ve sonucu ayırdığı bir gösterici dizisinde saklayarak bu dizinin adresini ve eleman sayısını <parameter>word-vector-ptr</parameter> içinde döndürür.  <parameter>flags</parameter> bağımsız değişkeni bit değerli seçenekleri belirtmek için kullanılabilir; bu seçenekler <xref linkend="glibc-Flags-for-Wordexp"/> bölümünde bulunabilir.
+    </para>
+    <para>
+     <parameter>words</parameter> dizgesinde ‘<filename>|&amp;;&lt;&gt;</filename>’ karakterleri ters eğik çizgi ile öncelemeden kullanılmamalıdır. Aksi takdirde <varname>WRDE_BADCHAR</varname> hata kodu alınır. Bir sözcük yorumlama oluşumunu sarmalamak dışında yaylı ve kaşlı ayraç kullanılmamalıdır. Eğer tırnak karakteri olarak ‘<filename>'"`</filename>’ karakterlerinden biri kullanılırsa, bir ikincisi ile kapatılmalıdır.
+    </para>
+    <para>
+     Sözcük yorumlamasının sonucu bir sözcük dizisidir. <code>wordexp</code> işlevi sonuçlanan her sözcük için bir dizge ve bu dizgelerin göstericilerinden oluşan <type>char **</type> türünde bir dizi ayırır. Gösterici dizisinin son elemanı boş göstericidir. Bu diziye <firstterm>dizge göstericileri dizisi</firstterm> denir.
+    </para>
+    <para>
+     <code>wordexp</code> dizinin adresini ve eleman sayısını (sonlandırıcı boş gösterici hariç) *<parameter>word-vector-ptr</parameter> ile gösterilen yapı içinde döndürür.
+    </para>
+    <para>
+     <code>wordexp</code> başarılı olduğu takdirde <code>0</code> ile aksi takdirde şu hata kodlarından biri ile döner:
+    </para>
+    <csynopsis>
+     <indexterm xml:id="glibc-vr-WRDE_BADCHAR" linkend="glibc-vr"><primary>WRDE_BADCHAR</primary></indexterm>
+     <csproto type="sabit">
+      <csname><function>WRDE_BADCHAR</function></csname>
+     </csproto>
+     <para>
+      <parameter>words</parameter> girdi dizgesi ‘<filename>|</filename>’ benzeri öncelenmemiş geçersiz karakter içeriyor.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm xml:id="glibc-vr-WRDE_BADVAL" linkend="glibc-vr"><primary>WRDE_BADVAL</primary></indexterm>
+     <csproto type="sabit">
+      <csname><function>WRDE_BADVAL</function></csname>
+     </csproto>
+     <para>
+      Girdi dizgesi tanımlanmamış bir kabuk değişkenini ifade ediyor ve bu tür ifadeleri yasaklayan <varname>WRDE_UNDEF</varname> seçeneği belirtilmiş.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm xml:id="glibc-vr-WRDE_CMDSUB" linkend="glibc-vr"><primary>WRDE_CMDSUB</primary></indexterm>
+     <csproto type="sabit">
+      <csname><function>WRDE_CMDSUB</function></csname>
+     </csproto>
+     <para>
+      Girdi dizgesi komut ikamesi içeriyor ve bunların kullanımı  <varname>WRDE_NOCMD</varname> seçeneği kullanılarak yasaklanmış.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm xml:id="glibc-vr-WRDE_NOSPACE" linkend="glibc-vr"><primary>WRDE_NOSPACE</primary></indexterm>
+     <csproto type="sabit">
+      <csname><function>WRDE_NOSPACE</function></csname>
+     </csproto>
+     <para>
+      Sonucu yerleştirmek için bellek tahsis edilemiyor. Bu durumda işlev tahsis edilebilen alana yerleştirebildiği kadar sonuçla döner.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm xml:id="glibc-vr-WRDE_SYNTAX" linkend="glibc-vr"><primary>WRDE_SYNTAX</primary></indexterm>
+     <csproto type="sabit">
+      <csname><function>WRDE_SYNTAX</function></csname>
+     </csproto>
+     <para>
+      Girdi dizgesinde sözdizimi hatası var. Örneğin, tırnak karakterinin eşi yoksa bu bir sözdizimi hatasıdır. Bu hata kodu ayrıca aritmetik genişletmede sıfıra bölme ve taşma sinyalini vermek için de kullanılır.
+     </para>
+    </csynopsis>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-fn" xml:id="glibc-fn-wordfree"><primary>wordfree</primary></indexterm>
+    <csproto type="işlev">
+     <csname><type>void</type><function>wordfree</function></csname>
+     <csparam><ptr>wordexp_t</ptr><parameter>word-vector-ptr</parameter></csparam>
+    </csproto>
+    <header>&wordexp.h;</header>
+    <conceptlist>
+     <concept>&mtsafe;</concept>
+     <concept>&asunsafe; &corrupt; &heap;</concept>
+     <concept>&acunsafe; &corrupt; &mem;</concept>
+    </conceptlist>
+    <para>
+     *<parameter>word-vector-ptr</parameter> yapısında adresi belirtilen gösterici dizisini serbest bırakır. İşlev *<parameter>word-vector-ptr</parameter> yapısını değil yapının gösterdiği veriyi serbest bırakır.
+    </para>
+   </csynopsis>
+  </sect1>
+  <sect1 xml:id="glibc-Flags-for-Wordexp">
+   <title>Sözcük Yorumlama Seçenekleri</title>
+   <titleabbrev><code>wordexp</code> işlevinde belirtilebilecek seçenekler.</titleabbrev>
+   <para>
+    Bu bölümde <function>wordexp</function> işlevinin <parameter>flags</parameter> bağımsız değişkeninde belirtilebilecek seçenekler açıklanacaktır. Seçilen seçenekler bir C işleci olan <code>|</code> ile birleştirerek kullanılabilir.
+   </para>
+   <csynopsis>
+    <indexterm xml:id="glibc-vr-WRDE_APPEND" linkend="glibc-vr"><primary>WRDE_APPEND</primary></indexterm>
+    <csproto type="sabit">
+     <csname><function>WRDE_APPEND</function></csname>
+    </csproto>
+    <para>
+     Önceki bir <function>wordexp</function> çağrısı ile üretilmiş sözcük göstericileri dizisine bu yorumlamadan sözcükler eklenir. Bu yolla bir dizgenin sonuna aralarında boşluk bırakarak sözcük ekler gibi diziye sözcük eklenebilir.
+    </para>
+    <para>
+     Ekleme işlemi sırasında, <function>wordexp</function> çağrıları arasında sözcük göstericileri dizisinde değişiklik yapılmamalıdır. Ayrıca ilk <function>wordexp</function> çağrısında <varname>WRDE_DOOFFS</varname> seçeneği belirtilmişse, ekleme işlemi için yapılan çağrıda da bu seçenek belirtilmelidir.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm xml:id="glibc-vr-WRDE_DOOFFS" linkend="glibc-vr"><primary>WRDE_DOOFFS</primary></indexterm>
+    <csproto type="sabit">
+     <csname><function>WRDE_DOOFFS</function></csname>
+    </csproto>
+    <para>
+     Sözcük gösterici dizisinin başlangıcındaki elemanların boş kalmasını sağlar. Kaç elemanın boş kalacağı <structfield>we_offs</structfield> üyesinde belirtilir. Boş elemanlar boş gösterici içerir.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm xml:id="glibc-vr-WRDE_NOCMD" linkend="glibc-vr"><primary>WRDE_NOCMD</primary></indexterm>
+    <csproto type="sabit">
+     <csname><function>WRDE_NOCMD</function></csname>
+    </csproto>
+    <para>
+     Komut ikamesi yapılmaz; eğer girdi komut ikamesini gerektiriyorsa, bir hata bildirilir.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm xml:id="glibc-vr-WRDE_REUSE" linkend="glibc-vr"><primary>WRDE_REUSE</primary></indexterm>
+    <csproto type="sabit">
+     <csname><function>WRDE_REUSE</function></csname>
+    </csproto>
+    <para>
+     Önceki bir <function>wordexp</function> çağrısı ile üretilmiş sözcük göstericileri dizisini yeniden kullanılabilir yapar. Bu seçeneğin kullanıldığı bir <function>wordexp</function> çağrısında yeni bir gösterici dizisi ayrılmaz, mevcut olan (gerekirse genişletilerek) kullanılır.
+    </para>
+    <para>
+     Bu işlem sırasında dizi başka bir bellek bölgesine taşınabileceğinden eski gösterici saklanıp bu çağrıdan sonra kullanılmamamalıdır. Her çağrıdan sonra  gösterici <structfield>we_pathv</structfield> üyesinden alınabilir.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm xml:id="glibc-vr-WRDE_SHOWERR" linkend="glibc-vr"><primary>WRDE_SHOWERR</primary></indexterm>
+    <csproto type="sabit">
+     <csname><function>WRDE_SHOWERR</function></csname>
+    </csproto>
+    <para>
+     Komut ikamesinde çalıştırılan komutlardan dönen hata iletileri gösterilir. Yani, bu komutların sürecin standart hata akımını kullanması sağlanır. Öntanımlı olarak, <function>wordexp</function> bu komutlara hata iletilerinin gösterilmediği standart hata akımını atar.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm xml:id="glibc-vr-WRDE_UNDEF" linkend="glibc-vr"><primary>WRDE_UNDEF</primary></indexterm>
+    <csproto type="sabit">
+     <csname><function>WRDE_UNDEF</function></csname>
+    </csproto>
+    <para>
+     Eğer girdi tanımsız bir kabuk değişkeni içeriyorsa bir hata bildirilir.
+    </para>
+   </csynopsis>
+  </sect1>
+  <sect1 xml:id="glibc-Wordexp-Example">
+   <title><code>wordexp</code> Örneği</title>
+   <titleabbrev>Sözcük yorumlaması yapılan bir kod örneği.</titleabbrev>
+   <para>
+    Bu örnekte <function>wordexp</function> işlevi muhtelif dizgeleri yorumlayıp sonuçlarını birer kabuk komutu olarak kullanmaktadır. Ayrıca, <varname>WRDE_APPEND</varname> seçeneği ile <function>wordfree</function> işlevinin kullanımı da gösterilmiştir.
+   </para>
+   <example>
+    <screen>int
+expand_and_execute (const char *program, const char **options)
+{
+  wordexp_t sonuc;
+  pid_t pid
+  int status, i;
+
+  /* <replaceable>Çalıştırılacak komut için dizgeyi yorumla.</replaceable>  */
+  switch (wordexp (program, &amp;sonuc, 0))
+    {
+    case 0:			/* <replaceable>Başarılı</replaceable>.  */
+      break;
+    case WRDE_NOSPACE:
+      /* <replaceable>WRDE_NOSPACE hatası varsa, sonuc kısmen de olsa
+         tahsis edilmiştir. Onu serbest bırak.</replaceable>  */
+      wordfree (&amp;sonuc);
+    default:                    /* <replaceable>Başka hatalar.</replaceable>  */
+      return -1;
+    }
+
+  /* <replaceable>Bağımsız değişkenleri elde etmek için dizgeyi yorumla.</replaceable>  */
+  for (i = 0; options[i] != NULL; i++)
+    {
+      if (wordexp (options[i], &amp;sonuc, WRDE_APPEND))
+        {
+          wordfree (&amp;sonuc);
+          return -1;
+        }
+    }
+
+  pid = fork ();
+  if (pid == 0)
+    {
+      /* <replaceable>Burada bir alt süreç oluşturup komutu çalıştır.</replaceable> */
+      execv (sonuc.we_wordv[0], sonuc.we_wordv);
+      exit (EXIT_FAILURE);
+    }
+  else if (pid &lt; 0)
+    /* <replaceable>Çatallama başarısız oldu, durumu raporla.</replaceable>  */
+    status = -1;
+  else
+    /* <replaceable>Bu üst süreç, alt sürecin bitmesini bekleyecek.</replaceable>  */
+    if (waitpid (pid, &amp;status, 0) != pid)
+      status = -1;
+
+  wordfree (&amp;sonuc);
+  return status;
+}
+</screen>
+   </example>
+  </sect1>
+  <sect1 xml:id="glibc-Tilde-Expansion">
+   <title>Yaklaşık (~) Yorumlaması Hakkında</title>
+   <titleabbrev>Yaklaşık yorumlaması ile ilgili ayrıntılar.</titleabbrev>
+   <para>
+    Kendi ev dizininizi belirtmek için bir dosya isminin başında kullandığınız ‘<filename>~</filename>’ imi kabuk sözdiziminin standart parçalarından biridir. Bir <replaceable>kullanıcı</replaceable>'nın ev dizinini belirtmek için ise  <code>~</code><replaceable>kullanıcı</replaceable> yazılabilir.
+   </para>
+   <para>
+    <wordasword>Yaklaşık (~) yorumlaması</wordasword>, ‘<filename>~</filename>’ imini ev dizini ismine dönüştürme işlemidir.
+   </para>
+   <para>
+    Yaklaşık (~) yorumlaması ‘<filename>~</filename>’ imi ile başlayan, ilk boşluk ya da eğik çizgi karakterine kadar tüm karakterlere uygulanır. <command>~</command> imi sadece bir sözcüğün başındaysa anlamlıdır; tek başına olsa bile yorumlama yapılır.
+   </para>
+   <para>
+    Tek başına ‘<filename>~</filename>’ imi için <varname>HOME</varname> ortam değişkeninin değeri kullanılır. ‘<filename>~</filename>’ karakterinden sonra gelen sözcük kullanıcı veritabanında <function>getpwname</function> ile aranır ve veritabanında kayıtlı ev dizini kullanılır. Bu durumda, ‘<filename>~</filename>’ iminden sonra kendi kullanıcı isminizi yazarsanız ve <varname>HOME</varname> ortam değişkenindeki değer, veritabanında kayıtlı değerden farklıysa, tek başına ‘<filename>~</filename>’ kullanarak yapılan yorumlamadan farklı bir sonuç dönebilir.
+   </para>
+  </sect1>
+  <sect1 xml:id="glibc-Variable-Substitution">
+   <title>Değişken İkamesi Hakkında</title>
+   <titleabbrev>Değişken ikamesinin türleri.</titleabbrev>
+   <para>
+    Kabuk sözdiziminin bir parçası da bir kabuk değişkeninin değerini bir komutta kullanırken <code>$</code><replaceable>değişken</replaceable> şeklinde kullanmaktır. Buna <wordasword>değişken ikamesi</wordasword> denir ve yapılan işlem sözcük yorumlamanın bir parçasıdır.
+   </para>
+   <para>
+    Bir ikame yapmak için bir değişken iki yöntemle kullanılabilir:
+   </para>
+   <glosslist>
+    <glossentry>
+     <glossterm>
+      <code>${<replaceable>değişken</replaceable>}</code>
+     </glossterm>
+     <glossdef>
+      <para>
+       Eğer değişken ismi kaşlı ayraçlar içine alınırsa, değişken isminin bittiği yerin belirsizliği tamamen ortadan kalkar. Böylece değişken ismine sözcük eklenebilir. Örneğin, ‘<filename>${foo}</filename>’ değişkeninin değeri ‘<filename>traktör</filename>’ ise ‘<filename>${foo}ler</filename>’ifadesinin sonucu ‘<filename>traktörler</filename>’ olur.
+      </para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <code>$</code><replaceable>değişken</replaceable>
+     </glossterm>
+     <glossdef>
+      <para>
+       Değişken ismi kaşlı ayraçlar içine alınmazsa, değişken ismi <code>$</code> karakteri ile başlar ve abecesayısal karakterler ve alt çizgi karakterinden oluşabilir. İsimden sonra gelen herhangi bir noktalama işareti değişken ismini sonlandırır. Örneğin, ‘<filename>$foo-pulluk</filename>’ ifadesinin sonucu ‘<filename>traktör-pulluk</filename>’ olur.
+      </para>
+     </glossdef>
+    </glossentry>
+   </glosslist>
+   <para>
+    Kaşlı ayraçlar kullanıldığında değeri değiştirmek için çeşitli oluşumları kullanmak ya da bazı sınamalar yapmak mümkün olur.
+   </para>
+   <glosslist>
+    <glossentry>
+     <glossterm>
+      <operator>${</operator><replaceable>değişken</replaceable><operator>:-</operator><replaceable>öntanımlı</replaceable><operator>}</operator>
+     </glossterm>
+     <glossdef>
+      <para>
+       <replaceable>değişken</replaceable>'e değer atanmamışsa ya da tanımsızsa değer olarak <replaceable>öntanımlı</replaceable> kullanılır, aksi takdirde <replaceable>değişken</replaceable>'in değeri kullanılır.
+      </para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <operator>${</operator><replaceable>değişken</replaceable><operator>:=</operator><replaceable>öntanımlı</replaceable><operator>}</operator>
+     </glossterm>
+     <glossdef>
+      <para>
+       <replaceable>değişken</replaceable>'e değer atanmamışsa ya da tanımsızsa değer olarak <replaceable>öntanımlı</replaceable> kullanılır ve <replaceable>değişken</replaceable>'e <replaceable>öntanımlı</replaceable> değeri atanır.
+      </para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <operator>${</operator><replaceable>değişken</replaceable><operator>:?</operator><literal><replaceable>ileti</replaceable></literal><operator>}</operator>
+     </glossterm>
+     <glossdef>
+      <para>
+       <replaceable>değişken</replaceable>'e değer atanmışsa ya da tanımlıysa, değeri kullanılır. Aksi takdirde, sözcük ikamesinin başarısız olduğu kabulüyle standart hata akımına hata <replaceable>ileti</replaceable>si basılır.
+      </para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <operator>${</operator><replaceable>değişken</replaceable><operator>:+</operator><replaceable>sözcük</replaceable><operator>}</operator>
+     </glossterm>
+     <glossdef>
+      <para>
+       Sadece, <replaceable>değişken</replaceable>'e değer atanmışsa ya da tanımlıysa, <replaceable>sözcük</replaceable> kullanılır. Aksi takdirde sonuç hiçbir şey olur.
+      </para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <operator>${#</operator><replaceable>değişken</replaceable><operator>}</operator>
+     </glossterm>
+     <glossdef>
+      <para>
+       Bu ifadenin değeri, <replaceable>değişken</replaceable>in değerindeki karakter sayısıdır. Sonuç onluk tabandadır. Örneğin, <code>${#foo}</code> ifadesinin sonucu 7'dir, çünkü <code>traktör</code> 7 karakter uzunluktadır.
+      </para>
+     </glossdef>
+    </glossentry>
+   </glosslist>
+   <para>
+    Aşağıdaki değişken ikamelerinde, değişkene bir değer ikame etmeden önce değeri kısmen kaldırılır. <replaceable>önek</replaceable> ve <replaceable>sonek</replaceable> basitçe birer dizge olmayabilir; dosya ismi kalıpları kullanılabilir. Ancak bu bağlamda bu kalıplar dosya isimleri ile değil, değişkenin değerinin parçaları ile eşleştirilir.
+   </para>
+   <glosslist>
+    <glossentry>
+     <glossterm>
+      <operator>${</operator><replaceable>değişken</replaceable><operator>%%</operator><replaceable>sonek</replaceable><operator>}</operator>
+     </glossterm>
+     <glossdef>
+      <para>
+       <replaceable>değişken</replaceable>'in değeri, değerin sonunda <replaceable>sonek</replaceable> kalıbı ile eşleşen kısmı iptal edilerek kullanılır.
+      </para>
+      <para>
+       <replaceable>sonek</replaceable> ile eşleşen çok sayıda parça varsa en uzun eşleşme iptal edilir.
+      </para>
+      <para>
+       Örneğin, <code>${foo%%r*}</code> ifadesinin sonucu <code>t</code> olur, çünkü <code>r*</code> kalıbı ile değerin sonunda eşleşen en uzun parça <code>raktör</code>'dür.
+      </para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <operator>${</operator><replaceable>değişken</replaceable><operator>%</operator><replaceable>sonek</replaceable><operator>}</operator>
+     </glossterm>
+     <glossdef>
+      <para>
+       <replaceable>değişken</replaceable>'in değeri, değerin sonunda <replaceable>sonek</replaceable> kalıbı ile eşleşen kısmı iptal edilerek kullanılır.
+      </para>
+      <para>
+       <replaceable>sonek</replaceable> ile eşleşen çok sayıda parça varsa en kısa eşleşme iptal edilir.
+      </para>
+      <para>
+       Örneğin, <code>${foo%r*}</code> ifadesinin sonucu <code>traktö</code> olur, çünkü <code>r*</code> kalıbı ile değerin sonunda eşleşen en kısa parça <code>r</code>'dir.
+      </para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <operator>${</operator><replaceable>değişken</replaceable><operator>##</operator><replaceable>önek</replaceable><operator>}</operator>
+     </glossterm>
+     <glossdef>
+      <para>
+       <replaceable>değişken</replaceable>'in değeri, değerin başlangıcında <replaceable>önek</replaceable> kalıbı ile eşleşen kısmı iptal edilerek kullanılır.
+      </para>
+      <para>
+       <replaceable>önek</replaceable> ile eşleşen çok sayıda parça varsa en uzun eşleşme iptal edilir.
+      </para>
+      <para>
+       Örneğin, <code>${foo##*t}</code> ifadesinin sonucu <code>ör</code> olur, çünkü <code>*t</code> kalıbı ile değerin başlangıcında eşleşen en uzun parça <code>trakt</code>'tır.
+      </para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <operator>${</operator><replaceable>değişken</replaceable><operator>#</operator><replaceable>önek</replaceable><operator>}</operator>
+     </glossterm>
+     <glossdef>
+      <para>
+       <replaceable>değişken</replaceable>'in değeri, değerin başlangıcında <replaceable>önek</replaceable> kalıbı ile eşleşen kısmı iptal edilerek kullanılır.
+      </para>
+      <para>
+       <replaceable>önek</replaceable> ile eşleşen çok sayıda parça varsa en kısa eşleşme iptal edilir.
+      </para>
+      <para>
+       Örneğin, <code>${foo#*t}</code> ifadesinin sonucu <code>raktör</code> olur, çünkü <code>*t</code> kalıbı ile değerin başlangıcında eşleşen en kısa parça <code>t</code>'dir.
+      </para>
+     </glossdef>
+    </glossentry>
+   </glosslist>
+  </sect1>
+ </chapter>
 </part>

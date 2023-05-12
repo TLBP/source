@@ -3,6 +3,671 @@
         glibc/ch38.xml,v2.36, GFDL,LGPL, NBB, 2023
      ******************************************************************** -->
 <part xml:id="glibc-Tunables">
-  <title>Ayarlanabilirler</title>
-  <titleabbrev>libc dahili davranışını değiştirmek için ayarlanabilir özellikler.</titleabbrev>
+ <title>Ayarlanabilirler</title>
+ <titleabbrev>libc dahili davranışını değiştirmek için ayarlanabilir özellikler.</titleabbrev>
+ <partintro>
+  <?dbhtml stop-chunking?>
+  <para>
+   <indexterm linkend="glibc-cp"><primary>ayarlanabilirler</primary></indexterm>
+   <wordasword>Ayarlanabilirler</wordasword> uygulama yazarlarının ve dağıtım sorumlularının çalışma anında kütüphanenin davranışını iş yüküne uyacak şekilde değiştirmelerini sağlayan &glibc;ndeki bir özelliktir. Bunlar, farklı şekillerde değiştirilebilen bir dizi anahtar olarak uygulanır. Bunu yapmak için mevcut yöntem, <varname>GLIBC_TUNABLES</varname> ortam değişkenine iki nokta üst üste ile ayrılmış  <replaceable>ad</replaceable>=<replaceable>değer</replaceable> çiftleri dizgesini atamaktır.
+  </para>
+  <example>
+   <para>
+    Aşağıdaki örnekte <function>malloc</function> denetimi etkinleştirilmekte ve <function>malloc</function> kırpma eşiği 128 bayta ayarlanmaktadır:
+   </para>
+<screen><code>GLIBC_TUNABLE</code>S=glibc.malloc.trim_threshold=128:glibc.malloc.check=3
+export <code>GLIBC_TUNABLE</code>
+</screen>
+  </example>
+  <para>
+   Ayarlanabilirler, &glibc; kararlı arayüzünün parçası değildir ve her biri  sürümler arasında değişikliğe uğrayabilir veya kaldırılabilir. Ek olarak, ayarlanabilirin değerlerini değiştirme yöntemi de sürümler ve dağıtımlar arasında değişebilir. Dağıtımların kurulum sırasında tercih ettikleri yöntemi seçebilmesini sağlayan ayarlanabilirler için birden fazla "ön uç" gerçeklemek mümkündür.
+  </para>
+  <para>
+   Son olarak, ayarlanabilirlerin özelliği gereği, dağıtımlar kendi ad alanları altında kendi ayarlanabilirlerini ekleyebildiğinden, mevcut ayarlanabilirler kümesi dağıtımlar arasında da değişiklik gösterebilir.
+  </para>
+  <example>
+   <para>
+    Tüm ayarlanabilirleri asgari ve azami değerlerle yazdırmak için özdevimli ilintileyici <option>&#45;&#45;list-tunables</option> seçeneği ile kullanılabilir (glibc-2.34 ve üstü):
+   </para>
+   <screen>$ <code>/lib64/ld-linux-x86-64.so.2 &#45;&#45;list-tunables</code>
+glibc.rtld.nns: 0x4 (min: 0x1, max: 0x10)
+glibc.elision.skip_lock_after_retries: 3 (min: -2147483648, max: 2147483647)
+glibc.malloc.trim_threshold: 0x0 (min: 0x0, max: 0xffffffffffffffff)
+glibc.malloc.perturb: 0 (min: 0, max: 255)
+glibc.cpu.x86_shared_cache_size: 0x100000 (min: 0x0, max: 0xffffffffffffffff)
+glibc.mem.tagging: 0 (min: 0, max: 255)
+glibc.elision.tries: 3 (min: -2147483648, max: 2147483647)
+glibc.elision.enable: 0 (min: 0, max: 1)
+glibc.cpu.x86_rep_movsb_threshold: 0x1000 (min: 0x100, max: 0xffffffffffffffff)
+glibc.malloc.mxfast: 0x0 (min: 0x0, max: 0xffffffffffffffff)
+glibc.elision.skip_lock_busy: 3 (min: -2147483648, max: 2147483647)
+glibc.malloc.top_pad: 0x0 (min: 0x0, max: 0xffffffffffffffff)
+glibc.cpu.x86_rep_stosb_threshold: 0x800 (min: 0x1, max: 0xffffffffffffffff)
+glibc.cpu.x86_non_temporal_threshold: 0xc0000 (min: 0x4040, max: 0x0fffffffffffffff)
+glibc.cpu.x86_shstk:
+glibc.cpu.hwcap_mask: 0x6 (min: 0x0, max: 0xffffffffffffffff)
+glibc.malloc.mmap_max: 0 (min: -2147483648, max: 2147483647)
+glibc.elision.skip_trylock_internal_abort: 3 (min: -2147483648, max: 2147483647)
+glibc.malloc.tcache_unsorted_limit: 0x0 (min: 0x0, max: 0xffffffffffffffff)
+glibc.cpu.x86_ibt:
+glibc.cpu.hwcaps:
+glibc.elision.skip_lock_internal_abort: 3 (min: -2147483648, max: 2147483647)
+glibc.malloc.arena_max: 0x0 (min: 0x1, max: 0xffffffffffffffff)
+glibc.malloc.mmap_threshold: 0x0 (min: 0x0, max: 0xffffffffffffffff)
+glibc.cpu.x86_data_cache_size: 0x8000 (min: 0x0, max: 0xffffffffffffffff)
+glibc.malloc.tcache_count: 0x0 (min: 0x0, max: 0xffffffffffffffff)
+glibc.malloc.arena_test: 0x0 (min: 0x1, max: 0xffffffffffffffff)
+glibc.pthread.mutex_spin_count: 100 (min: 0, max: 32767)
+glibc.rtld.optional_static_tls: 0x200 (min: 0x0, max: 0xffffffffffffffff)
+glibc.malloc.tcache_max: 0x0 (min: 0x0, max: 0xffffffffffffffff)
+glibc.malloc.check: 0 (min: 0, max: 3)
+</screen>
+  </example>
+  <sect1 xml:id="glibc-Tunable-names">
+   <title>Ayarlanabilir İsimleri</title>
+   <titleabbrev>Ayarlanabilir isimlerinin yapısı.</titleabbrev>
+   <para>
+    <indexterm linkend="glibc-cp"><primary>ayarlanabilirler</primary><secondary>isimleri</secondary></indexterm>
+    <indexterm linkend="glibc-cp"><primary>ayarlanabilirler</primary><secondary>isim alanları</secondary></indexterm>
+    Ayarlanabilir adı, üç bileşene ayrılır; üst ad alanı, ayarlanabilirin ad alanı ve ayarlanabilirin adı. &glibc;nde gerçeklenen ayarlanabilirler için üst ad alanı <code>glibc</code>'dir. &glibc;nin kendi dağıtımlarındaki sürümlerine özel ayarlanabilirler eklemek isteyen dağıtımlar, bunu kendi üst ad alanları altında yapmayı seçebilir.
+   </para>
+   <para>
+    Ayarlanabilirin ad alanı, ayarlanabilirlerin tek bir modülde mantıksal  gruplanmasıdır. Bu, gelecekte değişebilecek olsa da şu anda özel bir öneme sahip değildir.
+   </para>
+   <para>
+    Ayarlanabilirin adı, ayarlanabilirin gerçek adıdır. Farklı ayarlanabilir ad alanlarının tıpkı üst ad alanlarındaki gibi, aynı ada sahip ayarlanabilirlere sahip olması mümkündür. Bu nedenle, ayarlanabilirlerin yalnızca tam adlarıyla, yani noktalarla ayrılmış olarak üst ad alanı, ayarlanabilirin ad alanı ve ayarlanabilirin adıyla bir bütün olarak tanımlanmasını destekliyoruz.
+   </para>
+  </sect1>
+  <sect1 xml:id="glibc-Memory-Allocation-Tunables">
+   <title>Bellek Tahsis Ayarlanabilirleri</title>
+   <titleabbrev>Bellek tahsis alt sistemindeki ayarlar.</titleabbrev>
+   <formalpara><title>Ayarlanabilir ad alanı: <code>glibc.malloc</code></title>
+    <para>
+     <indexterm linkend="glibc-cp"><primary>ayarlanabilirler</primary><secondary>bellek tahsisinde</secondary></indexterm>
+     <indexterm linkend="glibc-cp"><primary>ayarlanabilir ad alanı</primary><secondary>malloc</secondary></indexterm>
+     <indexterm linkend="glibc-cp"><primary>bellek tahsis ayarları</primary></indexterm>
+     Bellek tahsis etme davranışı, <code>malloc</code> ad alanında aşağıdaki ayarlanabilirler atanarak değiştirilebilir:
+    </para>
+   </formalpara>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-glibc.malloc.check"><primary>ayarlanabilirler</primary><secondary>glibc.malloc.check</secondary></indexterm>
+    <indexterm xml:id="glibc-vr-glibc.malloc.check" linkend="glibc-vr"><primary>glibc.malloc.check</primary></indexterm>
+    <csproto type="ayar">
+     <csname><function>glibc.malloc.check</function></csname>
+    </csproto>
+    <para>
+     Bu ayarlanabilir, <varname>MALLOC_CHECK_</varname> ortam değişkeninin yerini alır ve özellikleri aynıdır. Bu ayarlanabilirin öntanımlı olarak herhangi bir etkisi yoktur ve <filename>libc_malloc_debug</filename> hata ayıklama kütüphanesinin <varname>LD_PRELOAD</varname> ortam değişkeni kullanılarak önceden yüklenmesini gerektirir.
+    </para>
+    <para>
+     Bu ayarlanabilire değeri 4'ten küçük sıfır olmayan bir değer atamak, aynı bağımsız değişkenle çift <function>free</function> çağrısı veya tek baytlık taşmalar gibi basit hataları görmezden gelecek şekilde tasarlanmış <function>malloc</function> işlev ailesi için özel (daha az verimli) bir bellek tahsisçisi sağlar. Bununla birlikte, bu tür hataların tümüne karşı korunulamaz ve bellek sızıntıları  olabilir. Tespit edilen herhangi bir yığın bozulması, sürecin derhal sonlandırılmasına neden olur.
+    </para>
+    <para>
+     <code>MALLOC_CHECK_</code> gibi, <code>glibc.malloc.check</code> ayarlanabilirinin de SUID ve SGID'li ikil dosyaların istismarı nedeniyle standart hataya yazarak normal davranıştan sapma sorunu vardır. Bu nedenle <code>glibc.malloc.check</code>, SUID ve SGID ikil dosyaları için öntanımlı olarak devre dışı olup sistem yöneticisi tarafından <filename>/etc/suid-debug</filename> dosyası eklenerek tekrar etkinleştirilebilir; dosyanın içeriğinin önemi yoktur, herhangi bir şey veya hatta boş olabilir.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-glibc.malloc.top_pad"><primary>ayarlanabilirler</primary><secondary>glibc.malloc.top_pad</secondary></indexterm>
+    <indexterm xml:id="glibc-vr-glibc.malloc.top_pad" linkend="glibc-vr"><primary>glibc.malloc.top_pad</primary></indexterm>
+    <csproto type="ayar">
+     <csname><function>glibc.malloc.top_pad</function></csname>
+    </csproto>
+    <para>
+     Bu ayarlanabilir, <varname>MALLOC_TOP_PAD_</varname> ortam değişkeninin yerini alır ve özellikleri aynıdır.
+    </para>
+    <para>
+     Bu ayarlanabilir, arenalardan herhangi birinin genişletilmesi gerektiğinde sistemden alınacak ek bellek miktarını bayt cinsinden belirler. Ayrıca arenalardan herhangi biri küçültülürken saklanacak bayt sayısını da belirtir. Bu, yığın boyutunda gerekli gecikmeyi de sağlar, böylece aşırı miktarda sistem çağrısı önlenebilir.
+    </para>
+    <para>
+     Öntanımlı değer: ‘<code>131072</code>’ (128 KB).
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-glibc.malloc.perturb"><primary>ayarlanabilirler</primary><secondary>glibc.malloc.perturb</secondary></indexterm>
+    <indexterm xml:id="glibc-vr-glibc.malloc.perturb" linkend="glibc-vr"><primary>glibc.malloc.perturb</primary></indexterm>
+    <csproto type="ayar">
+     <csname><function>glibc.malloc.perturb</function></csname>
+    </csproto>
+    <para>
+     Bu ayarlanabilir, <varname>MALLOC_PERTURB_</varname> ortam değişkeninin yerini alır ve özellikleri aynıdır.
+    </para>
+    <para>
+     Sıfırdan farklı bir değere ayarlanırsa, bellek dilimleri, tahsis edildikleri (<function>calloc</function> ile tahsis durumu  dışında) ve serbest bırakıldıklarında, bu ayarlanabilirin bazı düşük sıralı bitlerine bağlı  değerlerle ilklendirilir. Bu, ilklendirilmemiş veya serbest bırakılmış yığın belleğin kullanımında hata ayıklamak için kullanılabilir. Bu seçeneğin, serbest bırakılan dilimin belirli değerlerde olacağını garanti etmediği unutulmamalıdır. Yalnızca dilimin serbest bırakılmadan önceki içeriğinin üzerine yazılacağını garanti eder.
+    </para>
+    <para>
+     Öntanımlı değer: ‘<code>0</code>’.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-glibc.malloc.mmap_threshold"><primary>ayarlanabilirler</primary><secondary>glibc.malloc.mmap_threshold</secondary></indexterm>
+    <indexterm xml:id="glibc-vr-glibc.malloc.mmap_threshold" linkend="glibc-vr"><primary>glibc.malloc.mmap_threshold</primary></indexterm>
+    <csproto type="ayar">
+     <csname><function>glibc.malloc.mmap_threshold</function></csname>
+    </csproto>
+    <para>
+     Bu ayarlanabilir, <varname>MALLOC_MMAP_THRESHOLD_</varname> ortam değişkeninin yerini alır ve özellikleri aynıdır.
+    </para>
+    <para>
+     Bu ayarlanabilire atama yapıldığında, bayt cinsinden değeri bu eşik değerden büyük olan tüm öbekler, <function>mmap</function> sistem çağrısı kullanılarak normal yığının dışında tahsis edilir. Bu yolla, bu öbeklerdeki belleğin <function>free</function> ile sisteme iade edilebileceği garanti edilir. Bu eşikten daha küçük isteklerin yine de <function>mmap</function> aracılığıyla tahsis edilebileceği unutulmamalıdır.
+    </para>
+    <para>
+     Bu ayarlanabilire atama yapılmazsa, ‘<filename>131072</filename>’ baytlık öntanımlı değer kullanılır ve eşik, özdevimli olarak yazılımın tahsis kalıplarına uyacak şekilde ayarlanır. Ayarlanabilire atama yapılırsa, özdevimli ayarlama devre dışı bırakılır ve değer duruk olarak atanır.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-glibc.malloc.trim_threshold"><primary>ayarlanabilirler</primary><secondary>glibc.malloc.trim_threshold</secondary></indexterm>
+    <indexterm xml:id="glibc-vr-glibc.malloc.trim_threshold" linkend="glibc-vr"><primary>glibc.malloc.trim_threshold</primary></indexterm>
+    <csproto type="ayar">
+     <csname><function>glibc.malloc.trim_threshold</function></csname>
+    </csproto>
+    <para>
+     Bu ayarlanabilir, <varname>MALLOC_TRIM_THRESHOLD_</varname> ortam değişkeninin yerini alır ve özellikleri aynıdır.
+    </para>
+    <para>
+     Bu ayarlanabilirin değeri, bir arenada o arenadan sisteme bellek döndürülmesi sırasında bir sistem çağrısını tetikleyecek en üstteki serbest bırakılabilir öbeğin en küçük boyutudur (bayt cinsinden).
+    </para>
+    <para>
+     Bu ayarlanabilire atama yapılmazsa, ‘<filename>128</filename>’ kilobaytlık öntanımlı değer kullanılır ve eşik, özdevimli olarak yazılımın tahsis kalıplarına uyacak şekilde ayarlanır. Ayarlanabilire atama yapılırsa, özdevimli ayarlama devre dışı bırakılır ve değer duruk olarak atanır.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-glibc.malloc.mmap_max"><primary>ayarlanabilirler</primary><secondary>glibc.malloc.mmap_max</secondary></indexterm>
+    <indexterm xml:id="glibc-vr-glibc.malloc.mmap_max" linkend="glibc-vr"><primary>glibc.malloc.mmap_max</primary></indexterm>
+    <csproto type="ayar">
+     <csname><function>glibc.malloc.mmap_max</function></csname>
+    </csproto>
+    <para>
+     Bu ayarlanabilir, <varname>MALLOC_MMAP_MAX_</varname> ortam değişkeninin yerini alır ve özellikleri aynıdır.
+    </para>
+    <para>
+     Bu ayarlanabilirin değeri, <function>mmap</function> ile tahsis edilecek azami parça sayısıdır. Sıfır atanırsa, tüm <function>mmap</function> kullanımı devre dışı bırakılır.
+    </para>
+    <para>
+     Öntanımlı değer: ‘<code>65536</code>’.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-glibc.malloc.arena_test"><primary>ayarlanabilirler</primary><secondary>glibc.malloc.arena_test</secondary></indexterm>
+    <indexterm xml:id="glibc-vr-glibc.malloc.arena_test" linkend="glibc-vr"><primary>glibc.malloc.arena_test</primary></indexterm>
+    <csproto type="ayar">
+     <csname><function>glibc.malloc.arena_test</function></csname>
+    </csproto>
+    <para>
+     Bu ayarlanabilir, <varname>MALLOC_ARENA_TEST</varname> ortam değişkeninin yerini alır ve özellikleri aynıdır.
+    </para>
+    <para>
+     <code>glibc.malloc.arena_test</code> ayarlanabiliri arena sayısı sınırı sınanmadan oluşturulabilecek arena sayısını belirtir. <varname>glibc.malloc.arena_max</varname> ayarlanabilirine değer atanmışsa bu ayarlanabilir yok sayılır.
+    </para>
+    <para>
+     Öntanımlı değer: 32 bitlik sistemlerde ‘<code>2</code>’, 64 bitlik sistemlerde ‘<code>8</code>’.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-glibc.malloc.arena_max"><primary>ayarlanabilirler</primary><secondary>glibc.malloc.arena_max</secondary></indexterm>
+    <indexterm xml:id="glibc-vr-glibc.malloc.arena_max" linkend="glibc-vr"><primary>glibc.malloc.arena_max</primary></indexterm>
+    <csproto type="ayar">
+     <csname><function>glibc.malloc.arena_max</function></csname>
+    </csproto>
+    <para>
+     Bu ayarlanabilir, <varname>MALLOC_ARENA_MAX</varname> ortam değişkeninin yerini alır ve özellikleri aynıdır.
+    </para>
+    <para>
+     Bu ayarlanabilir sistemdeki çekirdek sayısından bağımsız olarak bir süreçte kullanılacak arena sayısını tanımlar.
+    </para>
+    <para>
+     Öntanımlı değer <code>0</code>'dır, yani arena sayısındaki sınır çevrim içi işlemci çekirdeği sayısına göre belirlenir. 32 bitlik sistemlerde sınır, çevrim içi çekirdek sayısının iki katı, 64 bitlik sistemlerde ise çevrim içi çekirdek sayısının 8 katıdır.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-glibc.malloc.tcache_max"><primary>ayarlanabilirler</primary><secondary>glibc.malloc.tcache_max</secondary></indexterm>
+    <indexterm xml:id="glibc-vr-glibc.malloc.tcache_max" linkend="glibc-vr"><primary>glibc.malloc.tcache_max</primary></indexterm>
+    <csproto type="ayar">
+     <csname><function>glibc.malloc.tcache_max</function></csname>
+    </csproto>
+    <para>
+     Evre başına önbellek üzerinden karşılanabilecek bayt cinsinden azami istek boyutu. Öntanımlı (ve azami) değer, 64 bitlik sistemlerde 1032 bayt, 32 bitlik sistemlerde 516 bayttır.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-glibc.malloc.tcache_count"><primary>ayarlanabilirler</primary><secondary>glibc.malloc.tcache_count</secondary></indexterm>
+    <indexterm xml:id="glibc-vr-glibc.malloc.tcache_count" linkend="glibc-vr"><primary>glibc.malloc.tcache_count</primary></indexterm>
+    <csproto type="ayar">
+     <csname><function>glibc.malloc.tcache_count</function></csname>
+    </csproto>
+    <para>
+     Önbelleğe alınacak her boyuttan azami parça sayısı. Öntanımlı değer 7'dir. Üst sınır 65535'tir. Sıfır atanırsa, evre başına önbellek devre dışı bırakılır.
+    </para>
+    <para>
+     Bu nedenle, evre başına önbelleğin yaklaşık azami ek yükü, bölme sayısı ile bölme başına öbek sayısı çarpımının öbek boyutu ile çarpımına eşittir. Ayarlanabilire atama yapılmazsa, evre başına önbelleğin yaklaşık azami ek yükü, 64 bitlik sistemlerde 236 KB ve 32 bitlik sistemlerde 118 KB'tır.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-glibc.malloc.tcache_unsorted_limit"><primary>ayarlanabilirler</primary><secondary>glibc.malloc.tcache_unsorted_limit</secondary></indexterm>
+    <indexterm xml:id="glibc-vr-glibc.malloc.tcache_unsorted_limit" linkend="glibc-vr"><primary>glibc.malloc.tcache_unsorted_limit</primary></indexterm>
+    <csproto type="ayar">
+     <csname><function>glibc.malloc.tcache_unsorted_limit</function></csname>
+    </csproto>
+    <para>
+     Kullanıcı bellek istediğinde ve istek evre başına önbellek üzerinden karşılanamadığında, isteği karşılamak için arenalar kullanılır. Şu anda, ilgili önbelleği önceden doldurmak için mevcut arena listelerinden ek parçalar taşınmaktadır. Hızlı, küçük ve normal bölmelerden alınan kopyalar bölme boyutları nedeniyle sınırlı ve öngörülebilir olacağından sıralanmamış bölmeden gelen kopyalar sınırlanmaz ve tarandıkça sıralanmaları gerektiğinden, bu ek zaman cezalarına neden olur. Sıralanmamış listenin taranmasını daha öngörülebilir ve sınırlı hale getirmek için, kullanıcı, evre başına önbelleği önceden doldurmak için öbekler ararken, sıralanmamış listeden taranan parçaların sayısını sınırlamak için bu ayarlanabilire atama yapabilir. Öntanımlı olarak veya sıfır atandığında herhangi bir üst sınır yoktur.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-glibc.malloc.mxfast"><primary>ayarlanabilirler</primary><secondary>glibc.malloc.mxfast</secondary></indexterm>
+    <indexterm xml:id="glibc-vr-glibc.malloc.mxfast" linkend="glibc-vr"><primary>glibc.malloc.mxfast</primary></indexterm>
+    <csproto type="ayar">
+     <csname><function>glibc.malloc.mxfast</function></csname>
+    </csproto>
+    <para>
+     <function>malloc</function>'un kullandığı en iyilemelerden biri, öbekleri belirli bir boyuta kadar tutan bir dizi "hızlı bölme" bulundurmaktır. Bu şekilde tutulabilecek öntanımlı ve azami boyut, 32 bitlik sistemlerde 80 bayt, 64 bitlik sistemlerde 160 bayttır. Boyuta hızdan çok değer veren uygulamalar, bu ayar ile hızlı bölmelerden sunulan isteklerin boyutunu azaltmayı seçebilir. Belirtilen değerin, normalde bir gösterici boyutu olan  <function>malloc</function>'un dahili ek yükünü de içerdiği unutulmamalıdır; bu nedenle, etkinleştirilecek en büyük bölme boyutu için <function>malloc</function>'a aktarılan boyuta 32 bitlik sistemlerde 4, 64 bitlik sistemlerde 8 eklenmelidir.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-glibc.malloc.hugetlb"><primary>ayarlanabilirler</primary><secondary>glibc.malloc.hugetlb</secondary></indexterm>
+    <indexterm xml:id="glibc-vr-glibc.malloc.hugetlb" linkend="glibc-vr"><primary>glibc.malloc.hugetlb</primary></indexterm>
+    <csproto type="ayar">
+     <csname><function>glibc.malloc.hugetlb</function></csname>
+    </csproto>
+    <para>
+     Bu ayarlanabilir, <function>malloc</function> çağrılarında Büyük Sayfaların kullanımını denetler. Öntanımlı değer, <function>malloc</function> üzerindeki herhangi bir ek desteği devre dışı bırakan <code>0</code>'dır.
+    </para>
+    <para>
+     Değer olarak <code>1</code> atanırsa, <function>mmap</function> ile bellek tahsisinden sonra <function>madvise</function> işlevinde <varname>MADV_HUGEPAGE</varname> kullanımını etkinleştirir. Yalnızca sistem Şeffaf Büyük Sayfayı destekliyorsa etkinleştirilir (şu anda yalnızca Linux'ta).
+    </para>
+    <para>
+     Değer olarak <code>1</code> atanırsa, Büyük Sayfanın doğrudan <function>mmap</function> ile kullanımı için <varname>MAP_HUGETLB</varname> kullanımını etkinleştirir. Kullanılacak büyük sayfa boyutu, sistem tarafından sağlanan öntanımlı boyut olacaktır. 2'den büyük bir değer, sistem tarafından desteklenenlerle eşleştirilecek olan büyük sayfa boyutunu belirtir. Sağlanan değer geçersizse, <varname>MAP_HUGETLB</varname> kullanılmayacaktır.
+    </para>
+   </csynopsis>
+  </sect1>
+  <sect1 xml:id="glibc-Dynamic-Linking-Tunables">
+   <title>Özdevimli İlintileme Ayarlanabilirleri</title>
+   <titleabbrev>Özdevimli ilintileme alt sistemindeki ayarlar.</titleabbrev>
+   <formalpara><title>Ayarlanabilir ad alanı: <code>glibc.rtld</code></title>
+    <para>
+     <indexterm linkend="glibc-cp"><primary>ayarlanabilirler</primary><secondary>özdevimli ilintileme (rtld)</secondary></indexterm>
+     <indexterm linkend="glibc-cp"><primary>ayarlanabilir ad alanı</primary><secondary>rtld</secondary></indexterm>
+     <indexterm linkend="glibc-cp"><primary>özdevimli ilintileme (rtld) ayarları</primary></indexterm>
+     Özdevimli ilintileme davranışı, <code>rtld</code> ad alanında aşağıdaki ayarlanabilirler atanarak değiştirilebilir:
+    </para>
+   </formalpara>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-glibc.rtld.nns"><primary>ayarlanabilirler</primary><secondary>glibc.rtld.nns</secondary></indexterm>
+    <indexterm xml:id="glibc-vr-glibc.rtld.nns" linkend="glibc-vr"><primary>glibc.rtld.nns</primary></indexterm>
+    <csproto type="ayar">
+     <csname><function>glibc.rtld.nns</function></csname>
+    </csproto>
+    <para>
+     Desteklenen özdevimli ilintileme ad alanlarının sayısı. (bkz. <uri xl:href="man3-dlmopen"/><footnote><para>Ç.N.: <uri xl:href="man3-dlmopen"/> işlevi bu kılavuzda henüz belgelendirilmediğinden kılavuz sayfasına bağ verilmiştir.</para></footnote>). Şu anda bu sınır 1 ile 16 (dahil) arasında olabilir, <code>4</code> öntanımlı değerdir. Her ad alanı, tüm evrelerde bir miktar bellek tüketir ve bu nedenle sınırı yükseltmek, her evrenin kullandığı bellek miktarını artırır. Yazılımın <uri xl:href="man3-dlmopen"/> tarafından <varname>LM_ID_NEWLM</varname> değerli <parameter>lmid</parameter> bağımsız değişkeni ile oluşturulan <code>4</code>'ten fazla özdevimli ilintileme ad alanı kullanması durumunda bu sınırın yükseltilmesi yararlıdır. Özdevimli ilintileyici denetim modülleri, kendi özdevimli ilintileme ad alanlarına yüklenir, ancak <code>glibc.rtld.nns</code> için bu dikkate alınmaz. Gerektiğinde evre başına bellek kullanımı örtük olarak artırılır, bu nedenle bu ayarlanabilirin birçok denetim modülüne izin verecek şekilde (örn, <varname>LD_AUDIT</varname> aracılığıyla) değiştirilmesi gerekmez.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-glibc.rtld.optional_static_tls"><primary>ayarlanabilirler</primary><secondary>glibc.rtld.optional_static_tls</secondary></indexterm>
+    <indexterm xml:id="glibc-vr-glibc.rtld.optional_static_tls" linkend="glibc-vr"><primary>glibc.rtld.optional_static_tls</primary></indexterm>
+    <csproto type="ayar">
+     <csname><function>glibc.rtld.optional_static_tls</function></csname>
+    </csproto>
+    <para>
+     Yazılım başlatılırken tahsis edilecek bayt cinsinden fazladan duruk TLS miktarı. Oluşturulan her evre, belirtilen miktarda fazladan duruk TLS tahsis eder. Bu asgari değer olup hizalama da dahil olmak üzere dahili amaçlar için daha fazla alan tahsis edilebilir. İsteğe bağlı duruk TLS, bu tür en iyilemeleri destekleyen sistemler için özdevimli TLS erişimini en iyilemek için kullanılır; örneğin, IBM POWER için TLS tanıtıcıları veya en iyilenmiş TLS erişimi (<varname>DT_PPC64_OPT</varname> ve <varname>DT_PPC_OPT</varname>). Bu tür iyilemelerden en iyi şekilde yararlanmak için, atanacak değer, tüm özdevimli yüklenen paylaşımlı kütüphanelerde tüm TLS değişkenlerini tutmak için gereken bayt miktarı olmalıdır. Yüklenecek paylaşımlı kütüphaneler bilinemediğinden, değer özdevimli yükleyici tarafından bilinemez. Mevcut duruk TLS alanı, işlem başlangıcında tahsis edildikten sonra değiştirilemez. İsteğe bağlı duruk TLS'nin öntanımlı tahsis boyutu 512 bayttır ve her evreye tahsis edilir.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-glibc.rtld.dynamic_sort"><primary>ayarlanabilirler</primary><secondary>glibc.rtld.dynamic_sort</secondary></indexterm>
+    <indexterm xml:id="glibc-vr-glibc.rtld.dynamic_sort" linkend="glibc-vr"><primary>glibc.rtld.dynamic_sort</primary></indexterm>
+    <csproto type="ayar">
+     <csname><function>glibc.rtld.dynamic_sort</function></csname>
+    </csproto>
+    <para>
+     DSO sıralaması için kullanılacak algoritmayı belirler. Geçerli değerler ‘<code>1</code>’ ve ‘<code>2</code>’dir. ‘<code>1</code>’ değeri için, uzun süredir sınanan ancak döngüsel bağımlılıklar nedeniyle döngüler içeren paylaşımlı kütüphaneler arasında bağımlılıklar olduğunda başarım sorunları olabilen daha eski bir O(n^3) algoritması kullanılır. ‘<code>2</code>’ değeri için ise, derinlik öncelikli arama yoluyla topolojik bir sıralama gerçekleyen ve ‘<code>1</code>’in başarım sorunlarını sergilemeyen farklı bir algoritma kullanılır.
+    </para>
+    <para>
+     Öntanımlı değer: ‘<code>2</code>’.
+    </para>
+   </csynopsis>
+  </sect1>
+  <sect1 xml:id="glibc-Elision-Tunables">
+   <title>Kaynaşma Ayarlanabilirleri</title>
+   <titleabbrev>Kaynaşma alt sistemindeki ayarlar.</titleabbrev>
+   <formalpara><title>Ayarlanabilir ad alanı: <code>glibc.elision</code></title>
+    <para>
+     <indexterm linkend="glibc-cp"><primary>ayarlanabilirler</primary><secondary>Kaynaşma (elision)</secondary></indexterm>
+     <indexterm linkend="glibc-cp"><primary>ayarlanabilir ad alanı</primary><secondary>elision</secondary></indexterm>
+     <indexterm linkend="glibc-cp"><primary>Kaynaşma (elision) ayarları</primary></indexterm>
+     <dicterm><english>elision</english><turkish>kaynaşma</turkish></dicterm>
+     Çekişen kilitler genellikle yavaştır ve çok evreli kodda başarım ve ölçeklenebilirlik sorunlarına yol açabilir. Kilit kaynaşması, belirli koşullar altında kilitleri devre dışı bırakmak ve başarımı artırmak için bellek işlemlerini kullanır. Kaynaşma <footnote><para>Ç.N.: Kaynaşma terimi "elision" karşılığı olarak kullanılmıştır ve "cuma ertesi -> cumartesi" örneğindekine benzer bir ses olayını tanımlar.</para></footnote>) davranışı, <code>elision</code> ad alanında aşağıdaki ayarlanabilirler atanarak değiştirilebilir:
+    </para>
+   </formalpara>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-glibc.elision.enable"><primary>ayarlanabilirler</primary><secondary>glibc.elision.enable</secondary></indexterm>
+    <indexterm xml:id="glibc-vr-glibc.elision.enable" linkend="glibc-vr"><primary>glibc.elision.enable</primary></indexterm>
+    <csproto type="ayar">
+     <csname><function>glibc.elision.enable</function></csname>
+    </csproto>
+    <para>
+     Özellik donanım tarafından destekleniyorsa kilit kaynaşmasını etkinleştirir. Kaynaşma donanım tarafından desteklenmiyorsa, bu ayarlanabilirin bir etkisi olmaz.
+    </para>
+    <para>
+     Kaynaşma ayarlanabilirleri 64 bitlik Intel, IBM POWER ve z System mimarilerinde desteklenmektedir.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-glibc.elision.skip_lock_busy"><primary>ayarlanabilirler</primary><secondary>glibc.elision.skip_lock_busy</secondary></indexterm>
+    <indexterm xml:id="glibc-vr-glibc.elision.skip_lock_busy" linkend="glibc-vr"><primary>glibc.elision.skip_lock_busy</primary></indexterm>
+    <csproto type="ayar">
+     <csname><function>glibc.elision.skip_lock_busy</function></csname>
+    </csproto>
+    <para>
+     Kilidin zaten alınmış olduğu durumda bir işlem hatası oluştuktan sonra işlemsel olmayan bir kilidin kaç kez kullanılacağını belirler. Kilit edinme girişimlerinin sayısı olarak da ifade edilir.
+    </para>
+    <para>
+     Öntanımlı değer: ‘<code>3</code>’.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-glibc.elision.skip_lock_internal_abort"><primary>ayarlanabilirler</primary><secondary>glibc.elision.skip_lock_internal_abort</secondary></indexterm>
+    <indexterm xml:id="glibc-vr-glibc.elision.skip_lock_internal_abort" linkend="glibc-vr"><primary>glibc.elision.skip_lock_internal_abort</primary></indexterm>
+    <csproto type="ayar">
+     <csname><function>glibc.elision.skip_lock_internal_abort</function></csname>
+    </csproto>
+    <para>
+     Farklı evrelerin bellek erişimleri dışında herhangi bir nedenle iptal edilen bir işlem olursa, evrenin kaç kez kaynaşma kullanmaktan kaçınması gerektiğini belirler. Kilit edinme girişimlerinin sayısı olarak da ifade edilir.
+    </para>
+    <para>
+     Öntanımlı değer: ‘<code>3</code>’.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-glibc.elision.skip_lock_after_retries"><primary>ayarlanabilirler</primary><secondary>glibc.elision.skip_lock_after_retries</secondary></indexterm>
+    <indexterm xml:id="glibc-vr-glibc.elision.skip_lock_after_retries" linkend="glibc-vr"><primary>gglibc.elision.skip_lock_after_retries</primary></indexterm>
+    <csproto type="ayar">
+     <csname><function>glibc.elision.skip_lock_after_retries</function></csname>
+    </csproto>
+    <para>
+     Normal kilide geri dönmeden önce, yalnızca farklı verlerin bellek erişimleri nedeniyle başarısız olan işlemlerle bir kilidin kaç kez atlanmaya çalışılacağını ayarlar. Kilit kaynaştırma girişimi sayısı olarak da ifade edilir.
+    </para>
+    <para>
+     Bu ayarlanabilir yalnızca IBM POWER ve z System mimarilerinde desteklenmektedir.
+    </para>
+    <para>
+     Öntanımlı değer: ‘<code>3</code>’.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-glibc.elision.tries"><primary>ayarlanabilirler</primary><secondary>glibc.elision.tries</secondary></indexterm>
+    <indexterm xml:id="glibc-vr-glibc.elision.tries" linkend="glibc-vr"><primary>glibc.elision.tries</primary></indexterm>
+    <csproto type="ayar">
+     <csname><function>glibc.elision.tries</function></csname>
+    </csproto>
+    <para>
+     İşlemin yürütmeyi bitirme şansı varsa (örneğin, zaten alınmış olan kilit nedeniyle yürütmeden çıkılmamışsa), kaynaşmanın kaç kez yeniden deneneceğini belirler. Kaynaşma, donanım tarafından desteklenmiyorsa, yeniden denemelerden kaçınmak için bu ayarlanabilire ‘<filename>0</filename>’ atanır.
+    </para>
+    <para>
+     Öntanımlı değer: ‘<code>3</code>’.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-glibc.elision.skip_trylock_internal_abort"><primary>ayarlanabilirler</primary><secondary>glibc.elision.skip_trylock_internal_abort</secondary></indexterm>
+    <indexterm xml:id="glibc-vr-glibc.elision.skip_trylock_internal_abort" linkend="glibc-vr"><primary>glibc.elision.skip_trylock_internal_abort</primary></indexterm>
+    <csproto type="ayar">
+     <csname><function>glibc.elision.skip_trylock_internal_abort</function></csname>
+    </csproto>
+    <para>
+     Farklı evrelerin bellek erişimi dışındaki nedenlerle bir işlem iptal edilirse, evrenin kilidi denemekten kaç kez kaçınması gerektiğini belirler. Kilit deneme girişimlerinin sayısı olarak da ifade edilir.
+    </para>
+    <para>
+     Öntanımlı değer: ‘<code>3</code>’.
+    </para>
+   </csynopsis>
+  </sect1>
+  <sect1 xml:id="glibc-POSIX-Thread-Tunables">
+   <title>POSIX Evre Ayarlanabilirleri</title>
+   <titleabbrev>POSIX evreleri alt sistemindeki ayarlar.</titleabbrev>
+   <formalpara><title>Ayarlanabilir ad alanı: <code>glibc.pthread</code></title>
+    <para>
+     <indexterm linkend="glibc-cp"><primary>ayarlanabilirler</primary><secondary>POSIX evreleri</secondary></indexterm>
+     <indexterm linkend="glibc-cp"><primary>ayarlanabilirler</primary><secondary>POSIX dışlayıcıları</secondary></indexterm>
+     <indexterm linkend="glibc-cp"><primary>ayarlanabilirler</primary><secondary>evre dışlayıcıları</secondary></indexterm>
+     <indexterm linkend="glibc-cp"><primary>ayarlanabilir ad alanı</primary><secondary>pthread</secondary></indexterm>
+     <indexterm linkend="glibc-cp"><primary>evre dışlayıcı ayarları</primary></indexterm>
+     POSIX evrelerinin davranışı, <code>pthread</code> ad alanında aşağıdaki ayarlanabilirlerle belirli donanım yeteneklerine ve iş yükü özelliklerine göre başarım iyileştirmeleri elde etmek için ayarlanabilir:
+    </para>
+   </formalpara>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-glibc.pthread.mutex_spin_count"><primary>ayarlanabilirler</primary><secondary>glibc.pthread.mutex_spin_count</secondary></indexterm>
+    <indexterm xml:id="glibc-vr-glibc.pthread.mutex_spin_count" linkend="glibc-vr"><primary>glibc.pthread.mutex_spin_count</primary></indexterm>
+    <csproto type="ayar">
+     <csname><function>glibc.pthread.mutex_spin_count</function></csname>
+    </csproto>
+    <para>
+     Çekirdeğe engellenmesi için çağrılmadan önce bir evrenin kilit üzerindeki gerekli azami dönüş sayısını belirler. Uyarlanabilir dönüş, <varname>PTHREAD_MUTEX_ADAPTIVE_NP</varname> GNU genişletmesi ile başlatılan karşılıklı dışlayıcılar için kullanılır. Hem <function>pthread_mutex_lock</function> hem de <function>pthread_mutex_timedlock</function>'u etkiler.
+    </para>
+    <para>
+     Evre, azami dönüş sayısına ulaşılana veya kilit elde edilene kadar döner.
+    </para>
+    <para>
+     Öntanımlı değer: ‘<code>100</code>’.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-glibc.pthread.stack_cache_size"><primary>ayarlanabilirler</primary><secondary>glibc.pthread.stack_cache_size</secondary></indexterm>
+    <indexterm xml:id="glibc-vr-glibc.pthread.stack_cache_size" linkend="glibc-vr"><primary>glibc.pthread.stack_cache_size</primary></indexterm>
+    <csproto type="ayar">
+     <csname><function>glibc.pthread.stack_cache_size</function></csname>
+    </csproto>
+    <para>
+     Yığıt önbelleğinin azami boyutunu belirler. Yığıt önbelleği bu boyutu aştığında, önbellek boyutunu bu sınırın altına getirmek için kullanılmayan evre yığıtları çekirdeğe geri döndürülür.
+    </para>
+    <para>
+     Değer bayt cinsindendir.  ‘<code>41943040</code>’ (kırk megabibayt) öntanımlı değerdir.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-glibc.pthread.rseq"><primary>ayarlanabilirler</primary><secondary>glibc.pthread.rseq</secondary></indexterm>
+    <indexterm xml:id="glibc-vr-glibc.pthread.rseq" linkend="glibc-vr"><primary>glibc.pthread.rseq</primary></indexterm>
+    <csproto type="ayar">
+     <csname><function>glibc.pthread.rseq</function></csname>
+    </csproto>
+    <para>
+     &glibc;ndeki yeniden başlatılabilir yordam desteğini devre dışı bırakmak için ‘<code>0</code>’ olarak ayarlanabilir. Uygulamaların çekirdekle doğrudan yeniden başlatılabilir yordam kaydı yapabilmesini sağlar. ‘<code>1</code>’ öntanımlı değerdir. &glibc;nin uygulama adına kayıt yaptırdığı anlamına gelir.
+    </para>
+    <para>
+     Yeniden başlatılabilir yordam desteği, Linux'a özgüdür.
+    </para>
+   </csynopsis>
+  </sect1>
+  <sect1 xml:id="glibc-Hardware-Capability-Tunables">
+   <title>Donanım Yetenekleri Ayarlanabilirleri</title>
+   <titleabbrev>Glibc tarafından görülen donanım yeteneklerini değiştiren ayarlar.</titleabbrev>
+   <formalpara><title>Ayarlanabilir ad alanı: <code>glibc.cpu</code></title>
+    <para>
+     <indexterm linkend="glibc-cp"><primary>ayarlanabilirler</primary><secondary>donanım yetenekleri</secondary></indexterm>
+     <indexterm linkend="glibc-cp"><primary>ayarlanabilirler</primary><secondary>POSIX dışlayıcıları</secondary></indexterm>
+     <indexterm linkend="glibc-cp"><primary>ayarlanabilirler</primary><secondary>evre dışlayıcıları</secondary></indexterm>
+     <indexterm linkend="glibc-cp"><primary>ayarlanabilir ad alanı</primary><secondary>pthread</secondary></indexterm>
+     <indexterm linkend="glibc-cp"><primary>evre dışlayıcı ayarları</primary></indexterm>
+     &glibc;nin davranışı, belirli donanım yeteneklerini üstlenecek şekilde <code>cpu</code> ad alanında aşağıdaki ayarlanabilirlerle belirlenebilir:
+    </para>
+   </formalpara>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-glibc.cpu.hwcap_mask"><primary>ayarlanabilirler</primary><secondary>glibc.cpu.hwcap_mask</secondary></indexterm>
+    <indexterm xml:id="glibc-vr-glibc.cpu.hwcap_mask" linkend="glibc-vr"><primary>glibc.cpu.hwcap_mask</primary></indexterm>
+    <csproto type="ayar">
+     <csname><function>glibc.cpu.hwcap_mask</function></csname>
+    </csproto>
+    <para>
+      Bu ayarlanabilir, <varname>LD_HWCAP_MASK</varname> ortam değişkeninin yerini alır ve özellikleri aynıdır.
+     </para>
+     <para>
+      Yardımcı gösterici dizisindeki <varname>AT_HWCAP</varname> anahtarı, bazı mimariler için çalışma anında işlemcide bulunan komut kümesi genişletmelerini belirler. <code>glibc.cpu.hwcap_mask</code> ayarlanabiliri, kullanıcının çalışma anında bu yetenekleri maskelemesine ve böylece bu genişletmelerin kullanımının devre dışı bırakılabilmesini sağlar.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-glibc.cpu.hwcaps"><primary>ayarlanabilirler</primary><secondary>glibc.cpu.hwcaps</secondary></indexterm>
+    <indexterm xml:id="glibc-vr-glibc.cpu.hwcaps" linkend="glibc-vr"><primary>glibc.cpu.hwcaps</primary></indexterm>
+    <csproto type="ayar">
+     <csname><function>glibc.cpu.hwcaps</function></csname>
+    </csproto>
+    <para>
+     <code>glibc.cpu.hwcaps=-xxx,yyy,-zzz...</code> ayarlanabiliri <code>yyy</code> CPU/ARCH özelliğini etkinleştirmesini ve özellik adının harf büyüklüğüne duyarlılığını etkileyen ve <code>sysdeps/x86/include/cpu-features.h</code> başlık dosyasındakilerle eşleşmeyi sağlayan  <code>xxx</code> ve <code>zzz</code> CPU/ARCH özelliklerini devre dışı bırakmasını sağlar.
+     </para>
+     <para>
+      Bu ayarlanabilir, i386 ve x86-64'e özgüdür.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-glibc.cpu.cached_memopt"><primary>ayarlanabilirler</primary><secondary>glibc.cpu.cached_memopt</secondary></indexterm>
+    <indexterm xml:id="glibc-vr-glibc.cpu.cached_memopt" linkend="glibc-vr"><primary>glibc.cpu.cached_memopt</primary></indexterm>
+    <csproto type="ayar">
+     <csname><function>glibc.cpu.cached_memopt</function></csname>
+    </csproto>
+    <para>
+     <code>glibc.cpu.cached_memopt=[0|1]</code> ayarlanabiliri kullanıcının önbelleğe alınabilir bellek için önerilen en iyilemeleri etkinleştirebilmesini sağlar. <code>1</code> değeri için, &glibc; süreç belleği imgesinin yalnızca önbelleğe alınabilir (aygıt dışı) bellekten oluştuğu varsayılır. Öntanımlı değer olan <code>0</code>, sürecin aygıt belleğini kullanabileceğini belirtir.
+     </para>
+     <para>
+      Bu ayarlanabilir, powerpc, powerpc64 ve powerpc64le'ye özgüdür.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-glibc.cpu.name"><primary>ayarlanabilirler</primary><secondary>glibc.cpu.name</secondary></indexterm>
+    <indexterm xml:id="glibc-vr-glibc.cpu.name" linkend="glibc-vr"><primary>glibc.cpu.name</primary></indexterm>
+    <csproto type="ayar">
+     <csname><function>glibc.cpu.name</function></csname>
+    </csproto>
+    <para>
+     <code>glibc.cpu.name=xxx</code> ayarlanabiliri kullanıcının &glibc;ne işlemcinin <code>xxx</code> olduğunu varsaymasını belirtmesini sağlar, burada <code>xxx</code> şu değerlerden biri olabilir: <code>generic</code>, <code>falkor</code>, <code>thunderxt88</code>, <code>thunderx2t99</code>, <code>thunderx2t99p1</code>, <code>ares</code>, <code>emag</code>, <code>kunpeng</code>, <code>a64fx</code>.
+    </para>
+    <para>
+     Bu ayarlanabilir, aarch64'e özgüdür.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-glibc.cpu.x86_data_cache_size"><primary>ayarlanabilirler</primary><secondary>glibc.cpu.x86_data_cache_size</secondary></indexterm>
+    <indexterm xml:id="glibc-vr-glibc.cpu.x86_data_cache_size" linkend="glibc-vr"><primary>glibc.cpu.x86_data_cache_size</primary></indexterm>
+    <csproto type="ayar">
+     <csname><function>glibc.cpu.x86_data_cache_size</function></csname>
+    </csproto>
+    <para>
+     <code>glibc.cpu.x86_data_cache_size</code> ayarlanabiliri kullanıcının bellek ve dizge yordamlarında kullanım için veri önbellek boyutunun bayt cinsinden belirlenmesine olanak tanır.
+    </para>
+    <para>
+     Bu ayarlanabilir, 386 ve x86-64'e özgüdür.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-glibc.cpu.x86_shared_cache_size"><primary>ayarlanabilirler</primary><secondary>glibc.cpu.x86_shared_cache_size</secondary></indexterm>
+    <indexterm xml:id="glibc-vr-glibc.cpu.x86_shared_cache_size" linkend="glibc-vr"><primary>glibc.cpu.x86_shared_cache_size</primary></indexterm>
+    <csproto type="ayar">
+     <csname><function>glibc.cpu.x86_shared_cache_size</function></csname>
+    </csproto>
+    <para>
+     <code>glibc.cpu.x86_shared_cache_size</code> ayarlanabiliri kullanıcının bellek ve dizge yordamlarında kullanım için paylaşımlı önbellek boyutunu bayt cinsinden belirtmesine olanak sağlar.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-glibc.cpu.x86_non_temporal_threshold"><primary>ayarlanabilirler</primary><secondary>glibc.cpu.x86_non_temporal_threshold</secondary></indexterm>
+    <indexterm xml:id="glibc-vr-glibc.cpu.x86_non_temporal_threshold" linkend="glibc-vr"><primary>glibc.cpu.x86_non_temporal_threshold</primary></indexterm>
+    <csproto type="ayar">
+     <csname><function>glibc.cpu.x86_non_temporal_threshold</function></csname>
+    </csproto>
+    <para>
+     <code>glibc.cpu.x86_non_temporal_threshold</code> ayarlanabiliri kullanıcının geçici olmayan depolama eşiğini bayt cinsinden belirtmesine olanak sağlar. Geçici olmayan depolar, diğer verileri önbellekten çıkarmadan verileri doğrudan belleğe taşımak için donanıma bir ipucu verir. Bu ayar, bazı donanımlar tarafından <function>memmove</function> ve <function>memcpy</function> gibi işlevlerde geçici olmayan depoların ne zaman kullanılacağını belirlemek için kullanılır.
+    </para>
+    <para>
+     Bu ayarlanabilir, i386 ve x86-64'e özgüdür.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-glibc.cpu.x86_rep_movsb_threshold"><primary>ayarlanabilirler</primary><secondary>glibc.cpu.x86_rep_movsb_threshold</secondary></indexterm>
+    <indexterm xml:id="glibc-vr-glibc.cpu.x86_rep_movsb_threshold" linkend="glibc-vr"><primary>glibc.cpu.x86_rep_movsb_threshold</primary></indexterm>
+    <csproto type="ayar">
+     <csname><function>glibc.cpu.x86_rep_movsb_threshold</function></csname>
+    </csproto>
+    <para>
+     <code>glibc.cpu.x86_rep_movsb_threshold</code> ayarlanabiliri kullanıcıya "rep movsb" kullanarak başlatma eşiğini bayt cinsinden belirtmesine olanak sağlar. Değer sıfırdan büyük olmalıdır, şimdilik 2048 bayt öntanımlı değerdir.
+    </para>
+    <para>
+     Bu ayarlanabilir, i386 ve x86-64'e özgüdür.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-glibc.cpu.x86_rep_stosb_threshold"><primary>ayarlanabilirler</primary><secondary>glibc.cpu.x86_rep_stosb_threshold</secondary></indexterm>
+    <indexterm xml:id="glibc-vr-glibc.cpu.x86_rep_stosb_threshold" linkend="glibc-vr"><primary>glibc.cpu.x86_rep_stosb_threshold</primary></indexterm>
+    <csproto type="ayar">
+     <csname><function>glibc.cpu.x86_rep_stosb_threshold</function></csname>
+    </csproto>
+    <para>
+     <code>glibc.cpu.x86_rep_stosb_threshold</code> ayarlanabiliri kullanıcıya "rep stosb" kullanarak başlatma eşiğini bayt cinsinden belirtmesine olanak sağlar. Değer sıfırdan büyük olmalıdır, şimdilik 2048 bayt öntanımlı değerdir.
+    </para>
+    <para>
+     Bu ayarlanabilir, i386 ve x86-64'e özgüdür.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-glibc.cpu.x86_ibt"><primary>ayarlanabilirler</primary><secondary>glibc.cpu.x86_ibt</secondary></indexterm>
+    <indexterm xml:id="glibc-vr-glibc.cpu.x86_ibt" linkend="glibc-vr"><primary>glibc.cpu.x86_ibt</primary></indexterm>
+    <csproto type="ayar">
+     <csname><function>glibc.cpu.x86_ibt</function></csname>
+    </csproto>
+    <para>
+     <code>glibc.cpu.x86_ibt</code> ayarlanabiliri kullanıcıya dolaylı dal izlemesinin (IBT) nasıl etkinleştirileceğini belirtebilme olanağı sağlar. Kabul edilen değerler: <code>on</code>, <code>off</code> ve <code>permissive</code> (ılımlı).  <code>on</code> değeri, çalıştırılabilirde IBT'nin etkin olup olmamasına aldırmaksızın IBT'yi açar. <code>off</code> değeri, çalıştırılabilirin kendinde ve bağımlı olduğu paylaşımlı kütüphanelerde IBT'nin etkin olup olmamasına aldırmaksızın IBT'yi kapatır. <code>permissive</code> değeri, CET olmayan çalıştırılabilirlerde ve paylaşımlı kütüphanelerde IBT'yi devre dıışı bırakan öntanmlıyla aynıdır.
+     </para>
+    <para>
+     Bu ayarlanabilir, i386 ve x86-64'e özgüdür.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-glibc.cpu.x86_shstk"><primary>ayarlanabilirler</primary><secondary>glibc.cpu.x86_shstk</secondary></indexterm>
+    <indexterm xml:id="glibc-vr-glibc.cpu.x86_shstk" linkend="glibc-vr"><primary>glibc.cpu.x86_shstk</primary></indexterm>
+    <csproto type="ayar">
+     <csname><function>glibc.cpu.x86_shstk</function></csname>
+    </csproto>
+    <para>
+     <code>glibc.cpu.x86_shstk</code> ayarlanabiliri kullanıcıya gölge yığıtın (SHSTK) nasıl etkinkeştirileceğini belirtebilme olanağı sağlar. Kabul edilen değerler: <code>on</code>, <code>off</code> ve <code>permissive</code> (ılımlı). <code>on</code> değeri, çalıştırılabilirde SHSTK'nın etkin olup olmamasına aldırmaksızın SHSTK'yı açar. <code>off</code> değeri, çalıştırılabilirin kendinde ve bağımlı olduğu paylaşımlı kütüphanelerde SHSTK'nın etkin olup olmamasına aldırmaksızın SHSTK'yı kapatır. Öntanımlı olarak, SHSTK etkinleştirildiğinde, CET olmayan bir paylaşımlı kütüphanenin kaldırılması hataya yol açar. <code>permissive</code> değeri ile bunun yerine SHSTK kapatılır.
+    </para>
+    <para>
+     Bu ayarlanabilir, i386 ve x86-64'e özgüdür.
+    </para>
+   </csynopsis>
+  </sect1>
+  <sect1 xml:id="glibc-Memory-Related-Tunables">
+   <title>Bellek Kullanım Ayarlanabilirleri</title>
+   <titleabbrev>Glibc bellek kullanımını denetleyen ayarlar.</titleabbrev>
+   <formalpara><title>Ayarlanabilir ad alanı: <code>glibc.mem</code></title>
+    <para>
+     <indexterm linkend="glibc-cp"><primary>ayarlanabilirler</primary><secondary>bellek kullanımı</secondary></indexterm>
+     <indexterm linkend="glibc-cp"><primary>ayarlanabilir ad alanı</primary><secondary>mem</secondary></indexterm>
+     <indexterm linkend="glibc-cp"><primary>bellek kullanım ayarları</primary></indexterm>
+     Bu ayarlanabilir ad alanı, &glibc;nin ve sürecin belleği yönetme yöntemini etkileyen işlemleri destekler.
+    </para>
+   </formalpara>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-glibc.mem.tagging"><primary>ayarlanabilirler</primary><secondary>glibc.mem.tagging</secondary></indexterm>
+    <indexterm xml:id="glibc-vr-glibc.mem.tagging" linkend="glibc-vr"><primary>glibc.mem.tagging</primary></indexterm>
+    <csproto type="ayar">
+     <csname><function>glibc.mem.tagging</function></csname>
+    </csproto>
+    <para>
+     Donanım bellek etiketlemeyi destekliyorsa, bu ayarlanabilir &glibc;nin bu özelliği kullanma yöntemini belirlemek için kullanılabilir. Şu anda bu yalnızca MTE oluşumuna sahip AArch64 sistemlerinde desteklenmektedir; diğer tüm sistemlerde yoksayılır.
+    </para>
+    <para>
+     Bu ayarlanabilir, 0 ile 255 arasında bir değer alır ve çeşitli yetenekler sağlayan bir bit maskesi olarak davranır.
+    </para>
+    <para>
+     Bit 0 (en önemsiz bit), <code>malloc</code> alt sisteminin, her tahsise rastgele bir etiket atanarak, etiketli bellek tahsis etmesine neden olur.
+    </para>
+    <para>
+     Bit 1, ertelenmiş etiket ihlali bildirimini destekleyen sistemlerde etiket ihlalleri için kesin arıza kipini etkinleştirir. Bu, uygulamaların daha yavaş çalışmasına neden olabilir.
+    </para>
+    <para>
+     Bit 2, sistem tarafından hangisi tercih edilirse edilsin, etiket ihlalleri için kesin veya ertelenmiş arıza kipini etkinleştirir.
+    </para>
+    <para>
+     Diğer bitler ileride kullanım için ayrılmıştır.
+    </para>
+    <para>
+     &glibc; başlatma kodu, bu ayarlanabilir değeri sıfırdan farklıysa, çekirdekte bellek etiketleme desteğini özdevinimli olarak etkinleştirecektir.
+    </para>
+    <para>
+     Bellek etiketlemeyi tamamen devre dışı bırakan '<code>0</code>' öntanımlı değerdir.
+    </para>
+   </csynopsis>
+  </sect1>
+ </partintro>
 </part>

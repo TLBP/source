@@ -3,6 +3,841 @@
         glibc/ch09.xml,v2.36, GFDL,LGPL, NBB, 2023
      ******************************************************************** -->
 <part xml:id="glibc-Searching-and-Sorting">
-  <title>Arama ve Sıralama</title>
-  <titleabbrev>Genel arama ve sıralama işlevleri.</titleabbrev>
+ <title>Arama ve Sıralama</title>
+ <titleabbrev>Genel arama ve sıralama işlevleri.</titleabbrev>
+ <preliminary>
+  <para>
+   Bu kısımda keyfi nesne dizilerinde arama ve sıralama için kullanılan işlevlere yer verilmiştir. Bu işlevlere dizi üyelerinin sayısı ve dizideki nesnelerin boyutları ile birlikte uygun bir karşılaştırma işlevi bağımsız değişken olarak verilir.
+  </para>
+ </preliminary>
+ <chapter xml:id="glibc-Comparison-Functions">
+  <title>Karşılaştırma İşlevinin Tanımlanması</title>
+  <titleabbrev>Arama ve sıralama oluşumları genel amaçlı olduğundan sıralamanın nasıl olacağı belirtilmelidir.</titleabbrev>
+  <para>
+   <indexterm linkend="glibc-cp"><primary>karşılaştırma işlevleri</primary></indexterm>
+   Sıralı dizi kütüphanesi işlevlerinin kullanılması sırasında dizi elemanlarının nasıl karşılaştırılacağının belirtilmesi gerekir.
+  </para>
+  <para>
+   Bunu yapmak için, dizideki iki elemanı karşılaştıracak bir karşılaştırma işlevi yazılımcı tarafından sağlanmalıdır. Kütüphane bu işlevi çağırırken karşılaştırılacak dizi elemanlarını işleve bağımsız değişken olarak belirtecektir. Bu karşılaştıma işlevi <function>strcmp</function> (<xref linkend="glibc-String-Array-Comparison"/>) işlevinin yaptığı gibi bir değer döndürmelidir: İlk bağımsız değişken ikincisinden küçükse negatif, büyükse pozitif değer döner.
+  </para>
+  <para>
+   Aşağıdaki örnekte, <type>double</type> türünden sayılardan oluşan bir dizi ile çalışan bir karşılaştırma işlevi vardır:
+  </para>
+  <example>
+   <screen>int
+compare_doubles (const void *a, const void *b)
+{
+  const double *da = (const double *) a;
+  const double *db = (const double *) b;
+
+  return (*da &gt; *db) - (*da &lt; *db);
+}
+</screen>
+  </example>
+  <csynopsis>
+   <indexterm linkend="glibc-pg"><primary>stdlib.h</primary></indexterm>
+   <indexterm linkend="glibc-tp" xml:id="glibc-tp-comparison_fn_t"><primary>comparison_fn_t</primary></indexterm>
+   <indexterm linkend="glibc-cp"><primary>karşılaştırma işlevleri</primary><secondary>veri türü</secondary></indexterm>
+   <csproto type="veri türü">
+    <csname><type>int</type><function>comparison_fn_t</function></csname>
+    <csparam><ptr>const&#160;void</ptr><parameter/></csparam>
+     <csparam><ptr>const&#160;void</ptr><parameter/></csparam>
+   </csproto>
+   <header>&stddef.h;</header>
+   <para>
+    Karşılaştırma işlevlerinin veri türü olup bir GNU oluşumudur.
+   </para>
+  </csynopsis>
+ </chapter>
+
+ <chapter xml:id="glibc-Array-Search-Function">
+  <title>Dizi Arama İşlevleri</title>
+  <titleabbrev><command>bsearch</command> işlevi.</titleabbrev>
+  <para>
+   <indexterm linkend="glibc-cp"><primary>diziler</primary><secondary>arama işlevleri</secondary></indexterm>
+   <indexterm linkend="glibc-cp"><primary>diziler</primary><secondary>ikil arama işlevleri</secondary></indexterm>
+   <indexterm linkend="glibc-cp"><primary>arama işlevleri</primary><secondary>diziler</secondary></indexterm>
+   Genel olarak bir dizi içindeki belli bir elemanın aranması, hemen hemen tüm elemenlara bakılmasını gerektirir. &glibc; düzgün doğrusal arama yapan işlevler içerir. Aşağıdaki iki işlev &search.h; başlık dosyasında bildirilmiştir.
+  </para>
+  <csynopsis>
+   <indexterm linkend="glibc-fn" xml:id="glibc-fn-lfind"><primary>lfind</primary></indexterm>
+   <csproto type="işlev">
+    <csname><ptr>void</ptr><function>lfind</function></csname>
+    <csparam><ptr>const&#160;void</ptr><parameter>key</parameter></csparam>
+    <csparam><ptr>const&#160;void</ptr><parameter>base</parameter></csparam>
+    <csparam><ptr>size_t</ptr><parameter>nmemb</parameter></csparam>
+    <csparam><type>size_t</type><parameter>size</parameter></csparam>
+    <csparam><type>comparison_fn_t</type><parameter>compar</parameter></csparam>
+   </csproto>
+   <header>&search.h;</header>
+   <conceptlist>
+    <concept>&mtsafe;</concept>
+    <concept>&assafe;</concept>
+    <concept>&acsafe;</concept>
+   </conceptlist>
+   <para>
+    <code>lfind</code> işlevi, <parameter>size</parameter> baytlık <parameter>nmemb</parameter> elemanlı dizide <parameter>key</parameter> ile gösterilen elemanla eşleşen elemanı <parameter>base</parameter> ile gösterilen elemandan başlayarak arar. <parameter>compar</parameter> ile gösterilen işlev iki elemanın karşılaştırılması için kullanılır.
+   </para>
+   <para>
+    İşlev, dizide <parameter>base</parameter> ile gösterilen elemandan başlayan aramada eşleşen elemana gösterici ile döner, eşleşen eleman yoksa <varname>NULL</varname> döner.
+   </para>
+   <para>
+    İşlevin ortalama çalışma süresi <code>*<replaceable>nmemb</replaceable>/2</code> dir. İşlev, arama başlamadan önce sıkça eleman eklenmesi veya silinmesi gibi işlemlerin dizinin sıralanması açısından pek kullanışlı olmayabileceği durumda kullanılmalıdır.
+   </para>
+  </csynopsis>
+  <csynopsis>
+   <indexterm linkend="glibc-fn" xml:id="glibc-fn-lsearch"><primary>lsearch</primary></indexterm>
+   <csproto type="işlev">
+    <csname><ptr>void</ptr><function>lsearch</function></csname>
+    <csparam><ptr>const&#160;void</ptr><parameter>key</parameter></csparam>
+    <csparam><ptr>void</ptr><parameter>base</parameter></csparam>
+    <csparam><ptr>size_t</ptr><parameter>nmemb</parameter></csparam>
+    <csparam><type>size_t</type><parameter>size</parameter></csparam>
+    <csparam><type>comparison_fn_t</type><parameter>compar</parameter></csparam>
+   </csproto>
+   <header>&search.h;</header>
+   <conceptlist>
+    <concept>&mtsafe;</concept>
+    <concept>&assafe;</concept>
+    <concept>&acsafe;</concept>
+   </conceptlist>
+   <para>
+    <code>lsearch</code> işlevi <function>lfind</function> işlevine benzer. Verilen dizide bir elemanı arar ve bulduğunda bu elemanla döner. Farklı olarak, bir eşleşme bulunamazsa, <parameter>key</parameter> ile gösterilen <parameter>size</parameter> baytlık elemanı dizinin sonuna ekler ve bu eklemeyi belirtmek için <code>*</code><parameter>nmemb</parameter> değerini bir arttırır.
+   </para>
+   <para>
+    Bunun işlevi çağıran açısından anlamı, dizinin elemanı içerdiğinden emin olunamadığı durumda, <parameter>base</parameter> göstericisinde başlayan dizi için ayrılan bellekte kullanılmamış en azından <parameter>size</parameter> baytlık bir alanın daha bulunmasının gerekliliğidir. <code>lsearch</code> işlevi çağrılırken daima bellekte yeterli yerin bulunması gerektiğinden, dizinin  aranan elemanı içerdiğinden emin olunduğu durumlarda <function>lfind</function> işlevini kullanmak daha iyidir.
+   </para>
+  </csynopsis>
+  <para>
+   Anahtarla eşleşen bir elemanı "sıralanmış" bir dizide aramak için <function>bsearch</function> işlevi kullanılmalıdır.
+  </para>
+  <csynopsis>
+   <indexterm linkend="glibc-fn" xml:id="glibc-fn-bsearch"><primary>bsearch</primary></indexterm>
+   <csproto type="işlev">
+    <csname><ptr>void</ptr><function>bsearch</function></csname>
+    <csparam><ptr>const&#160;void</ptr><parameter>key</parameter></csparam>
+    <csparam><ptr>const&#160;void</ptr><parameter>array</parameter></csparam>
+    <csparam><type>size_t</type><parameter>count</parameter></csparam>
+    <csparam><type>size_t</type><parameter>size</parameter></csparam>
+    <csparam><type>comparison_fn_t</type><parameter>compare</parameter></csparam>
+   </csproto>
+   <header>&search.h;</header>
+   <conceptlist>
+    <concept>&mtsafe;</concept>
+    <concept>&assafe;</concept>
+    <concept>&acsafe;</concept>
+   </conceptlist>
+   <para>
+    <code>bsearch</code> işlevi, <parameter>size</parameter> baytlık <parameter>count</parameter> eleman içeren önceden sıralanmış <parameter>array</parameter> dizisinde <parameter>key</parameter> ile eşleşen elemanı arar.
+   </para>
+   <para>
+    <parameter>compare</parameter> işlevi, karşılaştırma yapmak için kullanılır. Bu işlev iki bağımsız değişken ile çağrılabilmeli ve birinci bağımsız değişkenin ikinci bağımsız değişkenden küçük, büyük ya da ona eşit olması durumlarına bağlı olarak sırasıyla sıfırdan küçük, büyük bir değerle ya da sıfır ile dönmelidir. <varname>array</varname> dizisinin elamanları bu karşılaştırma işlevine uygun olarak artan sırada sıralanmış olmalıdır.
+   </para>
+   <para>
+    Eşleşme bulunursa dönen değer eşleşen dizi elemanına bir göstericidir, aksi takdirde boş gösterici döner. Dizi birden fazla eşleşme içeriyorsa, dönen elemanın hangisi olacağı belirlenmemiştir.
+   </para>
+   <para>
+    İşlev ikil arama (binary search) algoritması kullanılarak gerçeklendiğinden işlevin ismi bu algortimanın isminden türetilmiştir.
+   </para>
+  </csynopsis>
+ </chapter>
+
+ <chapter xml:id="glibc-Array-Sort-Function">
+  <title>Dizi Sıralama İşlevi</title>
+  <titleabbrev><code>qsort</code> işlevi.</titleabbrev>
+  <para>
+   <indexterm linkend="glibc-cp"><primary>diziler</primary><secondary>sıralama işlevi</secondary></indexterm>
+   <indexterm linkend="glibc-cp"><primary>hızlı sıralama işlevleri</primary><secondary>diziler</secondary></indexterm>
+   <indexterm linkend="glibc-cp"><primary>sıralama işlevleri</primary><secondary>diziler</secondary></indexterm>
+   <indexterm linkend="glibc-pg"><primary>stdlib.h</primary></indexterm>
+   Bir dizinin belli bir karşılaştırma işlevi kullanılarak sıralanmak istenmesi durumunda, <function>qsort</function> işlevi kullanılmalıdır.
+  </para>
+  <csynopsis>
+   <indexterm linkend="glibc-fn" xml:id="glibc-fn-qsort"><primary>qsort</primary></indexterm>
+   <indexterm linkend="glibc-cp" xml:id="glibc-cp-qsort"><primary>kararlı sıralama</primary></indexterm>
+   <csproto type="işlev">
+    <csname><type>void</type><function>qsort</function></csname>
+    <csparam><ptr>void</ptr><parameter>array</parameter></csparam>
+    <csparam><type>size_t</type><parameter>count</parameter></csparam>
+    <csparam><type>size_t</type><parameter>size</parameter></csparam>
+    <csparam><type>comparison_fn_t</type><parameter>compare</parameter></csparam>
+   </csproto>
+   <header>&stdlib.h;</header>
+   <conceptlist>
+    <concept>&mtsafe;</concept>
+    <concept>&assafe;</concept>
+    <concept>&acunsafe; &corrupt;</concept>
+   </conceptlist>
+   <para>
+    <code>qsort</code> işlevi, <parameter>size</parameter> baytlık <parameter>count</parameter> eleman içeren <parameter>array</parameter> dizisini sıralar.
+   </para>
+   <para>
+    <parameter>compare</parameter> işlevi, karşılaştırma yapmak için kullanılır. Bu işlev iki bağımsız değişken ile çağrılabilmeli ve birinci bağımsız değişkenin ikinci bağımsız değişkenden küçük, büyük ya da ona eşit olması durumlarına bağlı olarak sırasıyla sıfırdan küçük, büyük bir değerle ya da sıfır ile dönmelidir.
+   </para>
+   <warning>
+    <para>
+     İki nesnenin karşılaştırması eşitlikle sonuçlanıyorsa, sıralama sonrası hangisinin önce olacağı kestirilemez. Bu durumda sıralamanın kararsız olduğundan söz edilebilir. Bu sadece karşılaştırma elemanların belli bir bölümünde yapıldığında bir fark oluşturur. İki elemanın sıralama anahtarlarının aynı olması başka bakımlardan bir fark oluşturabilir.
+    </para>
+   </warning>
+   <para>
+    Karşılaştırma işlevine aktarılan nesne adresleri dizinin içinde yer alsa da, sıralama algoritması bazı karşılaştırmalar yapmadan önce dizideki nesneler arasında yer değiştirme yapabileceğinden, bu nesnelerin özgün konumlarına karşılık gelmeleri gerekmez. <code>qsort</code> ile kararlı bir sıralama gerçekleştirmenin tek yolu, önce nesneleri bir tür tekdüze sayıcı ile çoğaltmaktır.
+   </para>
+   <example>
+    <para>
+     Burada <type>double</type> türünden sayılardan oluşan bir dizi ile çalışan bir sıralama örneği vardır. Kullanılan karşılaştırma işlevi <xref linkend="glibc-Comparison-Functions"/> bölümündeki örnekte tanımlanmıştı:
+    </para>
+    <screen>{
+  double *array;
+  int size;
+  …
+  qsort (array, size, sizeof (double), compare_doubles);
+}
+</screen>
+   </example>
+   <para>
+    <code>qsort</code> işlevi çabuk sıralama (quick sort) algoritması kullanarak gerçeklendiğinden işlevin ismi bu algortimanın isminden türetilmiştir.
+   </para>
+   <para>
+    Bu kütüphanedeki <code>qsort</code> gerçeklemesi sadece dizinin kapladığı bellek bölgesi ile sınırlı kalmayabilir ve diziyi saklamak için fazladan bellek kullanabilir.
+   </para>
+  </csynopsis>
+ </chapter>
+
+ <chapter xml:id="glibc-Search-Sort-Example">
+  <title>Arama ve Sıralama Örneği</title>
+  <titleabbrev>Örnek yazılım.</titleabbrev>
+  <para>
+   Bu örnekte, bir veri yapısı dizisi ile <function>qsort</function> ve <function>bsearch</function> işlevlerinin kullanımı gösterilmiştir. Dizideki nesneler <parameter>name</parameter> alanlarına göre  <function>strcmp</function> işlevi kullanılarak sıralanmakta ve nesnelere isimleri ile bakılmaktadır.
+  </para>
+  <screen>#include &lt;stdlib.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+
+/* <replaceable>Sıralanacak gösteri karakterlerine bir dizi tanımla.</replaceable> */
+
+struct critter
+  {
+    const char *name;
+    const char *species;
+  };
+
+struct critter muppets[] =
+  {
+    {"Kermit", "frog"},
+    {"Piggy", "pig"},
+    {"Gonzo", "whatever"},
+    {"Fozzie", "bear"},
+    {"Sam", "eagle"},
+    {"Robin", "frog"},
+    {"Animal", "animal"},
+    {"Camilla", "chicken"},
+    {"Sweetums", "monster"},
+    {"Dr. Strangepork", "pig"},
+    {"Link Hogthrob", "pig"},
+    {"Zoot", "human"},
+    {"Dr. Bunsen Honeydew", "human"},
+    {"Beaker", "human"},
+    {"Swedish Chef", "human"}
+  };
+
+int count = sizeof (muppets) / sizeof (struct critter);
+
+
+
+/* <replaceable>Sıralama ve arama için kullanılacak karşılaştırma işlevi.</replaceable> */
+
+int
+critter_cmp (const void *v1, const void *v2)
+{
+  const struct critter *c1 = v1;
+  const struct critter *c2 = v2;
+
+  return strcmp (c1-&gt;name, c2-&gt;name);
+}
+
+
+/* <replaceable>Gösteri karakteri hakkında bilgi bas.</replaceable> */
+
+void
+print_critter (const struct critter *c)
+{
+  printf ("%s, the %s\n", c-&gt;name, c-&gt;species);
+}
+
+
+/* <replaceable>Sıralanmış dizi üzerinde arama yap.</replaceable> */
+
+void
+find_critter (const char *name)
+{
+  struct critter target, *result;
+  target.name = name;
+  result = bsearch (&amp;target, muppets, count, sizeof (struct critter),
+                    critter_cmp);
+  if (result)
+    print_critter (result);
+  else
+    printf ("Couldn't find %s.\n", name);
+}
+
+/* <replaceable>Main işlevi.</replaceable> */
+
+int
+main (void)
+{
+  int i;
+
+  for (i = 0; i &lt; count; i++)
+    print_critter (&amp;muppets[i]);
+  printf ("\n");
+
+  qsort (muppets, count, sizeof (struct critter), critter_cmp);
+
+  for (i = 0; i &lt; count; i++)
+    print_critter (&amp;muppets[i]);
+  printf ("\n");
+
+  find_critter ("Kermit");
+  find_critter ("Gonzo");
+  find_critter ("Janice");
+
+  return 0;
+}
+</screen>
+  <para>
+   Yazılımın çıktısı:
+  </para>
+  <screen>Kermit, the frog
+Piggy, the pig
+Gonzo, the whatever
+Fozzie, the bear
+Sam, the eagle
+Robin, the frog
+Animal, the animal
+Camilla, the chicken
+Sweetums, the monster
+Dr. Strangepork, the pig
+Link Hogthrob, the pig
+Zoot, the human
+Dr. Bunsen Honeydew, the human
+Beaker, the human
+Swedish Chef, the human
+
+Animal, the animal
+Beaker, the human
+Camilla, the chicken
+Dr. Bunsen Honeydew, the human
+Dr. Strangepork, the pig
+Fozzie, the bear
+Gonzo, the whatever
+Kermit, the frog
+Link Hogthrob, the pig
+Piggy, the pig
+Robin, the frog
+Sam, the eagle
+Swedish Chef, the human
+Sweetums, the monster
+Zoot, the human
+
+Kermit, the frog
+Gonzo, the whatever
+Couldn't find Janice.
+</screen>
+ </chapter>
+
+ <chapter xml:id="glibc-Hash-Search-Function">
+  <title>İsim-Değer Çiftleri ile Arama İşlevi</title>
+  <titleabbrev><code>hsearch</code> işlevi.</titleabbrev>
+  <!--hash table: isim-değer çiftleri tablosu. Aslında ilişkisel bir dizidir
+  ve dizi elemanlarına indisleri ile değil isimleri ile erişilebilir.-->
+  <para>
+   Bu kısma gelinceye kadar sıralı ve sırasız dizilerde arama yapılmasından bahsedildi. Bilgileri aramadan önce düzenlemek için başka yöntemler de vardır. Bilgi girme, silme ve arama maliyetleri farklıdır. Olası bir gerçekleme de bir isim-değer çiftleri tablosu kullanmaktır. Bu kısımda bahsedilecek işlevler &search.h; başlık dosyasında bildirilmiştir.
+  </para>
+  <csynopsis>
+   <indexterm linkend="glibc-fn" xml:id="glibc-fn-hcreate"><primary>hcreate</primary></indexterm>
+   <csproto type="işlev">
+    <csname><type>int</type><function>hcreate</function></csname>
+    <csparam><type>size_t</type><parameter>nel</parameter></csparam>
+   </csproto>
+   <header>&search.h;</header>
+   <conceptlist>
+    <concept>&mtunsafe; &race;<code linkend="glibc-safety-identifier">:hsearch</code></concept>
+    <concept>&asunsafe; &heap;</concept>
+    <concept>&acunsafe; &corrupt; &mem;</concept>
+   </conceptlist>
+   <para>
+    <code>hcreate</code> işlevi en az <parameter>nel</parameter> eleman içeren bir isim-değer çifti tablosu oluşturur. Bu tabloyu daha sonra genişletmek mümkün olmadığından eleman sayısı akıllıca seçilmelidir. Bu işlevi gerçeklemekte kullanılan yöntem, tablodaki eleman sayısının kullanılması olası en büyük eleman sayısından daha büyük olarak belirlenmesini gerektirir. %80’den fazlası dolu olan isim-değer çifti tabloları çalışmak için yetersiz olur. Yöntem tarafından garanti edilen sabit erişim süresine bir kaç çakışma mevcut olduğunda ulaşılabilir. Bu konuda daha fazla bilgi için Knuth'un &quot;The Art of Computer Programming, Part 3: Searching and Sorting&quot; adlı eserine bakılabilir.
+   </para>
+   <para>
+    Bu işlevin en zayıf tarafı bir yazılım için en çok bir tablonun olabilmesidir. Tablo yazılımcının denetimi dışındaki yerel bellek bölgesinde oluşturulur. &glibc;, bu arayüze benzeyen ve çok sayıda tablonun tutulmasını mümkün kılan evresel (reentrant) bir arayüz ile çalışan işlevlere de sahiptir.
+   </para>
+   <para>
+    Bir yazılım içinde birden fazla isim-değer çifti tablosu kullanımı, önceki tablonun  bir <function>hdestroy</function> çağrısı ile kaldırılmasından sonra mümkün olur.
+   </para>
+   <para>
+    Tablo başarıyla oluşturulmuşsa işlev sıfırdan farklı bir değerle döner. Aksi takdirde işlev sıfır değeriyle döner. Bu durumda ya zaten kullanılan bir tablo vardır ya da yazılım yetersiz bellekle çalışıyordur.
+   </para>
+  </csynopsis>
+  <csynopsis>
+   <indexterm linkend="glibc-fn" xml:id="glibc-fn-hdestroy"><primary>hdestroy</primary></indexterm>
+   <csproto type="işlev">
+    <csname><type>void</type><function>hdestroy</function></csname>
+    <csparam><void/></csparam>
+   </csproto>
+   <header>&search.h;</header>
+   <conceptlist>
+    <concept>&mtunsafe; &race;<code linkend="glibc-safety-identifier">:hsearch</code></concept>
+    <concept>&asunsafe; &heap;</concept>
+    <concept>&acunsafe; &corrupt; &mem;</concept>
+   </conceptlist>
+   <para>
+    <code>hdestroy</code> işlevi daha önceki bir <function>hcreate</function> çağrısı ile ayrılan özkaynakları serbest bırakmak için kullanılabilir. Bu işlev çağrıldıktan sonra tekrar bir <function>hcreate</function> çağrısı yapabilmek ve farklı boyutta bir tablo oluşturmak mümkün olur.
+   </para>
+   <important>
+    <para>
+     <code>hdestroy</code> çağrısı sırasında tablo içindeki elemanlar bu işlev tarafından serbest bırakılmaz. Bundan, dizgeleri serbest bırakacak yazılım kodu sorumludur. Tabloda mevcut tüm elemanlarla tek tek uğraşacak bir işlev olmadığından bellekteki elemanların tümünün serbest bırakılması mümkün değildir. Tablo ve tablo içindeki tüm elemanların serbest bırakılması önemliyse, yazılımcı tablo elemanlarının bir listesini tutmalı ve <code>hdestroy</code> çağrısından önce bu listeyi kullanarak tüm elemanların verilerini serbest bırakmalıdır. Bu çok tatsız bir mekanizmadır ve isim-değer çifti tablolarının bu türünün yazılım tarafından bir kere oluşturulup, yazılım sonlandırılıncaya kadar kullanılacağını gösterir.
+    </para>
+   </important>
+  </csynopsis>
+  <para>
+   Arama işleminin yapılacağı isim-değer çiftleri aşağıdaki veri türü ile oluşturulur:
+  </para>
+  <csynopsis>
+   <indexterm linkend="glibc-tp" xml:id="glibc-tp-ENTRY"><primary>ENTRY</primary></indexterm>
+   <csproto type="veri türü">
+    <csname><function>ENTRY</function></csname>
+   </csproto>
+   <header>&search.h;</header>
+   <para>
+    Bu yapının dayanağı olan <type>struct&#160;entry</type> yapısının her iki elemanı da boş bayt sonlandırmalı dizge göstericisidir. Bu durum <function>hsearch</function> işlevlerinin işlevselliğinin sınırlarını belirler. Sadece boş bayt ile sonlandırılabilen verilerle çalışılabilir, genel ikil verilerle çalışabilmek mümkün değildir.
+   </para>
+  </csynopsis>
+  <csynopsis>
+   <indexterm linkend="glibc-tp" xml:id="glibc-tp-struct_entry"><primary sortas="entry">struct&#160;entry</primary></indexterm>
+   <csproto type="veri türü">
+    <csname><type>struct</type><function>entry</function></csname>
+   </csproto>
+   <header>&search.h;</header>
+   <para>
+    <type>ENTRY</type> türünün dayandığı veri türüdür.
+   </para>
+   <glosslist>
+    <glossentry>
+     <glossterm>
+      <type>char&#160;*</type><structfield>key</structfield>
+     </glossterm>
+     <glossdef>
+      <para>
+       Tablo içindeki elemanı ifade eden ya da arama anahtarı olarak kullanılacak olan boş karakter sonlandırmalı dizgenin göstericisidir (çiftin isim parçası).
+      </para>
+      <para>
+       Bu, <function>hsearch</function> işlevlerinin işlevselliğini sınırlayan bir kısıtlamadır: Yalnız ve daima boş karakter sonlandırmalı anatarlar kullanan veri kümeleri için kullanılabilir. Anahtarlar için genel ikili verileri işlemek mümkün değildir.
+      </para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <type>char&#160;*</type><structfield>data</structfield>
+     </glossterm>
+     <glossdef>
+      <para>
+       Çiftin değer parçasını oluşturan boş karakter sonlandırmalı dizgenin göstericisidir. Gerçeklenim girdilerde bu göstericiyi korur, ancak başka şekilde kullanılamaz.
+      </para>
+     </glossdef>
+    </glossentry>
+   </glosslist>
+  </csynopsis>
+  <csynopsis>
+   <indexterm linkend="glibc-tp" xml:id="glibc-tp-ACTION"><primary sortas="ACTION">enum ACTION</primary></indexterm>
+   <csproto type="veri türü">
+    <csname><type>enum</type><function>ACTION</function></csname>
+   </csproto>
+   <para>
+    <function>hsearch</function> çağrısında gerçekleştirilecek eylem. Olası değerler:
+   </para>
+   <csynopsis>
+    <indexterm linkend="glibc-vr" xml:id="glibc-vr-FIND"><primary>FIND</primary></indexterm>
+    <csproto type="sabit">
+     <csname><function>FIND</function></csname>
+    </csproto>
+    <para>
+     <type>ACTION</type> değeri <code>FIND</code> olduğunda, ya ilgili işlevle bulunan girdi ya da sinyal hatası durumunda <varname>NULL</varname> döner.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-vr" xml:id="glibc-vr-ENTER"><primary>ENTER</primary></indexterm>
+    <csproto type="sabit">
+     <csname><function>ENTER</function></csname>
+    </csproto>
+    <para>
+     <type>ACTION</type> değeri <code>ENTER</code> olduğunda, mevcut verinin (varsa) yerine eleman verisi konur.
+    </para>
+   </csynopsis>
+  </csynopsis>
+  <csynopsis>
+   <indexterm linkend="glibc-fn" xml:id="glibc-fn-hsearch"><primary>hsearch</primary></indexterm>
+   <csproto type="işlev">
+    <csname><ptr>ENTRY</ptr><function>hsearch</function></csname>
+    <csparam><type>ENTRY</type><parameter>item</parameter></csparam>
+    <csparam><type>ACTION</type><parameter>action</parameter></csparam>
+   </csproto>
+   <header>&search.h;</header>
+   <conceptlist>
+    <concept>&mtunsafe; &race;<code linkend="glibc-safety-identifier">:hsearch</code></concept>
+    <concept>&asunsafe;</concept>
+    <concept>&acunsafe; &corrupt;<code linkend="glibc-safety-condition">/action==ENTER</code></concept>
+   </conceptlist>
+   <para>
+    Bir isim-değer çifti tablosunda arama yapmak için <function>hcreate</function> işleviyle oluşturulan tabloda arama yapmak için <code>hsearch</code> işlevi kullanılmalıdır. Bu işlev ya (<varname>action</varname> değeri olarak <varname>FIND</varname> verilmişse) bir elemanı aramakta ya da (<varname>action</varname> değeri olarak <varname>ENTER</varname> verilmişse) tabloya yeni bir isim elemanı girmekte kullanılır. Girdiler değiştirilemez.
+   </para>
+   <para>
+    <type>struct&#160;entry</type> türündeki yapının <structfield>key</structfield> elemanı <type>ENTRY</type> türündeki nesnenin göstericisidir. Tablo üzerinde bir girdiyi konumlamak için yapının <structfield>key</structfield> elemanı kullanılır.
+   </para>
+   <para>
+    <structfield>key</structfield> ile eşleşen bir girdinin varlığı durumunda <parameter>action</parameter> yok sayılır. Bulunan girdi döner. Bir eşleşme bulunamazsa ve <parameter>action</parameter> değeri <varname>FIND</varname> ise işlev boş gösterici ile döner. Bir eşleşme bulunamazsa ve <parameter>action</parameter> değeri <varname>ENTER</varname> ise <parameter>item</parameter> ile ilklendirilerek tabloya yeni bir girdi eklenir ve işlev eklenen girdinin göstericisi ile döner.
+   </para>
+  </csynopsis>
+  <csynopsis>
+   <indexterm linkend="glibc-tp" xml:id="glibc-tp-hsearch_data"><primary sortas="hsearch_data">struct&#160;hsearch_data</primary></indexterm>
+   <csproto type="veri türü">
+    <csname><type>struct</type><function>hsearch_data</function></csname>
+   </csproto>
+   <header>&search.h;</header>
+   <para>
+    Bu veri türü şeffaf değildir, yani üyeleri doğrudan değiştirilemez.
+   </para>
+  </csynopsis>
+  <para>
+   Şimdiye dek bahsedilen işlevler geneldir ve yazılımda bir defada en çok bir isim-değer çifti tablosunun var olabildiği durumda kullanılabilir. Bunun tersi durumlarda bir GNU oluşumu olarak aşağıdaki işlevler kullanılabilir. Bu işlevler <type>struct&#160;hsearch_data</type> türünde nesnelerden oluşan bir isim-değer çifti tablosu ile çalışır.
+  </para>
+  <csynopsis>
+   <indexterm linkend="glibc-fn" xml:id="glibc-fn-hcreate_r"><primary>hcreate_r</primary></indexterm>
+   <csproto type="işlev">
+    <csname><type>int</type><function>hcreate_r</function></csname>
+    <csparam><type>size_t</type><parameter>nel</parameter></csparam>
+    <csparam><ptr>struct&#160;hsearch_data</ptr><parameter>htab</parameter></csparam>
+   </csproto>
+   <header>&search.h;</header>
+   <conceptlist>
+    <concept>&mtsafe; &race;<code linkend="glibc-safety-identifier">:htab</code></concept>
+    <concept>&asunsafe; &heap;</concept>
+    <concept>&acunsafe; &corrupt; &mem;</concept>
+   </conceptlist>
+   <para>
+    <code>hcreate_r</code> işlevi en az <parameter>nel</parameter> eleman içeren <parameter>htab</parameter> isimli isim-değer çiftleri tablosunu ilklendirir. Bu işlev, yazılımcı tarafından denetlenebilir bir tablo oluşturmak dışında <function>hcreate</function> işlevi gibidir.
+   </para>
+   <para>
+    Bu işlev bir defada birden fazla isim-değer çiftleri tablosu oluşturabilmeyi mümkün kılar. <type>struct&#160;hsearch_data</type> nesnesi için gereken bellek özdevimli ayrılabilir ancak işlevi çağırmadan önce sıfırla doldurularak ilklendirilmelidir.
+   </para>
+   <para>
+    İşlem başarılıysa işlev sıfırdan farklı bir değerle döner. Sıfır değeri dönmüşse ya bir şeyler yanlış gitmiştir ya da yazılım yetersiz bellekle çalışıyordur.
+   </para>
+  </csynopsis>
+  <csynopsis>
+   <indexterm linkend="glibc-fn" xml:id="glibc-fn-hdestroy_r"><primary>hdestroy_r</primary></indexterm>
+   <csproto type="işlev">
+    <csname><type>void</type><function>hdestroy_r</function></csname>
+    <csparam><ptr>struct&#160;hsearch_data</ptr><parameter>htab</parameter></csparam>
+   </csproto>
+   <header>&search.h;</header>
+   <conceptlist>
+    <concept>&mtsafe; &race;<code linkend="glibc-safety-identifier">:htab</code></concept>
+    <concept>&asunsafe; &heap;</concept>
+    <concept>&acunsafe; &corrupt; &mem;</concept>
+   </conceptlist>
+   <para>
+    <code>hdestroy_r</code> işlevi <function>hcreate_r</function> işlevi ile
+    oluşturulan <parameter>htab</parameter> tablosu tarafından kullanılan tüm kaynakları serbest bırakır. Tablonun içindeki elemanların serbest bırakılmasını yazılıma bırakması bakımından <function>hdestroy</function> gibidir.
+   </para>
+  </csynopsis>
+ <csynopsis>
+   <indexterm linkend="glibc-fn" xml:id="glibc-fn-hsearch_r"><primary>hsearch_r</primary></indexterm>
+   <csproto type="işlev">
+    <csname><type>int</type><function>hsearch_r</function></csname>
+    <csparam><type>ENTRY</type><parameter>item</parameter></csparam>
+    <csparam><type>ACTION</type><parameter>action</parameter></csparam>
+    <csparam><pptr>ENTRY</pptr><parameter>retval</parameter></csparam>
+    <csparam><ptr>struct&#160;hsearch_data</ptr><parameter>htab</parameter></csparam>
+   </csproto>
+   <header>&search.h;</header>
+   <conceptlist>
+    <concept>&mtsafe; &race;<code linkend="glibc-safety-identifier">:htab</code></concept>
+    <concept>&assafe;</concept>
+    <concept>&acunsafe;  &corrupt;<code linkend="glibc-safety-condition">/action==ENTER</code></concept>
+   </conceptlist>
+   <para>
+    <code>hsearch_r</code> işlevi <function>hsearch</function> işlevine eşdeğerdir. İlk iki bağımsız değişken aynıdır. Ancak tek bir genel tablo yerine <function>hcreate_r</function> işlevi ile ilklendirilen ve <parameter>htab</parameter> ile gösterilen bir tablo ile çalışır.
+   </para>
+   <para>
+    <function>hcreate</function> işlevinden diğer bir farkı da tabloda bulunan değeri işlevin dönüş değeri olarak değil, <parameter>retval</parameter> tarafından gösterilen bir gösterici değişkeni içinde döndürmesidir. İşlevin geri dönüş değeri işlev başarılı ise sıfırdan farklı, değilse sıfırdır. <varname>errno</varname> genel değişkeni başarısızlığın sebebini gösterir:
+   </para>
+   <variablelist>
+    <varlistentry>
+     <term><code>ENOMEM</code></term>
+     <listitem>
+      <para>
+       Tablo doludur, <code>hsearch_r</code> işlevi <parameter>action</parameter> değeri olarak <varname>ENTER</varname> belirtilerek, bilinmeyen bir <parameter>item</parameter> ile çağrılmıştır.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><code>ESRCH</code></term>
+     <listitem>
+      <para>
+       <parameter>action</parameter> değeri olarak <varname>FIND</varname> belirtilmiş ve belirtilen <parameter>item</parameter> tabloda bulunamamıştır.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </csynopsis>
+ </chapter>
+
+ <chapter xml:id="glibc-Tree-Search-Function">
+  <title>Ağaç Arama İşlevi</title>
+  <titleabbrev><code>tsearch</code> işlevi.</titleabbrev>
+  <para>
+   Verimli bir arama yapmak için verileri düzenlemenin bir yolu da ağaçları kullanmaktır. <function>tsearch</function> işlev ailesi büyük boyutlardaki verileri eleman sayısının logaritmasından daha kısa bir sürede bulmayı garantileyen  hoş bir arayüz sağlar. &glibc;nin gerçeklemesi bu sınırın, basit ikil ağaç gerçeklenimlerin veri girdilerinin sebep olduğu sorunlarda bile aşılmamasını garanti eder.
+  </para>
+  <para>
+   Bu bölümde açıklanan işlevlerin tümü System V ve X/Open belirtimlerinde açıklanmıştır ve dolayısıyla taşınabilirdir.
+  </para>
+  <para>
+   <function>hsearch</function> işlevlerinin aksine <function>tsearch</function> işlevleri sadece boş karakter sonlandırmalı dizgelerle değil her türlü veri ile kullanılabilir.
+  </para>
+  <para>
+   <function>tsearch</function> işlevleri ayrıca veri yapılarının ilklendirilmesini gerektiren işlevleri içermemek gibi bir ayrıcalığa da sahiptir. <varname>NULL</varname> ile ilklendirilmiş <type>void *</type> türünde bir gösterici geçerli bir ağaçtır ve genişletilebilir ya da aranabilirdir.
+  </para>
+  <csynopsis>
+   <indexterm linkend="glibc-fn" xml:id="glibc-fn-tsearch"><primary>tsearch</primary></indexterm>
+   <csproto type="işlev">
+    <csname><ptr>void</ptr><function>tsearch</function></csname>
+    <csparam><ptr>const&#160;void</ptr><parameter>key</parameter></csparam>
+    <csparam><pptr>void</pptr><parameter>rootp</parameter></csparam>
+    <csparam><type>comparison_fn_t</type><parameter>compar</parameter></csparam>
+   </csproto>
+   <header>&search.h;</header>
+   <conceptlist>
+    <concept>&mtsafe; &race;<code linkend="glibc-safety-identifier">:rootp</code></concept>
+    <concept>&asunsafe; &heap;</concept>
+    <concept>&acunsafe; &corrupt; &mem;</concept>
+   </conceptlist>
+   <para>
+    <code>tsearch</code> işlevi *<parameter>rootp</parameter> ile gösterilen ağaç içinde <parameter>key</parameter> ile eşleşen elemanı arar. <parameter>compar</parameter> ile belirtilen işlev iki elemanın karşılaştırılmasında kullanılır. <parameter>compar</parameter> ile belirtilen işlevlerin özellikleri için <xref linkend="glibc-Comparison-Functions"/> bölümüne bakılabilir.
+   </para>
+   <para>
+    Ağaç içinde <parameter>key</parameter> ile eşleşen bir girdi bulunamazsa değer ağaca eklenir. <code>tsearch</code> işlevi <parameter>key</parameter> ile gösterilen nesnenin bir kopyasını oluşturmaz (boyutu bilinmediğinden). Bunun yerine ağacın yapısı içinde olduğunu belirtmek için ona bir başvuru ekler.
+   </para>
+   <para>
+    Ağacın kök düğümünü kimi zaman değiştirmek gerekebileceğinden ağaç, göstericiye gösterici olarak belirtilmiştir. Bu nedenle çağrıdan sonra <parameter>rootp</parameter> tarafından gösterilen değişkenin aynı değerde olmayacağı varsayılmalıdır. Bu da <code>tsearch</code> işlevinin aynı ağaç için peşpeşe çağrılamayacağı anlamına gelir. Ancak işlevi peşpeşe farklı ağaçlarla çağırmak bir sorun oluşturmaz.
+   </para>
+   <para>
+    Dönen değer ağaçta eşleşen elemanın göstericisidir. Yeni bir eleman oluşturulmuşsa dönen değer yeni oluşturulan elemanın göstericisidir. Bir girdi oluşturulmuş ama bellek yetmemişse <varname>NULL</varname> döner.
+   </para>
+  </csynopsis>
+  <csynopsis>
+   <indexterm linkend="glibc-fn" xml:id="glibc-fn-tfind"><primary>tfind</primary></indexterm>
+   <csproto type="işlev">
+    <csname><ptr>void</ptr><function>tfind</function></csname>
+    <csparam><ptr>const&#160;void</ptr><parameter>key</parameter></csparam>
+    <csparam><ptr>void&#160;*const</ptr><parameter>rootp</parameter></csparam>
+    <csparam><type>comparison_fn_t</type><parameter>compar</parameter></csparam>
+   </csproto>
+   <header>&search.h;</header>
+   <conceptlist>
+    <concept>&mtsafe; &race;<code linkend="glibc-safety-identifier">:rootp</code></concept>
+    <concept>&assafe;</concept>
+    <concept>&acsafe;</concept>
+   </conceptlist>
+   <para>
+    <code>tfind</code> işlevi <function>tsearch</function> işlevine benzer. <parameter>key</parameter> ile eşleşen elemana bir gösterici ile döner. Eşleşen  eleman bulunamazsa ağaca yeni bir eleman girilmez ve işlev <varname>NULL</varname> ile döner (Dikkat: <parameter>rootp</parameter> sabit göstericiye göstericidir).
+   </para>
+  </csynopsis>
+  <para>
+   <function>tsearch</function> işlevlerinin bir özelliği de <function>hsearch</function> işlevlerinin aksine elemanların silinebilmesidir.
+  </para>
+  <csynopsis>
+   <indexterm linkend="glibc-fn" xml:id="glibc-fn-tdelete"><primary>tdelete</primary></indexterm>
+   <csproto type="işlev">
+    <csname><ptr>void</ptr><function>tdelete</function></csname>
+    <csparam><ptr>const&#160;void</ptr><parameter>key</parameter></csparam>
+    <csparam><pptr>void</pptr><parameter>rootp</parameter></csparam>
+    <csparam><type>comparison_fn_t</type><parameter>compar</parameter></csparam>
+   </csproto>
+   <header>&search.h;</header>
+   <conceptlist>
+    <concept>&mtsafe; &race;<code linkend="glibc-safety-identifier">:rootp</code></concept>
+    <concept>&asunsafe; &heap;</concept>
+    <concept>&acunsafe; &corrupt; &mem;</concept>
+   </conceptlist>
+   <para>
+    <parameter>key</parameter> ile eşleşen belli bir elemanı ağaçtan kaldırmak için <code>tdelete</code> işlevi kullanılabilir. Eleman silindikten sonra silinen düğümün ata düğümüne bir gösterici döner. Ağaçta silinecek bir eleman bulunamazsa işlev <varname>NULL</varname> ile döner. İşlev ağacın kökünü silerse dönen değer <varname>NULL</varname> olmayan anlamsız bir değer olabilir.
+   </para>
+  </csynopsis>
+  <csynopsis>
+   <indexterm linkend="glibc-fn" xml:id="glibc-fn-tdestroy"><primary>tdestroy</primary></indexterm>
+   <csproto type="işlev">
+    <csname><type>void</type><function>tdestroy</function></csname>
+    <csparam><ptr>void</ptr><parameter>vroot</parameter></csparam>
+    <csparam><type>__free_fn_t</type><parameter>freefct</parameter></csparam>
+   </csproto>
+   <header>&search.h;</header>
+   <conceptlist>
+    <concept>&mtsafe;</concept>
+    <concept>&asunsafe; &heap;</concept>
+    <concept>&acunsafe; &mem;</concept>
+   </conceptlist>
+   <para>
+    Arama ağacı tamamen silinmek istenirse <code>tdestroy</code> işlevi kullanılabilir. <function>tsearch</function> işlevi tarafından oluşturulan ve <parameter>vroot</parameter> ile kökü belirtilen ağaca ayrılan tüm kaynakları serbest bırakır.
+   </para>
+   <para>
+    Ağacın her düğümü için  <parameter>freefct</parameter> işlevi çağrılır. Veri göstericisi bağımsız değişken olarak işleve aktarılır. Böyle bir işlem gerekli değilse <parameter>freefct</parameter> hiçbir şey yapmayan bir işlevi göstermelidir. İşlev ne olursa olsun çağrılır.
+   </para>
+   <para>
+    Bu işlev bir GNU oluşumudur. System V veya X/Open belirtimlerinde yoktur.
+   </para>
+  </csynopsis>
+  <para>
+   Ağaç veri yapısını oluşturan ve yok eden işlevlere ek olarak, ağacın her elemanına uygulanan bir işlev daha vardır. İşlev aşağıdaki türde olmalıdır:
+  </para>
+  <csynopsis>
+   <indexterm linkend="glibc-tp" xml:id="glibc-tp-__action_fn_t"><primary sortas="action_fn_t">__action_fn_t</primary></indexterm>
+   <csproto type="veri türü">
+    <csname><type>void</type><function>__action_fn_t</function></csname>
+    <csparam><ptr>const&#160;void</ptr><parameter>nodep</parameter></csparam>
+    <csparam><type>VISIT</type><parameter>value</parameter></csparam>
+    <csparam><type>int</type><parameter>level</parameter></csparam>
+   </csproto>
+   <header>&search.h;</header>
+   <para>
+    <parameter>nodep</parameter>, düğümün veri değeridir (<function>tsearch</function> işlevine verilen <parameter>key</parameter> bağımsız değişkeni). <parameter>level</parameter> düğümün ağaçtaki derinliğine karşı düşen sayısal bir değerdir. Kök düğümün derinliği 0’dır, sonraki düğüm 1, sonraki 2 diye gider. <type>VISIT</type> sayılama türüdür.
+   </para>
+  </csynopsis>
+  <csynopsis>
+   <indexterm linkend="glibc-tp" xml:id="glibc-tp-VISIT"><primary>VISIT</primary></indexterm>
+   <csproto type="veri türü">
+    <csname><type>enum</type><function>VISIT</function></csname>
+   </csproto>
+   <header>&search.h;</header>
+   <para>
+    <code>VISIT</code> değeri düğümün ağaçtaki durumunu ve işlevin nasıl çağrıldığını belirtir. Düğümün durumu ya sonuncu ya da dahili düğümdür. Her sonuncu düğüm için işlev yalnız ve yalnız bir kere çağrılır. Her dahili düğüm için ise üç kere çağrılır: İlk çocuk işlenmeden önce, ilk çocuk işlendikten sonra ve her iki çocuk işlendikten sonra. Böylece ağacın üç yöntemini geçişli (hatta hepsini birlikte) kullanmak mümkün olur.
+   </para>
+   <variablelist>
+    <varlistentry>
+     <term><code>preorder</code></term>
+     <listitem>
+      <para>
+       Düğüm, dahili bir düğümdür ve işlev ilk çocuk düğüm işlenmeden önce çağrılır.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><code>postorder</code></term>
+     <listitem>
+      <para>
+       Düğüm, dahili bir düğümdür ve işlev ilk çocuk düğüm işlendikten sonra çağrılır.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><code>endorder</code></term>
+     <listitem>
+      <para>
+       Düğüm, dahili bir düğümdür ve işlev ikinci çocuk düğüm işlendikten sonra çağrılır.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><code>leaf</code></term>
+     <listitem>
+      <para>
+       Düğüm sonuncu düğümdür (yaprak).
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </csynopsis>
+  <csynopsis>
+   <indexterm linkend="glibc-fn" xml:id="glibc-fn-twalk"><primary>twalk</primary></indexterm>
+   <csproto type="işlev">
+    <csname><type>void</type><function>twalk</function></csname>
+    <csparam><ptr>const&#160;void</ptr><parameter>root</parameter></csparam>
+    <csparam><type>__action_fn_t</type><parameter>action</parameter></csparam>
+   </csproto>
+   <header>&search.h;</header>
+   <conceptlist>
+    <concept>&mtsafe; &race;<code linkend="glibc-safety-identifier">:root</code></concept>
+    <concept>&assafe;</concept>
+    <concept>&acsafe;</concept>
+   </conceptlist>
+   <para>
+    <parameter>root</parameter> ile gösterilen ağacın her düğümü için <parameter>action</parameter> ile belirtilen işlevi çağırır. Sonuncu düğümler için işlev <parameter>value</parameter> bağımsız değişkenine <parameter>leaf</parameter> belirtilerek sadece bir kere çağrılır. İç düğümler için işlev <parameter>value</parameter> bağımsız değişkeninde ilgili değer belirtilerek üç kere çağrılır. <parameter>action</parameter> işlevinin <parameter>level</parameter> bağımsız değişkeni ağacın kökünden çocuklara inildikçe artan değerler alır. Kökün seviyesi 0’dır.
+   </para>
+   <para>
+    <code>twalk</code> işlevinin <parameter>action</parameter> bağımsız değişkeni için kullanılan işlevler ağaç verisini değiştirmemelidir çünkü aynı ağaç üzerinde aynı anda birden fazla evrede <code>twalk</code> çalıştırılabilir. Ayrıca aynı anda paralel olarak <function>tfind</function> de çağrılabilir. Ağaçta değişiklik yapan işlevler kullanılmamalıdır, aksi takdirde davranış tanımsızdır. Ancak, genel değişkenlere (ve evresel güvenilirlik sorunlarına) başvurmadan <parameter>action</parameter> işlevine ağacın dışındaki verileri aktarmak zordur. Bunun için aşağıdaki <function>twalk_r</function> işlevi çözüm olabilir.
+   </para>
+  </csynopsis>
+  <csynopsis>
+   <indexterm linkend="glibc-fn" xml:id="glibc-fn-twalk_r"><primary>twalk_r</primary></indexterm>
+   <csproto type="işlev">
+    <csname><type>void</type><function>twalk_r</function></csname>
+    <csparam><ptr>const&#160;void</ptr><parameter>root</parameter></csparam>
+    <csparam><code>void&#160;(*<parameter>action</parameter>)</code> <code>(const&#160;void&#160;*<parameter>key</parameter>, VISIT <parameter>which</parameter>, void&#160;*<parameter>closure</parameter>)</code></csparam>
+    <csparam><ptr>void</ptr><parameter>closure</parameter></csparam>
+   </csproto>
+   <header>&search.h;</header>
+   <conceptlist>
+    <concept>&mtsafe; &race;<code linkend="glibc-safety-identifier">:root</code></concept>
+    <concept>&assafe;</concept>
+    <concept>&acsafe;</concept>
+   </conceptlist>
+   <para>
+    <parameter>root</parameter> ile gösterilen düğüme sahip ağaçtaki her düğüm için, <code>twalk_r</code> işlevi <parameter>action</parameter> ile belirtilen işlevi çağırır. En uçtaki düğümler için işlev  <parameter>which</parameter>'e <parameter>leaf</parameter> atanarak yalnızca bir kez çağrılır. Dahili düğümler için işlev, <parameter>action</parameter> işlevinin <parameter>which</parameter> bağımsız değişkenine uygun değer atanarak üç kez çağrılır. <parameter>closure</parameter> değeri <parameter>action</parameter> işlevinin her çağrısına değiştirilmeden iletilir.
+   </para>
+   <para>
+    <function>twalk</function> işlevini <code>twalk_r</code> işlevinin öncesinde uygulamak mümkündür, bu nedenle ayrı bir <parameter>level</parameter> bağımsız değişkeni yoktur.
+   </para>
+   <example>
+    <screen>#include &lt;search.h&gt;
+
+struct twalk_with_twalk_r_closure
+{
+  void (*action) (const void *, VISIT, int);
+  int depth;
+};
+
+static void
+twalk_with_twalk_r_action (const void *nodep, VISIT which, void *closure0)
+{
+  struct twalk_with_twalk_r_closure *closure = closure0;
+
+  switch (which)
+    {
+    case leaf:
+      closure-&gt;action (nodep, which, closure-&gt;depth);
+      break;
+    case preorder:
+      closure-&gt;action (nodep, which, closure-&gt;depth);
+      ++closure-&gt;depth;
+      break;
+    case postorder:
+      /* <replaceable>preorder eylemi derinliği artırdı.</replaceable> */
+      closure-&gt;action (nodep, which, closure-&gt;depth - 1);
+      break;
+    case endorder:
+      - -closure-&gt;depth;
+      closure-&gt;action (nodep, which, closure-&gt;depth);
+      break;
+    }
+}
+
+void
+twalk (const void *root, void (*action) (const void *, VISIT, int))
+{
+  struct twalk_with_twalk_r_closure closure = { action, 0 };
+  twalk_r (root, twalk_with_twalk_r_action, &amp;closure);
+}
+</screen>
+   </example>
+  </csynopsis>
+ </chapter>
 </part>

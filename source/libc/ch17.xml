@@ -3,6 +3,2518 @@
         glibc/ch17.xml,v2.36, GFDL,LGPL, NBB, 2023
      ******************************************************************** -->
 <part xml:id="glibc-Low-Level-Terminal-Interface">
-  <title>Düşük Seviyeli Uçbirim Arayüzü</title>
-  <titleabbrev>Uçbirim aygıtının özellikleri nasıl değiştirilir.</titleabbrev>
+ <title>Düşük Seviyeli Uçbirim Arayüzü</title>
+ <titleabbrev>Uçbirim aygıtının özellikleri nasıl değiştirilir.</titleabbrev>
+ <preliminary>
+<para>This chapter describes functions that are specific to terminal devices.
+You can use these functions to do things like turn off input echoing;
+set serial line characteristics such as line speed and flow control; and
+change which characters are used for end-of-file, command-line editing,
+sending signals, and similar control functions.
+</para>
+<para>Most of the functions in this chapter operate on file descriptors.
+See <xref linkend="glibc-Low-Level-I-O"/>, for more information about what a file
+descriptor is and how to open a file descriptor for a terminal device.
+</para>
+ </preliminary><!--
+<sect xml:id="glibc-Is-It-a-Terminal">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#I_002fO-Queues" accesskey="n" rel="next">I/O Queues</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Low_002dLevel-Terminal-Interface" accesskey="u" rel="up">Low-Level Terminal Interface</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Identifying-Terminals"></span><h3 class="section">17.1 Identifying Terminals</title>
+<span xml:id="glibc-index-terminal-identification"></span>
+<span xml:id="glibc-index-identifying-terminals"></span>
+
+<para>The functions described in this chapter only work on files that
+correspond to terminal devices.  You can find out whether a file
+descriptor is associated with a terminal by using the <code>isatty</code>
+function.
+</para>
+<span xml:id="glibc-index-unistd_002eh-13"></span>
+<para>Prototypes for the functions in this section are declared in the header
+file <filename>unistd.h</filename>.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-isatty"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>isatty</strong> <emphasis>(int <var>filedes</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-isatty" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This function returns <code>1</code> if <var>filedes</var> is a file descriptor
+associated with an open terminal device, and <em class="math">0</emphasis> otherwise.
+</para></dd></dl>
+
+<para>If a file descriptor is associated with a terminal, you can get its
+associated file name using the <code>ttyname</code> function.  See also the
+<code>ctermid</code> function, described in <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Identifying-the-Terminal">Identifying the Controlling Terminal</a>.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-ttyname"><span class="category">Function: </span><span><emphasis>char *</emphasis> <strong>ttyname</strong> <emphasis>(int <var>filedes</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-ttyname" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Unsafe race:ttyname
+| AS-Unsafe heap lock
+| AC-Unsafe lock fd mem
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>If the file descriptor <var>filedes</var> is associated with a terminal
+device, the <code>ttyname</code> function returns a pointer to a
+statically-allocated, null-terminated string containing the file name of
+the terminal file.  The value is a null pointer if the file descriptor
+isn’t associated with a terminal, or the file name cannot be determined.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-ttyname_005fr"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>ttyname_r</strong> <emphasis>(int <var>filedes</var>, char *<var>buf</var>, size_t <var>len</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-ttyname_005fr" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Unsafe heap
+| AC-Unsafe mem fd
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>ttyname_r</code> function is similar to the <code>ttyname</code> function
+except that it places its result into the user-specified buffer starting
+at <var>buf</var> with length <var>len</var>.
+</para>
+<para>The normal return value from <code>ttyname_r</code> is <em class="math">0</emphasis>.  Otherwise an
+error number is returned to indicate the error.  The following
+<code>errno</code> error conditions are defined for this function:
+</para>
+<dl compact="compact">
+<dt><span><code>EBADF</code></span></dt>
+<dd><para>The <var>filedes</var> argument is not a valid file descriptor.
+</para>
+</dd>
+<dt><span><code>ENOTTY</code></span></dt>
+<dd><para>The <var>filedes</var> is not associated with a terminal.
+</para>
+</dd>
+<dt><span><code>ERANGE</code></span></dt>
+<dd><para>The buffer length <var>len</var> is too small to store the string to be
+returned.
+</para>
+</dd>
+<dt><span><code>ENODEV</code></span></dt>
+<dd><para>The <var>filedes</var> is associated with a terminal device that is a slave
+pseudo-terminal, but the file name associated with that device could
+not be determined.  This is a GNU extension.
+</para></dd>
+</dl>
+</dd></dl>
+
+<hr>
+</div>
+<sect xml:id="glibc-I_002fO-Queues">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Canonical-or-Not" accesskey="n" rel="next">Two Styles of Input: Canonical or Not</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Is-It-a-Terminal" accesskey="p" rel="prev">Identifying Terminals</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Low_002dLevel-Terminal-Interface" accesskey="u" rel="up">Low-Level Terminal Interface</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-I_002fO-Queues-1"></span><h3 class="section">17.2 I/O Queues</title>
+
+<para>Many of the remaining functions in this section refer to the input and
+output queues of a terminal device.  These queues implement a form of
+buffering <emphasis>within the kernel</emphasis> independent of the buffering
+implemented by I/O streams (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#I_002fO-on-Streams">Input/Output on Streams</a>).
+</para>
+<span xml:id="glibc-index-terminal-input-queue"></span>
+<span xml:id="glibc-index-typeahead-buffer"></span>
+<para>The <emphasis>terminal input queue</emphasis> is also sometimes referred to as its
+<emphasis>typeahead buffer</emphasis>.  It holds the characters that have been received
+from the terminal but not yet read by any process.
+</para>
+<para>The size of the input queue is described by the <code>MAX_INPUT</code> and
+<code><span class="nolinebreak">_POSIX_MAX_INPUT</span></code> parameters; see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Limits-for-Files">Limits on File System Capacity</a>.  You
+are guaranteed a queue size of at least <code>MAX_INPUT</code>, but the queue
+might be larger, and might even dynamically change size.  If input flow
+control is enabled by setting the <code>IXOFF</code> input mode bit
+(see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Input-Modes">Input Modes</a>), the terminal driver transmits STOP and START
+characters to the terminal when necessary to prevent the queue from
+overflowing.  Otherwise, input may be lost if it comes in too fast from
+the terminal.  In canonical mode, all input stays in the queue until a
+newline character is received, so the terminal input queue can fill up
+when you type a very long line.  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Canonical-or-Not">Two Styles of Input: Canonical or Not</a>.
+</para>
+<span xml:id="glibc-index-terminal-output-queue"></span>
+<para>The <emphasis>terminal output queue</emphasis> is like the input queue, but for output;
+it contains characters that have been written by processes, but not yet
+transmitted to the terminal.  If output flow control is enabled by
+setting the <code>IXON</code> input mode bit (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Input-Modes">Input Modes</a>), the
+terminal driver obeys START and STOP characters sent by the terminal to
+stop and restart transmission of output.
+</para>
+<para><emphasis>Clearing</emphasis> the terminal input queue means discarding any characters
+that have been received but not yet read.  Similarly, clearing the
+terminal output queue means discarding any characters that have been
+written but not yet transmitted.
+</para>
+<hr>
+</div>
+<sect xml:id="glibc-Canonical-or-Not">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Terminal-Modes" accesskey="n" rel="next">Terminal Modes</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#I_002fO-Queues" accesskey="p" rel="prev">I/O Queues</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Low_002dLevel-Terminal-Interface" accesskey="u" rel="up">Low-Level Terminal Interface</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Two-Styles-of-Input_003a-Canonical-or-Not"></span><h3 class="section">17.3 Two Styles of Input: Canonical or Not</title>
+
+<para>POSIX systems support two basic modes of input: canonical and
+noncanonical.
+</para>
+<span xml:id="glibc-index-canonical-input-processing"></span>
+<para>In <emphasis>canonical input processing</emphasis> mode, terminal input is processed in
+lines terminated by newline (<code>'\n'</code>), EOF, or EOL characters.  No
+input can be read until an entire line has been typed by the user, and
+the <code>read</code> function (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#I_002fO-Primitives">Input and Output Primitives</a>) returns at most a
+single line of input, no matter how many bytes are requested.
+</para>
+<para>In canonical input mode, the operating system provides input editing
+facilities: some characters are interpreted specially to perform editing
+operations within the current line of text, such as ERASE and KILL.
+See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Editing-Characters">Characters for Input Editing</a>.
+</para>
+<para>The constants <code>_POSIX_MAX_CANON</code> and <code>MAX_CANON</code> parameterize
+the maximum number of bytes which may appear in a single line of
+canonical input.  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Limits-for-Files">Limits on File System Capacity</a>.  You are guaranteed a maximum
+line length of at least <code>MAX_CANON</code> bytes, but the maximum might be
+larger, and might even dynamically change size.
+</para>
+<span xml:id="glibc-index-noncanonical-input-processing"></span>
+<para>In <emphasis>noncanonical input processing</emphasis> mode, characters are not grouped
+into lines, and ERASE and KILL processing is not performed.  The
+granularity with which bytes are read in noncanonical input mode is
+controlled by the MIN and TIME settings.  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Noncanonical-Input">Noncanonical Input</a>.
+</para>
+<para>Most programs use canonical input mode, because this gives the user a
+way to edit input line by line.  The usual reason to use noncanonical
+mode is when the program accepts single-character commands or provides
+its own editing facilities.
+</para>
+<para>The choice of canonical or noncanonical input is controlled by the
+<code>ICANON</code> flag in the <code>c_lflag</code> member of <code>struct termios</code>.
+See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Local-Modes">Local Modes</a>.
+</para>
+<hr>
+</div>
+<sect xml:id="glibc-Terminal-Modes">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#BSD-Terminal-Modes" accesskey="n" rel="next">BSD Terminal Modes</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Canonical-or-Not" accesskey="p" rel="prev">Two Styles of Input: Canonical or Not</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Low_002dLevel-Terminal-Interface" accesskey="u" rel="up">Low-Level Terminal Interface</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Terminal-Modes-1"></span><h3 class="section">17.4 Terminal Modes</title>
+
+<span xml:id="glibc-index-termios_002eh-1"></span>
+<para>This section describes the various terminal attributes that control how
+input and output are done.  The functions, data structures, and symbolic
+constants are all declared in the header file <filename>termios.h</filename>.
+</para>
+<para>Don’t confuse terminal attributes with file attributes.  A device special
+file which is associated with a terminal has file attributes as described
+in <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#File-Attributes">File Attributes</a>.  These are unrelated to the attributes of the
+terminal device itself, which are discussed in this section.
+</para>
+
+<ul class="section-toc">
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Mode-Data-Types" accesskey="1">Terminal Mode Data Types</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Mode-Functions" accesskey="2">Terminal Mode Functions</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Setting-Modes" accesskey="3">Setting Terminal Modes Properly</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Input-Modes" accesskey="4">Input Modes</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Output-Modes" accesskey="5">Output Modes</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Control-Modes" accesskey="6">Control Modes</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Local-Modes" accesskey="7">Local Modes</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Line-Speed" accesskey="8">Line Speed</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Special-Characters" accesskey="9">Special Characters</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Noncanonical-Input">Noncanonical Input</a></li>
+</ul>
+<hr>
+<div class="subsection" xml:id="glibc-Mode-Data-Types">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Mode-Functions" accesskey="n" rel="next">Terminal Mode Functions</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Terminal-Modes" accesskey="u" rel="up">Terminal Modes</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Terminal-Mode-Data-Types"></span><h4 class="subsection">17.4.1 Terminal Mode Data Types</title>
+<span xml:id="glibc-index-terminal-mode-data-types"></span>
+
+<para>The entire collection of attributes of a terminal is stored in a
+structure of type <code>struct termios</code>.  This structure is used
+with the functions <code>tcgetattr</code> and <code>tcsetattr</code> to read
+and set the attributes.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-struct-termios"><span class="category">Data Type: </span><span><strong>struct termios</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-struct-termios" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>A <code>struct termios</code> records all the I/O attributes of a terminal.  The
+structure includes at least the following members:
+</para>
+<dl compact="compact">
+<dt><span><code>tcflag_t c_iflag</code></span></dt>
+<dd><para>A bit mask specifying flags for input modes; see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Input-Modes">Input Modes</a>.
+</para>
+</dd>
+<dt><span><code>tcflag_t c_oflag</code></span></dt>
+<dd><para>A bit mask specifying flags for output modes; see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Output-Modes">Output Modes</a>.
+</para>
+</dd>
+<dt><span><code>tcflag_t c_cflag</code></span></dt>
+<dd><para>A bit mask specifying flags for control modes; see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Control-Modes">Control Modes</a>.
+</para>
+</dd>
+<dt><span><code>tcflag_t c_lflag</code></span></dt>
+<dd><para>A bit mask specifying flags for local modes; see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Local-Modes">Local Modes</a>.
+</para>
+</dd>
+<dt><span><code>cc_t c_cc[NCCS]</code></span></dt>
+<dd><para>An array specifying which characters are associated with various
+control functions; see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Special-Characters">Special Characters</a>.
+</para></dd>
+</dl>
+
+<para>The <code>struct termios</code> structure also contains members which
+encode input and output transmission speeds, but the representation is
+not specified.  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Line-Speed">Line Speed</a>, for how to examine and store the
+speed values.
+</para></dd></dl>
+
+<para>The following sections describe the details of the members of the
+<code>struct termios</code> structure.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-tcflag_005ft"><span class="category">Data Type: </span><span><strong>tcflag_t</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-tcflag_005ft" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>This is an unsigned integer type used to represent the various
+bit masks for terminal flags.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-cc_005ft"><span class="category">Data Type: </span><span><strong>cc_t</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-cc_005ft" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>This is an unsigned integer type used to represent characters associated
+with various terminal control functions.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-NCCS"><span class="category">Macro: </span><span><emphasis>int</emphasis> <strong>NCCS</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-NCCS" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>The value of this macro is the number of elements in the <code>c_cc</code>
+array.
+</para></dd></dl>
+
+<hr>
+</div>
+<div class="subsection" xml:id="glibc-Mode-Functions">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Setting-Modes" accesskey="n" rel="next">Setting Terminal Modes Properly</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Mode-Data-Types" accesskey="p" rel="prev">Terminal Mode Data Types</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Terminal-Modes" accesskey="u" rel="up">Terminal Modes</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Terminal-Mode-Functions"></span><h4 class="subsection">17.4.2 Terminal Mode Functions</title>
+<span xml:id="glibc-index-terminal-mode-functions"></span>
+
+<dl class="def">
+<dt xml:id="glibc-index-tcgetattr"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>tcgetattr</strong> <emphasis>(int <var>filedes</var>, struct termios *<var>termios-p</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-tcgetattr" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This function is used to examine the attributes of the terminal
+device with file descriptor <var>filedes</var>.  The attributes are returned
+in the structure that <var>termios-p</var> points to.
+</para>
+<para>If successful, <code>tcgetattr</code> returns <em class="math">0</emphasis>.  A return value of <em class="math">-1</emphasis>
+indicates an error.  The following <code>errno</code> error conditions are
+defined for this function:
+</para>
+<dl compact="compact">
+<dt><span><code>EBADF</code></span></dt>
+<dd><para>The <var>filedes</var> argument is not a valid file descriptor.
+</para>
+</dd>
+<dt><span><code>ENOTTY</code></span></dt>
+<dd><para>The <var>filedes</var> is not associated with a terminal.
+</para></dd>
+</dl>
+</dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-tcsetattr"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>tcsetattr</strong> <emphasis>(int <var>filedes</var>, int <var>when</var>, const struct termios *<var>termios-p</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-tcsetattr" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This function sets the attributes of the terminal device with file
+descriptor <var>filedes</var>.  The new attributes are taken from the
+structure that <var>termios-p</var> points to.
+</para>
+<para>The <var>when</var> argument specifies how to deal with input and output
+already queued.  It can be one of the following values:
+</para>
+<dl compact="compact">
+<dt xml:id="glibc-index-TCSANOW"><span><code>TCSANOW</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-TCSANOW" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Make the change immediately.
+</para>
+</dd>
+<dt xml:id="glibc-index-TCSADRAIN"><span><code>TCSADRAIN</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-TCSADRAIN" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Make the change after waiting until all queued output has been written.
+You should usually use this option when changing parameters that affect
+output.
+</para>
+</dd>
+<dt xml:id="glibc-index-TCSAFLUSH"><span><code>TCSAFLUSH</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-TCSAFLUSH" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>This is like <code>TCSADRAIN</code>, but also discards any queued input.
+</para>
+</dd>
+<dt xml:id="glibc-index-TCSASOFT"><span><code>TCSASOFT</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-TCSASOFT" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>This is a flag bit that you can add to any of the above alternatives.
+Its meaning is to inhibit alteration of the state of the terminal
+hardware.  It is a BSD extension; it is only supported on BSD systems
+and GNU/Hurd systems.
+</para>
+<para>Using <code>TCSASOFT</code> is exactly the same as setting the <code>CIGNORE</code>
+bit in the <code>c_cflag</code> member of the structure <var>termios-p</var> points
+to.  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Control-Modes">Control Modes</a>, for a description of <code>CIGNORE</code>.
+</para></dd>
+</dl>
+
+<para>If this function is called from a background process on its controlling
+terminal, normally all processes in the process group are sent a
+<code>SIGTTOU</code> signal, in the same way as if the process were trying to
+write to the terminal.  The exception is if the calling process itself
+is ignoring or blocking <code>SIGTTOU</code> signals, in which case the
+operation is performed and no signal is sent.  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Job-Control">Job Control</a>.
+</para>
+<para>If successful, <code>tcsetattr</code> returns <em class="math">0</emphasis>.  A return value of
+<em class="math">-1</emphasis> indicates an error.  The following <code>errno</code> error
+conditions are defined for this function:
+</para>
+<dl compact="compact">
+<dt><span><code>EBADF</code></span></dt>
+<dd><para>The <var>filedes</var> argument is not a valid file descriptor.
+</para>
+</dd>
+<dt><span><code>ENOTTY</code></span></dt>
+<dd><para>The <var>filedes</var> is not associated with a terminal.
+</para>
+</dd>
+<dt><span><code>EINVAL</code></span></dt>
+<dd><para>Either the value of the <code>when</code> argument is not valid, or there is
+something wrong with the data in the <var>termios-p</var> argument.
+</para></dd>
+</dl>
+</dd></dl>
+
+<para>Although <code>tcgetattr</code> and <code>tcsetattr</code> specify the terminal
+device with a file descriptor, the attributes are those of the terminal
+device itself and not of the file descriptor.  This means that the
+effects of changing terminal attributes are persistent; if another
+process opens the terminal file later on, it will see the changed
+attributes even though it doesn’t have anything to do with the open file
+descriptor you originally specified in changing the attributes.
+</para>
+<para>Similarly, if a single process has multiple or duplicated file
+descriptors for the same terminal device, changing the terminal
+attributes affects input and output to all of these file
+descriptors.  This means, for example, that you can’t open one file
+descriptor or stream to read from a terminal in the normal
+line-buffered, echoed mode; and simultaneously have another file
+descriptor for the same terminal that you use to read from it in
+single-character, non-echoed mode.  Instead, you have to explicitly
+switch the terminal back and forth between the two modes.
+</para>
+<hr>
+</div>
+<div class="subsection" xml:id="glibc-Setting-Modes">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Input-Modes" accesskey="n" rel="next">Input Modes</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Mode-Functions" accesskey="p" rel="prev">Terminal Mode Functions</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Terminal-Modes" accesskey="u" rel="up">Terminal Modes</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Setting-Terminal-Modes-Properly"></span><h4 class="subsection">17.4.3 Setting Terminal Modes Properly</title>
+
+<para>When you set terminal modes, you should call <code>tcgetattr</code> first to
+get the current modes of the particular terminal device, modify only
+those modes that you are really interested in, and store the result with
+<code>tcsetattr</code>.
+</para>
+<para>It’s a bad idea to simply initialize a <code>struct termios</code> structure
+to a chosen set of attributes and pass it directly to <code>tcsetattr</code>.
+Your program may be run years from now, on systems that support members
+not documented in this manual.  The way to avoid setting these members
+to unreasonable values is to avoid changing them.
+</para>
+<para>What’s more, different terminal devices may require different mode
+settings in order to function properly.  So you should avoid blindly
+copying attributes from one terminal device to another.
+</para>
+<para>When a member contains a collection of independent flags, as the
+<code>c_iflag</code>, <code>c_oflag</code> and <code>c_cflag</code> members do, even
+setting the entire member is a bad idea, because particular operating
+systems have their own flags.  Instead, you should start with the
+current value of the member and alter only the flags whose values matter
+in your program, leaving any other flags unchanged.
+</para>
+<para>Here is an example of how to set one flag (<code>ISTRIP</code>) in the
+<code>struct termios</code> structure while properly preserving all the other
+data in the structure:
+</para>
+<div class="example">
+<pre class="example">int
+set_istrip (int desc, int value)
+{
+  struct termios settings;
+  int result;
+</pre><pre class="example">
+</pre><pre class="example">  result = tcgetattr (desc, &amp;settings);
+  if (result &lt; 0)
+    {
+      perror ("error in tcgetattr");
+      return 0;
+    }
+</pre><pre class="example">  settings.c_iflag &amp;= ~ISTRIP;
+  if (value)
+    settings.c_iflag |= ISTRIP;
+</pre><pre class="example">  result = tcsetattr (desc, TCSANOW, &amp;settings);
+  if (result &lt; 0)
+    {
+      perror ("error in tcsetattr");
+      return 0;
+   }
+  return 1;
+}
+</pre></div>
+
+<hr>
+</div>
+<div class="subsection" xml:id="glibc-Input-Modes">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Output-Modes" accesskey="n" rel="next">Output Modes</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Setting-Modes" accesskey="p" rel="prev">Setting Terminal Modes Properly</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Terminal-Modes" accesskey="u" rel="up">Terminal Modes</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Input-Modes-1"></span><h4 class="subsection">17.4.4 Input Modes</title>
+
+<para>This section describes the terminal attribute flags that control
+fairly low-level aspects of input processing: handling of parity errors,
+break signals, flow control, and <tt class="key">RET</tt> and <tt class="key">LFD</tt> characters.
+</para>
+<para>All of these flags are bits in the <code>c_iflag</code> member of the
+<code>struct termios</code> structure.  The member is an integer, and you
+change flags using the operators <code>&amp;</code>, <code>|</code> and <code>^</code>.  Don’t
+try to specify the entire value for <code>c_iflag</code>—instead, change
+only specific flags and leave the rest untouched (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Setting-Modes">Setting Terminal Modes Properly</a>).
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-INPCK"><span class="category">Macro: </span><span><emphasis>tcflag_t</emphasis> <strong>INPCK</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-INPCK" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<span xml:id="glibc-index-parity-checking"></span>
+<para>If this bit is set, input parity checking is enabled.  If it is not set,
+no checking at all is done for parity errors on input; the
+characters are simply passed through to the application.
+</para>
+<para>Parity checking on input processing is independent of whether parity
+detection and generation on the underlying terminal hardware is enabled;
+see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Control-Modes">Control Modes</a>.  For example, you could clear the <code>INPCK</code>
+input mode flag and set the <code>PARENB</code> control mode flag to ignore
+parity errors on input, but still generate parity on output.
+</para>
+<para>If this bit is set, what happens when a parity error is detected depends
+on whether the <code>IGNPAR</code> or <code>PARMRK</code> bits are set.  If neither
+of these bits are set, a byte with a parity error is passed to the
+application as a <code>'\0'</code> character.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-IGNPAR"><span class="category">Macro: </span><span><emphasis>tcflag_t</emphasis> <strong>IGNPAR</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-IGNPAR" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>If this bit is set, any byte with a framing or parity error is ignored.
+This is only useful if <code>INPCK</code> is also set.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-PARMRK"><span class="category">Macro: </span><span><emphasis>tcflag_t</emphasis> <strong>PARMRK</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-PARMRK" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>If this bit is set, input bytes with parity or framing errors are marked
+when passed to the program.  This bit is meaningful only when
+<code>INPCK</code> is set and <code>IGNPAR</code> is not set.
+</para>
+<para>The way erroneous bytes are marked is with two preceding bytes,
+<code>377</code> and <code>0</code>.  Thus, the program actually reads three bytes
+for one erroneous byte received from the terminal.
+</para>
+<para>If a valid byte has the value <code>0377</code>, and <code>ISTRIP</code> (see below)
+is not set, the program might confuse it with the prefix that marks a
+parity error.  So a valid byte <code>0377</code> is passed to the program as
+two bytes, <code>0377</code> <code>0377</code>, in this case.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-ISTRIP"><span class="category">Macro: </span><span><emphasis>tcflag_t</emphasis> <strong>ISTRIP</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-ISTRIP" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>If this bit is set, valid input bytes are stripped to seven bits;
+otherwise, all eight bits are available for programs to read.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-IGNBRK"><span class="category">Macro: </span><span><emphasis>tcflag_t</emphasis> <strong>IGNBRK</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-IGNBRK" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>If this bit is set, break conditions are ignored.
+</para>
+<span xml:id="glibc-index-break-condition_002c-detecting"></span>
+<para>A <emphasis>break condition</emphasis> is defined in the context of asynchronous
+serial data transmission as a series of zero-value bits longer than a
+single byte.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-BRKINT"><span class="category">Macro: </span><span><emphasis>tcflag_t</emphasis> <strong>BRKINT</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-BRKINT" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>If this bit is set and <code>IGNBRK</code> is not set, a break condition
+clears the terminal input and output queues and raises a <code>SIGINT</code>
+signal for the foreground process group associated with the terminal.
+</para>
+<para>If neither <code>BRKINT</code> nor <code>IGNBRK</code> are set, a break condition is
+passed to the application as a single <code>'\0'</code> character if
+<code>PARMRK</code> is not set, or otherwise as a three-character sequence
+<code>'\377'</code>, <code>'\0'</code>, <code>'\0'</code>.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-IGNCR"><span class="category">Macro: </span><span><emphasis>tcflag_t</emphasis> <strong>IGNCR</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-IGNCR" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>If this bit is set, carriage return characters (<code>'\r'</code>) are
+discarded on input.  Discarding carriage return may be useful on
+terminals that send both carriage return and linefeed when you type the
+<tt class="key">RET</tt> key.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-ICRNL"><span class="category">Macro: </span><span><emphasis>tcflag_t</emphasis> <strong>ICRNL</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-ICRNL" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>If this bit is set and <code>IGNCR</code> is not set, carriage return characters
+(<code>'\r'</code>) received as input are passed to the application as newline
+characters (<code>'\n'</code>).
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-INLCR"><span class="category">Macro: </span><span><emphasis>tcflag_t</emphasis> <strong>INLCR</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-INLCR" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>If this bit is set, newline characters (<code>'\n'</code>) received as input
+are passed to the application as carriage return characters (<code>'\r'</code>).
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-IXOFF"><span class="category">Macro: </span><span><emphasis>tcflag_t</emphasis> <strong>IXOFF</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-IXOFF" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>If this bit is set, start/stop control on input is enabled.  In other
+words, the computer sends STOP and START characters as necessary to
+prevent input from coming in faster than programs are reading it.  The
+idea is that the actual terminal hardware that is generating the input
+data responds to a STOP character by suspending transmission, and to a
+START character by resuming transmission.  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Start_002fStop-Characters">Special Characters for Flow Control</a>.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-IXON"><span class="category">Macro: </span><span><emphasis>tcflag_t</emphasis> <strong>IXON</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-IXON" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>If this bit is set, start/stop control on output is enabled.  In other
+words, if the computer receives a STOP character, it suspends output
+until a START character is received.  In this case, the STOP and START
+characters are never passed to the application program.  If this bit is
+not set, then START and STOP can be read as ordinary characters.
+See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Start_002fStop-Characters">Special Characters for Flow Control</a>.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-IXANY"><span class="category">Macro: </span><span><emphasis>tcflag_t</emphasis> <strong>IXANY</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-IXANY" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>If this bit is set, any input character restarts output when output has
+been suspended with the STOP character.  Otherwise, only the START
+character restarts output.
+</para>
+<para>This is a BSD extension; it exists only on BSD systems and
+GNU/Linux and GNU/Hurd systems.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-IMAXBEL"><span class="category">Macro: </span><span><emphasis>tcflag_t</emphasis> <strong>IMAXBEL</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-IMAXBEL" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>If this bit is set, then filling up the terminal input buffer sends a
+BEL character (code <code>007</code>) to the terminal to ring the bell.
+</para>
+<para>This is a BSD extension.
+</para></dd></dl>
+
+<hr>
+</div>
+<div class="subsection" xml:id="glibc-Output-Modes">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Control-Modes" accesskey="n" rel="next">Control Modes</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Input-Modes" accesskey="p" rel="prev">Input Modes</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Terminal-Modes" accesskey="u" rel="up">Terminal Modes</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Output-Modes-1"></span><h4 class="subsection">17.4.5 Output Modes</title>
+
+<para>This section describes the terminal flags and fields that control how
+output characters are translated and padded for display.  All of these
+are contained in the <code>c_oflag</code> member of the <code>struct&nbsp;termios</code>
+structure.
+</para>
+<para>The <code>c_oflag</code> member itself is an integer, and you change the flags
+and fields using the operators <code>&amp;</code>, <code>|</code>, and <code>^</code>.  Don’t
+try to specify the entire value for <code>c_oflag</code>—instead, change
+only specific flags and leave the rest untouched (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Setting-Modes">Setting Terminal Modes Properly</a>).
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-OPOST"><span class="category">Macro: </span><span><emphasis>tcflag_t</emphasis> <strong>OPOST</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-OPOST" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>If this bit is set, output data is processed in some unspecified way so
+that it is displayed appropriately on the terminal device.  This
+typically includes mapping newline characters (<code>'\n'</code>) onto
+carriage return and linefeed pairs.
+</para>
+<para>If this bit isn’t set, the characters are transmitted as-is.
+</para></dd></dl>
+
+<para>The following three bits are effective only if <code>OPOST</code> is set.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-ONLCR"><span class="category">Macro: </span><span><emphasis>tcflag_t</emphasis> <strong>ONLCR</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-ONLCR" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>If this bit is set, convert the newline character on output into a pair
+of characters, carriage return followed by linefeed.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-OXTABS"><span class="category">Macro: </span><span><emphasis>tcflag_t</emphasis> <strong>OXTABS</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-OXTABS" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>If this bit is set, convert tab characters on output into the appropriate
+number of spaces to emulate a tab stop every eight columns.  This bit
+exists only on BSD systems and GNU/Hurd systems; on
+GNU/Linux systems it is available as <code>XTABS</code>.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-ONOEOT"><span class="category">Macro: </span><span><emphasis>tcflag_t</emphasis> <strong>ONOEOT</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-ONOEOT" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>If this bit is set, discard <kbd>C-d</kbd> characters (code <code>004</code>) on
+output.  These characters cause many dial-up terminals to disconnect.
+This bit exists only on BSD systems and GNU/Hurd systems.
+</para></dd></dl>
+
+<hr>
+</div>
+<div class="subsection" xml:id="glibc-Control-Modes">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Local-Modes" accesskey="n" rel="next">Local Modes</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Output-Modes" accesskey="p" rel="prev">Output Modes</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Terminal-Modes" accesskey="u" rel="up">Terminal Modes</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Control-Modes-1"></span><h4 class="subsection">17.4.6 Control Modes</title>
+
+<para>This section describes the terminal flags and fields that control
+parameters usually associated with asynchronous serial data
+transmission.  These flags may not make sense for other kinds of
+terminal ports (such as a network connection pseudo-terminal).  All of
+these are contained in the <code>c_cflag</code> member of the <code>struct
+termios</code> structure.
+</para>
+<para>The <code>c_cflag</code> member itself is an integer, and you change the flags
+and fields using the operators <code>&amp;</code>, <code>|</code>, and <code>^</code>.  Don’t
+try to specify the entire value for <code>c_cflag</code>—instead, change
+only specific flags and leave the rest untouched (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Setting-Modes">Setting Terminal Modes Properly</a>).
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-CLOCAL"><span class="category">Macro: </span><span><emphasis>tcflag_t</emphasis> <strong>CLOCAL</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-CLOCAL" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>If this bit is set, it indicates that the terminal is connected
+“locally” and that the modem status lines (such as carrier detect)
+should be ignored.
+<span xml:id="glibc-index-modem-status-lines"></span>
+<span xml:id="glibc-index-carrier-detect"></span>
+</para>
+<para>On many systems if this bit is not set and you call <code>open</code> without
+the <code>O_NONBLOCK</code> flag set, <code>open</code> blocks until a modem
+connection is established.
+</para>
+<para>If this bit is not set and a modem disconnect is detected, a
+<code>SIGHUP</code> signal is sent to the controlling process group for the
+terminal (if it has one).  Normally, this causes the process to exit;
+see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Signal-Handling">Signal Handling</a>.  Reading from the terminal after a disconnect
+causes an end-of-file condition, and writing causes an <code>EIO</code> error
+to be returned.  The terminal device must be closed and reopened to
+clear the condition.
+<span xml:id="glibc-index-modem-disconnect"></span>
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-HUPCL"><span class="category">Macro: </span><span><emphasis>tcflag_t</emphasis> <strong>HUPCL</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-HUPCL" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>If this bit is set, a modem disconnect is generated when all processes
+that have the terminal device open have either closed the file or exited.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-CREAD"><span class="category">Macro: </span><span><emphasis>tcflag_t</emphasis> <strong>CREAD</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-CREAD" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>If this bit is set, input can be read from the terminal.  Otherwise,
+input is discarded when it arrives.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-CSTOPB"><span class="category">Macro: </span><span><emphasis>tcflag_t</emphasis> <strong>CSTOPB</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-CSTOPB" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>If this bit is set, two stop bits are used.  Otherwise, only one stop bit
+is used.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-PARENB"><span class="category">Macro: </span><span><emphasis>tcflag_t</emphasis> <strong>PARENB</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-PARENB" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>If this bit is set, generation and detection of a parity bit are enabled.
+See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Input-Modes">Input Modes</a>, for information on how input parity errors are handled.
+</para>
+<para>If this bit is not set, no parity bit is added to output characters, and
+input characters are not checked for correct parity.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-PARODD"><span class="category">Macro: </span><span><emphasis>tcflag_t</emphasis> <strong>PARODD</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-PARODD" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>This bit is only useful if <code>PARENB</code> is set.  If <code>PARODD</code> is set,
+odd parity is used, otherwise even parity is used.
+</para></dd></dl>
+
+<para>The control mode flags also includes a field for the number of bits per
+character.  You can use the <code>CSIZE</code> macro as a mask to extract the
+value, like this: <code>settings.c_cflag &amp; CSIZE</code>.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-CSIZE"><span class="category">Macro: </span><span><emphasis>tcflag_t</emphasis> <strong>CSIZE</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-CSIZE" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>This is a mask for the number of bits per character.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-CS5"><span class="category">Macro: </span><span><emphasis>tcflag_t</emphasis> <strong>CS5</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-CS5" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>This specifies five bits per byte.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-CS6"><span class="category">Macro: </span><span><emphasis>tcflag_t</emphasis> <strong>CS6</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-CS6" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>This specifies six bits per byte.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-CS7"><span class="category">Macro: </span><span><emphasis>tcflag_t</emphasis> <strong>CS7</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-CS7" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>This specifies seven bits per byte.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-CS8"><span class="category">Macro: </span><span><emphasis>tcflag_t</emphasis> <strong>CS8</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-CS8" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>This specifies eight bits per byte.
+</para></dd></dl>
+
+<para>The following four bits are BSD extensions; these exist only on BSD
+systems and GNU/Hurd systems.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-CCTS_005fOFLOW"><span class="category">Macro: </span><span><emphasis>tcflag_t</emphasis> <strong>CCTS_OFLOW</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-CCTS_005fOFLOW" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>If this bit is set, enable flow control of output based on the CTS wire
+(RS232 protocol).
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-CRTS_005fIFLOW"><span class="category">Macro: </span><span><emphasis>tcflag_t</emphasis> <strong>CRTS_IFLOW</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-CRTS_005fIFLOW" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>If this bit is set, enable flow control of input based on the RTS wire
+(RS232 protocol).
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-MDMBUF"><span class="category">Macro: </span><span><emphasis>tcflag_t</emphasis> <strong>MDMBUF</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-MDMBUF" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>If this bit is set, enable carrier-based flow control of output.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-CIGNORE"><span class="category">Macro: </span><span><emphasis>tcflag_t</emphasis> <strong>CIGNORE</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-CIGNORE" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>If this bit is set, it says to ignore the control modes and line speed
+values entirely.  This is only meaningful in a call to <code>tcsetattr</code>.
+</para>
+<para>The <code>c_cflag</code> member and the line speed values returned by
+<code>cfgetispeed</code> and <code>cfgetospeed</code> will be unaffected by the
+call.  <code>CIGNORE</code> is useful if you want to set all the software
+modes in the other members, but leave the hardware details in
+<code>c_cflag</code> unchanged.  (This is how the <code>TCSASOFT</code> flag to
+<code>tcsettattr</code> works.)
+</para>
+<para>This bit is never set in the structure filled in by <code>tcgetattr</code>.
+</para></dd></dl>
+
+<hr>
+</div>
+<div class="subsection" xml:id="glibc-Local-Modes">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Line-Speed" accesskey="n" rel="next">Line Speed</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Control-Modes" accesskey="p" rel="prev">Control Modes</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Terminal-Modes" accesskey="u" rel="up">Terminal Modes</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Local-Modes-1"></span><h4 class="subsection">17.4.7 Local Modes</title>
+
+<para>This section describes the flags for the <code>c_lflag</code> member of the
+<code>struct termios</code> structure.  These flags generally control
+higher-level aspects of input processing than the input modes flags
+described in <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Input-Modes">Input Modes</a>, such as echoing, signals, and the choice
+of canonical or noncanonical input.
+</para>
+<para>The <code>c_lflag</code> member itself is an integer, and you change the flags
+and fields using the operators <code>&amp;</code>, <code>|</code>, and <code>^</code>.  Don’t
+try to specify the entire value for <code>c_lflag</code>—instead, change
+only specific flags and leave the rest untouched (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Setting-Modes">Setting Terminal Modes Properly</a>).
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-ICANON"><span class="category">Macro: </span><span><emphasis>tcflag_t</emphasis> <strong>ICANON</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-ICANON" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>This bit, if set, enables canonical input processing mode.  Otherwise,
+input is processed in noncanonical mode.  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Canonical-or-Not">Two Styles of Input: Canonical or Not</a>.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-ECHO"><span class="category">Macro: </span><span><emphasis>tcflag_t</emphasis> <strong>ECHO</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-ECHO" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>If this bit is set, echoing of input characters back to the terminal
+is enabled.
+<span xml:id="glibc-index-echo-of-terminal-input"></span>
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-ECHOE"><span class="category">Macro: </span><span><emphasis>tcflag_t</emphasis> <strong>ECHOE</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-ECHOE" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>If this bit is set, echoing indicates erasure of input with the ERASE
+character by erasing the last character in the current line from the
+screen.  Otherwise, the character erased is re-echoed to show what has
+happened (suitable for a printing terminal).
+</para>
+<para>This bit only controls the display behavior; the <code>ICANON</code> bit by
+itself controls actual recognition of the ERASE character and erasure of
+input, without which <code>ECHOE</code> is simply irrelevant.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-ECHOPRT"><span class="category">Macro: </span><span><emphasis>tcflag_t</emphasis> <strong>ECHOPRT</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-ECHOPRT" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>This bit, like <code>ECHOE</code>, enables display of the ERASE character in
+a way that is geared to a hardcopy terminal.  When you type the ERASE
+character, a ‘<filename>\</filename>’ character is printed followed by the first
+character erased.  Typing the ERASE character again just prints the next
+character erased.  Then, the next time you type a normal character, a
+‘<filename>/</filename>’ character is printed before the character echoes.
+</para>
+<para>This is a BSD extension, and exists only in BSD systems and
+GNU/Linux and GNU/Hurd systems.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-ECHOK"><span class="category">Macro: </span><span><emphasis>tcflag_t</emphasis> <strong>ECHOK</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-ECHOK" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>This bit enables special display of the KILL character by moving to a
+new line after echoing the KILL character normally.  The behavior of
+<code>ECHOKE</code> (below) is nicer to look at.
+</para>
+<para>If this bit is not set, the KILL character echoes just as it would if it
+were not the KILL character.  Then it is up to the user to remember that
+the KILL character has erased the preceding input; there is no
+indication of this on the screen.
+</para>
+<para>This bit only controls the display behavior; the <code>ICANON</code> bit by
+itself controls actual recognition of the KILL character and erasure of
+input, without which <code>ECHOK</code> is simply irrelevant.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-ECHOKE"><span class="category">Macro: </span><span><emphasis>tcflag_t</emphasis> <strong>ECHOKE</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-ECHOKE" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>This bit is similar to <code>ECHOK</code>.  It enables special display of the
+KILL character by erasing on the screen the entire line that has been
+killed.  This is a BSD extension, and exists only in BSD systems and
+GNU/Linux and GNU/Hurd systems.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-ECHONL"><span class="category">Macro: </span><span><emphasis>tcflag_t</emphasis> <strong>ECHONL</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-ECHONL" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>If this bit is set and the <code>ICANON</code> bit is also set, then the
+newline (<code>'\n'</code>) character is echoed even if the <code>ECHO</code> bit
+is not set.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-ECHOCTL"><span class="category">Macro: </span><span><emphasis>tcflag_t</emphasis> <strong>ECHOCTL</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-ECHOCTL" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>If this bit is set and the <code>ECHO</code> bit is also set, echo control
+characters with ‘<filename>^</filename>’ followed by the corresponding text character.
+Thus, control-A echoes as ‘<filename>^A</filename>’.  This is usually the preferred mode
+for interactive input, because echoing a control character back to the
+terminal could have some undesired effect on the terminal.
+</para>
+<para>This is a BSD extension, and exists only in BSD systems and
+GNU/Linux and GNU/Hurd systems.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-ISIG"><span class="category">Macro: </span><span><emphasis>tcflag_t</emphasis> <strong>ISIG</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-ISIG" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>This bit controls whether the INTR, QUIT, and SUSP characters are
+recognized.  The functions associated with these characters are performed
+if and only if this bit is set.  Being in canonical or noncanonical
+input mode has no effect on the interpretation of these characters.
+</para>
+<para>You should use caution when disabling recognition of these characters.
+Programs that cannot be interrupted interactively are very
+user-unfriendly.  If you clear this bit, your program should provide
+some alternate interface that allows the user to interactively send the
+signals associated with these characters, or to escape from the program.
+<span xml:id="glibc-index-interactive-signals_002c-from-terminal"></span>
+</para>
+<para>See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Signal-Characters">Characters that Cause Signals</a>.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-IEXTEN"><span class="category">Macro: </span><span><emphasis>tcflag_t</emphasis> <strong>IEXTEN</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-IEXTEN" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>POSIX.1 gives <code>IEXTEN</code> implementation-defined meaning,
+so you cannot rely on this interpretation on all systems.
+</para>
+<para>On BSD systems and GNU/Linux and GNU/Hurd systems, it enables the LNEXT and
+DISCARD characters.
+See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Other-Special">Other Special Characters</a>.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-NOFLSH"><span class="category">Macro: </span><span><emphasis>tcflag_t</emphasis> <strong>NOFLSH</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-NOFLSH" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Normally, the INTR, QUIT, and SUSP characters cause input and output
+queues for the terminal to be cleared.  If this bit is set, the queues
+are not cleared.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-TOSTOP"><span class="category">Macro: </span><span><emphasis>tcflag_t</emphasis> <strong>TOSTOP</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-TOSTOP" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>If this bit is set and the system supports job control, then
+<code>SIGTTOU</code> signals are generated by background processes that
+attempt to write to the terminal.  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Access-to-the-Terminal">Access to the Controlling Terminal</a>.
+</para></dd></dl>
+
+<para>The following bits are BSD extensions; they exist only on BSD systems
+and GNU/Hurd systems.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-ALTWERASE"><span class="category">Macro: </span><span><emphasis>tcflag_t</emphasis> <strong>ALTWERASE</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-ALTWERASE" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>This bit determines how far the WERASE character should erase.  The
+WERASE character erases back to the beginning of a word; the question
+is, where do words begin?
+</para>
+<para>If this bit is clear, then the beginning of a word is a nonwhitespace
+character following a whitespace character.  If the bit is set, then the
+beginning of a word is an alphanumeric character or underscore following
+a character which is none of those.
+</para>
+<para>See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Editing-Characters">Characters for Input Editing</a>, for more information about the WERASE character.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-FLUSHO"><span class="category">Macro: </span><span><emphasis>tcflag_t</emphasis> <strong>FLUSHO</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-FLUSHO" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>This is the bit that toggles when the user types the DISCARD character.
+While this bit is set, all output is discarded.  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Other-Special">Other Special Characters</a>.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-NOKERNINFO"><span class="category">Macro: </span><span><emphasis>tcflag_t</emphasis> <strong>NOKERNINFO</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-NOKERNINFO" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Setting this bit disables handling of the STATUS character.
+See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Other-Special">Other Special Characters</a>.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-PENDIN"><span class="category">Macro: </span><span><emphasis>tcflag_t</emphasis> <strong>PENDIN</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-PENDIN" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>If this bit is set, it indicates that there is a line of input that
+needs to be reprinted.  Typing the REPRINT character sets this bit; the
+bit remains set until reprinting is finished.  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Editing-Characters">Characters for Input Editing</a>.
+</para></dd></dl>
+
+
+<hr>
+</div>
+<div class="subsection" xml:id="glibc-Line-Speed">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Special-Characters" accesskey="n" rel="next">Special Characters</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Local-Modes" accesskey="p" rel="prev">Local Modes</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Terminal-Modes" accesskey="u" rel="up">Terminal Modes</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Line-Speed-1"></span><h4 class="subsection">17.4.8 Line Speed</title>
+<span xml:id="glibc-index-line-speed"></span>
+<span xml:id="glibc-index-baud-rate"></span>
+<span xml:id="glibc-index-terminal-line-speed"></span>
+<span xml:id="glibc-index-terminal-line-speed-1"></span>
+
+<para>The terminal line speed tells the computer how fast to read and write
+data on the terminal.
+</para>
+<para>If the terminal is connected to a real serial line, the terminal speed
+you specify actually controls the line—if it doesn’t match the
+terminal’s own idea of the speed, communication does not work.  Real
+serial ports accept only certain standard speeds.  Also, particular
+hardware may not support even all the standard speeds.  Specifying a
+speed of zero hangs up a dialup connection and turns off modem control
+signals.
+</para>
+<para>If the terminal is not a real serial line (for example, if it is a
+network connection), then the line speed won’t really affect data
+transmission speed, but some programs will use it to determine the
+amount of padding needed.  It’s best to specify a line speed value that
+matches the actual speed of the actual terminal, but you can safely
+experiment with different values to vary the amount of padding.
+</para>
+<para>There are actually two line speeds for each terminal, one for input and
+one for output.  You can set them independently, but most often
+terminals use the same speed for both directions.
+</para>
+<para>The speed values are stored in the <code>struct termios</code> structure, but
+don’t try to access them in the <code>struct termios</code> structure
+directly.  Instead, you should use the following functions to read and
+store them:
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-cfgetospeed"><span class="category">Function: </span><span><emphasis>speed_t</emphasis> <strong>cfgetospeed</strong> <emphasis>(const struct termios *<var>termios-p</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-cfgetospeed" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This function returns the output line speed stored in the structure
+<code>*<var>termios-p</var></code>.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-cfgetispeed"><span class="category">Function: </span><span><emphasis>speed_t</emphasis> <strong>cfgetispeed</strong> <emphasis>(const struct termios *<var>termios-p</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-cfgetispeed" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This function returns the input line speed stored in the structure
+<code>*<var>termios-p</var></code>.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-cfsetospeed"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>cfsetospeed</strong> <emphasis>(struct termios *<var>termios-p</var>, speed_t <var>speed</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-cfsetospeed" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This function stores <var>speed</var> in <code>*<var>termios-p</var></code> as the output
+speed.  The normal return value is <em class="math">0</emphasis>; a value of <em class="math">-1</emphasis>
+indicates an error.  If <var>speed</var> is not a speed, <code>cfsetospeed</code>
+returns <em class="math">-1</emphasis>.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-cfsetispeed"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>cfsetispeed</strong> <emphasis>(struct termios *<var>termios-p</var>, speed_t <var>speed</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-cfsetispeed" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This function stores <var>speed</var> in <code>*<var>termios-p</var></code> as the input
+speed.  The normal return value is <em class="math">0</emphasis>; a value of <em class="math">-1</emphasis>
+indicates an error.  If <var>speed</var> is not a speed, <code>cfsetospeed</code>
+returns <em class="math">-1</emphasis>.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-cfsetspeed"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>cfsetspeed</strong> <emphasis>(struct termios *<var>termios-p</var>, speed_t <var>speed</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-cfsetspeed" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+
+<para>This function stores <var>speed</var> in <code>*<var>termios-p</var></code> as both the
+input and output speeds.  The normal return value is <em class="math">0</emphasis>; a value
+of <em class="math">-1</emphasis> indicates an error.  If <var>speed</var> is not a speed,
+<code>cfsetspeed</code> returns <em class="math">-1</emphasis>.  This function is an extension in
+4.4 BSD.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-speed_005ft"><span class="category">Data Type: </span><span><strong>speed_t</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-speed_005ft" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>The <code>speed_t</code> type is an unsigned integer data type used to
+represent line speeds.
+</para></dd></dl>
+
+<para>The functions <code>cfsetospeed</code> and <code>cfsetispeed</code> report errors
+only for speed values that the system simply cannot handle.  If you
+specify a speed value that is basically acceptable, then those functions
+will succeed.  But they do not check that a particular hardware device
+can actually support the specified speeds—in fact, they don’t know
+which device you plan to set the speed for.  If you use <code>tcsetattr</code>
+to set the speed of a particular device to a value that it cannot
+handle, <code>tcsetattr</code> returns <em class="math">-1</emphasis>.
+</para>
+<para><strong>Portability note:</strong> In the GNU C Library, the functions above
+accept speeds measured in bits per second as input, and return speed
+values measured in bits per second.  Other libraries require speeds to
+be indicated by special codes.  For POSIX.1 portability, you must use
+one of the following symbols to represent the speed; their precise
+numeric values are system-dependent, but each name has a fixed meaning:
+<code>B110</code> stands for 110 bps, <code>B300</code> for 300 bps, and so on.
+There is no portable way to represent any speed but these, but these are
+the only speeds that typical serial lines can support.
+</para>
+<span xml:id="glibc-index-B0"></span>
+<span xml:id="glibc-index-B50"></span>
+<span xml:id="glibc-index-B75"></span>
+<span xml:id="glibc-index-B110"></span>
+<span xml:id="glibc-index-B134"></span>
+<span xml:id="glibc-index-B150"></span>
+<span xml:id="glibc-index-B200"></span>
+<span xml:id="glibc-index-B300"></span>
+<span xml:id="glibc-index-B600"></span>
+<span xml:id="glibc-index-B1200"></span>
+<span xml:id="glibc-index-B1800"></span>
+<span xml:id="glibc-index-B2400"></span>
+<span xml:id="glibc-index-B4800"></span>
+<span xml:id="glibc-index-B9600"></span>
+<span xml:id="glibc-index-B19200"></span>
+<span xml:id="glibc-index-B38400"></span>
+<span xml:id="glibc-index-B57600"></span>
+<span xml:id="glibc-index-B115200"></span>
+<span xml:id="glibc-index-B230400"></span>
+<span xml:id="glibc-index-B460800"></span>
+<div class="example">
+<pre class="example">B0  B50  B75  B110  B134  B150  B200
+B300  B600  B1200  B1800  B2400  B4800
+B9600  B19200  B38400  B57600  B115200
+B230400  B460800
+</pre></div>
+
+<span xml:id="glibc-index-EXTA"></span>
+<span xml:id="glibc-index-EXTB"></span>
+<para>BSD defines two additional speed symbols as aliases: <code>EXTA</code> is an
+alias for <code>B19200</code> and <code>EXTB</code> is an alias for <code>B38400</code>.
+These aliases are obsolete.
+</para>
+<hr>
+</div>
+<div class="subsection" xml:id="glibc-Special-Characters">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Noncanonical-Input" accesskey="n" rel="next">Noncanonical Input</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Line-Speed" accesskey="p" rel="prev">Line Speed</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Terminal-Modes" accesskey="u" rel="up">Terminal Modes</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Special-Characters-1"></span><h4 class="subsection">17.4.9 Special Characters</title>
+
+<para>In canonical input, the terminal driver recognizes a number of special
+characters which perform various control functions.  These include the
+ERASE character (usually <tt class="key">DEL</tt>) for editing input, and other editing
+characters.  The INTR character (normally <kbd>C-c</kbd>) for sending a
+<code>SIGINT</code> signal, and other signal-raising characters, may be
+available in either canonical or noncanonical input mode.  All these
+characters are described in this section.
+</para>
+<para>The particular characters used are specified in the <code>c_cc</code> member
+of the <code>struct termios</code> structure.  This member is an array; each
+element specifies the character for a particular role.  Each element has
+a symbolic constant that stands for the index of that element—for
+example, <code>VINTR</code> is the index of the element that specifies the INTR
+character, so storing <code>'='</code> in <code><var>termios</var>.c_cc[VINTR]</code>
+specifies ‘<filename>=</filename>’ as the INTR character.
+</para>
+<span xml:id="glibc-index-_005fPOSIX_005fVDISABLE"></span>
+<para>On some systems, you can disable a particular special character function
+by specifying the value <code>_POSIX_VDISABLE</code> for that role.  This
+value is unequal to any possible character code.  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Options-for-Files">Optional Features in File Support</a>, for more information about how to tell whether the operating
+system you are using supports <code>_POSIX_VDISABLE</code>.
+</para>
+
+<ul class="section-toc">
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Editing-Characters" accesskey="1">Characters for Input Editing</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Signal-Characters" accesskey="2">Characters that Cause Signals</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Start_002fStop-Characters" accesskey="3">Special Characters for Flow Control</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Other-Special" accesskey="4">Other Special Characters</a></li>
+</ul>
+<hr>
+<div class="subsubsection" xml:id="glibc-Editing-Characters">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Signal-Characters" accesskey="n" rel="next">Characters that Cause Signals</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Special-Characters" accesskey="u" rel="up">Special Characters</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Characters-for-Input-Editing"></span><h4 class="subsubsection">17.4.9.1 Characters for Input Editing</title>
+
+<para>These special characters are active only in canonical input mode.
+See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Canonical-or-Not">Two Styles of Input: Canonical or Not</a>.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-VEOF"><span class="category">Macro: </span><span><emphasis>int</emphasis> <strong>VEOF</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-VEOF" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<span xml:id="glibc-index-EOF-character"></span>
+<para>This is the subscript for the EOF character in the special control
+character array.  <code><var>termios</var>.c_cc[VEOF]</code> holds the character
+itself.
+</para>
+<para>The EOF character is recognized only in canonical input mode.  It acts
+as a line terminator in the same way as a newline character, but if the
+EOF character is typed at the beginning of a line it causes <code>read</code>
+to return a byte count of zero, indicating end-of-file.  The EOF
+character itself is discarded.
+</para>
+<para>Usually, the EOF character is <kbd>C-d</kbd>.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-VEOL"><span class="category">Macro: </span><span><emphasis>int</emphasis> <strong>VEOL</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-VEOL" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<span xml:id="glibc-index-EOL-character"></span>
+<para>This is the subscript for the EOL character in the special control
+character array.  <code><var>termios</var>.c_cc[VEOL]</code> holds the character
+itself.
+</para>
+<para>The EOL character is recognized only in canonical input mode.  It acts
+as a line terminator, just like a newline character.  The EOL character
+is not discarded; it is read as the last character in the input line.
+</para>
+
+<para>You don’t need to use the EOL character to make <tt class="key">RET</tt> end a line.
+Just set the ICRNL flag.  In fact, this is the default state of
+affairs.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-VEOL2"><span class="category">Macro: </span><span><emphasis>int</emphasis> <strong>VEOL2</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-VEOL2" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<span xml:id="glibc-index-EOL2-character"></span>
+<para>This is the subscript for the EOL2 character in the special control
+character array.  <code><var>termios</var>.c_cc[VEOL2]</code> holds the character
+itself.
+</para>
+<para>The EOL2 character works just like the EOL character (see above), but it
+can be a different character.  Thus, you can specify two characters to
+terminate an input line, by setting EOL to one of them and EOL2 to the
+other.
+</para>
+<para>The EOL2 character is a BSD extension; it exists only on BSD systems
+and GNU/Linux and GNU/Hurd systems.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-VERASE"><span class="category">Macro: </span><span><emphasis>int</emphasis> <strong>VERASE</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-VERASE" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<span xml:id="glibc-index-ERASE-character"></span>
+<para>This is the subscript for the ERASE character in the special control
+character array.  <code><var>termios</var>.c_cc[VERASE]</code> holds the
+character itself.
+</para>
+<para>The ERASE character is recognized only in canonical input mode.  When
+the user types the erase character, the previous character typed is
+discarded.  (If the terminal generates multibyte character sequences,
+this may cause more than one byte of input to be discarded.)  This
+cannot be used to erase past the beginning of the current line of text.
+The ERASE character itself is discarded.
+</para>
+<para>Usually, the ERASE character is <tt class="key">DEL</tt>.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-VWERASE"><span class="category">Macro: </span><span><emphasis>int</emphasis> <strong>VWERASE</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-VWERASE" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<span xml:id="glibc-index-WERASE-character"></span>
+<para>This is the subscript for the WERASE character in the special control
+character array.  <code><var>termios</var>.c_cc[VWERASE]</code> holds the character
+itself.
+</para>
+<para>The WERASE character is recognized only in canonical mode.  It erases an
+entire word of prior input, and any whitespace after it; whitespace
+characters before the word are not erased.
+</para>
+<para>The definition of a “word” depends on the setting of the
+<code>ALTWERASE</code> mode; see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Local-Modes">Local Modes</a>.
+</para>
+<para>If the <code>ALTWERASE</code> mode is not set, a word is defined as a sequence
+of any characters except space or tab.
+</para>
+<para>If the <code>ALTWERASE</code> mode is set, a word is defined as a sequence of
+characters containing only letters, numbers, and underscores, optionally
+followed by one character that is not a letter, number, or underscore.
+</para>
+<para>The WERASE character is usually <kbd>C-w</kbd>.
+</para>
+<para>This is a BSD extension.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-VKILL"><span class="category">Macro: </span><span><emphasis>int</emphasis> <strong>VKILL</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-VKILL" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<span xml:id="glibc-index-KILL-character"></span>
+<para>This is the subscript for the KILL character in the special control
+character array.  <code><var>termios</var>.c_cc[VKILL]</code> holds the character
+itself.
+</para>
+<para>The KILL character is recognized only in canonical input mode.  When the
+user types the kill character, the entire contents of the current line
+of input are discarded.  The kill character itself is discarded too.
+</para>
+<para>The KILL character is usually <kbd>C-u</kbd>.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-VREPRINT"><span class="category">Macro: </span><span><emphasis>int</emphasis> <strong>VREPRINT</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-VREPRINT" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<span xml:id="glibc-index-REPRINT-character"></span>
+<para>This is the subscript for the REPRINT character in the special control
+character array.  <code><var>termios</var>.c_cc[VREPRINT]</code> holds the character
+itself.
+</para>
+<para>The REPRINT character is recognized only in canonical mode.  It reprints
+the current input line.  If some asynchronous output has come while you
+are typing, this lets you see the line you are typing clearly again.
+</para>
+<para>The REPRINT character is usually <kbd>C-r</kbd>.
+</para>
+<para>This is a BSD extension.
+</para></dd></dl>
+
+<hr>
+</div>
+<div class="subsubsection" xml:id="glibc-Signal-Characters">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Start_002fStop-Characters" accesskey="n" rel="next">Special Characters for Flow Control</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Editing-Characters" accesskey="p" rel="prev">Characters for Input Editing</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Special-Characters" accesskey="u" rel="up">Special Characters</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Characters-that-Cause-Signals"></span><h4 class="subsubsection">17.4.9.2 Characters that Cause Signals</title>
+
+<para>These special characters may be active in either canonical or noncanonical
+input mode, but only when the <code>ISIG</code> flag is set (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Local-Modes">Local Modes</a>).
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-VINTR"><span class="category">Macro: </span><span><emphasis>int</emphasis> <strong>VINTR</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-VINTR" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<span xml:id="glibc-index-INTR-character"></span>
+<span xml:id="glibc-index-interrupt-character"></span>
+<para>This is the subscript for the INTR character in the special control
+character array.  <code><var>termios</var>.c_cc[VINTR]</code> holds the character
+itself.
+</para>
+<para>The INTR (interrupt) character raises a <code>SIGINT</code> signal for all
+processes in the foreground job associated with the terminal.  The INTR
+character itself is then discarded.  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Signal-Handling">Signal Handling</a>, for more
+information about signals.
+</para>
+<para>Typically, the INTR character is <kbd>C-c</kbd>.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-VQUIT"><span class="category">Macro: </span><span><emphasis>int</emphasis> <strong>VQUIT</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-VQUIT" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<span xml:id="glibc-index-QUIT-character"></span>
+<para>This is the subscript for the QUIT character in the special control
+character array.  <code><var>termios</var>.c_cc[VQUIT]</code> holds the character
+itself.
+</para>
+<para>The QUIT character raises a <code>SIGQUIT</code> signal for all processes in
+the foreground job associated with the terminal.  The QUIT character
+itself is then discarded.  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Signal-Handling">Signal Handling</a>, for more information
+about signals.
+</para>
+<para>Typically, the QUIT character is <kbd>C-\</kbd>.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-VSUSP"><span class="category">Macro: </span><span><emphasis>int</emphasis> <strong>VSUSP</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-VSUSP" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<span xml:id="glibc-index-SUSP-character"></span>
+<span xml:id="glibc-index-suspend-character"></span>
+<para>This is the subscript for the SUSP character in the special control
+character array.  <code><var>termios</var>.c_cc[VSUSP]</code> holds the character
+itself.
+</para>
+<para>The SUSP (suspend) character is recognized only if the implementation
+supports job control (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Job-Control">Job Control</a>).  It causes a <code>SIGTSTP</code>
+signal to be sent to all processes in the foreground job associated with
+the terminal.  The SUSP character itself is then discarded.
+See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Signal-Handling">Signal Handling</a>, for more information about signals.
+</para>
+<para>Typically, the SUSP character is <kbd>C-z</kbd>.
+</para></dd></dl>
+
+<para>Few applications disable the normal interpretation of the SUSP
+character.  If your program does this, it should provide some other
+mechanism for the user to stop the job.  When the user invokes this
+mechanism, the program should send a <code>SIGTSTP</code> signal to the
+process group of the process, not just to the process itself.
+See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Signaling-Another-Process">Signaling Another Process</a>.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-VDSUSP"><span class="category">Macro: </span><span><emphasis>int</emphasis> <strong>VDSUSP</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-VDSUSP" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<span xml:id="glibc-index-DSUSP-character"></span>
+<span xml:id="glibc-index-delayed-suspend-character"></span>
+<para>This is the subscript for the DSUSP character in the special control
+character array.  <code><var>termios</var>.c_cc[VDSUSP]</code> holds the character
+itself.
+</para>
+<para>The DSUSP (suspend) character is recognized only if the implementation
+supports job control (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Job-Control">Job Control</a>).  It sends a <code>SIGTSTP</code>
+signal, like the SUSP character, but not right away—only when the
+program tries to read it as input.  Not all systems with job control
+support DSUSP; only BSD-compatible systems do (including GNU/Hurd systems).
+</para>
+<para>See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Signal-Handling">Signal Handling</a>, for more information about signals.
+</para>
+<para>Typically, the DSUSP character is <kbd>C-y</kbd>.
+</para></dd></dl>
+
+<hr>
+</div>
+<div class="subsubsection" xml:id="glibc-Start_002fStop-Characters">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Other-Special" accesskey="n" rel="next">Other Special Characters</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Signal-Characters" accesskey="p" rel="prev">Characters that Cause Signals</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Special-Characters" accesskey="u" rel="up">Special Characters</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Special-Characters-for-Flow-Control"></span><h4 class="subsubsection">17.4.9.3 Special Characters for Flow Control</title>
+
+<para>These special characters may be active in either canonical or noncanonical
+input mode, but their use is controlled by the flags <code>IXON</code> and
+<code>IXOFF</code> (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Input-Modes">Input Modes</a>).
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-VSTART"><span class="category">Macro: </span><span><emphasis>int</emphasis> <strong>VSTART</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-VSTART" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<span xml:id="glibc-index-START-character"></span>
+<para>This is the subscript for the START character in the special control
+character array.  <code><var>termios</var>.c_cc[VSTART]</code> holds the
+character itself.
+</para>
+<para>The START character is used to support the <code>IXON</code> and <code>IXOFF</code>
+input modes.  If <code>IXON</code> is set, receiving a START character resumes
+suspended output; the START character itself is discarded.  If
+<code>IXANY</code> is set, receiving any character at all resumes suspended
+output; the resuming character is not discarded unless it is the START
+character.  If <code>IXOFF</code> is set, the system may also transmit START
+characters to the terminal.
+</para>
+<para>The usual value for the START character is <kbd>C-q</kbd>.  You may not be
+able to change this value—the hardware may insist on using <kbd>C-q</kbd>
+regardless of what you specify.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-VSTOP"><span class="category">Macro: </span><span><emphasis>int</emphasis> <strong>VSTOP</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-VSTOP" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<span xml:id="glibc-index-STOP-character"></span>
+<para>This is the subscript for the STOP character in the special control
+character array.  <code><var>termios</var>.c_cc[VSTOP]</code> holds the character
+itself.
+</para>
+<para>The STOP character is used to support the <code>IXON</code> and <code>IXOFF</code>
+input modes.  If <code>IXON</code> is set, receiving a STOP character causes
+output to be suspended; the STOP character itself is discarded.  If
+<code>IXOFF</code> is set, the system may also transmit STOP characters to the
+terminal, to prevent the input queue from overflowing.
+</para>
+<para>The usual value for the STOP character is <kbd>C-s</kbd>.  You may not be
+able to change this value—the hardware may insist on using <kbd>C-s</kbd>
+regardless of what you specify.
+</para></dd></dl>
+
+<hr>
+</div>
+<div class="subsubsection" xml:id="glibc-Other-Special">
+<div class="header">
+<para>
+Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Start_002fStop-Characters" accesskey="p" rel="prev">Special Characters for Flow Control</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Special-Characters" accesskey="u" rel="up">Special Characters</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Other-Special-Characters"></span><h4 class="subsubsection">17.4.9.4 Other Special Characters</title>
+
+<dl class="def">
+<dt xml:id="glibc-index-VLNEXT"><span class="category">Macro: </span><span><emphasis>int</emphasis> <strong>VLNEXT</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-VLNEXT" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<span xml:id="glibc-index-LNEXT-character"></span>
+<para>This is the subscript for the LNEXT character in the special control
+character array.  <code><var>termios</var>.c_cc[VLNEXT]</code> holds the character
+itself.
+</para>
+<para>The LNEXT character is recognized only when <code>IEXTEN</code> is set, but in
+both canonical and noncanonical mode.  It disables any special
+significance of the next character the user types.  Even if the
+character would normally perform some editing function or generate a
+signal, it is read as a plain character.  This is the analogue of the
+<kbd>C-q</kbd> command in Emacs.  “LNEXT” stands for “literal next.”
+</para>
+<para>The LNEXT character is usually <kbd>C-v</kbd>.
+</para>
+<para>This character is available on BSD systems and GNU/Linux and GNU/Hurd systems.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-VDISCARD"><span class="category">Macro: </span><span><emphasis>int</emphasis> <strong>VDISCARD</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-VDISCARD" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<span xml:id="glibc-index-DISCARD-character"></span>
+<para>This is the subscript for the DISCARD character in the special control
+character array.  <code><var>termios</var>.c_cc[VDISCARD]</code> holds the character
+itself.
+</para>
+<para>The DISCARD character is recognized only when <code>IEXTEN</code> is set, but
+in both canonical and noncanonical mode.  Its effect is to toggle the
+discard-output flag.  When this flag is set, all program output is
+discarded.  Setting the flag also discards all output currently in the
+output buffer.  Typing any other character resets the flag.
+</para>
+<para>This character is available on BSD systems and GNU/Linux and GNU/Hurd systems.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-VSTATUS"><span class="category">Macro: </span><span><emphasis>int</emphasis> <strong>VSTATUS</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-VSTATUS" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<span xml:id="glibc-index-STATUS-character"></span>
+<para>This is the subscript for the STATUS character in the special control
+character array.  <code><var>termios</var>.c_cc[VSTATUS]</code> holds the character
+itself.
+</para>
+<para>The STATUS character’s effect is to print out a status message about how
+the current process is running.
+</para>
+<para>The STATUS character is recognized only in canonical mode, and only if
+<code>NOKERNINFO</code> is not set.
+</para>
+<para>This character is available only on BSD systems and GNU/Hurd systems.
+</para></dd></dl>
+
+<hr>
+</div>
+</div>
+<div class="subsection" xml:id="glibc-Noncanonical-Input">
+<div class="header">
+<para>
+Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Special-Characters" accesskey="p" rel="prev">Special Characters</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Terminal-Modes" accesskey="u" rel="up">Terminal Modes</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Noncanonical-Input-1"></span><h4 class="subsection">17.4.10 Noncanonical Input</title>
+
+<para>In noncanonical input mode, the special editing characters such as
+ERASE and KILL are ignored.  The system facilities for the user to edit
+input are disabled in noncanonical mode, so that all input characters
+(unless they are special for signal or flow-control purposes) are passed
+to the application program exactly as typed.  It is up to the
+application program to give the user ways to edit the input, if
+appropriate.
+</para>
+<para>Noncanonical mode offers special parameters called MIN and TIME for
+controlling whether and how long to wait for input to be available.  You
+can even use them to avoid ever waiting—to return immediately with
+whatever input is available, or with no input.
+</para>
+<para>The MIN and TIME are stored in elements of the <code>c_cc</code> array, which
+is a member of the <code>struct&nbsp;termios</code> structure.  Each element of
+this array has a particular role, and each element has a symbolic
+constant that stands for the index of that element.  <code>VMIN</code> and
+<code>VTIME</code> are the names for the indices in the array of the MIN and
+TIME slots.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-VMIN"><span class="category">Macro: </span><span><emphasis>int</emphasis> <strong>VMIN</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-VMIN" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<span xml:id="glibc-index-MIN-termios-slot"></span>
+<para>This is the subscript for the MIN slot in the <code>c_cc</code> array.  Thus,
+<code><var>termios</var>.c_cc[VMIN]</code> is the value itself.
+</para>
+<para>The MIN slot is only meaningful in noncanonical input mode; it
+specifies the minimum number of bytes that must be available in the
+input queue in order for <code>read</code> to return.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-VTIME"><span class="category">Macro: </span><span><emphasis>int</emphasis> <strong>VTIME</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-VTIME" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<span xml:id="glibc-index-TIME-termios-slot"></span>
+<para>This is the subscript for the TIME slot in the <code>c_cc</code> array.  Thus,
+<code><var>termios</var>.c_cc[VTIME]</code> is the value itself.
+</para>
+<para>The TIME slot is only meaningful in noncanonical input mode; it
+specifies how long to wait for input before returning, in units of 0.1
+seconds.
+</para></dd></dl>
+
+<para>The MIN and TIME values interact to determine the criterion for when
+<code>read</code> should return; their precise meanings depend on which of
+them are nonzero.  There are four possible cases:
+</para>
+<ul>
+<li> Both TIME and MIN are nonzero.
+
+<para>In this case, TIME specifies how long to wait after each input character
+to see if more input arrives.  After the first character received,
+<code>read</code> keeps waiting until either MIN bytes have arrived in all, or
+TIME elapses with no further input.
+</para>
+<para><code>read</code> always blocks until the first character arrives, even if
+TIME elapses first.  <code>read</code> can return more than MIN characters if
+more than MIN happen to be in the queue.
+</para>
+</li><li> Both MIN and TIME are zero.
+
+<para>In this case, <code>read</code> always returns immediately with as many
+characters as are available in the queue, up to the number requested.
+If no input is immediately available, <code>read</code> returns a value of
+zero.
+</para>
+</li><li> MIN is zero but TIME has a nonzero value.
+
+<para>In this case, <code>read</code> waits for time TIME for input to become
+available; the availability of a single byte is enough to satisfy the
+read request and cause <code>read</code> to return.  When it returns, it
+returns as many characters as are available, up to the number requested.
+If no input is available before the timer expires, <code>read</code> returns a
+value of zero.
+</para>
+</li><li> TIME is zero but MIN has a nonzero value.
+
+<para>In this case, <code>read</code> waits until at least MIN bytes are available
+in the queue.  At that time, <code>read</code> returns as many characters as
+are available, up to the number requested.  <code>read</code> can return more
+than MIN characters if more than MIN happen to be in the queue.
+</para></li></ul>
+
+<para>What happens if MIN is 50 and you ask to read just 10 bytes?
+Normally, <code>read</code> waits until there are 50 bytes in the buffer (or,
+more generally, the wait condition described above is satisfied), and
+then reads 10 of them, leaving the other 40 buffered in the operating
+system for a subsequent call to <code>read</code>.
+</para>
+<para><strong>Portability note:</strong> On some systems, the MIN and TIME slots are
+actually the same as the EOF and EOL slots.  This causes no serious
+problem because the MIN and TIME slots are used only in noncanonical
+input and the EOF and EOL slots are used only in canonical input, but it
+isn’t very clean.  The GNU C Library allocates separate slots for these
+uses.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-cfmakeraw"><span class="category">Function: </span><span><emphasis>void</emphasis> <strong>cfmakeraw</strong> <emphasis>(struct termios *<var>termios-p</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-cfmakeraw" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This function provides an easy way to set up <code>*<var>termios-p</var></code> for
+what has traditionally been called “raw mode” in BSD.  This uses
+noncanonical input, and turns off most processing to give an unmodified
+channel to the terminal.
+</para>
+<para>It does exactly this:
+</para><div class="example">
+<pre class="example">  <var>termios-p</var>-&gt;c_iflag &amp;= ~(IGNBRK|BRKINT|PARMRK|ISTRIP
+                                |INLCR|IGNCR|ICRNL|IXON);
+  <var>termios-p</var>-&gt;c_oflag &amp;= ~OPOST;
+  <var>termios-p</var>-&gt;c_lflag &amp;= ~(ECHO|ECHONL|ICANON|ISIG|IEXTEN);
+  <var>termios-p</var>-&gt;c_cflag &amp;= ~(CSIZE|PARENB);
+  <var>termios-p</var>-&gt;c_cflag |= CS8;
+</pre></div>
+</dd></dl>
+
+
+<hr>
+</div>
+</div>
+<sect xml:id="glibc-BSD-Terminal-Modes">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Line-Control" accesskey="n" rel="next">Line Control Functions</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Terminal-Modes" accesskey="p" rel="prev">Terminal Modes</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Low_002dLevel-Terminal-Interface" accesskey="u" rel="up">Low-Level Terminal Interface</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-BSD-Terminal-Modes-1"></span><h3 class="section">17.5 BSD Terminal Modes</title>
+<span xml:id="glibc-index-terminal-modes_002c-BSD"></span>
+
+<para>The usual way to get and set terminal modes is with the functions described
+in <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Terminal-Modes">Terminal Modes</a>.  However, on some systems you can use the
+BSD-derived functions in this section to do some of the same things.  On
+many systems, these functions do not exist.  Even with the GNU C Library,
+the functions simply fail with <code>errno</code> = <code>ENOSYS</code> with many
+kernels, including Linux.
+</para>
+<para>The symbols used in this section are declared in <filename>sgtty.h</filename>.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-struct-sgttyb"><span class="category">Data Type: </span><span><strong>struct sgttyb</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-struct-sgttyb" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>This structure is an input or output parameter list for <code>gtty</code> and
+<code>stty</code>.
+</para>
+<dl compact="compact">
+<dt><span><code>char sg_ispeed</code></span></dt>
+<dd><para>Line speed for input
+</para></dd>
+<dt><span><code>char sg_ospeed</code></span></dt>
+<dd><para>Line speed for output
+</para></dd>
+<dt><span><code>char sg_erase</code></span></dt>
+<dd><para>Erase character
+</para></dd>
+<dt><span><code>char sg_kill</code></span></dt>
+<dd><para>Kill character
+</para></dd>
+<dt><span><code>int sg_flags</code></span></dt>
+<dd><para>Various flags
+</para></dd>
+</dl>
+</dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-gtty"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>gtty</strong> <emphasis>(int <var>filedes</var>, struct sgttyb *<var>attributes</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-gtty" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This function gets the attributes of a terminal.
+</para>
+<para><code>gtty</code> sets *<var>attributes</var> to describe the terminal attributes
+of the terminal which is open with file descriptor <var>filedes</var>.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-stty"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>stty</strong> <emphasis>(int <var>filedes</var>, const struct sgttyb *<var>attributes</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-stty" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+
+<para>This function sets the attributes of a terminal.
+</para>
+<para><code>stty</code> sets the terminal attributes of the terminal which is open with
+file descriptor <var>filedes</var> to those described by *<var>attributes</var>.
+</para></dd></dl>
+
+<hr>
+</div>
+<sect xml:id="glibc-Line-Control">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Noncanon-Example" accesskey="n" rel="next">Noncanonical Mode Example</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#BSD-Terminal-Modes" accesskey="p" rel="prev">BSD Terminal Modes</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Low_002dLevel-Terminal-Interface" accesskey="u" rel="up">Low-Level Terminal Interface</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Line-Control-Functions"></span><h3 class="section">17.6 Line Control Functions</title>
+<span xml:id="glibc-index-terminal-line-control-functions"></span>
+
+<para>These functions perform miscellaneous control actions on terminal
+devices.  As regards terminal access, they are treated like doing
+output: if any of these functions is used by a background process on its
+controlling terminal, normally all processes in the process group are
+sent a <code>SIGTTOU</code> signal.  The exception is if the calling process
+itself is ignoring or blocking <code>SIGTTOU</code> signals, in which case the
+operation is performed and no signal is sent.  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Job-Control">Job Control</a>.
+</para>
+<span xml:id="glibc-index-break-condition_002c-generating"></span>
+<dl class="def">
+<dt xml:id="glibc-index-tcsendbreak"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>tcsendbreak</strong> <emphasis>(int <var>filedes</var>, int <var>duration</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-tcsendbreak" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Unsafe race:tcattr(filedes)/bsd
+| AS-Unsafe
+| AC-Unsafe corrupt/bsd
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This function generates a break condition by transmitting a stream of
+zero bits on the terminal associated with the file descriptor
+<var>filedes</var>.  The duration of the break is controlled by the
+<var>duration</var> argument.  If zero, the duration is between 0.25 and 0.5
+seconds.  The meaning of a nonzero value depends on the operating system.
+</para>
+<para>This function does nothing if the terminal is not an asynchronous serial
+data port.
+</para>
+<para>The return value is normally zero.  In the event of an error, a value
+of <em class="math">-1</emphasis> is returned.  The following <code>errno</code> error conditions
+are defined for this function:
+</para>
+<dl compact="compact">
+<dt><span><code>EBADF</code></span></dt>
+<dd><para>The <var>filedes</var> is not a valid file descriptor.
+</para>
+</dd>
+<dt><span><code>ENOTTY</code></span></dt>
+<dd><para>The <var>filedes</var> is not associated with a terminal device.
+</para></dd>
+</dl>
+</dd></dl>
+
+
+<span xml:id="glibc-index-flushing-terminal-output-queue"></span>
+<span xml:id="glibc-index-terminal-output-queue_002c-flushing"></span>
+<dl class="def">
+<dt xml:id="glibc-index-tcdrain"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>tcdrain</strong> <emphasis>(int <var>filedes</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-tcdrain" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>tcdrain</code> function waits until all queued
+output to the terminal <var>filedes</var> has been transmitted.
+</para>
+<para>This function is a cancellation point in multi-threaded programs.  This
+is a problem if the thread allocates some resources (like memory, file
+descriptors, semaphores or whatever) at the time <code>tcdrain</code> is
+called.  If the thread gets canceled these resources stay allocated
+until the program ends.  To avoid this calls to <code>tcdrain</code> should be
+protected using cancellation handlers.
+</para>
+<para>The return value is normally zero.  In the event of an error, a value
+of <em class="math">-1</emphasis> is returned.  The following <code>errno</code> error conditions
+are defined for this function:
+</para>
+<dl compact="compact">
+<dt><span><code>EBADF</code></span></dt>
+<dd><para>The <var>filedes</var> is not a valid file descriptor.
+</para>
+</dd>
+<dt><span><code>ENOTTY</code></span></dt>
+<dd><para>The <var>filedes</var> is not associated with a terminal device.
+</para>
+</dd>
+<dt><span><code>EINTR</code></span></dt>
+<dd><para>The operation was interrupted by delivery of a signal.
+See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Interrupted-Primitives">Primitives Interrupted by Signals</a>.
+</para></dd>
+</dl>
+</dd></dl>
+
+
+<span xml:id="glibc-index-clearing-terminal-input-queue"></span>
+<span xml:id="glibc-index-terminal-input-queue_002c-clearing"></span>
+<dl class="def">
+<dt xml:id="glibc-index-tcflush"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>tcflush</strong> <emphasis>(int <var>filedes</var>, int <var>queue</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-tcflush" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>tcflush</code> function is used to clear the input and/or output
+queues associated with the terminal file <var>filedes</var>.  The <var>queue</var>
+argument specifies which queue(s) to clear, and can be one of the
+following values:
+</para>
+<dl compact="compact">
+<dt xml:id="glibc-index-TCIFLUSH"><span><code>TCIFLUSH</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-TCIFLUSH" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Clear any input data received, but not yet read.
+</para>
+</dd>
+<dt xml:id="glibc-index-TCOFLUSH"><span><code>TCOFLUSH</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-TCOFLUSH" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Clear any output data written, but not yet transmitted.
+</para>
+</dd>
+<dt xml:id="glibc-index-TCIOFLUSH"><span><code>TCIOFLUSH</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-TCIOFLUSH" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Clear both queued input and output.
+</para></dd>
+</dl>
+
+<para>The return value is normally zero.  In the event of an error, a value
+of <em class="math">-1</emphasis> is returned.  The following <code>errno</code> error conditions
+are defined for this function:
+</para>
+<dl compact="compact">
+<dt><span><code>EBADF</code></span></dt>
+<dd><para>The <var>filedes</var> is not a valid file descriptor.
+</para>
+</dd>
+<dt><span><code>ENOTTY</code></span></dt>
+<dd><para>The <var>filedes</var> is not associated with a terminal device.
+</para>
+</dd>
+<dt><span><code>EINVAL</code></span></dt>
+<dd><para>A bad value was supplied as the <var>queue</var> argument.
+</para></dd>
+</dl>
+
+<para>It is unfortunate that this function is named <code>tcflush</code>, because
+the term “flush” is normally used for quite another operation—waiting
+until all output is transmitted—and using it for discarding input or
+output would be confusing.  Unfortunately, the name <code>tcflush</code> comes
+from POSIX and we cannot change it.
+</para></dd></dl>
+
+<span xml:id="glibc-index-flow-control_002c-terminal"></span>
+<span xml:id="glibc-index-terminal-flow-control"></span>
+<dl class="def">
+<dt xml:id="glibc-index-tcflow"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>tcflow</strong> <emphasis>(int <var>filedes</var>, int <var>action</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-tcflow" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Unsafe race:tcattr(filedes)/bsd
+| AS-Unsafe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>tcflow</code> function is used to perform operations relating to
+XON/XOFF flow control on the terminal file specified by <var>filedes</var>.
+</para>
+<para>The <var>action</var> argument specifies what operation to perform, and can
+be one of the following values:
+</para>
+<dl compact="compact">
+<dt xml:id="glibc-index-TCOOFF"><span><code>TCOOFF</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-TCOOFF" class="copiable-anchor"> ¶</a></span></dt>
+<dd><para>Suspend transmission of output.
+</para>
+</dd>
+<dt xml:id="glibc-index-TCOON"><span><code>TCOON</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-TCOON" class="copiable-anchor"> ¶</a></span></dt>
+<dd><para>Restart transmission of output.
+</para>
+</dd>
+<dt xml:id="glibc-index-TCIOFF"><span><code>TCIOFF</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-TCIOFF" class="copiable-anchor"> ¶</a></span></dt>
+<dd><para>Transmit a STOP character.
+</para>
+</dd>
+<dt xml:id="glibc-index-TCION"><span><code>TCION</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-TCION" class="copiable-anchor"> ¶</a></span></dt>
+<dd><para>Transmit a START character.
+</para></dd>
+</dl>
+
+<para>For more information about the STOP and START characters, see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Special-Characters">Special Characters</a>.
+</para>
+<para>The return value is normally zero.  In the event of an error, a value
+of <em class="math">-1</emphasis> is returned.  The following <code>errno</code> error conditions
+are defined for this function:
+</para>
+<dl compact="compact">
+<dd><span xml:id="glibc-index-EBADF-1"></span>
+</dd>
+<dt><span><code>EBADF</code></span></dt>
+<dd><para>The <var>filedes</var> is not a valid file descriptor.
+</para>
+<span xml:id="glibc-index-ENOTTY-1"></span>
+</dd>
+<dt><span><code>ENOTTY</code></span></dt>
+<dd><para>The <var>filedes</var> is not associated with a terminal device.
+</para>
+<span xml:id="glibc-index-EINVAL-1"></span>
+</dd>
+<dt><span><code>EINVAL</code></span></dt>
+<dd><para>A bad value was supplied as the <var>action</var> argument.
+</para></dd>
+</dl>
+</dd></dl>
+
+<hr>
+</div>
+<sect xml:id="glibc-Noncanon-Example">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#getpass" accesskey="n" rel="next">Reading Passphrases</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Line-Control" accesskey="p" rel="prev">Line Control Functions</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Low_002dLevel-Terminal-Interface" accesskey="u" rel="up">Low-Level Terminal Interface</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Noncanonical-Mode-Example"></span><h3 class="section">17.7 Noncanonical Mode Example</title>
+
+<para>Here is an example program that shows how you can set up a terminal
+device to read single characters in noncanonical input mode, without
+echo.
+</para>
+<div class="example">
+<pre class="example">
+#include &lt;unistd.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;termios.h&gt;
+
+/* <span class="roman">Use this variable to remember original terminal attributes.</span> */
+
+struct termios saved_attributes;
+
+void
+reset_input_mode (void)
+{
+  tcsetattr (STDIN_FILENO, TCSANOW, &amp;saved_attributes);
+}
+
+void
+set_input_mode (void)
+{
+  struct termios tattr;
+  char *name;
+
+  /* <span class="roman">Make sure stdin is a terminal.</span> */
+  if (!isatty (STDIN_FILENO))
+    {
+      fprintf (stderr, "Not a terminal.\n");
+      exit (EXIT_FAILURE);
+    }
+
+  /* <span class="roman">Save the terminal attributes so we can restore them later.</span> */
+  tcgetattr (STDIN_FILENO, &amp;saved_attributes);
+  atexit (reset_input_mode);
+
+</pre><pre class="example">  /* <span class="roman">Set the funny terminal modes.</span> */
+  tcgetattr (STDIN_FILENO, &amp;tattr);
+  tattr.c_lflag &amp;= ~(ICANON|ECHO); /* <span class="roman">Clear ICANON and ECHO.</span> */
+  tattr.c_cc[VMIN] = 1;
+  tattr.c_cc[VTIME] = 0;
+  tcsetattr (STDIN_FILENO, TCSAFLUSH, &amp;tattr);
+}
+</pre><pre class="example">
+int
+main (void)
+{
+  char c;
+
+  set_input_mode ();
+
+  while (1)
+    {
+      read (STDIN_FILENO, &amp;c, 1);
+      if (c == '\004')          /* <span class="roman"><kbd>C-d</kbd></span> */
+        break;
+      else
+        putchar (c);
+    }
+
+  return EXIT_SUCCESS;
+}
+</pre></div>
+
+<para>This program is careful to restore the original terminal modes before
+exiting or terminating with a signal.  It uses the <code>atexit</code>
+function (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Cleanups-on-Exit">Cleanups on Exit</a>) to make sure this is done
+by <code>exit</code>.
+</para>
+
+<para>The shell is supposed to take care of resetting the terminal modes when
+a process is stopped or continued; see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Job-Control">Job Control</a>.  But some
+existing shells do not actually do this, so you may wish to establish
+handlers for job control signals that reset terminal modes.  The above
+example does so.
+</para>
+<hr>
+</div>
+<sect xml:id="glibc-getpass">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Pseudo_002dTerminals" accesskey="n" rel="next">Pseudo-Terminals</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Noncanon-Example" accesskey="p" rel="prev">Noncanonical Mode Example</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Low_002dLevel-Terminal-Interface" accesskey="u" rel="up">Low-Level Terminal Interface</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Reading-Passphrases"></span><h3 class="section">17.8 Reading Passphrases</title>
+
+<para>When reading in a passphrase, it is desirable to avoid displaying it on
+the screen, to help keep it secret.  The following function handles this
+in a convenient way.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-getpass"><span class="category">Function: </span><span><emphasis>char *</emphasis> <strong>getpass</strong> <emphasis>(const char *<var>prompt</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-getpass" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Unsafe term
+| AS-Unsafe heap lock corrupt
+| AC-Unsafe term lock corrupt
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+
+<para><code>getpass</code> outputs <var>prompt</var>, then reads a string in from the
+terminal without echoing it.  It tries to connect to the real terminal,
+<filename>/dev/tty</filename>, if possible, to encourage users not to put plaintext
+passphrases in files; otherwise, it uses <code>stdin</code> and <code>stderr</code>.
+<code>getpass</code> also disables the INTR, QUIT, and SUSP characters on the
+terminal using the <code>ISIG</code> terminal attribute (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Local-Modes">Local Modes</a>).
+The terminal is flushed before and after <code>getpass</code>, so that
+characters of a mistyped passphrase are not accidentally visible.
+</para>
+<para>In other C libraries, <code>getpass</code> may only return the first
+<code>PASS_MAX</code> bytes of a passphrase.  The GNU C Library has no limit, so
+<code>PASS_MAX</code> is undefined.
+</para>
+<para>The prototype for this function is in <filename>unistd.h</filename>.  <code>PASS_MAX</code>
+would be defined in <filename>limits.h</filename>.
+</para></dd></dl>
+
+<para>This precise set of operations may not suit all possible situations.  In
+this case, it is recommended that users write their own <code>getpass</code>
+substitute.  For instance, a very simple substitute is as follows:
+</para>
+<div class="example">
+<pre class="example">
+#include &lt;termios.h&gt;
+#include &lt;stdio.h&gt;
+
+ssize_t
+my_getpass (char **lineptr, size_t *n, FILE *stream)
+{
+  struct termios old, new;
+  int nread;
+
+  /* <span class="roman">Turn echoing off and fail if we can’t.</span> */
+  if (tcgetattr (fileno (stream), &amp;old) != 0)
+    return -1;
+  new = old;
+  new.c_lflag &amp;= ~ECHO;
+  if (tcsetattr (fileno (stream), TCSAFLUSH, &amp;new) != 0)
+    return -1;
+
+  /* <span class="roman">Read the passphrase</span> */
+  nread = getline (lineptr, n, stream);
+
+  /* <span class="roman">Restore terminal.</span> */
+  (void) tcsetattr (fileno (stream), TCSAFLUSH, &amp;old);
+
+  return nread;
+}
+</pre></div>
+
+<para>The substitute takes the same parameters as <code>getline</code>
+(see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Line-Input">Line-Oriented Input</a>); the user must print any prompt desired.
+</para>
+<hr>
+</div>
+<sect xml:id="glibc-Pseudo_002dTerminals">
+<div class="header">
+<para>
+Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#getpass" accesskey="p" rel="prev">Reading Passphrases</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Low_002dLevel-Terminal-Interface" accesskey="u" rel="up">Low-Level Terminal Interface</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Pseudo_002dTerminals-1"></span><h3 class="section">17.9 Pseudo-Terminals</title>
+<span xml:id="glibc-index-pseudo_002dterminals"></span>
+
+<para>A <emphasis>pseudo-terminal</emphasis> is a special interprocess communication channel
+that acts like a terminal.  One end of the channel is called the
+<emphasis>master</emphasis> side or <emphasis>master pseudo-terminal device</emphasis>, the other side
+is called the <emphasis>slave</emphasis> side.  Data written to the master side is
+received by the slave side as if it was the result of a user typing at
+an ordinary terminal, and data written to the slave side is sent to the
+master side as if it was written on an ordinary terminal.
+</para>
+<para>Pseudo terminals are the way programs like <code>xterm</code> and <code>emacs</code>
+implement their terminal emulation functionality.
+</para>
+
+<ul class="section-toc">
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Allocation" accesskey="1">Allocating Pseudo-Terminals</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Pseudo_002dTerminal-Pairs" accesskey="2">Opening a Pseudo-Terminal Pair</a></li>
+</ul>
+<hr>
+<div class="subsection" xml:id="glibc-Allocation">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Pseudo_002dTerminal-Pairs" accesskey="n" rel="next">Opening a Pseudo-Terminal Pair</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Pseudo_002dTerminals" accesskey="u" rel="up">Pseudo-Terminals</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Allocating-Pseudo_002dTerminals"></span><h4 class="subsection">17.9.1 Allocating Pseudo-Terminals</title>
+<span xml:id="glibc-index-allocating-pseudo_002dterminals"></span>
+
+<span xml:id="glibc-index-stdlib_002eh-11"></span>
+<para>This subsection describes functions for allocating a pseudo-terminal,
+and for making this pseudo-terminal available for actual use.  These
+functions are declared in the header file <filename>stdlib.h</filename>.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-getpt"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>getpt</strong> <emphasis>(void)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-getpt" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe fd
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>getpt</code> function returns a new file descriptor for the next
+available master pseudo-terminal.  The normal return value from
+<code>getpt</code> is a non-negative integer file descriptor.  In the case of
+an error, a value of <em class="math">-1</emphasis> is returned instead.  The following
+<code>errno</code> conditions are defined for this function:
+</para>
+<dl compact="compact">
+<dt><span><code>ENOENT</code></span></dt>
+<dd><para>There are no free master pseudo-terminals available.
+</para></dd>
+</dl>
+
+<para>This function is a GNU extension.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-grantpt"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>grantpt</strong> <emphasis>(int <var>filedes</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-grantpt" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+
+<para>Preliminary:
+| MT-Safe locale
+| AS-Unsafe dlopen plugin heap lock
+| AC-Unsafe corrupt lock fd mem
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>grantpt</code> function changes the ownership and access permission
+of the slave pseudo-terminal device corresponding to the master
+pseudo-terminal device associated with the file descriptor
+<var>filedes</var>.  The owner is set from the real user ID of the calling
+process (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Process-Persona">The Persona of a Process</a>), and the group is set to a special
+group (typically <emphasis>tty</emphasis>) or from the real group ID of the calling
+process.  The access permission is set such that the file is both
+readable and writable by the owner and only writable by the group.
+</para>
+<para>On some systems this function is implemented by invoking a special
+<code>setuid</code> root program (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#How-Change-Persona">How an Application Can Change Persona</a>).  As a
+consequence, installing a signal handler for the <code>SIGCHLD</code> signal
+(see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Job-Control-Signals">Job Control Signals</a>) may interfere with a call to
+<code>grantpt</code>.
+</para>
+<para>The normal return value from <code>grantpt</code> is <em class="math">0</emphasis>; a value of
+<em class="math">-1</emphasis> is returned in case of failure.  The following <code>errno</code>
+error conditions are defined for this function:
+</para>
+<dl compact="compact">
+<dt><span><code>EBADF</code></span></dt>
+<dd><para>The <var>filedes</var> argument is not a valid file descriptor.
+</para>
+</dd>
+<dt><span><code>EINVAL</code></span></dt>
+<dd><para>The <var>filedes</var> argument is not associated with a master pseudo-terminal
+device.
+</para>
+</dd>
+<dt><span><code>EACCES</code></span></dt>
+<dd><para>The slave pseudo-terminal device corresponding to the master associated
+with <var>filedes</var> could not be accessed.
+</para></dd>
+</dl>
+
+</dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-unlockpt"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>unlockpt</strong> <emphasis>(int <var>filedes</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-unlockpt" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+
+<para>Preliminary:
+| MT-Safe
+| AS-Unsafe heap/bsd
+| AC-Unsafe mem fd
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>unlockpt</code> function unlocks the slave pseudo-terminal device
+corresponding to the master pseudo-terminal device associated with the
+file descriptor <var>filedes</var>.  On many systems, the slave can only be
+opened after unlocking, so portable applications should always call
+<code>unlockpt</code> before trying to open the slave.
+</para>
+<para>The normal return value from <code>unlockpt</code> is <em class="math">0</emphasis>; a value of
+<em class="math">-1</emphasis> is returned in case of failure.  The following <code>errno</code>
+error conditions are defined for this function:
+</para>
+<dl compact="compact">
+<dt><span><code>EBADF</code></span></dt>
+<dd><para>The <var>filedes</var> argument is not a valid file descriptor.
+</para>
+</dd>
+<dt><span><code>EINVAL</code></span></dt>
+<dd><para>The <var>filedes</var> argument is not associated with a master pseudo-terminal
+device.
+</para></dd>
+</dl>
+</dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-ptsname"><span class="category">Function: </span><span><emphasis>char *</emphasis> <strong>ptsname</strong> <emphasis>(int <var>filedes</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-ptsname" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+
+<para>Preliminary:
+| MT-Unsafe race:ptsname
+| AS-Unsafe heap/bsd
+| AC-Unsafe mem fd
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>If the file descriptor <var>filedes</var> is associated with a
+master pseudo-terminal device, the <code>ptsname</code> function returns a
+pointer to a statically-allocated, null-terminated string containing the
+file name of the associated slave pseudo-terminal file.  This string
+might be overwritten by subsequent calls to <code>ptsname</code>.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-ptsname_005fr"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>ptsname_r</strong> <emphasis>(int <var>filedes</var>, char *<var>buf</var>, size_t <var>len</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-ptsname_005fr" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Unsafe heap/bsd
+| AC-Unsafe mem fd
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>ptsname_r</code> function is similar to the <code>ptsname</code> function
+except that it places its result into the user-specified buffer starting
+at <var>buf</var> with length <var>len</var>.
+</para>
+<para>This function is a GNU extension.
+</para></dd></dl>
+
+<para>Typical usage of these functions is illustrated by the following example:
+</para><div class="example">
+<pre class="example">int
+open_pty_pair (int *amaster, int *aslave)
+{
+  int master, slave;
+  char *name;
+
+  master = getpt ();
+  if (master &lt; 0)
+    return 0;
+
+  if (grantpt (master) &lt; 0 || unlockpt (master) &lt; 0)
+    goto close_master;
+  name = ptsname (master);
+  if (name == NULL)
+    goto close_master;
+
+  slave = open (name, O_RDWR);
+  if (slave == -1)
+    goto close_master;
+
+  *amaster = master;
+  *aslave = slave;
+  return 1;
+
+close_slave:
+  close (slave);
+
+close_master:
+  close (master);
+  return 0;
+}
+</pre></div>
+
+<hr>
+</div>
+<div class="subsection" xml:id="glibc-Pseudo_002dTerminal-Pairs">
+<div class="header">
+<para>
+Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Allocation" accesskey="p" rel="prev">Allocating Pseudo-Terminals</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Pseudo_002dTerminals" accesskey="u" rel="up">Pseudo-Terminals</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Opening-a-Pseudo_002dTerminal-Pair"></span><h4 class="subsection">17.9.2 Opening a Pseudo-Terminal Pair</title>
+<span xml:id="glibc-index-opening-a-pseudo_002dterminal-pair"></span>
+
+<para>These functions, derived from BSD, are available in the separate
+<filename>libutil</filename> library, and declared in <filename>pty.h</filename>.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-openpty"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>openpty</strong> <emphasis>(int *<var>amaster</var>, int *<var>aslave</var>, char *<var>name</var>, const struct termios *<var>termp</var>, const struct winsize *<var>winp</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-openpty" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe locale
+| AS-Unsafe dlopen plugin heap lock
+| AC-Unsafe corrupt lock fd mem
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This function allocates and opens a pseudo-terminal pair, returning the
+file descriptor for the master in <var>*amaster</var>, and the file
+descriptor for the slave in <var>*aslave</var>.  If the argument <var>name</var>
+is not a null pointer, the file name of the slave pseudo-terminal
+device is stored in <code>*name</code>.  If <var>termp</var> is not a null pointer,
+the terminal attributes of the slave are set to the ones specified in
+the structure that <var>termp</var> points to (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Terminal-Modes">Terminal Modes</a>).
+Likewise, if <var>winp</var> is not a null pointer, the screen size of
+the slave is set to the values specified in the structure that
+<var>winp</var> points to.
+</para>
+<para>The normal return value from <code>openpty</code> is <em class="math">0</emphasis>; a value of
+<em class="math">-1</emphasis> is returned in case of failure.  The following <code>errno</code>
+conditions are defined for this function:
+</para>
+<dl compact="compact">
+<dt><span><code>ENOENT</code></span></dt>
+<dd><para>There are no free pseudo-terminal pairs available.
+</para></dd>
+</dl>
+
+<para><strong>Warning:</strong> Using the <code>openpty</code> function with <var>name</var> not
+set to <code>NULL</code> is <strong>very dangerous</strong> because it provides no
+protection against overflowing the string <var>name</var>.  You should use
+the <code>ttyname</code> function on the file descriptor returned in
+<var>*slave</var> to find out the file name of the slave pseudo-terminal
+device instead.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-forkpty"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>forkpty</strong> <emphasis>(int *<var>amaster</var>, char *<var>name</var>, const struct termios *<var>termp</var>, const struct winsize *<var>winp</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-forkpty" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe locale
+| AS-Unsafe dlopen plugin heap lock
+| AC-Unsafe corrupt lock fd mem
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This function is similar to the <code>openpty</code> function, but in
+addition, forks a new process (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Creating-a-Process">Creating a Process</a>) and makes the
+newly opened slave pseudo-terminal device the controlling terminal
+(see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Controlling-Terminal">Controlling Terminal of a Process</a>) for the child process.
+</para>
+<para>If the operation is successful, there are then both parent and child
+processes and both see <code>forkpty</code> return, but with different values:
+it returns a value of <em class="math">0</emphasis> in the child process and returns the child’s
+process ID in the parent process.
+</para>
+<para>If the allocation of a pseudo-terminal pair or the process creation
+failed, <code>forkpty</code> returns a value of <em class="math">-1</emphasis> in the parent
+process.
+</para>
+<para><strong>Warning:</strong> The <code>forkpty</code> function has the same problems with
+respect to the <var>name</var> argument as <code>openpty</code>.
+</para></dd></dl>
+<hr>
+</div>
+</div>
+</div-->
 </part>

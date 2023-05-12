@@ -109,7 +109,7 @@ xmlns="http://www.w3.org/1999/xhtml" version="1.0">
 <xsl:template match="d:part">
   <xsl:call-template name="id.warning"/>
 
-  <div>
+  <section>
     <xsl:apply-templates select="." mode="common.html.attributes"/>
     <xsl:call-template name="id.attribute">
       <xsl:with-param name="conditional" select="0"/>
@@ -127,7 +127,7 @@ xmlns="http://www.w3.org/1999/xhtml" version="1.0">
       <xsl:call-template name="division.toc"/>
     </xsl:if>
     <xsl:apply-templates/>
-  </div>
+  </section>
 </xsl:template>
 
 <xsl:template match="d:part" mode="make.part.toc">
@@ -148,7 +148,7 @@ xmlns="http://www.w3.org/1999/xhtml" version="1.0">
 <xsl:template match="d:partintro">
   <xsl:call-template name="id.warning"/>
 
-  <div>
+  <section>
     <xsl:call-template name="common.html.attributes"/>
     <xsl:call-template name="id.attribute">
       <xsl:with-param name="conditional" select="0"/>
@@ -168,7 +168,7 @@ xmlns="http://www.w3.org/1999/xhtml" version="1.0">
       <xsl:apply-templates select="parent::*" mode="make.part.toc"/>
     </xsl:if>
     <xsl:call-template name="process.footnotes"/>
-  </div>
+  </section>
 </xsl:template>
 
 <xsl:template match="d:partintro/d:title"/>

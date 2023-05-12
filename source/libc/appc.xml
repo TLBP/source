@@ -5,6 +5,836 @@
 <appendix xml:id="glibc-Installation">
  <title>GNU C Kütüphanesinin Kurulması</title>
  <titleabbrev>GNU C Kütüphanesi nasıl kurulur?</titleabbrev>
- <para/>
+ <para/><!--
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Maintenance" accesskey="n" rel="next">Library Maintenance</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Library-Summary" accesskey="p" rel="prev">Summary of Library Facilities</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Top" accesskey="u" rel="up">Main Menu</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
 
+<span xml:id="glibc-Installing-the-GNU-C-Library"></span><h2 class="appendix">Appendix C Installing the GNU C Library</title>
+
+<para>Before you do anything else, you should read the FAQ at
+<a href="https://sourceware.org/glibc/wiki/FAQ">https://sourceware.org/glibc/wiki/FAQ</a>.  It answers common
+questions and describes problems you may experience with compilation
+and installation.
+</para>
+<para>You will need recent versions of several GNU tools: definitely GCC and
+GNU Make, and possibly others.  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Tools-for-Compilation">Recommended Tools for Compilation</a>, below.
+</para>
+
+<ul class="section-toc">
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Configuring-and-compiling" accesskey="1">Configuring and compiling the GNU C Library</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Running-make-install" accesskey="2">Installing the C Library</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Tools-for-Compilation" accesskey="3">Recommended Tools for Compilation</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Linux" accesskey="4">Specific advice for GNU/Linux systems</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Reporting-Bugs" accesskey="5">Reporting Bugs</a></li>
+</ul>
+<hr>
+<div class="appendixsec" xml:id="glibc-Configuring-and-compiling">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Running-make-install" accesskey="n" rel="next">Installing the C Library</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Installation" accesskey="u" rel="up">Installing the GNU C Library</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Configuring-and-compiling-the-GNU-C-Library"></span><h3 class="appendixsec">C.1 Configuring and compiling the GNU C Library</title>
+<span xml:id="glibc-index-configuring"></span>
+<span xml:id="glibc-index-compiling"></span>
+
+<para>The GNU C Library cannot be compiled in the source directory.  You must build
+it in a separate build directory.  For example, if you have unpacked
+the GNU C Library sources in <filename>/src/gnu/glibc-<var>version</var></filename>,
+create a directory
+<filename>/src/gnu/glibc-build</filename> to put the object files in.  This allows
+removing the whole build directory in case an error occurs, which is
+the safest way to get a fresh start and should always be done.
+</para>
+<para>From your object directory, run the shell script <filename>configure</filename> located
+at the top level of the source tree.  In the scenario above, you’d type
+</para>
+<div class="example">
+<pre class="example">$ ../glibc-<var>version</var>/configure <var>args…</var>
+</pre></div>
+
+<para>Please note that even though you’re building in a separate build
+directory, the compilation may need to create or modify files and
+directories in the source directory.
+</para>
+<para><code>configure</code> takes many options, but the only one that is usually
+mandatory is ‘<filename>&#45;&#45;prefix</filename>’.  This option tells <code>configure</code>
+where you want the GNU C Library installed.  This defaults to <filename>/usr/local</filename>,
+but the normal setting to install as the standard system library is
+‘<filename>&#45;&#45;prefix=/usr</filename>’ for GNU/Linux systems and ‘<filename>&#45;&#45;prefix=</filename>’ (an
+empty prefix) for GNU/Hurd systems.
+</para>
+<para>It may also be useful to pass ‘<filename>CC=<var>compiler</var></filename>’ and
+<code>CFLAGS=<var>flags</var></code> arguments to <code>configure</code>.  <code>CC</code>
+selects the C compiler that will be used, and <code>CFLAGS</code> sets
+optimization options for the compiler.  Any compiler options required
+for all compilations, such as options selecting an ABI or a processor
+for which to generate code, should be included in <code>CC</code>.  Options
+that may be overridden by the GNU C Library build system for particular
+files, such as for optimization and debugging, should go in
+<code>CFLAGS</code>.  The default value of <code>CFLAGS</code> is ‘<filename>-g -O2</filename>’,
+and the GNU C Library cannot be compiled without optimization, so if
+<code>CFLAGS</code> is specified it must enable optimization.  For example:
+</para>
+<div class="example">
+<pre class="example">$ ../glibc-<var>version</var>/configure CC="gcc -m32" CFLAGS="-O3"
+</pre></div>
+
+<para>The following list describes all of the available options for
+ <code>configure</code>:
+</para>
+<dl compact="compact">
+<dt><span>‘<filename>&#45;&#45;prefix=<var>directory</var></filename>’</span></dt>
+<dd><para>Install machine-independent data files in subdirectories of
+<filename><var>directory</var></filename>.  The default is to install in <filename>/usr/local</filename>.
+</para>
+</dd>
+<dt><span>‘<filename>&#45;&#45;exec-prefix=<var>directory</var></filename>’</span></dt>
+<dd><para>Install the library and other machine-dependent files in subdirectories
+of <filename><var>directory</var></filename>.  The default is to the ‘<filename>&#45;&#45;prefix</filename>’
+directory if that option is specified, or <filename>/usr/local</filename> otherwise.
+</para>
+</dd>
+<dt><span>‘<filename>&#45;&#45;with-headers=<var>directory</var></filename>’</span></dt>
+<dd><para>Look for kernel header files in <var>directory</var>, not
+<filename>/usr/include</filename>.  The GNU C Library needs information from the kernel’s header
+files describing the interface to the kernel.  The GNU C Library will normally
+look in <filename>/usr/include</filename> for them,
+but if you specify this option, it will look in <var>DIRECTORY</var> instead.
+</para>
+<para>This option is primarily of use on a system where the headers in
+<filename>/usr/include</filename> come from an older version of the GNU C Library.  Conflicts can
+occasionally happen in this case.  You can also use this option if you want to
+compile the GNU C Library with a newer set of kernel headers than the ones found in
+<filename>/usr/include</filename>.
+</para>
+</dd>
+<dt><span>‘<filename>&#45;&#45;enable-kernel=<var>version</var></filename>’</span></dt>
+<dd><para>This option is currently only useful on GNU/Linux systems.  The
+<var>version</var> parameter should have the form X.Y.Z and describes the
+smallest version of the Linux kernel the generated library is expected
+to support.  The higher the <var>version</var> number is, the less
+compatibility code is added, and the faster the code gets.
+</para>
+</dd>
+<dt><span>‘<filename>&#45;&#45;with-binutils=<var>directory</var></filename>’</span></dt>
+<dd><para>Use the binutils (assembler and linker) in <filename><var>directory</var></filename>, not
+the ones the C compiler would default to.  You can use this option if
+the default binutils on your system cannot deal with all the constructs
+in the GNU C Library.  In that case, <code>configure</code> will detect the
+problem and suppress these constructs, so that the library will still be
+usable, but functionality may be lost—for example, you can’t build a
+shared libc with old binutils.
+</para>
+</dd>
+<dt><span>‘<filename>&#45;&#45;with-default-link</filename>’</span></dt>
+<dd><para>With <code>&#45;&#45;with-default-link</code>, the build system does not use a custom
+linker script for linking shared objects.  The default is
+<code>&#45;&#45;without-default-link</code>, because the custom linker script is
+needed for full RELRO protection.
+</para>
+</dd>
+<dt><span>‘<filename>&#45;&#45;with-nonshared-cflags=<var>cflags</var></filename>’</span></dt>
+<dd><para>Use additional compiler flags <var>cflags</var> to build the parts of the
+library which are always statically linked into applications and
+libraries even with shared linking (that is, the object files contained
+in <filename>lib*_nonshared.a</filename> libraries).  The build process will
+automatically use the appropriate flags, but this option can be used to
+set additional flags required for building applications and libraries,
+to match local policy.  For example, if such a policy requires that all
+code linked into applications must be built with source fortification,
+‘<filename>&#45;&#45;with-nonshared-cflags=-Wp,-D_FORTIFY_SOURCE=2</filename>’ will make sure
+that the objects in <filename>libc_nonshared.a</filename> are compiled with this flag
+(although this will not affect the generated code in this particular
+case and potentially change debugging information and metadata only).
+</para>
+</dd>
+<dt><span>‘<filename>&#45;&#45;with-rtld-early-cflags=<var>cflags</var></filename>’</span></dt>
+<dd><para>Use additional compiler flags <var>cflags</var> to build the early startup
+code of the dynamic linker.  These flags can be used to enable early
+dynamic linker diagnostics to run on CPUs which are not compatible with
+the rest of the GNU C Library, for example, due to compiler flags which target
+a later instruction set architecture (ISA).
+</para>
+</dd--><!--
+<dt><span>‘<filename>&#45;&#45;with-extra-version-id=<var>string</var></filename>’</span></dt>
+<dd><para>Use <var>string</var> as part of the fingerprint that is used by the dynamic
+linker to detect an incompatible version of <filename>libc.so</filename>.  For
+example, <var>string</var> could be the full package version and release
+string used by a distribution build of the GNU C Library.  This way,
+concurrent process creation during a package update will fail with an
+error message, <emphasis>ld.so/libc.so mismatch detected (upgrade in
+progress?)<emphasis>, rather than crashing mysteriously.
+</para>
+
+</dd>
+--><!--
+<dt><span>‘<filename>&#45;&#45;with-timeoutfactor=<var>NUM</var></filename>’</span></dt>
+<dd><para>Specify an integer <var>NUM</var> to scale the timeout of test programs.
+This factor can be changed at run time using <code>TIMEOUTFACTOR</code>
+environment variable.
+</para>
+
+</dd>
+<dt><span>‘<filename>&#45;&#45;disable-shared</filename>’</span></dt>
+<dd><para>Don’t build shared libraries even if it is possible.  Not all systems
+support shared libraries; you need ELF support and (currently) the GNU
+linker.
+</para>
+</dd>
+<dt><span>‘<filename>&#45;&#45;disable-default-pie</filename>’</span></dt>
+<dd><para>Don’t build glibc programs and the testsuite as position independent
+executables (PIE).  By default, glibc programs and tests are created as
+position independent executables on targets that support it.  If the toolchain
+and architecture support it, static executables are built as static PIE and the
+resulting glibc can be used with the GCC option, -static-pie, which is
+available with GCC 8 or above, to create static PIE.
+</para>
+</dd>
+<dt><span>‘<filename>&#45;&#45;enable-cet</filename>’</span></dt>
+<dt><span>‘<filename>&#45;&#45;enable-cet=permissive</filename>’</span></dt>
+<dd><para>Enable Intel Control-flow Enforcement Technology (CET) support.  When
+the GNU C Library is built with <filename>&#45;&#45;enable-cet</filename> or
+<filename>&#45;&#45;enable-cet=permissive</filename>, the resulting library
+is protected with indirect branch tracking (IBT) and shadow stack
+(SHSTK).  When CET is enabled, the GNU C Library is compatible with all
+existing executables and shared libraries.  This feature is currently
+supported on i386, x86_64 and x32 with GCC 8 and binutils 2.29 or later.
+Note that when CET is enabled, the GNU C Library requires CPUs capable of
+multi-byte NOPs, like x86-64 processors as well as Intel Pentium Pro or
+newer.  With <filename>&#45;&#45;enable-cet</filename>, it is an error to dlopen a non CET
+enabled shared library in CET enabled application.  With
+<filename>&#45;&#45;enable-cet=permissive</filename>, CET is disabled when dlopening a
+non CET enabled shared library in CET enabled application.
+</para>
+<para>NOTE: <filename>&#45;&#45;enable-cet</filename> has been tested for i686, x86_64 and x32
+on non-CET processors.  <filename>&#45;&#45;enable-cet</filename> has been tested for
+i686, x86_64 and x32 on CET processors.
+</para>
+</dd>
+<dt><span>‘<filename>&#45;&#45;enable-memory-tagging</filename>’</span></dt>
+<dd><para>Enable memory tagging support if the architecture supports it.  When
+the GNU C Library is built with this option then the resulting library will
+be able to control the use of tagged memory when hardware support is
+present by use of the tunable ‘<filename>glibc.mem.tagging</filename>’.  This includes
+the generation of tagged memory when using the <code>malloc</code> APIs.
+</para>
+<para>At present only AArch64 platforms with MTE provide this functionality,
+although the library will still operate (without memory tagging) on
+older versions of the architecture.
+</para>
+<para>The default is to disable support for memory tagging.
+</para>
+</dd>
+<dt><span>‘<filename>&#45;&#45;disable-profile</filename>’</span></dt>
+<dd><para>Don’t build libraries with profiling information.  You may want to use
+this option if you don’t plan to do profiling.
+</para>
+</dd>
+<dt><span>‘<filename>&#45;&#45;enable-static-nss</filename>’</span></dt>
+<dd><para>Compile static versions of the NSS (Name Service Switch) libraries.
+This is not recommended because it defeats the purpose of NSS; a program
+linked statically with the NSS libraries cannot be dynamically
+reconfigured to use a different name database.
+</para>
+</dd>
+<dt><span>‘<filename>&#45;&#45;enable-hardcoded-path-in-tests</filename>’</span></dt>
+<dd><para>By default, dynamic tests are linked to run with the installed C library.
+This option hardcodes the newly built C library path in dynamic tests
+so that they can be invoked directly.
+</para>
+</dd>
+<dt><span>‘<filename>&#45;&#45;disable-timezone-tools</filename>’</span></dt>
+<dd><para>By default, timezone related utilities (<code>zic</code>, <code>zdump</code>,
+and <code>tzselect</code>) are installed with the GNU C Library.  If you are building
+these independently (e.g. by using the ‘<filename>tzcode</filename>’ package), then this
+option will allow disabling the install of these.
+</para>
+<para>Note that you need to make sure the external tools are kept in sync with
+the versions that the GNU C Library expects as the data formats may change over
+time.  Consult the <filename>timezone</filename> subdirectory for more details.
+</para>
+</dd>
+<dt><span>‘<filename>&#45;&#45;enable-stack-protector</filename>’</span></dt>
+<dt><span>‘<filename>&#45;&#45;enable-stack-protector=strong</filename>’</span></dt>
+<dt><span>‘<filename>&#45;&#45;enable-stack-protector=all</filename>’</span></dt>
+<dd><para>Compile the C library and all other parts of the glibc package
+(including the threading and math libraries, NSS modules, and
+transliteration modules) using the GCC <filename>-fstack-protector</filename>,
+<filename>-fstack-protector-strong</filename> or <filename>-fstack-protector-all</filename>
+options to detect stack overruns.  Only the dynamic linker and a small
+number of routines called directly from assembler are excluded from this
+protection.
+</para>
+</dd>
+<dt><span>‘<filename>&#45;&#45;enable-bind-now</filename>’</span></dt>
+<dd><para>Disable lazy binding for installed shared objects and programs.  This
+provides additional security hardening because it enables full RELRO
+and a read-only global offset table (GOT), at the cost of slightly
+increased program load times.
+</para>
+<span xml:id="glibc-index-pt_005fchown"></span>
+<span xml:id="glibc-index-grantpt-1"></span>
+</dd>
+<dt><span>‘<filename>&#45;&#45;enable-pt_chown</filename>’</span></dt>
+<dd><para>The file <filename>pt_chown</filename> is a helper binary for <code>grantpt</code>
+(see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Allocation">Pseudo-Terminals</a>) that is installed setuid root to
+fix up pseudo-terminal ownership on GNU/Hurd.  It is not required on
+GNU/Linux, and the GNU C Library will not use the installed <filename>pt_chown</filename>
+program when configured with <filename>&#45;&#45;enable-pt_chown</filename>.
+</para>
+</dd>
+<dt><span>‘<filename>&#45;&#45;disable-werror</filename>’</span></dt>
+<dd><para>By default, the GNU C Library is built with <filename>-Werror</filename>.  If you wish
+to build without this option (for example, if building with a newer
+version of GCC than this version of the GNU C Library was tested with, so
+new warnings cause the build with <filename>-Werror</filename> to fail), you can
+configure with <filename>&#45;&#45;disable-werror</filename>.
+</para>
+</dd>
+<dt><span>‘<filename>&#45;&#45;disable-mathvec</filename>’</span></dt>
+<dd><para>By default for x86_64, the GNU C Library is built with the vector math library.
+Use this option to disable the vector math library.
+</para>
+</dd>
+<dt><span>‘<filename>&#45;&#45;enable-tunables</filename>’</span></dt>
+<dd><para>Tunables support allows additional library parameters to be customized at
+runtime.  This feature is enabled by default.  This option can take the
+following values:
+</para>
+<dl compact="compact">
+<dt><span><code>yes</code></span></dt>
+<dd><para>This is the default if no option is passed to configure. This enables tunables
+and selects the default frontend (currently ‘<filename>valstring</filename>’).
+</para>
+</dd>
+<dt><span><code>no</code></span></dt>
+<dd><para>This option disables tunables.
+</para>
+</dd>
+<dt><span><code>valstring</code></span></dt>
+<dd><para>This enables tunables and selects the ‘<filename>valstring</filename>’ frontend for tunables.
+This frontend allows users to specify tunables as a colon-separated list in a
+single environment variable <code>GLIBC_TUNABLES</code>.
+</para></dd>
+</dl>
+
+</dd>
+<dt><span>‘<filename>&#45;&#45;disable-crypt</filename>’</span></dt>
+<dd><para>Do not install the passphrase-hashing library <filename>libcrypt</filename> or the
+header file <filename>crypt.h</filename>.  <filename>unistd.h</filename> will still declare the
+function <code>crypt</code>.  Using this option does not change the set of
+programs that may need to be linked with <filename>-lcrypt</filename>; it only
+means that the GNU C Library will not provide that library.
+</para>
+<para>This option is for hackers and distributions experimenting with
+independently-maintained implementations of libcrypt.  It may become
+the default in a future release.
+</para>
+</dd>
+<dt><span>‘<filename>&#45;&#45;disable-experimental-malloc</filename>’</span></dt>
+<dd><para>By default, a per-thread cache is enabled in <code>malloc</code>.  While
+this cache can be disabled on a per-application basis using tunables
+(set glibc.malloc.tcache_count to zero), this option can be used to
+remove it from the build completely.
+</para>
+</dd>
+<dt><span>‘<filename>&#45;&#45;disable-scv</filename>’</span></dt>
+<dd><para>Disable using <code>scv</code> instruction for syscalls. All syscalls will use
+<code>sc</code> instead, even if the kernel supports <code>scv</code>. PowerPC only.
+</para>
+</dd>
+<dt><span>‘<filename>&#45;&#45;build=<var>build-system</var></filename>’</span></dt>
+<dt><span>‘<filename>&#45;&#45;host=<var>host-system</var></filename>’</span></dt>
+<dd><para>These options are for cross-compiling.  If you specify both options and
+<var>build-system</var> is different from <var>host-system</var>, <code>configure</code>
+will prepare to cross-compile the GNU C Library from <var>build-system</var> to be used
+on <var>host-system</var>.  You’ll probably need the ‘<filename>&#45;&#45;with-headers</filename>’
+option too, and you may have to override <var>configure</var>’s selection of
+the compiler and/or binutils.
+</para>
+<para>If you only specify ‘<filename>&#45;&#45;host</filename>’, <code>configure</code> will prepare for a
+native compile but use what you specify instead of guessing what your
+system is.  This is most useful to change the CPU submodel.  For example,
+if <code>configure</code> guesses your machine as <code>i686-pc-linux-gnu</code> but
+you want to compile a library for 586es, give
+‘<filename>&#45;&#45;host=i586-pc-linux-gnu</filename>’ or just ‘<filename>&#45;&#45;host=i586-linux</filename>’ and add
+the appropriate compiler flags (‘<filename>-mcpu=i586</filename>’ will do the trick) to
+<code>CC</code>.
+</para>
+<para>If you specify just ‘<filename>&#45;&#45;build</filename>’, <code>configure</code> will get confused.
+</para>
+</dd>
+<dt><span>‘<filename>&#45;&#45;with-pkgversion=<var>version</var></filename>’</span></dt>
+<dd><para>Specify a description, possibly including a build number or build
+date, of the binaries being built, to be included in
+<filename>&#45;&#45;version</filename> output from programs installed with the GNU C Library.
+For example, <filename>&#45;&#45;with-pkgversion='FooBar GNU/Linux glibc build
+123'</filename>.  The default value is ‘<filename>GNU libc</filename>’.
+</para>
+</dd>
+<dt><span>‘<filename>&#45;&#45;with-bugurl=<var>url</var></filename>’</span></dt>
+<dd><para>Specify the URL that users should visit if they wish to report a bug,
+to be included in <filename>&#45;&#45;help</filename> output from programs installed with
+the GNU C Library.  The default value refers to the main bug-reporting
+information for the GNU C Library.
+</para></dd>
+</dl>
+
+<para>To build the library and related programs, type <code>make</code>.  This will
+produce a lot of output, some of which may look like errors from
+<code>make</code> but aren’t.  Look for error messages from <code>make</code>
+containing ‘<filename>***</filename>’.  Those indicate that something is seriously wrong.
+</para>
+<para>The compilation process can take a long time, depending on the
+configuration and the speed of your machine.  Some complex modules may
+take a very long time to compile, as much as several minutes on slower
+machines.  Do not panic if the compiler appears to hang.
+</para>
+<para>If you want to run a parallel make, simply pass the ‘<filename>-j</filename>’ option
+with an appropriate numeric parameter to <code>make</code>.  You need a recent
+GNU <code>make</code> version, though.
+</para>
+<para>To build and run test programs which exercise some of the library
+facilities, type <code>make check</code>.  If it does not complete
+successfully, do not use the built library, and report a bug after
+verifying that the problem is not already known.  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Reporting-Bugs">Reporting Bugs</a>,
+for instructions on reporting bugs.  Note that some of the tests assume
+they are not being run by <code>root</code>.  We recommend you compile and
+test the GNU C Library as an unprivileged user.
+</para>
+<para>Before reporting bugs make sure there is no problem with your system.
+The tests (and later installation) use some pre-existing files of the
+system such as <filename>/etc/passwd</filename>, <filename>/etc/nsswitch.conf</filename> and others.
+These files must all contain correct and sensible content.
+</para>
+<para>Normally, <code>make check</code> will run all the tests before reporting
+all problems found and exiting with error status if any problems
+occurred.  You can specify ‘<filename>stop-on-test-failure=y</filename>’ when running
+<code>make check</code> to make the test run stop and exit with an error
+status immediately when a failure occurs.
+</para>
+<para>To format the <cite>GNU C Library Reference Manual</cite> for printing, type
+<code>make&nbsp;dvi</code>.  You need a working TeX installation to do
+this.  The distribution builds the on-line formatted version of the
+manual, as Info files, as part of the build process.  You can build
+them manually with <code>make&nbsp;info</code>.
+</para>
+<para>The library has a number of special-purpose configuration parameters
+which you can find in <filename>Makeconfig</filename>.  These can be overwritten with
+the file <filename>configparms</filename>.  To change them, create a
+<filename>configparms</filename> in your build directory and add values as appropriate
+for your system.  The file is included and parsed by <code>make</code> and has
+to follow the conventions for makefiles.
+</para>
+<para>It is easy to configure the GNU C Library for cross-compilation by
+setting a few variables in <filename>configparms</filename>.  Set <code>CC</code> to the
+cross-compiler for the target you configured the library for; it is
+important to use this same <code>CC</code> value when running
+<code>configure</code>, like this: ‘<filename>configure <var>target</var>
+CC=<var>target</var>-gcc</filename>’.  Set <code>BUILD_CC</code> to the compiler to use for programs
+run on the build system as part of compiling the library.  You may need to
+set <code>AR</code> to cross-compiling versions of <code>ar</code>
+if the native tools are not configured to work with
+object files for the target you configured for.  When cross-compiling
+the GNU C Library, it may be tested using ‘<filename>make check
+test-wrapper="<var>srcdir</var>/scripts/cross-test-ssh.sh <var>hostname</var>"</filename>’,
+where <var>srcdir</var> is the absolute directory name for the main source
+directory and <var>hostname</var> is the host name of a system that can run
+the newly built binaries of the GNU C Library.  The source and build
+directories must be visible at the same locations on both the build
+system and <var>hostname</var>.
+The ‘<filename>cross-test-ssh.sh</filename>’ script requires ‘<filename>flock</filename>’ from
+‘<filename>util-linux</filename>’ to work when <var>glibc_test_allow_time_setting</var>
+environment variable is set.
+</para>
+<para>It is also possible to execute tests, which require setting the date on
+the target machine.  Following use cases are supported:
+</para><ul>
+<li> <code>GLIBC_TEST_ALLOW_TIME_SETTING</code> is set in the environment in
+which eligible tests are executed and have the privilege to run
+<code>clock_settime</code>.  In this case, nothing prevents those tests from
+running in parallel, so the caller shall assure that those tests
+are serialized or provide a proper wrapper script for them.
+
+</li><li> The <code>cross-test-ssh.sh</code> script is used and one passes the
+<filename>&#45;&#45;allow-time-setting</filename> flag.  In this case, both sets
+<code>GLIBC_TEST_ALLOW_TIME_SETTING</code> and serialization of test
+execution are assured automatically.
+</li></ul>
+
+<para>In general, when testing the GNU C Library, ‘<filename>test-wrapper</filename>’ may be set
+to the name and arguments of any program to run newly built binaries.
+This program must preserve the arguments to the binary being run, its
+working directory and the standard input, output and error file
+descriptors.  If ‘<filename><var>test-wrapper</var> env</filename>’ will not work to run a
+program with environment variables set, then ‘<filename>test-wrapper-env</filename>’
+must be set to a program that runs a newly built program with
+environment variable assignments in effect, those assignments being
+specified as ‘<filename><var>var</var>=<var>value</var></filename>’ before the name of the
+program to be run.  If multiple assignments to the same variable are
+specified, the last assignment specified must take precedence.
+Similarly, if ‘<filename><var>test-wrapper</var> env -i</filename>’ will not work to run a
+program with an environment completely empty of variables except those
+directly assigned, then ‘<filename>test-wrapper-env-only</filename>’ must be set; its
+use has the same syntax as ‘<filename>test-wrapper-env</filename>’, the only
+difference in its semantics being starting with an empty set of
+environment variables rather than the ambient set.
+</para>
+<para>For AArch64 with SVE, when testing the GNU C Library, ‘<filename>test-wrapper</filename>’
+may be set to "<var>srcdir</var>/sysdeps/unix/sysv/linux/aarch64/vltest.py
+<var>vector-length</var>" to change Vector Length.
+</para>
+<hr>
+</div>
+<div class="appendixsec" xml:id="glibc-Running-make-install">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Tools-for-Compilation" accesskey="n" rel="next">Recommended Tools for Compilation</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Configuring-and-compiling" accesskey="p" rel="prev">Configuring and compiling the GNU C Library</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Installation" accesskey="u" rel="up">Installing the GNU C Library</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Installing-the-C-Library"></span><h3 class="appendixsec">C.2 Installing the C Library</title>
+<span xml:id="glibc-index-installing"></span>
+
+<para>To install the library and its header files, and the Info files of the
+manual, type <code>make install</code>.  This will
+build things, if necessary, before installing them; however, you should
+still compile everything first.  If you are installing the GNU C Library as your
+primary C library, we recommend that you shut the system down to
+single-user mode first, and reboot afterward.  This minimizes the risk
+of breaking things when the library changes out from underneath.
+</para>
+<para>‘<filename>make install</filename>’ will do the entire job of upgrading from a
+previous installation of the GNU C Library version 2.x.  There may sometimes
+be headers
+left behind from the previous installation, but those are generally
+harmless.  If you want to avoid leaving headers behind you can do
+things in the following order.
+</para>
+<para>You must first build the library (‘<filename>make</filename>’), optionally check it
+(‘<filename>make check</filename>’), switch the include directories and then install
+(‘<filename>make install</filename>’).  The steps must be done in this order.  Not moving
+the directory before install will result in an unusable mixture of header
+files from both libraries, but configuring, building, and checking the
+library requires the ability to compile and run programs against the old
+library.  The new <filename>/usr/include</filename>, after switching the include
+directories and before installing the library should contain the Linux
+headers, but nothing else.  If you do this, you will need to restore
+any headers from libraries other than the GNU C Library yourself after installing the
+library.
+</para>
+<para>You can install the GNU C Library somewhere other than where you configured
+it to go by setting the <code>DESTDIR</code> GNU standard make variable on
+the command line for ‘<filename>make install</filename>’.  The value of this variable
+is prepended to all the paths for installation.  This is useful when
+setting up a chroot environment or preparing a binary distribution.
+The directory should be specified with an absolute file name. Installing
+with the <code>prefix</code> and <code>exec_prefix</code> GNU standard make variables
+set is not supported.
+</para>
+<para>The GNU C Library includes a daemon called <code>nscd</code>, which you
+may or may not want to run.  <code>nscd</code> caches name service lookups; it
+can dramatically improve performance with NIS+, and may help with DNS as
+well.
+</para>
+<para>One auxiliary program, <filename>/usr/libexec/pt_chown</filename>, is installed setuid
+<code>root</code> if the ‘<filename>&#45;&#45;enable-pt_chown</filename>’ configuration option is used.
+This program is invoked by the <code>grantpt</code> function; it sets the
+permissions on a pseudoterminal so it can be used by the calling process.
+If you are using a Linux kernel with the <code>devpts</code> filesystem enabled
+and mounted at <filename>/dev/pts</filename>, you don’t need this program.
+</para>
+<para>After installation you should configure the timezone and install locales
+for your system.  The time zone configuration ensures that your system
+time matches the time for your current timezone.  The locales ensure that
+the display of information on your system matches the expectations of
+your language and geographic region.
+</para>
+<para>The GNU C Library is able to use two kinds of localization information sources, the
+first is a locale database named <filename>locale-archive</filename> which is generally
+installed as <filename>/usr/lib/locale/locale-archive</filename>.  The locale archive has the
+benefit of taking up less space and being very fast to load, but only if you
+plan to install sixty or more locales.  If you plan to install one or two
+locales you can instead install individual locales into their self-named
+directories e.g. <filename>/usr/lib/locale/en_US.utf8</filename>.  For example to install
+the German locale using the character set for UTF-8 with name <code>de_DE</code> into
+the locale archive issue the command ‘<filename>localedef -i de_DE -f UTF-8 de_DE</filename>’,
+and to install just the one locale issue the command ‘<filename>localedef
+&#45;&#45;no-archive -i de_DE -f UTF-8 de_DE</filename>’.  To configure all locales that are
+supported by the GNU C Library, you can issue from your build directory the command
+‘<filename>make localedata/install-locales</filename>’ to install all locales into the locale
+archive or ‘<filename>make localedata/install-locale-files</filename>’ to install all locales
+as files in the default configured locale installation directory (derived from
+‘<filename>&#45;&#45;prefix</filename>’ or <code>&#45;&#45;localedir</code>).  To install into an alternative system
+root use ‘<filename>DESTDIR</filename>’ e.g. ‘<filename>make localedata/install-locale-files
+DESTDIR=/opt/glibc</filename>’, but note that this does not change the configured prefix.
+</para>
+<para>To configure the locally used timezone, set the <code>TZ</code> environment
+variable.  The script <code>tzselect</code> helps you to select the right value.
+As an example, for Germany, <code>tzselect</code> would tell you to use
+‘<filename>TZ='Europe/Berlin'</filename>’.  For a system wide installation (the given
+paths are for an installation with ‘<filename>&#45;&#45;prefix=/usr</filename>’), link the
+timezone file which is in <filename>/usr/share/zoneinfo</filename> to the file
+<filename>/etc/localtime</filename>.  For Germany, you might execute ‘<filename>ln -s
+/usr/share/zoneinfo/Europe/Berlin /etc/localtime</filename>’.
+</para>
+<hr>
+</div>
+<div class="appendixsec" xml:id="glibc-Tools-for-Compilation">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Linux" accesskey="n" rel="next">Specific advice for GNU/Linux systems</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Running-make-install" accesskey="p" rel="prev">Installing the C Library</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Installation" accesskey="u" rel="up">Installing the GNU C Library</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Recommended-Tools-for-Compilation"></span><h3 class="appendixsec">C.3 Recommended Tools for Compilation</title>
+<span xml:id="glibc-index-installation-tools"></span>
+<span xml:id="glibc-index-tools_002c-for-installing-library"></span>
+
+<para>We recommend installing the following GNU tools before attempting to
+build the GNU C Library:
+</para>
+<ul>
+<li> GNU <code>make</code> 4.0 or newer
+
+<para>As of relase time, GNU <code>make</code> 4.3 is the newest verified to work
+to build the GNU C Library.
+</para>
+</li><li> GCC 6.2 or newer
+
+<para>GCC 6.2 or higher is required.  In general it is recommended to use
+the newest version of the compiler that is known to work for building
+the GNU C Library, as newer compilers usually produce better code.  As of
+release time, GCC 12.1 is the newest compiler verified to work to build
+the GNU C Library.
+</para>
+<para>For PowerPC 64-bits little-endian (powerpc64le), a GCC version with support
+for <filename>-mno-gnu-attribute</filename>, <filename>-mabi=ieeelongdouble</filename>, and
+<filename>-mabi=ibmlondouble</filename> is required.  Likewise, the compiler must also
+support passing <filename>-mlong-double-128</filename> with the preceding options.  As
+of release, this implies GCC 7.4 and newer (excepting GCC 7.5.0, see GCC
+PR94200).  These additional features are required for building the GNU C
+Library with support for IEEE long double.
+</para>
+
+<para>For ARC architecture builds, GCC 8.3 or higher is needed.
+</para>
+<para>For s390x architecture builds, GCC 7.1 or higher is needed (See gcc Bug 98269).
+</para>
+<para>For multi-arch support it is recommended to use a GCC which has been built with
+support for GNU indirect functions.  This ensures that correct debugging
+information is generated for functions selected by IFUNC resolvers.  This
+support can either be enabled by configuring GCC with
+‘<filename>&#45;&#45;enable-gnu-indirect-function</filename>’, or by enabling it by default by setting
+‘<filename>default_gnu_indirect_function</filename>’ variable for a particular architecture in
+the GCC source file <filename>gcc/config.gcc</filename>.
+</para>
+<para>You can use whatever compiler you like to compile programs that use
+the GNU C Library.
+</para>
+<para>Check the FAQ for any special compiler issues on particular platforms.
+</para>
+</li><li> GNU <code>binutils</code> 2.25 or later
+
+<para>You must use GNU <code>binutils</code> (as and ld) to build the GNU C Library.
+No other assembler or linker has the necessary functionality at the
+moment. As of release time, GNU <code>binutils</code> 2.38 is the newest
+verified to work to build the GNU C Library.
+</para>
+<para>For PowerPC 64-bits little-endian (powerpc64le), <code>objcopy</code> is required
+to support <filename>&#45;&#45;update-section</filename>.  This option requires binutils 2.26 or
+newer.
+</para>
+<para>ARC architecture needs <code>binutils</code> 2.32 or higher for TLS related fixes.
+</para>
+</li><li> GNU <code>texinfo</code> 4.7 or later
+
+<para>To correctly translate and install the Texinfo documentation you need
+this version of the <code>texinfo</code> package.  Earlier versions do not
+understand all the tags used in the document, and the installation
+mechanism for the info files is not present or works differently.
+As of release time, <code>texinfo</code> 6.8 is the newest verified to work
+to build the GNU C Library.
+</para>
+</li><li> GNU <code>awk</code> 3.1.2, or higher
+
+<para><code>awk</code> is used in several places to generate files.
+Some <code>gawk</code> extensions are used, including the <code>asorti</code>
+function, which was introduced in version 3.1.2 of <code>gawk</code>.
+As of release time, <code>gawk</code> version 5.1.1 is the newest verified
+to work to build the GNU C Library.
+</para>
+</li><li> GNU <code>bison</code> 2.7 or later
+
+<para><code>bison</code> is used to generate the <code>yacc</code> parser code in the <filename>intl</filename>
+subdirectory.  As of release time, <code>bison</code> version 3.8.2 is the newest
+verified to work to build the GNU C Library.
+</para>
+</li><li> Perl 5
+
+<para>Perl is not required, but if present it is used in some tests and the
+<code>mtrace</code> program, to build the GNU C Library manual.  As of release
+time <code>perl</code> version 5.34.1 is the newest verified to work to
+build the GNU C Library.
+</para>
+</li><li> GNU <code>sed</code> 3.02 or newer
+
+<para><code>Sed</code> is used in several places to generate files.  Most scripts work
+with any version of <code>sed</code>.  As of release time, <code>sed</code> version
+4.8 is the newest verified to work to build the GNU C Library.
+</para>
+</li><li> Python 3.4 or later
+
+<para>Python is required to build the GNU C Library.  As of release time, Python
+3.10.5 is the newest verified to work for building and testing
+the GNU C Library.
+</para>
+</li><li> PExpect 4.0
+
+<para>The pretty printer tests drive GDB through test programs and compare
+its output to the printers’.  PExpect is used to capture the output of
+GDB, and should be compatible with the Python version in your system.
+As of release time PExpect 4.8.0 is the newest verified to work to test
+the pretty printers.
+</para>
+</li><li> GDB 7.8 or later with support for Python 2.7/3.4 or later
+
+<para>GDB itself needs to be configured with Python support in order to use
+the pretty printers.  Notice that your system having Python available
+doesn’t imply that GDB supports it, nor that your system’s Python and
+GDB’s have the same version.  As of release time GNU <code>debugger</code>
+12.1 is the newest verified to work to test the pretty printers.
+</para>
+<para>Unless Python, PExpect and GDB with Python support are present, the
+printer tests will report themselves as <code>UNSUPPORTED</code>.  Notice
+that some of the printer tests require the GNU C Library to be compiled with
+debugging symbols.
+</para></li></ul>
+
+<para>If you change any of the <filename>configure.ac</filename> files you will also need
+</para>
+<ul>
+<li> GNU <code>autoconf</code> 2.69 (exactly)
+</li></ul>
+
+<para>and if you change any of the message translation files you will need
+</para>
+<ul>
+<li> GNU <code>gettext</code> 0.10.36 or later
+
+<para>As of release time, GNU <code>gettext</code> version 0.21 is the newest
+version verified to work to build the GNU C Library.
+</para></li></ul>
+
+
+<para>You may also need these packages if you upgrade your source tree using
+patches, although we try to avoid this.
+</para>
+<hr>
+</div>
+<div class="appendixsec" xml:id="glibc-Linux">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Reporting-Bugs" accesskey="n" rel="next">Reporting Bugs</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Tools-for-Compilation" accesskey="p" rel="prev">Recommended Tools for Compilation</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Installation" accesskey="u" rel="up">Installing the GNU C Library</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Specific-advice-for-GNU_002fLinux-systems"></span><h3 class="appendixsec">C.4 Specific advice for GNU/Linux systems</title>
+<span xml:id="glibc-index-kernel-header-files"></span>
+
+<para>If you are installing the GNU C Library on GNU/Linux systems, you need to have
+the header files from a 3.2 or newer kernel around for reference.
+(For the ia64 architecture, you need version 3.2.18 or newer because this
+is the first version with support for the <code>accept4</code> system call.)
+These headers must be installed using ‘<filename>make headers_install</filename>’; the
+headers present in the kernel source directory are not suitable for
+direct use by the GNU C Library.  You do not need to use that kernel, just have
+its headers installed where the GNU C Library can access them, referred to here as
+<var>install-directory</var>.  The easiest way to do this is to unpack it
+in a directory such as <filename>/usr/src/linux-<var>version</var></filename>.  In that
+directory, run ‘<filename>make headers_install
+INSTALL_HDR_PATH=<var>install-directory</var></filename>’.  Finally, configure the GNU C Library
+with the option ‘<filename>&#45;&#45;with-headers=<var>install-directory</var>/include</filename>’.
+Use the most recent kernel you can get your hands on.  (If you are
+cross-compiling the GNU C Library, you need to specify
+‘<filename>ARCH=<var>architecture</var></filename>’ in the ‘<filename>make headers_install</filename>’
+command, where <var>architecture</var> is the architecture name used by the
+Linux kernel, such as ‘<filename>x86</filename>’ or ‘<filename>powerpc</filename>’.)
+</para>
+<para>After installing the GNU C Library, you may need to remove or rename
+directories such as <filename>/usr/include/linux</filename> and
+<filename>/usr/include/asm</filename>, and replace them with copies of directories
+such as <filename>linux</filename> and <filename>asm</filename> from
+<filename><var>install-directory</var>/include</filename>.  All directories present in
+<filename><var>install-directory</var>/include</filename> should be copied, except that
+the GNU C Library provides its own version of <filename>/usr/include/scsi</filename>; the
+files provided by the kernel should be copied without replacing those
+provided by the GNU C Library.  The <filename>linux</filename>, <filename>asm</filename> and
+<filename>asm-generic</filename> directories are required to compile programs using
+the GNU C Library; the other directories describe interfaces to the kernel but
+are not required if not compiling programs using those interfaces.
+You do not need to copy kernel headers if you did not specify an
+alternate kernel header source using ‘<filename>&#45;&#45;with-headers</filename>’.
+</para>
+<para>The Filesystem Hierarchy Standard for GNU/Linux systems expects some
+components of the GNU C Library installation to be in
+<filename>/lib</filename> and some in <filename>/usr/lib</filename>.  This is handled automatically
+if you configure the GNU C Library with ‘<filename>&#45;&#45;prefix=/usr</filename>’.  If you set some other
+prefix or allow it to default to <filename>/usr/local</filename>, then all the
+components are installed there.
+</para>
+<para>As of release time, Linux version 5.18 is the newest stable version verified
+to work to build the GNU C Library.
+</para>
+<hr>
+</div>
+<div class="appendixsec" xml:id="glibc-Reporting-Bugs">
+<div class="header">
+<para>
+Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Linux" accesskey="p" rel="prev">Specific advice for GNU/Linux systems</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Installation" accesskey="u" rel="up">Installing the GNU C Library</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Reporting-Bugs-1"></span><h3 class="appendixsec">C.5 Reporting Bugs</title>
+<span xml:id="glibc-index-reporting-bugs"></span>
+<span xml:id="glibc-index-bugs_002c-reporting"></span>
+
+<para>There are probably bugs in the GNU C Library.  There are certainly
+errors and omissions in this manual.  If you report them, they will get
+fixed.  If you don’t, no one will ever know about them and they will
+remain unfixed for all eternity, if not longer.
+</para>
+<para>It is a good idea to verify that the problem has not already been
+reported.  Bugs are documented in two places: The file <filename>BUGS</filename>
+describes a number of well known bugs and the central GNU C Library
+bug tracking system has a
+WWW interface at
+<a href="https://sourceware.org/bugzilla/">https://sourceware.org/bugzilla/</a>.  The WWW
+interface gives you access to open and closed reports.  A closed report
+normally includes a patch or a hint on solving the problem.
+</para>
+<para>To report a bug, first you must find it.  With any luck, this will be the
+hard part.  Once you’ve found a bug, make sure it’s really a bug.  A
+good way to do this is to see if the GNU C Library behaves the same way
+some other C library does.  If so, probably you are wrong and the
+libraries are right (but not necessarily).  If not, one of the libraries
+is probably wrong.  It might not be the GNU C Library.  Many historical
+Unix C libraries permit things that we don’t, such as closing a file
+twice.
+</para>
+<para>If you think you have found some way in which the GNU C Library does not
+conform to the ISO and POSIX standards (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Standards-and-Portability">Standards and Portability</a>), that is definitely a bug.  Report it!
+</para>
+<para>Once you’re sure you’ve found a bug, try to narrow it down to the
+smallest test case that reproduces the problem.  In the case of a C
+library, you really only need to narrow it down to one library
+function call, if possible.  This should not be too difficult.
+</para>
+<para>The final step when you have a simple test case is to report the bug.
+Do this at <a href="https://www.gnu.org/software/libc/bugs.html">https://www.gnu.org/software/libc/bugs.html</a>.
+</para>
+<para>If you are not sure how a function should behave, and this manual
+doesn’t tell you, that’s a bug in the manual.  Report that too!  If the
+function’s behavior disagrees with the manual, then either the library
+or the manual has a bug, so report the disagreement.  If you find any
+errors or omissions in this manual, please report them to the
+bug database.  If you refer to specific
+sections of the manual, please include the section names for easier
+identification.
+</para><hr>
+</div>
+</div-->
 </appendix>

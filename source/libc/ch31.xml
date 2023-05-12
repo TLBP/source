@@ -5,4 +5,1258 @@
 <part xml:id="glibc-System-Management">
   <title>Sistem Yönetimi</title>
   <titleabbrev>Sistemin denetimi ve hakkında bilgi alınması.</titleabbrev>
+ <preliminary>
+<para>This chapter describes facilities for controlling the system that
+underlies a process (including the operating system and hardware) and
+for getting information about it.  Anyone can generally use the
+informational facilities, but usually only a properly privileged process
+can make changes.
+</para>
+
+
+<para>To get information on parameters of the system that are built into the
+system, such as the maximum length of a filename, <xref linkend="glibc-System-Configuration"/>.
+</para>
+ </preliminary><!--
+<sect xml:id="glibc-Host-Identification">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Platform-Type" accesskey="n" rel="next">Platform Type Identification</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#System-Management" accesskey="u" rel="up">System Management</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Host-Identification-1"></span><h3 class="section">31.1 Host Identification</title>
+
+<para>This section explains how to identify the particular system on which your
+program is running.  First, let’s review the various ways computer systems
+are named, which is a little complicated because of the history of the
+development of the Internet.
+</para>
+<para>Every Unix system (also known as a host) has a host name, whether it’s
+connected to a network or not.  In its simplest form, as used before
+computer networks were an issue, it’s just a word like ‘<filename>chicken</filename>’.
+<span xml:id="glibc-index-host-name"></span>
+</para>
+<para>But any system attached to the Internet or any network like it conforms
+to a more rigorous naming convention as part of the Domain Name System
+(DNS).  In the DNS, every host name is composed of two parts:
+<span xml:id="glibc-index-DNS"></span>
+<span xml:id="glibc-index-Domain-Name-System"></span>
+</para>
+<ol>
+<li> hostname
+</li><li> <span xml:id="glibc-index-hostname"></span>
+domain name
+<span xml:id="glibc-index-domain-name"></span>
+</li></ol>
+
+<para>You will note that “hostname” looks a lot like “host name”, but is
+not the same thing, and that people often incorrectly refer to entire
+host names as “domain names.”
+</para>
+<para>In the DNS, the full host name is properly called the FQDN (Fully Qualified
+Domain Name) and consists of the hostname, then a period, then the
+domain name.  The domain name itself usually has multiple components
+separated by periods.  So for example, a system’s hostname may be
+‘<filename>chicken</filename>’ and its domain name might be ‘<filename>ai.mit.edu</filename>’, so
+its FQDN (which is its host name) is ‘<filename>chicken.ai.mit.edu</filename>’.
+<span xml:id="glibc-index-FQDN"></span>
+</para>
+<para>Adding to the confusion, though, is that the DNS is not the only name space
+in which a computer needs to be known.  Another name space is the
+NIS (aka YP) name space.  For NIS purposes, there is another domain
+name, which is called the NIS domain name or the YP domain name.  It
+need not have anything to do with the DNS domain name.
+<span xml:id="glibc-index-YP"></span>
+<span xml:id="glibc-index-NIS"></span>
+<span xml:id="glibc-index-NIS-domain-name"></span>
+<span xml:id="glibc-index-YP-domain-name"></span>
+</para>
+<para>Confusing things even more is the fact that in the DNS, it is possible for
+multiple FQDNs to refer to the same system.  However, there is always
+exactly one of them that is the true host name, and it is called the
+canonical FQDN.
+</para>
+<para>In some contexts, the host name is called a “node name.”
+</para>
+<para>For more information on DNS host naming, see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Host-Names">Host Names</a>.
+</para>
+<span xml:id="glibc-index-hostname-1"></span>
+<span xml:id="glibc-index-hostid-1"></span>
+<span xml:id="glibc-index-unistd_002eh-26"></span>
+<para>Prototypes for these functions appear in <filename>unistd.h</filename>.
+</para>
+<para>The programs <code>hostname</code>, <code>hostid</code>, and <code>domainname</code> work
+by calling these functions.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-gethostname"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>gethostname</strong> <emphasis>(char *<var>name</var>, size_t <var>size</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-gethostname" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This function returns the host name of the system on which it is called,
+in the array <var>name</var>.  The <var>size</var> argument specifies the size of
+this array, in bytes.  Note that this is <emphasis>not</emphasis> the DNS hostname.
+If the system participates in the DNS, this is the FQDN (see above).
+</para>
+<para>The return value is <code>0</code> on success and <code>-1</code> on failure.  In
+the GNU C Library, <code>gethostname</code> fails if <var>size</var> is not large
+enough; then you can try again with a larger array.  The following
+<code>errno</code> error condition is defined for this function:
+</para>
+<dl compact="compact">
+<dt><span><code>ENAMETOOLONG</code></span></dt>
+<dd><para>The <var>size</var> argument is less than the size of the host name plus one.
+</para></dd>
+</dl>
+
+<span xml:id="glibc-index-sys_002fparam_002eh"></span>
+<para>On some systems, there is a symbol for the maximum possible host name
+length: <code>MAXHOSTNAMELEN</code>.  It is defined in <filename>sys/param.h</filename>.
+But you can’t count on this to exist, so it is cleaner to handle
+failure and try again.
+</para>
+<para><code>gethostname</code> stores the beginning of the host name in <var>name</var>
+even if the host name won’t entirely fit.  For some purposes, a
+truncated host name is good enough.  If it is, you can ignore the
+error code.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-sethostname"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>sethostname</strong> <emphasis>(const char *<var>name</var>, size_t <var>length</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-sethostname" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>sethostname</code> function sets the host name of the system that
+calls it to <var>name</var>, a string with length <var>length</var>.  Only
+privileged processes are permitted to do this.
+</para>
+<para>Usually <code>sethostname</code> gets called just once, at system boot time.
+Often, the program that calls it sets it to the value it finds in the
+file <code>/etc/hostname</code>.
+<span xml:id="glibc-index-_002fetc_002fhostname"></span>
+</para>
+<para>Be sure to set the host name to the full host name, not just the DNS
+hostname (see above).
+</para>
+<para>The return value is <code>0</code> on success and <code>-1</code> on failure.
+The following <code>errno</code> error condition is defined for this function:
+</para>
+<dl compact="compact">
+<dt><span><code>EPERM</code></span></dt>
+<dd><para>This process cannot set the host name because it is not privileged.
+</para></dd>
+</dl>
+</dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-getdomainnname"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>getdomainnname</strong> <emphasis>(char *<var>name</var>, size_t <var>length</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-getdomainnname" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<span xml:id="glibc-index-NIS-domain-name-1"></span>
+<span xml:id="glibc-index-YP-domain-name-1"></span>
+
+<para><code>getdomainname</code> returns the NIS (aka YP) domain name of the system
+on which it is called.  Note that this is not the more popular DNS
+domain name.  Get that with <code>gethostname</code>.
+</para>
+<para>The specifics of this function are analogous to <code>gethostname</code>, above.
+</para>
+</dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-setdomainname"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>setdomainname</strong> <emphasis>(const char *<var>name</var>, size_t <var>length</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-setdomainname" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<span xml:id="glibc-index-NIS-domain-name-2"></span>
+<span xml:id="glibc-index-YP-domain-name-2"></span>
+
+<para><code>setdomainname</code> sets the NIS (aka YP) domain name of the system
+on which it is called.  Note that this is not the more popular DNS
+domain name.  Set that with <code>sethostname</code>.
+</para>
+<para>The specifics of this function are analogous to <code>sethostname</code>, above.
+</para>
+</dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-gethostid"><span class="category">Function: </span><span><emphasis>long int</emphasis> <strong>gethostid</strong> <emphasis>(void)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-gethostid" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe hostid env locale
+| AS-Unsafe dlopen plugin corrupt heap lock
+| AC-Unsafe lock corrupt mem fd
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This function returns the “host ID” of the machine the program is
+running on.  By convention, this is usually the primary Internet IP address
+of that machine, converted to a <code>long&nbsp;int</code>.  However, on some
+systems it is a meaningless but unique number which is hard-coded for
+each machine.
+</para>
+<para>This is not widely used.  It arose in BSD 4.2, but was dropped in BSD 4.4.
+It is not required by POSIX.
+</para>
+<para>The proper way to query the IP address is to use <code>gethostbyname</code>
+on the results of <code>gethostname</code>.  For more information on IP addresses,
+See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Host-Addresses">Host Addresses</a>.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-sethostid"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>sethostid</strong> <emphasis>(long int <var>id</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-sethostid" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Unsafe const:hostid
+| AS-Unsafe
+| AC-Unsafe corrupt fd
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>sethostid</code> function sets the “host ID” of the host machine
+to <var>id</var>.  Only privileged processes are permitted to do this.  Usually
+it happens just once, at system boot time.
+</para>
+<para>The proper way to establish the primary IP address of a system
+is to configure the IP address resolver to associate that IP address with
+the system’s host name as returned by <code>gethostname</code>.  For example,
+put a record for the system in <filename>/etc/hosts</filename>.
+</para>
+<para>See <code>gethostid</code> above for more information on host ids.
+</para>
+<para>The return value is <code>0</code> on success and <code>-1</code> on failure.
+The following <code>errno</code> error conditions are defined for this function:
+</para>
+<dl compact="compact">
+<dt><span><code>EPERM</code></span></dt>
+<dd><para>This process cannot set the host name because it is not privileged.
+</para>
+</dd>
+<dt><span><code>ENOSYS</code></span></dt>
+<dd><para>The operating system does not support setting the host ID.  On some
+systems, the host ID is a meaningless but unique number hard-coded for
+each machine.
+</para></dd>
+</dl>
+</dd></dl>
+
+<hr>
+</div>
+<sect xml:id="glibc-Platform-Type">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Filesystem-Handling" accesskey="n" rel="next">Controlling and Querying Mounts</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Host-Identification" accesskey="p" rel="prev">Host Identification</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#System-Management" accesskey="u" rel="up">System Management</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Platform-Type-Identification"></span><h3 class="section">31.2 Platform Type Identification</title>
+
+<para>You can use the <code>uname</code> function to find out some information about
+the type of computer your program is running on.  This function and the
+associated data type are declared in the header file
+<filename>sys/utsname.h</filename>.
+<span xml:id="glibc-index-sys_002futsname_002eh"></span>
+</para>
+<para>As a bonus, <code>uname</code> also gives some information identifying the
+particular system your program is running on.  This is the same information
+which you can get with functions targeted to this purpose described in
+<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Host-Identification">Host Identification</a>.
+</para>
+
+<dl class="def">
+<dt xml:id="glibc-index-struct-utsname"><span class="category">Data Type: </span><span><strong>struct utsname</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-struct-utsname" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>The <code>utsname</code> structure is used to hold information returned
+by the <code>uname</code> function.  It has the following members:
+</para>
+<dl compact="compact">
+<dt><span><code>char sysname[]</code></span></dt>
+<dd><para>This is the name of the operating system in use.
+</para>
+</dd>
+<dt><span><code>char release[]</code></span></dt>
+<dd><para>This is the current release level of the operating system implementation.
+</para>
+</dd>
+<dt><span><code>char version[]</code></span></dt>
+<dd><para>This is the current version level within the release of the operating
+system.
+</para>
+</dd>
+<dt><span><code>char machine[]</code></span></dt>
+<dd><para>This is a description of the type of hardware that is in use.
+</para>
+<para>Some systems provide a mechanism to interrogate the kernel directly for
+this information.  On systems without such a mechanism, the GNU C Library
+fills in this field based on the configuration name that was
+specified when building and installing the library.
+</para>
+<para>GNU uses a three-part name to describe a system configuration; the three
+parts are <var>cpu</var>, <var>manufacturer</var> and <var>system-type</var>, and they
+are separated with dashes.  Any possible combination of three names is
+potentially meaningful, but most such combinations are meaningless in
+practice and even the meaningful ones are not necessarily supported by
+any particular GNU program.
+</para>
+<para>Since the value in <code>machine</code> is supposed to describe just the
+hardware, it consists of the first two parts of the configuration name:
+‘<filename><var>cpu</var>-<var>manufacturer</var></filename>’.  For example, it might be one of these:
+</para>
+<blockquote>
+<para><code>"sparc-sun"</code>,
+<code>"i386-<var>anything</var>"</code>,
+<code>"m68k-hp"</code>,
+<code>"m68k-sony"</code>,
+<code>"m68k-sun"</code>,
+<code>"mips-dec"</code>
+</para></blockquote>
+
+</dd>
+<dt><span><code>char nodename[]</code></span></dt>
+<dd><para>This is the host name of this particular computer.  In the GNU C Library,
+the value is the same as that returned by <code>gethostname</code>;
+see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Host-Identification">Host Identification</a>.
+</para>
+<para><code>gethostname</code> is implemented with a call to <code>uname</code>.
+</para>
+</dd>
+<dt><span><code>char domainname[]</code></span></dt>
+<dd><para>This is the NIS or YP domain name.  It is the same value returned by
+<code>getdomainname</code>; see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Host-Identification">Host Identification</a>.  This element
+is a relatively recent invention and use of it is not as portable as
+use of the rest of the structure.
+</para>
+
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-uname"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>uname</strong> <emphasis>(struct utsname *<var>info</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-uname" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>uname</code> function fills in the structure pointed to by
+<var>info</var> with information about the operating system and host machine.
+A non-negative return value indicates that the data was successfully stored.
+</para>
+<para><code>-1</code> as the return value indicates an error.  The only error possible is
+<code>EFAULT</code>, which we normally don’t mention as it is always a
+possibility.
+</para></dd></dl>
+
+
+<hr>
+</div>
+<sect xml:id="glibc-Filesystem-Handling">
+<div class="header">
+<para>
+Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Platform-Type" accesskey="p" rel="prev">Platform Type Identification</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#System-Management" accesskey="u" rel="up">System Management</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Controlling-and-Querying-Mounts"></span><h3 class="section">31.3 Controlling and Querying Mounts</title>
+
+<para>All files are in filesystems, and before you can access any file, its
+filesystem must be mounted.  Because of Unix’s concept of
+<emphasis>Everything is a file</emphasis>, mounting of filesystems is central to doing
+almost anything.  This section explains how to find out what filesystems
+are currently mounted and what filesystems are available for mounting,
+and how to change what is mounted.
+</para>
+<para>The classic filesystem is the contents of a disk drive.  The concept is
+considerably more abstract, though, and lots of things other than disk
+drives can be mounted.
+</para>
+<para>Some block devices don’t correspond to traditional devices like disk
+drives.  For example, a loop device is a block device whose driver uses
+a regular file in another filesystem as its medium.  So if that regular
+file contains appropriate data for a filesystem, you can by mounting the
+loop device essentially mount a regular file.
+</para>
+<para>Some filesystems aren’t based on a device of any kind.  The “proc”
+filesystem, for example, contains files whose data is made up by the
+filesystem driver on the fly whenever you ask for it.  And when you
+write to it, the data you write causes changes in the system.  No data
+gets stored.
+</para>
+
+
+<ul class="section-toc">
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Mount-Information" accesskey="1">Mount Information</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Mount_002dUnmount_002dRemount" accesskey="2">Mount, Unmount, Remount</a></li>
+</ul>
+<hr>
+<div class="subsection" xml:id="glibc-Mount-Information">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Mount_002dUnmount_002dRemount" accesskey="n" rel="next">Mount, Unmount, Remount</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Filesystem-Handling" accesskey="u" rel="up">Controlling and Querying Mounts</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Mount-Information-1"></span><h4 class="subsection">31.3.1 Mount Information</title>
+
+<para>For some programs it is desirable and necessary to access information
+about whether a certain filesystem is mounted and, if it is, where, or
+simply to get lists of all the available filesystems.  The GNU C Library
+provides some functions to retrieve this information portably.
+</para>
+<para>Traditionally Unix systems have a file named <filename>/etc/fstab</filename> which
+describes all possibly mounted filesystems.  The <code>mount</code> program
+uses this file to mount at startup time of the system all the
+necessary filesystems.  The information about all the filesystems
+actually mounted is normally kept in a file named either
+<filename>/var/run/mtab</filename> or <filename>/etc/mtab</filename>.  Both files share the same
+syntax and it is crucial that this syntax is followed all the time.
+Therefore it is best to never directly write to the files.  The functions
+described in this section can do this and they also provide the
+functionality to convert the external textual representation to the
+internal representation.
+</para>
+<para>Note that the <filename>fstab</filename> and <filename>mtab</filename> files are maintained on a
+system by <emphasis>convention</emphasis>.  It is possible for the files not to exist
+or not to be consistent with what is really mounted or available to
+mount, if the system’s administration policy allows it.  But programs
+that mount and unmount filesystems typically maintain and use these
+files as described herein.
+</para>
+<span xml:id="glibc-index-_005fPATH_005fFSTAB"></span>
+<span xml:id="glibc-index-_005fPATH_005fMNTTAB"></span>
+<span xml:id="glibc-index-_005fPATH_005fMOUNTED"></span>
+<span xml:id="glibc-index-FSTAB"></span>
+<span xml:id="glibc-index-MNTTAB"></span>
+<span xml:id="glibc-index-MOUNTED"></span>
+<para>The filenames given above should never be used directly.  The portable
+way to handle these files is to use the macros <code>_PATH_FSTAB</code>,
+defined in <filename>fstab.h</filename>, or <code>_PATH_MNTTAB</code>, defined in
+<filename>mntent.h</filename> and <filename>paths.h</filename>, for <filename>fstab</filename>; and the macro
+<code>_PATH_MOUNTED</code>, also defined in <filename>mntent.h</filename> and
+<filename>paths.h</filename>, for <filename>mtab</filename>.  There are also two alternate macro
+names <code>FSTAB</code>, <code>MNTTAB</code>, and <code>MOUNTED</code> defined but
+these names are deprecated and kept only for backward compatibility.
+The names <code>_PATH_MNTTAB</code> and <code>_PATH_MOUNTED</code> should always be used.
+</para>
+
+<ul class="section-toc">
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#fstab" accesskey="1">The <filename>fstab</filename> file</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#mtab" accesskey="2">The <filename>mtab</filename> file</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Other-Mount-Information" accesskey="3">Other (Non-libc) Sources of Mount Information</a></li>
+</ul>
+<hr>
+<div class="subsubsection" xml:id="glibc-fstab">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#mtab" accesskey="n" rel="next">The <filename>mtab</filename> file</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Mount-Information" accesskey="u" rel="up">Mount Information</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-The-fstab-file"></span><h4 class="subsubsection">31.3.1.1 The <filename>fstab</filename> file</title>
+
+<para>The internal representation for entries of the file is <code>struct&nbsp;fstab</code>, defined in <filename>fstab.h</filename>.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-struct-fstab"><span class="category">Data Type: </span><span><strong>struct fstab</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-struct-fstab" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>This structure is used with the <code>getfsent</code>, <code>getfsspec</code>, and
+<code>getfsfile</code> functions.
+</para>
+<dl compact="compact">
+<dt><span><code>char *fs_spec</code></span></dt>
+<dd><para>This element describes the device from which the filesystem is mounted.
+Normally this is the name of a special device, such as a hard disk
+partition, but it could also be a more or less generic string.  For
+<emphasis>NFS</emphasis> it would be a hostname and directory name combination.
+</para>
+<para>Even though the element is not declared <code>const</code> it shouldn’t be
+modified.  The missing <code>const</code> has historic reasons, since this
+function predates &isoc;.  The same is true for the other string
+elements of this structure.
+</para>
+</dd>
+<dt><span><code>char *fs_file</code></span></dt>
+<dd><para>This describes the mount point on the local system.  I.e., accessing any
+file in this filesystem has implicitly or explicitly this string as a
+prefix.
+</para>
+</dd>
+<dt><span><code>char *fs_vfstype</code></span></dt>
+<dd><para>This is the type of the filesystem.  Depending on what the underlying
+kernel understands it can be any string.
+</para>
+</dd>
+<dt><span><code>char *fs_mntops</code></span></dt>
+<dd><para>This is a string containing options passed to the kernel with the
+<code>mount</code> call.  Again, this can be almost anything.  There can be
+more than one option, separated from the others by a comma.  Each option
+consists of a name and an optional value part, introduced by an <code>=</code>
+character.
+</para>
+<para>If the value of this element must be processed it should ideally be done
+using the <code>getsubopt</code> function; see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Suboptions">Parsing of Suboptions</a>.
+</para>
+</dd>
+<dt><span><code>const char *fs_type</code></span></dt>
+<dd><para>This name is poorly chosen.  This element points to a string (possibly
+in the <code>fs_mntops</code> string) which describes the modes with which the
+filesystem is mounted.  <filename>fstab</filename> defines five macros to describe the
+possible values:
+</para>
+<dl compact="compact">
+<dt xml:id="glibc-index-FSTAB_005fRW"><span><code>FSTAB_RW</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-FSTAB_005fRW" class="copiable-anchor"> ¶</a></span></dt>
+<dd><para>The filesystem gets mounted with read and write enabled.
+</para></dd>
+<dt xml:id="glibc-index-FSTAB_005fRQ"><span><code>FSTAB_RQ</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-FSTAB_005fRQ" class="copiable-anchor"> ¶</a></span></dt>
+<dd><para>The filesystem gets mounted with read and write enabled.  Write access
+is restricted by quotas.
+</para></dd>
+<dt xml:id="glibc-index-FSTAB_005fRO"><span><code>FSTAB_RO</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-FSTAB_005fRO" class="copiable-anchor"> ¶</a></span></dt>
+<dd><para>The filesystem gets mounted read-only.
+</para></dd>
+<dt xml:id="glibc-index-FSTAB_005fSW"><span><code>FSTAB_SW</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-FSTAB_005fSW" class="copiable-anchor"> ¶</a></span></dt>
+<dd><para>This is not a real filesystem, it is a swap device.
+</para></dd>
+<dt xml:id="glibc-index-FSTAB_005fXX"><span><code>FSTAB_XX</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-FSTAB_005fXX" class="copiable-anchor"> ¶</a></span></dt>
+<dd><para>This entry from the <filename>fstab</filename> file is totally ignored.
+</para></dd>
+</dl>
+
+<para>Testing for equality with these values must happen using <code>strcmp</code>
+since these are all strings.  Comparing the pointer will probably always
+fail.
+</para>
+</dd>
+<dt><span><code>int fs_freq</code></span></dt>
+<dd><para>This element describes the dump frequency in days.
+</para>
+</dd>
+<dt><span><code>int fs_passno</code></span></dt>
+<dd><para>This element describes the pass number on parallel dumps.  It is closely
+related to the <code>dump</code> utility used on Unix systems.
+</para></dd>
+</dl>
+</dd></dl>
+
+
+<para>To read the entire content of the of the <filename>fstab</filename> file the GNU C Library
+contains a set of three functions which are designed in the usual way.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-setfsent"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>setfsent</strong> <emphasis>(void)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-setfsent" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Unsafe race:fsent
+| AS-Unsafe heap corrupt lock
+| AC-Unsafe corrupt lock mem fd
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This function makes sure that the internal read pointer for the
+<filename>fstab</filename> file is at the beginning of the file.  This is done by
+either opening the file or resetting the read pointer.
+</para>
+<para>Since the file handle is internal to the libc this function is not
+thread-safe.
+</para>
+<para>This function returns a non-zero value if the operation was successful
+and the <code>getfs*</code> functions can be used to read the entries of the
+file.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-endfsent"><span class="category">Function: </span><span><emphasis>void</emphasis> <strong>endfsent</strong> <emphasis>(void)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-endfsent" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Unsafe race:fsent
+| AS-Unsafe heap corrupt lock
+| AC-Unsafe corrupt lock mem fd
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This function makes sure that all resources acquired by a prior call to
+<code>setfsent</code> (explicitly or implicitly by calling <code>getfsent</code>) are
+freed.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-getfsent"><span class="category">Function: </span><span><emphasis>struct fstab *</emphasis> <strong>getfsent</strong> <emphasis>(void)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-getfsent" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Unsafe race:fsent locale
+| AS-Unsafe corrupt heap lock
+| AC-Unsafe corrupt lock mem
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This function returns the next entry of the <filename>fstab</filename> file.  If this
+is the first call to any of the functions handling <filename>fstab</filename> since
+program start or the last call of <code>endfsent</code>, the file will be
+opened.
+</para>
+<para>The function returns a pointer to a variable of type <code>struct
+fstab</code>.  This variable is shared by all threads and therefore this
+function is not thread-safe.  If an error occurred <code>getfsent</code>
+returns a <code>NULL</code> pointer.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-getfsspec"><span class="category">Function: </span><span><emphasis>struct fstab *</emphasis> <strong>getfsspec</strong> <emphasis>(const char *<var>name</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-getfsspec" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Unsafe race:fsent locale
+| AS-Unsafe corrupt heap lock
+| AC-Unsafe corrupt lock mem
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This function returns the next entry of the <filename>fstab</filename> file which has
+a string equal to <var>name</var> pointed to by the <code>fs_spec</code> element.
+Since there is normally exactly one entry for each special device it
+makes no sense to call this function more than once for the same
+argument.  If this is the first call to any of the functions handling
+<filename>fstab</filename> since program start or the last call of <code>endfsent</code>,
+the file will be opened.
+</para>
+<para>The function returns a pointer to a variable of type <code>struct
+fstab</code>.  This variable is shared by all threads and therefore this
+function is not thread-safe.  If an error occurred <code>getfsent</code>
+returns a <code>NULL</code> pointer.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-getfsfile"><span class="category">Function: </span><span><emphasis>struct fstab *</emphasis> <strong>getfsfile</strong> <emphasis>(const char *<var>name</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-getfsfile" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Unsafe race:fsent locale
+| AS-Unsafe corrupt heap lock
+| AC-Unsafe corrupt lock mem
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This function returns the next entry of the <filename>fstab</filename> file which has
+a string equal to <var>name</var> pointed to by the <code>fs_file</code> element.
+Since there is normally exactly one entry for each mount point it
+makes no sense to call this function more than once for the same
+argument.  If this is the first call to any of the functions handling
+<filename>fstab</filename> since program start or the last call of <code>endfsent</code>,
+the file will be opened.
+</para>
+<para>The function returns a pointer to a variable of type <code>struct
+fstab</code>.  This variable is shared by all threads and therefore this
+function is not thread-safe.  If an error occurred <code>getfsent</code>
+returns a <code>NULL</code> pointer.
+</para></dd></dl>
+
+
+<hr>
+</div>
+<div class="subsubsection" xml:id="glibc-mtab">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Other-Mount-Information" accesskey="n" rel="next">Other (Non-libc) Sources of Mount Information</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#fstab" accesskey="p" rel="prev">The <filename>fstab</filename> file</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Mount-Information" accesskey="u" rel="up">Mount Information</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-The-mtab-file"></span><h4 class="subsubsection">31.3.1.2 The <filename>mtab</filename> file</title>
+<para>The following functions and data structure access the <filename>mtab</filename> file.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-struct-mntent"><span class="category">Data Type: </span><span><strong>struct mntent</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-struct-mntent" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>This structure is used with the <code>getmntent</code>, <code>getmntent_r</code>,
+<code>addmntent</code>, and <code>hasmntopt</code> functions.
+</para>
+<dl compact="compact">
+<dt><span><code>char *mnt_fsname</code></span></dt>
+<dd><para>This element contains a pointer to a string describing the name of the
+special device from which the filesystem is mounted.  It corresponds to
+the <code>fs_spec</code> element in <code>struct fstab</code>.
+</para>
+</dd>
+<dt><span><code>char *mnt_dir</code></span></dt>
+<dd><para>This element points to a string describing the mount point of the
+filesystem.  It corresponds to the <code>fs_file</code> element in
+<code>struct fstab</code>.
+</para>
+</dd>
+<dt><span><code>char *mnt_type</code></span></dt>
+<dd><para><code>mnt_type</code> describes the filesystem type and is therefore
+equivalent to <code>fs_vfstype</code> in <code>struct fstab</code>.  <filename>mntent.h</filename>
+defines a few symbolic names for some of the values this string can have.
+But since the kernel can support arbitrary filesystems it does not
+make much sense to give them symbolic names.  If one knows the symbol
+name one also knows the filesystem name.  Nevertheless here follows the
+list of the symbols provided in <filename>mntent.h</filename>.
+</para>
+<dl compact="compact">
+<dt xml:id="glibc-index-MNTTYPE_005fIGNORE"><span><code>MNTTYPE_IGNORE</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-MNTTYPE_005fIGNORE" class="copiable-anchor"> ¶</a></span></dt>
+<dd><para>This symbol expands to <code>"ignore"</code>.  The value is sometimes used in
+<filename>fstab</filename> files to make sure entries are not used without removing them.
+</para></dd>
+<dt xml:id="glibc-index-MNTTYPE_005fNFS"><span><code>MNTTYPE_NFS</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-MNTTYPE_005fNFS" class="copiable-anchor"> ¶</a></span></dt>
+<dd><para>Expands to <code>"nfs"</code>.  Using this macro sometimes could make sense
+since it names the default NFS implementation, in case both version 2
+and 3 are supported.
+</para></dd>
+<dt xml:id="glibc-index-MNTTYPE_005fSWAP"><span><code>MNTTYPE_SWAP</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-MNTTYPE_005fSWAP" class="copiable-anchor"> ¶</a></span></dt>
+<dd><para>This symbol expands to <code>"swap"</code>.  It names the special <filename>fstab</filename>
+entry which names one of the possibly multiple swap partitions.
+</para></dd>
+</dl>
+
+</dd>
+<dt><span><code>char *mnt_opts</code></span></dt>
+<dd><para>The element contains a string describing the options used while mounting
+the filesystem.  As for the equivalent element <code>fs_mntops</code> of
+<code>struct fstab</code> it is best to use the function <code>getsubopt</code>
+(see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Suboptions">Parsing of Suboptions</a>) to access the parts of this string.
+</para>
+<para>The <filename>mntent.h</filename> file defines a number of macros with string values
+which correspond to some of the options understood by the kernel.  There
+might be many more options which are possible so it doesn’t make much sense
+to rely on these macros but to be consistent here is the list:
+</para>
+<dl compact="compact">
+<dt xml:id="glibc-index-MNTOPT_005fDEFAULTS"><span><code>MNTOPT_DEFAULTS</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-MNTOPT_005fDEFAULTS" class="copiable-anchor"> ¶</a></span></dt>
+<dd><para>Expands to <code>"defaults"</code>.  This option should be used alone since it
+indicates all values for the customizable values are chosen to be the
+default.
+</para></dd>
+<dt xml:id="glibc-index-MNTOPT_005fRO"><span><code>MNTOPT_RO</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-MNTOPT_005fRO" class="copiable-anchor"> ¶</a></span></dt>
+<dd><para>Expands to <code>"ro"</code>.  See the <code>FSTAB_RO</code> value, it means the
+filesystem is mounted read-only.
+</para></dd>
+<dt xml:id="glibc-index-MNTOPT_005fRW"><span><code>MNTOPT_RW</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-MNTOPT_005fRW" class="copiable-anchor"> ¶</a></span></dt>
+<dd><para>Expands to <code>"rw"</code>.  See the <code>FSTAB_RW</code> value, it means the
+filesystem is mounted with read and write permissions.
+</para></dd>
+<dt xml:id="glibc-index-MNTOPT_005fSUID"><span><code>MNTOPT_SUID</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-MNTOPT_005fSUID" class="copiable-anchor"> ¶</a></span></dt>
+<dd><para>Expands to <code>"suid"</code>.  This means that the SUID bit (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#How-Change-Persona">How an Application Can Change Persona</a>) is respected when a program from the filesystem is
+started.
+</para></dd>
+<dt xml:id="glibc-index-MNTOPT_005fNOSUID"><span><code>MNTOPT_NOSUID</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-MNTOPT_005fNOSUID" class="copiable-anchor"> ¶</a></span></dt>
+<dd><para>Expands to <code>"nosuid"</code>.  This is the opposite of <code>MNTOPT_SUID</code>,
+the SUID bit for all files from the filesystem is ignored.
+</para></dd>
+<dt xml:id="glibc-index-MNTOPT_005fNOAUTO"><span><code>MNTOPT_NOAUTO</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-MNTOPT_005fNOAUTO" class="copiable-anchor"> ¶</a></span></dt>
+<dd><para>Expands to <code>"noauto"</code>.  At startup time the <code>mount</code> program
+will ignore this entry if it is started with the <code>-a</code> option to
+mount all filesystems mentioned in the <filename>fstab</filename> file.
+</para></dd>
+</dl>
+
+<para>As for the <code>FSTAB_*</code> entries introduced above it is important to
+use <code>strcmp</code> to check for equality.
+</para>
+</dd>
+<dt><span><code>mnt_freq</code></span></dt>
+<dd><para>This elements corresponds to <code>fs_freq</code> and also specifies the
+frequency in days in which dumps are made.
+</para>
+</dd>
+<dt><span><code>mnt_passno</code></span></dt>
+<dd><para>This element is equivalent to <code>fs_passno</code> with the same meaning
+which is uninteresting for all programs beside <code>dump</code>.
+</para></dd>
+</dl>
+</dd></dl>
+
+<para>For accessing the <filename>mtab</filename> file there is again a set of three
+functions to access all entries in a row.  Unlike the functions to
+handle <filename>fstab</filename> these functions do not access a fixed file and there
+is even a thread safe variant of the get function.  Besides this the GNU C Library
+contains functions to alter the file and test for specific options.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-setmntent"><span class="category">Function: </span><span><emphasis>FILE *</emphasis> <strong>setmntent</strong> <emphasis>(const char *<var>file</var>, const char *<var>mode</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-setmntent" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Unsafe heap lock
+| AC-Unsafe mem fd lock
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>setmntent</code> function prepares the file named <var>FILE</var> which
+must be in the format of a <filename>fstab</filename> and <filename>mtab</filename> file for the
+upcoming processing through the other functions of the family.  The
+<var>mode</var> parameter can be chosen in the way the <var>opentype</var>
+parameter for <code>fopen</code> (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Opening-Streams">Opening Streams</a>) can be chosen.  If
+the file is opened for writing the file is also allowed to be empty.
+</para>
+<para>If the file was successfully opened <code>setmntent</code> returns a file
+handle for future use.  Otherwise the return value is <code>NULL</code>
+and <code>errno</code> is set accordingly.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-endmntent"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>endmntent</strong> <emphasis>(FILE *<var>stream</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-endmntent" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Unsafe heap lock
+| AC-Unsafe lock mem fd
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This function takes for the <var>stream</var> parameter a file handle which
+previously was returned from the <code>setmntent</code> call.
+<code>endmntent</code> closes the stream and frees all resources.
+</para>
+<para>The return value is <em class="math">1</emphasis> unless an error occurred in which case it
+is <em class="math">0</emphasis>.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-getmntent"><span class="category">Function: </span><span><emphasis>struct mntent *</emphasis> <strong>getmntent</strong> <emphasis>(FILE *<var>stream</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-getmntent" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Unsafe race:mntentbuf locale
+| AS-Unsafe corrupt heap init
+| AC-Unsafe init corrupt lock mem
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>getmntent</code> function takes as the parameter a file handle
+previously returned by a successful call to <code>setmntent</code>.  It returns
+a pointer to a static variable of type <code>struct mntent</code> which is
+filled with the information from the next entry from the file currently
+read.
+</para>
+<para>The file format used prescribes the use of spaces or tab characters to
+separate the fields.  This makes it harder to use names containing one
+of these characters (e.g., mount points using spaces).  Therefore
+these characters are encoded in the files and the <code>getmntent</code>
+function takes care of the decoding while reading the entries back in.
+<code>'\040'</code> is used to encode a space character, <code>'\011'</code> to
+encode a tab character, <code>'\012'</code> to encode a newline character,
+and <code>'\\'</code> to encode a backslash.
+</para>
+<para>If there was an error or the end of the file is reached the return value
+is <code>NULL</code>.
+</para>
+<para>This function is not thread-safe since all calls to this function return
+a pointer to the same static variable.  <code>getmntent_r</code> should be
+used in situations where multiple threads access the file.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-getmntent_005fr"><span class="category">Function: </span><span><emphasis>struct mntent *</emphasis> <strong>getmntent_r</strong> <emphasis>(FILE *<var>stream</var>, struct mntent *<var>result</var>, char *<var>buffer</var>, int <var>bufsize</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-getmntent_005fr" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe locale
+| AS-Unsafe corrupt heap
+| AC-Unsafe corrupt lock mem
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>getmntent_r</code> function is the reentrant variant of
+<code>getmntent</code>.  It also returns the next entry from the file and
+returns a pointer.  The actual variable the values are stored in is not
+static, though.  Instead the function stores the values in the variable
+pointed to by the <var>result</var> parameter.  Additional information (e.g.,
+the strings pointed to by the elements of the result) are kept in the
+buffer of size <var>bufsize</var> pointed to by <var>buffer</var>.
+</para>
+<para>Escaped characters (space, tab, backslash) are converted back in the
+same way as it happens for <code>getmentent</code>.
+</para>
+<para>The function returns a <code>NULL</code> pointer in error cases.  Errors could be:
+</para><ul>
+<li> error while reading the file,
+</li><li> end of file reached,
+</li><li> <var>bufsize</var> is too small for reading a complete new entry.
+</li></ul>
+</dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-addmntent"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>addmntent</strong> <emphasis>(FILE *<var>stream</var>, const struct mntent *<var>mnt</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-addmntent" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe race:stream locale
+| AS-Unsafe corrupt
+| AC-Unsafe corrupt
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>addmntent</code> function allows adding a new entry to the file
+previously opened with <code>setmntent</code>.  The new entries are always
+appended.  I.e., even if the position of the file descriptor is not at
+the end of the file this function does not overwrite an existing entry
+following the current position.
+</para>
+<para>The implication of this is that to remove an entry from a file one has
+to create a new file while leaving out the entry to be removed and after
+closing the file remove the old one and rename the new file to the
+chosen name.
+</para>
+<para>This function takes care of spaces and tab characters in the names to be
+written to the file.  It converts them and the backslash character into
+the format described in the <code>getmntent</code> description above.
+</para>
+<para>This function returns <em class="math">0</emphasis> in case the operation was successful.
+Otherwise the return value is <em class="math">1</emphasis> and <code>errno</code> is set
+appropriately.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-hasmntopt"><span class="category">Function: </span><span><emphasis>char *</emphasis> <strong>hasmntopt</strong> <emphasis>(const struct mntent *<var>mnt</var>, const char *<var>opt</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-hasmntopt" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This function can be used to check whether the string pointed to by the
+<code>mnt_opts</code> element of the variable pointed to by <var>mnt</var> contains
+the option <var>opt</var>.  If this is true a pointer to the beginning of the
+option in the <code>mnt_opts</code> element is returned.  If no such option
+exists the function returns <code>NULL</code>.
+</para>
+<para>This function is useful to test whether a specific option is present but
+when all options have to be processed one is better off with using the
+<code>getsubopt</code> function to iterate over all options in the string.
+</para></dd></dl>
+
+<hr>
+</div>
+<div class="subsubsection" xml:id="glibc-Other-Mount-Information">
+<div class="header">
+<para>
+Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#mtab" accesskey="p" rel="prev">The <filename>mtab</filename> file</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Mount-Information" accesskey="u" rel="up">Mount Information</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Other-_0028Non_002dlibc_0029-Sources-of-Mount-Information"></span><h4 class="subsubsection">31.3.1.3 Other (Non-libc) Sources of Mount Information</title>
+
+<para>On a system with a Linux kernel and the <code>proc</code> filesystem, you can
+get information on currently mounted filesystems from the file
+<filename>mounts</filename> in the <code>proc</code> filesystem.  Its format is similar to
+that of the <filename>mtab</filename> file, but represents what is truly mounted
+without relying on facilities outside the kernel to keep <filename>mtab</filename> up
+to date.
+</para>
+
+<hr>
+</div>
+</div>
+<div class="subsection" xml:id="glibc-Mount_002dUnmount_002dRemount">
+<div class="header">
+<para>
+Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Mount-Information" accesskey="p" rel="prev">Mount Information</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Filesystem-Handling" accesskey="u" rel="up">Controlling and Querying Mounts</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Mount_002c-Unmount_002c-Remount"></span><h4 class="subsection">31.3.2 Mount, Unmount, Remount</title>
+
+<para>This section describes the functions for mounting, unmounting, and
+remounting filesystems.
+</para>
+<para>Only the superuser can mount, unmount, or remount a filesystem.
+</para>
+<para>These functions do not access the <filename>fstab</filename> and <filename>mtab</filename> files.  You
+should maintain and use these separately.  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Mount-Information">Mount Information</a>.
+</para>
+<para>The symbols in this section are declared in <filename>sys/mount.h</filename>.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-mount"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>mount</strong> <emphasis>(const char *<var>special_file</var>, const char *<var>dir</var>, const char *<var>fstype</var>, unsigned long int <var>options</var>, const void *<var>data</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-mount" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+
+<para><code>mount</code> mounts or remounts a filesystem.  The two operations are
+quite different and are merged rather unnaturally into this one function.
+The <code>MS_REMOUNT</code> option, explained below, determines whether
+<code>mount</code> mounts or remounts.
+</para>
+<para>For a mount, the filesystem on the block device represented by the
+device special file named <var>special_file</var> gets mounted over the mount
+point <var>dir</var>.  This means that the directory <var>dir</var> (along with any
+files in it) is no longer visible; in its place (and still with the name
+<var>dir</var>) is the root directory of the filesystem on the device.
+</para>
+<para>As an exception, if the filesystem type (see below) is one which is not
+based on a device (e.g. “proc”), <code>mount</code> instantiates a
+filesystem and mounts it over <var>dir</var> and ignores <var>special_file</var>.
+</para>
+<para>For a remount, <var>dir</var> specifies the mount point where the filesystem
+to be remounted is (and remains) mounted and <var>special_file</var> is
+ignored.  Remounting a filesystem means changing the options that control
+operations on the filesystem while it is mounted.  It does not mean
+unmounting and mounting again.
+</para>
+<para>For a mount, you must identify the type of the filesystem with
+<var>fstype</var>.  This type tells the kernel how to access the filesystem
+and can be thought of as the name of a filesystem driver.  The
+acceptable values are system dependent.  On a system with a Linux kernel
+and the <code>proc</code> filesystem, the list of possible values is in the
+file <filename>filesystems</filename> in the <code>proc</code> filesystem (e.g. type
+<kbd>cat /proc/filesystems</kbd> to see the list).  With a Linux kernel, the
+types of filesystems that <code>mount</code> can mount, and their type names,
+depends on what filesystem drivers are configured into the kernel or
+loaded as loadable kernel modules.  An example of a common value for
+<var>fstype</var> is <code>ext2</code>.
+</para>
+<para>For a remount, <code>mount</code> ignores <var>fstype</var>.
+</para>
+<para><var>options</var> specifies a variety of options that apply until the
+filesystem is unmounted or remounted.  The precise meaning of an option
+depends on the filesystem and with some filesystems, an option may have
+no effect at all.  Furthermore, for some filesystems, some of these
+options (but never <code>MS_RDONLY</code>) can be overridden for individual
+file accesses via <code>ioctl</code>.
+</para>
+<para><var>options</var> is a bit string with bit fields defined using the
+following mask and masked value macros:
+</para>
+<dl compact="compact">
+<dt xml:id="glibc-index-MS_005fMGC_005fMASK"><span><code>MS_MGC_MASK</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-MS_005fMGC_005fMASK" class="copiable-anchor"> ¶</a></span></dt>
+<dd><para>This multibit field contains a magic number.  If it does not have the value
+<code>MS_MGC_VAL</code>, <code>mount</code> assumes all the following bits are zero and
+the <var>data</var> argument is a null string, regardless of their actual values.
+</para>
+</dd>
+<dt xml:id="glibc-index-MS_005fREMOUNT"><span><code>MS_REMOUNT</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-MS_005fREMOUNT" class="copiable-anchor"> ¶</a></span></dt>
+<dd><para>This bit on means to remount the filesystem.  Off means to mount it.
+</para>
+</dd>
+<dt xml:id="glibc-index-MS_005fRDONLY"><span><code>MS_RDONLY</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-MS_005fRDONLY" class="copiable-anchor"> ¶</a></span></dt>
+<dd><para>This bit on specifies that no writing to the filesystem shall be allowed
+while it is mounted.  This cannot be overridden by <code>ioctl</code>.  This
+option is available on nearly all filesystems.
+</para>
+</dd>
+<dt xml:id="glibc-index-MS_005fNOSUID"><span><code>MS_NOSUID</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-MS_005fNOSUID" class="copiable-anchor"> ¶</a></span></dt>
+<dd><para>This bit on specifies that Setuid and Setgid permissions on files in the
+filesystem shall be ignored while it is mounted.
+</para>
+</dd>
+<dt xml:id="glibc-index-MS_005fNOEXEC"><span><code>MS_NOEXEC</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-MS_005fNOEXEC" class="copiable-anchor"> ¶</a></span></dt>
+<dd><para>This bit on specifies that no files in the filesystem shall be executed
+while the filesystem is mounted.
+</para>
+</dd>
+<dt xml:id="glibc-index-MS_005fNODEV"><span><code>MS_NODEV</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-MS_005fNODEV" class="copiable-anchor"> ¶</a></span></dt>
+<dd><para>This bit on specifies that no device special files in the filesystem
+shall be accessible while the filesystem is mounted.
+</para>
+</dd>
+<dt xml:id="glibc-index-MS_005fSYNCHRONOUS"><span><code>MS_SYNCHRONOUS</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-MS_005fSYNCHRONOUS" class="copiable-anchor"> ¶</a></span></dt>
+<dd><para>This bit on specifies that all writes to the filesystem while it is
+mounted shall be synchronous; i.e., data shall be synced before each
+write completes rather than held in the buffer cache.
+</para>
+</dd>
+<dt xml:id="glibc-index-MS_005fMANDLOCK"><span><code>MS_MANDLOCK</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-MS_005fMANDLOCK" class="copiable-anchor"> ¶</a></span></dt>
+<dd><para>This bit on specifies that mandatory locks on files shall be permitted while
+the filesystem is mounted.
+</para>
+</dd>
+<dt xml:id="glibc-index-MS_005fNOATIME"><span><code>MS_NOATIME</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-MS_005fNOATIME" class="copiable-anchor"> ¶</a></span></dt>
+<dd><para>This bit on specifies that access times of files shall not be updated when
+the files are accessed while the filesystem is mounted.
+</para>
+</dd>
+<dt xml:id="glibc-index-MS_005fNODIRATIME"><span><code>MS_NODIRATIME</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-MS_005fNODIRATIME" class="copiable-anchor"> ¶</a></span></dt>
+<dd><para>This bit on specifies that access times of directories shall not be updated
+when the directories are accessed while the filesystem in mounted.
+</para>
+
+</dd>
+</dl>
+
+<para>Any bits not covered by the above masks should be set off; otherwise,
+results are undefined.
+</para>
+<para>The meaning of <var>data</var> depends on the filesystem type and is controlled
+entirely by the filesystem driver in the kernel.
+</para>
+<para>Example:
+</para>
+<div class="example">
+<pre class="example">#include &lt;sys/mount.h&gt;
+
+mount("/dev/hdb", "/cdrom", "iso9660", MS_MGC_VAL | MS_RDONLY | MS_NOSUID, "");
+
+mount("/dev/hda2", "/mnt", "", MS_MGC_VAL | MS_REMOUNT, "");
+
+</pre></div>
+
+<para>Appropriate arguments for <code>mount</code> are conventionally recorded in
+the <filename>fstab</filename> table.  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Mount-Information">Mount Information</a>.
+</para>
+<para>The return value is zero if the mount or remount is successful.  Otherwise,
+it is <code>-1</code> and <code>errno</code> is set appropriately.  The values of
+<code>errno</code> are filesystem dependent, but here is a general list:
+</para>
+<dl compact="compact">
+<dt><span><code>EPERM</code></span></dt>
+<dd><para>The process is not superuser.
+</para></dd>
+<dt><span><code>ENODEV</code></span></dt>
+<dd><para>The file system type <var>fstype</var> is not known to the kernel.
+</para></dd>
+<dt><span><code>ENOTBLK</code></span></dt>
+<dd><para>The file <var>dev</var> is not a block device special file.
+</para></dd>
+<dt><span><code>EBUSY</code></span></dt>
+<dd>
+<ul>
+<li> The device is already mounted.
+
+</li><li> The mount point is busy.  (E.g. it is some process’ working directory or
+has a filesystem mounted on it already).
+
+</li><li> The request is to remount read-only, but there are files open for writing.
+</li></ul>
+
+</dd>
+<dt><span><code>EINVAL</code></span></dt>
+<dd><ul>
+<li> A remount was attempted, but there is no filesystem mounted over the
+specified mount point.
+
+</li><li> The supposed filesystem has an invalid superblock.
+
+</li></ul>
+
+</dd>
+<dt><span><code>EACCES</code></span></dt>
+<dd><ul>
+<li> The filesystem is inherently read-only (possibly due to a switch on the
+device) and the process attempted to mount it read/write (by setting the
+<code>MS_RDONLY</code> bit off).
+
+</li><li> <var>special_file</var> or <var>dir</var> is not accessible due to file permissions.
+
+</li><li> <var>special_file</var> is not accessible because it is in a filesystem that is
+mounted with the <code>MS_NODEV</code> option.
+
+</li></ul>
+
+</dd>
+<dt><span><code>EM_FILE</code></span></dt>
+<dd><para>The table of dummy devices is full.  <code>mount</code> needs to create a
+dummy device (aka “unnamed” device) if the filesystem being mounted is
+not one that uses a device.
+</para>
+</dd>
+</dl>
+
+</dd></dl>
+
+
+<dl class="def">
+<dt xml:id="glibc-index-umount2"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>umount2</strong> <emphasis>(const char *<var>file</var>, int <var>flags</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-umount2" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+
+<para><code>umount2</code> unmounts a filesystem.
+</para>
+<para>You can identify the filesystem to unmount either by the device special
+file that contains the filesystem or by the mount point.  The effect is
+the same.  Specify either as the string <var>file</var>.
+</para>
+<para><var>flags</var> contains the one-bit field identified by the following
+mask macro:
+</para>
+<dl compact="compact">
+<dt xml:id="glibc-index-MNT_005fFORCE"><span><code>MNT_FORCE</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-MNT_005fFORCE" class="copiable-anchor"> ¶</a></span></dt>
+<dd><para>This bit on means to force the unmounting even if the filesystem is
+busy, by making it unbusy first.  If the bit is off and the filesystem is
+busy, <code>umount2</code> fails with <code>errno</code> = <code>EBUSY</code>.  Depending
+on the filesystem, this may override all, some, or no busy conditions.
+</para>
+</dd>
+</dl>
+
+<para>All other bits in <var>flags</var> should be set to zero; otherwise, the result
+is undefined.
+</para>
+<para>Example:
+</para>
+<div class="example">
+<pre class="example">#include &lt;sys/mount.h&gt;
+
+umount2("/mnt", MNT_FORCE);
+
+umount2("/dev/hdd1", 0);
+
+</pre></div>
+
+<para>After the filesystem is unmounted, the directory that was the mount point
+is visible, as are any files in it.
+</para>
+<para>As part of unmounting, <code>umount2</code> syncs the filesystem.
+</para>
+<para>If the unmounting is successful, the return value is zero.  Otherwise, it
+is <code>-1</code> and <code>errno</code> is set accordingly:
+</para>
+<dl compact="compact">
+<dt><span><code>EPERM</code></span></dt>
+<dd><para>The process is not superuser.
+</para></dd>
+<dt><span><code>EBUSY</code></span></dt>
+<dd><para>The filesystem cannot be unmounted because it is busy.  E.g. it contains
+a directory that is some process’s working directory or a file that some
+process has open.  With some filesystems in some cases, you can avoid
+this failure with the <code>MNT_FORCE</code> option.
+</para>
+</dd>
+<dt><span><code>EINVAL</code></span></dt>
+<dd><para><var>file</var> validly refers to a file, but that file is neither a mount
+point nor a device special file of a currently mounted filesystem.
+</para>
+</dd>
+</dl>
+
+<para>This function is not available on all systems.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-umount"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>umount</strong> <emphasis>(const char *<var>file</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-umount" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+
+<para><code>umount</code> does the same thing as <code>umount2</code> with <var>flags</var> set
+to zeroes.  It is more widely available than <code>umount2</code> but since it
+lacks the possibility to forcefully unmount a filesystem is deprecated
+when <code>umount2</code> is also available.
+</para></dd></dl>
+<hr>
+</div>
+</div>
+</div-->
 </part>

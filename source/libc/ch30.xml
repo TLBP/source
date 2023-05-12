@@ -5,4 +5,2740 @@
 <part xml:id="glibc-Users-and-Groups">
   <title>Kullanıcılar ve Gruplar</title>
   <titleabbrev>Kullanıcılar nasıl kimliklendirilir ve sınıflandırılır.</titleabbrev>
+ <preliminary>
+
+<para>Every user who can log in on the system is identified by a unique number
+called the <emphasis>user ID</emphasis>.  Each process has an effective user ID which
+says which user’s access permissions it has.
+</para>
+<para>Users are classified into <emphasis>groups</emphasis> for access control purposes.  Each
+process has one or more <emphasis>group ID values</emphasis> which say which groups the
+process can use for access to files.
+</para>
+<para>The effective user and group IDs of a process collectively form its
+<emphasis>persona</emphasis>.  This determines which files the process can access.
+Normally, a process inherits its persona from the parent process, but
+under special circumstances a process can change its persona and thus
+change its access permissions.
+</para>
+<para>Each file in the system also has a user ID and a group ID.  Access
+control works by comparing the user and group IDs of the file with those
+of the running process.
+</para>
+<para>The system keeps a database of all the registered users, and another
+database of all the defined groups.  There are library functions you
+can use to examine these databases.
+</para>
+ </preliminary><!--
+<sect xml:id="glibc-User-and-Group-IDs">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Process-Persona" accesskey="n" rel="next">The Persona of a Process</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Users-and-Groups" accesskey="u" rel="up">Users and Groups</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-User-and-Group-IDs-1"></span><h3 class="section">30.1 User and Group IDs</title>
+
+<span xml:id="glibc-index-login-name"></span>
+<span xml:id="glibc-index-user-name"></span>
+<span xml:id="glibc-index-user-ID"></span>
+<para>Each user account on a computer system is identified by a <emphasis>user
+name</emphasis> (or <emphasis>login name</emphasis>) and <emphasis>user ID</emphasis>.  Normally, each user name
+has a unique user ID, but it is possible for several login names to have
+the same user ID.  The user names and corresponding user IDs are stored
+in a data base which you can access as described in <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#User-Database">User Database</a>.
+</para>
+<span xml:id="glibc-index-group-name"></span>
+<span xml:id="glibc-index-group-ID"></span>
+<para>Users are classified in <emphasis>groups</emphasis>.  Each user name belongs to one
+<emphasis>default group</emphasis> and may also belong to any number of
+<emphasis>supplementary groups</emphasis>.  Users who are members of the same group can
+share resources (such as files) that are not accessible to users who are
+not a member of that group.  Each group has a <emphasis>group name</emphasis> and
+<emphasis>group ID</emphasis>.  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Group-Database">Group Database</a>, for how to find information
+about a group ID or group name.
+</para>
+<hr>
+</div>
+<sect xml:id="glibc-Process-Persona">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Why-Change-Persona" accesskey="n" rel="next">Why Change the Persona of a Process?</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#User-and-Group-IDs" accesskey="p" rel="prev">User and Group IDs</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Users-and-Groups" accesskey="u" rel="up">Users and Groups</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-The-Persona-of-a-Process"></span><h3 class="section">30.2 The Persona of a Process</title>
+<span xml:id="glibc-index-persona"></span>
+<span xml:id="glibc-index-effective-user-ID"></span>
+<span xml:id="glibc-index-effective-group-ID"></span>
+<span xml:id="glibc-index-supplementary-group-IDs"></span>
+
+<para>At any time, each process has an <emphasis>effective user ID</emphasis>, a <emphasis>effective
+group ID</emphasis>, and a set of <emphasis>supplementary group IDs</emphasis>.  These IDs
+determine the privileges of the process.  They are collectively
+called the <emphasis>persona</emphasis> of the process, because they determine “who it
+is” for purposes of access control.
+</para>
+<para>Your login shell starts out with a persona which consists of your user
+ID, your default group ID, and your supplementary group IDs (if you are
+in more than one group).  In normal circumstances, all your other processes
+inherit these values.
+</para>
+<span xml:id="glibc-index-real-user-ID"></span>
+<span xml:id="glibc-index-real-group-ID"></span>
+<para>A process also has a <emphasis>real user ID</emphasis> which identifies the user who
+created the process, and a <emphasis>real group ID</emphasis> which identifies that
+user’s default group.  These values do not play a role in access
+control, so we do not consider them part of the persona.  But they are
+also important.
+</para>
+<para>Both the real and effective user ID can be changed during the lifetime
+of a process.  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Why-Change-Persona">Why Change the Persona of a Process?</a>.
+</para>
+<para>For details on how a process’s effective user ID and group IDs affect
+its permission to access files, see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Access-Permission">How Your Access to a File is Decided</a>.
+</para>
+<para>The effective user ID of a process also controls permissions for sending
+signals using the <code>kill</code> function.  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Signaling-Another-Process">Signaling Another Process</a>.
+</para>
+<para>Finally, there are many operations which can only be performed by a
+process whose effective user ID is zero.  A process with this user ID is
+a <emphasis>privileged process</emphasis>.  Commonly the user name <code>root</code> is
+associated with user ID 0, but there may be other user names with this
+ID.
+</para>
+<hr>
+</div>
+<sect xml:id="glibc-Why-Change-Persona">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#How-Change-Persona" accesskey="n" rel="next">How an Application Can Change Persona</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Process-Persona" accesskey="p" rel="prev">The Persona of a Process</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Users-and-Groups" accesskey="u" rel="up">Users and Groups</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Why-Change-the-Persona-of-a-Process_003f"></span><h3 class="section">30.3 Why Change the Persona of a Process?</title>
+
+<para>The most obvious situation where it is necessary for a process to change
+its user and/or group IDs is the <code>login</code> program.  When
+<code>login</code> starts running, its user ID is <code>root</code>.  Its job is to
+start a shell whose user and group IDs are those of the user who is
+logging in.  (To accomplish this fully, <code>login</code> must set the real
+user and group IDs as well as its persona.  But this is a special case.)
+</para>
+<para>The more common case of changing persona is when an ordinary user
+program needs access to a resource that wouldn’t ordinarily be
+accessible to the user actually running it.
+</para>
+<para>For example, you may have a file that is controlled by your program but
+that shouldn’t be read or modified directly by other users, either
+because it implements some kind of locking protocol, or because you want
+to preserve the integrity or privacy of the information it contains.
+This kind of restricted access can be implemented by having the program
+change its effective user or group ID to match that of the resource.
+</para>
+<para>Thus, imagine a game program that saves scores in a file.  The game
+program itself needs to be able to update this file no matter who is
+running it, but if users can write the file without going through the
+game, they can give themselves any scores they like.  Some people
+consider this undesirable, or even reprehensible.  It can be prevented
+by creating a new user ID and login name (say, <code>games</code>) to own the
+scores file, and make the file writable only by this user.  Then, when
+the game program wants to update this file, it can change its effective
+user ID to be that for <code>games</code>.  In effect, the program must
+adopt the persona of <code>games</code> so it can write to the scores file.
+</para>
+<hr>
+</div>
+<sect xml:id="glibc-How-Change-Persona">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Reading-Persona" accesskey="n" rel="next">Reading the Persona of a Process</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Why-Change-Persona" accesskey="p" rel="prev">Why Change the Persona of a Process?</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Users-and-Groups" accesskey="u" rel="up">Users and Groups</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-How-an-Application-Can-Change-Persona"></span><h3 class="section">30.4 How an Application Can Change Persona</title>
+<span xml:id="glibc-index-setuid-programs"></span>
+<span xml:id="glibc-index-saved-set_002duser_002dID"></span>
+<span xml:id="glibc-index-saved-set_002dgroup_002dID"></span>
+<span xml:id="glibc-index-_005fPOSIX_005fSAVED_005fIDS"></span>
+
+<para>The ability to change the persona of a process can be a source of
+unintentional privacy violations, or even intentional abuse.  Because of
+the potential for problems, changing persona is restricted to special
+circumstances.
+</para>
+<para>You can’t arbitrarily set your user ID or group ID to anything you want;
+only privileged processes can do that.  Instead, the normal way for a
+program to change its persona is that it has been set up in advance to
+change to a particular user or group.  This is the function of the setuid
+and setgid bits of a file’s access mode.  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Permission-Bits">The Mode Bits for Access Permission</a>.
+</para>
+<para>When the setuid bit of an executable file is on, executing that file
+gives the process a third user ID: the <emphasis>file user ID</emphasis>.  This ID is
+set to the owner ID of the file.  The system then changes the effective
+user ID to the file user ID.  The real user ID remains as it was.
+Likewise, if the setgid bit is on, the process is given a <emphasis>file
+group ID</emphasis> equal to the group ID of the file, and its effective group ID
+is changed to the file group ID.
+</para>
+<para>If a process has a file ID (user or group), then it can at any time
+change its effective ID to its real ID and back to its file ID.
+Programs use this feature to relinquish their special privileges except
+when they actually need them.  This makes it less likely that they can
+be tricked into doing something inappropriate with their privileges.
+</para>
+<para><strong>Portability Note:</strong> Older systems do not have file IDs.
+To determine if a system has this feature, you can test the compiler
+define <code>_POSIX_SAVED_IDS</code>.  (In the POSIX standard, file IDs are
+known as saved IDs.)
+</para>
+<para>See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#File-Attributes">File Attributes</a>, for a more general discussion of file modes and
+accessibility.
+</para>
+<hr>
+</div>
+<sect xml:id="glibc-Reading-Persona">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Setting-User-ID" accesskey="n" rel="next">Setting the User ID</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#How-Change-Persona" accesskey="p" rel="prev">How an Application Can Change Persona</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Users-and-Groups" accesskey="u" rel="up">Users and Groups</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Reading-the-Persona-of-a-Process"></span><h3 class="section">30.5 Reading the Persona of a Process</title>
+
+<para>Here are detailed descriptions of the functions for reading the user and
+group IDs of a process, both real and effective.  To use these
+facilities, you must include the header files <filename>sys/types.h</filename> and
+<filename>unistd.h</filename>.
+<span xml:id="glibc-index-unistd_002eh-22"></span>
+<span xml:id="glibc-index-sys_002ftypes_002eh-4"></span>
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-uid_005ft"><span class="category">Data Type: </span><span><strong>uid_t</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-uid_005ft" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>This is an integer data type used to represent user IDs.  In
+the GNU C Library, this is an alias for <code>unsigned int</code>.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-gid_005ft"><span class="category">Data Type: </span><span><strong>gid_t</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-gid_005ft" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>This is an integer data type used to represent group IDs.  In
+the GNU C Library, this is an alias for <code>unsigned int</code>.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-getuid"><span class="category">Function: </span><span><emphasis>uid_t</emphasis> <strong>getuid</strong> <emphasis>(void)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-getuid" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>getuid</code> function returns the real user ID of the process.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-getgid"><span class="category">Function: </span><span><emphasis>gid_t</emphasis> <strong>getgid</strong> <emphasis>(void)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-getgid" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>getgid</code> function returns the real group ID of the process.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-geteuid"><span class="category">Function: </span><span><emphasis>uid_t</emphasis> <strong>geteuid</strong> <emphasis>(void)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-geteuid" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>geteuid</code> function returns the effective user ID of the process.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-getegid"><span class="category">Function: </span><span><emphasis>gid_t</emphasis> <strong>getegid</strong> <emphasis>(void)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-getegid" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>getegid</code> function returns the effective group ID of the process.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-getgroups"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>getgroups</strong> <emphasis>(int <var>count</var>, gid_t *<var>groups</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-getgroups" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>getgroups</code> function is used to inquire about the supplementary
+group IDs of the process.  Up to <var>count</var> of these group IDs are
+stored in the array <var>groups</var>; the return value from the function is
+the number of group IDs actually stored.  If <var>count</var> is smaller than
+the total number of supplementary group IDs, then <code>getgroups</code>
+returns a value of <code>-1</code> and <code>errno</code> is set to <code>EINVAL</code>.
+</para>
+<para>If <var>count</var> is zero, then <code>getgroups</code> just returns the total
+number of supplementary group IDs.  On systems that do not support
+supplementary groups, this will always be zero.
+</para>
+<para>Here’s how to use <code>getgroups</code> to read all the supplementary group
+IDs:
+</para>
+<div class="example">
+<pre class="example">gid_t *
+read_all_groups (void)
+{
+  int ngroups = getgroups (0, NULL);
+  gid_t *groups
+    = (gid_t *) xmalloc (ngroups * sizeof (gid_t));
+  int val = getgroups (ngroups, groups);
+  if (val &lt; 0)
+    {
+      free (groups);
+      return NULL;
+    }
+  return groups;
+}
+</pre></div>
+</dd></dl>
+
+<hr>
+</div>
+<sect xml:id="glibc-Setting-User-ID">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Setting-Groups" accesskey="n" rel="next">Setting the Group IDs</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Reading-Persona" accesskey="p" rel="prev">Reading the Persona of a Process</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Users-and-Groups" accesskey="u" rel="up">Users and Groups</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Setting-the-User-ID"></span><h3 class="section">30.6 Setting the User ID</title>
+
+<para>This section describes the functions for altering the user ID (real
+and/or effective) of a process.  To use these facilities, you must
+include the header files <filename>sys/types.h</filename> and <filename>unistd.h</filename>.
+<span xml:id="glibc-index-unistd_002eh-23"></span>
+<span xml:id="glibc-index-sys_002ftypes_002eh-5"></span>
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-seteuid"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>seteuid</strong> <emphasis>(uid_t <var>neweuid</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-seteuid" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Unsafe lock
+| AC-Unsafe lock
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This function sets the effective user ID of a process to <var>neweuid</var>,
+provided that the process is allowed to change its effective user ID.  A
+privileged process (effective user ID zero) can change its effective
+user ID to any legal value.  An unprivileged process with a file user ID
+can change its effective user ID to its real user ID or to its file user
+ID.  Otherwise, a process may not change its effective user ID at all.
+</para>
+<para>The <code>seteuid</code> function returns a value of <code>0</code> to indicate
+successful completion, and a value of <code>-1</code> to indicate an error.
+The following <code>errno</code> error conditions are defined for this
+function:
+</para>
+<dl compact="compact">
+<dt><span><code>EINVAL</code></span></dt>
+<dd><para>The value of the <var>neweuid</var> argument is invalid.
+</para>
+</dd>
+<dt><span><code>EPERM</code></span></dt>
+<dd><para>The process may not change to the specified ID.
+</para></dd>
+</dl>
+
+<para>Older systems (those without the <code>_POSIX_SAVED_IDS</code> feature) do not
+have this function.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-setuid"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>setuid</strong> <emphasis>(uid_t <var>newuid</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-setuid" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Unsafe lock
+| AC-Unsafe lock
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>If the calling process is privileged, this function sets both the real
+and effective user IDs of the process to <var>newuid</var>.  It also deletes
+the file user ID of the process, if any.  <var>newuid</var> may be any
+legal value.  (Once this has been done, there is no way to recover the
+old effective user ID.)
+</para>
+<para>If the process is not privileged, and the system supports the
+<code>_POSIX_SAVED_IDS</code> feature, then this function behaves like
+<code>seteuid</code>.
+</para>
+<para>The return values and error conditions are the same as for <code>seteuid</code>.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-setreuid"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>setreuid</strong> <emphasis>(uid_t <var>ruid</var>, uid_t <var>euid</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-setreuid" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Unsafe lock
+| AC-Unsafe lock
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This function sets the real user ID of the process to <var>ruid</var> and the
+effective user ID to <var>euid</var>.  If <var>ruid</var> is <code>-1</code>, it means
+not to change the real user ID; likewise if <var>euid</var> is <code>-1</code>, it
+means not to change the effective user ID.
+</para>
+<para>The <code>setreuid</code> function exists for compatibility with 4.3 BSD Unix,
+which does not support file IDs.  You can use this function to swap the
+effective and real user IDs of the process.  (Privileged processes are
+not limited to this particular usage.)  If file IDs are supported, you
+should use that feature instead of this function.  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Enable_002fDisable-Setuid">Enabling and Disabling Setuid Access</a>.
+</para>
+<para>The return value is <code>0</code> on success and <code>-1</code> on failure.
+The following <code>errno</code> error conditions are defined for this
+function:
+</para>
+<dl compact="compact">
+<dt><span><code>EPERM</code></span></dt>
+<dd><para>The process does not have the appropriate privileges; you do not
+have permission to change to the specified ID.
+</para></dd>
+</dl>
+</dd></dl>
+
+<hr>
+</div>
+<sect xml:id="glibc-Setting-Groups">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Enable_002fDisable-Setuid" accesskey="n" rel="next">Enabling and Disabling Setuid Access</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Setting-User-ID" accesskey="p" rel="prev">Setting the User ID</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Users-and-Groups" accesskey="u" rel="up">Users and Groups</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Setting-the-Group-IDs"></span><h3 class="section">30.7 Setting the Group IDs</title>
+
+<para>This section describes the functions for altering the group IDs (real
+and effective) of a process.  To use these facilities, you must include
+the header files <filename>sys/types.h</filename> and <filename>unistd.h</filename>.
+<span xml:id="glibc-index-unistd_002eh-24"></span>
+<span xml:id="glibc-index-sys_002ftypes_002eh-6"></span>
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-setegid"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>setegid</strong> <emphasis>(gid_t <var>newgid</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-setegid" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Unsafe lock
+| AC-Unsafe lock
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This function sets the effective group ID of the process to
+<var>newgid</var>, provided that the process is allowed to change its group
+ID.  Just as with <code>seteuid</code>, if the process is privileged it may
+change its effective group ID to any value; if it isn’t, but it has a
+file group ID, then it may change to its real group ID or file group ID;
+otherwise it may not change its effective group ID.
+</para>
+<para>Note that a process is only privileged if its effective <emphasis>user</emphasis> ID
+is zero.  The effective group ID only affects access permissions.
+</para>
+<para>The return values and error conditions for <code>setegid</code> are the same
+as those for <code>seteuid</code>.
+</para>
+<para>This function is only present if <code>_POSIX_SAVED_IDS</code> is defined.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-setgid"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>setgid</strong> <emphasis>(gid_t <var>newgid</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-setgid" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Unsafe lock
+| AC-Unsafe lock
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This function sets both the real and effective group ID of the process
+to <var>newgid</var>, provided that the process is privileged.  It also
+deletes the file group ID, if any.
+</para>
+<para>If the process is not privileged, then <code>setgid</code> behaves like
+<code>setegid</code>.
+</para>
+<para>The return values and error conditions for <code>setgid</code> are the same
+as those for <code>seteuid</code>.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-setregid"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>setregid</strong> <emphasis>(gid_t <var>rgid</var>, gid_t <var>egid</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-setregid" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Unsafe lock
+| AC-Unsafe lock
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This function sets the real group ID of the process to <var>rgid</var> and
+the effective group ID to <var>egid</var>.  If <var>rgid</var> is <code>-1</code>, it
+means not to change the real group ID; likewise if <var>egid</var> is
+<code>-1</code>, it means not to change the effective group ID.
+</para>
+<para>The <code>setregid</code> function is provided for compatibility with 4.3 BSD
+Unix, which does not support file IDs.  You can use this function to
+swap the effective and real group IDs of the process.  (Privileged
+processes are not limited to this usage.)  If file IDs are supported,
+you should use that feature instead of using this function.
+See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Enable_002fDisable-Setuid">Enabling and Disabling Setuid Access</a>.
+</para>
+<para>The return values and error conditions for <code>setregid</code> are the same
+as those for <code>setreuid</code>.
+</para></dd></dl>
+
+<para><code>setuid</code> and <code>setgid</code> behave differently depending on whether
+the effective user ID at the time is zero.  If it is not zero, they
+behave like <code>seteuid</code> and <code>setegid</code>.  If it is, they change
+both effective and real IDs and delete the file ID.  To avoid confusion,
+we recommend you always use <code>seteuid</code> and <code>setegid</code> except
+when you know the effective user ID is zero and your intent is to change
+the persona permanently.  This case is rare—most of the programs that
+need it, such as <code>login</code> and <code>su</code>, have already been written.
+</para>
+<para>Note that if your program is setuid to some user other than <code>root</code>,
+there is no way to drop privileges permanently.
+</para>
+<para>The system also lets privileged processes change their supplementary
+group IDs.  To use <code>setgroups</code> or <code>initgroups</code>, your programs
+should include the header file <filename>grp.h</filename>.
+<span xml:id="glibc-index-grp_002eh-1"></span>
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-setgroups"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>setgroups</strong> <emphasis>(size_t <var>count</var>, const gid_t *<var>groups</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-setgroups" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Unsafe lock
+| AC-Unsafe lock
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This function sets the process’s supplementary group IDs.  It can only
+be called from privileged processes.  The <var>count</var> argument specifies
+the number of group IDs in the array <var>groups</var>.
+</para>
+<para>This function returns <code>0</code> if successful and <code>-1</code> on error.
+The following <code>errno</code> error conditions are defined for this
+function:
+</para>
+<dl compact="compact">
+<dt><span><code>EPERM</code></span></dt>
+<dd><para>The calling process is not privileged.
+</para></dd>
+</dl>
+</dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-initgroups-1"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>initgroups</strong> <emphasis>(const char *<var>user</var>, gid_t <var>group</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-initgroups-1" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe locale
+| AS-Unsafe dlopen plugin heap lock
+| AC-Unsafe corrupt mem fd lock
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>initgroups</code> function sets the process’s supplementary group
+IDs to be the normal default for the user name <var>user</var>.  The group
+<var>group</var> is automatically included.
+</para>
+<para>This function works by scanning the group database for all the groups
+<var>user</var> belongs to.  It then calls <code>setgroups</code> with the list it
+has constructed.
+</para>
+<para>The return values and error conditions are the same as for
+<code>setgroups</code>.
+</para></dd></dl>
+
+<para>If you are interested in the groups a particular user belongs to, but do
+not want to change the process’s supplementary group IDs, you can use
+<code>getgrouplist</code>.  To use <code>getgrouplist</code>, your programs should
+include the header file <filename>grp.h</filename>.
+<span xml:id="glibc-index-grp_002eh-2"></span>
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-getgrouplist"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>getgrouplist</strong> <emphasis>(const char *<var>user</var>, gid_t <var>group</var>, gid_t *<var>groups</var>, int *<var>ngroups</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-getgrouplist" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe locale
+| AS-Unsafe dlopen plugin heap lock
+| AC-Unsafe corrupt mem fd lock
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>getgrouplist</code> function scans the group database for all the
+groups <var>user</var> belongs to.  Up to *<var>ngroups</var> group IDs
+corresponding to these groups are stored in the array <var>groups</var>; the
+return value from the function is the number of group IDs actually
+stored.  If *<var>ngroups</var> is smaller than the total number of groups
+found, then <code>getgrouplist</code> returns a value of <code>-1</code> and stores
+the actual number of groups in *<var>ngroups</var>.  The group <var>group</var> is
+automatically included in the list of groups returned by
+<code>getgrouplist</code>.
+</para>
+<para>Here’s how to use <code>getgrouplist</code> to read all supplementary groups
+for <var>user</var>:
+</para>
+<div class="example">
+<pre class="example">gid_t *
+supplementary_groups (char *user)
+{
+  int ngroups = 16;
+  gid_t *groups
+    = (gid_t *) xmalloc (ngroups * sizeof (gid_t));
+  struct passwd *pw = getpwnam (user);
+
+  if (pw == NULL)
+    return NULL;
+
+  if (getgrouplist (pw-&gt;pw_name, pw-&gt;pw_gid, groups, &amp;ngroups) &lt; 0)
+    {
+      groups = xreallocarray (ngroups, sizeof *groups);
+      getgrouplist (pw-&gt;pw_name, pw-&gt;pw_gid, groups, &amp;ngroups);
+    }
+  return groups;
+}
+</pre></div>
+</dd></dl>
+
+<hr>
+</div>
+<sect xml:id="glibc-Enable_002fDisable-Setuid">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Setuid-Program-Example" accesskey="n" rel="next">Setuid Program Example</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Setting-Groups" accesskey="p" rel="prev">Setting the Group IDs</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Users-and-Groups" accesskey="u" rel="up">Users and Groups</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Enabling-and-Disabling-Setuid-Access"></span><h3 class="section">30.8 Enabling and Disabling Setuid Access</title>
+
+<para>A typical setuid program does not need its special access all of the
+time.  It’s a good idea to turn off this access when it isn’t needed,
+so it can’t possibly give unintended access.
+</para>
+<para>If the system supports the <code>_POSIX_SAVED_IDS</code> feature, you can
+accomplish this with <code>seteuid</code>.  When the game program starts, its
+real user ID is <code>jdoe</code>, its effective user ID is <code>games</code>, and
+its saved user ID is also <code>games</code>.  The program should record both
+user ID values once at the beginning, like this:
+</para>
+<div class="example">
+<pre class="example">user_user_id = getuid ();
+game_user_id = geteuid ();
+</pre></div>
+
+<para>Then it can turn off game file access with
+</para>
+<div class="example">
+<pre class="example">seteuid (user_user_id);
+</pre></div>
+
+<para>and turn it on with
+</para>
+<div class="example">
+<pre class="example">seteuid (game_user_id);
+</pre></div>
+
+<para>Throughout this process, the real user ID remains <code>jdoe</code> and the
+file user ID remains <code>games</code>, so the program can always set its
+effective user ID to either one.
+</para>
+<para>On other systems that don’t support file user IDs, you can
+turn setuid access on and off by using <code>setreuid</code> to swap the real
+and effective user IDs of the process, as follows:
+</para>
+<div class="example">
+<pre class="example">setreuid (geteuid (), getuid ());
+</pre></div>
+
+<para>This special case is always allowed—it cannot fail.
+</para>
+<para>Why does this have the effect of toggling the setuid access?  Suppose a
+game program has just started, and its real user ID is <code>jdoe</code> while
+its effective user ID is <code>games</code>.  In this state, the game can
+write the scores file.  If it swaps the two uids, the real becomes
+<code>games</code> and the effective becomes <code>jdoe</code>; now the program has
+only <code>jdoe</code> access.  Another swap brings <code>games</code> back to
+the effective user ID and restores access to the scores file.
+</para>
+<para>In order to handle both kinds of systems, test for the saved user ID
+feature with a preprocessor conditional, like this:
+</para>
+<div class="example">
+<pre class="example">#ifdef _POSIX_SAVED_IDS
+  seteuid (user_user_id);
+#else
+  setreuid (geteuid (), getuid ());
+#endif
+</pre></div>
+
+<hr>
+</div>
+<sect xml:id="glibc-Setuid-Program-Example">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Tips-for-Setuid" accesskey="n" rel="next">Tips for Writing Setuid Programs</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Enable_002fDisable-Setuid" accesskey="p" rel="prev">Enabling and Disabling Setuid Access</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Users-and-Groups" accesskey="u" rel="up">Users and Groups</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Setuid-Program-Example-1"></span><h3 class="section">30.9 Setuid Program Example</title>
+
+<para>Here’s an example showing how to set up a program that changes its
+effective user ID.
+</para>
+<para>This is part of a game program called <code>caber-toss</code> that manipulates
+a file <filename>scores</filename> that should be writable only by the game program
+itself.  The program assumes that its executable file will be installed
+with the setuid bit set and owned by the same user as the <filename>scores</filename>
+file.  Typically, a system administrator will set up an account like
+<code>games</code> for this purpose.
+</para>
+<para>The executable file is given mode <code>4755</code>, so that doing an
+‘<filename>ls -l</filename>’ on it produces output like:
+</para>
+<div class="example">
+<pre class="example">-rwsr-xr-x   1 games    184422 Jul 30 15:17 caber-toss
+</pre></div>
+
+<para>The setuid bit shows up in the file modes as the ‘<filename>s</filename>’.
+</para>
+<para>The scores file is given mode <code>644</code>, and doing an ‘<filename>ls -l</filename>’ on
+it shows:
+</para>
+<div class="example">
+<pre class="example">-rw-r&#45;&#45;r&#45;&#45;  1 games           0 Jul 31 15:33 scores
+</pre></div>
+
+<para>Here are the parts of the program that show how to set up the changed
+user ID.  This program is conditionalized so that it makes use of the
+file IDs feature if it is supported, and otherwise uses <code>setreuid</code>
+to swap the effective and real user IDs.
+</para>
+<div class="example">
+<pre class="example">#include &lt;stdio.h&gt;
+#include &lt;sys/types.h&gt;
+#include &lt;unistd.h&gt;
+#include &lt;stdlib.h&gt;
+
+
+/* <span class="roman">Remember the effective and real UIDs.</span> */
+
+static uid_t euid, ruid;
+
+
+/* <span class="roman">Restore the effective UID to its original value.</span> */
+
+void
+do_setuid (void)
+{
+  int status;
+
+#ifdef _POSIX_SAVED_IDS
+  status = seteuid (euid);
+#else
+  status = setreuid (ruid, euid);
+#endif
+  if (status &lt; 0) {
+    fprintf (stderr, "Couldn't set uid.\n");
+    exit (status);
+    }
+}
+
+
+</pre><pre class="example">/* <span class="roman">Set the effective UID to the real UID.</span> */
+
+void
+undo_setuid (void)
+{
+  int status;
+
+#ifdef _POSIX_SAVED_IDS
+  status = seteuid (ruid);
+#else
+  status = setreuid (euid, ruid);
+#endif
+  if (status &lt; 0) {
+    fprintf (stderr, "Couldn't set uid.\n");
+    exit (status);
+    }
+}
+</pre><pre class="example">
+/* <span class="roman">Main program.</span> */
+
+int
+main (void)
+{
+  /* <span class="roman">Remember the real and effective user IDs.</span>  */
+  ruid = getuid ();
+  euid = geteuid ();
+  undo_setuid ();
+
+  /* <span class="roman">Do the game and record the score.</span>  */
+  …
+}
+</pre></div>
+
+<para>Notice how the first thing the <code>main</code> function does is to set the
+effective user ID back to the real user ID.  This is so that any other
+file accesses that are performed while the user is playing the game use
+the real user ID for determining permissions.  Only when the program
+needs to open the scores file does it switch back to the file user ID,
+like this:
+</para>
+<div class="example">
+<pre class="example">/* <span class="roman">Record the score.</span> */
+
+int
+record_score (int score)
+{
+  FILE *stream;
+  char *myname;
+
+  /* <span class="roman">Open the scores file.</span> */
+  do_setuid ();
+  stream = fopen (SCORES_FILE, "a");
+  undo_setuid ();
+
+</pre><pre class="example">  /* <span class="roman">Write the score to the file.</span> */
+  if (stream)
+    {
+      myname = cuserid (NULL);
+      if (score &lt; 0)
+        fprintf (stream, "%10s: Couldn't lift the caber.\n", myname);
+      else
+        fprintf (stream, "%10s: %d feet.\n", myname, score);
+      fclose (stream);
+      return 0;
+    }
+  else
+    return -1;
+}
+</pre></div>
+
+<hr>
+</div>
+<sect xml:id="glibc-Tips-for-Setuid">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Who-Logged-In" accesskey="n" rel="next">Identifying Who Logged In</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Setuid-Program-Example" accesskey="p" rel="prev">Setuid Program Example</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Users-and-Groups" accesskey="u" rel="up">Users and Groups</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Tips-for-Writing-Setuid-Programs"></span><h3 class="section">30.10 Tips for Writing Setuid Programs</title>
+
+<para>It is easy for setuid programs to give the user access that isn’t
+intended—in fact, if you want to avoid this, you need to be careful.
+Here are some guidelines for preventing unintended access and
+minimizing its consequences when it does occur:
+</para>
+<ul>
+<li> Don’t have <code>setuid</code> programs with privileged user IDs such as
+<code>root</code> unless it is absolutely necessary.  If the resource is
+specific to your particular program, it’s better to define a new,
+nonprivileged user ID or group ID just to manage that resource.
+It’s better if you can write your program to use a special group than a
+special user.
+
+</li><li> Be cautious about using the <code>exec</code> functions in combination with
+changing the effective user ID.  Don’t let users of your program execute
+arbitrary programs under a changed user ID.  Executing a shell is
+especially bad news.  Less obviously, the <code>execlp</code> and <code>execvp</code>
+functions are a potential risk (since the program they execute depends
+on the user’s <code>PATH</code> environment variable).
+
+<para>If you must <code>exec</code> another program under a changed ID, specify an
+absolute file name (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#File-Name-Resolution">File Name Resolution</a>) for the executable,
+and make sure that the protections on that executable and <emphasis>all</emphasis>
+containing directories are such that ordinary users cannot replace it
+with some other program.
+</para>
+<para>You should also check the arguments passed to the program to make sure
+they do not have unexpected effects.  Likewise, you should examine the
+environment variables.  Decide which arguments and variables are safe,
+and reject all others.
+</para>
+<para>You should never use <code>system</code> in a privileged program, because it
+invokes a shell.
+</para>
+</li><li> Only use the user ID controlling the resource in the part of the program
+that actually uses that resource.  When you’re finished with it, restore
+the effective user ID back to the actual user’s user ID.
+See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Enable_002fDisable-Setuid">Enabling and Disabling Setuid Access</a>.
+
+</li><li> If the <code>setuid</code> part of your program needs to access other files
+besides the controlled resource, it should verify that the real user
+would ordinarily have permission to access those files.  You can use the
+<code>access</code> function (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Access-Permission">How Your Access to a File is Decided</a>) to check this; it
+uses the real user and group IDs, rather than the effective IDs.
+</li></ul>
+
+<hr>
+</div>
+<sect xml:id="glibc-Who-Logged-In">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#User-Accounting-Database" accesskey="n" rel="next">The User Accounting Database</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Tips-for-Setuid" accesskey="p" rel="prev">Tips for Writing Setuid Programs</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Users-and-Groups" accesskey="u" rel="up">Users and Groups</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Identifying-Who-Logged-In"></span><h3 class="section">30.11 Identifying Who Logged In</title>
+<span xml:id="glibc-index-login-name_002c-determining"></span>
+<span xml:id="glibc-index-user-ID_002c-determining"></span>
+
+<para>You can use the functions listed in this section to determine the login
+name of the user who is running a process, and the name of the user who
+logged in the current session.  See also the function <code>getuid</code> and
+friends (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Reading-Persona">Reading the Persona of a Process</a>).  How this information is collected by
+the system and how to control/add/remove information from the background
+storage is described in <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#User-Accounting-Database">The User Accounting Database</a>.
+</para>
+<para>The <code>getlogin</code> function is declared in <filename>unistd.h</filename>, while
+<code>cuserid</code> and <code>L_cuserid</code> are declared in <filename>stdio.h</filename>.
+<span xml:id="glibc-index-stdio_002eh-20"></span>
+<span xml:id="glibc-index-unistd_002eh-25"></span>
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-getlogin"><span class="category">Function: </span><span><emphasis>char *</emphasis> <strong>getlogin</strong> <emphasis>(void)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-getlogin" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Unsafe race:getlogin race:utent sig:ALRM timer locale
+| AS-Unsafe dlopen plugin heap lock
+| AC-Unsafe corrupt lock fd mem
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>getlogin</code> function returns a pointer to a string containing the
+name of the user logged in on the controlling terminal of the process,
+or a null pointer if this information cannot be determined.  The string
+is statically allocated and might be overwritten on subsequent calls to
+this function or to <code>cuserid</code>.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-cuserid"><span class="category">Function: </span><span><emphasis>char *</emphasis> <strong>cuserid</strong> <emphasis>(char *<var>string</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-cuserid" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Unsafe race:cuserid/!string locale
+| AS-Unsafe dlopen plugin heap lock
+| AC-Unsafe corrupt lock fd mem
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>cuserid</code> function returns a pointer to a string containing a
+user name associated with the effective ID of the process.  If
+<var>string</var> is not a null pointer, it should be an array that can hold
+at least <code>L_cuserid</code> characters; the string is returned in this
+array.  Otherwise, a pointer to a string in a static area is returned.
+This string is statically allocated and might be overwritten on
+subsequent calls to this function or to <code>getlogin</code>.
+</para>
+<para>The use of this function is deprecated since it is marked to be
+withdrawn in XPG4.2 and has already been removed from newer revisions of
+POSIX.1.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-L_005fcuserid"><span class="category">Macro: </span><span><emphasis>int</emphasis> <strong>L_cuserid</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-L_005fcuserid" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>An integer constant that indicates how long an array you might need to
+store a user name.
+</para></dd></dl>
+
+<para>These functions let your program identify positively the user who is
+running or the user who logged in this session.  (These can differ when
+setuid programs are involved; see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Process-Persona">The Persona of a Process</a>.)  The user cannot
+do anything to fool these functions.
+</para>
+<para>For most purposes, it is more useful to use the environment variable
+<code>LOGNAME</code> to find out who the user is.  This is more flexible
+precisely because the user can set <code>LOGNAME</code> arbitrarily.
+See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Standard-Environment">Standard Environment Variables</a>.
+</para>
+
+<hr>
+</div>
+<sect xml:id="glibc-User-Accounting-Database">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#User-Database" accesskey="n" rel="next">User Database</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Who-Logged-In" accesskey="p" rel="prev">Identifying Who Logged In</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Users-and-Groups" accesskey="u" rel="up">Users and Groups</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-The-User-Accounting-Database"></span><h3 class="section">30.12 The User Accounting Database</title>
+<span xml:id="glibc-index-user-accounting-database"></span>
+
+<para>Most Unix-like operating systems keep track of logged in users by
+maintaining a user accounting database.  This user accounting database
+stores for each terminal, who has logged on, at what time, the process
+ID of the user’s login shell, etc., etc., but also stores information
+about the run level of the system, the time of the last system reboot,
+and possibly more.
+</para>
+<para>The user accounting database typically lives in <filename>/etc/utmp</filename>,
+<filename>/var/adm/utmp</filename> or <filename>/var/run/utmp</filename>.  However, these files
+should <strong>never</strong> be accessed directly.  For reading information
+from and writing information to the user accounting database, the
+functions described in this section should be used.
+</para>
+
+
+<ul class="section-toc">
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Manipulating-the-Database" accesskey="1">Manipulating the User Accounting Database</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#XPG-Functions" accesskey="2">XPG User Accounting Database Functions</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Logging-In-and-Out" accesskey="3">Logging In and Out</a></li>
+</ul>
+<hr>
+<div class="subsection" xml:id="glibc-Manipulating-the-Database">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#XPG-Functions" accesskey="n" rel="next">XPG User Accounting Database Functions</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#User-Accounting-Database" accesskey="u" rel="up">The User Accounting Database</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Manipulating-the-User-Accounting-Database"></span><h4 class="subsection">30.12.1 Manipulating the User Accounting Database</title>
+
+<para>These functions and the corresponding data structures are declared in
+the header file <filename>utmp.h</filename>.
+<span xml:id="glibc-index-utmp_002eh"></span>
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-struct-exit_005fstatus"><span class="category">Data Type: </span><span><strong>struct exit_status</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-struct-exit_005fstatus" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>The <code>exit_status</code> data structure is used to hold information about
+the exit status of processes marked as <code>DEAD_PROCESS</code> in the user
+accounting database.
+</para>
+<dl compact="compact">
+<dt><span><code>short int e_termination</code></span></dt>
+<dd><para>The exit status of the process.
+</para>
+</dd>
+<dt><span><code>short int e_exit</code></span></dt>
+<dd><para>The exit status of the process.
+</para></dd>
+</dl>
+</dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-struct-utmp"><span class="category">Data Type: </span><span><strong>struct utmp</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-struct-utmp" class="copiable-anchor"> ¶</a></span></dt>
+<dd><para>The <code>utmp</code> data structure is used to hold information about entries
+in the user accounting database.  On GNU systems it has the following
+members:
+</para>
+<dl compact="compact">
+<dt><span><code>short int ut_type</code></span></dt>
+<dd><para>Specifies the type of login; one of <code>EMPTY</code>, <code>RUN_LVL</code>,
+<code>BOOT_TIME</code>, <code>OLD_TIME</code>, <code>NEW_TIME</code>, <code>INIT_PROCESS</code>,
+<code>LOGIN_PROCESS</code>, <code>USER_PROCESS</code>, <code>DEAD_PROCESS</code> or
+<code>ACCOUNTING</code>.
+</para>
+</dd>
+<dt><span><code>pid_t ut_pid</code></span></dt>
+<dd><para>The process ID number of the login process.
+</para>
+</dd>
+<dt><span><code>char ut_line[]</code></span></dt>
+<dd><para>The device name of the tty (without <filename>/dev/</filename>).
+</para>
+</dd>
+<dt><span><code>char ut_id[]</code></span></dt>
+<dd><para>The inittab ID of the process.
+</para>
+</dd>
+<dt><span><code>char ut_user[]</code></span></dt>
+<dd><para>The user’s login name.
+</para>
+</dd>
+<dt><span><code>char ut_host[]</code></span></dt>
+<dd><para>The name of the host from which the user logged in.
+</para>
+</dd>
+<dt><span><code>struct exit_status ut_exit</code></span></dt>
+<dd><para>The exit status of a process marked as <code>DEAD_PROCESS</code>.
+</para>
+</dd>
+<dt><span><code>long ut_session</code></span></dt>
+<dd><para>The Session ID, used for windowing.
+</para>
+</dd>
+<dt><span><code>struct timeval ut_tv</code></span></dt>
+<dd><para>Time the entry was made.  For entries of type <code>OLD_TIME</code> this is
+the time when the system clock changed, and for entries of type
+<code>NEW_TIME</code> this is the time the system clock was set to.
+</para>
+</dd>
+<dt><span><code>int32_t ut_addr_v6[4]</code></span></dt>
+<dd><para>The Internet address of a remote host.
+</para></dd>
+</dl>
+</dd></dl>
+
+<para>The <code>ut_type</code>, <code>ut_pid</code>, <code>ut_id</code>, <code>ut_tv</code>, and
+<code>ut_host</code> fields are not available on all systems.  Portable
+applications therefore should be prepared for these situations.  To help
+do this the <filename>utmp.h</filename> header provides macros
+<code>_HAVE_UT_TYPE</code>, <code>_HAVE_UT_PID</code>, <code>_HAVE_UT_ID</code>,
+<code>_HAVE_UT_TV</code>, and <code>_HAVE_UT_HOST</code> if the respective field is
+available.  The programmer can handle the situations by using
+<code>#ifdef</code> in the program code.
+</para>
+<para>The following macros are defined for use as values for the
+<code>ut_type</code> member of the <code>utmp</code> structure.  The values are
+integer constants.
+</para>
+<dl compact="compact">
+<dt xml:id="glibc-index-EMPTY"><span><code>EMPTY</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-EMPTY" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>This macro is used to indicate that the entry contains no valid user
+accounting information.
+</para>
+</dd>
+<dt xml:id="glibc-index-RUN_005fLVL"><span><code>RUN_LVL</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-RUN_005fLVL" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>This macro is used to identify the system’s runlevel.
+</para>
+</dd>
+<dt xml:id="glibc-index-BOOT_005fTIME"><span><code>BOOT_TIME</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-BOOT_005fTIME" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>This macro is used to identify the time of system boot.
+</para>
+</dd>
+<dt xml:id="glibc-index-OLD_005fTIME"><span><code>OLD_TIME</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-OLD_005fTIME" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>This macro is used to identify the time when the system clock changed.
+</para>
+</dd>
+<dt xml:id="glibc-index-NEW_005fTIME"><span><code>NEW_TIME</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-NEW_005fTIME" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>This macro is used to identify the time after the system clock changed.
+</para>
+</dd>
+<dt xml:id="glibc-index-INIT_005fPROCESS"><span><code>INIT_PROCESS</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-INIT_005fPROCESS" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>This macro is used to identify a process spawned by the init process.
+</para>
+</dd>
+<dt xml:id="glibc-index-LOGIN_005fPROCESS"><span><code>LOGIN_PROCESS</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LOGIN_005fPROCESS" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>This macro is used to identify the session leader of a logged in user.
+</para>
+</dd>
+<dt xml:id="glibc-index-USER_005fPROCESS"><span><code>USER_PROCESS</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-USER_005fPROCESS" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>This macro is used to identify a user process.
+</para>
+</dd>
+<dt xml:id="glibc-index-DEAD_005fPROCESS"><span><code>DEAD_PROCESS</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-DEAD_005fPROCESS" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>This macro is used to identify a terminated process.
+</para>
+</dd>
+<dt xml:id="glibc-index-ACCOUNTING"><span><code>ACCOUNTING</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-ACCOUNTING" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>???
+</para></dd>
+</dl>
+
+<para>The size of the <code>ut_line</code>, <code>ut_id</code>, <code>ut_user</code> and
+<code>ut_host</code> arrays can be found using the <code>sizeof</code> operator.
+</para>
+<para>Many older systems have, instead of an <code>ut_tv</code> member, an
+<code>ut_time</code> member, usually of type <code>time_t</code>, for representing
+the time associated with the entry.  Therefore, for backwards
+compatibility only, <filename>utmp.h</filename> defines <code>ut_time</code> as an alias for
+<code>ut_tv.tv_sec</code>.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-setutent"><span class="category">Function: </span><span><emphasis>void</emphasis> <strong>setutent</strong> <emphasis>(void)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-setutent" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Unsafe race:utent
+| AS-Unsafe lock
+| AC-Unsafe lock fd
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+
+<para>This function opens the user accounting database to begin scanning it.
+You can then call <code>getutent</code>, <code>getutid</code> or <code>getutline</code> to
+read entries and <code>pututline</code> to write entries.
+</para>
+<para>If the database is already open, it resets the input to the beginning of
+the database.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-getutent"><span class="category">Function: </span><span><emphasis>struct utmp *</emphasis> <strong>getutent</strong> <emphasis>(void)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-getutent" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Unsafe init race:utent race:utentbuf sig:ALRM timer
+| AS-Unsafe heap lock
+| AC-Unsafe lock fd mem
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+
+<para>The <code>getutent</code> function reads the next entry from the user
+accounting database.  It returns a pointer to the entry, which is
+statically allocated and may be overwritten by subsequent calls to
+<code>getutent</code>.  You must copy the contents of the structure if you
+wish to save the information or you can use the <code>getutent_r</code>
+function which stores the data in a user-provided buffer.
+</para>
+<para>A null pointer is returned in case no further entry is available.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-endutent"><span class="category">Function: </span><span><emphasis>void</emphasis> <strong>endutent</strong> <emphasis>(void)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-endutent" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Unsafe race:utent
+| AS-Unsafe lock
+| AC-Unsafe lock fd
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This function closes the user accounting database.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-getutid"><span class="category">Function: </span><span><emphasis>struct utmp *</emphasis> <strong>getutid</strong> <emphasis>(const struct utmp *<var>id</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-getutid" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Unsafe init race:utent sig:ALRM timer
+| AS-Unsafe lock heap
+| AC-Unsafe lock mem fd
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This function searches forward from the current point in the database
+for an entry that matches <var>id</var>.  If the <code>ut_type</code> member of the
+<var>id</var> structure is one of <code>RUN_LVL</code>, <code>BOOT_TIME</code>,
+<code>OLD_TIME</code> or <code>NEW_TIME</code> the entries match if the
+<code>ut_type</code> members are identical.  If the <code>ut_type</code> member of
+the <var>id</var> structure is <code>INIT_PROCESS</code>, <code>LOGIN_PROCESS</code>,
+<code>USER_PROCESS</code> or <code>DEAD_PROCESS</code>, the entries match if the
+<code>ut_type</code> member of the entry read from the database is one of
+these four, and the <code>ut_id</code> members match.  However if the
+<code>ut_id</code> member of either the <var>id</var> structure or the entry read
+from the database is empty it checks if the <code>ut_line</code> members match
+instead.  If a matching entry is found, <code>getutid</code> returns a pointer
+to the entry, which is statically allocated, and may be overwritten by a
+subsequent call to <code>getutent</code>, <code>getutid</code> or <code>getutline</code>.
+You must copy the contents of the structure if you wish to save the
+information.
+</para>
+<para>A null pointer is returned in case the end of the database is reached
+without a match.
+</para>
+<para>The <code>getutid</code> function may cache the last read entry.  Therefore,
+if you are using <code>getutid</code> to search for multiple occurrences, it
+is necessary to zero out the static data after each call.  Otherwise
+<code>getutid</code> could just return a pointer to the same entry over and
+over again.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-getutline"><span class="category">Function: </span><span><emphasis>struct utmp *</emphasis> <strong>getutline</strong> <emphasis>(const struct utmp *<var>line</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-getutline" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Unsafe init race:utent sig:ALRM timer
+| AS-Unsafe heap lock
+| AC-Unsafe lock fd mem
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+
+<para>This function searches forward from the current point in the database
+until it finds an entry whose <code>ut_type</code> value is
+<code>LOGIN_PROCESS</code> or <code>USER_PROCESS</code>, and whose <code>ut_line</code>
+member matches the <code>ut_line</code> member of the <var>line</var> structure.
+If it finds such an entry, it returns a pointer to the entry which is
+statically allocated, and may be overwritten by a subsequent call to
+<code>getutent</code>, <code>getutid</code> or <code>getutline</code>.  You must copy the
+contents of the structure if you wish to save the information.
+</para>
+<para>A null pointer is returned in case the end of the database is reached
+without a match.
+</para>
+<para>The <code>getutline</code> function may cache the last read entry.  Therefore
+if you are using <code>getutline</code> to search for multiple occurrences, it
+is necessary to zero out the static data after each call.  Otherwise
+<code>getutline</code> could just return a pointer to the same entry over and
+over again.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-pututline"><span class="category">Function: </span><span><emphasis>struct utmp *</emphasis> <strong>pututline</strong> <emphasis>(const struct utmp *<var>utmp</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-pututline" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Unsafe race:utent sig:ALRM timer
+| AS-Unsafe lock
+| AC-Unsafe lock fd
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>pututline</code> function inserts the entry <code>*<var>utmp</var></code> at
+the appropriate place in the user accounting database.  If it finds that
+it is not already at the correct place in the database, it uses
+<code>getutid</code> to search for the position to insert the entry, however
+this will not modify the static structure returned by <code>getutent</code>,
+<code>getutid</code> and <code>getutline</code>.  If this search fails, the entry
+is appended to the database.
+</para>
+<para>The <code>pututline</code> function returns a pointer to a copy of the entry
+inserted in the user accounting database, or a null pointer if the entry
+could not be added.  The following <code>errno</code> error conditions are
+defined for this function:
+</para>
+<dl compact="compact">
+<dt><span><code>EPERM</code></span></dt>
+<dd><para>The process does not have the appropriate privileges; you cannot modify
+the user accounting database.
+</para></dd>
+</dl>
+</dd></dl>
+
+<para>All the <code>get*</code> functions mentioned before store the information
+they return in a static buffer.  This can be a problem in multi-threaded
+programs since the data returned for the request is overwritten by the
+return value data in another thread.  Therefore the GNU C Library
+provides as extensions three more functions which return the data in a
+user-provided buffer.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-getutent_005fr"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>getutent_r</strong> <emphasis>(struct utmp *<var>buffer</var>, struct utmp **<var>result</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-getutent_005fr" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Unsafe race:utent sig:ALRM timer
+| AS-Unsafe lock
+| AC-Unsafe lock fd
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>getutent_r</code> is equivalent to the <code>getutent</code> function.  It
+returns the next entry from the database.  But instead of storing the
+information in a static buffer it stores it in the buffer pointed to by
+the parameter <var>buffer</var>.
+</para>
+<para>If the call was successful, the function returns <code>0</code> and the
+pointer variable pointed to by the parameter <var>result</var> contains a
+pointer to the buffer which contains the result (this is most probably
+the same value as <var>buffer</var>).  If something went wrong during the
+execution of <code>getutent_r</code> the function returns <code>-1</code>.
+</para>
+<para>This function is a GNU extension.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-getutid_005fr"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>getutid_r</strong> <emphasis>(const struct utmp *<var>id</var>, struct utmp *<var>buffer</var>, struct utmp **<var>result</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-getutid_005fr" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Unsafe race:utent sig:ALRM timer
+| AS-Unsafe lock
+| AC-Unsafe lock fd
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This function retrieves just like <code>getutid</code> the next entry matching
+the information stored in <var>id</var>.  But the result is stored in the
+buffer pointed to by the parameter <var>buffer</var>.
+</para>
+<para>If successful the function returns <code>0</code> and the pointer variable
+pointed to by the parameter <var>result</var> contains a pointer to the
+buffer with the result (probably the same as <var>result</var>.  If not
+successful the function return <code>-1</code>.
+</para>
+<para>This function is a GNU extension.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-getutline_005fr"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>getutline_r</strong> <emphasis>(const struct utmp *<var>line</var>, struct utmp *<var>buffer</var>, struct utmp **<var>result</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-getutline_005fr" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Unsafe race:utent sig:ALRM timer
+| AS-Unsafe lock
+| AC-Unsafe lock fd
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This function retrieves just like <code>getutline</code> the next entry
+matching the information stored in <var>line</var>.  But the result is stored
+in the buffer pointed to by the parameter <var>buffer</var>.
+</para>
+<para>If successful the function returns <code>0</code> and the pointer variable
+pointed to by the parameter <var>result</var> contains a pointer to the
+buffer with the result (probably the same as <var>result</var>.  If not
+successful the function return <code>-1</code>.
+</para>
+<para>This function is a GNU extension.
+</para></dd></dl>
+
+
+<para>In addition to the user accounting database, most systems keep a number
+of similar databases.  For example most systems keep a log file with all
+previous logins (usually in <filename>/etc/wtmp</filename> or <filename>/var/log/wtmp</filename>).
+</para>
+<para>For specifying which database to examine, the following function should
+be used.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-utmpname"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>utmpname</strong> <emphasis>(const char *<var>file</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-utmpname" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Unsafe race:utent
+| AS-Unsafe lock heap
+| AC-Unsafe lock mem
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>utmpname</code> function changes the name of the database to be
+examined to <var>file</var>, and closes any previously opened database.  By
+default <code>getutent</code>, <code>getutid</code>, <code>getutline</code> and
+<code>pututline</code> read from and write to the user accounting database.
+</para>
+<para>The following macros are defined for use as the <var>file</var> argument:
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-_005fPATH_005fUTMP"><span class="category">Macro: </span><span><emphasis>char *</emphasis> <strong>_PATH_UTMP</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-_005fPATH_005fUTMP" class="copiable-anchor"> ¶</a></span></dt>
+<dd><para>This macro is used to specify the user accounting database.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-_005fPATH_005fWTMP"><span class="category">Macro: </span><span><emphasis>char *</emphasis> <strong>_PATH_WTMP</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-_005fPATH_005fWTMP" class="copiable-anchor"> ¶</a></span></dt>
+<dd><para>This macro is used to specify the user accounting log file.
+</para></dd></dl>
+
+<para>The <code>utmpname</code> function returns a value of <code>0</code> if the new name
+was successfully stored, and a value of <code>-1</code> to indicate an error.
+Note that <code>utmpname</code> does not try to open the database, and that
+therefore the return value does not say anything about whether the
+database can be successfully opened.
+</para></dd></dl>
+
+<para>Specially for maintaining log-like databases the GNU C Library provides
+the following function:
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-updwtmp"><span class="category">Function: </span><span><emphasis>void</emphasis> <strong>updwtmp</strong> <emphasis>(const char *<var>wtmp_file</var>, const struct utmp *<var>utmp</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-updwtmp" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Unsafe sig:ALRM timer
+| AS-Unsafe
+| AC-Unsafe fd
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>updwtmp</code> function appends the entry *<var>utmp</var> to the
+database specified by <var>wtmp_file</var>.  For possible values for the
+<var>wtmp_file</var> argument see the <code>utmpname</code> function.
+</para></dd></dl>
+
+<para><strong>Portability Note:</strong> Although many operating systems provide a
+subset of these functions, they are not standardized.  There are often
+subtle differences in the return types, and there are considerable
+differences between the various definitions of <code>struct utmp</code>.  When
+programming for the GNU C Library, it is probably best to stick
+with the functions described in this section.  If however, you want your
+program to be portable, consider using the XPG functions described in
+<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#XPG-Functions">XPG User Accounting Database Functions</a>, or take a look at the BSD compatible functions in
+<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Logging-In-and-Out">Logging In and Out</a>.
+</para>
+
+<hr>
+</div>
+<div class="subsection" xml:id="glibc-XPG-Functions">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Logging-In-and-Out" accesskey="n" rel="next">Logging In and Out</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Manipulating-the-Database" accesskey="p" rel="prev">Manipulating the User Accounting Database</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#User-Accounting-Database" accesskey="u" rel="up">The User Accounting Database</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-XPG-User-Accounting-Database-Functions"></span><h4 class="subsection">30.12.2 XPG User Accounting Database Functions</title>
+
+<para>These functions, described in the X/Open Portability Guide, are declared
+in the header file <filename>utmpx.h</filename>.
+<span xml:id="glibc-index-utmpx_002eh"></span>
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-struct-utmpx"><span class="category">Data Type: </span><span><strong>struct utmpx</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-struct-utmpx" class="copiable-anchor"> ¶</a></span></dt>
+<dd><para>The <code>utmpx</code> data structure contains at least the following members:
+</para>
+<dl compact="compact">
+<dt><span><code>short int ut_type</code></span></dt>
+<dd><para>Specifies the type of login; one of <code>EMPTY</code>, <code>RUN_LVL</code>,
+<code>BOOT_TIME</code>, <code>OLD_TIME</code>, <code>NEW_TIME</code>, <code>INIT_PROCESS</code>,
+<code>LOGIN_PROCESS</code>, <code>USER_PROCESS</code> or <code>DEAD_PROCESS</code>.
+</para>
+</dd>
+<dt><span><code>pid_t ut_pid</code></span></dt>
+<dd><para>The process ID number of the login process.
+</para>
+</dd>
+<dt><span><code>char ut_line[]</code></span></dt>
+<dd><para>The device name of the tty (without <filename>/dev/</filename>).
+</para>
+</dd>
+<dt><span><code>char ut_id[]</code></span></dt>
+<dd><para>The inittab ID of the process.
+</para>
+</dd>
+<dt><span><code>char ut_user[]</code></span></dt>
+<dd><para>The user’s login name.
+</para>
+</dd>
+<dt><span><code>struct timeval ut_tv</code></span></dt>
+<dd><para>Time the entry was made.  For entries of type <code>OLD_TIME</code> this is
+the time when the system clock changed, and for entries of type
+<code>NEW_TIME</code> this is the time the system clock was set to.
+</para></dd>
+</dl>
+<para>In the GNU C Library, <code>struct utmpx</code> is identical to <code>struct
+utmp</code> except for the fact that including <filename>utmpx.h</filename> does not make
+visible the declaration of <code>struct exit_status</code>.
+</para></dd></dl>
+
+<para>The following macros are defined for use as values for the
+<code>ut_type</code> member of the <code>utmpx</code> structure.  The values are
+integer constants and are, in the GNU C Library, identical to the
+definitions in <filename>utmp.h</filename>.
+</para>
+<dl compact="compact">
+<dt xml:id="glibc-index-EMPTY-1"><span><code>EMPTY</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-EMPTY-1" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>This macro is used to indicate that the entry contains no valid user
+accounting information.
+</para>
+</dd>
+<dt xml:id="glibc-index-RUN_005fLVL-1"><span><code>RUN_LVL</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-RUN_005fLVL-1" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>This macro is used to identify the system’s runlevel.
+</para>
+</dd>
+<dt xml:id="glibc-index-BOOT_005fTIME-1"><span><code>BOOT_TIME</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-BOOT_005fTIME-1" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>This macro is used to identify the time of system boot.
+</para>
+</dd>
+<dt xml:id="glibc-index-OLD_005fTIME-1"><span><code>OLD_TIME</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-OLD_005fTIME-1" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>This macro is used to identify the time when the system clock changed.
+</para>
+</dd>
+<dt xml:id="glibc-index-NEW_005fTIME-1"><span><code>NEW_TIME</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-NEW_005fTIME-1" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>This macro is used to identify the time after the system clock changed.
+</para>
+</dd>
+<dt xml:id="glibc-index-INIT_005fPROCESS-1"><span><code>INIT_PROCESS</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-INIT_005fPROCESS-1" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>This macro is used to identify a process spawned by the init process.
+</para>
+</dd>
+<dt xml:id="glibc-index-LOGIN_005fPROCESS-1"><span><code>LOGIN_PROCESS</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LOGIN_005fPROCESS-1" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>This macro is used to identify the session leader of a logged in user.
+</para>
+</dd>
+<dt xml:id="glibc-index-USER_005fPROCESS-1"><span><code>USER_PROCESS</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-USER_005fPROCESS-1" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>This macro is used to identify a user process.
+</para>
+</dd>
+<dt xml:id="glibc-index-DEAD_005fPROCESS-1"><span><code>DEAD_PROCESS</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-DEAD_005fPROCESS-1" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>This macro is used to identify a terminated process.
+</para></dd>
+</dl>
+
+<para>The size of the <code>ut_line</code>, <code>ut_id</code> and <code>ut_user</code> arrays
+can be found using the <code>sizeof</code> operator.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-setutxent"><span class="category">Function: </span><span><emphasis>void</emphasis> <strong>setutxent</strong> <emphasis>(void)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-setutxent" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Unsafe race:utent
+| AS-Unsafe lock
+| AC-Unsafe lock fd
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This function is similar to <code>setutent</code>.  In the GNU C Library it is
+simply an alias for <code>setutent</code>.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-getutxent"><span class="category">Function: </span><span><emphasis>struct utmpx *</emphasis> <strong>getutxent</strong> <emphasis>(void)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-getutxent" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Unsafe init race:utent sig:ALRM timer
+| AS-Unsafe heap lock
+| AC-Unsafe lock fd mem
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>getutxent</code> function is similar to <code>getutent</code>, but returns
+a pointer to a <code>struct utmpx</code> instead of <code>struct utmp</code>.  In
+the GNU C Library it simply is an alias for <code>getutent</code>.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-endutxent"><span class="category">Function: </span><span><emphasis>void</emphasis> <strong>endutxent</strong> <emphasis>(void)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-endutxent" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Unsafe race:utent
+| AS-Unsafe lock
+| AC-Unsafe lock
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This function is similar to <code>endutent</code>.  In the GNU C Library it is
+simply an alias for <code>endutent</code>.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-getutxid"><span class="category">Function: </span><span><emphasis>struct utmpx *</emphasis> <strong>getutxid</strong> <emphasis>(const struct utmpx *<var>id</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-getutxid" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Unsafe init race:utent sig:ALRM timer
+| AS-Unsafe lock heap
+| AC-Unsafe lock mem fd
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This function is similar to <code>getutid</code>, but uses <code>struct utmpx</code>
+instead of <code>struct utmp</code>.  In the GNU C Library it is simply an alias
+for <code>getutid</code>.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-getutxline"><span class="category">Function: </span><span><emphasis>struct utmpx *</emphasis> <strong>getutxline</strong> <emphasis>(const struct utmpx *<var>line</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-getutxline" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Unsafe init race:utent sig:ALRM timer
+| AS-Unsafe heap lock
+| AC-Unsafe lock fd mem
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This function is similar to <code>getutid</code>, but uses <code>struct utmpx</code>
+instead of <code>struct utmp</code>.  In the GNU C Library it is simply an alias
+for <code>getutline</code>.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-pututxline"><span class="category">Function: </span><span><emphasis>struct utmpx *</emphasis> <strong>pututxline</strong> <emphasis>(const struct utmpx *<var>utmp</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-pututxline" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Unsafe race:utent sig:ALRM timer
+| AS-Unsafe lock
+| AC-Unsafe lock fd
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>pututxline</code> function is functionally identical to
+<code>pututline</code>, but uses <code>struct utmpx</code> instead of <code>struct
+utmp</code>.  In the GNU C Library, <code>pututxline</code> is simply an alias for
+<code>pututline</code>.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-utmpxname"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>utmpxname</strong> <emphasis>(const char *<var>file</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-utmpxname" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Unsafe race:utent
+| AS-Unsafe lock heap
+| AC-Unsafe lock mem
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>utmpxname</code> function is functionally identical to
+<code>utmpname</code>.  In the GNU C Library, <code>utmpxname</code> is simply an
+alias for <code>utmpname</code>.
+</para></dd></dl>
+
+<para>You can translate between a traditional <code>struct utmp</code> and an XPG
+<code>struct utmpx</code> with the following functions.  In the GNU C Library,
+these functions are merely copies, since the two structures are
+identical.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-getutmp"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>getutmp</strong> <emphasis>(const struct utmpx *<var>utmpx</var>, struct utmp *<var>utmp</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-getutmp" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para><code>getutmp</code> copies the information, insofar as the structures are
+compatible, from <var>utmpx</var> to <var>utmp</var>.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-getutmpx"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>getutmpx</strong> <emphasis>(const struct utmp *<var>utmp</var>, struct utmpx *<var>utmpx</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-getutmpx" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para><code>getutmpx</code> copies the information, insofar as the structures are
+compatible, from <var>utmp</var> to <var>utmpx</var>.
+</para></dd></dl>
+
+
+<hr>
+</div>
+<div class="subsection" xml:id="glibc-Logging-In-and-Out">
+<div class="header">
+<para>
+Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#XPG-Functions" accesskey="p" rel="prev">XPG User Accounting Database Functions</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#User-Accounting-Database" accesskey="u" rel="up">The User Accounting Database</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Logging-In-and-Out-1"></span><h4 class="subsection">30.12.3 Logging In and Out</title>
+
+<para>These functions, derived from BSD, are available in the separate
+<filename>libutil</filename> library, and declared in <filename>utmp.h</filename>.
+<span xml:id="glibc-index-utmp_002eh-1"></span>
+</para>
+<para>Note that the <code>ut_user</code> member of <code>struct utmp</code> is called
+<code>ut_name</code> in BSD.  Therefore, <code>ut_name</code> is defined as an alias
+for <code>ut_user</code> in <filename>utmp.h</filename>.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-login_005ftty"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>login_tty</strong> <emphasis>(int <var>filedes</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-login_005ftty" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Unsafe race:ttyname
+| AS-Unsafe heap lock
+| AC-Unsafe lock fd mem
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This function makes <var>filedes</var> the controlling terminal of the
+current process, redirects standard input, standard output and
+standard error output to this terminal, and closes <var>filedes</var>.
+</para>
+<para>This function returns <code>0</code> on successful completion, and <code>-1</code>
+on error.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-login"><span class="category">Function: </span><span><emphasis>void</emphasis> <strong>login</strong> <emphasis>(const struct utmp *<var>entry</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-login" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Unsafe race:utent sig:ALRM timer
+| AS-Unsafe lock heap
+| AC-Unsafe lock corrupt fd mem
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>login</code> functions inserts an entry into the user accounting
+database.  The <code>ut_line</code> member is set to the name of the terminal
+on standard input.  If standard input is not a terminal <code>login</code>
+uses standard output or standard error output to determine the name of
+the terminal.  If <code>struct utmp</code> has a <code>ut_type</code> member,
+<code>login</code> sets it to <code>USER_PROCESS</code>, and if there is an
+<code>ut_pid</code> member, it will be set to the process ID of the current
+process.  The remaining entries are copied from <var>entry</var>.
+</para>
+<para>A copy of the entry is written to the user accounting log file.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-logout"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>logout</strong> <emphasis>(const char *<var>ut_line</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-logout" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Unsafe race:utent sig:ALRM timer
+| AS-Unsafe lock heap
+| AC-Unsafe lock fd mem
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This function modifies the user accounting database to indicate that the
+user on <var>ut_line</var> has logged out.
+</para>
+<para>The <code>logout</code> function returns <code>1</code> if the entry was successfully
+written to the database, or <code>0</code> on error.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-logwtmp"><span class="category">Function: </span><span><emphasis>void</emphasis> <strong>logwtmp</strong> <emphasis>(const char *<var>ut_line</var>, const char *<var>ut_name</var>, const char *<var>ut_host</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-logwtmp" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Unsafe sig:ALRM timer
+| AS-Unsafe
+| AC-Unsafe fd
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>logwtmp</code> function appends an entry to the user accounting log
+file, for the current time and the information provided in the
+<var>ut_line</var>, <var>ut_name</var> and <var>ut_host</var> arguments.
+</para></dd></dl>
+
+<para><strong>Portability Note:</strong> The BSD <code>struct utmp</code> only has the
+<code>ut_line</code>, <code>ut_name</code>, <code>ut_host</code> and <code>ut_time</code>
+members.  Older systems do not even have the <code>ut_host</code> member.
+</para>
+
+<hr>
+</div>
+</div>
+<sect xml:id="glibc-User-Database">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Group-Database" accesskey="n" rel="next">Group Database</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#User-Accounting-Database" accesskey="p" rel="prev">The User Accounting Database</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Users-and-Groups" accesskey="u" rel="up">Users and Groups</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-User-Database-1"></span><h3 class="section">30.13 User Database</title>
+<span xml:id="glibc-index-user-database"></span>
+<span xml:id="glibc-index-password-database"></span>
+<span xml:id="glibc-index-_002fetc_002fpasswd"></span>
+
+<para>This section describes how to search and scan the database of registered
+users.  The database itself is kept in the file <filename>/etc/passwd</filename> on
+most systems, but on some systems a special network server gives access
+to it.
+</para>
+<para>Historically, this database included one-way hashes of user
+passphrases (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Passphrase-Storage">Passphrase Storage</a>) as well as public information
+about each user (such as their user ID and full name).  Many of the
+functions and data structures associated with this database, and the
+filename <filename>/etc/passwd</filename> itself, reflect this history.  However,
+the information in this database is available to all users, and it is
+no longer considered safe to make passphrase hashes available to all
+users, so they have been moved to a “shadow” database that can only
+be accessed with special privileges.
+</para>
+
+<ul class="section-toc">
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#User-Data-Structure" accesskey="1">The Data Structure that Describes a User</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Lookup-User" accesskey="2">Looking Up One User</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Scanning-All-Users" accesskey="3">Scanning the List of All Users</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Writing-a-User-Entry" accesskey="4">Writing a User Entry</a></li>
+</ul>
+<hr>
+<div class="subsection" xml:id="glibc-User-Data-Structure">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Lookup-User" accesskey="n" rel="next">Looking Up One User</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#User-Database" accesskey="u" rel="up">User Database</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-The-Data-Structure-that-Describes-a-User"></span><h4 class="subsection">30.13.1 The Data Structure that Describes a User</title>
+
+<para>The functions and data structures for accessing the system user database
+are declared in the header file <filename>pwd.h</filename>.
+<span xml:id="glibc-index-pwd_002eh-1"></span>
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-struct-passwd"><span class="category">Data Type: </span><span><strong>struct passwd</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-struct-passwd" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>The <code>passwd</code> data structure is used to hold information about
+entries in the system user data base.  It has at least the following members:
+</para>
+<dl compact="compact">
+<dt><span><code>char *pw_name</code></span></dt>
+<dd><para>The user’s login name.
+</para>
+</dd>
+<dt><span><code>char *pw_passwd</code></span></dt>
+<dd><para>Historically, this field would hold the one-way hash of the user’s
+passphrase.  Nowadays, it will almost always be the single character
+‘<filename>x</filename>’, indicating that the hash is in the shadow database.
+</para>
+</dd>
+<dt><span><code>uid_t pw_uid</code></span></dt>
+<dd><para>The user ID number.
+</para>
+</dd>
+<dt><span><code>gid_t pw_gid</code></span></dt>
+<dd><para>The user’s default group ID number.
+</para>
+</dd>
+<dt><span><code>char *pw_gecos</code></span></dt>
+<dd><para>A string typically containing the user’s real name, and possibly other
+information such as a phone number.
+</para>
+</dd>
+<dt><span><code>char *pw_dir</code></span></dt>
+<dd><para>The user’s home directory, or initial working directory.  This might be
+a null pointer, in which case the interpretation is system-dependent.
+</para>
+</dd>
+<dt><span><code>char *pw_shell</code></span></dt>
+<dd><para>The user’s default shell, or the initial program run when the user logs in.
+This might be a null pointer, indicating that the system default should
+be used.
+</para></dd>
+</dl>
+</dd></dl>
+
+<hr>
+</div>
+<div class="subsection" xml:id="glibc-Lookup-User">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Scanning-All-Users" accesskey="n" rel="next">Scanning the List of All Users</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#User-Data-Structure" accesskey="p" rel="prev">The Data Structure that Describes a User</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#User-Database" accesskey="u" rel="up">User Database</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Looking-Up-One-User"></span><h4 class="subsection">30.13.2 Looking Up One User</title>
+<span xml:id="glibc-index-converting-user-ID-to-user-name"></span>
+<span xml:id="glibc-index-converting-user-name-to-user-ID"></span>
+
+<para>You can search the system user database for information about a
+specific user using <code>getpwuid</code> or <code>getpwnam</code>.  These
+functions are declared in <filename>pwd.h</filename>.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-getpwuid"><span class="category">Function: </span><span><emphasis>struct passwd *</emphasis> <strong>getpwuid</strong> <emphasis>(uid_t <var>uid</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-getpwuid" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Unsafe race:pwuid locale
+| AS-Unsafe dlopen plugin heap lock
+| AC-Unsafe corrupt lock fd mem
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This function returns a pointer to a statically-allocated structure
+containing information about the user whose user ID is <var>uid</var>.  This
+structure may be overwritten on subsequent calls to <code>getpwuid</code>.
+</para>
+<para>A null pointer value indicates there is no user in the data base with
+user ID <var>uid</var>.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-getpwuid_005fr"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>getpwuid_r</strong> <emphasis>(uid_t <var>uid</var>, struct passwd *<var>result_buf</var>, char *<var>buffer</var>, size_t <var>buflen</var>, struct passwd **<var>result</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-getpwuid_005fr" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe locale
+| AS-Unsafe dlopen plugin heap lock
+| AC-Unsafe corrupt lock fd mem
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+
+
+<para>This function is similar to <code>getpwuid</code> in that it returns
+information about the user whose user ID is <var>uid</var>.  However, it
+fills the user supplied structure pointed to by <var>result_buf</var> with
+the information instead of using a static buffer.  The first
+<var>buflen</var> bytes of the additional buffer pointed to by <var>buffer</var>
+are used to contain additional information, normally strings which are
+pointed to by the elements of the result structure.
+</para>
+<para>If a user with ID <var>uid</var> is found, the pointer returned in
+<var>result</var> points to the record which contains the wanted data (i.e.,
+<var>result</var> contains the value <var>result_buf</var>).  If no user is found
+or if an error occurred, the pointer returned in <var>result</var> is a null
+pointer.  The function returns zero or an error code.  If the buffer
+<var>buffer</var> is too small to contain all the needed information, the
+error code <code>ERANGE</code> is returned and <code>errno</code> is set to
+<code>ERANGE</code>.
+</para></dd></dl>
+
+
+<dl class="def">
+<dt xml:id="glibc-index-getpwnam"><span class="category">Function: </span><span><emphasis>struct passwd *</emphasis> <strong>getpwnam</strong> <emphasis>(const char *<var>name</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-getpwnam" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Unsafe race:pwnam locale
+| AS-Unsafe dlopen plugin heap lock
+| AC-Unsafe corrupt lock fd mem
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This function returns a pointer to a statically-allocated structure
+containing information about the user whose user name is <var>name</var>.
+This structure may be overwritten on subsequent calls to
+<code>getpwnam</code>.
+</para>
+<para>A null pointer return indicates there is no user named <var>name</var>.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-getpwnam_005fr"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>getpwnam_r</strong> <emphasis>(const char *<var>name</var>, struct passwd *<var>result_buf</var>, char *<var>buffer</var>, size_t <var>buflen</var>, struct passwd **<var>result</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-getpwnam_005fr" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe locale
+| AS-Unsafe dlopen plugin heap lock
+| AC-Unsafe corrupt lock fd mem
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+
+<para>This function is similar to <code>getpwnam</code> in that it returns
+information about the user whose user name is <var>name</var>.  However, like
+<code>getpwuid_r</code>, it fills the user supplied buffers in
+<var>result_buf</var> and <var>buffer</var> with the information instead of using
+a static buffer.
+</para>
+<para>The return values are the same as for <code>getpwuid_r</code>.
+</para></dd></dl>
+
+
+<hr>
+</div>
+<div class="subsection" xml:id="glibc-Scanning-All-Users">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Writing-a-User-Entry" accesskey="n" rel="next">Writing a User Entry</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Lookup-User" accesskey="p" rel="prev">Looking Up One User</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#User-Database" accesskey="u" rel="up">User Database</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Scanning-the-List-of-All-Users"></span><h4 class="subsection">30.13.3 Scanning the List of All Users</title>
+<span xml:id="glibc-index-scanning-the-user-list"></span>
+
+<para>This section explains how a program can read the list of all users in
+the system, one user at a time.  The functions described here are
+declared in <filename>pwd.h</filename>.
+</para>
+<para>You can use the <code>fgetpwent</code> function to read user entries from a
+particular file.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-fgetpwent"><span class="category">Function: </span><span><emphasis>struct passwd *</emphasis> <strong>fgetpwent</strong> <emphasis>(FILE *<var>stream</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-fgetpwent" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Unsafe race:fpwent
+| AS-Unsafe corrupt lock
+| AC-Unsafe corrupt lock
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This function reads the next user entry from <var>stream</var> and returns a
+pointer to the entry.  The structure is statically allocated and is
+rewritten on subsequent calls to <code>fgetpwent</code>.  You must copy the
+contents of the structure if you wish to save the information.
+</para>
+<para>The stream must correspond to a file in the same format as the standard
+user database file.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-fgetpwent_005fr"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>fgetpwent_r</strong> <emphasis>(FILE *<var>stream</var>, struct passwd *<var>result_buf</var>, char *<var>buffer</var>, size_t <var>buflen</var>, struct passwd **<var>result</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-fgetpwent_005fr" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Unsafe corrupt
+| AC-Unsafe corrupt lock
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This function is similar to <code>fgetpwent</code> in that it reads the next
+user entry from <var>stream</var>.  But the result is returned in the
+structure pointed to by <var>result_buf</var>.  The
+first <var>buflen</var> bytes of the additional buffer pointed to by
+<var>buffer</var> are used to contain additional information, normally
+strings which are pointed to by the elements of the result structure.
+</para>
+<para>The stream must correspond to a file in the same format as the standard
+user database file.
+</para>
+<para>If the function returns zero <var>result</var> points to the structure with
+the wanted data (normally this is in <var>result_buf</var>).  If errors
+occurred the return value is nonzero and <var>result</var> contains a null
+pointer.
+</para></dd></dl>
+
+<para>The way to scan all the entries in the user database is with
+<code>setpwent</code>, <code>getpwent</code>, and <code>endpwent</code>.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-setpwent"><span class="category">Function: </span><span><emphasis>void</emphasis> <strong>setpwent</strong> <emphasis>(void)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-setpwent" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+
+<para>Preliminary:
+| MT-Unsafe race:pwent locale
+| AS-Unsafe dlopen plugin heap lock
+| AC-Unsafe corrupt lock fd mem
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This function initializes a stream which <code>getpwent</code> and
+<code>getpwent_r</code> use to read the user database.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-getpwent"><span class="category">Function: </span><span><emphasis>struct passwd *</emphasis> <strong>getpwent</strong> <emphasis>(void)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-getpwent" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Unsafe race:pwent race:pwentbuf locale
+| AS-Unsafe dlopen plugin heap lock
+| AC-Unsafe corrupt lock fd mem
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>getpwent</code> function reads the next entry from the stream
+initialized by <code>setpwent</code>.  It returns a pointer to the entry.  The
+structure is statically allocated and is rewritten on subsequent calls
+to <code>getpwent</code>.  You must copy the contents of the structure if you
+wish to save the information.
+</para>
+<para>A null pointer is returned when no more entries are available.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-getpwent_005fr"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>getpwent_r</strong> <emphasis>(struct passwd *<var>result_buf</var>, char *<var>buffer</var>, size_t <var>buflen</var>, struct passwd **<var>result</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-getpwent_005fr" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Unsafe race:pwent locale
+| AS-Unsafe dlopen plugin heap lock
+| AC-Unsafe corrupt lock fd mem
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This function is similar to <code>getpwent</code> in that it returns the next
+entry from the stream initialized by <code>setpwent</code>.  Like
+<code>fgetpwent_r</code>, it uses the user-supplied buffers in
+<var>result_buf</var> and <var>buffer</var> to return the information requested.
+</para>
+<para>The return values are the same as for <code>fgetpwent_r</code>.
+</para>
+</dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-endpwent"><span class="category">Function: </span><span><emphasis>void</emphasis> <strong>endpwent</strong> <emphasis>(void)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-endpwent" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+
+<para>Preliminary:
+| MT-Unsafe race:pwent locale
+| AS-Unsafe dlopen plugin heap lock
+| AC-Unsafe corrupt lock fd mem
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This function closes the internal stream used by <code>getpwent</code> or
+<code>getpwent_r</code>.
+</para></dd></dl>
+
+<hr>
+</div>
+<div class="subsection" xml:id="glibc-Writing-a-User-Entry">
+<div class="header">
+<para>
+Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Scanning-All-Users" accesskey="p" rel="prev">Scanning the List of All Users</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#User-Database" accesskey="u" rel="up">User Database</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Writing-a-User-Entry-1"></span><h4 class="subsection">30.13.4 Writing a User Entry</title>
+
+<dl class="def">
+<dt xml:id="glibc-index-putpwent"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>putpwent</strong> <emphasis>(const struct passwd *<var>p</var>, FILE *<var>stream</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-putpwent" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe locale
+| AS-Unsafe corrupt
+| AC-Unsafe lock corrupt
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This function writes the user entry <code>*<var>p</var></code> to the stream
+<var>stream</var>, in the format used for the standard user database
+file.  The return value is zero on success and nonzero on failure.
+</para>
+<para>This function exists for compatibility with SVID.  We recommend that you
+avoid using it, because it makes sense only on the assumption that the
+<code>struct passwd</code> structure has no members except the standard ones;
+on a system which merges the traditional Unix data base with other
+extended information about users, adding an entry using this function
+would inevitably leave out much of the important information.
+</para>
+<para>The group and user ID fields are left empty if the group or user name
+starts with a - or +.
+</para>
+<para>The function <code>putpwent</code> is declared in <filename>pwd.h</filename>.
+</para></dd></dl>
+
+<hr>
+</div>
+</div>
+<sect xml:id="glibc-Group-Database">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Database-Example" accesskey="n" rel="next">User and Group Database Example</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#User-Database" accesskey="p" rel="prev">User Database</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Users-and-Groups" accesskey="u" rel="up">Users and Groups</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Group-Database-1"></span><h3 class="section">30.14 Group Database</title>
+<span xml:id="glibc-index-group-database"></span>
+<span xml:id="glibc-index-_002fetc_002fgroup"></span>
+
+<para>This section describes how to search and scan the database of
+registered groups.  The database itself is kept in the file
+<filename>/etc/group</filename> on most systems, but on some systems a special network
+service provides access to it.
+</para>
+
+<ul class="section-toc">
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Group-Data-Structure" accesskey="1">The Data Structure for a Group</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Lookup-Group" accesskey="2">Looking Up One Group</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Scanning-All-Groups" accesskey="3">Scanning the List of All Groups</a></li>
+</ul>
+<hr>
+<div class="subsection" xml:id="glibc-Group-Data-Structure">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Lookup-Group" accesskey="n" rel="next">Looking Up One Group</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Group-Database" accesskey="u" rel="up">Group Database</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-The-Data-Structure-for-a-Group"></span><h4 class="subsection">30.14.1 The Data Structure for a Group</title>
+
+<para>The functions and data structures for accessing the system group
+database are declared in the header file <filename>grp.h</filename>.
+<span xml:id="glibc-index-grp_002eh-3"></span>
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-struct-group"><span class="category">Data Type: </span><span><strong>struct group</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-struct-group" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>The <code>group</code> structure is used to hold information about an entry in
+the system group database.  It has at least the following members:
+</para>
+<dl compact="compact">
+<dt><span><code>char *gr_name</code></span></dt>
+<dd><para>The name of the group.
+</para>
+</dd>
+<dt><span><code>gid_t gr_gid</code></span></dt>
+<dd><para>The group ID of the group.
+</para>
+</dd>
+<dt><span><code>char **gr_mem</code></span></dt>
+<dd><para>A vector of pointers to the names of users in the group.  Each user name
+is a null-terminated string, and the vector itself is terminated by a
+null pointer.
+</para></dd>
+</dl>
+</dd></dl>
+
+<hr>
+</div>
+<div class="subsection" xml:id="glibc-Lookup-Group">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Scanning-All-Groups" accesskey="n" rel="next">Scanning the List of All Groups</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Group-Data-Structure" accesskey="p" rel="prev">The Data Structure for a Group</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Group-Database" accesskey="u" rel="up">Group Database</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Looking-Up-One-Group"></span><h4 class="subsection">30.14.2 Looking Up One Group</title>
+<span xml:id="glibc-index-converting-group-name-to-group-ID"></span>
+<span xml:id="glibc-index-converting-group-ID-to-group-name"></span>
+
+<para>You can search the group database for information about a specific
+group using <code>getgrgid</code> or <code>getgrnam</code>.  These functions are
+declared in <filename>grp.h</filename>.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-getgrgid"><span class="category">Function: </span><span><emphasis>struct group *</emphasis> <strong>getgrgid</strong> <emphasis>(gid_t <var>gid</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-getgrgid" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Unsafe race:grgid locale
+| AS-Unsafe dlopen plugin heap lock
+| AC-Unsafe corrupt lock fd mem
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This function returns a pointer to a statically-allocated structure
+containing information about the group whose group ID is <var>gid</var>.
+This structure may be overwritten by subsequent calls to
+<code>getgrgid</code>.
+</para>
+<para>A null pointer indicates there is no group with ID <var>gid</var>.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-getgrgid_005fr"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>getgrgid_r</strong> <emphasis>(gid_t <var>gid</var>, struct group *<var>result_buf</var>, char *<var>buffer</var>, size_t <var>buflen</var>, struct group **<var>result</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-getgrgid_005fr" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe locale
+| AS-Unsafe dlopen plugin heap lock
+| AC-Unsafe corrupt lock fd mem
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This function is similar to <code>getgrgid</code> in that it returns
+information about the group whose group ID is <var>gid</var>.  However, it
+fills the user supplied structure pointed to by <var>result_buf</var> with
+the information instead of using a static buffer.  The first
+<var>buflen</var> bytes of the additional buffer pointed to by <var>buffer</var>
+are used to contain additional information, normally strings which are
+pointed to by the elements of the result structure.
+</para>
+<para>If a group with ID <var>gid</var> is found, the pointer returned in
+<var>result</var> points to the record which contains the wanted data (i.e.,
+<var>result</var> contains the value <var>result_buf</var>).  If no group is found
+or if an error occurred, the pointer returned in <var>result</var> is a null
+pointer.  The function returns zero or an error code.  If the buffer
+<var>buffer</var> is too small to contain all the needed information, the
+error code <code>ERANGE</code> is returned and <code>errno</code> is set to
+<code>ERANGE</code>.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-getgrnam"><span class="category">Function: </span><span><emphasis>struct group *</emphasis> <strong>getgrnam</strong> <emphasis>(const char *<var>name</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-getgrnam" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+
+<para>Preliminary:
+| MT-Unsafe race:grnam locale
+| AS-Unsafe dlopen plugin heap lock
+| AC-Unsafe corrupt lock fd mem
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This function returns a pointer to a statically-allocated structure
+containing information about the group whose group name is <var>name</var>.
+This structure may be overwritten by subsequent calls to
+<code>getgrnam</code>.
+</para>
+<para>A null pointer indicates there is no group named <var>name</var>.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-getgrnam_005fr"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>getgrnam_r</strong> <emphasis>(const char *<var>name</var>, struct group *<var>result_buf</var>, char *<var>buffer</var>, size_t <var>buflen</var>, struct group **<var>result</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-getgrnam_005fr" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe locale
+| AS-Unsafe dlopen plugin heap lock
+| AC-Unsafe corrupt lock fd mem
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This function is similar to <code>getgrnam</code> in that it returns
+information about the group whose group name is <var>name</var>.  Like
+<code>getgrgid_r</code>, it uses the user supplied buffers in
+<var>result_buf</var> and <var>buffer</var>, not a static buffer.
+</para>
+<para>The return values are the same as for <code>getgrgid_r</code>.
+</para></dd></dl>
+
+<hr>
+</div>
+<div class="subsection" xml:id="glibc-Scanning-All-Groups">
+<div class="header">
+<para>
+Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Lookup-Group" accesskey="p" rel="prev">Looking Up One Group</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Group-Database" accesskey="u" rel="up">Group Database</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Scanning-the-List-of-All-Groups"></span><h4 class="subsection">30.14.3 Scanning the List of All Groups</title>
+<span xml:id="glibc-index-scanning-the-group-list"></span>
+
+<para>This section explains how a program can read the list of all groups in
+the system, one group at a time.  The functions described here are
+declared in <filename>grp.h</filename>.
+</para>
+<para>You can use the <code>fgetgrent</code> function to read group entries from a
+particular file.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-fgetgrent"><span class="category">Function: </span><span><emphasis>struct group *</emphasis> <strong>fgetgrent</strong> <emphasis>(FILE *<var>stream</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-fgetgrent" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Unsafe race:fgrent
+| AS-Unsafe corrupt lock
+| AC-Unsafe corrupt lock
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>fgetgrent</code> function reads the next entry from <var>stream</var>.
+It returns a pointer to the entry.  The structure is statically
+allocated and is overwritten on subsequent calls to <code>fgetgrent</code>.  You
+must copy the contents of the structure if you wish to save the
+information.
+</para>
+<para>The stream must correspond to a file in the same format as the standard
+group database file.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-fgetgrent_005fr"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>fgetgrent_r</strong> <emphasis>(FILE *<var>stream</var>, struct group *<var>result_buf</var>, char *<var>buffer</var>, size_t <var>buflen</var>, struct group **<var>result</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-fgetgrent_005fr" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Unsafe corrupt
+| AC-Unsafe corrupt lock
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This function is similar to <code>fgetgrent</code> in that it reads the next
+user entry from <var>stream</var>.  But the result is returned in the
+structure pointed to by <var>result_buf</var>.  The first <var>buflen</var> bytes
+of the additional buffer pointed to by <var>buffer</var> are used to contain
+additional information, normally strings which are pointed to by the
+elements of the result structure.
+</para>
+<para>This stream must correspond to a file in the same format as the standard
+group database file.
+</para>
+<para>If the function returns zero <var>result</var> points to the structure with
+the wanted data (normally this is in <var>result_buf</var>).  If errors
+occurred the return value is non-zero and <var>result</var> contains a null
+pointer.
+</para></dd></dl>
+
+<para>The way to scan all the entries in the group database is with
+<code>setgrent</code>, <code>getgrent</code>, and <code>endgrent</code>.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-setgrent"><span class="category">Function: </span><span><emphasis>void</emphasis> <strong>setgrent</strong> <emphasis>(void)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-setgrent" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+
+<para>Preliminary:
+| MT-Unsafe race:grent locale
+| AS-Unsafe dlopen plugin heap lock
+| AC-Unsafe corrupt lock fd mem
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This function initializes a stream for reading from the group data base.
+You use this stream by calling <code>getgrent</code> or <code>getgrent_r</code>.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-getgrent"><span class="category">Function: </span><span><emphasis>struct group *</emphasis> <strong>getgrent</strong> <emphasis>(void)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-getgrent" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+
+<para>Preliminary:
+| MT-Unsafe race:grent race:grentbuf locale
+| AS-Unsafe dlopen plugin heap lock
+| AC-Unsafe corrupt lock fd mem
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>getgrent</code> function reads the next entry from the stream
+initialized by <code>setgrent</code>.  It returns a pointer to the entry.  The
+structure is statically allocated and is overwritten on subsequent calls
+to <code>getgrent</code>.  You must copy the contents of the structure if you
+wish to save the information.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-getgrent_005fr"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>getgrent_r</strong> <emphasis>(struct group *<var>result_buf</var>, char *<var>buffer</var>, size_t <var>buflen</var>, struct group **<var>result</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-getgrent_005fr" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Unsafe race:grent locale
+| AS-Unsafe dlopen plugin heap lock
+| AC-Unsafe corrupt lock fd mem
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This function is similar to <code>getgrent</code> in that it returns the next
+entry from the stream initialized by <code>setgrent</code>.  Like
+<code>fgetgrent_r</code>, it places the result in user-supplied buffers
+pointed to by <var>result_buf</var> and <var>buffer</var>.
+</para>
+<para>If the function returns zero <var>result</var> contains a pointer to the data
+(normally equal to <var>result_buf</var>).  If errors occurred the return
+value is non-zero and <var>result</var> contains a null pointer.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-endgrent"><span class="category">Function: </span><span><emphasis>void</emphasis> <strong>endgrent</strong> <emphasis>(void)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-endgrent" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+
+<para>Preliminary:
+| MT-Unsafe race:grent locale
+| AS-Unsafe dlopen plugin heap lock
+| AC-Unsafe corrupt lock fd mem
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This function closes the internal stream used by <code>getgrent</code> or
+<code>getgrent_r</code>.
+</para></dd></dl>
+
+<hr>
+</div>
+</div>
+<sect xml:id="glibc-Database-Example">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Netgroup-Database" accesskey="n" rel="next">Netgroup Database</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Group-Database" accesskey="p" rel="prev">Group Database</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Users-and-Groups" accesskey="u" rel="up">Users and Groups</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-User-and-Group-Database-Example"></span><h3 class="section">30.15 User and Group Database Example</title>
+
+<para>Here is an example program showing the use of the system database inquiry
+functions.  The program prints some information about the user running
+the program.
+</para>
+<div class="example">
+<pre class="example">
+#include &lt;grp.h&gt;
+#include &lt;pwd.h&gt;
+#include &lt;sys/types.h&gt;
+#include &lt;unistd.h&gt;
+#include &lt;stdlib.h&gt;
+
+int
+main (void)
+{
+  uid_t me;
+  struct passwd *my_passwd;
+  struct group *my_group;
+  char **members;
+
+  /* <span class="roman">Get information about the user ID.</span> */
+  me = getuid ();
+  my_passwd = getpwuid (me);
+  if (!my_passwd)
+    {
+      printf ("Couldn't find out about user %d.\n", (int) me);
+      exit (EXIT_FAILURE);
+    }
+
+  /* <span class="roman">Print the information.</span> */
+  printf ("I am %s.\n", my_passwd-&gt;pw_gecos);
+  printf ("My login name is %s.\n", my_passwd-&gt;pw_name);
+  printf ("My uid is %d.\n", (int) (my_passwd-&gt;pw_uid));
+  printf ("My home directory is %s.\n", my_passwd-&gt;pw_dir);
+  printf ("My default shell is %s.\n", my_passwd-&gt;pw_shell);
+
+  /* <span class="roman">Get information about the default group ID.</span> */
+  my_group = getgrgid (my_passwd-&gt;pw_gid);
+  if (!my_group)
+    {
+      printf ("Couldn't find out about group %d.\n",
+              (int) my_passwd-&gt;pw_gid);
+      exit (EXIT_FAILURE);
+    }
+
+  /* <span class="roman">Print the information.</span> */
+  printf ("My default group is %s (%d).\n",
+          my_group-&gt;gr_name, (int) (my_passwd-&gt;pw_gid));
+  printf ("The members of this group are:\n");
+  members = my_group-&gt;gr_mem;
+  while (*members)
+    {
+      printf ("  %s\n", *(members));
+      members++;
+    }
+
+  return EXIT_SUCCESS;
+}
+</pre></div>
+
+<para>Here is some output from this program:
+</para>
+<div class="example">
+<pre class="example">I am Throckmorton Snurd.
+My login name is snurd.
+My uid is 31093.
+My home directory is /home/fsg/snurd.
+My default shell is /bin/sh.
+My default group is guest (12).
+The members of this group are:
+  friedman
+  tami
+</pre></div>
+
+<hr>
+</div>
+<sect xml:id="glibc-Netgroup-Database">
+<div class="header">
+<para>
+Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Database-Example" accesskey="p" rel="prev">User and Group Database Example</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Users-and-Groups" accesskey="u" rel="up">Users and Groups</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Netgroup-Database-1"></span><h3 class="section">30.16 Netgroup Database</title>
+
+
+<ul class="section-toc">
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Netgroup-Data" accesskey="1">Netgroup Data</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Lookup-Netgroup" accesskey="2">Looking up one Netgroup</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Netgroup-Membership" accesskey="3">Testing for Netgroup Membership</a></li>
+</ul>
+<hr>
+<div class="subsection" xml:id="glibc-Netgroup-Data">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Lookup-Netgroup" accesskey="n" rel="next">Looking up one Netgroup</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Netgroup-Database" accesskey="u" rel="up">Netgroup Database</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Netgroup-Data-1"></span><h4 class="subsection">30.16.1 Netgroup Data</title>
+
+<span xml:id="glibc-index-Netgroup"></span>
+<para>Sometimes it is useful to group users according to other criteria
+(see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Group-Database">Group Database</a>).  E.g., it is useful to associate a certain
+group of users with a certain machine.  On the other hand grouping of
+host names is not supported so far.
+</para>
+<para>In Sun Microsystems’ SunOS appeared a new kind of database, the netgroup
+database.  It allows grouping hosts, users, and domains freely, giving
+them individual names.  To be more concrete, a netgroup is a list of triples
+consisting of a host name, a user name, and a domain name where any of
+the entries can be a wildcard entry matching all inputs.  A last
+possibility is that names of other netgroups can also be given in the
+list specifying a netgroup.  So one can construct arbitrary hierarchies
+without loops.
+</para>
+<para>Sun’s implementation allows netgroups only for the <code>nis</code> or
+<code>nisplus</code> service, see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Services-in-the-NSS-configuration">Services in the NSS configuration File</a>.  The
+implementation in the GNU C Library has no such restriction.  An entry
+in either of the input services must have the following form:
+</para>
+<div class="example">
+<pre class="example"><var>groupname</var> ( <var>groupname</var> | <code>(</code><var>hostname</var><code>,</code><var>username</var><code>,</code><code>domainname</code><code>)</code> )+
+</pre></div>
+
+<para>Any of the fields in the triple can be empty which means anything
+matches.  While describing the functions we will see that the opposite
+case is useful as well.  I.e., there may be entries which will not
+match any input.  For entries like this, a name consisting of the single
+character <code>-</code> shall be used.
+</para>
+<hr>
+</div>
+<div class="subsection" xml:id="glibc-Lookup-Netgroup">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Netgroup-Membership" accesskey="n" rel="next">Testing for Netgroup Membership</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Netgroup-Data" accesskey="p" rel="prev">Netgroup Data</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Netgroup-Database" accesskey="u" rel="up">Netgroup Database</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Looking-up-one-Netgroup"></span><h4 class="subsection">30.16.2 Looking up one Netgroup</title>
+
+<para>The lookup functions for netgroups are a bit different than all other
+system database handling functions.  Since a single netgroup can contain
+many entries a two-step process is needed.  First a single netgroup is
+selected and then one can iterate over all entries in this netgroup.
+These functions are declared in <filename>netdb.h</filename>.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-setnetgrent"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>setnetgrent</strong> <emphasis>(const char *<var>netgroup</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-setnetgrent" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Unsafe race:netgrent locale
+| AS-Unsafe dlopen plugin heap lock
+| AC-Unsafe corrupt lock fd mem
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>A call to this function initializes the internal state of the library to
+allow following calls of <code>getnetgrent</code> to iterate over all entries
+in the netgroup with name <var>netgroup</var>.
+</para>
+<para>When the call is successful (i.e., when a netgroup with this name exists)
+the return value is <code>1</code>.  When the return value is <code>0</code> no
+netgroup of this name is known or some other error occurred.
+</para></dd></dl>
+
+<para>It is important to remember that there is only one single state for
+iterating the netgroups.  Even if the programmer uses the
+<code>getnetgrent_r</code> function the result is not really reentrant since
+always only one single netgroup at a time can be processed.  If the
+program needs to process more than one netgroup simultaneously she
+must protect this by using external locking.  This problem was
+introduced in the original netgroups implementation in SunOS and since
+we must stay compatible it is not possible to change this.
+</para>
+<para>Some other functions also use the netgroups state.  Currently these are
+the <code>innetgr</code> function and parts of the implementation of the
+<code>compat</code> service part of the NSS implementation.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-getnetgrent"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>getnetgrent</strong> <emphasis>(char **<var>hostp</var>, char **<var>userp</var>, char **<var>domainp</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-getnetgrent" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Unsafe race:netgrent race:netgrentbuf locale
+| AS-Unsafe dlopen plugin heap lock
+| AC-Unsafe corrupt lock fd mem
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This function returns the next unprocessed entry of the currently
+selected netgroup.  The string pointers, in which addresses are passed in
+the arguments <var>hostp</var>, <var>userp</var>, and <var>domainp</var>, will contain
+after a successful call pointers to appropriate strings.  If the string
+in the next entry is empty the pointer has the value <code>NULL</code>.
+The returned string pointers are only valid if none of the netgroup
+related functions are called.
+</para>
+<para>The return value is <code>1</code> if the next entry was successfully read.  A
+value of <code>0</code> means no further entries exist or internal errors occurred.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-getnetgrent_005fr"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>getnetgrent_r</strong> <emphasis>(char **<var>hostp</var>, char **<var>userp</var>, char **<var>domainp</var>, char *<var>buffer</var>, size_t <var>buflen</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-getnetgrent_005fr" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Unsafe race:netgrent locale
+| AS-Unsafe dlopen plugin heap lock
+| AC-Unsafe corrupt lock fd mem
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This function is similar to <code>getnetgrent</code> with only one exception:
+the strings the three string pointers <var>hostp</var>, <var>userp</var>, and
+<var>domainp</var> point to, are placed in the buffer of <var>buflen</var> bytes
+starting at <var>buffer</var>.  This means the returned values are valid
+even after other netgroup related functions are called.
+</para>
+<para>The return value is <code>1</code> if the next entry was successfully read and
+the buffer contains enough room to place the strings in it.  <code>0</code> is
+returned in case no more entries are found, the buffer is too small, or
+internal errors occurred.
+</para>
+<para>This function is a GNU extension.  The original implementation in the
+SunOS libc does not provide this function.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-endnetgrent"><span class="category">Function: </span><span><emphasis>void</emphasis> <strong>endnetgrent</strong> <emphasis>(void)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-endnetgrent" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Unsafe race:netgrent
+| AS-Unsafe dlopen plugin heap lock
+| AC-Unsafe corrupt lock fd mem
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This function frees all buffers which were allocated to process the last
+selected netgroup.  As a result all string pointers returned by calls
+to <code>getnetgrent</code> are invalid afterwards.
+</para></dd></dl>
+
+<hr>
+</div>
+<div class="subsection" xml:id="glibc-Netgroup-Membership">
+<div class="header">
+<para>
+Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Lookup-Netgroup" accesskey="p" rel="prev">Looking up one Netgroup</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Netgroup-Database" accesskey="u" rel="up">Netgroup Database</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Testing-for-Netgroup-Membership"></span><h4 class="subsection">30.16.3 Testing for Netgroup Membership</title>
+
+<para>It is often not necessary to scan the whole netgroup since often the
+only interesting question is whether a given entry is part of the
+selected netgroup.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-innetgr"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>innetgr</strong> <emphasis>(const char *<var>netgroup</var>, const char *<var>host</var>, const char *<var>user</var>, const char *<var>domain</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-innetgr" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Unsafe race:netgrent locale
+| AS-Unsafe dlopen plugin heap lock
+| AC-Unsafe corrupt lock fd mem
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This function tests whether the triple specified by the parameters
+<var>host</var>, <var>user</var>, and <var>domain</var> is part of the netgroup
+<var>netgroup</var>.  Using this function has the advantage that
+</para>
+<ol>
+<li> no other netgroup function can use the global netgroup state since
+internal locking is used and
+</li><li> the function is implemented more efficiently than successive calls
+to the other <code>set</code>/<code>get</code>/<code>endnetgrent</code> functions.
+</li></ol>
+
+<para>Any of the pointers <var>host</var>, <var>user</var>, or <var>domain</var> can be
+<code>NULL</code> which means any value is accepted in this position.  This is
+also true for the name <code>-</code> which should not match any other string
+otherwise.
+</para>
+<para>The return value is <code>1</code> if an entry matching the given triple is
+found in the netgroup.  The return value is <code>0</code> if the netgroup
+itself is not found, the netgroup does not contain the triple or
+internal errors occurred.
+</para></dd></dl>
+
+<hr>
+</div>
+</div>
+</div-->
 </part>

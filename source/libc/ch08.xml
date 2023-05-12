@@ -2,7 +2,1547 @@
 <!-- ********************************************************************
         glibc/ch08.xml,v2.36, GFDL,LGPL, NBB, 2023
      ******************************************************************** -->
-<part xml:id="glibc-Message-Translation">
-  <title>İleti Çevirileri</title>
-  <titleabbrev>Yazılım kullanıcının dilinde nasıl konuşturulur?</titleabbrev>
+<part xml:id="glibc-Message-Translation" userlevel="longtoc">
+ <title>İleti Çevirileri</title>
+ <titleabbrev>Yazılım kullanıcının dilinde nasıl konuşturulur?</titleabbrev>
+ <preliminary>
+  <para>
+   Bir yazılımın kullanıcı arayüzü kullanıcının işini yapmasını kolaylaştıracak şekilde tasarlanmalıdır. Arayüzü oluşturan iletilerin kullanıcının tercih ettiği dilde olması da bu kolaylıklardan biridir.
+  </para>
+  <para>
+   İletilerin farklı dillerde gösterilmesi farklı yollarla gerçekleştirilebilir. Bunlardan biri tüm dilleri ve her iletinin bu dillerdeki çevirilerini yazılıma eklemektir. Bu pek de iyi bir çözüm değildir, çünkü dil kümesini genişletmek gerektiğinde işler zorlaşır (kodun değişmesi gerekir). Kodun kendisi ileti kümeleri arttıkça aşırı büyür.
+  </para>
+  <para>
+   Daha iyi bir çözüm ileti kümelerini her dil için ayrı dosyalarda tutmak, kullanıcının seçimine bağlı olarak yazılımın çalışması esnasında iletileri bu dosyalardan yüklemektir.
+  </para>
+  <para>
+   &glibc; ileti çevirilerini destekleyen iki işlev ailesi içerir. Sorun bu amaca uygun bir arayüzün POSIX standardında resmen tanımlanmamış olmasıdır. <function>catgets</function> ailesi işlevler X/Open standardında tanımlanmış, ancak bu endüstriyel kararlarla oluşturulmuş ve bu bakımdan kabul edilebilir kararlara dayanması gerekmemiştir.
+  </para>
+  <para>
+   Yukarıda kısaca bahsedildiği gibi ileti çevirilerini içeren harici veri dosyaları kullanılarak ileti kataloglarının kolayca genişletilebilmesi sağlanmıştır. Yani, bu dosyalar yazılımdaki her ileti için ilgili olduğu dilde birer çeviri içerir. Bu yapıya göre ileti işleme işlevlerinin görevleri:
+  </para>
+  <simplelist>
+   <member>Uygun çevirileri içeren harici dosyayı bulmak.</member>
+   <member>Veriyi yüklemek ve çevirilerin adreslenebilmesini sağlamak.</member>
+   <member>Belirtilen bir anahtarı çevrilmiş iletiye eşlemek.</member>
+  </simplelist>
+  <para>
+   Son adımın gerçeklenmesi açısından iki yaklaşım farklı davranır. Kalan her şey için tasarım kararları bunun etkisinde verilmiştir.
+  </para>
+ </preliminary>
+ <chapter xml:id="glibc-Message-catalogs-a-la-X-Open">
+  <title>X/Open İleti Kataloglarının İşlenmesi</title>
+  <titleabbrev><code>catgets</code> işlev ailesi.</titleabbrev>
+  <preliminary>
+   <para>
+    <function>catgets</function> işlevleri basit bir şemaya dayanır:
+   </para>
+   <blockquote>
+    <para>
+     Kaynak koddaki her ileti eşsiz bir belirteç kullanılarak çeviriyle ilişkilendirilir. İletinin katalog dosyasından alınmasında sadece bu belirteç kullanılır.
+    </para>
+   </blockquote>
+   <para>
+    Bunun yazılımın geliştiricisi açısından anlamı, yazılımın kodunda ve ileti kataloğunda aynı olan her belirtecin anlamını bilmek zorunda olmaktır.
+   </para>
+   <para>
+    Bir ileti çevrilmeden önce katalog dosyası yüklenmiş olmalıdır. Yazılımın kullanıcısının istenen kataloğu bulması için işleve yardımcı olması gerekir. Bu yazılımcının yapması gereken işlerden değildir.
+   </para>
+   <para>
+    <function>catgets</function> işlevleri ile ilgili veri türleri, sabitler ve işlevler &nl_types.h; başlık dosyasında tanımlanmış ya da bildirilmiştir.
+   </para>
+  </preliminary>
+  <sect1 xml:id="glibc-The-catgets-Functions">
+   <title><code>catgets</code> İşlevleri</title>
+   <titleabbrev><code>catgets</code> işlev ailesi.</titleabbrev>
+   <csynopsis>
+    <indexterm linkend="glibc-fn" xml:id="glibc-fn-catopen"><primary>catopen</primary></indexterm>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-catopen"><primary>ileti çevirileri</primary><secondary>ileti kataloğunun açılması</secondary></indexterm>
+    <csproto type="işlev">
+     <csname><type>nl_catd</type><function>catopen</function></csname>
+     <csparam><ptr>const&#160;char</ptr><parameter>cat_name</parameter></csparam>
+     <csparam><type>int</type><parameter>flag</parameter></csparam>
+    </csproto>
+    <header>&nl_types.h;</header>
+    <conceptlist>
+     <concept>&mtsafe; &env;</concept>
+     <concept>&asunsafe; &heap;</concept>
+     <concept>&acunsafe; &mem;</concept>
+    </conceptlist>
+    <para>
+     <dicterm><english>opaque</english><turkish>geçirimsiz</turkish></dicterm>
+     <code>catopen</code> işlevi <parameter>cat_name</parameter> ile belirtilen ileti dosyalarını bulmaya çalışır ve bulduğunda yükler.  Dönüş değeri kataloğun tanıtıcısı olup geçirimsiz türdedir ve diğer işlev çağrılarında yüklü kataloğu belirtmek için kullanılabilir.
+    </para>
+    <para>
+     İşlev başarısız olursa katalog yüklenmemiş demektir ve dönüş değeri <code>(nl_catd) -1</code>'dir. <varname>errno</varname> genel değişkeni başarısızlığın sebebini belirten hata kodunu içerir. İşlev çağrısının başarılı olması katalogdaki tüm iletilerin çevrilmiş olduğu anlamına gelmez.
+    </para>
+    <para>
+     Katalog dosyasının yeri yazılımın kullanıcısının kararını açıklaması sağlanarak belirlenir.  Kullanılacak dile karar vermek kullanıcıya bırakılır ve kimi zaman başka katalog dosyaları kullanmak yararlı olur. Bunun tamamı kullanıcı tarafından bazı ortam değişkenleri kullanılarak belirtilebilir.
+    </para>
+    <para>
+     İlk sorun ileti kataloglarının bulunduğu yeri bulmaktır. Her yazılımın farklı dosyalar  için kendi yeri olabileceği gibi, katalog dosyaları dillere göre gruplanarak tüm yazılımlar için ortak bir yerde de tutulabilir.
+    </para>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-NLSPATH"><primary>NLSPATH</primary></indexterm>
+     <csproto type="ortam">
+      <csname><function>NLSPATH</function></csname>
+     </csproto>
+     <para>
+      <code>catopen</code> işlevine yazılımın katalog dosyalarını nerede bulacağı kullanıcı tarafından <code>NLSPATH</code> ortam değişkenine yazılarak belirtilebilir. Bu değerin farklı dil ve yereller için kullanılabilir olması gerektiğinden, değer basit bir dizge olamayacaktır. Dizgenin kendine özgü bir biçimi vardır (<function>printf</function>'in biçem dizgesi gibi). Bir örnek:
+     </para>
+     <literallayout class="monospaced">/usr/share/locale/%L/%N:/usr/share/locale/%L/LC_MESSAGES/%N
+</literallayout>
+     <para>
+      Görüleceği üzere, iki nokta imleri ile ayırarak birden fazla dizin belirtilebilir. Biçim dizgesinde dikkati çeken ikinci durum <code>%L</code> ve <code>%N</code> belirteçleridir. <code>catopen</code> işlevi bunların çeşitlerini ve yerlerine neleri yerleştireceğini bilir.
+     </para>
+     <variablelist>
+      <varlistentry>
+       <term><code>%N</code></term>
+       <listitem>
+        <para>
+         Bu biçem elemanı katalog dosyasının isminin yerine geçer. Değeri, <code>catopen</code> işlevine belirtilen <parameter>cat_name</parameter> bağımsız değişkeninin değeridir.
+        </para>
+       </listitem>
+      </varlistentry>
+      <varlistentry>
+       <term><code>%L</code></term>
+       <listitem>
+        <para>
+         Bu biçem elemanı ileti çevirileri için seçili yerelin isminin yerine geçer. Bunun nasıl saptanacağı aşağıda anlatılmıştır.
+        </para>
+       </listitem>
+      </varlistentry>
+      <varlistentry>
+       <term><code>%l</code></term>
+       <listitem>
+        <para>
+         (Küçük L harfi.) Bu biçem elemanı yerel isminin dil elemanının yerine geçer. Seçili yereli betimleyen bu dizgenin şu biçimde olması beklenir:
+        </para>
+        <literallayout class="monospaced"><code><replaceable>dil</replaceable>[_<replaceable>ülke</replaceable>[.<replaceable>karakter-kümesi</replaceable>]]</code>
+</literallayout>
+        <para>
+         Bu biçem elemanı bu dizgenin <replaceable>dil</replaceable> parçasını ifade eder.
+        </para>
+       </listitem>
+      </varlistentry>
+      <varlistentry>
+       <term><code>%t</code></term>
+       <listitem>
+        <para>
+         Bu biçem elemanı yerel isminin <replaceable>ülke</replaceable> elemanının yerine geçer. Yerel isminin sözdizimi yukarda verilmişti.
+        </para>
+       </listitem>
+      </varlistentry>
+      <varlistentry>
+       <term><code>%c</code></term>
+       <listitem>
+        <para>
+         Bu biçem elemanı yerel isminin <replaceable>karakter-kümesi</replaceable> elemanının yerine geçer. Yerel isminin sözdizimi yukarda verilmişti.
+        </para>
+       </listitem>
+      </varlistentry>
+      <varlistentry>
+       <term><code>%%</code></term>
+       <listitem>
+        <para>
+         <code>%</code> karakteri bir önceleme karakteri olarak kullanıldığından kendisini de öncelemesi gerekir. <code>%%</code> belirteci aynen <function>printf</function> işlevindeki gibi çalışır.
+        </para>
+       </listitem>
+      </varlistentry>
+     </variablelist>
+     <para>
+      <code>NLSPATH</code> kullanılarak, kullanılacak farklı dillerin ileti kataloglarının aranacağı dizinler isteğe bağlı olarak belirlenebilir. Eğer <code>NLSPATH</code> ortam değişkeni ortamda mevcut değilse, öntanımlı değeri:
+     </para>
+     <literallayout class="monospaced"><code><replaceable>önek</replaceable>/share/locale/%L/%N:<replaceable>önek</replaceable>/share/locale/%L/LC_MESSAGES/%N</code>
+</literallayout>
+     <para>
+      Burada <replaceable>önek</replaceable>, &glibc; derlenirken <filename>configure</filename> betiğine <option>--prefix</option> seçeneğinde belirtilen dizindir (bu dizin çoğu zaman ya <filename>/usr</filename> ya da boş dizgedir).
+     </para>
+    </csynopsis>
+    <para>
+     Sorun artık ne kullanılacağına karar vermektir. Değer, yukarıda bahsedilen biçem elemanlarının nelerle ikame edileceğini belirler. Herşeyden önce, ileti kataloğunun ismi dosya yolu ile birlikte belirtilebilir (yani dosya ismi eğik çizgi imleri içerir). Bu durumda <varname>NLSPATH</varname> ortam değişkeni kullanılmaz. Katalog yazılımda belirtildiği gibi mevcut olmalıdır; şüphesiz, bu çalışma dizinine görelidir. Bu istenen bir durum değildir ve katalog isimleri bu yöntemle yazılmamalıdır. Bununla beraber, <function>catgets</function> arayüzünü kullanan platformlar bakımından bu davranış taşınabilir olmayacaktır.
+    </para>
+    <para>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-NL_CAT_LOCALE"><primary>NL_CAT_LOCALE</primary></indexterm>
+     Aksi takdirde, <link linkend="glibc-Standard-Environment">standart ortamdaki</link> ortam değişkenlerinin değerlerine bakılır. Hangi değişkenlere bakılacağına <code>catopen</code> işlevinin <parameter>flag</parameter> bağımsız değişkenine bakarak karar verilir. Eğer bu değer <code>NL_CAT_LOCALE</code> (&nl_types.h; dosyasında tanımlıdır) ise, <code>catopen</code> işlevi <varname>LC_MESSAGES</varname> kategorisi için seçili yerelin ismini kullanır.
+    </para>
+    <para>
+     Eğer <parameter>flag</parameter> sıfırsa <varname>LANG</varname> ortam değişkenine bakılır. Bu davranış, yerel kavramının POSIX yerelleri seviyesine henüz ulaşmadığı erken dönemlerden kalmadır.
+    </para>
+    <para>
+     Ortam değişkeninin içerdiği yerel ismi yukarıda açıklandığı gibi
+    </para>
+    <literallayout class="monospaced"><code><replaceable>dil</replaceable>[_<replaceable>ülke</replaceable>[.<replaceable>karakter-kümesi</replaceable>]]</code>
+</literallayout>
+    <para>
+     biçiminde olmalıdır. Hiç ortam değişkeni bulunamazsa, çevirilerin kullanılmayacağı anlamına gelen <command>&quot;C&quot;</command> yereli kullanılır.
+    </para>
+    <para>
+     Bir hata oluştuğunda <varname>errno</varname> genel değişkenine şunlar atanabilir:
+    </para>
+    <variablelist>
+     <varlistentry>
+      <term><code>EBADF</code></term>
+      <listitem>
+       <para>Katalog mevcut değil.</para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><code>ENOMSG</code></term>
+      <listitem>
+       <para>
+        <parameter>set</parameter>/<parameter>message</parameter> çifti ileti kataloğundaki mevcut bir elemana ait değil.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+    <para>
+     Kimi zaman hatalara karşı sınama yapmak faydalı olduğu halde yazılımlar normalde herhangi bir sınamadan kaçınacaktır. Bir çevirinin yokluğu özgün ileti varsa sorun olmaz, çevrilmemiş ileti basılır. Bu durumu kullanıcı ya olduğu gibi kabul eder ya da iletinin neden çevrilmediğini araştırır.
+    </para>
+   </csynopsis>
+   <para>
+    O an seçili yerelin <function>setlocale</function> işlevine yapılan bir çağrıya bağlı olmadığı unutulmamalıdır. <function>catopen</function> işlevi bu değerleri ortam değişkenlerinden doğrudan kendisi okur.
+   </para>
+   <csynopsis>
+    <indexterm linkend="glibc-fn" xml:id="glibc-fn-catgets"><primary>catgets</primary></indexterm>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-catgets"><primary>ileti çevirileri</primary><secondary>ileti kataloğunun yüklenmesi</secondary></indexterm>
+    <csproto type="işlev">
+     <csname><ptr>char</ptr><function>catgets</function></csname>
+     <csparam><type>nl_catd</type><parameter>catalog_desc</parameter></csparam>
+     <csparam><type>int</type><parameter>set</parameter></csparam>
+     <csparam><type>int</type><parameter>message</parameter></csparam>
+     <csparam><ptr>const&#160;char</ptr><parameter>string</parameter></csparam>
+    </csproto>
+    <header>&nl_types.h;</header>
+    <conceptlist>
+     <concept>&mtsafe;</concept>
+     <concept>&assafe;</concept>
+     <concept>&acsafe;</concept>
+    </conceptlist>
+    <para>
+     <code>catgets</code> işlevi önceki bir <function>catopen</function> çağrısı ile açılmış ileti kataloğuna erişmekte kullanılır. <parameter>catalog_desc</parameter> bağımsız değişkeni önceki bir <function>catopen</function> çağrısının dönüş değeri olmalıdır.
+    </para>
+    <para>
+     Sonraki iki bağımsız değişken, <parameter>set</parameter> ve <parameter>message</parameter>, ileti kataloğu dosyalarının iç düzeni ile ilgilidir. Bu aşağıda ayrıntılı olarak açıklanmıştır. Şimdilik, kataloğun her biri numaralanmış çeşitli <parameter>set</parameter> ve <parameter>message</parameter> demetlerinden oluştuğunu bilmek yeterli olacaktır. Ne <parameter>set</parameter> numarasının ne de <parameter>message</parameter> numarasının bir önemi vardır. Keyfi olarak seçilmiş olabilirler. Fakat her iletinin (başka biriyle aynı olmadıkça) kendine özel eşsiz bir <parameter>set</parameter>/<parameter>message</parameter> çifti ve ileti numarası olmalıdır.
+    </para>
+    <para>
+     Kullanıcı tarafından seçilen dil için ileti kataloğunun bulunacağı garanti olmadığından son bağımsız değişken olan <parameter>string</parameter> ile bu duruma bir çözüm getirilmiştir. Eğer ileti ile eşleşen bir dizge bulunamazsa <parameter>string</parameter> döndürülür.  Bunun yazılımcı açısından anlamı:
+    </para>
+    <simplelist>
+     <member>
+      <parameter>string</parameter> bağımsız değişkeni kabul edilebilir bir metin içermelidir (bu ayrıca umulan dizge dönmediğinde bu duruma dair bir ipucu elde edilmesini sağlayabilmelidir).
+     </member>
+     <member>
+      Tüm <parameter>string</parameter> bağımsız değişkenleri aynı dilde yazılmış olmalıdır.
+     </member>
+    </simplelist>
+    <para>
+     İşlevin dönüş değeri her durumda geçerli bir dizgedir. Ya bir ileti kataloğundan çeviridir ya da <parameter>string</parameter> bağımsız değişkeni ile aynıdır. Dolayısıyla, bir çevirinin gerçekten var olup olmadığına karar veren kod parçası şöyle görünmelidir:
+    </para>
+    <example>
+     <screen>{
+  char *trans = catgets (desc, set, msg, input_string);
+  if (trans == input_string)
+    {
+      /* Birşeyler yanlış gitmiş.  */
+    }
+}
+</screen>
+    </example>
+   </csynopsis>
+   <para>
+    Destekleyici bir işlevsellik olmadıkça <function>catgets</function> işlevlerini kullanarak  yazılım geliştirmek biraz tatsız olur. Her <parameter>set</parameter>/<parameter>message</parameter> çiftinin eşsiz olması gerektiğinden yazılımcı kodu yazarken aynı zamanda iletilerin listesini de tutmalı ve aynı proje üzerinde çalışan yazılımcılar arasında eşgüdüm sağlanmış olmalıdır. Bunun nasıl biraz daha esnetilebileceği <xref linkend="glibc-Common-Usage"/> bölümünde açıklanacaktır.
+   </para>
+   <csynopsis>
+    <indexterm linkend="glibc-fn" xml:id="glibc-fn-catclose"><primary>catclose</primary></indexterm>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-catclose"><primary>ileti çevirileri</primary><secondary>ileti kataloğunun kapatılması</secondary></indexterm>
+    <csproto type="işlev">
+     <csname><type>int</type><function>catclose</function></csname>
+     <csparam><type>nl_catd</type><parameter>catalog_desc</parameter></csparam>
+    </csproto>
+    <header>&nl_types.h;</header>
+    <conceptlist>
+     <concept>&mtsafe;</concept>
+     <concept>&asunsafe; &heap;</concept>
+     <concept>&acunsafe; &corrupt; &mem;</concept>
+    </conceptlist>
+    <para>
+     <code>catclose</code> işlevi önceki bir <function>catopen</function> çağrısı ile açılmış bir ileti kataloğu ile ilgili özkaynakları serbest bırakmakta kullanılır. Eğer özkaynaklar başarıyla serbest bırakılmışsa işlev <code>0</code> ile aksi takdirde <code>-1</code> ile döner ve <varname>errno</varname> değişkenine hata durumu atanır.  Eğer <parameter>catalog_desc</parameter> ile belirtilen katalog tanıtıcı geçersizse, <varname>errno</varname> değişkenine <varname>EBADF</varname> atanır.
+    </para>
+   </csynopsis>
+  </sect1>
+  <sect1 xml:id="glibc-The-message-catalog-files">
+   <title>İleti Kataloğu Dosyalarının Biçimi</title>
+   <para>
+    Bir yazılımın tüm iletilerinin çevrilmesinin kabul edilebilir tek yolu, iletileri bir ileti kataloğu dosyasında toplamak ve bunu bir çevirmenin çevirmesini sağlamaktır. Yani, belli bir çeviri ile <parameter>set</parameter>/<parameter>message</parameter> çiftini ilişkilendiren girdilerden oluşan bir dosya olmalıdır. Bu dosyanın biçimi X/Open standardında şöyle belirlenmiştir:
+   </para>
+   <itemizedlist>
+    <listitem>
+     <para>
+      Boş satırlar ve sadece boşluk karakterleri içeren satırlar yoksayılır.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      Satırın başında bir <code>$</code> karakterinden sonra boşluk geldiğinde satırın kalanının bir açıklama içerdiği varsayılır ve bu satırlar da yoksayılır.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      Satır <code>$set</code> ile başlıyorsa bunu bir boşluk karakteri ile bir bağımsız değişken izlemelidir. Bu bağımsız değişken şunlardan biri olabilir:
+     </para>
+     <simplelist>
+      <member>
+       Bir sayı.  Bu sayının değeri altındaki iletiler bir küme oluşturur.
+      </member>
+      <member>
+       Abecesayısal karakterlerle alt çizgi karakterinden oluşabilen bir belirteç. Bu durumda ileti kümesinin numarası özdevinimli olarak atanır. Bu değer o kümeye kadar belirtilenlerden büyük bir sayı olmalıdır.
+      </member>
+     </simplelist>
+     <para>
+      Simgesel isimlerin nasıl kullanıldığı <xref linkend="glibc-Common-Usage"/> bölümünde açıklanmıştır.
+     </para>
+     <para>
+      Bir simge ismi birden fazla varsa bu bir hatadır. Bir kümenin içerdiği tüm iletiler bu numara altında toplanır.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      Satır <code>$delset</code> ile başlıyorsa bunu bir boşluk karakteri ile bir bağımsız değişken izlemelidir. Bu bağımsız değişken şunlardan biri olabilir:
+     </para>
+     <simplelist>
+      <member>
+       Bir sayı.  Bu sayının değeri hangi <code>set</code>'in silineceğini belirler.
+      </member>
+      <member>
+       Abecesayısal karakterlerle alt çizgi karakterinden oluşabilen bir belirteç. Bu simgesel belirteç evvelce tanımlanmış bir küme ismi olmalıdır. İsim bilinmiyorsa bu bir hatadır.
+      </member>
+     </simplelist>
+     <para>
+      Her iki durumda da belirtilen kümelerdeki tüm iletiler silinir ve çıktıda görünmez. Fakat bu küme daha sonra tekrar <code>$set</code> komutu ile seçilerek içerdiği iletilerin tekrar çıktılanması sağlanabilir.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      Satır <code>$quote</code> ile başlıyorsa bunu bir boşluk karakteri ile girdi dosyasında tırnak karakteri olarak kullanılacak karakter izlemelidir. Satır boşluktan farklı bir karakter ile bitmiyorsa dosyada tırnaklar iptal edilir.
+     </para>
+     <para>
+      Öntanımlı olarak bir tırnak karakteri yoktur. Bu kipte dizgeler öncelenmemiş ilk satır sonu karakterinde biter. Eğer bir <code>$quote</code> belirtimi varsa satır sonu karakterlerinin öncelenmesi gerekmez. Bu durumda dizge öncelenmemiş ilk tırnak karakterinde biter.
+     </para>
+     <para>
+      Bu özelliğin çok kullanılan bir kullanımı tırnak karakteri olarak <code>&quot;</code> belirtmektir.  Dizge içinde bir <code>&quot;</code> karakteri kullanmak gerekirse <code>\&quot;</code>  şeklinde tırnak imi ters eğik çizgi ile öncelenmelidir.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      Bunların dışında satırlar bir sayı veya abecesayısal bir sözcük (alt çizgi dahil) ile başlayabilir. İlk boşluk karakterinden hemen sonra ileti dizgesi gelir. Satırın başındaki sözcük ya da sayı iletinin numarasını ifade eder.
+     </para>
+     <para>
+      Eğer satır bir sayı ile başlıyorsa bu açıkça iletinin numarasıdır. İleti kümesi içinde aynı numaralı ileti birden fazla varsa bu bir hatadır.
+     </para>
+     <para>
+      Eğer satır bir sözcük ile başlıyorsa ileti numarası özdevinimli olarak atanır. Değeri iletiyi içeren kümedeki en büyük numaralı iletinin numararasının bir fazlasıdır. Bir ileti kümesi içinde aynı sözcük birden fazla ileti için kullanılmışsa bu bir hatadır. Ama aynı sözcük başka bir küme içinde kullanılabilir. Simgesel belirteçlerin nasıl kullanıldığı <xref linkend="glibc-Common-Usage"/> bölümünde anlatılmıştır.  Belirteç ile ilgili bir sınırlama vardır: Belirteç <code>Set</code> olmamalıdır.  Bunun sebebi ilerde açıklanacaktır.
+     </para>
+     <para>
+      İleti metni öncelenmiş karakterler içerebilir. Bunlar &isoc; dilinde tanınan karakterlerdir (<code>\n</code>, <code>\t</code>, <code>\v</code>, <code>\b</code>, <code>\r</code>, <code>\f</code>, <code>\\</code> ve <code>\</code><replaceable>nnn</replaceable>, burada <replaceable>nnn</replaceable> karakterin sekizlik kodudur).
+     </para>
+    </listitem>
+   </itemizedlist>
+   <important>
+    <para>
+     <parameter>set</parameter>/<parameter>message</parameter> için sayılar yerine belirteçlerin belirtilebilmesi bir GNU oluşumudur. X/Open standardına sıkı sıkıya bağlı sistemlerde bu özellik yoktur. Bir ileti kataloğu dosyası örneği:
+    </para>
+    <screen> 1|  $ Bu bir açıklamadır.
+ 2|  $quote &quot;
+ 3|
+ 4|  $set SetOne
+ 5|  1 Numarası 1 olan ileti.
+ 6|  two &quot;   Kimliği \&quot;two\&quot; olan ileti, buna 2 değeri atanacaktır&quot;
+ 7|
+ 8|  $set SetTwo
+ 9|  $ Önceki Set'in numarası 1 oldu, bununki 2 olacaktır.
+10|  4000 &quot;Numaralar keyfidir, 1'den başlamaları gerekmez.&quot;
+</screen>
+    <para>
+     Bu küçük örnekte görünenler:
+    </para>
+    <simplelist>
+     <member>
+      1. ve 9. satır <code>$</code> işaretinden sonra bir boşluk içerdiğinden birer açıklamadır.
+     </member>
+     <member>
+      Tırnak karakteri olarak <code>&quot;</code> atanmıştır.  Aksi takdirde ileti tırnak içine alınamayacağından <code>two</code> kimlikli iletinin başındaki boşluklar gösterilemeyecekti.
+     </member>
+     <member>
+      Numaralı iletilerle isimli iletilerin karışık kullanılması bir sorun oluşturmaz, numaralama özdevinimli olarak yapılacaktır.
+     </member>
+    </simplelist>
+   </important>
+   <para>
+    Bu dosya biçimi çok kolay görünmesine rağmen çalışan bir yazılımda kullanmak için yeterli değildir. <function>catopen</function> işlevi dosyayı çözümlemeli ve sözdizimsel hataları en iyi şekilde elde etmelidir. Bu öyle kolay değildir ve işlem oldukça yavaştır. Bu bakımdan <function>catgets</function> işlevleri verinin daha bütünleşik ve kullanıma hazır bir dosya biçiminde olmasını umar. Bunun için ayrıntıları sonraki bölümde açıklanacak olan özel bir uygulama, <uri xl:href="man1-gencat"/> vardır.
+   </para>
+   <para>
+    Bu biçimdeki dosyalar insanlarca okunabilir değildir. Yazılımlar tarafından kolayca kullanılabilmeleri için ikilik biçimdedir. Fakat biçimin bayt sıralaması dosyaların bulunduğu sisteme bağlıdır.
+   </para>
+   <para>
+    İkilik dosyanın biçimi hakkında ayrıntıya girilmeyecektir, çünkü bu dosyalar daima <uri xl:href="man1-gencat"/> uygulaması tarafından oluşturulur. &glibc;nin kaynak kodunda <uri xl:href="man1-gencat"/> uygulamasının kaynak kodu da bulunduğundan, dosyanın biçimi hakkında fikir edinmek için kaynak kodu incelenebilir.
+   </para>
+  </sect1>
+  <sect1 xml:id="glibc-The-gencat-program">
+   <title>İleti Kataloğu Dosyalarının Üretilmesi</title>
+   <titleabbrev>İşlevler tarafından kullanılmak üzere ileti katalogları nasıl üretilir?</titleabbrev>
+   <para>
+    <indexterm linkend="glibc-cp"><primary><code>gencat</code> uygulaması</primary></indexterm>
+    <uri xl:href="man1-gencat"/> uygulaması X/Open standardında belirtilmiştir ve GNU gerçeklemesi bu belirtime uygundur. Fazladan, <function>catgets</function>  işlevlerinin daha makul şekilde çalışmasına yardımcı olacak ek oluşumlarla gerçeklenmiştir.
+   </para>
+   <para>
+    <uri xl:href="man1-gencat"/> iki yolla çalıştırılabilir:
+   </para>
+   <literallayout class="monospaced">`<command>gencat </command><code>[<replaceable>seçenek</replaceable> …] [<replaceable>çıktı-dosyası</replaceable> [<replaceable>girdi-dosyası</replaceable> …]]</code>`
+</literallayout>
+   <para>
+    Bu, X/Open standardında tanımlı arayüzdür. <replaceable>çıktı-dosyası</replaceable> verilmezse girdi standart girdiden okunur. Çok sayıda girdi dosyası belirtilebilir. <replaceable>çıktı-dosyası</replaceable> verilmemişse çıktılama için standart çıktı kullanılır. Başka yazılımlardan kullanmak için ikinci bir arayüz sağlanmıştır.
+   </para>
+   <literallayout class="monospaced">`<command>gencat </command><code>[<replaceable>seçenek</replaceable> …]</code> <option>-o</option> <replaceable>çıktı-dosyası</replaceable> <code>[<replaceable>girdi-dosyası</replaceable> …]</code>`
+</literallayout>
+   <para>
+    <option>-o</option> seçeneği çıktı dosyasını belirtmek için kullanılır ve belirtilen diğer bütün dosyalar girdi dosyası olarak kullanılır.
+   </para>
+   <para>
+    Bunlardan başka, <replaceable>girdi-dosyası</replaceable> olarak <filename>-</filename> veya <filename>/dev/stdin</filename> belirtilirse, girdi standart girdiden alınır. Aynı şekilde, <replaceable>çıktı-dosyası</replaceable> olarak <filename>-</filename> veya <filename>/dev/stdout</filename> belirtilirse, çıktılama standart çıktıya yapılır. <filename>-</filename> kullanımı X/Open standardında bir dosya ismi olarak ele alındığı halde, aygıt ismi olarak kullanımı bir GNU oluşumudur.
+   </para>
+   <para>
+    <uri xl:href="man1-gencat"/> uygulaması tüm girdi dosyalarını birbirine ekleyerek çalışır ve bu iletileri çıktı dosyasındakilerle bir araya getirir. Bu işlem çıktı dosyasında zaten mevcut olan set/message demetlerinin silinip, olmayanlar çıktıya eklenerek yapılır.  Bu işlem, eski eşleşen set/message demetleri kaldırılarak yapıldığından çıktı dosyasının tamamen boşalmasına bile sebep olabilir. Çıktılama standart çıktıya yapılıyosa bu bir araya getirme işlemi yapılmaz.
+   </para>
+   <para>
+    Burada <uri xl:href="man1-gencat"/> uygulamasının tanıdığı seçeneklere yer verilmiştir. X/Open standardında uygulama için herhangi bir seçenek tanımlanmadığından bu seçeneklerin hepsi GNU oluşumudur.
+   </para>
+   <glosslist>
+    <glossentry>
+     <glossterm>
+      <glossterm><option>-V</option></glossterm>
+      <glossterm><option>--version</option></glossterm>
+     </glossterm>
+     <glossdef>
+      <para>
+       Sürüm bilgilerini basar ve çıkar.
+      </para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <glossterm><option>-h</option></glossterm>
+      <glossterm><option>--help</option></glossterm>
+     </glossterm>
+     <glossdef>
+      <para>
+       Bir kullanım iletisi basar ve çıkar.
+      </para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm><option>--new</option></glossterm>
+     <glossdef>
+      <para>
+       Girdi dosyalarındaki yeni iletileri çıktı dosyasındaki eski iletilerle birleştirmez. Çıktı dosyasının eski içeriği silinir.
+      </para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <glossterm><option>-H </option><replaceable>isim</replaceable></glossterm>
+      <glossterm><option>--header=</option><replaceable>isim</replaceable></glossterm>
+     </glossterm>
+     <glossdef>
+      <para>
+       Bu seçenekle, yazılımda kullanmak için girdi dosyalarındaki set/message kümelerindeki sembolik isimler çıktılanır. Bu isimlerin nasıl kullanıldığı sonraki bölümde açıklanmıştır. Seçenekte <replaceable>isim</replaceable> girdisi ile çıktı dosyasının ismi belirtilir. Çıktı dosyasında isimleri numaralarla eşleyen <code>#define</code> yönergeleri bulunur.
+      </para>
+      <para>
+       Üretilen dosyanın sadece girdi dosyalarındaki simgeleri içereceğine dikkat edilmelidir. Eğer, çıktı dosyası önceki çıktı dosyasındakilerle karıştırılarak elde ediliyorsa, hem girdi dosyalarında hem de eski çıktı dosyasında bulunan iletilerin simgeleri üretilen başlık dosyasında bulunmayacaktır.
+      </para>
+     </glossdef>
+    </glossentry>
+   </glosslist>
+  </sect1>
+  <sect1 xml:id="glibc-Common-Usage" userlevel="notoc">
+   <?dbhtml stop-chunking?>
+   <title><code>catgets</code> Kullanımı</title>
+   <titleabbrev><code>catgets</code> arayüzü nasıl kullanılır?</titleabbrev>
+   <para>
+    <function>catgets</function> işlevleri iki farklı yolla kullanılabilir: X/Open belirtiminden hiç sapmadan ve GNU oluşumlarını kullanarak. Önce ilk yöntemin nasıl kullanıldığına bakılacak, böylece ikinci yöntemin yani GNU oluşumlarının getirileri daha iyi anlaşılabilecektir.
+   </para>
+   <sect2><title>Simgesel İsimler Kullanılmadan</title>
+    <para>
+     X/Open biçimi katalog dosyalarında sembolik isimlere izin vermediğinden bu seferlik sadece numaralarla çalışılacak. Yazılım geliştirmeye başlanırken çevrilebilir dizgelerin hepsi şu biçimde bir kodla değiştirilmelidir:
+    </para>
+    <literallayout class="monospaced">catgets (catdesc, set, message, "string")
+</literallayout>
+    <para>
+     <parameter>catdesc</parameter> bağımsız değişkeni, yazılım başında normalde bir kere yapılan bir <function>catopen</function> çağrısından alınır. "<parameter>string</parameter>" çevrilecek dizgedir. <parameter>set</parameter>/<parameter>message</parameter> numaraları ile sorunlar başlar.
+    </para>
+    <para>
+     Büyükçe bir yazılımda aynı anda çok sayıda geliştirici çalışırsa numara ayırma işleminin eşgüdümü önem kazanır. Aynı numara demetiyle ile iki farklı dizge indislenemediğinden, birbirinin aynı dizgeler ile birbirinin aynı çeviriler için numaraların yeniden kullanılması tercih edilir. (Bir dilde aynı olan dizgeler başka bir dilde bağlama bağlı olarak farklı dizgeler olabilir; bir de bu var...)
+    </para>
+    <para>
+     Numara ayırma işlemi yazılımın farklı parçalarında farklı set/message numaraları kullanılarak biraz olsun rahatlatılabilir. Böylece eşgüdümlenecek geliştirici sayısı düşürülebilir. Yine de ayırma ile ilgili listeler tutulabilir ve hataların giderilmesi kolaylaştırılabilir. Bu hatalar derleyici ya da <function>catgets</function> işlevleri tarafından saptanamaz. Sadece yazılımın kullanıcısı yanlış iletinin basıldığını görür. En kötü durumda, yanlış olarak tanımlanamayan iletiler çok sinir bozucu olabilir. Doğrularla yanlışlar birbirine karışır ve bu bir felaketle sonuçlanır.
+    </para>
+   </sect2>
+   <sect2><title>Simgesel İsimler Kullanılarak</title>
+    <para>
+     Önceki bölümde bahsedilen sorunlardan şu sonuçlar çıkarılabilir:
+    </para>
+    <orderedlist>
+     <listitem>
+      <para>
+       Numaralar bir kere ayrıldıktan sonra onları değiştirmek gerekirse bu çok zor olur.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       Numaralar dizgenin içeriği hakkında hiçbir fikir vermediğinden karışıklıklar olabilir.
+      </para>
+     </listitem>
+    </orderedlist>
+    <para>
+     Sürekli olarak simgesel isimleri kullanarak ve dizge içeriğini simgesel bir isimle eşleyen bir yöntem sağlanarak bu iki sorundan kurtulmak mümkündür. Bu yöntemin yazılımcıya maliyeti yazılımı geliştirirken bir yandan da ileti kataloğunun yazılmasıdır.
+    </para>
+    <para>
+     Yazılım derlenmeden önce simgesel isimlerin numaralarla eşleştirilmesi gerektiğinden bunun böyle olması gerekir. Önceki bölümde <uri xl:href="man1-gencat"/> uygulaması tanıtılırken isimlerle eşleşmeleri içeren bir başlık dosyasının nasıl üretileceğinden bahsedilmişti. Örneğin, önceki örnekteki katalog dosyasının isminin <filename>ex.msg</filename> olduğu kabul edilerek,
+    </para>
+    <screen>gencat -H ex.h -o ex.cat ex.msg
+</screen>
+    <para>
+     komutuyla şu içeriğe sahip bir başlık dosyası üretilir:
+    </para>
+    <screen>#define SetTwoSet 0x2   /* ex.msg:8 */
+
+#define SetOneSet 0x1   /* ex.msg:4 */
+#define SetOnetwo 0x2   /* ex.msg:6 */
+</screen>
+    <para>
+     Görüldüğü gibi, kaynak dosyasında verilen simgelerden eşsiz belirteçler üretmek için yeni simgeler elde edilmiş ve bunlar numaralara atanmıştır. Kaynak dosyayı okuyarak ve kuralları bilerek başlık dosyasının içeriğini tahmin etmek mümkündür ama bu gerekli değildir. <uri xl:href="man1-gencat"/> uygulaması herşeyi dikkatlice yapabilir. Bütün geliştiriciler, projenin kaynak dosyalarının bağımlılık listesine üretilen başlık dosyasını koymalı ve girdi dosyaları değiştiğinde başlığı üretecek kuralları eklemelidir.
+    </para>
+    <para>
+     Simgelerden makroların elde edilmesinden de biraz bahsetmek gerekir. Her simge iki parçadan oluşur: İleti kümesinin ismi artı iletinin ismi ya da özel bir dizge olarak <code>Set</code>. Yani, <code>SetOnetwo</code> ile ileti katalog dosyasındaki <code>SetOne</code> ileti kümesinin <code>two</code> isimli iletisine erişilir.
+    </para>
+    <para>
+     Diğer isimler ileti kümelerinin isimlerini belirtir. Özel <code>Set</code> dizgesi ileti belirtecinin yerine kullanılır.
+    </para>
+    <para>
+     Koddaki <code>SetOne</code> kümesinin ikinci dizgesi C kodunda kullanılmak istenirse şöyle yapılırdı:
+    </para>
+    <screen>catgets (catdesc, SetOneSet, SetOnetwo,
+        "   Kimliği \"two\" olan ileti, buna 2 değeri atanacaktır")
+</screen>
+    <para>
+     İşlevin bu yöntemle yazılması C kaynak kodunda herhangi bir değişiklik gerekmeksizin ileti numarasını hatta <code>Set</code> numarasını değiştirmek mümkün olacaktır. (Dizgenin metni normalde aynı görünür; bu sadece bu örnek içindir.)
+    </para>
+   </sect2>
+   <sect2><title>Bunlar Yazılım Geliştirirken Nasıl Kullanılır?</title>
+    <para>
+     Simgesel sürüm numaraları ile çalışma yöntemini göstermek için burada küçük bir örneğe yer verilmiştir. Çok karmaşık ve ünlü selamlama yazılımını geliştirmek için koda şöyle başlanabilirdi:
+    </para>
+    <example>
+     <screen>#include &lt;stdio.h&gt;
+int
+main (void)
+{
+  printf ("Hello, world!\n");
+  return 0;
+}
+</screen>
+     <para>
+      İletinin kullanıcının diline çevrilebilir duruma getirilmesi:
+     </para>
+     <screen>#include &lt;nl_types.h&gt;
+#include &lt;stdio.h&gt;
+#include "msgnrs.h"
+int
+main (void)
+{
+  nl_catd catdesc = catopen ("hello.cat", NL_CAT_LOCALE);
+  printf (catgets (catdesc, SetMainSet, SetMainHello,
+                   "Hello, world!\n"));
+  catclose (catdesc);
+  return 0;
+}
+</screen>
+     <para>
+      Burada, katalog nesnesinin nasıl açıldığı ve diğer işlev çağrılarında kullanılacak tanımlayıcının nasıl döndürüldüğü görülmektedir. Buradaki işlevler makul davranacağından işlevlerde herhangi bir başarısızlık sınaması yapılması gerekmiyor. Basitçe tek bir çeviri döndürülecek.
+     </para>
+     <para>
+      Burada <code>SetMainSet</code> ve <code>SetMainHello</code> sabitleri belirsiz kaldı. Bunlar iletiyi tanımlayan simgesel isimlerdir. Katalog dosyasındaki bilgiyle eşleşen gerçek tanımları elde etmek için ileti kataloğu oluşturulup <uri xl:href="man1-gencat"/> uygulaması ile işlenmesi gerekir.
+     </para>
+<screen>$ Turkish messages for the famous greeting program.
+$quote &quot;
+
+$set Main
+Hello &quot;Merhaba Dünyalı!\n&quot;
+</screen>
+     <para>
+      Yazılım artık derlenebilir. Katalog kaynak dosyasının isminin <filename>hello.msg</filename> ve yazılım kaynak dosyası isminin <filename>hello.c</filename> olduğu varsayılıyor:
+     </para>
+     <screen>$ <command>gencat -H msgnrs.h -o hello.cat hello.msg</command>
+$ <command>cat msgnrs.h</command>
+#define MainSet 0x1     /* hello.msg:4 */
+#define MainHello 0x1   /* hello.msg:5 */
+$ <command>gcc -o hello hello.c -I.</command>
+$ <command>cp hello.cat /usr/share/locale/tr/LC_MESSAGES</command>
+$ <command>echo $LC_ALL</command>
+tr
+$ <command>./hello</command>
+Merhaba Dünyalı!
+$
+</screen>
+     <para>
+      <uri xl:href="man1-gencat"/> komutuyla ileti kataloğunun ikilik biçimi ile birlikte <filename>msgnrs.h</filename> başlık dosyası da elde edildi. İlk olarak <filename>hello.c</filename> derlendi, sonra da <filename>hello.cat</filename> <function>catopen</function> işlevinin bulabileceği yere yerleştirildi. Katalog dosyasının doğru yere yerleştirip yerleştirilmediği <varname>LC_ALL</varname> ortam değişkeninin değerine bakılarak sınanabileceği unutulmamalıdır.
+     </para>
+    </example>
+   </sect2>
+  </sect1>
+ </chapter>
+ <chapter xml:id="glibc-The-Uniforum-approach">
+  <title>İleti Çevirilerinde Uniforum Yaklaşımı</title>
+  <titleabbrev><code>gettext</code> işlev ailesi.</titleabbrev>
+  <para>
+   Sun Microsystems, Uniforum grubunda ileti çevirilerine farklı bir yaklaşımı standarlaştırmaya çalıştı. Gerçek bir standart hiç tanımlanmamıştı, ama bu arayüz hala Sun'ın işletim sistemlerinde kullanılıyordu. Açık kaynak kod geliştirenlere bu yaklaşım daha iyi bir geliştirme ortamı sağladığı için GNU projelerinde kullanılmaya başlandı ve &glibc; dışında buna destek olmak için GNU <filename>gettext</filename> paketi oluşturuldu.
+  </para>
+  <para>
+   GNU <filename>gettext</filename>'teki <code>libintl</code> kodu, &glibc;ndeki kod ile aynıdır. Bu bakımdan GNU <filename>gettext</filename> kılavuzundaki bilgiler ayrıca buradaki işlevsellik için de geçerlidir. Bu kısımda kütüphane işlevleri ayrıntılı olarak açıklanacak, ama çok sayıdaki yardımcı uygulama bu kılavuzda açıklanmayacaktır. Ayrıntılar için <link xl:href="https://www.gnu.org/software/gettext/manual/gettext.html#Top">GNU <filename>gettext</filename> kılavuzuna</link> bakılması önerilir. Burada bunların sadece kısa bir tanıtımı yapılacaktır.
+  </para>
+  <para>
+   <function>catgets</function> işlevleri çoğu sistemde öntanımlı olarak bulunmasına rağmen <filename>gettext</filename> arayüzü de en azından onun kadar taşınabilirdir. İşlevlerin bulunmadığı yerlerde GNU <filename>gettext</filename> paketi kullanılabilir.
+  </para>
+  <sect1 xml:id="glibc-Message-catalogs-with-gettext">
+   <title><code>gettext</code> İleti Katalogları</title>
+   <titleabbrev><code>gettext</code> İşlev Ailesi</titleabbrev>
+   <preliminary>
+    <para>
+     İleti çevirilerine <filename>gettext</filename> yaklaşımını oluşturan sözdizimsel alt yapı, temel işlevsellik bakımından eşdeğeri olan <function>catgets</function> işlevlerinden farklıdır.
+    </para>
+   </preliminary>
+   <sect2 xml:id="glibc-Translation-with-gettext">
+    <title><code>gettext</code> ile Çeviri</title>
+    <titleabbrev>Bir iletiyi çevirmek için ne yapılmalı?</titleabbrev>
+    <para>
+     <filename>gettext</filename> işlevlerinin çok basit bir arayüzü vardır. En temel işlev bağımsız değişken olarak sadece çevrilecek dizgeyi alır ve onun çevirisi ile döner. Bu, özgün dizgenin sadece hata durumunda kullanıldığı, normalde ek bir anahtar gerektiren <function>catgets</function> yaklaşımından en temel farktır.
+    </para>
+    <para>
+     Çevrilecek dizgenin tek bağımsız değişken olması şüphesiz dizgenin kendisinin bir anahtar olduğu anlamına gelir. Bundan dolayı ileti kataloglarının hem özgün dizgeyi hem de çeviriyi içermesi gerekir. <function>gettext</function> işlevinin görevi bağımsız değişken olarak verilen dizgeyi ileti kataloğundaki dizgelerle karşılaştırıp o dizgeye ait çeviriyi döndürmektir. Şüphesiz bu işlem en iyilenmiştir, dolayısıyla bu işlem <function>catgets</function>'deki gibi bir  anahtarla erişim sağlamaktan daha pahalıya malolmaz.
+    </para>
+    <para>
+     <function>gettext</function> yaklaşımının getirileri olduğu gibi götürüleri de vardır. Bu konuda daha fazla ayrıntı için <link xl:href="https://www.gnu.org/software/gettext/manual/gettext.html#Top">GNU <filename>gettext</filename> kılavuzuna</link> bakılmalıdır.
+    </para>
+    <para>
+     <function>gettext</function> ile ilgili tüm tanım ve bildirimler &libintl.h; başlık dosyasında bulunabilir. Bu işlevlerin C kütüphanesinin bir parçası olmayan sistemlerde <filename>libintl.a</filename> isimli ayrı bir kütüphane olarak (ya da paylaşımlı bir kütüphane olarak) bulunabilir.
+    </para>
+    <csynopsis>
+     <indexterm linkend="glibc-fn" xml:id="glibc-fn-gettext"><primary>gettext</primary></indexterm>
+     <csproto type="işlev">
+      <csname><ptr>char</ptr><function>gettext</function></csname>
+      <csparam><ptr>const&#160;char</ptr><parameter>msgid</parameter></csparam>
+     </csproto>
+     <header>&libintl.h;</header>
+     <conceptlist>
+      <concept>&mtsafe; &env;</concept>
+      <concept>&asunsafe; &corrupt; &heap; &lock; &dlopen;</concept>
+      <concept>&acunsafe; &corrupt; &lock; &fd; &mem;</concept>
+     </conceptlist>
+     <para>
+      <code>gettext</code> işlevi o an seçili olan ileti kataloglarında <parameter>msgid</parameter> ile belirtilen dizgeye eşdeğer çeviriyi arar. Eğer böyle bir dizge varsa onunla döner. Aksi takdirde, <parameter>msgid</parameter> ile belirtilen dizgeyi döndürür.
+     </para>
+     <para>
+      Dönüş değeri <type>char *</type> türünde olduğundan dönen dizgenin değiştirilmemesi gerektiğine dikkat edilmelidir. Bu bozuk türdeki sonuçlar işlevin geçmişinden kaynaklanır ve işlevin kullandığı yöntemi yansıtmaz.
+     </para>
+     <para>
+      Dikkat edilirse, yukarıda ileti katalogLARı (çoğul) denildi. Bu, bu işlevlerin GNU gerçeklemesinin bir özelliğidir ve ileti kataloglarının seçim yöntemlerindan bahsederken bundan daha ayrıntılı bahsedilecektir (bkz. <xref linkend="glibc-Locating-gettext-catalog"/>).
+     </para>
+     <para>
+      <code>gettext</code> işlevi <varname>errno</varname> genel değişkeninin değerini değiştirmez. Şöyle bir kodu yazabilmek için bu gereklidir:
+     </para>
+     <screen>printf (gettext ("Operation failed: %m\n"));
+</screen>
+     <para>
+      Burada <varname>errno</varname> değeri, <code>%m</code> biçem belirtimiyle işlenerek <function>printf</function> işlevinde kullanılmıştır. <code>gettext</code> işlevi bu değeri değiştirmiş olsaydı, (<function>printf</function> işlevinden önce çağrılacağından) yanlış ileti alınırdı.
+     </para>
+     <para>
+      Bu durumda, bir ileti kataloğunun mevcut olup olmadığını saptamanın bir yolu yoktur. Normalde katalogların bulunmasını sağlamak kullanıcının görevidir. Yazılımın geliştirildiği dili konuşan bir kullanıcı için iletinin herhangi bir çeviriye ihtiyacı olmadığından, yazılım bir ileti kataloğunun ne zaman gerçekten gerekli olduğunu tahmin edemez.
+     </para>
+    </csynopsis>
+    <para>
+     İleti kataloğuna erişmekte kullanılan diğer iki işlev öntanımlı olmayan bir ileti kataloğunun seçilmesine yardımcı olur. Eğer yazılım birbirinden bağımsız olarak geliştirilmiş parçalardan oluşuyorsa, her parçanın kendi ileti kataloğu olabilir ve bunlar aynı anda kullanılabilir. C kütüphanesinin kendisi buna iyi bir örnektir: Dahili olarak <function>gettext</function> işlevlerini kullanır, ancak o anda seçili olan öntanımlı ileti kataloğuna bağlı olmaması gerektiğinden, anlamı belirsiz tüm bilgileri belirtmesi gerekir.
+    </para>
+    <csynopsis>
+     <indexterm linkend="glibc-fn" xml:id="glibc-fn-dgettext"><primary>dgettext</primary></indexterm>
+     <csproto type="işlev">
+      <csname><ptr>char</ptr><function>dgettext</function></csname>
+      <csparam><ptr>const&#160;char</ptr><parameter>domainname</parameter></csparam>
+      <csparam><ptr>const&#160;char</ptr><parameter>msgid</parameter></csparam>
+     </csproto>
+     <header>&libintl.h;</header>
+     <conceptlist>
+      <concept>&mtsafe; &env;</concept>
+      <concept>&asunsafe; &corrupt; &heap; &lock; &dlopen;</concept>
+      <concept>&acunsafe; &corrupt; &lock; &fd; &mem;</concept>
+     </conceptlist>
+     <para>
+      <code>dgettext</code> işlevi <function>gettext</function> işlevi gibi davranır.  Farklı olarak ilk bağımsız değişkeninde çevirinin aranacağı ileti kataloğu belirtilir. Eğer <parameter>domainname</parameter> ile boş gösterici belirtilmişse, katalog olarak öntanımlı katalog kullanıldığından <command>dgettext</command> işlevi tamamen <function>gettext</function> işlevi gibi davranır.
+     </para>
+     <para>
+      <function>gettext</function> işlevinde olduğu gibi geçmişten gelen bir özellik olarak dönüş türü <type>char *</type> olduğundan dönen dizgenin asla değiştirilmemesi gerekir.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-fn" xml:id="glibc-fn-dcgettext"><primary>dcgettext</primary></indexterm>
+     <csproto type="işlev">
+      <csname><ptr>char</ptr><function>dcgettext</function></csname>
+      <csparam><ptr>const&#160;char</ptr><parameter>domainname</parameter></csparam>
+      <csparam><ptr>const&#160;char</ptr><parameter>msgid</parameter></csparam>
+      <csparam><type>int</type><parameter>category</parameter></csparam>
+     </csproto>
+     <header>&libintl.h;</header>
+     <conceptlist>
+      <concept>&mtsafe; &env;</concept>
+      <concept>&asunsafe; &corrupt; &heap; &lock; &dlopen;</concept>
+      <concept>&acunsafe; &corrupt; &lock; &fd; &mem;</concept>
+     </conceptlist>
+     <para>
+      <code>dcgettext</code> işlevi <function>dgettext</function> işlevinin bağımsız değişkenlerine ek olarak üçüncü bir bağımsız değişken alır. Bu bağımsız değişken <parameter>category</parameter> bağımsız değişkenidir ve ileti kataloğunun yerelini belirtmek için kullanılır. Yani, yerel kategorisi ve katalog ismi birlikte, kullanılacak kataloğun yerini tespit eder (aşağıya bakınız).
+     </para>
+     <para>
+      <function>dgettext</function> işlevi <code>dcgettext</code> işlevi kullanılarak şöyle ifade edilebilir:
+     </para>
+     <screen>dgettext (domain, string)</screen>
+     <para>yerine</para>
+     <screen>dcgettext (domain, string, LC_MESSAGES)</screen>
+     <para>yazılırsa sonuç aynı olur.</para>
+     <para>
+      Bu, üçüncü bağımsız değişken için umulan değerin hangisi olduğunu da gösterir. &locale.h; başlık dosyasında bulunan yerel sınıflarından biri kullanılabilir. Normalde kullanılabilecek değerler <varname>LC_CTYPE</varname>, <varname>LC_COLLATE</varname>, <varname>LC_MESSAGES</varname>, <varname>LC_MONETARY</varname>, <varname>LC_NUMERIC</varname> ve <varname>LC_TIME</varname> olup, bunların arasında <varname>LC_ALL</varname> makrosunun bulunmadığına dikkat edilmelidir. Bu makro ile ortam değişkenlerinin değeri arasında bir ilişki yoktur.
+     </para>
+     <para>
+      <code>dcgettext</code> işlevi, <function>gettext</function> işlevlerine sahip diğer sistemlerle uyumluluk adına gerçeklenmiştir. Aslında <parameter>category</parameter> bağımsız değişkeninde <varname>LC_MESSAGES</varname> dışında bir değeri kullanmayı gerektiren bir durum yoktur. Bunun dışında bir seçim sadece sinir bozucu olabilir.
+     </para>
+     <para>
+      <function>gettext</function> işlevinde olduğu gibi geçmişten gelen bir özellik olarak dönüş türü <type>char *</type> olduğundan dönen dizgenin asla değiştirilmemesi gerekir.
+     </para>
+    </csynopsis>
+    <para>
+     Yukarıdaki üç işlevi bir yazılımda kullanırken sıklıkla karşılaşılan durum <parameter>msgid</parameter> bağımsız değişkeninin  bir dizge sabiti olmasıdır. Yani bu duruma göre bir en iyileme yapmak gerekir. Bunun hakkında biraz düşününce, yeni bir ileti kataloğunun yüklenmesi mümkün olmadıkça bir iletinin çevirisinin değiştirilemeyeceği şeklinde gerçekleşmesi gerekir. Bu en iyileme <function>gettext</function>, <function>dgettext</function> ve <function>dcgettext</function> işlevleri tarafından gerçeklenmiştir.
+    </para>
+   </sect2>
+   <sect2 xml:id="glibc-Locating-gettext-catalog">
+    <title><code>gettext</code> Kataloğunun Yeri</title>
+    <titleabbrev>Hangi kataloğun kullanılacağı nasıl saptanır?</titleabbrev>
+    <para>
+     Belirtilen bir iletinin çevirisini elde eden işlevler olağanüstü basit bir arayüze sahiptir. Fakat yazılımın kullanıcısına istediği çeviriyi seçme fırsatı vermek ve yazılımcıya da katalog dosyalarının aranacağı yerler bakımından biraz hakimiyet sağlamak gerekir. Tüm bunları denetim altına alacak kod oldukça karmaşıktır ama kullanımı kolaydır.
+    </para>
+    <para>
+     <function>catgets</function> işlevleri tarafından da uygulanan iki temel görevin yerine getirilmesi gerekir:
+    </para>
+    <orderedlist>
+     <listitem>
+      <para>
+       İleti kataloglarının yeri. Hepsi aynı pakete karşılık gelen farklı dillerde bir miktar dosya vardır. Genellikle, bunlar dosya sistemi üzerinde belli bir dizin altında bulunurlar.
+      </para>
+      <para>
+       Kurulmuş çok sayıda keyfi paket olabilir ve bunlar dosyalarını bulmak için farklı kuralları izleyebilir.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       Kullanıcının isteklerine uyarlanmış çeviri dosyalarının aranması paket tarafından belirtilen konuma göreli olmalıdır. Yani, kullanıcı paketi seçerek her dil ile ilgili dosyayı konumlayabilmelidir.
+      </para>
+     </listitem>
+    </orderedlist>
+    <para>
+     Bu, <function>gettext</function> belirtimi tarafından gerek duyulan işlevsellik olduğu kadar <function>catgets</function> işlevlerinin de yapabildiği bir şeydir. Ancak, çözümlenmesi gereken bazı sorunlar vardır:
+    </para>
+    <itemizedlist>
+     <listitem>
+      <para>
+       Kullanılacak dil farklı yollarla belirtilebilir. Bunun için genel bir standart kabul edilmiş değildir ve kullanıcı yazılımdan ne anlatmak istediğini anlamasını bekler. Örneğin, Almanca çeviriyi seçmek için kullanıcı <code>de</code>, <code>german</code> ya da <code>deutsch</code> yazabilir ve yazılımın daima buna bir tepki vermesini bekler.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       Kimi zaman kullanıcının belirtimi çok ayrıntılı olabilir. Eğer kullanıcı kendini, Almanya'da, Almanca konuşan ve ISO 8859-1 karakter kodlamasını kullanan biri olarak tarif etmek için <code>de_DE.ISO-8859-1</code> belirtimini kullanırsa bu belirtimle tam olarak eşleşen bir ileti kataloğu bulamayacaktır. Ama <code>de</code> ile eşleşen bir katalog olabilir. Ayrıca, makinede kullanılan karakter kümesi daima ISO 8859-1 ise, ileti kataloğunun bunu kullanmaması için bir sebep yoktur. (Buna <firstterm>ileti kalıtımı</firstterm> adı verilir.)
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       Eğer istenen dilde bir katalog yoksa, son çare yazılımcının dili olmamalıdır. Kullanıcının iletileri daha iyi anlayacağı başka diller olabilir ve bunları öncelik sırasıyla belirtebilmesi gerekir.
+      </para>
+     </listitem>
+    </itemizedlist>
+    <para>
+     Yapılandırma eylemleri iki parçaya ayrılmaktadır: Biri yazılımcı tarafından uygulanan, diğeri kullanıcı tarafından uygulanan. Kullanıcının eylemlerine temel teşkil edeceğinden burada önce yazılımcının kullanabileceği işlevlerden bahsedilecektir
+    </para>
+    <para>
+     Önceki bölümde açıklanan işlevlerde iletilerin bir <firstterm>alan adı</firstterm>na göre seçilebildiğini görmüştük. Bu, ayrı bir alan kullanan her yazılım parçası için eşsiz olması gereken basit bir dizgedir. Bu isim sayesinde aynı anda çok sayıda keyfi alana sahip bir yazılım kullanmak mümkün olur. Örneğin, C kütüphanesini kullanan bir yazılım <code>foo</code> alan adını kullanırken, &glibc;nin kendisi <code>libc</code> alan adını kullanır. Burada önemli olan aynı anda sadece bir alanın etkin olduğudur. Bu aşağıdaki işlevle denetlenir.
+    </para>
+    <csynopsis>
+     <indexterm linkend="glibc-fn" xml:id="glibc-fn-textdomain"><primary>textdomain</primary></indexterm>
+     <csproto type="işlev">
+      <csname><ptr>char</ptr><function>textdomain</function></csname>
+      <csparam><ptr>const&#160;char</ptr><parameter>domainname</parameter></csparam>
+     </csproto>
+     <header>&libintl.h;</header>
+     <conceptlist>
+      <concept>&mtsafe;</concept>
+      <concept>&asunsafe; &lock; &heap;</concept>
+      <concept>&acunsafe; &lock; &mem;</concept>
+     </conceptlist>
+     <para>
+      <code>textdomain</code> işlevi ileride <function>gettext</function> çağrılarında öntanımlı alan olarak kullanılacak <parameter>domainname</parameter> alanını etkinleştirir. <function>dgettext</function> ve <function>dcgettext</function> çağrılarında <parameter>domainname</parameter> bağımsız değişkeni ile boş gösterici belirtilmedikçe bu alanın etkin olmayacağı unutulmamalıdır.
+     </para>
+     <para>
+      İlk <code>textdomain</code> çağrısından önceki öntanımlı alan adı <varname>messages</varname>'dir.  Bu, <function>gettext</function> arayüzünün belirtiminde belirtilen isimdir. Herhangi bir başka isimden çok daha iyidir. Sorunlarla karşılaşmak istenmiyorsa, hiçbir yazılım bu ismi kullanmamalıdır.
+     </para>
+     <para>
+      İşlev etkinleştirilen öntanımlı alan adı ile döner. Eğer işlev dönüş değeri için yer ayıramamışsa <varname>NULL</varname> döndürür ve <varname>errno</varname> genel değişkenine <varname>ENOMEM</varname> değerini atar. İşlevin dönüş türü <type>char *</type> olduğundan dönen dizge değiştirilmemelidir.  Dönüş değeri için yer ayırma işlemi işlev tarafından dahili olarak yapılır.
+     </para>
+     <para>
+      Eğer <parameter>domainname</parameter> boş gösterici ise hiçbir alan adı etkinleştirilmez. Sadece geçerli öntanımlı alan adı döner.
+     </para>
+     <para>
+      Eğer <parameter>domainname</parameter> ile boş dizge belirtilmişse, öntanımlı alan adı ilk değer olan <varname>messages</varname> yapılır. <varname>messages</varname> alanının asla kullanılmaması gerektiğinden dönüş değeri bu değerle sorgulanabilir.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-fn" xml:id="glibc-fn-bindtextdomain"><primary>bindtextdomain</primary></indexterm>
+     <csproto type="işlev">
+      <csname><ptr>char</ptr><function>bindtextdomain</function></csname>
+      <csparam><ptr>const&#160;char</ptr><parameter>domainname</parameter></csparam>
+      <csparam><ptr>const&#160;char</ptr><parameter>dirname</parameter></csparam>
+     </csproto>
+     <header>&libintl.h;</header>
+     <conceptlist>
+      <concept>&mtsafe;</concept>
+      <concept>&asunsafe; &heap;</concept>
+      <concept>&acunsafe; &mem;</concept>
+     </conceptlist>
+     <para>
+      <code>bindtextdomain</code> işlevi farklı diller için <parameter>domainname</parameter> alanının ileti kataloglarını içeren dizini belirtmekte kullanılır. Doğru olması bakımından, bu dizinin dizin hiyerarşisi içinde olması beklenir. Aşağıda buna daha ayrıntılı değinilmiştir.
+     </para>
+     <para>
+      Yazılımla gelen çevirilerin <filename>/foo/bar</filename> gibi bir dizin hiyerarşisine yerleştirilmiş olması yazılımcı açısından önemlidir. Yazılım bundan sonra bu dizinle bir <code>bindtextdomain</code>  çağrısı yaparak alanı bağlar. Böylece katalogların bulunması kesin olarak sağlanır. Düzgün çalışan bir yazılım kullanıcının bir ortam değişkeni belirtmesine ihtiyaç duymaz.
+     </para>
+     <para>
+      Evvelce bağlanan alanların üzerine yazılmaması için farklı <parameter>domainname</parameter> bağımsız değişkenleri gerekliyse, <code>bindtextdomain</code> çağrısı defalarca yapılabilir.
+     </para>
+     <para>
+      Yazılım bir <function>chdir</function> çağrısı ile çalışma dizinini değiştirdiği sırada <code>bindtextdomain</code> çağrısının yapılabilmesi için <parameter>dirname</parameter> bağımsız değişkeninin mutlak bir dosya yolu olması önem kazanır. Aksi takdirde bağımsız değişkende belirtilen dizin bu sırada değişebilir.
+     </para>
+     <para>
+      <parameter>dirname</parameter> bağımsız değişkeni boş gösterci ise, <code>bindtextdomain</code> <parameter>domainname</parameter> alanı için o an seçili dizin ile döner.
+     </para>
+     <para>
+      <code>bindtextdomain</code> işlevi normalde seçilen dizinin ismini içeren  dizgeye gösterici ile döner. Dizge işlev tarafından dahili olarak ayrıldığından yazılımcı bu dizgenin içeriğini değiştirmemelidir. Eğer sistem <code>bindtextdomain</code> çalışırken bir bellek dökümü (core dosyası) çıktılarsa, işlev  <varname>NULL</varname> ile döner ve <varname>errno</varname> genel değişkenine ilgili hata durumu atanır.
+     </para>
+    </csynopsis>
+   </sect2>
+   <sect2 xml:id="glibc-Advanced-gettext-functions">
+    <title>Gelişkin <code>gettext</code> İşlevleri</title>
+    <titleabbrev>Daha karmaşık durumlar için ek işlevler.</titleabbrev>
+    <para>
+     Şimdiye kadar bahsedilen <function>gettext</function> işlevleriyle ilgili tüm mevcut yaklaşımlarda (ve <function>catgets</function> işlevlerinin de tamamında) tamamen göz ardı edilmiş gerçek dünyaya özgü bir sorun vardır. Burada çoğul biçimlerin nasıl elde edildiğinden bahsedilecektir.
+    </para>
+    <para>
+     Kimsenin uluslararasılaştırma ile fazla ilgilenmediği zamanlarda (hatta, sonrasında da) Unix kaynak koduna baktığınızda şuna benzer kodlar görürdünüz:
+    </para>
+    <screen>printf ("%d file%s deleted", n, n == 1 ? "" : "s");
+</screen>
+    <para>
+     Kodu uluslararsılaştırmaya çalışan kişlerden gelen ilk tepkilerden sonra ya böyle kodlamalardan vazgeçildi ya da şöyle dizgeler kullanılmaya başlandı:
+    </para>
+    <screen>if (n == 1)
+  printf ("%d file deleted", n);
+else
+  printf ("%d files deleted", n);
+</screen>
+    <para>
+     Ancak bu da soruna çözüm olmadı. Miktarlı nesne isimlerine sadece `s' gibi tek bir ek alan dillere çözüm olurken, tamamına bir çözüm sağlayamadı. Çünkü çoğul biçimlerin elde edilmesi her dil ailesinde farklıydı. Bunların arasında (hatta dil ailesindeki diller içinde bile) farklı olabilen iki şey vardır:
+    </para>
+    <itemizedlist>
+     <listitem>
+      <para>
+       Çoğul biçimlerin kurgulanışı farklıdır. Bu bazı düzensizlikler içeren dillerle ilgili bir sorundur. Örneğin, Almanca'da bu çok belirgindir. İngilizce ve Almanca aynı dil ailesine (Germen) mensup oldukları halde çoğul isim biçiminin (`s' ekleme) kurgulanışında farklılıklar vardır.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       Çoğul biçimlerin sayısı farklıdır. Bir tekil, bir de çoğul biçim bulunan Romen ve Germen dillerine aşina olanlar için bu biraz şaşırtıcıdır.
+      </para>
+      <para>
+       Ancak, diğer dil ailelerine bir biçimden çok sayıda biçime kadar değişik biçimler sözkonusudur. Bu konuda daha ayrıntılı bilgi ayrı bir bölümde verilmiştir.
+      </para>
+     </listitem>
+    </itemizedlist>
+    <para>
+     Bunun sonucu olarak, uygulama yazarları kodlarında bu sorunu çözümlemekle uğraşmak istemez. Bu sadece kendi dillerinde yerelleştirme yapanların sorunu gibi görünse de <function>gettext</function>'in genişletilmiş arayüzü buna bir çözüm içerir.
+    </para>
+    <para>
+     Bu ek işlevler bir anahtar dizge yerine iki anahtar dizge ve bir sayısal bağımsız değişken alır. Sayısal bağımsız değişkeni ve ilk dizgeyi bir anahtar olarak kullanarak, gerçeklenim, çevirmen tarafından belirlenen doğru çoğul biçim kurallarını seçer. Normal <function>gettext</function> davranışına benzer şekilde, bir ileti kataloğu bulunamadığı zaman bu iki dizge dönüş değerini oluştururlar. Germen dili kuralları gereğince, ilk dizgenin tekil biçimde, ikinci dizgenin çoğul biçimde olduğu varsayılır.
+    </para>
+    <para>
+     Bunun sonucu olarak, dil katalogları olmayan yazılımlar iletileri Germen dili kullanılıyormuş gibi basar. Bu bir sınırlama olarak görülebilir ancak, &glibc; (keza GNU <function>gettext</function>) GNU paketinin bir parçası olarak yazılmıştır ve GNU projelerinin kodlama standartları yazılımın İngilizce yazılmasını gerektirdiğinden, kaçınılmaz olarak bu böyle olacaktır.
+    </para>
+    <csynopsis>
+     <indexterm linkend="glibc-fn" xml:id="glibc-fn-ngettext"><primary>ngettext</primary></indexterm>
+     <csproto type="işlev">
+      <csname><ptr>char</ptr><function>ngettext</function></csname>
+      <csparam><ptr>const&#160;char</ptr><parameter>msgid1</parameter></csparam>
+      <csparam><ptr>const&#160;char</ptr><parameter>msgid2</parameter></csparam>
+      <csparam><type>unsigned&#160;long&#160;int</type><parameter>n</parameter></csparam>
+     </csproto>
+     <header>&libintl.h;</header>
+     <conceptlist>
+      <concept>&mtsafe; &env;</concept>
+      <concept>&asunsafe; &corrupt; &heap; &lock; &dlopen;</concept>
+      <concept>&acunsafe; &corrupt; &lock; &fd; &mem;</concept>
+     </conceptlist>
+     <para>
+      <code>ngettext</code> işlevi ileti kataloğunun bulunması bakımından <function>gettext</function> işlevi gibidir. Ancak, iki ek bağımsız değişken alır. <parameter>msgid1</parameter> ile belirtilen dizge tekil biçimli ileti üretir. Ayrıca katalogdaki iletiyi aramak için anahtar olarak kullanılır. <parameter>msgid2</parameter> ile belirtilen dizge ise çoğul biçimli girdi/girdiler üretir. <parameter>n</parameter> bağımsız değişkeni çoğul biçimlerin sayısını belirler. Bir ileti kataloğu bulunamamışsa, işlev, <code>n == 1</code> ise <parameter>msgid1</parameter> ile, aksi takdirde <parameter>msgid2</parameter> ile döner.
+     </para>
+     <example><title>Kullanım örneği</title>
+      <screen>printf (ngettext ("%d file removed", "%d files removed", n), n);
+</screen>
+      <para>
+       <parameter>n</parameter> değerinin <function>printf</function> işlevinde de kullanıldığına dikkat edilmelidir. Sadece <code>ngettext</code> işlevinin bağımsız değişkeni olması yeterli değildir.
+      </para>
+     </example>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-fn" xml:id="glibc-fn-dngettext"><primary>dngettext</primary></indexterm>
+     <csproto type="işlev">
+      <csname><ptr>char</ptr><function>dngettext</function></csname>
+      <csparam><ptr>const&#160;char</ptr><parameter>domain</parameter></csparam>
+      <csparam><ptr>const&#160;char</ptr><parameter>msgid1</parameter></csparam>
+      <csparam><ptr>const&#160;char</ptr><parameter>msgid2</parameter></csparam>
+      <csparam><type>unsigned&#160;long&#160;int</type><parameter>n</parameter></csparam>
+     </csproto>
+     <header>&libintl.h;</header>
+     <conceptlist>
+      <concept>&mtsafe; &env;</concept>
+      <concept>&asunsafe; &corrupt; &heap; &lock; &dlopen;</concept>
+      <concept>&acunsafe; &corrupt; &lock; &fd; &mem;</concept>
+     </conceptlist>
+     <para>
+      <code>dngettext</code> işlevi ileti kataloğunun seçilmesi bakımından <function>gettext</function> işlevi gibidir. Ancak, iki ek bağımsız değişken alır. Tekil/Çoğul dizgelerin elde edilmesi bakımından da <function>ngettext</function> işlevi gibidir.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-fn" xml:id="glibc-fn-dcngettext"><primary>dcngettext</primary></indexterm>
+     <csproto type="işlev">
+      <csname><ptr>char</ptr><function>dcngettext</function></csname>
+      <csparam><ptr>const&#160;char</ptr><parameter>domain</parameter></csparam>
+      <csparam><ptr>const&#160;char</ptr><parameter>msgid1</parameter></csparam>
+      <csparam><ptr>const&#160;char</ptr><parameter>msgid2</parameter></csparam>
+      <csparam><type>unsigned&#160;long&#160;int</type><parameter>n</parameter></csparam>
+      <csparam><type>int</type><parameter>category</parameter></csparam>
+     </csproto>
+     <header>&libintl.h;</header>
+     <conceptlist>
+      <concept>&mtsafe; &env;</concept>
+      <concept>&asunsafe; &corrupt; &heap; &lock; &dlopen;</concept>
+      <concept>&acunsafe; &corrupt; &lock; &fd; &mem;</concept>
+     </conceptlist>
+     <para>
+      <code>dcngettext</code> işlevi ileti kataloğunun seçilmesi bakımından <function>dcgettext</function> işlevi gibidir. Ancak, iki ek bağımsız değişken alır. Tekil/Çoğul dizgelerin elde edilmesi bakımından da <function>ngettext</function> işlevi gibidir.
+     </para>
+    </csynopsis>
+   </sect2>
+   <sect2 xml:id="glibc-gettext-plural-forms">
+    <title>Çoğul Biçimler Sorunu</title>
+    <para>
+     Bir önceki bölümde sorun ile ilgili bir açıklama yapılmıştı. Şimdi burada sorunun nasıl çözümlendiği açıklanacaktır. Dilbilimciler olmaksızın (mevcut değildi), desteklenen her dil için çoğul biçimlerin neye göre şekillendiği, kaç çoğul biçim olduğu gibi bilgileri elde etmek mümkün değildi.
+    </para>
+    <para>
+     Bu bakımdan, çoğul biçimlerin seçim kurallarını belirlemeleri çevirmenlere bırakılarak çözüme ulaşıldı. Formül her dil için değişiklik gösterdiğinden, bilgiyi kodun içine yerleştirerek bu mümkün oldu (yeni dillerin kullanımını engellememek için hala bazı genişletmeler gerekiyor).  Bu konu hakkında <link xl:href="https://www.gnu.org/software/gettext/manual/gettext.html#Top">GNU <filename>gettext</filename> kılavuzunda</link> daha fazla ayrıntı bulunabilir.
+    </para>
+    <para>
+     Çoğul biçimin seçimi hakkındaki bilgi ileti kataloğunun başlık kısmında (Başlık, boş bir <parameter>msgid1</parameter> dizgesidir) şuna benzer bir girdi olarak bulunur:
+    </para>
+    <literallayout class="monospaced">Plural-Forms: nplurals=2; plural=n == 1 ? 0 : 1;
+</literallayout>
+    <para>
+     <code>nplurals</code> değeri bu dilde kaç çoğul biçim olduğunu belirten bir tamsayı olmalıdır. <code>plural</code> ise C dilinin sözdizimine uygun bir ifade olmalıdır. Ancak bu ifadede, negatif sayılar bulunmamalı, sayılar onluk tabanda olmalı ve değişken olarak sadece <code>n</code> bulunmalıdır. Bu ifade <function>ngettext</function>, <function>dngettext</function> veya <function>dcngettext</function> işlevlerinden biri ile değerlendirilecektir. Bu işlevlere aktarılan <code>n</code> değeri bu ifadede yerine konarak değerlendirilir. Sonuç, <code>nplurals</code> değerinden küçük, eşit veya büyük olmalıdır.
+    </para>
+    <para>
+     Bu noktada bilinen kurallar aşağıda dil ailelerine göre sınıflandırılarak listelenmiştir. Fakat, listeden de görüleceği gibi kurallar bir dil ailesinin tamamına genelleştirilememektedir.<footnote><para>Bu listeye eklenmesini isteyeceğiniz bilgileri lütfen <email>bug-glibc-manual@gnu.org</email> adresine bildiriniz.</para></footnote>
+    </para>
+    <variablelist>
+     <varlistentry>
+      <term>Sadece bir biçim:</term>
+      <listitem>
+       <para>
+        Bazı dillerde tekil/çoğul biçim farkı yoktur. Böyle bir dil için ileti kataloğunun başlığında şu satır bulunur:
+       </para>
+       <literallayout class="monospaced">Plural-Forms: nplurals=1; plural=0;
+</literallayout>
+       <para>
+        Bu özellikteki diller:
+       </para>
+       <variablelist>
+        <varlistentry>
+         <term>Uralca/Fin-Uygur Dil Ailesi</term>
+         <listitem>
+          <para>
+           Macarca
+          </para>
+         </listitem>
+        </varlistentry>
+        <varlistentry>
+         <term>Asya Dilleri</term>
+         <listitem>
+          <para>
+           Japonca, Korece
+          </para>
+         </listitem>
+        </varlistentry>
+        <varlistentry>
+         <term>Türk/Altay Dil Ailesi</term>
+         <listitem>
+          <para>
+           Türkçe<footnote><para>Çevirenin Notu: Her ne kadar türkçede miktar belirtirken  tekil/çoğul farkı yoksa da bir uygulama nedeniyle tekil ve çoğul biçimler için ayrı iletiler gerekli olmaktadır. Ben (NBB) GNU <filename>gettext</filename> paketinin ileti kataloğu dosyasının da çevirmeni olduğumdan o dosyadaki bir örneği vererek ne demek istediğimi açıklamaya çalışayım.</para>
+           <screen>#: src/msgfmt.c:1095
+#, c-format
+msgid "...but some messages have one plural form"
+msgid_plural "...but some messages have %lu plural forms"
+msgstr[0] "...ama bazı iletiler tek çoğul biçim içeriyor"
+msgstr[1] "...ama bazı iletiler %lu çoğul biçim içeriyor"
+</screen>
+           <para>Burada dikkat edilirse tekil biçimli ileti içinde miktar <literal>%lu</literal> belirtimi ile değil, yazıyla, <code>one</code> olarak yazılmış. Bu kılavuzun ingilizcesinde belirtildiği gibi tek çoğul biçim kullanma şansımız böyle bir örnek karşısında kalmıyor. Çünkü türkçe iletiye, ingilizce iletide bulunmayan <code>%lu</code> belirteci konulursa ve dosya <function>msgfmt</function> ile derlenmeye çalışılırsa bunun bir hata olduğu görülür. Böyle bir durumda her iki ileti için birer çeviri olmak zorunda, dolayısıyla bir tekil ve bir çoğul biçim belirtmek zorunludur:</para>
+           <literallayout class="monospaced">Plural-Forms: nplurals=2; plural=n != 1;
+</literallayout>
+           <para>Bunun bize bir zararı yok, en kötü durumda çoğul biçimli iletilerde birbirinin aynı iki ileti olur. Ancak dosya böyle özel bir duruma sahip tek bir ileti dahi içermedikçe tekil biçim de kullanılabilir. </para></footnote>
+          </para>
+         </listitem>
+        </varlistentry>
+       </variablelist>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term>Biri tekil biçim olmak üzere iki biçim</term>
+      <listitem>
+       <para>
+        Yazılımların çoğu ingilizce olduğundan bu biçimi kullanır. Böyle bir dil için ileti kataloğunun başlığında şu satır bulunur:
+       </para>
+       <literallayout class="monospaced">Plural-Forms: nplurals=2; plural=n != 1;
+</literallayout>
+       <para>
+        (Bilgi: Burada sıfır ya da bir ile sonuçlanan mantıksal C ifadesi kullanılmıştır.)
+       </para>
+       <para>
+        Bu özellikteki diller:
+       </para>
+       <variablelist>
+        <varlistentry>
+         <term>Germen Dil Ailesi</term>
+         <listitem>
+          <para>
+           Danca, Felemenkçe, İngilizce, Almanca, Norveççe, İsveççe
+          </para>
+         </listitem>
+        </varlistentry>
+        <varlistentry>
+         <term>Uralca/Fin-Uygur Dil Ailesi</term>
+         <listitem>
+          <para>
+           Estonca, Fince
+          </para>
+         </listitem>
+        </varlistentry>
+        <varlistentry>
+         <term>Latin/Helen Dil Ailesi</term>
+         <listitem>
+          <para>
+           Yunanca
+          </para>
+         </listitem>
+        </varlistentry>
+        <varlistentry>
+         <term>Batı Samî/Kenan Dil Ailesi</term>
+         <listitem>
+          <para>
+           İbranice
+          </para>
+         </listitem>
+        </varlistentry>
+        <varlistentry>
+         <term>İtalik/Latin Dil Ailesi</term>
+         <listitem>
+          <para>
+           İtalyanca, Portekizce, İspanyolca
+          </para>
+         </listitem>
+        </varlistentry>
+        <varlistentry>
+         <term>Hint-Arî Dil Ailesi</term>
+         <listitem>
+          <para>
+           Esperanto
+          </para>
+         </listitem>
+        </varlistentry>
+       </variablelist>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term>Biri 0 ve 1 için tekil biçim olmak üzere 2 biçim</term>
+      <listitem>
+       <para>
+        Dil ailesindeki olağandışı durum.  Böyle bir dil için ileti kataloğunun başlığında şu satır bulunur:
+       </para>
+       <literallayout class="monospaced">Plural-Forms: nplurals=2; plural=n&gt;1;
+</literallayout>
+       <para>
+        Bu özellikteki diller:
+       </para>
+       <variablelist>
+        <varlistentry>
+         <term>İtalik/Latin Dil Ailesi</term>
+         <listitem>
+          <para>
+           Fransızca, Brezilya Portekizcesi
+          </para>
+         </listitem>
+        </varlistentry>
+       </variablelist>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term>Sıfır için özel bir durum ile üç biçim</term>
+      <listitem>
+       <para>
+        Böyle bir dil için ileti kataloğunun başlığında şu satır bulunur:
+       </para>
+       <literallayout class="monospaced">Plural-Forms: nplurals=3; plural=n%10==1 &amp;&amp; n%100!=11 ? 0 : n != 0 ? 1 : 2;
+</literallayout>
+       <para>
+        Bu özellikteki diller:
+       </para>
+       <variablelist>
+        <varlistentry>
+         <term>Baltık Dil Ailesi</term>
+         <listitem>
+          <para>
+           Latviya dili
+          </para>
+         </listitem>
+        </varlistentry>
+       </variablelist>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term>1 ve 2 için özel bir durum ile üç biçim</term>
+      <listitem>
+       <para>
+        Böyle bir dil için ileti kataloğunun başlığında şu satır bulunur:
+       </para>
+       <literallayout class="monospaced">Plural-Forms: nplurals=3; plural=n==1 ? 0 : n==2 ? 1 : 2;
+</literallayout>
+       <para>
+        Bu özellikteki diller:
+       </para>
+       <variablelist>
+        <varlistentry>
+         <term>Keltçe Dil Ailesi</term>
+         <listitem>
+          <para>
+           İrlanda Dili
+          </para>
+         </listitem>
+        </varlistentry>
+       </variablelist>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term>1[2-9] ile biten sayılar için özel bir durum ile üç biçim</term>
+      <listitem>
+       <para>
+        Böyle bir dil için ileti kataloğunun başlığında şu satır bulunur:
+       </para>
+       <literallayout class="monospaced">Plural-Forms: nplurals=3; \
+plural=n%10==1 &amp;&amp; n%100!=11 ? 0 : \
+n%10&gt;=2 &amp;&amp; (n%100&lt;10 || n%100&gt;=20) ? 1 : 2;
+</literallayout>
+       <para>
+        Bu özellikteki diller:
+       </para>
+       <variablelist>
+        <varlistentry>
+         <term>Baltık Dil Ailesi</term>
+         <listitem>
+          <para>
+           Litvanya dili
+          </para>
+         </listitem>
+        </varlistentry>
+       </variablelist>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term>1[1-4] ile bitenler hariç; 1, 2, 3, 4 ile biten sayılar için özel bir durum ile üç biçim</term>
+      <listitem>
+       <para>
+        Böyle bir dil için ileti kataloğunun başlığında şu satır bulunur:
+       </para>
+       <literallayout class="monospaced">Plural-Forms: nplurals=3; \
+plural=n%100/10==1 ? 2 : n%10==1 ? 0 : (n+9)%103 ? 2 : 1;
+</literallayout>
+       <para>
+        Bu özellikteki diller:
+       </para>
+       <variablelist>
+        <varlistentry>
+         <term>İslav Dil Ailesi</term>
+         <listitem>
+          <para>
+           Hırvatça, Çekçe, Rusça, Ukrayna dili
+          </para>
+         </listitem>
+        </varlistentry>
+       </variablelist>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term>1, 2, 3, 4 için özel bir durum ile üç biçim</term>
+      <listitem>
+       <para>
+        Böyle bir dil için ileti kataloğunun başlığında şu satır bulunur:
+       </para>
+       <literallayout class="monospaced">Plural-Forms: nplurals=3; \
+plural=(n==1) ? 1 : (n>=2 &amp;&amp; n&lt;=4) ? 2 : 0;
+</literallayout>
+       <para>
+        Bu özellikteki diller:
+       </para>
+       <variablelist>
+        <varlistentry>
+         <term>İslav Dil Ailesi</term>
+         <listitem>
+          <para>
+           Slovakça
+          </para>
+         </listitem>
+        </varlistentry>
+       </variablelist>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term>1 için ve 2, 3 veya 4 ile biten bazı sayılar için özel bir durum ile üç biçim</term>
+      <listitem>
+       <para>
+        Böyle bir dil için ileti kataloğunun başlığında şu satır bulunur:
+       </para>
+       <literallayout class="monospaced">Plural-Forms: nplurals=3; \
+plural=n==1 ? 0 : \
+n%10>=2 &amp;&amp; n%10&lt;=4 &amp;&amp; (n%100&lt;10 || n%100>=20) ? 1 : 2;
+</literallayout>
+       <para>
+        Bu özellikteki diller:
+       </para>
+       <variablelist>
+        <varlistentry>
+         <term>İslav Dil Ailesi</term>
+         <listitem>
+          <para>
+           Lehçe
+          </para>
+         </listitem>
+        </varlistentry>
+       </variablelist>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term>1 için ve 02, 03 veya 04 ile biten tüm sayılar için özel bir durum ile dört biçim</term>
+      <listitem>
+       <para>
+        Böyle bir dil için ileti kataloğunun başlığında şu satır bulunur:
+       </para>
+       <literallayout class="monospaced">Plural-Forms: nplurals=4; \
+plural=n%100==1 ? 0 : n%100==2 ? 1 : n%100==3 || n%100==4 ? 2 : 3;
+</literallayout>
+       <para>
+        Bu özellikteki diller:
+       </para>
+       <variablelist>
+        <varlistentry>
+         <term>İslav Dil Ailesi</term>
+         <listitem>
+          <para>
+           Slovence
+          </para>
+         </listitem>
+        </varlistentry>
+       </variablelist>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </sect2>
+   <sect2 xml:id="glibc-Charset-conversion-in-gettext">
+    <title><code>gettext</code>'te Karakter Kümesi Dönüşümü</title>
+    <titleabbrev><code>gettext</code>'in çıktı karakter kümesi olarak neyi kullanacağı nasıl belirtilir?</titleabbrev>
+    <para>
+     <function>gettext</function> sadece bir ileti kataloğunda çeviri aramaz, ayrıca çeviriyi çıktı karakter kümesine anında dönüştürür. Kullanıcı, ileti kataloğunda kullanılan karakter kümesinden farklı bir karakter kümesi kullanıyorsa, bu faydalı bir özelliktir.
+    </para>
+    <para>
+     Çıktı karakter kümesi öntanımlı olarak, geçerli yerelin <varname>LC_CTYPE</varname> sınıfına bağımlı <code>nl_langinfo (CODESET)</code> değeridir. Ancak, bir yazılımın iletileri yerelden bağımsız bir kodlama (UTF-8) ile saklanıyorsa, <function>gettext</function> ailesindeki işlevler çevirinin kodlamasını <function>bind_textdomain_codeset</function> işlevini kullanarak bu kodlamaya dönüştürür.
+    </para>
+    <para>
+     <function>gettext</function> işlevinin <parameter>msgid</parameter> bağımsız değişkeninde verilen dizgenin karakter dönüşümüne konu olmadığını unutmayın. Eğer <function>gettext</function>, <parameter>msgid</parameter>'nin karşılığı olan çeviriyi bulamazsa <parameter>msgid</parameter> dizgesini dönüştürmeksizin döndürür. Bu bakımdan tüm <parameter>msgid</parameter> dizgelerinin US-ASCII dizgeler olması önerilir.
+    </para>
+    <csynopsis>
+     <indexterm linkend="glibc-fn" xml:id="glibc-fn-bind_textdomain_codeset"><primary>bind_textdomain_codeset</primary></indexterm>
+     <csproto type="işlev">
+      <csname><ptr>char</ptr><function>bind_textdomain_codeset</function></csname>
+      <csparam><ptr>const&#160;char</ptr><parameter>domainname</parameter></csparam>
+      <csparam><ptr>const&#160;char</ptr><parameter>codeset</parameter></csparam>
+     </csproto>
+     <header>&libintl.h;</header>
+     <conceptlist>
+      <concept>&mtsafe;</concept>
+      <concept>&asunsafe; &heap;</concept>
+      <concept>&acunsafe; &mem;</concept>
+     </conceptlist>
+     <para>
+      <code>bind_textdomain_codeset</code> işlevi <parameter>domainname</parameter> ileti kataloglarının çıktı karakter kümesini belirtmek için kullanılabilir. <parameter>codeset</parameter> bağımsız değişkeni ya <function>iconv_open</function> işlevinde kullanılabilen geçerli bir karakter kümesi dizgesine gösterici ya da boş gösterici olmalıdır.
+     </para>
+     <para>
+      <parameter>codeset</parameter> olarak boş gösterici belirtilmişse, işlev <parameter>domainname</parameter> isimli alanın o an seçilmiş karakter kümesi ile döner. <varname>NULL</varname> dönmüşse, henüz seçilmiş bir karakter kümesi yok demektir.
+     </para>
+     <para>
+      <code>bind_textdomain_codeset</code> işlevi defalarca kullanılabilir. Aynı <parameter>domainname</parameter> ile yapılan her çağrı bir önceki kodlamayı değiştirir.
+     </para>
+     <para>
+      <code>bind_textdomain_codeset</code> işlevi seçilen karakter kümesininin ismini içeren dizgeye gösterici döndürür. Dizge işlev tarafından dahili olarak ayrıldığından yazılımcı tarafından değiştirilmemelidir. Eğer sistem <code>bind_textdomain_codeset</code> çalışırken bellek dökümü (core dosyası) çıktılarsa, işlev <varname>NULL</varname> ile döner ve <varname>errno</varname> genel değişkenine ilgili hata durumu atanır.
+     </para>
+    </csynopsis>
+   </sect2>
+   <sect2 xml:id="glibc-GUI-program-problems">
+    <title>Görsel Arayüzlü Yazılımlarının Sorunları</title>
+    <titleabbrev><code>gettext</code> GA yazılımlarda nasıl kullanılır?</titleabbrev>
+    <para>
+     <function>gettext</function> işlevlerinin büyük sorunlara yol açtığı kullanım yerlerinden biri görsel arayüzlü yazılımlardır. Burada sorun çevrilecek iletilerin çoğunun çok kısa olması gerekliliğinden kaynaklanır. Bunlara genellikle menülerde rastlanır. Bu dizgeler tam bir cümle içeremedikleri gibi bir dilde aynı olan dizgelerin diğer dillerde farklı olabilmesi sorun oluşturur. Bu tek sözcüklük dizgelerde iyice belirginleşir.
+    </para>
+    <para>
+     Çoğu kimse, <function>gettext</function> yaklaşımı yerine bu sorunun görülmediği <function>catgets</function> işlevlerinin kullanılması gerektiğini söyler.  Ancak, bu sorunları <function>gettext</function> işlevleri kullanıldığında aşmanın çok basit ve oldukça güçlü bir yöntemi vardır.
+    </para>
+    <para>
+     Görsel arayüzlü bir yazılımın şöyle bir menüsü olduğu varsayılsın:
+    </para>
+    <literallayout class="monospaced">+------------+------------+--------------------------------------+
+| File       | Printer    |                                      |
++------------+------------+--------------------------------------+
+| Open     | | Select   |
+| New      | | Open     |
++----------+ | Connect  |
+             +----------+
+</literallayout>
+    <para>
+     Kodun bazı yerlerinde <function>gettext</function> ailesinden işlevlerde <code>File</code>, <code>Printer</code>, <code>Open</code>, <code>New</code>, <code>Select</code> ve <code>Connect</code> dizgelerinin çevirilerine erişildiği varsayılsın. Ancak dikkat edilirse iki yerde işleve aktarılan dizge  <code>Open</code> olacaktır.  Yukarıda açıklanan açmazdan dolayı bu dizgenin çevirileri aynı olmayabilecektir.
+    </para>
+    <para>
+     Bu sorunun çözümlerinden biri belirsizliği ortadan kaldırmak için dizgeyi yapay olarak uzatmak ama çevirmenden sadece asıl dizgeyi çevirmesini istemektir. Fakat bir çeviri bulunamadığında yazılım ne yapacak? Uzatılan dizge basılamaz. O halde işlevin biraz değiştirilmiş bir sürümünü kullanmak gerekir.
+    </para>
+    <para>
+     Dizgenin uzatılmasında tektip bir yönteme ihtiyaç vardır. Örneğin, yukarıdaki örnek için uzatılmış dizgeler şöyle seçilebilir:
+    </para>
+    <literallayout class="monospaced">Menu|File
+Menu|Printer
+Menu|File|Open
+Menu|File|New
+Menu|Printer|Select
+Menu|Printer|Open
+Menu|Printer|Connect
+</literallayout>
+    <para>
+     Böylece dizgelerin hepsi farklı oldu. Eğer <function>gettext</function> işlevi aşağıdaki işlevle kullanılırsa herşey istendiği gibi olacaktır:
+     <indexterm linkend="glibc-cp" xml:id="glibc-fn-sgettext"><primary>sgettext</primary></indexterm>
+    </para>
+    <screen>char *
+sgettext (const char *msgid)
+{
+  char *msgval = gettext (msgid);
+  if (msgval == msgid)
+    msgval = strrchr (msgid, '|') + 1;
+  return msgval;
+}
+</screen>
+    <para>
+     Bu küçük işlevin tek yaptığı bir çevirinin bulunmadığı zaman uzatılmış dizgeden özgün dizgeyi elde etmektir. Dönen değer girdi değeri olduğundan bu işlem doğrudan bir gösterici karşılaştırması olarak yapıldığında daha verimli olur. Bir çevirinin bulunmaması halinde girdi dizgesinin <command>|</command> karakterini içereceğini bildiğimize göre dizge içinde bu karakterin son görüldüğü yeri bulup bu noktaya bir gösterici döndürmek yeterli olacaktır.
+    </para>
+    <para>
+     Eğer uzatılmış dizgeler tutarlı şekilde kullanılır ve <function>gettext</function> çağrıları <function>sgettext</function> çağrıları ile değiştirilirse (bunu sadece görsel yazılımda gerektiği yerde yapmak yeterlidir), uluslarasılaştırılabilen bir yazılım üretilebilir.
+    </para>
+    <para>
+     GNU C gibi ileri düzey derleyicilerle <function>sgettext</function> işlevi bunun gibi satırlaştırılmış bir işlev veya  makro olarak gerçeklenebilir:
+    </para>
+    <screen>#define sgettext(msgid) \
+  ({ const char *__msgid = (msgid);            \
+     char *__msgstr = gettext (__msgid);       \
+     if (__msgval == __msgid)                  \
+       __msgval = strrchr (__msgid, '|') + 1;  \
+     __msgval; })
+</screen>
+    <para>
+     Diğer <function>gettext</function> işlevleri de (<function>dgettext</function>, <function>dcgettext</function> ve <function>ngettext</function>) benzer şekilde sarmalayıcı bir işlevle kullanılabilir.
+    </para>
+    <para>
+     Şimdi bir soru gelecek akıllara: &glibc;nde neden böyle işlevler yok? Bu sorunun iki şıklı bir yanıtı var:
+    </para>
+    <itemizedlist>
+     <listitem>
+      <para>
+       Yazılması kolaydır, bu bakımdan kullanıldıkları projenin içinde yazılabilir. Bu bir yanıt değil derseniz, ikinci şık ile birlikte değerlendirildiğinde bir şey ifade eder.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       C kütüphanesinde her yerde çalışabilecek bir sürümün bulunmasını sağlayacak bir yöntem yok. Sorun, uzatılmış dizgede asıl dizgenin başına eklenen dizgelerin arasındaki karakterin seçiminden kaynaklanıyor. Yukarıdaki örnekte kullanılan <code>|</code> karakteri bu tür bağlamlarda sıkça kullanılan bir ayraç karakteri olarak iyi bir seçimdir ama ileti dizgelerinde de sık kullanılan bir karakterdir.
+      </para>
+      <para>
+       <indexterm linkend="glibc-pg" xml:id="glibc-pg-iso646h"><primary>iso646.h</primary></indexterm>
+       Eğer bu ayraç karakteri ileti dizgesinde de kullanılmışsa ne olacak? Ya da ayraç karakteri kodun derlendiği makinede yoksa ne olacak (örneğini &isoc; için <code>|</code> karakteri gerekli değildir; bu nedenle &isoc; yazılım geliştirme ortamında ayrıca bir &iso646.h; dosyası vardır).
+      </para>
+     </listitem>
+    </itemizedlist>
+    <para>
+     Yalnızca bir açıklama daha kaldı. Yukarıdaki sarmalayıcı işlev uzatılmış dizgenin tamamının çevrilmeyeceği esasına dayandırılmıştır. Mantık bunu gerektirdiği için böyle yapılmıştır. Çeviri, arama için bir anahtar olarak kullanılmadığından neyi nasıl içerdiğinin bir önemi yoktur, hem gereksiz bellek harcamanın da alemi yok.
+    </para>
+   </sect2>
+   <sect2 xml:id="glibc-Using-gettextized-software">
+    <title><code>gettext</code> Kullanan Yazılımların Kullanımı</title>
+    <titleabbrev><code>gettext</code>'in neleri kullanacağını kullanıcı nasıl belirtmeli?</titleabbrev>
+    <para>
+     Önceki bölümde yazılımcının yazılımının iletilerini uluslararasılaştırmak için ne yapabileceği açıklandı. Ancak, sonuçta görmek istediği iletiyi kullanıcı seçecektir. Kullanıcı onları anlayabilmelidir.
+    </para>
+    <para>
+     POSIX yerel modeli, kullanılan yereli seçmede <varname>LC_COLLATE</varname>, <varname>LC_CTYPE</varname>, <varname>LC_MESSAGES</varname>, <varname>LC_MONETARY</varname>, <varname>LC_NUMERIC</varname> ve <varname>LC_TIME</varname> ortam değişkenlerini kullanır. Evvelce açıklandığı gibi <function>gettext</function> de bunları kullanır.
+    </para>
+    <para>
+     Bunun nasıl olduğunu anlayabilmek için bir ileti kataloğunun yerini bulmakta kullanılan dosya isminin hangi bileşenlerden oluştuğuna bakılabilir:
+    </para>
+    <literallayout class="monospaced"><replaceable>dizin_ismi</replaceable><code>/<replaceable>yerel_dil</replaceable>/LC_<replaceable>yerel_sınıf</replaceable>/<replaceable>alan_adı</replaceable>.mo</code>
+</literallayout>
+    <para>
+     <replaceable>dizin_ismi</replaceable> için öntanımlı değer sisteme özeldir. C kütüphanesi yapılandırılırken <option>--prefix</option> seçeneği ile belirtilen dizine göre hesaplanır. <option>--prefix</option> değeri normalde <filename>/usr</filename> ya da <filename>/</filename> dizinidir. <replaceable>dizin_ismi</replaceable> ise genellikle:
+     </para>
+     <literallayout class="monospaced"><filename>/usr/share/locale</filename>
+</literallayout>
+     <para>
+      dizinidir. İleti kataloglarını içeren <filename>.mo</filename> dosyaları sistemden bağımsız dosyalar olduklarından <filename>/usr/share</filename> öneki tercih edilmiştir. <function>bindtextdomain</function> işlevinin ikinci bağımsız değişkeninde sadece <replaceable>dizin_ismi</replaceable> ile belirtilen parça verilir. İşlev dosya yolunun geri kalanını aşağıda açıklandığı gibi oluşturur.
+     </para>
+     <para>
+      <replaceable>yerel_sınıf</replaceable> yerel sınıfının ismidir. <function>gettext</function> ve <function>dgettext</function> için bu daima <varname>LC_MESSAGES</varname>'dır. <function>dcgettext</function> işlevinde ise bu değer üçüncü bağımsız değişkende belirtilir. Ancak evvelce de açıklandığı gibi  <varname>LC_MESSAGES</varname> sınıfından başka bir sınıf belirtmekten kaçınılmalıdır.
+     </para>
+     <para>
+      <replaceable>yerel_dil</replaceable> elemanı yerel sınıfını içeren dildir. Bu değer <function>setlocale</function> işlevindeki gibi kullanıcının dil seçimine bağlı olarak belirlenir. Bu değer, bazı ortam değişkenlerinin belli bir öncelik sırasına göre belirlenir. Bu sıra şöyledir:
+     </para>
+     <literallayout class="monospaced">LANGUAGE
+LC_ALL
+LC_xxx
+LANG
+</literallayout>
+     <para>
+      Çok bildik görünüyor. Bu sıralama <varname>LANGUAGE</varname> ortam değişkeni dışında <function>setlocale</function> işlevinin kullandığı sıralama ile aynıdır. Peki ama neden <varname>LANGUAGE</varname> değişkenine bakılıyor?
+     </para>
+     <para>
+      Bunun sebebi bu değişkenlerin değerlerinden elde edilecek sözdiziminin <function>setlocale</function> işlevinden farklı olmasıdır. Eğer <varname>LC_ALL</varname> değişkenine aşağıdaki genişletilmiş sözdizimine uygun bir değer atanırsa, <function>setlocale</function> işlevi bu değeri asla kullanamayacaktır. Bir ek değişkenle bu sorun aşıldığı gibi, bu değişken sayesinde kullanıcının ileti dilini yerel ayarlarından bağımsız olarak belirleyebilme imkanı vardır.
+     </para>
+     <para>
+      <code>LC_xxx</code> değişkenlerinin değerleri sadece bir yerele ait belirtimi içerebilirken <varname>LANGUAGE</varname> değişkeninin değerinde çok sayıda dil iki nokta imleriyle ayrılarak belirtilebilir. Böylece kullanıcı tercih ettiği dilleri bu değişken sayesinde bir öncelik sırasıyla belirtebilir.
+     </para>
+     <para>
+      Dosya ismini oluşturan son parça olan <replaceable>alan_adı</replaceable> ya <function>textdomain</function> işlevi ile etkinleştirilen ya da <function>dgettext</function> veya <function>dcgettext</function> işlevinde ilk bağımsız değişken olarak belirtilen yazılımın alan ismidir; başka bir deyişle yazılımcının pakete verdiği isimdir. Örneğin &glibc; için alan ismi <filename>libc</filename>'dir.
+     </para>
+     <example>
+      <para>
+       Yazılımcının bu işlemi nasıl yapacağını gösteren örnek kod parçası:
+      </para>
+      <screen>{
+  setlocale (LC_ALL, "");
+  textdomain ("test-package");
+  bindtextdomain ("test-package", "/usr/local/share/locale");
+  puts (gettext ("Hello, world!"));
+}
+</screen>
+      <para>
+       Yazılım ilk çalıştırıldığında öntanımlı alan <varname>messages</varname>, öntanımlı yerel &quot;C&quot;dir. <function>setlocale</function> çağrısı yereli kullanıcının atadığı ortam değişkenlerine bağlı olarak değiştirir. Yukarıda bahsedildiği gibi <function>gettext</function> işlevleri ileti kataloglarının yerini bulmak için  <varname>LC_MESSAGES</varname> sınıfını, karakter kümesi dönüşümü için <varname>LC_CTYPE</varname> sınıfını kullanıyordu. <function>setlocale</function> çağrısı ile bunlar kullanıcının seçimlerine göre belirlenmiş olur. <function>textdomain</function> çağrısı ile <code>test-package</code> alan isimli ileti kataloğunun kullanılacağı, <function>bindtextdomain</function> çağrısı ile de bu kataloğun bulunacağı yerin <filename>/usr/local/share/locale</filename> olacağı belirtilmektedir.
+     </para>
+     <para>
+      Kullanıcı <varname>LANGUAGE</varname> ortam değişkenine <code>tr</code> değerini atarsa <function>gettext</function> işlevi
+     </para>
+     <para>
+      <filename>/usr/local/share/locale/tr/LC_MESSAGES/test-package.mo</filename> iletiği kataloğunu kullanacaktır.
+     </para>
+    </example>
+    <para>
+     Bu örnekte <varname>LANGUAGE</varname> ortam değişkenine <code>tr</code> değerinin atandığı varsayıldı. Eğer kullanıcı bunun yerine değeri <code>tr_TR.UTF-8</code> olan <varname>LC_ALL</varname> ortam değişkenini kullanmak isteseydi ne olacaktı? Yukarıda bu gibi durumlara pek sık rastlanmadığından  bahsetmiştik. Örneğin, kullanıcının tercih ettiği dil olarak son çare resmi dil değilse kullanıcı kendi lehçesini tercih edebilir.
+    </para>
+    <para>
+     <function>gettext</function> bu gibi durumlara da hazırlıklıdır. İşlevler bu değişkenin değerinin biçimini tanır. Değeri parçalarına ayırarak içinden kendi kullanacağı değeri alır. Bu işlem şüphesiz bir ön kabule dayanır. Ortam değişkeninin değerini oluşturan biçim az ya da çok standarttır. X/Open belirtimi şöyledir:
+    </para>
+    <literallayout class="monospaced"><code><replaceable>dil</replaceable>[_<replaceable>ülke</replaceable>[.<replaceable>karakter-kümesi</replaceable>]][@<replaceable>değiştirici</replaceable>]</code>
+</literallayout>
+    <para>
+     Yerel ismi şu sıraya göre ayıklanır:
+    </para>
+    <literallayout>1. <replaceable>karakter-kümesi</replaceable>
+2. normalleştirilmiş <replaceable>karakter-kümesi</replaceable>
+3. <replaceable>ülke</replaceable>
+4. <replaceable>değiştirici</replaceable>
+</literallayout>
+    <para>
+     <replaceable>dil</replaceable> alanı bilinen sebeplerle asla kaldırılmayacaktır.
+    </para>
+    <para>
+     Burada yeni olan <replaceable>normalleştirilmiş karakter-kümesi</replaceable> girdisidir. Çoğu kişi standart haline gelmiş isimleri yanlış hatırlar ve örneğin ISO-8859-9 yerine iso8859-9, iso_8859-9, 88599, 8859-9 gibi değerler yazabilir. <replaceable>normalleştirilmiş karakter-kümesi</replaceable> değeri şu kurallar izlenerek oluşturulur:
+    </para>
+    <orderedlist>
+     <listitem>
+      <para>
+       Sayılar ve harfler dışında tüm karakterler kaldırılır.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       Harflerin tamamı küçük harfe dönüştürülür.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       Rakamlar <code>"iso"</code> dizgesi ile öncelenmemişse öncelenir.
+      </para>
+     </listitem>
+    </orderedlist>
+    <para>
+     Örneğimizdeki isim <code>iso88599</code> olarak normalleştirilir. Böylece kullanıcıya yerel ismini belirtirken daha fazla serbestlik sağlanmış olur.
+    </para>
+    <para>
+     Ancak bu kadar genişletilmiş işlevsellik bile aynı dili belirtirken kullanılabilen farklı isimler için bir çözüm sağlamaz (örneğin, <code>tr</code> ve <code>turkish</code>). Hem yerel gerçeklemesi hem de <function>gettext</function> bu gibi durumlarda yardımseverdir.
+    </para>
+    <para>
+     <filename>/usr/share/locale/locale.alias</filename> dosyası (C kütüphanesini derlerken <filename>/usr</filename> yerine ne belirtimişse, <filename>/usr</filename> yerine onun yazılması gerekir) dil isimleriyle yerel isimlerini eşleştiren bir liste içerir. Sistem yöneticisi bu listeye yeni girdiler eklemekte özgürdür. Ortam değişkenleri ile seçilmiş isim bu listedekilerle karşılaştırılır. Bir eşleşme bulunursa ikinci sütundaki değer kullanılır.
+    </para>
+   </sect2>
+  </sect1>
+  <sect1 xml:id="glibc-Helper-programs-for-gettext">
+   <title><literal>gettext</literal> için Yardımcı Uygulamalar</title>
+   <titleabbrev><command>gettext</command> için ileti kataloglarını elde eden uygulamalar</titleabbrev>
+   <para>
+    &glibc; <function>gettext</function> işlevleri için yazılımın kaynak kodundan ileti kataloğunu oluşturacak yazılımları içermez. GNU projesinin bir parçası olarak GNU gettext paketi geliştiricinin ihtiyaç duyabileceği herşeyi içerir. Bu paketle sağlanmış araçlar, <function>catgets</function> işlevlerinin ileti kataloğunu elde eden <uri xl:href="man1-gencat"/> uygulamasından daha fazla yetenekli olmayı gerektirir.
+   </para>
+   <para>
+    <uri xl:href="man1-gencat"/> uygulamasına eşdeğer olarak <uri xl:href="man1-msgfmt"/> uygulaması gösterilebilir. Metin biçimindeki ileti kataloglarından <function>gettext</function> işlevlerinin kullanabileceği ikilik biçimdeki ileti kataloglarını elde etmekte kulanılır. Ama sırf bu değil, pakette daha pek çok uygulama vardır.
+   </para>
+   <para>
+    <uri xl:href="man1-xgettext"/> uygulaması bir kaynak dosyasından çevrilebilir dizgeleri toplamakta kullanılır. Yani yazılımcı geliştirme sırasında ileti kataloğunu elle oluşturmak zorunda değildir. Bu uygulama girdinin daha iyi anlaşılabilmesini ve çıktının özelleştirilebilmesini sağlayan seçenekler içerir.
+   </para>
+   <para>
+    Paket, sadece yazılımın geliştiricisinin değil çevirmenlerin de kullanabileceği araçları içerir. <link xl:href="https://www.gnu.org/software/gettext/manual/gettext.html#Top">GNU <filename>gettext</filename> kılavuzunda</link> bunlar hakkında ayrıntılı bilgi bulunabilir.
+   </para>
+  </sect1>
+ </chapter>
 </part>

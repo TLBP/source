@@ -3,6 +3,145 @@
         glibc/ch34.xml,v2.36, GFDL,LGPL, NBB, 2023
      ******************************************************************** -->
 <part xml:id="glibc-Debugging-Support">
-  <title>Hata Ayıklama Desteği</title>
-  <titleabbrev>Hata ayıklama uygulamalarına yardımcı işlevler.</titleabbrev>
+ <title>Hata Ayıklama Desteği</title>
+ <titleabbrev>Hata ayıklama uygulamalarına yardımcı işlevler.</titleabbrev>
+ <partintro>
+  <?dbhtml stop-chunking?>
+  <para>
+   Uygulamaların hataları genellikle amacı hata ayıklamak olan yazılımlar kullanılarak ayıklanır. Fakat kimi zaman bu mümkün olmaz ve sorunlar hakkında deneyim kazandıkça yazılımcıya mümkün olan en fazla bilgiyi sağlamak gerekir. Bu sebeple, yazılımcının sorunun kaynağına daha kolay erişebilmesini mümkün kılacak bir kaç işlev sağlanmıştır.
+  </para>
+  <sect1 xml:id="glibc-Backtraces">
+   <title>Köken Arama Listeleri</title>
+   <titleabbrev>O anki yığıtın geriye doğru izlenmesi ve çıktılanması.</titleabbrev>
+   <para>
+    <dicterm><english>backtrace</english><turkish>köken arama</turkish></dicterm>
+    <indexterm linkend="glibc-cp"><primary>köken arama</primary></indexterm>
+    <indexterm linkend="glibc-cp"><primary>backtrace_symbols</primary></indexterm>
+    <indexterm linkend="glibc-cp"><primary>backtrace_fd</primary></indexterm>
+    Bir <firstterm>köken arama listesi</firstterm> (backtrace), bir evre içindeki o an etkin olan işlev çağrılarının bir listesidir. Bir yazılımın köken arama listesini elde etmenin en uygun yolu <command>gdb</command> gibi harici bir hata ayıklayıcı kullanmaktır. Ancak, kimi zaman bir köken arama listesini günlük tutma, tanı koyma gibi amaçlarla yazılım içinde kodlayarak elde etmek de gerekebilir.
+    <indexterm linkend="glibc-pg"><primary>execinfo.h</primary></indexterm>
+   </para>
+   <para>
+    Geçerli evrenin köken arama listesini elde eden ve onunla çalışan üç işlev vardır ve bunlar &execinfo.h; başlık dosyasında bildirilmiştir.
+   </para>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-backtrace"><primary>köken arama</primary><secondary>listenin edinilmesi</secondary></indexterm>
+    <indexterm linkend="glibc-fn" xml:id="glibc-fn-backtrace"><primary>backtrace</primary></indexterm>
+    <csproto type="işlev">
+     <csname><type>int</type><function>backtrace</function></csname>
+     <csparam><pptr>void</pptr><parameter>buffer</parameter></csparam>
+     <csparam><type>int</type><parameter>size</parameter></csparam>
+    </csproto>
+    <header>&execinfo.h;</header>
+    <conceptlist>
+     <concept>&mtsafe;</concept>
+     <concept>&asunsafe; &init; &heap; &dlopen; &plugin; &lock;</concept>
+     <concept>&acunsafe; &init; &mem; &lock; &fd;</concept>
+    </conceptlist>
+    <para>
+     <code>backtrace</code> işlevi o anki evrenin köken arama listesini elde eder ve bir liste göstericisi olarak <parameter>buffer</parameter> tamponuna yerleştirir.  <parameter>size</parameter> bağımsız değişkeni <parameter>buffer</parameter> içinde bulunacak <type>void *</type> türündeki elemanların sayısı olmalıdır. İşlev <parameter>buffer</parameter> içine konmuş olan listenin eleman sayısı ile döner.
+    </para>
+    <para>
+     <parameter>buffer</parameter> içine yerleştirilen göstericiler aslında araştırılan yığıttan edinilen dönüş adresleridir, yani her yığıt çerçevesi için bir dönüş adresi vardır.
+    </para>
+    <para>
+     Belli derleyici en iyilemelerinin edinilen geçerli köken arama listesi ile etkileşeceği gözardı etdilmemelidir. Satırlaştırma işlemi satıriçi işlevlerin bir yığıt çerçevesine sahip olmamasına sebep olur; kuyruk çağrı en iyilemesi bir yığıt çerçevesini bir diğeri ile değiştirir; çerçeve göstericisi elemesi yığıt içeriğinin <code>backtrace</code> tarafından doğru olarak yorumlanmasını engelleyecektir.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-backtrace_symbols"><primary>köken arama</primary><secondary>ayrıntılar</secondary></indexterm>
+    <indexterm linkend="glibc-fn" xml:id="glibc-fn-backtrace_symbols"><primary>backtrace_symbols</primary></indexterm>
+    <csproto type="işlev">
+     <csname><pptr>char</pptr><function>backtrace_symbols</function></csname>
+     <csparam><ptr>void&#160;*const</ptr><parameter>buffer</parameter></csparam>
+     <csparam><type>int</type><parameter>size</parameter></csparam>
+    </csproto>
+    <header>&execinfo.h;</header>
+    <conceptlist>
+     <concept>&mtsafe;</concept>
+     <concept>&asunsafe; &heap;</concept>
+     <concept>&acunsafe; &mem; &lock;</concept>
+    </conceptlist>
+    <para>
+     <code>backtrace_symbols</code> işlevi <function>backtrace</function> işleviyle edinilen listeyi dizge dizisine dönüştürür. <parameter>buffer</parameter> bağımsız değişkeni <function>backtrace</function> işleviyle edinilen adres dizisinin göstericisi, <parameter>size</parameter> ise bu dizinin eleman sayısı (<function>backtrace</function> işlevinin dönüş değeri) olmalıdır.
+    </para>
+    <para>
+     İşlevin dönüş değeri <parameter>size</parameter> dizgelik diziye göstericidir. Her dizge <parameter>buffer</parameter> içindeki her elemanın yazdırılabilir içeriğini gösterir. Saptanabiliyorsa işlev ismi, işlevim başlangıç konumunu ve geçerli dönüş adresini (onaltılık tabanda) içerir.
+    </para>
+    <para>
+     Şimdilik işlev ismi ve başlangıç konumu sadece kütüphaneler ve uygulamalar için ELF ikil biçimi kullanılan sistemlerde elde edilebilmektedir. Diğer sistemlerde ise sadece onaltılık tabandaki dönüş adresi elde edilebilmektedir. Ayrıca, yazılımın işlev isimlerini içermesi için ilintileyiciye ek seçenekler belirtilebilir. (Örneğin, GNU <uri xl:href="man1-ld"/>'ye <option>--rdynamic</option> seçeneği aktarılabilir.)
+    </para>
+    <para>
+     <code>backtrace_symbols</code> işlevinin dönüş değeri <function>malloc</function> işlevi üzerinden edinilen ve <function>free</function> ile serbest bırakılması gereken bir göstericidir. Yalnız, sadece dönüş değeri serbest bırakılmalı, içerdiği dizgeler serbest bırakılmamalıdır.
+    </para>
+    <para>
+     Edinilen dizgeleri saklamak için bellek yetersizse işlev <varname>NULL</varname> ile döner.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-backtrace_symbols_fd"><primary>köken arama</primary><secondary>ayrıntı dosyası</secondary></indexterm>
+    <indexterm linkend="glibc-fn" xml:id="glibc-fn-backtrace_symbols_fd"><primary>backtrace_symbols_fd</primary></indexterm>
+    <csproto type="işlev">
+     <csname><type>void</type><function>backtrace_symbols_fd</function></csname>
+     <csparam><ptr>void&#160;*const</ptr><parameter>buffer</parameter></csparam>
+     <csparam><type>int</type><parameter>size</parameter></csparam>
+     <csparam><type>int</type><parameter>fd</parameter></csparam>
+    </csproto>
+    <header>&execinfo.h;</header>
+    <conceptlist>
+     <concept>&mtsafe;</concept>
+     <concept>&assafe;</concept>
+     <concept>&acunsafe; &lock;</concept>
+    </conceptlist>
+    <para>
+     <code>backtrace_symbols_fd</code> işlevi <function>backtrace_symbols</function> işlevinin yaptığı dönüşümün aynısını yapar, ancak farklı olarak, dizgelere  gösterici döndürmek yerine her dizge bir satır olmak üzere dizgeleri <parameter>fd</parameter> tanıtıcısına yazar. <function>malloc</function> işlevini kullanmaz ve dosya tanıtıcılara yazan işlevlerin başarısız olmasına sebep olan durumlarda bu işlev de başarısız olabilir.
+    </para>
+   </csynopsis>
+   <para>
+    Aşağıdaki yazılımda bu işlevlerin kullanımı gösterilmiştir. <function>backtrace</function> tarafından döndürülen gösterici dizisinin adresinin yığıt üzerine tahsis edildiğine dikkat edilmelidir. Bu bakımdan, bu kod  <function>malloc</function> üzerinden bellek tahsis edilemeyen sistemlerde kullanılabilir (bu gibi durumlarda <function>backtrace_symbols</function> yerine <code>backtrace_symbols_fd</code> işlevi de kullanılabilir). Dönüş adreslerinin sayısı normalde çok fazla olmayacaktır. Nadiren 50'den fazla iç içelik içeren çok karmaşık yazılımlarda bile 200 girdi olabilir.
+   </para>
+   <example>
+    <screen>#include &lt;execinfo.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+
+/* <replaceable>Köken arama listesini edinip stdout'a çıktıla.</replaceable> */
+void
+print_trace (void)
+{
+  void *array[10];
+  char **strings;
+  int size, i;
+
+  size = backtrace (array, 10);
+  strings = backtrace_symbols (array, size);
+  if (strings != NULL)
+  {
+
+    printf ("Obtained %d stack frames.\n", size);
+    for (i = 0; i &lt; size; i++)
+      printf ("%s\n", strings[i]);
+  }
+
+  free (strings);
+}
+
+/* <replaceable>Köken arama listesini biraz daha ilginç hale getirmek
+   için (iç içelik olsun diye) bir işlev.</replaceable> */
+void
+dummy_function (void)
+{
+  print_trace ();
+}
+
+int
+main (void)
+{
+  dummy_function ();
+  return 0;
+}
+</screen>
+   </example>
+  </sect1>
+ </partintro>
 </part>

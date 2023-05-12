@@ -2,7 +2,808 @@
 <!-- ********************************************************************
         glibc/ch29.xml,v2.36, GFDL,LGPL, NBB, 2023
      ******************************************************************** -->
-<part xml:id="glibc-Name-Service-Switch">
+<part xml:id="glibc-System-Databases-and-Name-Service-Switch">
   <title>Sistem Veritabanları ve İsim Hizmetleri Seçimi</title>
   <titleabbrev>Sistem veritabanlarına erişim.</titleabbrev>
+ <preliminary>
+<!--span xml:id="glibc-index-Name-Service-Switch"></span>
+<span xml:id="glibc-index-NSS-1"></span>
+<span xml:id="glibc-index-databases"></span-->
+
+<para>Various functions in the C Library need to be configured to work
+correctly in the local environment.  Traditionally, this was done by
+using files (e.g., <filename>/etc/passwd</filename>), but other nameservices (like the
+Network Information Service (NIS) and the Domain Name Service (DNS))
+became popular, and were hacked into the C library, usually with a fixed
+search order.
+</para>
+<para>The GNU C Library contains a cleaner solution to this problem.  It is
+designed after a method used by Sun Microsystems in the C library of
+Solaris&nbsp;2.  The GNU C Library follows their name and calls this
+scheme <emphasis>Name Service Switch</emphasis> (NSS).
+</para>
+<para>Though the interface might be similar to Sun’s version there is no
+common code.  We never saw any source code of Sun’s implementation and
+so the internal interface is incompatible.  This also manifests in the
+file names we use as we will see later.
+</para>
+ </preliminary><!--
+<sect xml:id="glibc-NSS-Basics">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#NSS-Configuration-File" accesskey="n" rel="next">The NSS Configuration File</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Name-Service-Switch" accesskey="p" rel="prev">System Databases and Name Service Switch</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Name-Service-Switch" accesskey="u" rel="up">System Databases and Name Service Switch</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-NSS-Basics-1"></span><h3 class="section">29.1 NSS Basics</title>
+
+<para>The basic idea is to put the implementation of the different services
+offered to access the databases in separate modules.  This has some
+advantages:
+</para>
+<ol>
+<li> Contributors can add new services without adding them to the GNU C Library.
+</li><li> The modules can be updated separately.
+</li><li> The C library image is smaller.
+</li></ol>
+
+<para>To fulfill the first goal above, the ABI of the modules will be described
+below.  For getting the implementation of a new service right it is
+important to understand how the functions in the modules get called.
+They are in no way designed to be used by the programmer directly.
+Instead the programmer should only use the documented and standardized
+functions to access the databases.
+</para>
+<para>The databases available in the NSS are
+</para>
+<span xml:id="glibc-index-aliases"></span>
+<span xml:id="glibc-index-ethers"></span>
+<span xml:id="glibc-index-group"></span>
+<span xml:id="glibc-index-gshadow"></span>
+<span xml:id="glibc-index-hosts"></span>
+<span xml:id="glibc-index-initgroups"></span>
+<span xml:id="glibc-index-netgroup"></span>
+<span xml:id="glibc-index-networks"></span>
+<span xml:id="glibc-index-passwd"></span>
+<span xml:id="glibc-index-protocols"></span>
+<span xml:id="glibc-index-publickey"></span>
+<span xml:id="glibc-index-rpc"></span>
+<span xml:id="glibc-index-services"></span>
+<span xml:id="glibc-index-shadow"></span>
+<dl compact="compact">
+<dt><span><code>aliases</code></span></dt>
+<dd><para>Mail aliases
+</para></dd>
+<dt><span><code>ethers</code></span></dt>
+<dd><para>Ethernet numbers,
+</para></dd>
+<dt><span><code>group</code></span></dt>
+<dd><para>Groups of users, see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Group-Database">Group Database</a>.
+</para></dd>
+<dt><span><code>gshadow</code></span></dt>
+<dd><para>Group passphrase hashes and related information.
+</para></dd>
+<dt><span><code>hosts</code></span></dt>
+<dd><para>Host names and numbers, see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Host-Names">Host Names</a>.
+</para></dd>
+<dt><span><code>initgroups</code></span></dt>
+<dd><para>Supplementary group access list.
+</para></dd>
+<dt><span><code>netgroup</code></span></dt>
+<dd><para>Network wide list of host and users, see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Netgroup-Database">Netgroup Database</a>.
+</para></dd>
+<dt><span><code>networks</code></span></dt>
+<dd><para>Network names and numbers, see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Networks-Database">Networks Database</a>.
+</para></dd>
+<dt><span><code>passwd</code></span></dt>
+<dd><para>User identities, see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#User-Database">User Database</a>.
+</para></dd>
+<dt><span><code>protocols</code></span></dt>
+<dd><para>Network protocols, see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Protocols-Database">Protocols Database</a>.
+</para></dd>
+<dt><span><code>publickey</code></span></dt>
+<dd><para>Public keys for Secure RPC.
+</para></dd>
+<dt><span><code>rpc</code></span></dt>
+<dd><para>Remote procedure call names and numbers.
+</para></dd>
+<dt><span><code>services</code></span></dt>
+<dd><para>Network services, see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Services-Database">The Services Database</a>.
+</para></dd>
+<dt><span><code>shadow</code></span></dt>
+<dd><para>User passphrase hashes and related information.
+</para></dd>
+</dl>
+
+<para>More databases may be added later.
+</para>
+<hr>
+</div>
+<sect xml:id="glibc-NSS-Configuration-File">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#NSS-Module-Internals" accesskey="n" rel="next">NSS Module Internals</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#NSS-Basics" accesskey="p" rel="prev">NSS Basics</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Name-Service-Switch" accesskey="u" rel="up">System Databases and Name Service Switch</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-The-NSS-Configuration-File"></span><h3 class="section">29.2 The NSS Configuration File</title>
+
+<span xml:id="glibc-index-_002fetc_002fnsswitch_002econf"></span>
+<span xml:id="glibc-index-nsswitch_002econf"></span>
+<para>Somehow the NSS code must be told about the wishes of the user.  For
+this reason there is the file <filename>/etc/nsswitch.conf</filename>.  For each
+database, this file contains a specification of how the lookup process should
+work.  The file could look like this:
+</para>
+<div class="example">
+<pre class="example"># /etc/nsswitch.conf
+#
+# Name Service Switch configuration file.
+#
+
+passwd:     db files
+shadow:     files
+group:      db files
+
+hosts:      files dns
+networks:   files
+
+ethers:     db files
+protocols:  db files
+rpc:        db files
+services:   db files
+</pre></div>
+
+<para>The first column is the database as you can guess from the table above.
+The rest of the line specifies how the lookup process works.  Please
+note that you specify the way it works for each database individually.
+This cannot be done with the old way of a monolithic implementation.
+</para>
+<para>The configuration specification for each database can contain two
+different items:
+</para>
+<ul>
+<li> the service specification like <code>files</code>, <code>db</code>, or <code>nis</code>.
+</li><li> the reaction on lookup result like <code>[NOTFOUND=return]</code>.
+</li></ul>
+
+
+<ul class="section-toc">
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Services-in-the-NSS-configuration" accesskey="1">Services in the NSS configuration File</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Actions-in-the-NSS-configuration" accesskey="2">Actions in the NSS configuration</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Notes-on-NSS-Configuration-File" accesskey="3">Notes on the NSS Configuration File</a></li>
+</ul>
+<hr>
+<div class="subsection" xml:id="glibc-Services-in-the-NSS-configuration">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Actions-in-the-NSS-configuration" accesskey="n" rel="next">Actions in the NSS configuration</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#NSS-Configuration-File" accesskey="p" rel="prev">The NSS Configuration File</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#NSS-Configuration-File" accesskey="u" rel="up">The NSS Configuration File</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Services-in-the-NSS-configuration-File"></span><h4 class="subsection">29.2.1 Services in the NSS configuration File</title>
+
+<para>The above example file mentions five different services: <code>files</code>,
+<code>db</code>, <code>dns</code>, <code>nis</code>, and <code>nisplus</code>.  This does not
+mean these
+services are available on all sites and neither does it mean these are
+all the services which will ever be available.
+</para>
+<para>In fact, these names are simply strings which the NSS code uses to find
+the implicitly addressed functions.  The internal interface will be
+described later.  Visible to the user are the modules which implement an
+individual service.
+</para>
+<para>Assume the service <var>name</var> shall be used for a lookup.  The code for
+this service is implemented in a module called <filename>libnss_<var>name</var></filename>.
+On a system supporting shared libraries this is in fact a shared library
+with the name (for example) <filename>libnss_<var>name</var>.so.2</filename>.  The number
+at the end is the currently used version of the interface which will not
+change frequently.  Normally the user should not have to be cognizant of
+these files since they should be placed in a directory where they are
+found automatically.  Only the names of all available services are
+important.
+</para>
+<para>Lastly, some system software may make use of the NSS configuration file
+to store their own configuration for similar purposes.  Examples of this
+include the <code>automount</code> service which is used by <code>autofs</code>.
+</para>
+<hr>
+</div>
+<div class="subsection" xml:id="glibc-Actions-in-the-NSS-configuration">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Notes-on-NSS-Configuration-File" accesskey="n" rel="next">Notes on the NSS Configuration File</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Services-in-the-NSS-configuration" accesskey="p" rel="prev">Services in the NSS configuration File</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#NSS-Configuration-File" accesskey="u" rel="up">The NSS Configuration File</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Actions-in-the-NSS-configuration-1"></span><h4 class="subsection">29.2.2 Actions in the NSS configuration</title>
+
+<para>The second item in the specification gives the user much finer control
+on the lookup process.  Action items are placed between two service
+names and are written within brackets.  The general form is
+</para>
+<div class="display">
+<pre class="display"><code>[</code> ( <code>!</code>? <var>status</var> <code>=</code> <var>action</var> )+ <code>]</code>
+</pre></div>
+
+<para>where
+</para>
+<div class="example">
+<pre class="example"><var>status</var> ⇒ success | notfound | unavail | tryagain
+<var>action</var> ⇒ return | continue
+</pre></div>
+
+<para>The case of the keywords is insignificant.  The <var>status</var>
+values are the results of a call to a lookup function of a specific
+service.  They mean:
+</para>
+<dl compact="compact">
+<dt xml:id="glibc-index-success"><span>‘<filename>success</filename>’<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-success" class="copiable-anchor"> ¶</a></span></dt>
+<dd><para>No error occurred and the wanted entry is returned.  The default action
+for this is <code>return</code>.
+</para>
+</dd>
+<dt xml:id="glibc-index-notfound"><span>‘<filename>notfound</filename>’<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-notfound" class="copiable-anchor"> ¶</a></span></dt>
+<dd><para>The lookup process works ok but the needed value was not found.  The
+default action is <code>continue</code>.
+</para>
+</dd>
+<dt xml:id="glibc-index-unavail"><span>‘<filename>unavail</filename>’<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-unavail" class="copiable-anchor"> ¶</a></span></dt>
+<dd><span xml:id="glibc-index-DNS-server-unavailable"></span>
+<para>The service is permanently unavailable.  This can either mean the needed
+file is not available, or, for DNS, the server is not available or does
+not allow queries.  The default action is <code>continue</code>.
+</para>
+</dd>
+<dt xml:id="glibc-index-tryagain"><span>‘<filename>tryagain</filename>’<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-tryagain" class="copiable-anchor"> ¶</a></span></dt>
+<dd><para>The service is temporarily unavailable.  This could mean a file is
+locked or a server currently cannot accept more connections.  The
+default action is <code>continue</code>.
+</para></dd>
+</dl>
+
+<para>The <var>action</var> values mean:
+</para>
+<dl compact="compact">
+<dt xml:id="glibc-index-return"><span>‘<filename>return</filename>’<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-return" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>If the status matches, stop the lookup process at this service
+specification.  If an entry is available, provide it to the application.
+If an error occurred, report it to the application.  In case of a prior
+‘<filename>merge</filename>’ action, the data is combined with previous lookup results,
+as explained below.
+</para>
+</dd>
+<dt xml:id="glibc-index-continue"><span>‘<filename>continue</filename>’<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-continue" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>If the status matches, proceed with the lookup process at the next
+entry, discarding the result of the current lookup (and any merged
+data).  An exception is the ‘<filename>initgroups</filename>’ database and the
+‘<filename>success</filename>’ status, where ‘<filename>continue</filename>’ acts like <code>merge</code>
+below.
+</para>
+</dd>
+<dt xml:id="glibc-index-merge"><span>‘<filename>merge</filename>’<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-merge" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Proceed with the lookup process, retaining the current lookup result.
+This action is useful only with the ‘<filename>success</filename>’ status.  If a
+subsequent service lookup succeeds and has a matching ‘<filename>return</filename>’
+specification, the results are merged, the lookup process ends, and the
+merged results are returned to the application.  If the following service
+has a matching ‘<filename>merge</filename>’ action, the lookup process continues,
+retaining the combined data from this and any previous lookups.
+</para>
+<para>After a <code>merge</code> action, errors from subsequent lookups are ignored,
+and the data gathered so far will be returned.
+</para>
+<para>The ‘<filename>merge</filename>’ only applies to the ‘<filename>success</filename>’ status.  It is
+currently implemented for the ‘<filename>group</filename>’ database and its group
+members field, ‘<filename>gr_mem</filename>’.  If specified for other databases, it
+causes the lookup to fail (if the <var>status</var> matches).
+</para>
+<para>When processing ‘<filename>merge</filename>’ for ‘<filename>group</filename>’ membership, the group GID
+and name must be identical for both entries.  If only one or the other is
+a match, the behavior is undefined.
+</para>
+</dd>
+</dl>
+
+<para>If we have a line like
+</para>
+<div class="example">
+<pre class="example">ethers: nisplus [NOTFOUND=return] db files
+</pre></div>
+
+<para>this is equivalent to
+</para>
+<div class="example">
+<pre class="example">ethers: nisplus [SUCCESS=return NOTFOUND=return UNAVAIL=continue
+                 TRYAGAIN=continue]
+        db      [SUCCESS=return NOTFOUND=continue UNAVAIL=continue
+                 TRYAGAIN=continue]
+        files
+</pre></div>
+
+<para>(except that it would have to be written on one line).  The default
+value for the actions are normally what you want, and only need to be
+changed in exceptional cases.
+</para>
+<para>If the optional <code>!</code> is placed before the <var>status</var> this means
+the following action is used for all statuses but <var>status</var> itself.
+I.e., <code>!</code> is negation as in the C language (and others).
+</para>
+<para>Before we explain the exception which makes this action item necessary
+one more remark: obviously it makes no sense to add another action
+item after the <code>files</code> service.  Since there is no other service
+following the action <emphasis>always</emphasis> is <code>return</code>.
+</para>
+<span xml:id="glibc-index-nisplus_002c-and-completeness"></span>
+<para>Now, why is this <code>[NOTFOUND=return]</code> action useful?  To understand
+this we should know that the <code>nisplus</code> service is often
+complete; i.e., if an entry is not available in the NIS+ tables it is
+not available anywhere else.  This is what is expressed by this action
+item: it is useless to examine further services since they will not give
+us a result.
+</para>
+<span xml:id="glibc-index-nisplus_002c-and-booting"></span>
+<span xml:id="glibc-index-bootstrapping_002c-and-services"></span>
+<para>The situation would be different if the NIS+ service is not available
+because the machine is booting.  In this case the return value of the
+lookup function is not <code>notfound</code> but instead <code>unavail</code>.  And
+as you can see in the complete form above: in this situation the
+<code>db</code> and <code>files</code> services are used.  Neat, isn’t it?  The
+system administrator need not pay special care for the time the system
+is not completely ready to work (while booting or shutdown or
+network problems).
+</para>
+
+<hr>
+</div>
+<div class="subsection" xml:id="glibc-Notes-on-NSS-Configuration-File">
+<div class="header">
+<para>
+Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Actions-in-the-NSS-configuration" accesskey="p" rel="prev">Actions in the NSS configuration</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#NSS-Configuration-File" accesskey="u" rel="up">The NSS Configuration File</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Notes-on-the-NSS-Configuration-File"></span><h4 class="subsection">29.2.3 Notes on the NSS Configuration File</title>
+
+<para>Finally a few more hints.  The NSS implementation is not completely
+helpless if <filename>/etc/nsswitch.conf</filename> does not exist.  For
+all supported databases there is a default value so it should normally
+be possible to get the system running even if the file is corrupted or
+missing.
+</para>
+<span xml:id="glibc-index-default-value_002c-and-NSS"></span>
+<para>For the <code>hosts</code> and <code>networks</code> databases the default value is
+<code>files dns</code>.  I.e., local configuration will override the contents
+of the domain name system (DNS).
+</para>
+<para>The <code>passwd</code>, <code>group</code>, and <code>shadow</code> databases was
+traditionally handled in a special way.  The appropriate files in the
+<filename>/etc</filename> directory were read but if an entry with a name starting
+with a <code>+</code> character was found NIS was used.  This kind of lookup
+was removed and now the default value for the services is <code>files</code>.
+libnss_compat no longer depends on libnsl and can be used without NIS.
+</para>
+<para>For all other databases the default value is <code>files</code>.
+</para>
+<span xml:id="glibc-index-optimizing-NSS"></span>
+<para>A second point is that the user should try to optimize the lookup
+process.  The different service have different response times.
+A simple file look up on a local file could be fast, but if the file
+is long and the needed entry is near the end of the file this may take
+quite some time.  In this case it might be better to use the <code>db</code>
+service which allows fast local access to large data sets.
+</para>
+<para>Often the situation is that some global information like NIS must be
+used.  So it is unavoidable to use service entries like <code>nis</code> etc.
+But one should avoid slow services like this if possible.
+</para>
+
+<hr>
+</div>
+</div>
+<sect xml:id="glibc-NSS-Module-Internals">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Extending-NSS" accesskey="n" rel="next">Extending NSS</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#NSS-Configuration-File" accesskey="p" rel="prev">The NSS Configuration File</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Name-Service-Switch" accesskey="u" rel="up">System Databases and Name Service Switch</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-NSS-Module-Internals-1"></span><h3 class="section">29.3 NSS Module Internals</title>
+
+<para>Now it is time to describe what the modules look like.  The functions
+contained in a module are identified by their names.  I.e., there is no
+jump table or the like.  How this is done is of no interest here; those
+interested in this topic should read about Dynamic Linking.
+</para>
+
+
+<ul class="section-toc">
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#NSS-Module-Names" accesskey="1">The Naming Scheme of the NSS Modules</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#NSS-Modules-Interface" accesskey="2">The Interface of the Function in NSS Modules</a></li>
+</ul>
+<hr>
+<div class="subsection" xml:id="glibc-NSS-Module-Names">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#NSS-Modules-Interface" accesskey="n" rel="next">The Interface of the Function in NSS Modules</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#NSS-Module-Internals" accesskey="p" rel="prev">NSS Module Internals</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#NSS-Module-Internals" accesskey="u" rel="up">NSS Module Internals</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-The-Naming-Scheme-of-the-NSS-Modules"></span><h4 class="subsection">29.3.1 The Naming Scheme of the NSS Modules</title>
+
+<para>The name of each function consists of various parts:
+</para>
+<blockquote>
+<para>_nss_<var>service</var>_<var>function</var>
+</para></blockquote>
+
+<para><var>service</var> of course corresponds to the name of the module this
+function is found in.<a xml:id="glibc-DOCF4" href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#FOOT4"><sup>4</sup></a>  The <var>function</var> part is derived
+from the interface function in the C library itself.  If the user calls
+the function <code>gethostbyname</code> and the service used is <code>files</code>
+the function
+</para>
+<div class="example">
+<pre class="example">       _nss_files_gethostbyname_r
+</pre></div>
+
+<para>in the module
+</para>
+<div class="example">
+<pre class="example">       libnss_files.so.2
+</pre></div>
+
+<para><span xml:id="glibc-index-reentrant-NSS-functions"></span>
+is used.  You see, what is explained above in not the whole truth.  In
+fact the NSS modules only contain reentrant versions of the lookup
+functions.  I.e., if the user would call the <code>gethostbyname_r</code>
+function this also would end in the above function.  For all user
+interface functions the C library maps this call to a call to the
+reentrant function.  For reentrant functions this is trivial since the
+interface is (nearly) the same.  For the non-reentrant version the
+library keeps internal buffers which are used to replace the user
+supplied buffer.
+</para>
+<para>I.e., the reentrant functions <emphasis>can</emphasis> have counterparts.  No service
+module is forced to have functions for all databases and all kinds to
+access them.  If a function is not available it is simply treated as if
+the function would return <code>unavail</code>
+(see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Actions-in-the-NSS-configuration">Actions in the NSS configuration</a>).
+</para>
+<para>The file name <filename>libnss_files.so.2</filename> would be on a Solaris&nbsp;2
+system <filename>nss_files.so.2</filename>.  This is the difference mentioned above.
+Sun’s NSS modules are usable as modules which get indirectly loaded
+only.
+</para>
+<para>The NSS modules in the GNU C Library are prepared to be used as normal
+libraries themselves.  This is <emphasis>not</emphasis> true at the moment, though.
+However,  the organization of the name space in the modules does not make it
+impossible like it is for Solaris.  Now you can see why the modules are
+still libraries.<a xml:id="glibc-DOCF5" href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#FOOT5"><sup>5</sup></a>
+</para>
+
+<hr>
+</div>
+<div class="subsection" xml:id="glibc-NSS-Modules-Interface">
+<div class="header">
+<para>
+Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#NSS-Module-Names" accesskey="p" rel="prev">The Naming Scheme of the NSS Modules</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#NSS-Module-Internals" accesskey="u" rel="up">NSS Module Internals</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-The-Interface-of-the-Function-in-NSS-Modules"></span><h4 class="subsection">29.3.2 The Interface of the Function in NSS Modules</title>
+
+<para>Now we know about the functions contained in the modules.  It is now
+time to describe the types.  When we mentioned the reentrant versions of
+the functions above, this means there are some additional arguments
+(compared with the standard, non-reentrant versions).  The prototypes for
+the non-reentrant and reentrant versions of our function above are:
+</para>
+<div class="example">
+<pre class="example">struct hostent *gethostbyname (const char *name)
+
+int gethostbyname_r (const char *name, struct hostent *result_buf,
+                     char *buf, size_t buflen, struct hostent **result,
+                     int *h_errnop)
+</pre></div>
+
+<para>The actual prototype of the function in the NSS modules in this case is
+</para>
+<div class="example">
+<pre class="example">enum nss_status _nss_files_gethostbyname_r (const char *name,
+                                            struct hostent *result_buf,
+                                            char *buf, size_t buflen,
+                                            int *errnop, int *h_errnop)
+</pre></div>
+
+<para>I.e., the interface function is in fact the reentrant function with the
+change of the return value, the omission of the <var>result</var> parameter,
+and the addition of the <var>errnop</var> parameter.  While the user-level
+function returns a pointer to the result the reentrant function return
+an <code>enum nss_status</code> value:
+</para>
+<dl compact="compact">
+<dt xml:id="glibc-index-NSS_005fSTATUS_005fTRYAGAIN"><span><code>NSS_STATUS_TRYAGAIN</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-NSS_005fSTATUS_005fTRYAGAIN" class="copiable-anchor"> ¶</a></span></dt>
+<dd><para>numeric value <code>-2</code>
+</para>
+</dd>
+<dt xml:id="glibc-index-NSS_005fSTATUS_005fUNAVAIL"><span><code>NSS_STATUS_UNAVAIL</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-NSS_005fSTATUS_005fUNAVAIL" class="copiable-anchor"> ¶</a></span></dt>
+<dd><para>numeric value <code>-1</code>
+</para>
+</dd>
+<dt xml:id="glibc-index-NSS_005fSTATUS_005fNOTFOUND"><span><code>NSS_STATUS_NOTFOUND</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-NSS_005fSTATUS_005fNOTFOUND" class="copiable-anchor"> ¶</a></span></dt>
+<dd><para>numeric value <code>0</code>
+</para>
+</dd>
+<dt xml:id="glibc-index-NSS_005fSTATUS_005fSUCCESS"><span><code>NSS_STATUS_SUCCESS</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-NSS_005fSTATUS_005fSUCCESS" class="copiable-anchor"> ¶</a></span></dt>
+<dd><para>numeric value <code>1</code>
+</para></dd>
+</dl>
+
+<para>Now you see where the action items of the <filename>/etc/nsswitch.conf</filename> file
+are used.
+</para>
+<para>If you study the source code you will find there is a fifth value:
+<code>NSS_STATUS_RETURN</code>.  This is an internal use only value, used by a
+few functions in places where none of the above value can be used.  If
+necessary the source code should be examined to learn about the details.
+</para>
+<para>In case the interface function has to return an error it is important
+that the correct error code is stored in <code>*<var>errnop</var></code>.  Some
+return status values have only one associated error code, others have
+more.
+</para>
+<table>
+<tbody><tr><td width="30%"><code>NSS_STATUS_TRYAGAIN</code></td><td width="20%"><code>EAGAIN</code></td><td width="50%">One of the functions used ran temporarily out of
+resources or a service is currently not available.</td></tr>
+<tr><td width="30%"></td><td width="20%"><code>ERANGE</code></td><td width="50%">The provided buffer is not large enough.
+The function should be called again with a larger buffer.</td></tr>
+<tr><td width="30%"><code>NSS_STATUS_UNAVAIL</code></td><td width="20%"><code>ENOENT</code></td><td width="50%">A necessary input file cannot be found.</td></tr>
+<tr><td width="30%"><code>NSS_STATUS_NOTFOUND</code></td><td width="20%"><code>ENOENT</code></td><td width="50%">The requested entry is not available.</td></tr>
+<tr><td width="30%"><code>NSS_STATUS_NOTFOUND</code></td><td width="20%"><code>SUCCESS</code></td><td width="50%">There are no entries.
+Use this to avoid returning errors for inactive services which may
+be enabled at a later time. This is not the same as the service
+being temporarily unavailable.</td></tr>
+</tbody></table>
+
+<para>These are proposed values.  There can be other error codes and the
+described error codes can have different meaning.  <strong>With one
+exception:</strong> when returning <code>NSS_STATUS_TRYAGAIN</code> the error code
+<code>ERANGE</code> <emphasis>must</emphasis> mean that the user provided buffer is too
+small.  Everything else is non-critical.
+</para>
+<para>In statically linked programs, the main application and NSS modules do
+not share the same thread-local variable <code>errno</code>, which is the
+reason why there is an explicit <var>errnop</var> function argument.
+</para>
+<para>The above function has something special which is missing for almost all
+the other module functions.  There is an argument <var>h_errnop</var>.  This
+points to a variable which will be filled with the error code in case
+the execution of the function fails for some reason.  (In statically
+linked programs, the thread-local variable <code>h_errno</code> is not shared
+with the main application.)
+</para>
+<para>The <code>get<var>XXX</var>by<var>YYY</var></code> functions are the most important
+functions in the NSS modules.  But there are others which implement
+the other ways to access system databases (say for the
+user database, there are <code>setpwent</code>, <code>getpwent</code>, and
+<code>endpwent</code>).  These will be described in more detail later.
+Here we give a general way to determine the
+signature of the module function:
+</para>
+<ul>
+<li> the return value is <code>enum nss_status</code>;
+</li><li> the name (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#NSS-Module-Names">The Naming Scheme of the NSS Modules</a>);
+</li><li> the first arguments are identical to the arguments of the non-reentrant
+function;
+</li><li> the next four arguments are:
+
+<dl compact="compact">
+<dt><span><code>STRUCT_TYPE *result_buf</code></span></dt>
+<dd><para>pointer to buffer where the result is stored.  <code>STRUCT_TYPE</code> is
+normally a struct which corresponds to the database.
+</para></dd>
+<dt><span><code>char *buffer</code></span></dt>
+<dd><para>pointer to a buffer where the function can store additional data for
+the result etc.
+</para></dd>
+<dt><span><code>size_t buflen</code></span></dt>
+<dd><para>length of the buffer pointed to by <var>buffer</var>.
+</para></dd>
+<dt><span><code>int *errnop</code></span></dt>
+<dd><para>the low-level error code to return to the application.  If the return
+value is not <code>NSS_STATUS_SUCCESS</code>, <code>*<var>errnop</var></code> needs to be
+set to a non-zero value.  An NSS module should never set
+<code>*<var>errnop</var></code> to zero.  The value <code>ERANGE</code> is special, as
+described above.
+</para></dd>
+</dl>
+
+</li><li> possibly a last argument <var>h_errnop</var>, for the host name and network
+name lookup functions.  If the return value is not
+<code>NSS_STATUS_SUCCESS</code>, <code>*<var>h_errnop</var></code> needs to be set to a
+non-zero value.  A generic error code is <code>NETDB_INTERNAL</code>, which
+instructs the caller to examine <code>*<var>errnop</var></code> for further
+details.  (This includes the <code>ERANGE</code> special case.)
+</li></ul>
+
+<para>This table is correct for all functions but the <code>set…ent</code>
+and <code>end…ent</code> functions.
+</para>
+
+<hr>
+</div>
+</div>
+<sect xml:id="glibc-Extending-NSS">
+<div class="header">
+<para>
+Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#NSS-Module-Internals" accesskey="p" rel="prev">NSS Module Internals</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Name-Service-Switch" accesskey="u" rel="up">System Databases and Name Service Switch</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Extending-NSS-1"></span><h3 class="section">29.4 Extending NSS</title>
+
+<para>One of the advantages of NSS mentioned above is that it can be extended
+quite easily.  There are two ways in which the extension can happen:
+adding another database or adding another service.  The former is
+normally done only by the C library developers.  It is
+here only important to remember that adding another database is
+independent from adding another service because a service need not
+support all databases or lookup functions.
+</para>
+<para>A designer/implementer of a new service is therefore free to choose the
+databases s/he is interested in and leave the rest for later (or
+completely aside).
+</para>
+
+<ul class="section-toc">
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Adding-another-Service-to-NSS" accesskey="1">Adding another Service to NSS</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#NSS-Module-Function-Internals" accesskey="2">Internals of the NSS Module Functions</a></li>
+</ul>
+<hr>
+<div class="subsection" xml:id="glibc-Adding-another-Service-to-NSS">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#NSS-Module-Function-Internals" accesskey="n" rel="next">Internals of the NSS Module Functions</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Extending-NSS" accesskey="p" rel="prev">Extending NSS</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Extending-NSS" accesskey="u" rel="up">Extending NSS</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Adding-another-Service-to-NSS-1"></span><h4 class="subsection">29.4.1 Adding another Service to NSS</title>
+
+<para>The sources for a new service need not (and should not) be part of the GNU C Library
+itself.  The developer retains complete control over the
+sources and its development.  The links between the C library and the
+new service module consists solely of the interface functions.
+</para>
+<para>Each module is designed following a specific interface specification.
+For now the version is 2 (the interface in version 1 was not adequate)
+and this manifests in the version number of the shared library object of
+the NSS modules: they have the extension <code>.2</code>.  If the interface
+changes again in an incompatible way, this number will be increased.
+Modules using the old interface will still be usable.
+</para>
+<para>Developers of a new service will have to make sure that their module is
+created using the correct interface number.  This means the file itself
+must have the correct name and on ELF systems the <emphasis>soname</emphasis> (Shared
+Object Name) must also have this number.  Building a module from a bunch
+of object files on an ELF system using GNU CC could be done like this:
+</para>
+<div class="example">
+<pre class="example">gcc -shared -o libnss_NAME.so.2 -Wl,-soname,libnss_NAME.so.2 OBJECTS
+</pre></div>
+
+<para><a data-manual="gcc" href="https://gcc.gnu.org/onlinedocs/gcc/Link-Options.html#Link-Options">Options for Linking</a> in <cite>GNU CC</cite>, to learn
+more about this command line.
+</para>
+<para>To use the new module the library must be able to find it.  This can be
+achieved by using options for the dynamic linker so that it will search
+the directory where the binary is placed.  For an ELF system this could be
+done by adding the wanted directory to the value of
+<code>LD_LIBRARY_PATH</code>.
+</para>
+<para>But this is not always possible since some programs (those which run
+under IDs which do not belong to the user) ignore this variable.
+Therefore the stable version of the module should be placed into a
+directory which is searched by the dynamic linker.  Normally this should
+be the directory <filename>$prefix/lib</filename>, where <filename>$prefix</filename> corresponds to
+the value given to configure using the <code>&#45;&#45;prefix</code> option.  But be
+careful: this should only be done if it is clear the module does not
+cause any harm.  System administrators should be careful.
+</para>
+
+<hr>
+</div>
+<div class="subsection" xml:id="glibc-NSS-Module-Function-Internals">
+<div class="header">
+<para>
+Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Adding-another-Service-to-NSS" accesskey="p" rel="prev">Adding another Service to NSS</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Extending-NSS" accesskey="u" rel="up">Extending NSS</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Internals-of-the-NSS-Module-Functions"></span><h4 class="subsection">29.4.2 Internals of the NSS Module Functions</title>
+
+<para>Until now we only provided the syntactic interface for the functions in
+the NSS module.  In fact there is not much more we can say since the
+implementation obviously is different for each function.  But a few
+general rules must be followed by all functions.
+</para>
+<para>In fact there are four kinds of different functions which may appear in
+the interface.  All derive from the traditional ones for system databases.
+<var>db</var> in the following table is normally an abbreviation for the
+database (e.g., it is <code>pw</code> for the user database).
+</para>
+<dl compact="compact">
+<dt><span><code>enum nss_status _nss_<var>database</var>_set<var>db</var>ent (void)</code></span></dt>
+<dd><para>This function prepares the service for following operations.  For a
+simple file based lookup this means files could be opened, for other
+services this function simply is a noop.
+</para>
+<para>One special case for this function is that it takes an additional
+argument for some <var>database</var>s (i.e., the interface is
+<code>int set<var>db</var>ent (int)</code>).  <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Host-Names">Host Names</a>, which describes the
+<code>sethostent</code> function.
+</para>
+<para>The return value should be <var>NSS_STATUS_SUCCESS</var> or according to the
+table above in case of an error (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#NSS-Modules-Interface">The Interface of the Function in NSS Modules</a>).
+</para>
+</dd>
+<dt><span><code>enum nss_status _nss_<var>database</var>_end<var>db</var>ent (void)</code></span></dt>
+<dd><para>This function simply closes all files which are still open or removes
+buffer caches.  If there are no files or buffers to remove this is again
+a simple noop.
+</para>
+<para>There normally is no return value other than <var>NSS_STATUS_SUCCESS</var>.
+</para>
+</dd>
+<dt><span><code>enum nss_status _nss_<var>database</var>_get<var>db</var>ent_r (<var>STRUCTURE</var> *result, char *buffer, size_t buflen, int *errnop)</code></span></dt>
+<dd><para>Since this function will be called several times in a row to retrieve
+one entry after the other it must keep some kind of state.  But this
+also means the functions are not really reentrant.  They are reentrant
+only in that simultaneous calls to this function will not try to
+write the retrieved data in the same place (as it would be the case for
+the non-reentrant functions); instead, it writes to the structure
+pointed to by the <var>result</var> parameter.  But the calls share a common
+state and in the case of a file access this means they return neighboring
+entries in the file.
+</para>
+<para>The buffer of length <var>buflen</var> pointed to by <var>buffer</var> can be used
+for storing some additional data for the result.  It is <emphasis>not</emphasis>
+guaranteed that the same buffer will be passed for the next call of this
+function.  Therefore one must not misuse this buffer to save some state
+information from one call to another.
+</para>
+<para>Before the function returns with a failure code, the implementation
+should store the value of the local <code>errno</code> variable in the variable
+pointed to be <var>errnop</var>.  This is important to guarantee the module
+working in statically linked programs.  The stored value must not be
+zero.
+</para>
+<para>As explained above this function could also have an additional last
+argument.  This depends on the database used; it happens only for
+<code>host</code> and <code>networks</code>.
+</para>
+<para>The function shall return <code>NSS_STATUS_SUCCESS</code> as long as there are
+more entries.  When the last entry was read it should return
+<code>NSS_STATUS_NOTFOUND</code>.  When the buffer given as an argument is too
+small for the data to be returned <code>NSS_STATUS_TRYAGAIN</code> should be
+returned.  When the service was not formerly initialized by a call to
+<code>_nss_<var>DATABASE</var>_set<var>db</var>ent</code> all return values allowed for
+this function can also be returned here.
+</para>
+</dd>
+<dt><span><code>enum nss_status _nss_<var>DATABASE</var>_get<var>db</var>by<var>XX</var>_r (<var>PARAMS</var>, <var>STRUCTURE</var> *result, char *buffer, size_t buflen, int *errnop)</code></span></dt>
+<dd><para>This function shall return the entry from the database which is
+addressed by the <var>PARAMS</var>.  The type and number of these arguments
+vary.  It must be individually determined by looking to the user-level
+interface functions.  All arguments given to the non-reentrant version
+are here described by <var>PARAMS</var>.
+</para>
+<para>The result must be stored in the structure pointed to by <var>result</var>.
+If there are additional data to return (say strings, where the
+<var>result</var> structure only contains pointers) the function must use the
+<var>buffer</var> of length <var>buflen</var>.  There must not be any references
+to non-constant global data.
+</para>
+<para>The implementation of this function should honor the <var>stayopen</var>
+flag set by the <code>set<var>DB</var>ent</code> function whenever this makes sense.
+</para>
+<para>Before the function returns, the implementation should store the value of
+the local <code>errno</code> variable in the variable pointed to by
+<var>errnop</var>.  This is important to guarantee the module works in
+statically linked programs.
+</para>
+<para>Again, this function takes an additional last argument for the
+<code>host</code> and <code>networks</code> database.
+</para>
+<para>The return value should as always follow the rules given above
+(see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#NSS-Modules-Interface">The Interface of the Function in NSS Modules</a>).
+</para>
+</dd>
+</dl>
+<hr>
+</div>
+</div>
+</div-->
 </part>

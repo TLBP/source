@@ -2,7 +2,281 @@
 <!-- ********************************************************************
         glibc/ch27.xml,v2.36, GFDL,LGPL, NBB, 2023
      ******************************************************************** -->
-<part xml:id="glibc-Process-Communication">
-  <title>Süreçler Arası İletişim</title>
-  <titleabbrev>Süreçler arası iletişim ile ilgili herşey.</titleabbrev>
+<part xml:id="glibc-Inter-Process-Communication">
+ <title>Süreçler Arası İletişim</title>
+ <titleabbrev>Süreçler arası iletişim ile ilgili herşey.</titleabbrev>
+ <partintro>
+  <?dbhtml stop-chunking?>
+  <para>
+   Bu oylumda &glibc; süreçler arası iletişim ilkelleri açıklanmıştır.
+  </para>
+  <sect1 xml:id="glibc-Semaphores" userlevel="notoc">
+   <title>Semaforlar</title>
+   <titleabbrev>Semaforları oluşturma ve yönetme desteği.</titleabbrev>
+   <para>
+    <indexterm linkend="glibc-cp"><primary>semaforlar</primary></indexterm>
+    &glibc; semafor arayüzlerini POSIX ve System V'te tanımlandığı şekilde gerçekler. Semaforlar, paylaşılan kaynakları eşgüdümlemek için birden çok süreç tarafından kullanılabilir. &glibc; tarafından sağlanan semafor işlevlerinin tam listesi aşağıdadır.
+   </para>
+   <sect2 xml:id="glibc-System-V-Semaphores">
+    <title>System V Semaforları</title>
+    <csynopsis>
+     <indexterm linkend="glibc-fn" xml:id="glibc-fn-semctl"><primary>semctl</primary></indexterm>
+     <csproto type="işlev" varargs="">
+      <csname><type>int</type><function>semctl</function></csname>
+      <csparam><type>int</type><parameter>semid</parameter></csparam>
+      <csparam><type>int</type><parameter>semnum</parameter></csparam>
+      <csparam><type>int</type><parameter>cmd</parameter></csparam>
+     </csproto>
+     <header><filename>sys/types.h</filename></header>
+     <header><filename>sys/ipc.h</filename></header>
+     <header><filename>sys/sem.h</filename></header>
+     <conceptlist>
+      <concept>&mtsafe;</concept>
+      <concept>&assafe;</concept>
+      <concept>&acunsafe; &corrupt;<code linkend="glibc-safety-condition">/linux</code></concept>
+     </conceptlist>
+     <para>
+      Ayrıntılı bilgi <uri xl:href="man2-semctl"/> kılavuz sayfasından edinilebilir.<!--code>semctl</code> işlevi <parameter>semid</parameter> tarafından tanımlanan System V semafor kümesinde veya o kümenin <parameter>semnum</parameter>-uncu semaforunda <parameter>cmd</parameter> tarafından belirtilen denetim işlemini gerçekleştirir. (Bir kümedeki semaforlar <code>0</code>'dan başlayarak numaralandırılır.)
+     </para>
+     <para>
+      Bu işlev <parameter>cmd</parameter> bağımsız değişkenine bağlı olarak üç veya dört bağımsız değişken alır. Dördüncüsü varsa  <type>union&#160;semun</type> türündedir.-->
+     </para>
+    </csynopsis>
+    <csynopsis>
+      <indexterm linkend="glibc-fn" xml:id="glibc-fn-semget"><primary>semget</primary></indexterm>
+     <csproto type="işlev">
+      <csname><type>int</type><function>semget</function></csname>
+      <csparam><type>key_t</type><parameter>key</parameter></csparam>
+      <csparam><type>int</type><parameter>nsems</parameter></csparam>
+      <csparam><type>int</type><parameter>semflg</parameter></csparam>
+     </csproto>
+     <header><filename>sys/types.h</filename></header>
+     <header><filename>sys/ipc.h</filename></header>
+     <header><filename>sys/sem.h</filename></header>
+     <conceptlist>
+      <concept>&mtsafe;</concept>
+      <concept>&assafe;</concept>
+      <concept>&acsafe;</concept>
+     </conceptlist>
+     <para>
+       Ayrıntılı bilgi <uri xl:href="man2-semget"/> kılavuz sayfasından edinilebilir.<!--<code>semget</code> işlevi <parameter>key</parameter> ile ilişkili System V semafor kümesi tanıtıcısı ile döner. İşlev ya yeni bir küme oluşturmak için ya da evvelce oluşturulmuş bir kümenin tanıtıcısını edinmek için (<parameter>semflg</parameter> bağımsız değişkeni <code>0</code> ise ve <parameter>key</parameter> değeri <varname>IPC_PRIVATE</varname> değilse) kullanılabilir.
+     </para>
+     <para>
+       <parameter>nsems</parameter> semaforluk yeni bir küme ya <parameter>key</parameter> değeri <varname>IPC_PRIVATE</varname> ise ya da <parameter>key</parameter> ile ilişkili bir semafor kümesinin olmadığı durumda <parameter>semflg</parameter> değeri <varname>IPC_CREAT</varname>I ise oluşturulabilir.-->
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-fn" xml:id="glibc-fn-semop"><primary>semop</primary></indexterm>
+     <csproto type="işlev">
+      <csname><type>int</type><function>semop</function></csname>
+      <csparam><type>int</type><parameter>semid</parameter></csparam>
+      <csparam><ptr>struct&#160;sembuf</ptr><parameter>sops</parameter></csparam>
+      <csparam><type>size_t</type><parameter>nsops</parameter></csparam>
+     </csproto>
+     <header><filename>sys/types.h</filename></header>
+     <header><filename>sys/ipc.h</filename></header>
+     <header><filename>sys/sem.h</filename></header>
+     <conceptlist>
+      <concept>&mtsafe;</concept>
+      <concept>&assafe;</concept>
+      <concept>&acsafe;</concept>
+     </conceptlist>
+     <para>
+      Ayrıntılı bilgi <uri xl:href="man2-semop"/> kılavuz sayfasından edinilebilir.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-fn" xml:id="glibc-fn-semtimedop"><primary>semtimedop</primary></indexterm>
+     <csproto type="işlev">
+      <csname><type>int</type><function>semtimedop</function></csname>
+      <csparam><type>int</type><parameter>semid</parameter></csparam>
+      <csparam><ptr>struct&#160;sembuf</ptr><parameter>sops</parameter></csparam>
+      <csparam><type>size_t</type><parameter>nsops</parameter></csparam>
+      <csparam><ptr>const&#160;struct&#160;timespec</ptr><parameter>timeout</parameter></csparam>
+     </csproto>
+     <header><filename>sys/types.h</filename></header>
+     <header><filename>sys/ipc.h</filename></header>
+     <header><filename>sys/sem.h</filename></header>
+     <conceptlist>
+      <concept>&mtsafe;</concept>
+      <concept>&assafe;</concept>
+      <concept>&acsafe;</concept>
+     </conceptlist>
+     <para>
+      Ayrıntılı bilgi <uri xl:href="man2-semtimedop"/> kılavuz sayfasından edinilebilir.
+     </para>
+    </csynopsis>
+   </sect2>
+   <sect2 xml:id="glibc-POSIX-Semaphores">
+    <title>POSIX Semaforları</title>
+    <csynopsis>
+     <indexterm linkend="glibc-fn" xml:id="glibc-fn-sem_init"><primary>sem_init</primary></indexterm>
+     <csproto type="işlev">
+      <csname><type>int</type><function>sem_init</function></csname>
+      <csparam><ptr>sem_t</ptr><parameter>sem</parameter></csparam>
+      <csparam><type>int</type><parameter>pshared</parameter></csparam>
+      <csparam><type>unsigned&#160;int</type><parameter>value</parameter></csparam>
+     </csproto>
+     <header><filename>semaphore.h</filename></header>
+     <conceptlist>
+      <concept>&mtsafe;</concept>
+      <concept>&assafe;</concept>
+      <concept>&acunsafe; &corrupt;</concept>
+     </conceptlist>
+     <para>
+      Ayrıntılı bilgi <uri xl:href="man3-sem_init"/> kılavuz sayfasından edinilebilir.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-fn" xml:id="glibc-fn-sem_destroy"><primary>sem_destroy</primary></indexterm>
+     <csproto type="işlev">
+      <csname><type>int</type><function>sem_destroy</function></csname>
+      <csparam><ptr>sem_t</ptr><parameter>sem</parameter></csparam>
+     </csproto>
+     <header><filename>semaphore.h</filename></header>
+     <conceptlist>
+      <concept>&mtsafe;</concept>
+      <concept>&assafe;</concept>
+      <concept>&acsafe;</concept>
+     </conceptlist>
+     <para>
+      Ayrıntılı bilgi <uri xl:href="man3-sem_destroy"/> kılavuz sayfasından edinilebilir.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-fn" xml:id="glibc-fn-sem_open"><primary>sem_open</primary></indexterm>
+     <csproto type="işlev" varargs="">
+      <csname><ptr>sem_t</ptr><function>sem_open</function></csname>
+      <csparam><ptr>const&#160;char</ptr><parameter>name</parameter></csparam>
+      <csparam><type>int</type><parameter>oflag</parameter></csparam>
+     </csproto>
+     <header>&fcntl.h;</header>
+     <header>&sys-stat.h;</header>
+     <header><filename>semaphore.h</filename></header>
+     <conceptlist>
+      <concept>&mtsafe;</concept>
+      <concept>&asunsafe; &init;</concept>
+      <concept>&acunsafe; &init;</concept>
+     </conceptlist>
+     <para>
+      Ayrıntılı bilgi <uri xl:href="man3-sem_open"/> kılavuz sayfasından edinilebilir.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-fn" xml:id="glibc-fn-sem_close"><primary>sem_close</primary></indexterm>
+     <csproto type="işlev">
+      <csname><type>int</type><function>sem_close</function></csname>
+      <csparam><ptr>sem_t</ptr><parameter>sem</parameter></csparam>
+     </csproto>
+     <header><filename>semaphore.h</filename></header>
+     <conceptlist>
+      <concept>&mtsafe;</concept>
+      <concept>&asunsafe; &lock;</concept>
+      <concept>&acunsafe; &lock;</concept>
+     </conceptlist>
+     <para>
+      Ayrıntılı bilgi <uri xl:href="man3-sem_close"/> kılavuz sayfasından edinilebilir.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-fn" xml:id="glibc-fn-sem_unlink"><primary>sem_unlink</primary></indexterm>
+     <csproto type="işlev">
+      <csname><type>int</type><function>sem_unlink</function></csname>
+      <csparam><ptr>const&#160;char</ptr><parameter>name</parameter></csparam>
+     </csproto>
+     <header><filename>semaphore.h</filename></header>
+     <conceptlist>
+      <concept>&mtsafe;</concept>
+      <concept>&asunsafe; &init;</concept>
+      <concept>&acunsafe; &corrupt;</concept>
+     </conceptlist>
+     <para>
+      Ayrıntılı bilgi <uri xl:href="man3-sem_unlink"/> kılavuz sayfasından edinilebilir.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-fn" xml:id="glibc-fn-sem_wait"><primary>sem_wait</primary></indexterm>
+     <csproto type="işlev">
+      <csname><type>int</type><function>sem_wait</function></csname>
+      <csparam><ptr>sem_t</ptr><parameter>sem</parameter></csparam>
+     </csproto>
+     <header><filename>semaphore.h</filename></header>
+     <conceptlist>
+      <concept>&mtsafe;</concept>
+      <concept>&assafe;</concept>
+      <concept>&acunsafe; &corrupt;</concept>
+     </conceptlist>
+     <para>
+      Ayrıntılı bilgi <uri xl:href="man3-sem_wait"/> kılavuz sayfasından edinilebilir.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-fn" xml:id="glibc-fn-sem_timedwait"><primary>sem_timedwait</primary></indexterm>
+     <csproto type="işlev">
+      <csname><type>int</type><function>sem_timedwait</function></csname>
+      <csparam><ptr>sem_t</ptr><parameter>sem</parameter></csparam>
+      <csparam><ptr>const&#160;struct&#160;timespec</ptr><parameter>abstime</parameter></csparam>
+     </csproto>
+     <header><filename>semaphore.h</filename></header>
+     <conceptlist>
+      <concept>&mtsafe;</concept>
+      <concept>&assafe;</concept>
+      <concept>&acunsafe; &corrupt;</concept>
+     </conceptlist>
+     <para>
+      Ayrıntılı bilgi <uri xl:href="man3-sem_timedwait"/> kılavuz sayfasından edinilebilir.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-fn" xml:id="glibc-fn-sem_trywait"><primary>sem_trywait</primary></indexterm>
+     <csproto type="işlev">
+      <csname><type>int</type><function>sem_trywait</function></csname>
+      <csparam><ptr>sem_t</ptr><parameter>sem</parameter></csparam>
+     </csproto>
+     <header><filename>semaphore.h</filename></header>
+     <conceptlist>
+      <concept>&mtsafe;</concept>
+      <concept>&assafe;</concept>
+      <concept>&assafe;</concept>
+     </conceptlist>
+     <para>
+      Ayrıntılı bilgi <uri xl:href="man3-sem_trywait"/> kılavuz sayfasından edinilebilir.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-fn" xml:id="glibc-fn-sem_post"><primary>sem_post</primary></indexterm>
+     <csproto type="işlev">
+      <csname><type>int</type><function>sem_post</function></csname>
+      <csparam><ptr>sem_t</ptr><parameter>sem</parameter></csparam>
+     </csproto>
+     <header><filename>semaphore.h</filename></header>
+     <conceptlist>
+      <concept>&mtsafe;</concept>
+      <concept>&assafe;</concept>
+      <concept>&assafe;</concept>
+     </conceptlist>
+     <para>
+      Ayrıntılı bilgi <uri xl:href="man3-sem_post"/> kılavuz sayfasından edinilebilir.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-fn" xml:id="glibc-fn-sem_getvalue"><primary>sem_getvalue</primary></indexterm>
+     <csproto type="işlev">
+      <csname><type>int</type><function>sem_getvalue</function></csname>
+      <csparam><ptr>sem_t</ptr><parameter>sem</parameter></csparam>
+      <csparam><ptr>int</ptr><parameter>sval</parameter></csparam>
+     </csproto>
+     <header><filename>semaphore.h</filename></header>
+     <conceptlist>
+      <concept>&mtsafe;</concept>
+      <concept>&assafe;</concept>
+      <concept>&assafe;</concept>
+     </conceptlist>
+     <para>
+      Ayrıntılı bilgi <uri xl:href="man3-sem_getvalue"/> kılavuz sayfasından edinilebilir.
+     </para>
+    </csynopsis>
+   </sect2>
+  </sect1>
+ </partintro>
 </part>

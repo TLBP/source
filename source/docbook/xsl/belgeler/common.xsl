@@ -74,7 +74,7 @@ bunu yapmak yerine xml:id'lerle değişmez id'ler oluşturmak daha iyidir. -->
 <xsl:param name="chunk.first.sections">1</xsl:param>
 <xsl:param name="chunk.section.depth">2</xsl:param>
 <!-- Bölümleme durdurulabiliyor. Kök altındaki
-chapter appendix, article gibi elemanların ilk satırına
+chapter appendix, article, sect1 gibi elemanların ilk satırına
   <?dbhtml stop-chunking?>
 yerleştirilirse o elamanın içeriği tek sayfada üretilir.
 Henüz bu yolla tek sayfalık bir book oluşturulamıyor. -->
@@ -85,8 +85,7 @@ Henüz bu yolla tek sayfalık bir book oluşturulamıyor. -->
 notoc: toc üretilmez
 longtoc: sect5'e kadar inilir
 onelevel: ilk başlık ve 1. seviye (genelde sect1'e kadar).
-set ve book öntanımlı olarak ilk başlıkları listeler.
--->
+set ve book öntanımlı olarak ilk başlıkları listeler. -->
 <xsl:param name="root.filename"/>
 <xsl:param name="use.id.as.filename">1</xsl:param>
 <xsl:param name="admon.graphics.path">images/xsl/</xsl:param>
@@ -112,30 +111,30 @@ sect5     nop
 section   nop
 set       toc,title
 </xsl:param>
-<!-- Seçimlik olarak sect1 altında <?dbhtml chunkthis?> pi ile sect2'leri
-chunk edebiliyoruz. (yukarıda sect1 nop olsa bile). Yalnız chunk edilen sect1'lerde
-toc üretiyoruz. Toc'un metnin alt veya üstünde kalması preliminary etiketi ile
-ayarlanabiliyor (varsa toc metnin altında, yoksa üstünde). İlk sect2 @userlevel
-varlığına bağlı olarak (değeri önemsiz, notchunk yazdığını varsayıyoruz)
-@userlevel varsa o ilk sect2 chunk edilmiyor, yoksa o ilk sect2 chunk ediliyor.
-Navigation bunlara uygun olarak değişiyor. -->
 <xsl:param name="part.autolabel">1</xsl:param>
 <xsl:param name="label.from.part">1</xsl:param>
 <xsl:param name="component.label.includes.part.label" select="1"/>
+<xsl:param name="html.stylesheet">style/nav.css</xsl:param>
 <!-- sözlük yapılandırılınca silinecek -->
 <xsl:template match="d:dicterm|d:english|d:turkish"/>
 
 <xsl:template name="user.head.content">
  <meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
- <link rel="stylesheet" type="text/css" href="/style/belgeler.css"/>
- <link rel="stylesheet" type="text/css" href="/style/nav.css"/>
  <link rel="icon" type="image/png" href="/images/belgeler-logo.png"/>
 </xsl:template>
 
 <xsl:template name="root.attributes">
  <xsl:attribute name="lang">tr</xsl:attribute>
  <xsl:attribute name="xml:lang">tr</xsl:attribute>
+</xsl:template>
+
+<xsl:template name="user.footer.content">
+ <footer>
+  <div align="center" class="footer">
+   <small>Bir <a href="http://belgeler.org.tr/">Linux Kitaplığı</a> Sayfası</small>
+  </div>
+ </footer>
 </xsl:template>
 
 <!-- Belgelerden kişisel eposta adresleri kaldırıldı (Şubat 2022) -->
@@ -430,18 +429,6 @@ Navigation bunlara uygun olarak değişiyor. -->
 
 <xsl:template match="d:keyword">
   <xsl:call-template name="inline.monoseq"/>
-</xsl:template>
-
-<xsl:template match="d:operator">
-  <xsl:call-template name="inline.boldmonoseq"/>
-</xsl:template>
-
-<xsl:template match="d:type">
-  <xsl:call-template name="inline.monoseq"/>
-</xsl:template>
-
-<xsl:template match="d:statement">
-  <xsl:call-template name="inline.boldmonoseq"/>
 </xsl:template>
 
 <xsl:template name="string.replace">
@@ -991,8 +978,12 @@ footnote text gets an id of #ftn.@id. They cross link to each other. -->
   <tt><xsl:apply-templates/></tt>
 </xsl:template>
 
-<xsl:template match="d:optional|d:structfield">
-  <tt><xsl:apply-templates/></tt>
+<xsl:template match="d:optional">
+  <xsl:call-template name="inline.italicmonoseq"/>
+</xsl:template>
+
+<xsl:template match="d:structfield">
+  <xsl:call-template name="inline.boldmonoseq"/>
 </xsl:template>
 
 <xsl:template match="article-w3cinfo|atomEntry|cover|dicterm|english|

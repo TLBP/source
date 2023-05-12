@@ -13,8 +13,8 @@ do
 done
 
 # Dosyaları derle (xsltproc)
-LANG=C xsltproc -o $prefix/beni.sil \
-manderle.xsl manpages-tr.xml
+xsltproc --xinclude -o $prefix/beni.sil \
+         manderle.xsl manpages-tr.xml
 
 # XML ağacının çıktılanmayan bölümlerinin yazılamadığı dosyayı sil
 rm -f $prefix/beni.sil

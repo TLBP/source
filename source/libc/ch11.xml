@@ -2,7 +2,314 @@
 <!-- ********************************************************************
         glibc/ch11.xml,v2.36, GFDL,LGPL, NBB, 2023
      ******************************************************************** -->
-<part xml:id="glibc-I-O-Overview">
-  <title>Girdi/Çiktı İşlemlerine Giriş</title>
-  <titleabbrev>G/Ç oluşumlarına giriş.</titleabbrev>
+<part xml:id="glibc-I-O-Overview" userlevel="longtoc">
+ <title>Girdi/Çıktı İşlemlerine Giriş</title>
+ <titleabbrev>G/Ç oluşumlarına giriş.</titleabbrev>
+ <preliminary>
+  <para>
+   Çoğu yazılım ya girdi (veri okuma) ya çıktı (veri yazma) işlemi yapar ya da her ikisini de. &glibc; bu girdi/çıktı işlevlerini o kadar geniş bir yelpazede içerir ki, hangi işlevi kullanmak gerektiğine karar vermek işin en zor tarafını oluşturur.
+  </para>
+  <para>
+   Bu kısımda girdi ve çıktı ile ilgili kavramlara ve terminolojiye giriş yapılacaktır. GNU G/Ç oluşumları ile ilgili diğer kısımlar şunlardır:
+  </para>
+  <simplelist>
+   <member>
+    <xref linkend="glibc-I-O-on-Streams"/> kısmı, akımlar üzerindeki işlemler ile biçimli girdi ve çıktı işlemlerini kapsar.
+   </member>
+   <member>
+    <xref linkend="glibc-Low-Level-I-O"/> kısmı, dosya tanımlayıcılar üzerinden temel G/Ç ve denetim işlevlerini içerir.
+   </member>
+   <member>
+    <xref linkend="glibc-File-System-Interface"/> kısmı, dizin ve dosyaların erişim kipleri ve dosya iyeliği gibi öznitelikleri değiştirmekle ilgili işlevleri içerir.
+   </member>
+   <member>
+    <xref linkend="glibc-Pipes-and-FIFOs"/> kısmı, süreçler arası temel iletişim oluşumları hakkında bilgiler içerir.
+   </member>
+   <member>
+    <xref linkend="glibc-Sockets"/> kısmı, süreçler arası iletişimin ağ desteğini de içeren daha karmaşık oluşumlarını kapsar.
+   </member>
+   <member>
+    <xref linkend="glibc-Low-Level-Terminal-Interface"/> kısmında uçbirimler ve diğer seri aygıtlar üzerinde G/Ç işlemlerinin nasıl yapıldığı anlatılmıştır.
+   </member>
+  </simplelist>
+ </preliminary>
+ <chapter xml:id="glibc-I-O-Concepts" userlevel="notoc">
+  <?dbhtml stop-chunking?>
+  <title>Girdi/Çıktı Kavramları</title>
+  <titleabbrev>Biraz temel bilgi ve terminoloji.</titleabbrev>
+  <para>
+   <indexterm linkend="glibc-cp"><primary>dosyalar</primary><secondary>açılması</secondary></indexterm>
+   Bir dosyayı okumak ya da bir dosyaya yazmak için, önce dosyaya bir iletişim veya bir bağlantı kanalı oluşturulmalıdır. Bu işleme  <wordasword>dosyanın açılması</wordasword> denir. Bir dosya okumak veya yazmak için açılabileceği gibi her iki işlem için de açılabilir.
+  </para>
+  <para>
+   Bir açık dosyaya bağlantı için ya bir akım ya da bir dosya tanıtıcı kullanılır. Bunu dosya okuma ve yazma işlevlerine bağımsız değişken olarak aktararak işleve iletişim için bunu kullanmasını belirtirsiniz. Bir işlev hem akımlarla hem de dosya tanıtıcılarla çalışamaz, bunlar farklı işlemlerdir.
+  </para>
+  <para>
+   Bir dosya üzerinde okuma veya yazma işlemi bittiğinde dosyanın kapatılarak bağlantının sonlandırılması gerekir. Bir dosya tanıtıcıyı veya akımı kapattıktan sonra dosya üzerinde artık bir okuma veya yazma işlemi yapılamaz.
+  </para>
+  <sect1 xml:id="glibc-Streams-and-File-Descriptors">
+   <title>Akımlar ve Dosya Tanıtıcılar</title>
+   <titleabbrev>GNU kütüphanesi dosya içeriğine erişmek için iki yöntem sunar.</titleabbrev>
+   <para>
+    Bir dosya üzerinde giriş ve çıkış işlemleri yapmak için, yazılım ile dosya arasında bağlantıyı temsil eden şu iki temel mekanizmadan biri kullanılmalıdır: Dosya tanıtıcılar ve akımlar. Dosya tanımlayıcılar <type>int</type> türünden nesneler olduğu halde akımlar <type>FILE *</type> türünden nesnelerdir.
+   </para>
+   <para>
+    Dosya tanıtıcılar girdi ve çıktı işlemleri için daha ilkel ve düşük  seviyeli bir arayüzdür. Bir dosya tanıtıcısı veya bir akım  normal bir dosya ile bağlantı kurmaktan başka, başka bir süreç ile iletişim kurmak için bir aygıt (örneğin, uçbirim), bir soket veya ardışık komutları da temsil edebilir. Ancak, belli bir aygıta özel işlemler denetlenmek istenirse bir dosya tanıtıcı kullanılmalıdır, akımların bu tür bir işlem için  kullanılmasını sağlayacak bir oluşum yoktur. Ayrıca, örneğin, engellenmeyen girdiler (<xref linkend="glibc-File-Status-Flags"/>) gibi özel kiplerde girdi ve çıktı işlemlerine ihtiyaç olduğunda da dosya tanıtıcıları kullanılmalıdır.
+   </para>
+   <para>
+    Akımlar, dosya tanıtıcılara göre daha üst seviyede bir arayüzdür. Akımlar, bütün dosya çeşitleri için üç farklı tamponlama tarzı (<xref linkend="glibc-Stream-Buffering"/>) seçilebilmesi dışında hemen hemen aynıdır.
+   </para>
+   <para>
+    Akımları kullanmanın en büyük getirisi, dosya tanıtıcılar için sağlanan işlevlerden daha güçlü ve daha zengin girdi ve çıktı işlemi türününün (denetim işlemlerinin aksine) uygulanabilmesidir. Dosya tanıtıcılar, karakter dizilerini aktarmak için basit işlevler içerirken akım arayüzü, daha güçlü biçimli girdi ve çıktı işlevlerinin (<function>printf</function> ve <function>scanf</function>) yanında karakter ve satır yönlenimli girdi ve çıktı işlevlerini de içerir.
+   </para>
+   <para>
+    Akımlar dosya tanıtıcıları üzerine kurulduklarından bir akımdaki dosya tanıtıcı çıkarılıp düşük seviyeli işlemler dosya tanıtıcılar üzerinden uygulanabilir. Ayrıca, dahili olarak bir bağlantıyı dosya tanıtıcı olarak açılabilir ve akım bu dosya tanıtıcı ile ilişkilendirilebilir.
+   </para>
+   <para>
+    Genelde, sadece dosya tanıtıcılarla yapılabilen işlemleri yapmak dışında akımların kullanımı tercih edilmemelidir. Hangi işlevi kullanacağına karar veremeyen başlangıç seviyesinde bir yazılımcıya, biçimli girdi ve çıktı (<xref linkend="glibc-Formatted-Input"/> ve  <xref linkend="glibc-Formatted-Output"/>) işlevlerine yoğunlaşması önerilir.
+   </para>
+   <para>
+    Yazılımın GNU dışındaki sistemlere taşınabilirliği sözkonusu olduğunda, akımlar kadar taşınabilir olmayan dosya tanıtıcı işlevlerinden uzak durulmalıdır. &isoc; ile çalışan her sistemde akımlara destek olduğu umulabilir, ama GNU dışı sistemler dosya tanıtıcıların tamamını desteklemeyebilir veya dosya tanıtıcılarla çalışan GNU işlevlerinin bir alt kümesini destekliyor olabilir. GNU kütüphanesindeki dosya tanıtıcı işlevlerin çoğu yine de POSIX.1 standardındadır.
+   </para>
+  </sect1>
+  <sect1 xml:id="glibc-File-Position">
+   <title>Dosyada Konumlama</title>
+   <titleabbrev>Dosyanın başlangıcından itibaren bayt sayısı.</titleabbrev>
+   <para>
+    <indexterm linkend="glibc-cp"><primary>dosyalar</primary><secondary>dosya konumu</secondary></indexterm>
+    <indexterm linkend="glibc-cp"><primary>dosyalar</primary><secondary>sıralı erişim</secondary></indexterm>
+    <indexterm linkend="glibc-cp"><primary>dosyalar</primary><secondary>rasgele erişim</secondary></indexterm>
+    <indexterm linkend="glibc-cp"><primary>dosyalar</primary><secondary>ekleme erişimli</secondary></indexterm>
+    Açık bir dosyanın niteliklerinden biri, okunacak ya da yazılacak bir baytın yerini belirten <wordasword>dosya konumu</wordasword>’dur. GNU sisteminde ve tüm POSIX sistemlerinde dosya konumu, dosya başlangıcından itibaren ilgili baytın bulunduğu yeri belirten bir tamsayıdır.
+   </para>
+   <para>
+    Dosya konumu, dosya ilk açıldığında dosyanın başlangıcına ayarlanır ve her okuma veya yazma işleminde ilerletilir. Yani bir dosyaya erişim normalde <wordasword>sıralı</wordasword>dır.
+   </para>
+   <para>
+    Sıradan dosyalar için dosyanın herhangi bir yerine yazmak ya da okumak mümkündür. Bu, bazı dosya çeşitlerinde de mümkündür. Bunun mümkün olduğu dosyalara kimi zaman <wordasword>rasgele erişimli</wordasword> dosyalar denir. Dosya konumu akımlarda <function>fseek</function> işlevi kullanılarak (<xref linkend="glibc-File-Positioning"/>), dosya tanıtıcılarda  <function>lseek</function> işlevi kullanılarak (<xref linkend="glibc-I-O-Primitives"/>) değiştirilebilir. Sıralı erişimi desteklemeyen dosyalar üzerinde dosya konumunu değiştirmeye çalışmak <varname>ESPIPE</varname> hatası ile sonuçlanır.
+   </para>
+   <para>
+    <wordasword>Ekleme erişimli</wordasword> açılmış akım ya da tanıtıcılar özellikle çıktılama amacıyla kullanılır: Bu tür dosyalara çıktılama <emphasis>daima</emphasis> dosya konumuna bakılmaksızın, <emphasis>dosya sonuna sıralı ekleme</emphasis> olarak yapılır. Aynı dosya üzerinde okuma yapıldığında dosya konumu hala kullanılabilir durumda kalır, çıktılama bunu etkilemez.
+   </para>
+   <para>
+    Bir dosya üzerinde birden fazla uygulama çalıştığında ne olur? Her uygulama kendi çalışma bölgesinde çalışır, her uygulamanın kendi dosya göstericisi olduğundan diğer uygulamanın yaptıklarından etkilenmez.
+   </para>
+   <para>
+    Fiili olarak, her dosya açılışında ayrı bir dosya konumu oluşturulur. Dolayısıyla, aynı yazılım içinde bir dosya iki kere açılırsa, iki akım veya dosya tanıtıcı için birbirinden bağımsız dosya konumlayıcılar olur.
+   </para>
+   <para>
+    Aksine, bir tanıtıcı açıp bu tanıtıcıı kopyalanarak bir tanıtıcı daha elde edilirse, iki dosya konumlayıcı daima aynı dosya konumunu gösterir, birinin değiştirilmesi diğerinde de aynı etkiyi oluşturur
+   </para>
+  </sect1>
+ </chapter>
+ <chapter xml:id="glibc-File-Names" userlevel="notoc">
+  <?dbhtml stop-chunking?>
+  <title>Dosya İsimleri</title>
+  <titleabbrev>Bir dosya nasıl betimlenir.</titleabbrev>
+  <para>
+   <indexterm linkend="glibc-cp"><primary>dosyalar</primary><secondary>isimleri</secondary></indexterm>
+   Dosyaya bir bağlantı açılması sırasında veya bir dosyanın silinmesi gibi işlemlerde dosyayı belirtmek için bazı yöntemlere ihtiyaç duyulur. Hemen hemen tüm dosyalar hatta teyp sürücüleri ve uçbirimler bile dizgelerden oluşan isimlere sahiptir.  Bu dizgelere <wordasword>dosya isimleri</wordasword> denir. Bir dosyayı açmak ve üzerinde işlem yapmak için bu isim belirtilir.
+  </para>
+  <para>
+   Bu kısımda dosya isimleri için uzlaşımlar ile işletim sisteminin onlarla nasıl çalıştığı üzerinde durulacaktır
+  </para>
+  <sect1 xml:id="glibc-Directories">
+   <title>Dizinler</title>
+   <titleabbrev>Dizinler, dosyalar için girdiler içerir.</titleabbrev>
+   <para>
+    Dosya isimlerinin sözdizimini anlayabilmek için öncelikle dosya sisteminin dizin hiyerarşisini nasıl düzenlediğini anlamak gerekir.
+   </para>
+   <para>
+    <indexterm linkend="glibc-cp"><primary>dizin</primary></indexterm>
+    <indexterm linkend="glibc-cp"><primary>bağ</primary></indexterm>
+    <indexterm linkend="glibc-cp"><primary>dosyalar</primary><secondary>dizin girdileri</secondary></indexterm>
+    Bir <wordasword>dizin</wordasword>, diğer dosyalarla ilişkili bilgiler içeren bir dosyadır; bu ilişkilere <wordasword>bağ</wordasword> ya da <wordasword>dizin girdisi</wordasword> denir. Kimi zaman "bir dizindeki dosyalar"dan bahsedilir ama gerçekte dizinler dosyalar için bilgiler içerir, dosyaların kendilerini içermez.
+   </para>
+   <para>
+    <indexterm linkend="glibc-cp"><primary>dosyalar</primary><secondary>dosya ismi bileşeni</secondary></indexterm>
+    Bir dizin girdisi olarak bir dosya ismine <wordasword>dosya ismi bileşeni</wordasword> denir. Genelde, bir dosya ismi eğik çizgiler (<filename>/</filename>) ile ayrılmış çok sayıda dizge bileşenden oluşur. Bir dosya ismindeki bileşenler onun dizini ile birlikte ismini belirtir.
+   </para>
+   <para>
+    POSIX standardı gibi bazı belgelerde, bu belgede dosya ismi denilen şeye <firstterm>dosyayolu</firstterm> ve dosya ismi elemanları denilrn şeylere de <firstterm>dosyaismi</firstterm> ya da <firstterm>dosyayolu bileşenleri</firstterm> denir. Burada bu terminoloji kullanılmayacaktır, çünkü "yol" (path) denilen şey tamamen farklı bir şeydir (dosyanın aranacağı dizinlerin listesidir) ve "dosyayolu" dendiğinde ise kullanıcıların muhtemelen kafası karışmaktadır. GNU belgelerinde daima "dosya ismi" ve "dosya ismi bileşenleri" (kimi zaman da sadece bileşen) terimleri kullanılacaktır. <command>PATH_MAX</command> gibi bazı makrolar POSIX terminolojisini kullanır. Bu makrolar POSIX standardında tanımlı olduklarından isimleri değiştirilememektedir.
+   </para>
+   <para>
+    Dizinler üzerinde yapılan işlemlerle ilgili daha ayrıntılı bilgi <xref linkend="glibc-File-System-Interface"/> bölümünde bulunabilir.
+   </para>
+  </sect1>
+  <sect1 xml:id="glibc-File-Name-Resolution">
+   <title>Dosya İsmi Çözümlemesi</title>
+   <titleabbrev>Bir dosya ismi bir dosyanın nasıl bulunacağını belirtir.</titleabbrev>
+   <para>
+    Bir dosya ismi eğik çizgi (‘<filename>/</filename>’) karakterleri ile ayrılmış dosya ismi bileşenlerinden oluşur. &glibc;nin desteklendiği sistemlerde çok sayıda ardarda verilen ‘<filename>/</filename>’ karakteri tek bir ‘<filename>/</filename>’ karakterine eşdeğerdir.
+   </para>
+   <para>
+    <indexterm linkend="glibc-cp"><primary>dosyalar</primary><secondary>dosya ismi çözümlemesi</secondary></indexterm>
+    Bir dosya isminin hangi dosyaya ait olduğunun saptanması işlemi <wordasword>dosya ismi çözümlemesi</wordasword> adını alır. Bu işlem dosya ismi üzerinde soldan sağa ilerleyerek bileşenleri saptamak ve önceki bileşen tarafından isimlendirilen dizindeki ardışık bileşenlere tekrar aynı işlemi uygulamak şeklindedir. Şüphesiz, her dosya ismini oluşturan dizinler normal dosya isimleri yerine dizin olarak mevcut olmalı ve ilgili izinler sürecin erişimi için yeterli olmalıdır; aksi takdirde, dosya ismi çözümlemesi başarısız olur.
+   </para>
+   <para>
+    <dicterm><english>root directory</english><turkish>kök dizin</turkish></dicterm>
+    <indexterm linkend="glibc-cp"><primary>dosyalar</primary><secondary>kök dizin</secondary></indexterm>
+    <indexterm linkend="glibc-cp"><primary>dosyalar</primary><secondary>mutlak dosya ismi</secondary></indexterm>
+    Bir dosya ismi bir ‘<filename>/</filename>’ karakteri ile başlıyorsa, dosya ismindeki ilk bileşen sürecin <wordasword>kök dizini</wordasword>’dir (genellikle sistem üzerindeki tüm süreçler aynı kök dizini paylaşır). Böyle, kök dizin ile başlayan bir dosya ismi <wordasword>mutlak dosya ismi</wordasword> adını alır.
+   </para>
+   <para>
+    <indexterm linkend="glibc-cp"><primary>dosyalar</primary><secondary>göreli dosya ismi</secondary></indexterm>
+    Aksi takdirde, dosya ismindeki ilk bileşen <link linkend="glibc-Working-Directory">çalışma dizini</link> olur. Bu tür dosya isimlerine <wordasword>göreli dosya ismi</wordasword> denir.
+   </para>
+   <para>
+    <indexterm linkend="glibc-cp"><primary>dosyalar</primary><secondary>üst dizin</secondary></indexterm>
+    <command>.</command> (nokta) ve <command>..</command> (nokta nokta) bileşenleri özel anlama sahiptir. Her dizin bu dosya ismi bileşenlerini içerir. Bu bileşenlerden <command>.</command> (nokta) dizinin kendisini, <command>..</command> (nokta nokta) ise <wordasword>üst dizin</wordasword>’i yani bu dizini içeren dizine bir bağ belirtir. Özel bir durum olarak kök dizindeki <command>..</command> (nokta nokta) kök dizinin üst dizini olmadığından kendisini belirtir; bu durumda <filename>/..</filename> ile <filename>/</filename> eşdeğerdir.
+   </para>
+   <para>
+    Bazı dosya ismi örnekleri:
+   </para>
+   <variablelist>
+    <varlistentry>
+     <term><literal>/a</literal></term>
+     <listitem>
+      <para>
+       Kök dizindeki <filename>a</filename> isimli dosya.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><literal>/a/b</literal></term>
+     <listitem>
+      <para>
+       Kök dizindeki <filename>a</filename> isimli dizindeki <filename>b</filename> isimli dosya.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><literal>a</literal></term>
+     <listitem>
+      <para>
+       İçinde olduğumuz dizindeki <filename>a</filename> isimli dosya.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><literal>/a/./b</literal></term>
+     <listitem>
+      <para>
+       <filename>/a/b</filename> ile aynı.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><literal>./a</literal></term>
+     <listitem>
+      <para>
+       İçinde olduğumuz dizindeki <filename>a</filename> isimli dosya.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><literal>../a</literal></term>
+     <listitem>
+      <para>
+       İçinde olduğumuz dizinin üst dizinindeki <filename>a</filename> isimli dosya.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+   <para>
+    Bir dosya ismi isteğe bağlı olarak bir ‘<filename>/</filename>’ ile bitebilir. Kök dizini için dosya ismi olarak ‘<filename>/</filename>’ belirtilebilir, ancak boş dizge bir dosya ismi olarak anlamlı değildir. İçinde bulunulan dizini belirtmek için dosya ismi olarak <filename>.</filename> veya <filename>./</filename> kullanılır.
+   </para>
+   <para>
+    GNU sisteminde başka bazı sistemlerin aksine dosya isimleri sözdiziminin parçası olarak dosya türleri (veya dosya uzantısı) ve dosya sürümleri için yerleşik bir destek yoktur. Bir çok uygulama dosya isimleri için bu tür varsayımlarda bulunur, örneğin C kaynak dosyaları için genellikle ‘<filename>.c</filename>’ uzantısı kullanılır, ancak dosya sisteminin kendisinde bu çeşit varsayımlar yoktur.
+   </para>
+  </sect1>
+  <sect1 xml:id="glibc-File-Name-Errors">
+   <title>Dosya İsmi Hataları</title>
+   <titleabbrev>Dosya isimleri ile ilişkili hata durumları.</titleabbrev>
+   <para>
+    <indexterm linkend="glibc-cp"><primary>dosyalar</primary><secondary>dosya ismi hataları</secondary></indexterm>
+    Dosya isimlerini bağımsız değişken olarak alan işlevler, dosya ismi sözdizimi ile veya dosya isminin bulunması ile ilgili sorunlar olduğunda genellikle bunları <varname>errno</varname> hata durumu ile saptar. Bu kılavuzda bu tür hatalardan <wordasword>olağan dosya ismi hataları</wordasword> olarak sözedilecektir.
+   </para>
+   <csynopsis>
+    <indexterm linkend="glibc-vr"><primary>EACCES</primary></indexterm>
+    <csproto type="makro">
+     <csname><type>int</type> <function>EACCES</function></csname>
+    </csproto>
+     <header>&errno.h;</header>
+    <para>
+     Süreç, dosya isminin dizin bileşeni için arama izinlerine sahip değil.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-vr"><primary>ENAMETOOLONG</primary></indexterm>
+    <csproto type="makro">
+     <csname><type>int</type> <function>ENAMETOOLONG</function></csname>
+    </csproto>
+     <header>&errno.h;</header>
+    <para>
+     Bu hata ya bir dosya isminin uzunluğunun <varname>PATH_MAX</varname> değerinden büyük olduğunda ya da tek başına dosya ismi <varname>NAME_MAX</varname> değerinden daha uzun olduğunda kullanılır. Bkz. <xref linkend="glibc-Limits-for-Files"/>.
+    </para>
+    <para>
+     GNU sisteminde dosya isimlerinin uzunlukları için zorlayıcı bir sınır yoktur, ancak bazı dosya sistemlerinde bir bileşenin uzunluğu ile ilgili belli bir sınır olabilir.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-vr"><primary>ENOENT</primary></indexterm>
+    <csproto type="makro">
+     <csname><type>int</type> <function>ENOENT</function></csname>
+    </csproto>
+     <header>&errno.h;</header>
+    <para>
+     Bu hata dosya ismindeki bir dizin bileşeninin bulunamaması durumunu ya da bileşen bir <link linkend="glibc-Symbolic-Links">sembolik bağ</link> olduğunda hedef dosyanın mevcut olmadığı durumu bildirir..
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-vr"><primary>ENOTDIR</primary></indexterm>
+    <csproto type="makro">
+     <csname><type>int</type> <function>ENOTDIR</function></csname>
+    </csproto>
+     <header>&errno.h;</header>
+    <para>
+     Dosya ismindeki dizin bileşeni dosya ismi olarak mevcut ama bir dizin değil.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-vr"><primary>ELOOP</primary></indexterm>
+    <csproto type="makro">
+     <csname><type>int</type> <function>ELOOP</function></csname>
+    </csproto>
+     <header>&errno.h;</header>
+    <para>
+     Dosya ismi aranırken çok fazla sembolik bağ çözümlendi. Sistem, olası döngüleri saptamak için ilkel bir yöntem olarak bir dosya isminde çözümlenebilecek sembolik bağ sayısına bir sınırlama getirir. Bkz.  <xref linkend="glibc-Symbolic-Links"/>.
+    </para>
+   </csynopsis>
+  </sect1>
+  <sect1 xml:id="glibc-File-Name-Portability">
+   <title>Dosya İsimlerinin Taşınabilirliği</title>
+   <titleabbrev>Dosya ismi taşınabilirliği ve sözdizimi ile ilgili konular.</titleabbrev>
+   <para>
+    Dosya isimlerinin sözdizimi ile ilgili GNU sisteminde ve diğer POSIX sistemlerinde normalde kullanılan kurallardan <xref  linkend="glibc-File-Names"/> bölümünde bahsedilmişti. Ancak, diğer işletim sistemleri başka varsayımlarda bulunabilir.
+   </para>
+   <para>
+    Dosya isimlerinin taşınabilirliğinin neden önemli olduğunu belirleyen iki durum vardır:
+   </para>
+   <itemizedlist>
+    <listitem>
+     <para>
+      Yazılımda dosya isimleri sözdizimi ile ilgili bazı varsayımlar yapılırsa veya gömülü sabit dosya ismi dizgeleri kullanılırsa, farklı sözdizimi kuralları kullanılan sistemlerde dosya isimlerinin elde edilmesi zorlaşır.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      Yazılımın başka sistemlerde çalışması sözkonusu olmasa bile, farklı isimlendirme kuralları kullanılan dosyalara erişim yine de mümkün olur. Örneğin, bir ağ üzerinden farklı isimleme kuralları olan bir işletim sisteminde bulunan bir dosyaya erişmek, hatta başka işletim sistemlerinde kullanılan biçimlemelerin kullanıldığı disklerde okuma ve yazma yapmak zorunda kalınabilir.
+     </para>
+    </listitem>
+   </itemizedlist>
+   <para>
+    ISO C standardında dosya ismi sözdizimi hakkında çok az bilgi varır, sadece dosya isimlerinin dizgeler olduğundan bahseder. Dosya isimlerinin uzunlukları ve dosya isimlerinde kullanılabilen karakterler ile ilgili  değişen kısıtlamalara ek olarak farkı işletim sistemlerinde örneğin, dizinlerin yapıları ve dosya türleri ile uzantıları gibi kavramlar için farklı kabuller ve sözdizim kuralları uygulanır. Örneğin dosya sürümleri gibi bazı kavramlar için bazı sistemlerde destek varken bazılarında yoktur.
+   </para>
+   <para>
+    POSIX.1 standardı, dosya ismi bileşeni dizgeleri ve dosya isimlerinin  uzunlukları ile dosya isimlerinde kullanılan karakterlerle ilgili dosya ismi sözdizimine ek kısıtlamalar getiren gerçeklemelere izin verir. Yine de, GNU sistemi bu sınırlamalara ihtiyaç duymaz; dosya isimlerinde boş bayt hariç her karakter kullanılabilir ve dosya ismi dizgeleri ile ilgili hiçbir sınırlama da yoktur.
+   </para>
+  </sect1>
+ </chapter>
 </part>
+
+

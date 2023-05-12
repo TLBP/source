@@ -5,4 +5,1378 @@
 <part xml:id="glibc-Job-Control">
   <title>İş Denetimi</title>
   <titleabbrev>Süreç grupları ve oturumlar hakkında herşey.</titleabbrev>
+ <preliminary>
+
+<!--span xml:id="glibc-index-process-groups"></span>
+<span xml:id="glibc-index-job-control"></span>
+<span xml:id="glibc-index-job"></span>
+<span xml:id="glibc-index-session"></span-->
+<para><emphasis>Job control</emphasis> refers to the protocol for allowing a user to move
+between multiple <emphasis>process groups</emphasis> (or <emphasis>jobs</emphasis>) within a single
+<emphasis>login session</emphasis>.  The job control facilities are set up so that
+appropriate behavior for most programs happens automatically and they
+need not do anything special about job control.  So you can probably
+ignore the material in this chapter unless you are writing a shell or
+login program.
+</para>
+<para>You need to be familiar with concepts relating to process creation
+(see <xref linkend="glibc-Process-Creation-Concepts"/>) and signal handling (see <xref linkend="glibc-Signal-Handling"/>) in order to understand this material presented in this
+chapter.
+</para>
+<!--span xml:id="glibc-index-_005fPOSIX_005fJOB_005fCONTROL"></span-->
+<para>Some old systems do not support job control, but GNU systems always
+have, and it is a required feature in the 2001 revision of POSIX.1
+(see <xref linkend="glibc-POSIX"/>).  If you need to be portable to old systems, you can
+use the <code>_POSIX_JOB_CONTROL</code> macro to test at compile-time
+whether the system supports job control.  See <xref linkend="glibc-System-Options"/>.
+</para>
+ </preliminary><!--
+<sect xml:id="glibc-Concepts-of-Job-Control">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Controlling-Terminal" accesskey="n" rel="next">Controlling Terminal of a Process</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Job-Control" accesskey="u" rel="up">Job Control</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Concepts-of-Job-Control-1"></span><h3 class="section">28.1 Concepts of Job Control</title>
+
+<span xml:id="glibc-index-shell"></span>
+<para>The fundamental purpose of an interactive shell is to read
+commands from the user’s terminal and create processes to execute the
+programs specified by those commands.  It can do this using the
+<code>fork</code> (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Creating-a-Process">Creating a Process</a>) and <code>exec</code>
+(see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Executing-a-File">Executing a File</a>) functions.
+</para>
+<para>A single command may run just one process—but often one command uses
+several processes.  If you use the ‘<filename>|</filename>’ operator in a shell command,
+you explicitly request several programs in their own processes.  But
+even if you run just one program, it can use multiple processes
+internally.  For example, a single compilation command such as ‘<filename>cc
+-c foo.c</filename>’ typically uses four processes (though normally only two at any
+given time).  If you run <code>make</code>, its job is to run other programs
+in separate processes.
+</para>
+<para>The processes belonging to a single command are called a <emphasis>process
+group</emphasis> or <emphasis>job</emphasis>.  This is so that you can operate on all of them at
+once.  For example, typing <kbd>C-c</kbd> sends the signal <code>SIGINT</code> to
+terminate all the processes in the foreground process group.
+</para>
+<span xml:id="glibc-index-session-1"></span>
+<para>A <emphasis>session</emphasis> is a larger group of processes.  Normally all the
+processes that stem from a single login belong to the same session.
+</para>
+<para>Every process belongs to a process group.  When a process is created, it
+becomes a member of the same process group and session as its parent
+process.  You can put it in another process group using the
+<code>setpgid</code> function, provided the process group belongs to the same
+session.
+</para>
+<span xml:id="glibc-index-session-leader"></span>
+<para>The only way to put a process in a different session is to make it the
+initial process of a new session, or a <emphasis>session leader</emphasis>, using the
+<code>setsid</code> function.  This also puts the session leader into a new
+process group, and you can’t move it out of that process group again.
+</para>
+<para>Usually, new sessions are created by the system login program, and the
+session leader is the process running the user’s login shell.
+</para>
+<span xml:id="glibc-index-controlling-terminal"></span>
+<para>A shell that supports job control must arrange to control which job can
+use the terminal at any time.  Otherwise there might be multiple jobs
+trying to read from the terminal at once, and confusion about which
+process should receive the input typed by the user.  To prevent this,
+the shell must cooperate with the terminal driver using the protocol
+described in this chapter.
+</para>
+<span xml:id="glibc-index-foreground-job"></span>
+<span xml:id="glibc-index-background-job"></span>
+<para>The shell can give unlimited access to the controlling terminal to only
+one process group at a time.  This is called the <emphasis>foreground job</emphasis> on
+that controlling terminal.  Other process groups managed by the shell
+that are executing without such access to the terminal are called
+<emphasis>background jobs</emphasis>.
+</para>
+<span xml:id="glibc-index-stopped-job"></span>
+<para>If a background job needs to read from its controlling
+terminal, it is <emphasis>stopped</emphasis> by the terminal driver; if the
+<code>TOSTOP</code> mode is set, likewise for writing.  The user can stop
+a foreground job by typing the SUSP character (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Special-Characters">Special Characters</a>) and a program can stop any job by sending it a
+<code>SIGSTOP</code> signal.  It’s the responsibility of the shell to notice
+when jobs stop, to notify the user about them, and to provide mechanisms
+for allowing the user to interactively continue stopped jobs and switch
+jobs between foreground and background.
+</para>
+<para>See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Access-to-the-Terminal">Access to the Controlling Terminal</a>, for more information about I/O to the
+controlling terminal.
+</para>
+<hr>
+</div>
+<sect xml:id="glibc-Controlling-Terminal">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Access-to-the-Terminal" accesskey="n" rel="next">Access to the Controlling Terminal</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concepts-of-Job-Control" accesskey="p" rel="prev">Concepts of Job Control</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Job-Control" accesskey="u" rel="up">Job Control</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Controlling-Terminal-of-a-Process"></span><h3 class="section">28.2 Controlling Terminal of a Process</title>
+
+<para>One of the attributes of a process is its controlling terminal.  Child
+processes created with <code>fork</code> inherit the controlling terminal from
+their parent process.  In this way, all the processes in a session
+inherit the controlling terminal from the session leader.  A session
+leader that has control of a terminal is called the <emphasis>controlling
+process</emphasis> of that terminal.
+</para>
+<span xml:id="glibc-index-controlling-process"></span>
+<para>You generally do not need to worry about the exact mechanism used to
+allocate a controlling terminal to a session, since it is done for you
+by the system when you log in.
+</para>
+<para>An individual process disconnects from its controlling terminal when it
+calls <code>setsid</code> to become the leader of a new session.
+See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Process-Group-Functions">Process Group Functions</a>.
+</para>
+
+<hr>
+</div>
+<sect xml:id="glibc-Access-to-the-Terminal">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Orphaned-Process-Groups" accesskey="n" rel="next">Orphaned Process Groups</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Controlling-Terminal" accesskey="p" rel="prev">Controlling Terminal of a Process</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Job-Control" accesskey="u" rel="up">Job Control</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Access-to-the-Controlling-Terminal"></span><h3 class="section">28.3 Access to the Controlling Terminal</title>
+<span xml:id="glibc-index-controlling-terminal_002c-access-to"></span>
+
+<para>Processes in the foreground job of a controlling terminal have
+unrestricted access to that terminal; background processes do not.  This
+section describes in more detail what happens when a process in a
+background job tries to access its controlling terminal.
+</para>
+<span xml:id="glibc-index-SIGTTIN_002c-from-background-job"></span>
+<para>When a process in a background job tries to read from its controlling
+terminal, the process group is usually sent a <code>SIGTTIN</code> signal.
+This normally causes all of the processes in that group to stop (unless
+they handle the signal and don’t stop themselves).  However, if the
+reading process is ignoring or blocking this signal, then <code>read</code>
+fails with an <code>EIO</code> error instead.
+</para>
+<span xml:id="glibc-index-SIGTTOU_002c-from-background-job"></span>
+<para>Similarly, when a process in a background job tries to write to its
+controlling terminal, the default behavior is to send a <code>SIGTTOU</code>
+signal to the process group.  However, the behavior is modified by the
+<code>TOSTOP</code> bit of the local modes flags (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Local-Modes">Local Modes</a>).  If
+this bit is not set (which is the default), then writing to the
+controlling terminal is always permitted without sending a signal.
+Writing is also permitted if the <code>SIGTTOU</code> signal is being ignored
+or blocked by the writing process.
+</para>
+<para>Most other terminal operations that a program can do are treated as
+reading or as writing.  (The description of each operation should say
+which.)
+</para>
+<para>For more information about the primitive <code>read</code> and <code>write</code>
+functions, see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#I_002fO-Primitives">Input and Output Primitives</a>.
+</para>
+
+<hr>
+</div>
+<sect xml:id="glibc-Orphaned-Process-Groups">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Implementing-a-Shell" accesskey="n" rel="next">Implementing a Job Control Shell</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Access-to-the-Terminal" accesskey="p" rel="prev">Access to the Controlling Terminal</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Job-Control" accesskey="u" rel="up">Job Control</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Orphaned-Process-Groups-1"></span><h3 class="section">28.4 Orphaned Process Groups</title>
+<span xml:id="glibc-index-orphaned-process-group"></span>
+
+<para>When a controlling process terminates, its terminal becomes free and a
+new session can be established on it.  (In fact, another user could log
+in on the terminal.)  This could cause a problem if any processes from
+the old session are still trying to use that terminal.
+</para>
+<para>To prevent problems, process groups that continue running even after the
+session leader has terminated are marked as <emphasis>orphaned process
+groups</emphasis>.
+</para>
+<para>When a process group becomes an orphan, its processes are sent a
+<code>SIGHUP</code> signal.  Ordinarily, this causes the processes to
+terminate.  However, if a program ignores this signal or establishes a
+handler for it (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Signal-Handling">Signal Handling</a>), it can continue running as in
+the orphan process group even after its controlling process terminates;
+but it still cannot access the terminal any more.
+</para>
+<hr>
+</div>
+<sect xml:id="glibc-Implementing-a-Shell">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Functions-for-Job-Control" accesskey="n" rel="next">Functions for Job Control</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Orphaned-Process-Groups" accesskey="p" rel="prev">Orphaned Process Groups</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Job-Control" accesskey="u" rel="up">Job Control</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Implementing-a-Job-Control-Shell"></span><h3 class="section">28.5 Implementing a Job Control Shell</title>
+
+<para>This section describes what a shell must do to implement job control, by
+presenting an extensive sample program to illustrate the concepts
+involved.
+</para>
+
+
+<ul class="section-toc">
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Data-Structures" accesskey="1">Data Structures for the Shell</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Initializing-the-Shell" accesskey="2">Initializing the Shell</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Launching-Jobs" accesskey="3">Launching Jobs</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Foreground-and-Background" accesskey="4">Foreground and Background</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Stopped-and-Terminated-Jobs" accesskey="5">Stopped and Terminated Jobs</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Continuing-Stopped-Jobs" accesskey="6">Continuing Stopped Jobs</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Missing-Pieces" accesskey="7">The Missing Pieces</a></li>
+</ul>
+<hr>
+<div class="subsection" xml:id="glibc-Data-Structures">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Initializing-the-Shell" accesskey="n" rel="next">Initializing the Shell</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Implementing-a-Shell" accesskey="u" rel="up">Implementing a Job Control Shell</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Data-Structures-for-the-Shell"></span><h4 class="subsection">28.5.1 Data Structures for the Shell</title>
+
+<para>All of the program examples included in this chapter are part of
+a simple shell program.  This section presents data structures
+and utility functions which are used throughout the example.
+</para>
+<para>The sample shell deals mainly with two data structures.  The
+<code>job</code> type contains information about a job, which is a
+set of subprocesses linked together with pipes.  The <code>process</code> type
+holds information about a single subprocess.  Here are the relevant
+data structure declarations:
+</para>
+<div class="example">
+<pre class="example">/* <span class="roman">A process is a single process.</span>  */
+typedef struct process
+{
+  struct process *next;       /* <span class="roman">next process in pipeline</span> */
+  char **argv;                /* <span class="roman">for exec</span> */
+  pid_t pid;                  /* <span class="roman">process ID</span> */
+  char completed;             /* <span class="roman">true if process has completed</span> */
+  char stopped;               /* <span class="roman">true if process has stopped</span> */
+  int status;                 /* <span class="roman">reported status value</span> */
+} process;
+</pre><pre class="example">
+</pre><pre class="example">/* <span class="roman">A job is a pipeline of processes.</span>  */
+typedef struct job
+{
+  struct job *next;           /* <span class="roman">next active job</span> */
+  char *command;              /* <span class="roman">command line, used for messages</span> */
+  process *first_process;     /* <span class="roman">list of processes in this job</span> */
+  pid_t pgid;                 /* <span class="roman">process group ID</span> */
+  char notified;              /* <span class="roman">true if user told about stopped job</span> */
+  struct termios tmodes;      /* <span class="roman">saved terminal modes</span> */
+  int stdin, stdout, stderr;  /* <span class="roman">standard i/o channels</span> */
+} job;
+
+/* <span class="roman">The active jobs are linked into a list.  This is its head.</span>   */
+job *first_job = NULL;
+</pre></div>
+
+<para>Here are some utility functions that are used for operating on <code>job</code>
+objects.
+</para>
+<div class="example">
+<pre class="example">/* <span class="roman">Find the active job with the indicated <var>pgid</var>.</span>  */
+job *
+find_job (pid_t pgid)
+{
+  job *j;
+
+  for (j = first_job; j; j = j-&gt;next)
+    if (j-&gt;pgid == pgid)
+      return j;
+  return NULL;
+}
+</pre><pre class="example">
+</pre><pre class="example">/* <span class="roman">Return true if all processes in the job have stopped or completed.</span>  */
+int
+job_is_stopped (job *j)
+{
+  process *p;
+
+  for (p = j-&gt;first_process; p; p = p-&gt;next)
+    if (!p-&gt;completed &amp;&amp; !p-&gt;stopped)
+      return 0;
+  return 1;
+}
+</pre><pre class="example">
+</pre><pre class="example">/* <span class="roman">Return true if all processes in the job have completed.</span>  */
+int
+job_is_completed (job *j)
+{
+  process *p;
+
+  for (p = j-&gt;first_process; p; p = p-&gt;next)
+    if (!p-&gt;completed)
+      return 0;
+  return 1;
+}
+</pre></div>
+
+
+<hr>
+</div>
+<div class="subsection" xml:id="glibc-Initializing-the-Shell">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Launching-Jobs" accesskey="n" rel="next">Launching Jobs</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Data-Structures" accesskey="p" rel="prev">Data Structures for the Shell</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Implementing-a-Shell" accesskey="u" rel="up">Implementing a Job Control Shell</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Initializing-the-Shell-1"></span><h4 class="subsection">28.5.2 Initializing the Shell</title>
+<span xml:id="glibc-index-job-control_002c-enabling"></span>
+<span xml:id="glibc-index-subshell"></span>
+
+<para>When a shell program that normally performs job control is started, it
+has to be careful in case it has been invoked from another shell that is
+already doing its own job control.
+</para>
+<para>A subshell that runs interactively has to ensure that it has been placed
+in the foreground by its parent shell before it can enable job control
+itself.  It does this by getting its initial process group ID with the
+<code>getpgrp</code> function, and comparing it to the process group ID of the
+current foreground job associated with its controlling terminal (which
+can be retrieved using the <code>tcgetpgrp</code> function).
+</para>
+<para>If the subshell is not running as a foreground job, it must stop itself
+by sending a <code>SIGTTIN</code> signal to its own process group.  It may not
+arbitrarily put itself into the foreground; it must wait for the user to
+tell the parent shell to do this.  If the subshell is continued again,
+it should repeat the check and stop itself again if it is still not in
+the foreground.
+</para>
+<span xml:id="glibc-index-job-control_002c-enabling-1"></span>
+<para>Once the subshell has been placed into the foreground by its parent
+shell, it can enable its own job control.  It does this by calling
+<code>setpgid</code> to put itself into its own process group, and then
+calling <code>tcsetpgrp</code> to place this process group into the
+foreground.
+</para>
+<para>When a shell enables job control, it should set itself to ignore all the
+job control stop signals so that it doesn’t accidentally stop itself.
+You can do this by setting the action for all the stop signals to
+<code>SIG_IGN</code>.
+</para>
+<para>A subshell that runs non-interactively cannot and should not support job
+control.  It must leave all processes it creates in the same process
+group as the shell itself; this allows the non-interactive shell and its
+child processes to be treated as a single job by the parent shell.  This
+is easy to do—just don’t use any of the job control primitives—but
+you must remember to make the shell do it.
+</para>
+
+<para>Here is the initialization code for the sample shell that shows how to
+do all of this.
+</para>
+<div class="example">
+<pre class="example">/* <span class="roman">Keep track of attributes of the shell.</span>  */
+
+#include &lt;sys/types.h&gt;
+#include &lt;termios.h&gt;
+#include &lt;unistd.h&gt;
+
+pid_t shell_pgid;
+struct termios shell_tmodes;
+int shell_terminal;
+int shell_is_interactive;
+
+
+/* <span class="roman">Make sure the shell is running interactively as the foreground job</span>
+   <span class="roman">before proceeding.</span> */
+
+void
+init_shell ()
+{
+
+  /* <span class="roman">See if we are running interactively.</span>  */
+  shell_terminal = STDIN_FILENO;
+  shell_is_interactive = isatty (shell_terminal);
+
+  if (shell_is_interactive)
+    {
+      /* <span class="roman">Loop until we are in the foreground.</span>  */
+      while (tcgetpgrp (shell_terminal) != (shell_pgid = getpgrp ()))
+        kill (- shell_pgid, SIGTTIN);
+
+      /* <span class="roman">Ignore interactive and job-control signals.</span>  */
+      signal (SIGINT, SIG_IGN);
+      signal (SIGQUIT, SIG_IGN);
+      signal (SIGTSTP, SIG_IGN);
+      signal (SIGTTIN, SIG_IGN);
+      signal (SIGTTOU, SIG_IGN);
+      signal (SIGCHLD, SIG_IGN);
+
+      /* <span class="roman">Put ourselves in our own process group.</span>  */
+      shell_pgid = getpid ();
+      if (setpgid (shell_pgid, shell_pgid) &lt; 0)
+        {
+          perror ("Couldn't put the shell in its own process group");
+          exit (1);
+        }
+
+      /* <span class="roman">Grab control of the terminal.</span>  */
+      tcsetpgrp (shell_terminal, shell_pgid);
+
+      /* <span class="roman">Save default terminal attributes for shell.</span>  */
+      tcgetattr (shell_terminal, &amp;shell_tmodes);
+    }
+}
+</pre></div>
+
+
+<hr>
+</div>
+<div class="subsection" xml:id="glibc-Launching-Jobs">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Foreground-and-Background" accesskey="n" rel="next">Foreground and Background</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Initializing-the-Shell" accesskey="p" rel="prev">Initializing the Shell</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Implementing-a-Shell" accesskey="u" rel="up">Implementing a Job Control Shell</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Launching-Jobs-1"></span><h4 class="subsection">28.5.3 Launching Jobs</title>
+<span xml:id="glibc-index-launching-jobs"></span>
+
+<para>Once the shell has taken responsibility for performing job control on
+its controlling terminal, it can launch jobs in response to commands
+typed by the user.
+</para>
+<para>To create the processes in a process group, you use the same <code>fork</code>
+and <code>exec</code> functions described in <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Process-Creation-Concepts">Process Creation Concepts</a>.
+Since there are multiple child processes involved, though, things are a
+little more complicated and you must be careful to do things in the
+right order.  Otherwise, nasty race conditions can result.
+</para>
+<para>You have two choices for how to structure the tree of parent-child
+relationships among the processes.  You can either make all the
+processes in the process group be children of the shell process, or you
+can make one process in group be the ancestor of all the other processes
+in that group.  The sample shell program presented in this chapter uses
+the first approach because it makes bookkeeping somewhat simpler.
+</para>
+<span xml:id="glibc-index-process-group-leader"></span>
+<span xml:id="glibc-index-process-group-ID"></span>
+<para>As each process is forked, it should put itself in the new process group
+by calling <code>setpgid</code>; see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Process-Group-Functions">Process Group Functions</a>.  The first
+process in the new group becomes its <emphasis>process group leader</emphasis>, and its
+process ID becomes the <emphasis>process group ID</emphasis> for the group.
+</para>
+<span xml:id="glibc-index-race-conditions_002c-relating-to-job-control"></span>
+<para>The shell should also call <code>setpgid</code> to put each of its child
+processes into the new process group.  This is because there is a
+potential timing problem: each child process must be put in the process
+group before it begins executing a new program, and the shell depends on
+having all the child processes in the group before it continues
+executing.  If both the child processes and the shell call
+<code>setpgid</code>, this ensures that the right things happen no matter which
+process gets to it first.
+</para>
+<para>If the job is being launched as a foreground job, the new process group
+also needs to be put into the foreground on the controlling terminal
+using <code>tcsetpgrp</code>.  Again, this should be done by the shell as well
+as by each of its child processes, to avoid race conditions.
+</para>
+<para>The next thing each child process should do is to reset its signal
+actions.
+</para>
+<para>During initialization, the shell process set itself to ignore job
+control signals; see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Initializing-the-Shell">Initializing the Shell</a>.  As a result, any child
+processes it creates also ignore these signals by inheritance.  This is
+definitely undesirable, so each child process should explicitly set the
+actions for these signals back to <code>SIG_DFL</code> just after it is forked.
+</para>
+<para>Since shells follow this convention, applications can assume that they
+inherit the correct handling of these signals from the parent process.
+But every application has a responsibility not to mess up the handling
+of stop signals.  Applications that disable the normal interpretation of
+the SUSP character should provide some other mechanism for the user to
+stop the job.  When the user invokes this mechanism, the program should
+send a <code>SIGTSTP</code> signal to the process group of the process, not
+just to the process itself.  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Signaling-Another-Process">Signaling Another Process</a>.
+</para>
+<para>Finally, each child process should call <code>exec</code> in the normal way.
+This is also the point at which redirection of the standard input and
+output channels should be handled.  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Duplicating-Descriptors">Duplicating Descriptors</a>,
+for an explanation of how to do this.
+</para>
+<para>Here is the function from the sample shell program that is responsible
+for launching a program.  The function is executed by each child process
+immediately after it has been forked by the shell, and never returns.
+</para>
+<div class="example">
+<pre class="example">void
+launch_process (process *p, pid_t pgid,
+                int infile, int outfile, int errfile,
+                int foreground)
+{
+  pid_t pid;
+
+  if (shell_is_interactive)
+    {
+      /* <span class="roman">Put the process into the process group and give the process group</span>
+         <span class="roman">the terminal, if appropriate.</span>
+         <span class="roman">This has to be done both by the shell and in the individual</span>
+         <span class="roman">child processes because of potential race conditions.</span>  */
+      pid = getpid ();
+      if (pgid == 0) pgid = pid;
+      setpgid (pid, pgid);
+      if (foreground)
+        tcsetpgrp (shell_terminal, pgid);
+
+      /* <span class="roman">Set the handling for job control signals back to the default.</span>  */
+      signal (SIGINT, SIG_DFL);
+      signal (SIGQUIT, SIG_DFL);
+      signal (SIGTSTP, SIG_DFL);
+      signal (SIGTTIN, SIG_DFL);
+      signal (SIGTTOU, SIG_DFL);
+      signal (SIGCHLD, SIG_DFL);
+    }
+
+  /* <span class="roman">Set the standard input/output channels of the new process.</span>  */
+  if (infile != STDIN_FILENO)
+    {
+      dup2 (infile, STDIN_FILENO);
+      close (infile);
+    }
+  if (outfile != STDOUT_FILENO)
+    {
+      dup2 (outfile, STDOUT_FILENO);
+      close (outfile);
+    }
+  if (errfile != STDERR_FILENO)
+    {
+      dup2 (errfile, STDERR_FILENO);
+      close (errfile);
+    }
+
+  /* <span class="roman">Exec the new process.  Make sure we exit.</span>  */
+  execvp (p-&gt;argv[0], p-&gt;argv);
+  perror ("execvp");
+  exit (1);
+}
+</pre></div>
+
+<para>If the shell is not running interactively, this function does not do
+anything with process groups or signals.  Remember that a shell not
+performing job control must keep all of its subprocesses in the same
+process group as the shell itself.
+</para>
+<para>Next, here is the function that actually launches a complete job.
+After creating the child processes, this function calls some other
+functions to put the newly created job into the foreground or background;
+these are discussed in <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Foreground-and-Background">Foreground and Background</a>.
+</para>
+<div class="example">
+<pre class="example">void
+launch_job (job *j, int foreground)
+{
+  process *p;
+  pid_t pid;
+  int mypipe[2], infile, outfile;
+
+  infile = j-&gt;stdin;
+  for (p = j-&gt;first_process; p; p = p-&gt;next)
+    {
+      /* <span class="roman">Set up pipes, if necessary.</span>  */
+      if (p-&gt;next)
+        {
+          if (pipe (mypipe) &lt; 0)
+            {
+              perror ("pipe");
+              exit (1);
+            }
+          outfile = mypipe[1];
+        }
+      else
+        outfile = j-&gt;stdout;
+
+      /* <span class="roman">Fork the child processes.</span>  */
+      pid = fork ();
+      if (pid == 0)
+        /* <span class="roman">This is the child process.</span>  */
+        launch_process (p, j-&gt;pgid, infile,
+                        outfile, j-&gt;stderr, foreground);
+      else if (pid &lt; 0)
+        {
+          /* <span class="roman">The fork failed.</span>  */
+          perror ("fork");
+          exit (1);
+        }
+      else
+        {
+          /* <span class="roman">This is the parent process.</span>  */
+          p-&gt;pid = pid;
+          if (shell_is_interactive)
+            {
+              if (!j-&gt;pgid)
+                j-&gt;pgid = pid;
+              setpgid (pid, j-&gt;pgid);
+            }
+        }
+
+      /* <span class="roman">Clean up after pipes.</span>  */
+      if (infile != j-&gt;stdin)
+        close (infile);
+      if (outfile != j-&gt;stdout)
+        close (outfile);
+      infile = mypipe[0];
+    }
+
+  format_job_info (j, "launched");
+
+  if (!shell_is_interactive)
+    wait_for_job (j);
+  else if (foreground)
+    put_job_in_foreground (j, 0);
+  else
+    put_job_in_background (j, 0);
+}
+</pre></div>
+
+
+<hr>
+</div>
+<div class="subsection" xml:id="glibc-Foreground-and-Background">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Stopped-and-Terminated-Jobs" accesskey="n" rel="next">Stopped and Terminated Jobs</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Launching-Jobs" accesskey="p" rel="prev">Launching Jobs</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Implementing-a-Shell" accesskey="u" rel="up">Implementing a Job Control Shell</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Foreground-and-Background-1"></span><h4 class="subsection">28.5.4 Foreground and Background</title>
+
+<para>Now let’s consider what actions must be taken by the shell when it
+launches a job into the foreground, and how this differs from what
+must be done when a background job is launched.
+</para>
+<span xml:id="glibc-index-foreground-job_002c-launching"></span>
+<para>When a foreground job is launched, the shell must first give it access
+to the controlling terminal by calling <code>tcsetpgrp</code>.  Then, the
+shell should wait for processes in that process group to terminate or
+stop.  This is discussed in more detail in <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Stopped-and-Terminated-Jobs">Stopped and Terminated Jobs</a>.
+</para>
+<para>When all of the processes in the group have either completed or stopped,
+the shell should regain control of the terminal for its own process
+group by calling <code>tcsetpgrp</code> again.  Since stop signals caused by
+I/O from a background process or a SUSP character typed by the user
+are sent to the process group, normally all the processes in the job
+stop together.
+</para>
+<para>The foreground job may have left the terminal in a strange state, so the
+shell should restore its own saved terminal modes before continuing.  In
+case the job is merely stopped, the shell should first save the current
+terminal modes so that it can restore them later if the job is
+continued.  The functions for dealing with terminal modes are
+<code>tcgetattr</code> and <code>tcsetattr</code>; these are described in
+<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Terminal-Modes">Terminal Modes</a>.
+</para>
+<para>Here is the sample shell’s function for doing all of this.
+</para>
+<div class="example">
+<pre class="example">/* <span class="roman">Put job <var>j</var> in the foreground.  If <var>cont</var> is nonzero,</span>
+   <span class="roman">restore the saved terminal modes and send the process group a</span>
+   <span class="roman"><code>SIGCONT</code> signal to wake it up before we block.</span>  */
+
+void
+put_job_in_foreground (job *j, int cont)
+{
+  /* <span class="roman">Put the job into the foreground.</span>  */
+  tcsetpgrp (shell_terminal, j-&gt;pgid);
+</pre><pre class="example">
+</pre><pre class="example">  /* <span class="roman">Send the job a continue signal, if necessary.</span>  */
+  if (cont)
+    {
+      tcsetattr (shell_terminal, TCSADRAIN, &amp;j-&gt;tmodes);
+      if (kill (- j-&gt;pgid, SIGCONT) &lt; 0)
+        perror ("kill (SIGCONT)");
+    }
+</pre><pre class="example">
+  /* <span class="roman">Wait for it to report.</span>  */
+  wait_for_job (j);
+
+  /* <span class="roman">Put the shell back in the foreground.</span>  */
+  tcsetpgrp (shell_terminal, shell_pgid);
+
+</pre><pre class="example">  /* <span class="roman">Restore the shell’s terminal modes.</span>  */
+  tcgetattr (shell_terminal, &amp;j-&gt;tmodes);
+  tcsetattr (shell_terminal, TCSADRAIN, &amp;shell_tmodes);
+}
+</pre></div>
+
+<span xml:id="glibc-index-background-job_002c-launching"></span>
+<para>If the process group is launched as a background job, the shell should
+remain in the foreground itself and continue to read commands from
+the terminal.
+</para>
+<para>In the sample shell, there is not much that needs to be done to put
+a job into the background.  Here is the function it uses:
+</para>
+<div class="example">
+<pre class="example">/* <span class="roman">Put a job in the background.  If the cont argument is true, send</span>
+   <span class="roman">the process group a <code>SIGCONT</code> signal to wake it up.</span>  */
+
+void
+put_job_in_background (job *j, int cont)
+{
+  /* <span class="roman">Send the job a continue signal, if necessary.</span>  */
+  if (cont)
+    if (kill (-j-&gt;pgid, SIGCONT) &lt; 0)
+      perror ("kill (SIGCONT)");
+}
+</pre></div>
+
+
+<hr>
+</div>
+<div class="subsection" xml:id="glibc-Stopped-and-Terminated-Jobs">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Continuing-Stopped-Jobs" accesskey="n" rel="next">Continuing Stopped Jobs</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Foreground-and-Background" accesskey="p" rel="prev">Foreground and Background</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Implementing-a-Shell" accesskey="u" rel="up">Implementing a Job Control Shell</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Stopped-and-Terminated-Jobs-1"></span><h4 class="subsection">28.5.5 Stopped and Terminated Jobs</title>
+
+<span xml:id="glibc-index-stopped-jobs_002c-detecting"></span>
+<span xml:id="glibc-index-terminated-jobs_002c-detecting"></span>
+<para>When a foreground process is launched, the shell must block until all of
+the processes in that job have either terminated or stopped.  It can do
+this by calling the <code>waitpid</code> function; see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Process-Completion">Process Completion</a>.  Use the <code>WUNTRACED</code> option so that status is reported
+for processes that stop as well as processes that terminate.
+</para>
+<para>The shell must also check on the status of background jobs so that it
+can report terminated and stopped jobs to the user; this can be done by
+calling <code>waitpid</code> with the <code>WNOHANG</code> option.  A good place to
+put a such a check for terminated and stopped jobs is just before
+prompting for a new command.
+</para>
+<span xml:id="glibc-index-SIGCHLD_002c-handling-of"></span>
+<para>The shell can also receive asynchronous notification that there is
+status information available for a child process by establishing a
+handler for <code>SIGCHLD</code> signals.  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Signal-Handling">Signal Handling</a>.
+</para>
+<para>In the sample shell program, the <code>SIGCHLD</code> signal is normally
+ignored.  This is to avoid reentrancy problems involving the global data
+structures the shell manipulates.  But at specific times when the shell
+is not using these data structures—such as when it is waiting for
+input on the terminal—it makes sense to enable a handler for
+<code>SIGCHLD</code>.  The same function that is used to do the synchronous
+status checks (<code>do_job_notification</code>, in this case) can also be
+called from within this handler.
+</para>
+<para>Here are the parts of the sample shell program that deal with checking
+the status of jobs and reporting the information to the user.
+</para>
+<div class="example">
+<pre class="example">/* <span class="roman">Store the status of the process <var>pid</var> that was returned by waitpid.</span>
+   <span class="roman">Return 0 if all went well, nonzero otherwise.</span>  */
+
+int
+mark_process_status (pid_t pid, int status)
+{
+  job *j;
+  process *p;
+</pre><pre class="example">
+</pre><pre class="example">  if (pid &gt; 0)
+    {
+      /* <span class="roman">Update the record for the process.</span>  */
+      for (j = first_job; j; j = j-&gt;next)
+        for (p = j-&gt;first_process; p; p = p-&gt;next)
+          if (p-&gt;pid == pid)
+            {
+              p-&gt;status = status;
+              if (WIFSTOPPED (status))
+                p-&gt;stopped = 1;
+              else
+                {
+                  p-&gt;completed = 1;
+                  if (WIFSIGNALED (status))
+                    fprintf (stderr, "%d: Terminated by signal %d.\n",
+                             (int) pid, WTERMSIG (p-&gt;status));
+                }
+              return 0;
+             }
+      fprintf (stderr, "No child process %d.\n", pid);
+      return -1;
+    }
+</pre><pre class="example">  else if (pid == 0 || errno == ECHILD)
+    /* <span class="roman">No processes ready to report.</span>  */
+    return -1;
+  else {
+    /* <span class="roman">Other weird errors.</span>  */
+    perror ("waitpid");
+    return -1;
+  }
+}
+</pre><pre class="example">
+</pre><pre class="example">/* <span class="roman">Check for processes that have status information available,</span>
+   <span class="roman">without blocking.</span>  */
+
+void
+update_status (void)
+{
+  int status;
+  pid_t pid;
+
+  do
+    pid = waitpid (WAIT_ANY, &amp;status, WUNTRACED|WNOHANG);
+  while (!mark_process_status (pid, status));
+}
+</pre><pre class="example">
+</pre><pre class="example">/* <span class="roman">Check for processes that have status information available,</span>
+   <span class="roman">blocking until all processes in the given job have reported.</span>  */
+
+void
+wait_for_job (job *j)
+{
+  int status;
+  pid_t pid;
+
+  do
+    pid = waitpid (WAIT_ANY, &amp;status, WUNTRACED);
+  while (!mark_process_status (pid, status)
+         &amp;&amp; !job_is_stopped (j)
+         &amp;&amp; !job_is_completed (j));
+}
+</pre><pre class="example">
+</pre><pre class="example">/* <span class="roman">Format information about job status for the user to look at.</span>  */
+
+void
+format_job_info (job *j, const char *status)
+{
+  fprintf (stderr, "%ld (%s): %s\n", (long)j-&gt;pgid, status, j-&gt;command);
+}
+</pre><pre class="example">
+</pre><pre class="example">/* <span class="roman">Notify the user about stopped or terminated jobs.</span>
+   <span class="roman">Delete terminated jobs from the active job list.</span>  */
+
+void
+do_job_notification (void)
+{
+  job *j, *jlast, *jnext;
+
+  /* <span class="roman">Update status information for child processes.</span>  */
+  update_status ();
+
+  jlast = NULL;
+  for (j = first_job; j; j = jnext)
+    {
+      jnext = j-&gt;next;
+
+      /* <span class="roman">If all processes have completed, tell the user the job has</span>
+         <span class="roman">completed and delete it from the list of active jobs.</span>  */
+      if (job_is_completed (j)) {
+        format_job_info (j, "completed");
+        if (jlast)
+          jlast-&gt;next = jnext;
+        else
+          first_job = jnext;
+        free_job (j);
+      }
+
+      /* <span class="roman">Notify the user about stopped jobs,</span>
+         <span class="roman">marking them so that we won’t do this more than once.</span>  */
+      else if (job_is_stopped (j) &amp;&amp; !j-&gt;notified) {
+        format_job_info (j, "stopped");
+        j-&gt;notified = 1;
+        jlast = j;
+      }
+
+      /* <span class="roman">Don’t say anything about jobs that are still running.</span>  */
+      else
+        jlast = j;
+    }
+}
+</pre></div>
+
+<hr>
+</div>
+<div class="subsection" xml:id="glibc-Continuing-Stopped-Jobs">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Missing-Pieces" accesskey="n" rel="next">The Missing Pieces</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Stopped-and-Terminated-Jobs" accesskey="p" rel="prev">Stopped and Terminated Jobs</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Implementing-a-Shell" accesskey="u" rel="up">Implementing a Job Control Shell</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Continuing-Stopped-Jobs-1"></span><h4 class="subsection">28.5.6 Continuing Stopped Jobs</title>
+
+<span xml:id="glibc-index-stopped-jobs_002c-continuing"></span>
+<para>The shell can continue a stopped job by sending a <code>SIGCONT</code> signal
+to its process group.  If the job is being continued in the foreground,
+the shell should first invoke <code>tcsetpgrp</code> to give the job access to
+the terminal, and restore the saved terminal settings.  After continuing
+a job in the foreground, the shell should wait for the job to stop or
+complete, as if the job had just been launched in the foreground.
+</para>
+<para>The sample shell program handles both newly created and continued jobs
+with the same pair of functions, <code><span class="nolinebreak">put_job_in_foreground</span></code> and
+<code><span class="nolinebreak">put_job_in_background</span></code>.  The definitions of these functions
+were given in <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Foreground-and-Background">Foreground and Background</a>.  When continuing a
+stopped job, a nonzero value is passed as the <var>cont</var> argument to
+ensure that the <code>SIGCONT</code> signal is sent and the terminal modes
+reset, as appropriate.
+</para>
+<para>This leaves only a function for updating the shell’s internal bookkeeping
+about the job being continued:
+</para>
+<div class="example">
+<pre class="example">/* <span class="roman">Mark a stopped job J as being running again.</span>  */
+
+void
+mark_job_as_running (job *j)
+{
+  Process *p;
+
+  for (p = j-&gt;first_process; p; p = p-&gt;next)
+    p-&gt;stopped = 0;
+  j-&gt;notified = 0;
+}
+</pre><pre class="example">
+</pre><pre class="example">/* <span class="roman">Continue the job J.</span>  */
+
+void
+continue_job (job *j, int foreground)
+{
+  mark_job_as_running (j);
+  if (foreground)
+    put_job_in_foreground (j, 1);
+  else
+    put_job_in_background (j, 1);
+}
+</pre></div>
+
+<hr>
+</div>
+<div class="subsection" xml:id="glibc-Missing-Pieces">
+<div class="header">
+<para>
+Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Continuing-Stopped-Jobs" accesskey="p" rel="prev">Continuing Stopped Jobs</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Implementing-a-Shell" accesskey="u" rel="up">Implementing a Job Control Shell</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-The-Missing-Pieces"></span><h4 class="subsection">28.5.7 The Missing Pieces</title>
+
+<para>The code extracts for the sample shell included in this chapter are only
+a part of the entire shell program.  In particular, nothing at all has
+been said about how <code>job</code> and <code>program</code> data structures are
+allocated and initialized.
+</para>
+<para>Most real shells provide a complex user interface that has support for
+a command language; variables; abbreviations, substitutions, and pattern
+matching on file names; and the like.  All of this is far too complicated
+to explain here!  Instead, we have concentrated on showing how to
+implement the core process creation and job control functions that can
+be called from such a shell.
+</para>
+<para>Here is a table summarizing the major entry points we have presented:
+</para>
+<dl compact="compact">
+<dt><span><code>void init_shell (void)</code></span></dt>
+<dd><para>Initialize the shell’s internal state.  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Initializing-the-Shell">Initializing the Shell</a>.
+</para>
+</dd>
+<dt><span><code>void launch_job (job *<var>j</var>, int <var>foreground</var>)</code></span></dt>
+<dd><para>Launch the job <var>j</var> as either a foreground or background job.
+See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Launching-Jobs">Launching Jobs</a>.
+</para>
+</dd>
+<dt><span><code>void do_job_notification (void)</code></span></dt>
+<dd><para>Check for and report any jobs that have terminated or stopped.  Can be
+called synchronously or within a handler for <code>SIGCHLD</code> signals.
+See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Stopped-and-Terminated-Jobs">Stopped and Terminated Jobs</a>.
+</para>
+</dd>
+<dt><span><code>void continue_job (job *<var>j</var>, int <var>foreground</var>)</code></span></dt>
+<dd><para>Continue the job <var>j</var>.  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Continuing-Stopped-Jobs">Continuing Stopped Jobs</a>.
+</para></dd>
+</dl>
+
+<para>Of course, a real shell would also want to provide other functions for
+managing jobs.  For example, it would be useful to have commands to list
+all active jobs or to send a signal (such as <code>SIGKILL</code>) to a job.
+</para>
+
+<hr>
+</div>
+</div>
+<sect xml:id="glibc-Functions-for-Job-Control">
+<div class="header">
+<para>
+Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Implementing-a-Shell" accesskey="p" rel="prev">Implementing a Job Control Shell</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Job-Control" accesskey="u" rel="up">Job Control</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Functions-for-Job-Control-1"></span><h3 class="section">28.6 Functions for Job Control</title>
+<span xml:id="glibc-index-process-group-functions"></span>
+<span xml:id="glibc-index-job-control-functions"></span>
+
+<para>This section contains detailed descriptions of the functions relating
+to job control.
+</para>
+
+
+<ul class="section-toc">
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Identifying-the-Terminal" accesskey="1">Identifying the Controlling Terminal</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Process-Group-Functions" accesskey="2">Process Group Functions</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Terminal-Access-Functions" accesskey="3">Functions for Controlling Terminal Access</a></li>
+</ul>
+<hr>
+<div class="subsection" xml:id="glibc-Identifying-the-Terminal">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Process-Group-Functions" accesskey="n" rel="next">Process Group Functions</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Functions-for-Job-Control" accesskey="u" rel="up">Functions for Job Control</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Identifying-the-Controlling-Terminal"></span><h4 class="subsection">28.6.1 Identifying the Controlling Terminal</title>
+<span xml:id="glibc-index-controlling-terminal_002c-determining"></span>
+
+<para>You can use the <code>ctermid</code> function to get a file name that you can
+use to open the controlling terminal.  In the GNU C Library, it returns
+the same string all the time: <code>"/dev/tty"</code>.  That is a special
+“magic” file name that refers to the controlling terminal of the
+current process (if it has one).  To find the name of the specific
+terminal device, use <code>ttyname</code>; see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Is-It-a-Terminal">Identifying Terminals</a>.
+</para>
+<para>The function <code>ctermid</code> is declared in the header file
+<filename>stdio.h</filename>.
+<span xml:id="glibc-index-stdio_002eh-19"></span>
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-ctermid"><span class="category">Function: </span><span><emphasis>char *</emphasis> <strong>ctermid</strong> <emphasis>(char *<var>string</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-ctermid" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe !posix/!string
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>ctermid</code> function returns a string containing the file name of
+the controlling terminal for the current process.  If <var>string</var> is
+not a null pointer, it should be an array that can hold at least
+<code>L_ctermid</code> characters; the string is returned in this array.
+Otherwise, a pointer to a string in a static area is returned, which
+might get overwritten on subsequent calls to this function.
+</para>
+<para>An empty string is returned if the file name cannot be determined for
+any reason.  Even if a file name is returned, access to the file it
+represents is not guaranteed.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-L_005fctermid"><span class="category">Macro: </span><span><emphasis>int</emphasis> <strong>L_ctermid</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-L_005fctermid" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>The value of this macro is an integer constant expression that
+represents the size of a string large enough to hold the file name
+returned by <code>ctermid</code>.
+</para></dd></dl>
+
+<para>See also the <code>isatty</code> and <code>ttyname</code> functions, in
+<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Is-It-a-Terminal">Identifying Terminals</a>.
+</para>
+
+<hr>
+</div>
+<div class="subsection" xml:id="glibc-Process-Group-Functions">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Terminal-Access-Functions" accesskey="n" rel="next">Functions for Controlling Terminal Access</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Identifying-the-Terminal" accesskey="p" rel="prev">Identifying the Controlling Terminal</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Functions-for-Job-Control" accesskey="u" rel="up">Functions for Job Control</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Process-Group-Functions-1"></span><h4 class="subsection">28.6.2 Process Group Functions</title>
+
+<para>Here are descriptions of the functions for manipulating process groups.
+Your program should include the header files <filename>sys/types.h</filename> and
+<filename>unistd.h</filename> to use these functions.
+<span xml:id="glibc-index-unistd_002eh-20"></span>
+<span xml:id="glibc-index-sys_002ftypes_002eh-2"></span>
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-setsid"><span class="category">Function: </span><span><emphasis>pid_t</emphasis> <strong>setsid</strong> <emphasis>(void)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-setsid" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>setsid</code> function creates a new session.  The calling process
+becomes the session leader, and is put in a new process group whose
+process group ID is the same as the process ID of that process.  There
+are initially no other processes in the new process group, and no other
+process groups in the new session.
+</para>
+<para>This function also makes the calling process have no controlling terminal.
+</para>
+<para>The <code>setsid</code> function returns the new process group ID of the
+calling process if successful.  A return value of <code>-1</code> indicates an
+error.  The following <code>errno</code> error conditions are defined for this
+function:
+</para>
+<dl compact="compact">
+<dt><span><code>EPERM</code></span></dt>
+<dd><para>The calling process is already a process group leader, or there is
+already another process group around that has the same process group ID.
+</para></dd>
+</dl>
+</dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-getsid"><span class="category">Function: </span><span><emphasis>pid_t</emphasis> <strong>getsid</strong> <emphasis>(pid_t <var>pid</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-getsid" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+
+<para>The <code>getsid</code> function returns the process group ID of the session
+leader of the specified process.  If a <var>pid</var> is <code>0</code>, the
+process group ID of the session leader of the current process is
+returned.
+</para>
+<para>In case of error <code>-1</code> is returned and <code>errno</code> is set.  The
+following <code>errno</code> error conditions are defined for this function:
+</para>
+<dl compact="compact">
+<dt><span><code>ESRCH</code></span></dt>
+<dd><para>There is no process with the given process ID <var>pid</var>.
+</para></dd>
+<dt><span><code>EPERM</code></span></dt>
+<dd><para>The calling process and the process specified by <var>pid</var> are in
+different sessions, and the implementation doesn’t allow to access the
+process group ID of the session leader of the process with ID <var>pid</var>
+from the calling process.
+</para></dd>
+</dl>
+</dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-getpgrp"><span class="category">Function: </span><span><emphasis>pid_t</emphasis> <strong>getpgrp</strong> <emphasis>(void)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-getpgrp" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>getpgrp</code> function returns the process group ID of
+the calling process.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-getpgid"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>getpgid</strong> <emphasis>(pid_t <var>pid</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-getpgid" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+
+<para>The <code>getpgid</code> function
+returns the process group ID of the process <var>pid</var>.  You can supply a
+value of <code>0</code> for the <var>pid</var> argument to get information about
+the calling process.
+</para>
+<para>In case of error <code>-1</code> is returned and <code>errno</code> is set.  The
+following <code>errno</code> error conditions are defined for this function:
+</para>
+<dl compact="compact">
+<dt><span><code>ESRCH</code></span></dt>
+<dd><para>There is no process with the given process ID <var>pid</var>.
+The calling process and the process specified by <var>pid</var> are in
+different sessions, and the implementation doesn’t allow to access the
+process group ID of the process with ID <var>pid</var> from the calling
+process.
+</para></dd>
+</dl>
+</dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-setpgid"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>setpgid</strong> <emphasis>(pid_t <var>pid</var>, pid_t <var>pgid</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-setpgid" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>setpgid</code> function puts the process <var>pid</var> into the process
+group <var>pgid</var>.  As a special case, either <var>pid</var> or <var>pgid</var> can
+be zero to indicate the process ID of the calling process.
+</para>
+<para>If the operation is successful, <code>setpgid</code> returns zero.  Otherwise
+it returns <code>-1</code>.  The following <code>errno</code> error conditions are
+defined for this function:
+</para>
+<dl compact="compact">
+<dt><span><code>EACCES</code></span></dt>
+<dd><para>The child process named by <var>pid</var> has executed an <code>exec</code>
+function since it was forked.
+</para>
+</dd>
+<dt><span><code>EINVAL</code></span></dt>
+<dd><para>The value of the <var>pgid</var> is not valid.
+</para>
+</dd>
+<dt><span><code>ENOSYS</code></span></dt>
+<dd><para>The system doesn’t support job control.
+</para>
+</dd>
+<dt><span><code>EPERM</code></span></dt>
+<dd><para>The process indicated by the <var>pid</var> argument is a session leader,
+or is not in the same session as the calling process, or the value of
+the <var>pgid</var> argument doesn’t match a process group ID in the same
+session as the calling process.
+</para>
+</dd>
+<dt><span><code>ESRCH</code></span></dt>
+<dd><para>The process indicated by the <var>pid</var> argument is not the calling
+process or a child of the calling process.
+</para></dd>
+</dl>
+</dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-setpgrp"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>setpgrp</strong> <emphasis>(pid_t <var>pid</var>, pid_t <var>pgid</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-setpgrp" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This is the BSD Unix name for <code>setpgid</code>.  Both functions do exactly
+the same thing.
+</para></dd></dl>
+
+
+<hr>
+</div>
+<div class="subsection" xml:id="glibc-Terminal-Access-Functions">
+<div class="header">
+<para>
+Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Process-Group-Functions" accesskey="p" rel="prev">Process Group Functions</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Functions-for-Job-Control" accesskey="u" rel="up">Functions for Job Control</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Functions-for-Controlling-Terminal-Access"></span><h4 class="subsection">28.6.3 Functions for Controlling Terminal Access</title>
+
+<para>These are the functions for reading or setting the foreground
+process group of a terminal.  You should include the header files
+<filename>sys/types.h</filename> and <filename>unistd.h</filename> in your application to use
+these functions.
+<span xml:id="glibc-index-unistd_002eh-21"></span>
+<span xml:id="glibc-index-sys_002ftypes_002eh-3"></span>
+</para>
+<para>Although these functions take a file descriptor argument to specify
+the terminal device, the foreground job is associated with the terminal
+file itself and not a particular open file descriptor.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-tcgetpgrp"><span class="category">Function: </span><span><emphasis>pid_t</emphasis> <strong>tcgetpgrp</strong> <emphasis>(int <var>filedes</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-tcgetpgrp" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This function returns the process group ID of the foreground process
+group associated with the terminal open on descriptor <var>filedes</var>.
+</para>
+<para>If there is no foreground process group, the return value is a number
+greater than <code>1</code> that does not match the process group ID of any
+existing process group.  This can happen if all of the processes in the
+job that was formerly the foreground job have terminated, and no other
+job has yet been moved into the foreground.
+</para>
+<para>In case of an error, a value of <code>-1</code> is returned.  The
+following <code>errno</code> error conditions are defined for this function:
+</para>
+<dl compact="compact">
+<dt><span><code>EBADF</code></span></dt>
+<dd><para>The <var>filedes</var> argument is not a valid file descriptor.
+</para>
+</dd>
+<dt><span><code>ENOSYS</code></span></dt>
+<dd><para>The system doesn’t support job control.
+</para>
+</dd>
+<dt><span><code>ENOTTY</code></span></dt>
+<dd><para>The terminal file associated with the <var>filedes</var> argument isn’t the
+controlling terminal of the calling process.
+</para></dd>
+</dl>
+</dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-tcsetpgrp"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>tcsetpgrp</strong> <emphasis>(int <var>filedes</var>, pid_t <var>pgid</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-tcsetpgrp" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This function is used to set a terminal’s foreground process group ID.
+The argument <var>filedes</var> is a descriptor which specifies the terminal;
+<var>pgid</var> specifies the process group.  The calling process must be a
+member of the same session as <var>pgid</var> and must have the same
+controlling terminal.
+</para>
+<para>For terminal access purposes, this function is treated as output.  If it
+is called from a background process on its controlling terminal,
+normally all processes in the process group are sent a <code>SIGTTOU</code>
+signal.  The exception is if the calling process itself is ignoring or
+blocking <code>SIGTTOU</code> signals, in which case the operation is
+performed and no signal is sent.
+</para>
+<para>If successful, <code>tcsetpgrp</code> returns <code>0</code>.  A return value of
+<code>-1</code> indicates an error.  The following <code>errno</code> error
+conditions are defined for this function:
+</para>
+<dl compact="compact">
+<dt><span><code>EBADF</code></span></dt>
+<dd><para>The <var>filedes</var> argument is not a valid file descriptor.
+</para>
+</dd>
+<dt><span><code>EINVAL</code></span></dt>
+<dd><para>The <var>pgid</var> argument is not valid.
+</para>
+</dd>
+<dt><span><code>ENOSYS</code></span></dt>
+<dd><para>The system doesn’t support job control.
+</para>
+</dd>
+<dt><span><code>ENOTTY</code></span></dt>
+<dd><para>The <var>filedes</var> isn’t the controlling terminal of the calling process.
+</para>
+</dd>
+<dt><span><code>EPERM</code></span></dt>
+<dd><para>The <var>pgid</var> isn’t a process group in the same session as the calling
+process.
+</para></dd>
+</dl>
+</dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-tcgetsid"><span class="category">Function: </span><span><emphasis>pid_t</emphasis> <strong>tcgetsid</strong> <emphasis>(int <var>fildes</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-tcgetsid" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>This function is used to obtain the process group ID of the session
+for which the terminal specified by <var>fildes</var> is the controlling terminal.
+If the call is successful the group ID is returned.  Otherwise the
+return value is <code>(pid_t) -1</code> and the global variable <code>errno</code>
+is set to the following value:
+</para><dl compact="compact">
+<dt><span><code>EBADF</code></span></dt>
+<dd><para>The <var>filedes</var> argument is not a valid file descriptor.
+</para>
+</dd>
+<dt><span><code>ENOTTY</code></span></dt>
+<dd><para>The calling process does not have a controlling terminal, or the file
+is not the controlling terminal.
+</para></dd>
+</dl>
+</dd></dl>
+<hr>
+</div>
+</div>
+</div-->
 </part>

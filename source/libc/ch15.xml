@@ -3,6 +3,373 @@
         glibc/ch15.xml,v2.36, GFDL,LGPL, NBB, 2023
      ******************************************************************** -->
 <part xml:id="glibc-Pipes-and-FIFOs">
-  <title>Borular ve İsimli Borular</title>
-  <titleabbrev>Süreçler arası basit iletişim düzeneği.</titleabbrev>
+ <title>Borular ve İsimli Borular</title>
+ <titleabbrev>Süreçler arası basit iletişim düzeneği.</titleabbrev>
+ <preliminary>
+  <para>
+   <indexterm linkend="glibc-cp"><primary>boru</primary></indexterm>
+   A <emphasis>pipe</emphasis> is a mechanism for interprocess communication; data written
+to the pipe by one process can be read by another process.  The data is
+handled in a first-in, first-out (FIFO) order.  The pipe has no name; it
+is created for one use and both ends must be inherited from the single
+process which created the pipe.
+</para>
+
+  <para>
+   <indexterm linkend="glibc-cp"><primary>FIFO özel dosyası</primary></indexterm>
+   A <emphasis>FIFO special file</emphasis> is similar to a pipe, but instead of being an anonymous, temporary connection, a FIFO has a name or names like any
+other file.  Processes open the FIFO by name in order to communicate
+through it.
+</para>
+<para>A pipe or FIFO has to be open at both ends simultaneously.  If you read
+from a pipe or FIFO file that doesn’t have any processes writing to it
+(perhaps because they have all closed the file, or exited), the read
+returns end-of-file.  Writing to a pipe or FIFO that doesn’t have a
+reading process is treated as an error condition; it generates a
+<code>SIGPIPE</code> signal, and fails with error code <code>EPIPE</code> if the
+signal is handled or blocked.
+</para>
+<para>Neither pipes nor FIFO special files allow file positioning.  Both
+reading and writing operations happen sequentially; reading from the
+beginning of the file and writing at the end.
+</para>
+ </preliminary><!--
+<sect xml:id="glibc-Creating-a-Pipe">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Pipe-to-a-Subprocess" accesskey="n" rel="next">Pipe to a Subprocess</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Pipes-and-FIFOs" accesskey="u" rel="up">Pipes and FIFOs</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Creating-a-Pipe-1"></span><h3 class="section">15.1 Creating a Pipe</title>
+<span xml:id="glibc-index-creating-a-pipe"></span>
+<span xml:id="glibc-index-opening-a-pipe"></span>
+<span xml:id="glibc-index-interprocess-communication_002c-with-pipes"></span>
+
+<para>The primitive for creating a pipe is the <code>pipe</code> function.  This
+creates both the reading and writing ends of the pipe.  It is not very
+useful for a single process to use a pipe to talk to itself.  In typical
+use, a process creates a pipe just before it forks one or more child
+processes (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Creating-a-Process">Creating a Process</a>).  The pipe is then used for
+communication either between the parent or child processes, or between
+two sibling processes.
+</para>
+<para>The <code>pipe</code> function is declared in the header file
+<filename>unistd.h</filename>.
+<span xml:id="glibc-index-unistd_002eh-12"></span>
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-pipe-1"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>pipe</strong> <emphasis>(int <var>filedes</var><tt>[2]</tt>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-pipe-1" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe fd
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>pipe</code> function creates a pipe and puts the file descriptors
+for the reading and writing ends of the pipe (respectively) into
+<code><var>filedes</var>[0]</code> and <code><var>filedes</var>[1]</code>.
+</para>
+<para>An easy way to remember that the input end comes first is that file
+descriptor <code>0</code> is standard input, and file descriptor <code>1</code> is
+standard output.
+</para>
+<para>If successful, <code>pipe</code> returns a value of <code>0</code>.  On failure,
+<code>-1</code> is returned.  The following <code>errno</code> error conditions are
+defined for this function:
+</para>
+<dl compact="compact">
+<dt><span><code>EMFILE</code></span></dt>
+<dd><para>The process has too many files open.
+</para>
+</dd>
+<dt><span><code>ENFILE</code></span></dt>
+<dd><para>There are too many open files in the entire system.  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Error-Codes">Error Codes</a>,
+for more information about <code>ENFILE</code>.  This error never occurs on
+GNU/Hurd systems.
+</para></dd>
+</dl>
+</dd></dl>
+
+<para>Here is an example of a simple program that creates a pipe.  This program
+uses the <code>fork</code> function (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Creating-a-Process">Creating a Process</a>) to create
+a child process.  The parent process writes data to the pipe, which is
+read by the child process.
+</para>
+<div class="example">
+<pre class="example">
+#include &lt;sys/types.h&gt;
+#include &lt;unistd.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+
+/* <span class="roman">Read characters from the pipe and echo them to <code>stdout</code>.</span> */
+
+void
+read_from_pipe (int file)
+{
+  FILE *stream;
+  int c;
+  stream = fdopen (file, "r");
+  while ((c = fgetc (stream)) != EOF)
+    putchar (c);
+  fclose (stream);
+}
+
+/* <span class="roman">Write some random text to the pipe.</span> */
+
+void
+write_to_pipe (int file)
+{
+  FILE *stream;
+  stream = fdopen (file, "w");
+  fprintf (stream, "hello, world!\n");
+  fprintf (stream, "goodbye, world!\n");
+  fclose (stream);
+}
+
+int
+main (void)
+{
+  pid_t pid;
+  int mypipe[2];
+
+</pre><pre class="example">  /* <span class="roman">Create the pipe.</span> */
+  if (pipe (mypipe))
+    {
+      fprintf (stderr, "Pipe failed.\n");
+      return EXIT_FAILURE;
+    }
+</pre><pre class="example">
+  /* <span class="roman">Create the child process.</span> */
+  pid = fork ();
+  if (pid == (pid_t) 0)
+    {
+      /* <span class="roman">This is the child process.
+         Close other end first.</span> */
+      close (mypipe[1]);
+      read_from_pipe (mypipe[0]);
+      return EXIT_SUCCESS;
+    }
+  else if (pid &lt; (pid_t) 0)
+    {
+      /* <span class="roman">The fork failed.</span> */
+      fprintf (stderr, "Fork failed.\n");
+      return EXIT_FAILURE;
+    }
+  else
+    {
+      /* <span class="roman">This is the parent process.
+         Close other end first.</span> */
+      close (mypipe[0]);
+      write_to_pipe (mypipe[1]);
+      return EXIT_SUCCESS;
+    }
+}
+</pre></div>
+
+<hr>
+</div>
+<sect xml:id="glibc-Pipe-to-a-Subprocess">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#FIFO-Special-Files" accesskey="n" rel="next">FIFO Special Files</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Creating-a-Pipe" accesskey="p" rel="prev">Creating a Pipe</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Pipes-and-FIFOs" accesskey="u" rel="up">Pipes and FIFOs</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Pipe-to-a-Subprocess-1"></span><h3 class="section">15.2 Pipe to a Subprocess</title>
+<span xml:id="glibc-index-creating-a-pipe-to-a-subprocess"></span>
+<span xml:id="glibc-index-pipe-to-a-subprocess"></span>
+<span xml:id="glibc-index-filtering-i_002fo-through-subprocess"></span>
+
+<para>A common use of pipes is to send data to or receive data from a program
+being run as a subprocess.  One way of doing this is by using a combination of
+<code>pipe</code> (to create the pipe), <code>fork</code> (to create the subprocess),
+<code>dup2</code> (to force the subprocess to use the pipe as its standard input
+or output channel), and <code>exec</code> (to execute the new program).  Or,
+you can use <code>popen</code> and <code>pclose</code>.
+</para>
+<para>The advantage of using <code>popen</code> and <code>pclose</code> is that the
+interface is much simpler and easier to use.  But it doesn’t offer as
+much flexibility as using the low-level functions directly.
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-popen"><span class="category">Function: </span><span><emphasis>FILE *</emphasis> <strong>popen</strong> <emphasis>(const char *<var>command</var>, const char *<var>mode</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-popen" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+
+
+<para>Preliminary:
+| MT-Safe
+| AS-Unsafe heap corrupt
+| AC-Unsafe corrupt lock fd mem
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>popen</code> function is closely related to the <code>system</code>
+function; see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Running-a-Command">Running a Command</a>.  It executes the shell command
+<var>command</var> as a subprocess.  However, instead of waiting for the
+command to complete, it creates a pipe to the subprocess and returns a
+stream that corresponds to that pipe.
+</para>
+<para>If you specify a <var>mode</var> argument of <code>"r"</code>, you can read from the
+stream to retrieve data from the standard output channel of the subprocess.
+The subprocess inherits its standard input channel from the parent process.
+</para>
+<para>Similarly, if you specify a <var>mode</var> argument of <code>"w"</code>, you can
+write to the stream to send data to the standard input channel of the
+subprocess.  The subprocess inherits its standard output channel from
+the parent process.
+</para>
+<para>In the event of an error <code>popen</code> returns a null pointer.  This
+might happen if the pipe or stream cannot be created, if the subprocess
+cannot be forked, or if the program cannot be executed.
+</para></dd></dl>
+
+<dl class="def">
+<dt xml:id="glibc-index-pclose"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>pclose</strong> <emphasis>(FILE *<var>stream</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-pclose" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+
+
+<para>Preliminary:
+| MT-Safe
+| AS-Unsafe heap plugin corrupt lock
+| AC-Unsafe corrupt lock fd mem
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>pclose</code> function is used to close a stream created by <code>popen</code>.
+It waits for the child process to terminate and returns its status value,
+as for the <code>system</code> function.
+</para></dd></dl>
+
+<para>Here is an example showing how to use <code>popen</code> and <code>pclose</code> to
+filter output through another program, in this case the paging program
+<code>more</code>.
+</para>
+<div class="example">
+<pre class="example">
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+
+void
+write_data (FILE * stream)
+{
+  int i;
+  for (i = 0; i &lt; 100; i++)
+    fprintf (stream, "%d\n", i);
+  if (ferror (stream))
+    {
+      fprintf (stderr, "Output to stream failed.\n");
+      exit (EXIT_FAILURE);
+    }
+}
+
+</pre><pre class="example">int
+main (void)
+{
+  FILE *output;
+
+  output = popen ("more", "w");
+  if (!output)
+    {
+      fprintf (stderr,
+               "incorrect parameters or too many files.\n");
+      return EXIT_FAILURE;
+    }
+  write_data (output);
+  if (pclose (output) != 0)
+    {
+      fprintf (stderr,
+               "Could not run more or other error.\n");
+    }
+  return EXIT_SUCCESS;
+}
+</pre></div>
+
+<hr>
+</div>
+<sect xml:id="glibc-FIFO-Special-Files">
+<div class="header">
+<para>
+Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Pipe-Atomicity" accesskey="n" rel="next">Atomicity of Pipe I/O</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Pipe-to-a-Subprocess" accesskey="p" rel="prev">Pipe to a Subprocess</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Pipes-and-FIFOs" accesskey="u" rel="up">Pipes and FIFOs</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-FIFO-Special-Files-1"></span><h3 class="section">15.3 FIFO Special Files</title>
+<span xml:id="glibc-index-creating-a-FIFO-special-file"></span>
+<span xml:id="glibc-index-interprocess-communication_002c-with-FIFO"></span>
+
+<para>A FIFO special file is similar to a pipe, except that it is created in a
+different way.  Instead of being an anonymous communications channel, a
+FIFO special file is entered into the file system by calling
+<code>mkfifo</code>.
+</para>
+<para>Once you have created a FIFO special file in this way, any process can
+open it for reading or writing, in the same way as an ordinary file.
+However, it has to be open at both ends simultaneously before you can
+proceed to do any input or output operations on it.  Opening a FIFO for
+reading normally blocks until some other process opens the same FIFO for
+writing, and vice versa.
+</para>
+<para>The <code>mkfifo</code> function is declared in the header file
+<filename>sys/stat.h</filename>.
+<span xml:id="glibc-index-sys_002fstat_002eh-7"></span>
+</para>
+<dl class="def">
+<dt xml:id="glibc-index-mkfifo"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>mkfifo</strong> <emphasis>(const char *<var>filename</var>, mode_t <var>mode</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-mkfifo" class="copiable-anchor"> ¶</a></span></dt>
+<dd>
+<para>Preliminary:
+| MT-Safe
+| AS-Safe
+| AC-Safe
+| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
+</para>
+
+<para>The <code>mkfifo</code> function makes a FIFO special file with name
+<var>filename</var>.  The <var>mode</var> argument is used to set the file’s
+permissions; see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Setting-Permissions">Assigning File Permissions</a>.
+</para>
+<para>The normal, successful return value from <code>mkfifo</code> is <code>0</code>.  In
+the case of an error, <code>-1</code> is returned.  In addition to the usual
+file name errors (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#File-Name-Errors">File Name Errors</a>), the following
+<code>errno</code> error conditions are defined for this function:
+</para>
+<dl compact="compact">
+<dt><span><code>EEXIST</code></span></dt>
+<dd><para>The named file already exists.
+</para>
+</dd>
+<dt><span><code>ENOSPC</code></span></dt>
+<dd><para>The directory or file system cannot be extended.
+</para>
+</dd>
+<dt><span><code>EROFS</code></span></dt>
+<dd><para>The directory that would contain the file resides on a read-only file
+system.
+</para></dd>
+</dl>
+</dd></dl>
+
+<hr>
+</div>
+<sect xml:id="glibc-Pipe-Atomicity">
+<div class="header">
+<para>
+Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#FIFO-Special-Files" accesskey="p" rel="prev">FIFO Special Files</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Pipes-and-FIFOs" accesskey="u" rel="up">Pipes and FIFOs</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
+</div>
+<span xml:id="glibc-Atomicity-of-Pipe-I_002fO"></span><h3 class="section">15.4 Atomicity of Pipe I/O</title>
+
+<para>Reading or writing pipe data is <emphasis>atomic</emphasis> if the size of data written
+is not greater than <code>PIPE_BUF</code>.  This means that the data transfer
+seems to be an instantaneous unit, in that nothing else in the system
+can observe a state in which it is partially complete.  Atomic I/O may
+not begin right away (it may need to wait for buffer space or for data),
+but once it does begin it finishes immediately.
+</para>
+<para>Reading or writing a larger amount of data may not be atomic; for
+example, output data from other processes sharing the descriptor may be
+interspersed.  Also, once <code>PIPE_BUF</code> characters have been written,
+further writes will block until some characters are read.
+</para>
+<para>See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Limits-for-Files">Limits on File System Capacity</a>, for information about the <code>PIPE_BUF</code>
+parameter.
+</para><hr>
+</div>
+</div-->
 </part>

@@ -39,11 +39,11 @@ xmlns:exsl="http://exslt.org/common"
       <xsl:call-template name="user.header.content"/>
 
       <section class="mainpage">
-      <div class="crumbs"><p>&#160;&#160;</p></div>
+       <div class="crumbs"><p>&#160;&#160;</p></div>
        <xsl:copy-of select="$content"/>
+       <xsl:call-template name="user.footer.content"/>
       </section>
 
-      <xsl:call-template name="user.footer.content"/>
 <!--
       <xsl:call-template name="html5.footer.navigation">
         <xsl:with-param name="prev" select="$prev"/>
