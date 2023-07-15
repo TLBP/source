@@ -6,7 +6,7 @@ cd ..
 xsl="scripts/bookless.xsl"
 xml="belgeler.xml"
 
-LANG="C" xsltproc $xsl $xml
+xsltproc --xinclude $xsl $xml
 
 cd -
 

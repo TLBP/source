@@ -6,196 +6,132 @@
   <title>Syslog</title>
   <titleabbrev>Sistem Günlükleme ve İletileşme.</titleabbrev>
  <preliminary>
-<para>This chapter describes facilities for issuing and logging messages of
-system administration interest.  This chapter has nothing to do with
-programs issuing messages to their own users or keeping private logs
-(One would typically do that with the facilities described in
-<xref linkend="glibc-I-O-on-Streams"/>).
-</para>
-<para>Most systems have a facility called “Syslog” that allows programs to
-submit messages of interest to system administrators and can be
-configured to pass these messages on in various ways, such as printing
-on the console, mailing to a particular person, or recording in a log
-file for future reference.
-</para>
-<para>A program uses the facilities in this chapter to submit such messages.
-</para>
- </preliminary><!--
-<sect xml:id="glibc-Overview-of-Syslog">
-<div class="header">
-<para>
-Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Submitting-Syslog-Messages" accesskey="n" rel="next">Submitting Syslog Messages</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Syslog" accesskey="u" rel="up">Syslog</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
-</div>
-<span xml:id="glibc-Overview-of-Syslog-1"></span><h3 class="section">18.1 Overview of Syslog</title>
-
-<para>System administrators have to deal with lots of different kinds of
-messages from a plethora of subsystems within each system, and usually
-lots of systems as well.  For example, an FTP server might report every
-connection it gets.  The kernel might report hardware failures on a disk
-drive.  A DNS server might report usage statistics at regular intervals.
-</para>
-<para>Some of these messages need to be brought to a system administrator’s
-attention immediately.  And it may not be just any system administrator
-– there may be a particular system administrator who deals with a
-particular kind of message.  Other messages just need to be recorded for
-future reference if there is a problem.  Still others may need to have
-information extracted from them by an automated process that generates
-monthly reports.
-</para>
-<para>To deal with these messages, most Unix systems have a facility called
-"Syslog."  It is generally based on a daemon called “Syslogd”
-Syslogd listens for messages on a Unix domain socket named
-<filename>/dev/log</filename>.  Based on classification information in the messages
-and its configuration file (usually <filename>/etc/syslog.conf</filename>), Syslogd
-routes them in various ways.  Some of the popular routings are:
-</para>
-<ul>
-<li> Write to the system console
-</li><li> Mail to a specific user
-</li><li> Write to a log file
-</li><li> Pass to another daemon
-</li><li> Discard
-</li></ul>
-
-<para>Syslogd can also handle messages from other systems.  It listens on the
-<code>syslog</code> UDP port as well as the local socket for messages.
-</para>
-<para>Syslog can handle messages from the kernel itself.  But the kernel
-doesn’t write to <filename>/dev/log</filename>; rather, another daemon (sometimes
-called “Klogd”) extracts messages from the kernel and passes them on to
-Syslog as any other process would (and it properly identifies them as
-messages from the kernel).
-</para>
-<para>Syslog can even handle messages that the kernel issued before Syslogd or
-Klogd was running.  A Linux kernel, for example, stores startup messages
-in a kernel message ring and they are normally still there when Klogd
-later starts up.  Assuming Syslogd is running by the time Klogd starts,
-Klogd then passes everything in the message ring to it.
-</para>
-<para>In order to classify messages for disposition, Syslog requires any process
-that submits a message to it to provide two pieces of classification
-information with it:
-</para>
-<dl compact="compact">
-<dt><span>facility</span></dt>
-<dd><para>This identifies who submitted the message.  There are a small number of
-facilities defined.  The kernel, the mail subsystem, and an FTP server
-are examples of recognized facilities.  For the complete list,
-See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#syslog_003b-vsyslog">syslog, vsyslog</a>.  Keep in mind that these are
-essentially arbitrary classifications.  "Mail subsystem" doesn’t have any
-more meaning than the system administrator gives to it.
-</para>
-</dd>
-<dt><span>priority</span></dt>
-<dd><para>This tells how important the content of the message is.  Examples of
-defined priority values are: debug, informational, warning and critical.
-For the complete list, see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#syslog_003b-vsyslog">syslog, vsyslog</a>.  Except for
-the fact that the priorities have a defined order, the meaning of each
-of these priorities is entirely determined by the system administrator.
-</para>
-</dd>
-</dl>
-
-<para>A “facility/priority” is a number that indicates both the facility
-and the priority.
-</para>
-<para><strong>Warning:</strong> This terminology is not universal.  Some people use
-“level” to refer to the priority and “priority” to refer to the
-combination of facility and priority.  A Linux kernel has a concept of a
-message “level,” which corresponds both to a Syslog priority and to a
-Syslog facility/priority (It can be both because the facility code for
-the kernel is zero, and that makes priority and facility/priority the
-same value).
-</para>
-<para>The GNU C Library provides functions to submit messages to Syslog.  They
-do it by writing to the <filename>/dev/log</filename> socket.  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Submitting-Syslog-Messages">Submitting Syslog Messages</a>.
-</para>
-<para>The GNU C Library functions only work to submit messages to the Syslog
-facility on the same system.  To submit a message to the Syslog facility
-on another system, use the socket I/O functions to write a UDP datagram
-to the <code>syslog</code> UDP port on that system.  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Sockets">Sockets</a>.
-</para>
-
-<hr>
-</div>
-<sect xml:id="glibc-Submitting-Syslog-Messages">
-<div class="header">
-<para>
-Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Overview-of-Syslog" accesskey="p" rel="prev">Overview of Syslog</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Syslog" accesskey="u" rel="up">Syslog</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
-</div>
-<span xml:id="glibc-Submitting-Syslog-Messages-1"></span><h3 class="section">18.2 Submitting Syslog Messages</title>
-
-<para>The GNU C Library provides functions to submit messages to the Syslog
-facility:
-</para>
-
-<para>These functions only work to submit messages to the Syslog facility on
-the same system.  To submit a message to the Syslog facility on another
-system, use the socket I/O functions to write a UDP datagram to the
-<code>syslog</code> UDP port on that system.  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Sockets">Sockets</a>.
-</para>
-
-
-<ul class="section-toc">
-<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#openlog" accesskey="1">openlog</a></li>
-<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#syslog_003b-vsyslog" accesskey="2">syslog, vsyslog</a></li>
-<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#closelog" accesskey="3">closelog</a></li>
-<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#setlogmask" accesskey="4">setlogmask</a></li>
-<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Syslog-Example" accesskey="5">Syslog Example</a></li>
-</ul>
-<hr>
-<div class="subsection" xml:id="glibc-openlog">
-<div class="header">
-<para>
-Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#syslog_003b-vsyslog" accesskey="n" rel="next">syslog, vsyslog</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Submitting-Syslog-Messages" accesskey="u" rel="up">Submitting Syslog Messages</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
-</div>
-<span xml:id="glibc-openlog-1"></span><h4 class="subsection">18.2.1 openlog</title>
-
-<para>The symbols referred to in this section are declared in the file
-<filename>syslog.h</filename>.
-</para>
-<dl class="def">
-<dt xml:id="glibc-index-openlog"><span class="category">Function: </span><span><emphasis>void</emphasis> <strong>openlog</strong> <emphasis>(const char *<var>ident</var>, int <var>option</var>, int <var>facility</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-openlog" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-<para>Preliminary:
-| MT-Safe
-| AS-Unsafe lock
-| AC-Unsafe lock fd
-| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
-</para>
-
-
-<para><code>openlog</code> opens or reopens a connection to Syslog in preparation
-for submitting messages.
-</para>
-<para><var>ident</var> is an arbitrary identification string which future
-<code>syslog</code> invocations will prefix to each message.  This is intended
-to identify the source of the message, and people conventionally set it
-to the name of the program that will submit the messages.
-</para>
-<para>If <var>ident</var> is NULL, or if <code>openlog</code> is not called, the default
-identification string used in Syslog messages will be the program name,
-taken from argv[0].
-</para>
-<para>Please note that the string pointer <var>ident</var> will be retained
-internally by the Syslog routines.  You must not free the memory that
-<var>ident</var> points to.  It is also dangerous to pass a reference to an
-automatic variable since leaving the scope would mean ending the
-lifetime of the variable.  If you want to change the <var>ident</var> string,
-you must call <code>openlog</code> again; overwriting the string pointed to by
-<var>ident</var> is not thread-safe.
-</para>
-<para>You can cause the Syslog routines to drop the reference to <var>ident</var> and
-go back to the default string (the program name taken from argv[0]), by
-calling <code>closelog</code>: See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#closelog">closelog</a>.
-</para>
-<para>In particular, if you are writing code for a shared library that might get
-loaded and then unloaded (e.g. a PAM module), and you use <code>openlog</code>,
-you must call <code>closelog</code> before any point where your library might
-get unloaded, as in this example:
-</para>
-<div class="example">
-<pre class="example">#include &lt;syslog.h&gt;
+  <para>
+   Bu oylumda sistem yönetimini ilgilendiren iletilerin günlüklenmesi ve çıktılanması ile ilgili oluşumlardan bahsedilecektir. Bu oylumda bahsedilen oluşumlar yazılımların kullanıcılarına ileti çıktılaması ve özel günlükler tutması ile ilgili hiçbir şey yapmazlar (Bunları yapan oluşumlar <xref linkend="glibc-I-O-on-Streams"/> bölümünde açıklanmıştır).
+  </para>
+  <para>
+   Çoğu sistemde &quot;Syslog&quot; diye bilinen bir oluşum vardır; yazılımların sistem yöneticisini ilgilendiren iletileri teslim edeceği ve bu iletileri aktarmak için konsola çıktılama, belli bir şahsa postalama ya da ileride başvurulmak üzere bir günlük dosyasına kaydetme gibi çeşitli yolların yapılandırılabileceği bir oluşumdur.
+  </para>
+  <para>
+   Yazılımlar bu oylumdaki oluşumları böyle iletileri teslim etmek için kullanır.
+  </para>
+ </preliminary>
+ <chapter xml:id="glibc-Overview-of-Syslog">
+  <title>Syslog'a Bir Bakış</title>
+  <titleabbrev>Bir sistemin Syslog oluşumuna bir bakış.</titleabbrev>
+  <para>
+   Sistem yöneticileri her sistemin içindeki bir yığın alt sistemden ve bazı başka sistemlerden gelen farklı çeşitte iletiyle uğraşmak zorunda kalır. Örneğin, bir FTP sunucu aldığı her bağlantıyı raporlayabilir. Çekirdek bir disk sürücüsündeki donanımsal hataları raporlayabilir. Bir DNS sunucusu düzenli aralıklarla istatistikleri raporlayabilir.
+  </para>
+  <para>
+   Bu iletilerden bazıları bir sistem yöneticisinin dikkatinin hemen çekilmesini gerektirebilir. Ve o sadece herhangi bir sistem yöneticisi olmayabilir - belli ileti çeşitleri ile uğraşan belli sistem yöneticileri olabilir. Diğer iletilerin sadece ileride gerektiğinde bakılmak üzere sadece kaydedilmesi gerekebilir. Kalan diğerlerinin aylık raporlar üreten kendiliğinden çalışan süreçler tarafından çıkarılan bilgiler olması gerekebilir.
+  </para>
+  <para>
+   Bu iletilerle uğraşmak için çoğu Unix sisteminde &quot;Syslog&quot; diye bilinen bir oluşum vardır ve genellikle &quot;Syslogd&quot; diye bilinen artalan süreci olarak çalışır. Syslogd iletiler için, <filename>/dev/log</filename> isminde bir Unix alan soketini dinler. İletilerdeki sınıflama bilgisine ve yapılandırma dosyasına (genellikle <filename>/etc/syslog.conf</filename>) bağlı olarak Syslogd onları çeşitli yollara yönlendirir. Çok bilinen bazı yöntemler:
+  </para>
+  <simplelist>
+   <member>Sistem konsoluna yazma
+   </member><member>Belli bir kullanıcıya ileti postalama
+   </member><member>Bir günlük dosyasına yazma
+   </member><member>Başka bir artalan sürecine aktarma
+   </member><member>İptal etme
+   </member>
+  </simplelist>
+  <para>
+   Syslogd ayrıca başka sistemlerdeki iletileri de işleyebilir. İletiler için   <function>syslog</function> hem UDP portunu hem de yerel soketi dinler.
+  </para>
+  <para>
+   Syslog çekirdeğin kendisinden gelen iletileri de işleyebilir. Fakat çekirdek <filename>/dev/log</filename>'a yazmaz; onun yerine başka bir artalan süreci (kimi zaman &quot;Klogd&quot; denir) çekirdekten iletileri çıkarır ve  onları herhangi bir başka sürecin yaptığı gibi Syslog'a aktarır (ve iletilerin çekirdekten geldiğini belirtir).
+  </para>
+  <para>
+   Syslog çekirdeğin Syslogd ve Klogd çalıştırılmadan önce çıktıladığı iletileri de işleyebilir. Örneğin Linux çekirdeği başlatma iletilerini bir çekirdek ileti zincirinde saklar ve daha sonra Klogd başlatıldığında onlar normal olarak hala orada duruyor olur. Klogd başlatıldığında Syslogd'nin de başlatılmış olduğu varsayımıyla ileti zincirindeki herşeyi ona aktarır.
+  </para>
+  <para>
+   Düzenlemek amacıyla iletilerin sınıflanması için, Syslogd her sürecin bir iletiyi teslim ederken iki parçalı sınıflama bilgisini iletiyle birlikte sağlamasını gerektirir:
+  </para>
+  <variablelist>
+   <varlistentry>
+    <term>oluşum</term>
+    <listitem>
+     <para>
+      İletiyi kimin teslim ettiğini belirtir. Tanımlı çok az sayıda oluşum vardır. Çekirdek, posta altsistemi ve FTP sunucusu tanınan oluşumlara birer örnektir. Tam bir liste için <xref linkend="glibc-syslog-vsyslog"/> bölümüne bakınız. Bunların tamamen keyfi bir sınıflama olduğunu unutulmamalıdır. "Posta altsistemi" denince sistem yöneticisinin ona verdiğinden daha fazla bir anlam içermez.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry>
+    <term>öncelik</term>
+    <listitem>
+     <para>
+      Bu teslim edilen iletinin ne kadar önemli olduğunu gösterir. Tanımlı önceliklere örnekler: hata ayıklama, bilgilendirme, uyarı, ölümcül. Tam bir liste için  <xref linkend="glibc-syslog-vsyslog"/> bölümüne bakılabilir.  Önceliklerin tanımlı bir sıralamasının dışında bu önceliklerin anlamları sistem yöneticisi tarafından belirlenir.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+  <para>
+   Bir &quot;oluşum/öncelik&quot; çifti hem oluşumu hem de önceliği belirten bir sayıdır.
+  </para>
+  <warning>
+   <para>
+    Bu terminoloji evrensel değildir. Bazıları önceliğe "seviye", öncelikle oluşumun oluşturduğu birleşime "öncelik" der. Linux çekirdeğinde ise bir iletinin seviyesi hem Syslog önceliği hem de Syslog oluşum/öncelik çiftine karşılık gelir (oluşum kodu çekirdek için sıfır olduğundan her ikisi de aslında aynı değere sahip olur).
+   </para>
+  </warning>
+  <para>
+   &glibc; iletileri Syslog'a teslim etmek için işlevler içerir. Bu işlemi <filename>/dev/log</filename> soketine yazarak yapar. Bkz. <xref linkend="glibc-Submitting-Syslog-Messages"/>.
+  </para>
+  <para>
+   &glibc; işlevleri iletileri sadece aynı sistemdeki Syslog oluşumuna teslim eder. Syslog iletilerini başka bir sistemdeki Syslog oluşumuna teslim etmek için sistemdeki <function>syslog</function> UDP portuna bir UDP ver katarı yazan soket G/Ç işlevleri kullanılır. Bkz. <xref linkend="glibc-Sockets"/>.
+  </para>
+ </chapter>
+ <chapter xml:id="glibc-Submitting-Syslog-Messages" userlevel="notoc">
+  <?dbhtml stop-chunking?>
+  <title>Syslog İletilerinin Teslim Edilmesi</title>
+  <titleabbrev>Syslog'a iletileri teslim eden işlevler.</titleabbrev>
+  <para>
+   &glibc; iletileri Syslog'a teslim etmek için işlevler içerir:
+  </para>
+  <para>
+   Bu işlevler iletileri sadece aynı sistemdeki Syslog oluşumuna teslim eder. Syslog iletilerini başka bir sistemdeki Syslog oluşumuna teslim etmek için sistemdeki <function>syslog</function> UDP portuna bir UDP veri katarı yazan soket G/Ç işlevleri kullanılır. Bkz. <xref linkend="glibc-Sockets"/>.
+  </para>
+  <sect1 xml:id="glibc-openlog">
+   <title>openlog</title>
+   <titleabbrev>Syslog'a bağlantı açılması.</titleabbrev>
+   <para>
+    Bu bölümdeki simgeler &syslog.h; başlık dosyasında bildirilmiştir.
+    <indexterm linkend="glibc-pg"><primary>syslog.h</primary></indexterm>
+   </para>
+   <csynopsis>
+    <indexterm linkend="glibc-fn" xml:id="glibc-fn-openlog"><primary>openlog</primary></indexterm>
+    <csproto type="işlev">
+     <csname><type>void</type><function>openlog</function></csname>
+     <csparam><ptr>const&#160;char</ptr><parameter>ident</parameter></csparam>
+     <csparam><type>int</type><parameter>option</parameter></csparam>
+     <csparam><type>int</type><parameter>facility</parameter></csparam>
+    </csproto>
+     <header>&syslog.h;</header>
+    <conceptlist>
+     <concept>&mtsafe;</concept>
+     <concept>&asunsafe; &lock;</concept>
+     <concept>&acunsafe; &lock; &fd;</concept>
+    </conceptlist>
+    <para>
+     <code>openlog</code> işlevi iletileri teslim etmek için Syslog'a bir bağlantı açar ya da yeniden açar.
+    </para>
+    <para>
+     <parameter>ident</parameter> ileride yapılacak <function>syslog</function> çağrılarında iletinin başına eklenecek keyfi bir kimlik dizgesidir. Bu iletinin kaynağını belirtmek için düşünülmüştür ve uzlaşımsal olarak iletileri teslim edecek yazılımın ismidir.
+    </para>
+    <para>
+     <parameter>ident</parameter> <varname>NULL</varname> ise ya da <code>openlog</code> çağrısı yapılmazsa, ön tanımlı kimlik dizgesi <code>argv[0]</code>'dan alınan yazılım ismi olacaktır.
+    </para>
+    <para>
+     <parameter>ident</parameter> dizge göstericisinin Syslog yordamları tarafından dahili olarak saklanacağı unutulmamalıdır. <parameter>ident</parameter> ile gösterilen bellek serbest bırakılmamalıdır. Etki alanından çıkmak değişkenin yaşamının sonu demek olduğundan dizgeyi bir özdevinimli değişkende saklamak ayrıca tehlikelidir de. <parameter>ident</parameter> dizgesi değiştirilmek istenirse <code>openlog</code> işlevi tekrar çağrılmalıdır; <parameter>ident</parameter> ile gösterilen dizgeye yazma işlemi evresel olarak güvenilir değildir.
+    </para>
+    <para>
+     Syslog yordamlarının <parameter>ident</parameter> başvurusunu bırakması sağlanabilir ve <function>closelog</function> çağrısı ile ön tanımlı dizgeye (<code>argv[0]</code>'dan alınan yazılım ismi) geri dönülebilir: Bkz. <xref linkend="glibc-closelog"/>.
+    </para>
+    <para>
+     Kodun, yüklenebilen bir paylaşımlı kütüphane (örn, bir PAM modülü) için yazılması durumunda <code>openlog</code> kullanılıyorsa, kütüphaneyi yüklenmemiş duruma getirmeden önce bir noktada <function>closelog</function> çağrısı yapılmalıdır. Bir örnek:
+    </para>
+    <example>
+     <screen>#include &lt;syslog.h&gt;
 
 void
 shared_library_function (void)
@@ -206,414 +142,506 @@ shared_library_function (void)
 
   closelog ();
 }
-</pre></div>
-
-<para>Without the call to <code>closelog</code>, future invocations of <code>syslog</code>
-by the program using the shared library may crash, if the library gets
-unloaded and the memory containing the string <code>"mylibrary"</code> becomes
-unmapped.  This is a limitation of the BSD syslog interface.
-</para>
-<para><code>openlog</code> may or may not open the <filename>/dev/log</filename> socket, depending
-on <var>option</var>.  If it does, it tries to open it and connect it as a
-stream socket.  If that doesn’t work, it tries to open it and connect it
-as a datagram socket.  The socket has the “Close on Exec” attribute,
-so the kernel will close it if the process performs an exec.
-</para>
-<para>You don’t have to use <code>openlog</code>.  If you call <code>syslog</code> without
-having called <code>openlog</code>, <code>syslog</code> just opens the connection
-implicitly and uses defaults for the information in <var>ident</var> and
-<var>options</var>.
-</para>
-<para><var>options</var> is a bit string, with the bits as defined by the following
-single bit masks:
-</para>
-<dl compact="compact">
-<dt xml:id="glibc-index-LOG_005fPERROR"><span><code>LOG_PERROR</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LOG_005fPERROR" class="copiable-anchor"> ¶</a></span></dt>
-<dd><para>If on, <code>openlog</code> sets up the connection so that any <code>syslog</code>
-on this connection writes its message to the calling process’ Standard
-Error stream in addition to submitting it to Syslog.  If off, <code>syslog</code>
-does not write the message to Standard Error.
-</para>
-</dd>
-<dt xml:id="glibc-index-LOG_005fCONS"><span><code>LOG_CONS</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LOG_005fCONS" class="copiable-anchor"> ¶</a></span></dt>
-<dd><para>If on, <code>openlog</code> sets up the connection so that a <code>syslog</code> on
-this connection that fails to submit a message to Syslog writes the
-message instead to system console.  If off, <code>syslog</code> does not write
-to the system console (but of course Syslog may write messages it
-receives to the console).
-</para>
-</dd>
-<dt xml:id="glibc-index-LOG_005fPID"><span><code>LOG_PID</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LOG_005fPID" class="copiable-anchor"> ¶</a></span></dt>
-<dd><para>When on, <code>openlog</code> sets up the connection so that a <code>syslog</code>
-on this connection inserts the calling process’ Process ID (PID) into
-the message.  When off, <code>openlog</code> does not insert the PID.
-</para>
-</dd>
-<dt xml:id="glibc-index-LOG_005fNDELAY"><span><code>LOG_NDELAY</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LOG_005fNDELAY" class="copiable-anchor"> ¶</a></span></dt>
-<dd><para>When on, <code>openlog</code> opens and connects the <filename>/dev/log</filename> socket.
-When off, a future <code>syslog</code> call must open and connect the socket.
-</para>
-<para><strong>Portability note:</strong>  In early systems, the sense of this bit was
-exactly the opposite.
-</para>
-</dd>
-<dt xml:id="glibc-index-LOG_005fODELAY"><span><code>LOG_ODELAY</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LOG_005fODELAY" class="copiable-anchor"> ¶</a></span></dt>
-<dd><para>This bit does nothing.  It exists for backward compatibility.
-</para>
-</dd>
-</dl>
-
-<para>If any other bit in <var>options</var> is on, the result is undefined.
-</para>
-<para><var>facility</var> is the default facility code for this connection.  A
-<code>syslog</code> on this connection that specifies default facility causes
-this facility to be associated with the message.  See <code>syslog</code> for
-possible values.  A value of zero means the default, which is
-<code>LOG_USER</code>.
-</para>
-<para>If a Syslog connection is already open when you call <code>openlog</code>,
-<code>openlog</code> “reopens” the connection.  Reopening is like opening
-except that if you specify zero for the default facility code, the
-default facility code simply remains unchanged and if you specify
-LOG_NDELAY and the socket is already open and connected, <code>openlog</code>
-just leaves it that way.
-</para>
-
-</dd></dl>
-
-
-<hr>
-</div>
-<div class="subsection" xml:id="glibc-syslog_003b-vsyslog">
-<div class="header">
-<para>
-Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#closelog" accesskey="n" rel="next">closelog</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#openlog" accesskey="p" rel="prev">openlog</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Submitting-Syslog-Messages" accesskey="u" rel="up">Submitting Syslog Messages</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
-</div>
-<span xml:id="glibc-syslog_002c-vsyslog"></span><h4 class="subsection">18.2.2 syslog, vsyslog</title>
-
-<para>The symbols referred to in this section are declared in the file
-<filename>syslog.h</filename>.
-</para>
-<dl class="def">
-<dt xml:id="glibc-index-syslog"><span class="category">Function: </span><span><emphasis>void</emphasis> <strong>syslog</strong> <emphasis>(int <var>facility_priority</var>, const char *<var>format</var>, …)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-syslog" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-<para>Preliminary:
-| MT-Safe env locale
-| AS-Unsafe corrupt heap lock dlopen
-| AC-Unsafe corrupt lock mem fd
-| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
-</para>
-
-
-<para><code>syslog</code> submits a message to the Syslog facility.  It does this by
-writing to the Unix domain socket <code>/dev/log</code>.
-</para>
-<para><code>syslog</code> submits the message with the facility and priority indicated
-by <var>facility_priority</var>.  The macro <code>LOG_MAKEPRI</code> generates a
-facility/priority from a facility and a priority, as in the following
-example:
-</para>
-<div class="example">
-<pre class="example">LOG_MAKEPRI(LOG_USER, LOG_WARNING)
-</pre></div>
-
-<para>The possible values for the facility code are (macros):
-</para>
-
-<dl compact="compact">
-<dt xml:id="glibc-index-LOG_005fUSER"><span><code>LOG_USER</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LOG_005fUSER" class="copiable-anchor"> ¶</a></span></dt>
-<dd><para>A miscellaneous user process
-</para></dd>
-<dt xml:id="glibc-index-LOG_005fMAIL"><span><code>LOG_MAIL</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LOG_005fMAIL" class="copiable-anchor"> ¶</a></span></dt>
-<dd><para>Mail
-</para></dd>
-<dt xml:id="glibc-index-LOG_005fDAEMON"><span><code>LOG_DAEMON</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LOG_005fDAEMON" class="copiable-anchor"> ¶</a></span></dt>
-<dd><para>A miscellaneous system daemon
-</para></dd>
-<dt xml:id="glibc-index-LOG_005fAUTH"><span><code>LOG_AUTH</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LOG_005fAUTH" class="copiable-anchor"> ¶</a></span></dt>
-<dd><para>Security (authorization)
-</para></dd>
-<dt xml:id="glibc-index-LOG_005fSYSLOG"><span><code>LOG_SYSLOG</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LOG_005fSYSLOG" class="copiable-anchor"> ¶</a></span></dt>
-<dd><para>Syslog
-</para></dd>
-<dt xml:id="glibc-index-LOG_005fLPR"><span><code>LOG_LPR</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LOG_005fLPR" class="copiable-anchor"> ¶</a></span></dt>
-<dd><para>Central printer
-</para></dd>
-<dt xml:id="glibc-index-LOG_005fNEWS"><span><code>LOG_NEWS</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LOG_005fNEWS" class="copiable-anchor"> ¶</a></span></dt>
-<dd><para>Network news (e.g. Usenet)
-</para></dd>
-<dt xml:id="glibc-index-LOG_005fUUCP"><span><code>LOG_UUCP</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LOG_005fUUCP" class="copiable-anchor"> ¶</a></span></dt>
-<dd><para>UUCP
-</para></dd>
-<dt xml:id="glibc-index-LOG_005fCRON"><span><code>LOG_CRON</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LOG_005fCRON" class="copiable-anchor"> ¶</a></span></dt>
-<dd><para>Cron and At
-</para></dd>
-<dt xml:id="glibc-index-LOG_005fAUTHPRIV"><span><code>LOG_AUTHPRIV</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LOG_005fAUTHPRIV" class="copiable-anchor"> ¶</a></span></dt>
-<dd><para>Private security (authorization)
-</para></dd>
-<dt xml:id="glibc-index-LOG_005fFTP"><span><code>LOG_FTP</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LOG_005fFTP" class="copiable-anchor"> ¶</a></span></dt>
-<dd><para>Ftp server
-</para></dd>
-<dt xml:id="glibc-index-LOG_005fLOCAL0"><span><code>LOG_LOCAL0</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LOG_005fLOCAL0" class="copiable-anchor"> ¶</a></span></dt>
-<dd><para>Locally defined
-</para></dd>
-<dt xml:id="glibc-index-LOG_005fLOCAL1"><span><code>LOG_LOCAL1</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LOG_005fLOCAL1" class="copiable-anchor"> ¶</a></span></dt>
-<dd><para>Locally defined
-</para></dd>
-<dt xml:id="glibc-index-LOG_005fLOCAL2"><span><code>LOG_LOCAL2</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LOG_005fLOCAL2" class="copiable-anchor"> ¶</a></span></dt>
-<dd><para>Locally defined
-</para></dd>
-<dt xml:id="glibc-index-LOG_005fLOCAL3"><span><code>LOG_LOCAL3</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LOG_005fLOCAL3" class="copiable-anchor"> ¶</a></span></dt>
-<dd><para>Locally defined
-</para></dd>
-<dt xml:id="glibc-index-LOG_005fLOCAL4"><span><code>LOG_LOCAL4</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LOG_005fLOCAL4" class="copiable-anchor"> ¶</a></span></dt>
-<dd><para>Locally defined
-</para></dd>
-<dt xml:id="glibc-index-LOG_005fLOCAL5"><span><code>LOG_LOCAL5</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LOG_005fLOCAL5" class="copiable-anchor"> ¶</a></span></dt>
-<dd><para>Locally defined
-</para></dd>
-<dt xml:id="glibc-index-LOG_005fLOCAL6"><span><code>LOG_LOCAL6</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LOG_005fLOCAL6" class="copiable-anchor"> ¶</a></span></dt>
-<dd><para>Locally defined
-</para></dd>
-<dt xml:id="glibc-index-LOG_005fLOCAL7"><span><code>LOG_LOCAL7</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LOG_005fLOCAL7" class="copiable-anchor"> ¶</a></span></dt>
-<dd><para>Locally defined
-</para></dd>
-</dl>
-
-<para>Results are undefined if the facility code is anything else.
-</para>
-<para><strong>NB:</strong> <code>syslog</code> recognizes one other facility code: that of
-the kernel.  But you can’t specify that facility code with these
-functions.  If you try, it looks the same to <code>syslog</code> as if you are
-requesting the default facility.  But you wouldn’t want to anyway,
-because any program that uses the GNU C Library is not the kernel.
-</para>
-<para>You can use just a priority code as <var>facility_priority</var>.  In that
-case, <code>syslog</code> assumes the default facility established when the
-Syslog connection was opened.  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Syslog-Example">Syslog Example</a>.
-</para>
-<para>The possible values for the priority code are (macros):
-</para>
-<dl compact="compact">
-<dt xml:id="glibc-index-LOG_005fEMERG"><span><code>LOG_EMERG</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LOG_005fEMERG" class="copiable-anchor"> ¶</a></span></dt>
-<dd><para>The message says the system is unusable.
-</para></dd>
-<dt xml:id="glibc-index-LOG_005fALERT"><span><code>LOG_ALERT</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LOG_005fALERT" class="copiable-anchor"> ¶</a></span></dt>
-<dd><para>Action on the message must be taken immediately.
-</para></dd>
-<dt xml:id="glibc-index-LOG_005fCRIT"><span><code>LOG_CRIT</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LOG_005fCRIT" class="copiable-anchor"> ¶</a></span></dt>
-<dd><para>The message states a critical condition.
-</para></dd>
-<dt xml:id="glibc-index-LOG_005fERR"><span><code>LOG_ERR</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LOG_005fERR" class="copiable-anchor"> ¶</a></span></dt>
-<dd><para>The message describes an error.
-</para></dd>
-<dt xml:id="glibc-index-LOG_005fWARNING"><span><code>LOG_WARNING</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LOG_005fWARNING" class="copiable-anchor"> ¶</a></span></dt>
-<dd><para>The message is a warning.
-</para></dd>
-<dt xml:id="glibc-index-LOG_005fNOTICE"><span><code>LOG_NOTICE</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LOG_005fNOTICE" class="copiable-anchor"> ¶</a></span></dt>
-<dd><para>The message describes a normal but important event.
-</para></dd>
-<dt xml:id="glibc-index-LOG_005fINFO"><span><code>LOG_INFO</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LOG_005fINFO" class="copiable-anchor"> ¶</a></span></dt>
-<dd><para>The message is purely informational.
-</para></dd>
-<dt xml:id="glibc-index-LOG_005fDEBUG"><span><code>LOG_DEBUG</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LOG_005fDEBUG" class="copiable-anchor"> ¶</a></span></dt>
-<dd><para>The message is only for debugging purposes.
-</para></dd>
-</dl>
-
-<para>Results are undefined if the priority code is anything else.
-</para>
-<para>If the process does not presently have a Syslog connection open (i.e.,
-it did not call <code>openlog</code>), <code>syslog</code> implicitly opens the
-connection the same as <code>openlog</code> would, with the following defaults
-for information that would otherwise be included in an <code>openlog</code>
-call: The default identification string is the program name.  The
-default default facility is <code>LOG_USER</code>.  The default for all the
-connection options in <var>options</var> is as if those bits were off.
-<code>syslog</code> leaves the Syslog connection open.
-</para>
-<para>If the <filename>/dev/log</filename> socket is not open and connected, <code>syslog</code>
-opens and connects it, the same as <code>openlog</code> with the
-<code>LOG_NDELAY</code> option would.
-</para>
-<para><code>syslog</code> leaves <filename>/dev/log</filename> open and connected unless its attempt
-to send the message failed, in which case <code>syslog</code> closes it (with the
-hope that a future implicit open will restore the Syslog connection to a
-usable state).
-</para>
-<para>Example:
-</para>
-<div class="example">
-<pre class="example">
-#include &lt;syslog.h&gt;
+</screen>
+     <para>
+      <function>closelog</function> çağrılmaksızın kütüphane yüklenmemiş duruma getirilip <code>"mylibrary"</code> dizgesini içeren bellek eşlenmemiş duruma getirilirse, kütüphaneyi kullanan yazılım tarafından ileride yapılacak bir <function>syslog</function> çağrısı çökmeye sebep olabilir. Bu BSD syslog arayüzünün bir sınırlamasıdır.
+     </para>
+    </example>
+    <para>
+     <code>openlog</code> işlevi <parameter>option</parameter> değerine bağlı olarak <filename>/dev/log</filename> soketini açabilir de açmayabilir de. Eğer açması gerekiyorsa,açmayı dener ve bir UDP soketi olarak ona bağlanır. Soket, &quot;Close on Exec&quot; özniteliğine sahiptir, bu bakımdan eğer süreç bir <function>exec</function> çağrısı yaparsa çekirdek onu kapatacaktır.
+    </para>
+    <para>
+     <code>openlog</code> kullanımı zorunlu değildir. <code>openlog</code> çağrısı yapmaksızın bir <function>syslog</function> çağrısı yapılırsa, <parameter>ident</parameter> ve <parameter>option</parameter> için ön tanımlı değerler kullanılarak bağlantı anında açılır.
+    </para>
+    <para>
+     <parameter>option</parameter> bir bit dizgesidir. Bitler aşağıdaki tek bitlik maskelerle tanımlanmıştır:
+    </para>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-LOG_PERROR"><primary>LOG_PERROR</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>LOG_PERROR</function></csname>
+     </csproto>
+     <para>
+      Bit varsa, <code>openlog</code> bağlantıyı kurar, böylece bu bağlantı üzerinden yapılan herhangi bir <function>syslog</function> çağrısı iletiyi Syslog'a teslim ederken ek olarak iletiyi sürecin standart hata akımına da yazar. Bit yoksa, <function>syslog</function> iletiyi standart hataya yazmaz.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-LOG_CONS"><primary>LOG_CONS</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>LOG_CONS</function></csname>
+     </csproto>
+     <para>
+      Bit varsa, <code>openlog</code> bağlantıyı kurar, böylece bu bağlantı üzerinden yapılan herhangi bir <function>syslog</function> çağrısında bir ileti Syslog'a teslim edilemezse ileti sistem konsoluna yazılır. Bit yoksa, <function>syslog</function> çağrısı sistem konsoluna yazmaz (ama şüphesiz çağrının geldiği konsola yazabilir).
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-LOG_PID"><primary>LOG_PID</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>LOG_PID</function></csname>
+     </csproto>
+     <para>
+      Bit varsa, <code>openlog</code> bağlantıyı kurar, böylece bu bağlantı üzerinden yapılan herhangi bir <function>syslog</function> çağrısı, çağrıldığı sürecin süreç kimliğini (PID) iletiye yerleştirir. Bit yoksa, <code>openlog</code> PID'i yerleştirmez.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-LOG_NDELAY"><primary>LOG_NDELAY</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>LOG_NDELAY</function></csname>
+     </csproto>
+     <para>
+      Bit varsa, <code>openlog</code>, <filename>/dev/log</filename> soketini açar ve bağlanır. Bit yoksa, ileride yapılacak bir <function>syslog</function> çağrısı soketi açmalı ve bağlanmalıdır.
+     </para>
+     <note><title>Taşınabilirlik Bilgisi</title>
+      <para>
+       Erken dönemdeki sistemlerde, bu bit tamamen ters çalışırdı.
+      </para>
+     </note>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-LOG_ODELAY"><primary>LOG_ODELAY</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>LOG_ODELAY</function></csname>
+     </csproto>
+     <para>
+      Bu bit hiçbir şey yapmaz. Sadece geriye uyumluluk adına vardır.
+     </para>
+    </csynopsis>
+    <para>
+     <parameter>option</parameter> içindeki diğer bitler birse sonuç belirsizdir.
+    </para>
+    <para>
+     <parameter>facility</parameter> bu bağlantı için ön tanımlı oluşum kodudur. Bu bağlantı üzerinden ön tanımlı oluşum belirten bir <function>syslog</function> çağrısı, iletinin bu oluşumla ilişkilendirilmesine sebep olur. Olası değerler <function>syslog</function> işlevinin açıklamasında bulunabilir. <command>LOG_USER</command> anlamına gelen sıfır değeri ön tanımlıdır.
+    </para>
+    <para>
+     <code>openlog</code> çağrısı yapıldığında, eğer bir Syslog bağlantısı zaten açıksa, <code>openlog</code> bağlantıyı "yeniden" açar. Yeniden açma ön tanımlı oluşum kodu için sıfır belirtilmesi dışında açma gibidir, ön tanımlı kod basitçe değişmeden kalır ve <varname>LOG_NDELAY</varname> belirtilmişse, soket zaten açık ve bağlı olduğundan <code>openlog</code> onu olduğu gibi bırakır.
+    </para>
+   </csynopsis>
+  </sect1>
+  <sect1 xml:id="glibc-syslog-vsyslog">
+   <title>syslog, vsyslog</title>
+  <titleabbrev>İletinin Syslog'a teslim edilmesi.</titleabbrev>
+  <para>
+   Bu bölümdeki simgeler &syslog.h; başkık dosyasında bildirilmiştir.
+   <indexterm linkend="glibc-pg"><primary>syslog.h</primary></indexterm>
+  </para>
+  <csynopsis>
+   <indexterm linkend="glibc-fn" xml:id="glibc-fn-syslog"><primary>syslog</primary></indexterm>
+   <csproto type="işlev">
+    <csname><type>void</type><function>syslog</function></csname>
+    <csparam><type>int</type><parameter>facility_priority</parameter></csparam>
+    <csparam><ptr>const&#160;char</ptr><parameter>format</parameter></csparam>
+   </csproto>
+   <header>&syslog.h;</header>
+   <conceptlist>
+    <concept>&mtsafe; &env; &locale;</concept>
+    <concept>&asunsafe; &corrupt; &heap; &lock; &dlopen;</concept>
+    <concept>&acunsafe; &corrupt; &lock; &mem; &fd;</concept>
+   </conceptlist>
+   <para>
+    <code>syslog</code> bir iletiyi Syslog'a teslim eder. Bunu Unix alan soketi olan <filename>/dev/log</filename>'a yazarak yapar.
+   </para>
+   <csynopsis>
+    <indexterm linkend="glibc-fn" xml:id="glibc-fn-LOG_MAKEPRI"><primary>LOG_MAKEPRI</primary></indexterm>
+   <csproto type="makro">
+    <csname><function>LOG_MAKEPRI</function></csname>
+    <csparam><parameter>facility</parameter></csparam>
+    <csparam><parameter>priority</parameter></csparam>
+   </csproto>
+   <header>&syslog.h;</header>
+   <para>
+    <code>syslog</code> iletiyi <parameter>facility_priority</parameter> ile belirtilen oluşum ve öncelikle teslim eder. Tek bir oluşum ve tek bir öncelik kodundan <parameter>facility_priority</parameter> değeri <code>LOG_MAKEPRI</code> makrosu ile şöyle üretilir (Makro iki değeri VEYAlar):
+    </para>
+    <screen>LOG_MAKEPRI(LOG_USER, LOG_WARNING)</screen>
+    <para>
+     <parameter>facility</parameter> için olası değerler (makrolar):
+    </para>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vt-LOG_USER"><primary>LOG_USER</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>LOG_USER</function></csname>
+     </csproto>
+     <para>
+      Çeşitli kullanıcı süreci
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vt-LOG_MAIL"><primary>LOG_MAIL</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>LOG_MAIL</function></csname>
+     </csproto>
+     <para>
+      Posta
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vt-LOG_DAEMON"><primary>LOG_DAEMON</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>LOG_DAEMON</function></csname>
+     </csproto>
+     <para>
+      Çeşitli sistem artalan süreci
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vt-LOG_AUTH"><primary>LOG_AUTH</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>LOG_AUTH</function></csname>
+     </csproto>
+     <para>
+      Güvenlik (yetkilendirme)
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vt-LOG_SYSLOG"><primary>LOG_SYSLOG</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>LOG_SYSLOG</function></csname>
+     </csproto>
+     <para>
+      Syslog
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vt-LOG_LPR"><primary>LOG_LPR</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>LOG_LPR</function></csname>
+     </csproto>
+     <para>
+      Merkezi yazıcı
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vt-LOG_NEWS"><primary>LOG_NEWS</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>LOG_NEWS</function></csname>
+     </csproto>
+     <para>
+      Ağ haber grupları (örn, Usenet)
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vt-LOG_UUCP"><primary>LOG_UUCP</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>LOG_UUCP</function></csname>
+     </csproto>
+     <para>
+      UUCP
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vt-LOG_CRON"><primary>LOG_CRON</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>LOG_CRON</function></csname>
+     </csproto>
+     <para>
+      Cron ve At
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vt-LOG_AUTHPRIV"><primary>LOG_AUTHPRIV</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>LOG_AUTHPRIV</function></csname>
+     </csproto>
+     <para>
+      Özel güvenlik (yetkilendirme)
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vt-LOG_FTP"><primary>LOG_FTP</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>LOG_FTP</function></csname>
+     </csproto>
+     <para>
+      FTP Sunucusu
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vt-LOG_LOCAL0"><primary>LOG_LOCAL0</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>LOG_LOCAL0</function></csname>
+     </csproto>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vt-LOG_LOCAL1"><primary>LOG_LOCAL1</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>LOG_LOCAL1</function></csname>
+     </csproto>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vt-LOG_LOCAL2"><primary>LOG_LOCAL2</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>LOG_LOCAL2</function></csname>
+     </csproto>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vt-LOG_LOCAL3"><primary>LOG_LOCAL3</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>LOG_LOCAL3</function></csname>
+     </csproto>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vt-LOG_LOCAL4"><primary>LOG_LOCAL4</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>LOG_LOCAL4</function></csname>
+     </csproto>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vt-LOG_LOCAL5"><primary>LOG_LOCAL5</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>LOG_LOCAL5</function></csname>
+     </csproto>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vt-LOG_LOCAL6"><primary>LOG_LOCAL6</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>LOG_LOCAL6</function></csname>
+     </csproto>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vt-LOG_LOCAL7"><primary>LOG_LOCAL7</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>LOG_LOCAL7</function></csname>
+     </csproto>
+     <para>
+      Yerel olarak tanımlı
+     </para>
+    </csynopsis>
+    <para>
+     Bunların dışındaki <parameter>facility</parameter> değerleri için sonuç tanımsızdır.
+    </para>
+    <note>
+     <para>
+      <code>syslog</code> başka bir oluşum kodu daha tanır: bu çekirdektir. Ama onun oluşum kodu bu işlevlerle belirtilemez. Denenirse, <code>syslog</code> ön tanımlı oluşum isteği yapılmış gibi davranır. Fakat bunun hiçbir şekilde denenmemesi gerekir, çünkü çekirdek &glibc;ni kullanan bir yazılım değildir.
+     </para>
+    </note>
+    <para>
+     <parameter>facility_priority</parameter> olarak tek bir öncelik kodu belirtilebilir. Bu durumda, <code>syslog</code> çağrısı Syslog bağlantısı açıldığında ön tanımlı oluşum bağlantısı kurulduğunu varsayar. Bkz.  <xref linkend="glibc-Syslog-Example"/>.
+    </para>
+    <para>
+     <parameter>priority</parameter> için olası değerler (makrolar):
+    </para>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vt-LOG_EMERG"><primary>LOG_EMERG</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>LOG_EMERG</function></csname>
+     </csproto>
+     <para>
+      İleti, sistemin kullanılamaz olduğunu söylüyor.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vt-LOG_ALERT"><primary>LOG_ALERT</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>LOG_ALERT</function></csname>
+     </csproto>
+     <para>
+      İletideki işlem hemen yerine getirilmelidir.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vt-LOG_CRIT"><primary>LOG_CRIT</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>LOG_CRIT</function></csname>
+     </csproto>
+     <para>
+      İleti ciddi bir durum belirtiyor.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vt-LOG_ERR"><primary>LOG_ERR</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>LOG_ERR</function></csname>
+     </csproto>
+     <para>
+      İleti bir hata açıklıyor.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vt-LOG_WARNING"><primary>LOG_WARNING</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>LOG_WARNING</function></csname>
+     </csproto>
+     <para>
+      İleti bir uyarı açıklıyor.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vt-LOG_NOTICE"><primary>LOG_NOTICE</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>LOG_NOTICE</function></csname>
+     </csproto>
+     <para>
+      İleti normal ama önemli bir olayı açıklıyor.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vt-LOG_INFO"><primary>LOG_INFO</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>LOG_INFO</function></csname>
+     </csproto>
+     <para>
+      İleti tamamen bilgilendiricidir.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vt-LOG_DEBUG"><primary>LOG_DEBUG</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>LOG_DEBUG</function></csname>
+     </csproto>
+     <para>
+      İleti yalnızca hata ayıklama amaçlıdır.
+     </para>
+    </csynopsis>
+    <para>
+     Bunların dışındaki <parameter>priority</parameter> değerleri için sonuç tanımsızdır.
+    </para>
+   </csynopsis>
+   <para>
+    Süreç açık bir Syslog bağlantısına sahip değilse (yani <function>openlog</function> çağrısı yapılmamışsa), <code>syslog</code> işlevi <function>openlog</function>  işlevinin yaptığı gibi hemen bağlantıyı açar. Bağlantıyı açarken, aksi sadece bir <function>openlog</function>  çağrısı ile belirtilebilecek bilgi için şu ön tanımlıları kullanır:
+   </para>
+   <simplelist>
+    <member>Öntanımlı <parameter>ident</parameter> dizgesi yazılımın ismidir.
+    </member><member>Öntanımlı <parameter>facility</parameter> <command>LOG_USER</command>'dır.
+    </member><member><parameter>option</parameter> ile belirtilen bitlerin hepsi sıfırdır. </member><member><code>syslog</code> bağlantıyı açık bırakır.</member>
+   </simplelist>
+   <para>
+    <filename>dev/log</filename> soketi açık ve bağlı değilse, <code>syslog</code> işlevi, <function>openlog</function> işlevinin <varname>LOG_NDELAY</varname> seçeneğiyle yaptığı gibi soketi açar ve bağlanır.
+   </para>
+   <para>
+    <code>syslog</code> iletiyi göndermeye çalışırkan başarısız olmazsa, <filename>dev/log</filename> soketini açık ve bağlı bırakır, aksi takdirde <code>syslog</code> soketi kapatır (ileride bir örtük açılışın Syslog bağlantısını kullanışlı bir durumda açacağını umarak).
+   </para>
+   <example>
+    <screen>#include &lt;syslog.h&gt;
 syslog (LOG_MAKEPRI(LOG_LOCAL1, LOG_ERROR),
         "Unable to make network connection to %s.  Error=%m", host);
-
-</pre></div>
-
-</dd></dl>
-
-
-<dl class="def">
-<dt xml:id="glibc-index-vsyslog"><span class="category">Function: </span><span><emphasis>void</emphasis> <strong>vsyslog</strong> <emphasis>(int <var>facility_priority</var>, const char *<var>format</var>, va_list <var>arglist</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-vsyslog" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-<para>Preliminary:
-| MT-Safe env locale
-| AS-Unsafe corrupt heap lock dlopen
-| AC-Unsafe corrupt lock mem fd
-| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
-</para>
-
-
-<para>This is functionally identical to <code>syslog</code>, with the BSD style variable
-length argument.
-</para>
-</dd></dl>
-
-
-<hr>
-</div>
-<div class="subsection" xml:id="glibc-closelog">
-<div class="header">
-<para>
-Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#setlogmask" accesskey="n" rel="next">setlogmask</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#syslog_003b-vsyslog" accesskey="p" rel="prev">syslog, vsyslog</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Submitting-Syslog-Messages" accesskey="u" rel="up">Submitting Syslog Messages</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
-</div>
-<span xml:id="glibc-closelog-1"></span><h4 class="subsection">18.2.3 closelog</title>
-
-<para>The symbols referred to in this section are declared in the file
-<filename>syslog.h</filename>.
-</para>
-<dl class="def">
-<dt xml:id="glibc-index-closelog"><span class="category">Function: </span><span><emphasis>void</emphasis> <strong>closelog</strong> <emphasis>(void)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-closelog" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-<para>Preliminary:
-| MT-Safe
-| AS-Unsafe lock
-| AC-Unsafe lock fd
-| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
-</para>
-
-
-<para><code>closelog</code> closes the current Syslog connection, if there is one.
-This includes closing the <filename>/dev/log</filename> socket, if it is open.
-<code>closelog</code> also sets the identification string for Syslog messages
-back to the default, if <code>openlog</code> was called with a non-NULL argument
-to <var>ident</var>.  The default identification string is the program name
-taken from argv[0].
-</para>
-<para>If you are writing shared library code that uses <code>openlog</code> to
-generate custom syslog output, you should use <code>closelog</code> to drop
-the GNU C Library’s internal reference to the <var>ident</var> pointer when you are
-done.  Please read the section on <code>openlog</code> for more information:
-See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#openlog">openlog</a>.
-</para>
-<para><code>closelog</code> does not flush any buffers.  You do not have to call
-<code>closelog</code> before re-opening a Syslog connection with <code>openlog</code>.
-Syslog connections are automatically closed on exec or exit.
-</para>
-</dd></dl>
-
-
-<hr>
-</div>
-<div class="subsection" xml:id="glibc-setlogmask">
-<div class="header">
-<para>
-Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Syslog-Example" accesskey="n" rel="next">Syslog Example</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#closelog" accesskey="p" rel="prev">closelog</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Submitting-Syslog-Messages" accesskey="u" rel="up">Submitting Syslog Messages</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
-</div>
-<span xml:id="glibc-setlogmask-1"></span><h4 class="subsection">18.2.4 setlogmask</title>
-
-<para>The symbols referred to in this section are declared in the file
-<filename>syslog.h</filename>.
-</para>
-<dl class="def">
-<dt xml:id="glibc-index-setlogmask"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>setlogmask</strong> <emphasis>(int <var>mask</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-setlogmask" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-<para>Preliminary:
-| MT-Unsafe race:LogMask
-| AS-Unsafe
-| AC-Safe
-| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
-</para>
-
-
-<para><code>setlogmask</code> sets a mask (the “logmask”) that determines which
-future <code>syslog</code> calls shall be ignored.  If a program has not
-called <code>setlogmask</code>, <code>syslog</code> doesn’t ignore any calls.  You
-can use <code>setlogmask</code> to specify that messages of particular
-priorities shall be ignored in the future.
-</para>
-<para>A <code>setlogmask</code> call overrides any previous <code>setlogmask</code> call.
-</para>
-<para>Note that the logmask exists entirely independently of opening and
-closing of Syslog connections.
-</para>
-<para>Setting the logmask has a similar effect to, but is not the same as,
-configuring Syslog.  The Syslog configuration may cause Syslog to
-discard certain messages it receives, but the logmask causes certain
-messages never to get submitted to Syslog in the first place.
-</para>
-<para><var>mask</var> is a bit string with one bit corresponding to each of the
-possible message priorities.  If the bit is on, <code>syslog</code> handles
-messages of that priority normally.  If it is off, <code>syslog</code>
-discards messages of that priority.  Use the message priority macros
-described in <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#syslog_003b-vsyslog">syslog, vsyslog</a> and the <code>LOG_MASK</code> to construct
-an appropriate <var>mask</var> value, as in this example:
-</para>
-<div class="example">
-<pre class="example">LOG_MASK(LOG_EMERG) | LOG_MASK(LOG_ERROR)
-</pre></div>
-
-<para>or
-</para>
-<div class="example">
-<pre class="example">~(LOG_MASK(LOG_INFO))
-</pre></div>
-
-<para>There is also a <code>LOG_UPTO</code> macro, which generates a mask with the bits
-on for a certain priority and all priorities above it:
-</para>
-<div class="example">
-<pre class="example">LOG_UPTO(LOG_ERROR)
-</pre></div>
-
-<para>The unfortunate naming of the macro is due to the fact that internally,
-higher numbers are used for lower message priorities.
-</para>
-</dd></dl>
-
-
-<hr>
-</div>
-<div class="subsection" xml:id="glibc-Syslog-Example">
-<div class="header">
-<para>
-Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#setlogmask" accesskey="p" rel="prev">setlogmask</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Submitting-Syslog-Messages" accesskey="u" rel="up">Submitting Syslog Messages</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
-</div>
-<span xml:id="glibc-Syslog-Example-1"></span><h4 class="subsection">18.2.5 Syslog Example</title>
-
-<para>Here is an example of <code>openlog</code>, <code>syslog</code>, and <code>closelog</code>:
-</para>
-<para>This example sets the logmask so that debug and informational messages
-get discarded without ever reaching Syslog.  So the second <code>syslog</code>
-in the example does nothing.
-</para>
-<div class="example">
-<pre class="example">#include &lt;syslog.h&gt;
+</screen>
+    </example>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-fn" xml:id="glibc-fn-vsyslog"><primary>vsyslog</primary></indexterm>
+    <csproto type="işlev" varargs="">
+     <csname><type>void</type><function>vsyslog</function></csname>
+     <csparam><type>int</type><parameter>facility_priority</parameter></csparam>
+     <csparam><ptr>const&#160;char</ptr><parameter>format</parameter></csparam>
+     <csparam><type>va_list</type><parameter>arglist</parameter></csparam>
+    </csproto>
+    <header>&syslog.h;</header>
+    <conceptlist>
+     <concept>&mtsafe; &env; &locale;</concept>
+     <concept>&asunsafe; &corrupt; &heap; &lock; &dlopen;</concept>
+     <concept>&acunsafe; &corrupt; &lock; &mem; &fd;</concept>
+    </conceptlist>
+    <para>
+     BSD tarzı değişken sayıda bağımsız değişken dışında <function>syslog</function> işlevinin benzeridir.
+    </para>
+   </csynopsis>
+  </sect1>
+  <sect1 xml:id="glibc-closelog">
+   <title>closelog</title>
+   <titleabbrev>Syslog bağlantısının kapatılması.</titleabbrev>
+   <para>
+    Bu bölümdeki simgeler &syslog.h; başılk dosyasında bildirilmiştir.
+    <indexterm linkend="glibc-pg"><primary>syslog.h</primary></indexterm>
+   </para>
+   <csynopsis>
+    <indexterm linkend="glibc-fn" xml:id="glibc-fn-closelog"><primary>closelog</primary></indexterm>
+    <csproto type="işlev" varargs="">
+     <csname><type>void</type><function>closelog</function></csname>
+     <csparam><void/></csparam>
+    </csproto>
+    <header>&syslog.h;</header>
+    <conceptlist>
+     <concept>&mtsafe;;</concept>
+     <concept>&asunsafe; &lock;</concept>
+     <concept>&acunsafe; &lock; &fd;</concept>
+    </conceptlist>
+    <para>
+     <code>closelog</code> işlevi, var olan Syslog bağlantısını kapatır. Bu işlem açıksa <filename>/dev/log</filename> soketini de kapatır. İşlev ayrıca Syslog iletilerininin kimlik dizgesini, eğer <function>openlog</function> bağlantıyı boş olmayan bir <parameter>ident</parameter> bağımsız değişkeni ile açmışsa, geriye ön tanımlı değerine ayarlar. Öntanımlı <parameter>ident</parameter> dizgesi <code>argv[0]</code>'dan alınan yazılım ismidir.
+    </para>
+    <para>
+     Özelleştirilmiş syslog çıktısı üretmek için <function>openlog</function> kullanan paylaşımlı bir kütüphane kodu yazılıyorsa, iş bittiğinde, &glibc;nin <parameter>ident</parameter> göstericisi ile ilişkisini kesmek için <code>closelog</code> kullanılmalıdır. Daha fazla bilgi için <xref linkend="glibc-openlog"/> bölümünü okunabilir.
+    </para>
+    <para>
+     <code>closelog</code> tamponları boşaltmaz. Bir Syslog bağlantısını <function>openlog</function> ile yeniden açmadan önce <code>closelog</code> çağrısı zorunlu değildir. Syslog bağlantıları <function>exec</function> veya <function>exit</function> çağrıları ile özdevinimli olarak kapanır.
+    </para>
+   </csynopsis>
+  </sect1>
+  <sect1 xml:id="glibc-setlogmask">
+   <title>setlogmask</title>
+   <titleabbrev>Belli iletilerin yok sayılmasının sağlanması.</titleabbrev>
+   <para>
+    Bu bölümdeki simgeler &syslog.h; başılk dosyasında bildirilmiştir.
+    <indexterm linkend="glibc-pg"><primary>syslog.h</primary></indexterm>
+   </para>
+   <csynopsis>
+    <indexterm linkend="glibc-fn" xml:id="glibc-fn-setlogmask"><primary>setlogmask</primary></indexterm>
+    <csproto type="işlev" varargs="">
+     <csname><type>int</type><function>setlogmask</function></csname>
+     <csparam><type>int</type><parameter>mask</parameter></csparam>
+    </csproto>
+    <header>&syslog.h;</header>
+    <conceptlist>
+     <concept>&mtunsafe; &race;<code linkend="glibc-safety-identifier">:LogMask</code></concept>
+     <concept>&asunsafe;</concept>
+     <concept>&acsafe;</concept>
+    </conceptlist>
+    <para>
+     <code>setlogmask</code> işlevi ileride hangi <function>syslog</function> çağrılarının yok sayılacağını belirleyen bir maske (&quot;logmask&quot;) tanımlar. Eğer bir yazılım <code>setlogmask</code> çağrısı yapmazsa, hiçbir <function>syslog</function> çağrısı yok sayılmaz. <code>setlogmask</code> işlevi hangi öncelikteki iletilerin ileride yok sayılacağını belirtmek için kullanılabilir.
+    </para>
+    <para>
+     Her <code>setlogmask</code> çağrısı daha önceki bir <code>setlogmask</code> çağrısının etkisini ortadan kaldırır.
+    </para>
+    <para>
+     Logmask, Syslog bağlantılarının açılması ya da kapanmasından bağımsız olarak mevcut olabilir.
+    </para>
+    <para>
+     Logmaskın atanması, Syslog'un yapılandırmasına benzer bir etki oluşturmasına rağmen tamamen aynı değildir. Syslog yapılandırması, alınacak belli iletilerin tamamen yok sayılmasına sebep olabilir, ama logmaskta belirterek yapılandırma ile yok sayılan iletilerin teslim edilmesi sağlanamaz.
+    </para>
+    <para>
+     <parameter>mask</parameter> her biti olası ileti önceliklerine karşılık düşen bir bit maskesidir. Eğer bu bitlerden biri birse, <function>syslog</function> o bitle ilgili öncelikteki iletileri iptal eder. Kullanılan ileti öncelik makroları  <xref linkend="glibc-syslog-vsyslog"/> bölümünde açıklanmıştır.
+    </para>
+    <csynopsis>
+     <indexterm linkend="glibc-fn" xml:id="glibc-fn-LOG_MASK"><primary>LOG_MASK</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>LOG_MASK</function></csname>
+      <csparam><parameter>priority</parameter></csparam>
+     </csproto>
+     <para>
+      Uygun <parameter>mask</parameter> değeri oluşturmak için kullanılır. Kullanım örnekleri:
+     </para>
+     <example>
+      <screen>LOG_MASK(LOG_EMERG) | LOG_MASK(LOG_ERROR)
+</screen>
+     <para>veya</para>
+     <screen>~(LOG_MASK(LOG_INFO))
+</screen>
+     </example>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-fn" xml:id="glibc-fn-LOG_UPTO"><primary>LOG_UPTO</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>LOG_UPTO</function></csname>
+      <csparam><parameter>priority</parameter></csparam>
+     </csproto>
+     <para>
+      <varname>LOG_MASK</varname> makrosuna benzer, farklı olarak belirtilen öncelikten daha düşük öncelikteki iletiler de iptal edilir. Örnek:
+     </para>
+     <screen>LOG_UPTO(LOG_ERROR)
+</screen>
+     <para>
+      Makronun talihsiz bir şekilde adlandırılmasının nedeni dahili olarak daha düşük ileti öncelikleri için daha yüksek sayıların kullanılmasıdır.
+     </para>
+    </csynopsis>
+   </csynopsis>
+  </sect1>
+  <sect1 xml:id="glibc-Syslog-Example">
+   <title>Syslog Örneği</title>
+   <titleabbrev>Buraya kadar bahsedilenlere toplu bir örnek.</titleabbrev>
+   <para>
+    Burada <function>openlog</function>, <function>syslog</function> ve <function>closelog</function> işlevlerinin kullanımı örneklenmiştir:
+   </para>
+   <example>
+    <para>
+     Bu örnekte hata ayıklama ve bilgilendirme iletileri logmaskta belirtilerek daha Syslog'a ulaşmadan iptal edilmektedir. Böylece örnekteki ikinci <function>syslog</function> hiçbir şey yapmamaktadır.
+    </para>
+    <screen>#include &lt;syslog.h&gt;
 
 setlogmask (LOG_UPTO (LOG_NOTICE));
 
 openlog ("exampleprog", LOG_CONS | LOG_PID | LOG_NDELAY, LOG_LOCAL1);
 
 syslog (LOG_NOTICE, "Program started by User %d", getuid ());
-syslog (LOG_INFO, "A tree falls in a forest");
+syslog (LOG_INFO, "Ormanda bir ağaç devrildi.");
 
 closelog ();
 
-</pre></div>
-
-<hr>
-</div>
-</div>
-</div-->
+</screen>
+   </example>
+  </sect1>
+ </chapter>
 </part>

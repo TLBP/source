@@ -63,6 +63,9 @@
    <xsl:when test="d:csproto/@type='işlev'">
     <xsl:text>&#160;&#160;&#160;&#160;&#160;&#160;işlev</xsl:text>
    </xsl:when>
+   <xsl:when test="d:csproto/@type='atıl işlev'">
+    <xsl:text>&#160;atıl&#160;işlev</xsl:text>
+   </xsl:when>
    <xsl:when test="d:csproto/@type='makro'">
     <xsl:text>&#160;&#160;&#160;&#160;&#160;&#160;makro</xsl:text>
    </xsl:when>
@@ -175,13 +178,13 @@
 </xsl:template>
 
 <xsl:template match="d:varargs" mode="ansi-tabular">
-  <strong><xsl:text>…</xsl:text>
+  <strong><code>…</code>
     <xsl:choose>
       <xsl:when test="following-sibling::*">
-	<xsl:text>, </xsl:text>
+       <code>, </code>
       </xsl:when>
       <xsl:otherwise>
-	<code>)</code>
+       <code>)</code>
       </xsl:otherwise>
     </xsl:choose></strong>
 </xsl:template>
@@ -195,7 +198,6 @@
      <strong class="type">**</strong>
     </xsl:when>
     <xsl:otherwise>
-     <xsl:text>&#160;</xsl:text>
     </xsl:otherwise>
   </xsl:choose>
   <strong>

@@ -122,6 +122,7 @@ set       toc,title
  <meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
  <link rel="icon" type="image/png" href="/images/belgeler-logo.png"/>
+ <meta name="robots" content="index, follow"/>
 </xsl:template>
 
 <xsl:template name="root.attributes">
@@ -339,11 +340,11 @@ set       toc,title
   </xsl:choose>
 </xsl:template>
 
-<xsl:template match="d:glossterm/d:glossterm[position()>1]">
+<xsl:template match="d:glossterm/d:glossterm[position()>1]|d:term/d:glossterm[position()>1]">
   <br/><xsl:apply-templates/>
 </xsl:template>
 
-<xsl:template match="d:glossterm/d:glossterm[position()=1]">
+<xsl:template match="d:glossterm/d:glossterm[position()=1]|d:term/d:glossterm[position()=1]">
   <xsl:apply-templates/>
 </xsl:template>
 
@@ -580,7 +581,7 @@ footnote text gets an id of #ftn.@id. They cross link to each other. -->
 
 <xsl:template match="d:formalpara">
   <dl><dt><xsl:apply-templates select="d:title"/></dt>
-  <dd><xsl:apply-templates select="./*[name(.)!='title']"/></dd></dl>
+  <dd><p><xsl:apply-templates select="./*[name(.)!='title']"/></p></dd></dl>
 </xsl:template>
 
 <xsl:template match="d:formalpara/d:title">

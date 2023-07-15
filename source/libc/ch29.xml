@@ -3,136 +3,189 @@
         glibc/ch29.xml,v2.36, GFDL,LGPL, NBB, 2023
      ******************************************************************** -->
 <part xml:id="glibc-System-Databases-and-Name-Service-Switch">
-  <title>Sistem Veritabanları ve İsim Hizmetleri Seçimi</title>
-  <titleabbrev>Sistem veritabanlarına erişim.</titleabbrev>
+ <title>Sistem Veritabanları ve İsim Hizmetleri Seçicisi</title>
+ <titleabbrev>Sistem veritabanlarına erişim.</titleabbrev>
  <preliminary>
-<!--span xml:id="glibc-index-Name-Service-Switch"></span>
-<span xml:id="glibc-index-NSS-1"></span>
-<span xml:id="glibc-index-databases"></span-->
+  <para>
+   <indexterm linkend="glibc-cp"><primary>isim hizmetleri</primary></indexterm>
+   <indexterm linkend="glibc-cp"><primary>NSS</primary></indexterm>
+   <indexterm linkend="glibc-cp"><primary>sistem veritabanları</primary></indexterm>
+   C kütüphanesindeki çeşitli işlevlerin yerel ortamda düzgün çalışması için yapılandırılmaları gerekir. Geleneksel olarak, bu işlem dosyalar kullanılarak yapılır (örn, <filename>/etc/passwd</filename>), ama diğer isim hizmetleri de (örn, Ağ Bilgi Hizmetleri - NIS, Alan Adı Hizmetleri - DNS) çok kullanılır olmuş ve C kütüphanesi içine zaman içinde dahil edilmiştir.
+  </para>
+  <para>
+   &glibc; bu soruna daha temiz bir çözüm içerir. Bu çözüm, Sun Microsystems tarafından Solaris 2'nin C kütüphanesinde kullanılan bir yöntemden sonra tasarlanmıştır. &glibc; bunların isimlerini ve çağrılarını <wordasword>İsim Hizmetleri Seçicisi</wordasword> - <firstterm>Name Service Switch</firstterm> (NSS) şeması ile izler.
+  </para>
+  <para>
+   Arayüzün Sun'ın sürümüne benzer olması beklenirdi ama bir ortak kod bile yoktur. &glibc;ne Sun'ın gerçeklemesinden herhangi bir kaynak kod asla alınmamıştır, bu yüzden dahili arayüz uyumsuzdur. Daha sonra görüleceği gibi dosya isimlerinde de bu açıkça ortaya konulmuştur.
+  </para>
+ </preliminary>
 
-<para>Various functions in the C Library need to be configured to work
-correctly in the local environment.  Traditionally, this was done by
-using files (e.g., <filename>/etc/passwd</filename>), but other nameservices (like the
-Network Information Service (NIS) and the Domain Name Service (DNS))
-became popular, and were hacked into the C library, usually with a fixed
-search order.
-</para>
-<para>The GNU C Library contains a cleaner solution to this problem.  It is
-designed after a method used by Sun Microsystems in the C library of
-Solaris&nbsp;2.  The GNU C Library follows their name and calls this
-scheme <emphasis>Name Service Switch</emphasis> (NSS).
-</para>
-<para>Though the interface might be similar to Sun’s version there is no
-common code.  We never saw any source code of Sun’s implementation and
-so the internal interface is incompatible.  This also manifests in the
-file names we use as we will see later.
-</para>
- </preliminary><!--
-<sect xml:id="glibc-NSS-Basics">
-<div class="header">
-<para>
-Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#NSS-Configuration-File" accesskey="n" rel="next">The NSS Configuration File</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Name-Service-Switch" accesskey="p" rel="prev">System Databases and Name Service Switch</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Name-Service-Switch" accesskey="u" rel="up">System Databases and Name Service Switch</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
-</div>
-<span xml:id="glibc-NSS-Basics-1"></span><h3 class="section">29.1 NSS Basics</title>
+ <chapter xml:id="glibc-NSS-Basics">
+  <title>NSS Temelleri</title>
+  <titleabbrev>Nedir bu NSS dedikleri.</titleabbrev>
+  <para>
+   Anafikir, veritabanlarına erişmeye çalışan farklı hizmetlerin gerçeklemelerini ayrı modüllere koymaktır. Bunun bazı faydaları vardır:
+  </para>
+  <orderedlist>
+   <listitem>
+    <para>
+     Destekçiler yeni hizmetleri &glibc;ne eklemeksizin NSS gerçeklenimine ekleyebilir.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     Modüller birbirinden bağımsız olarak güncellenebilir.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     C kütüphanesi fazla şişmemiş olur.
+    </para>
+   </listitem>
+  </orderedlist>
+  <para>
+   Yukarıdaki ilk görevi yerine getirmek için modül arayüzü<footnote><para>ABI: (Application Binary Interface kısaltması) - Bir uygulama ile işletim sistemi ya da hizmetler arasında erişimi sağlayan arayüz.</para></footnote> aşağıda açıklanacaktır. Yeni bir hizmeti doğru gerçeklemek için modüller içinde işlevlerin nasıl çağrıldığını anlamak önemlidir. Yazılımcının doğrudan doğruya kullanabileceği bir yol yoktur. Yazılımcı veritabanlarına sadece belgelenmiş ve standartlaştırılmış işlevleri kullararak erişebilir.
+  </para>
+  <para>
+   NSS şemasında mevcut veritabanları şunlardır:
+   <indexterm linkend="glibc-cp"><primary>sistem veritabanları</primary><secondary>aliases</secondary></indexterm>
+   <indexterm linkend="glibc-cp"><primary>sistem veritabanları</primary><secondary>ethers</secondary></indexterm>
+   <indexterm linkend="glibc-cp"><primary>sistem veritabanları</primary><secondary>group</secondary></indexterm>
+   <indexterm linkend="glibc-cp"><primary>sistem veritabanları</primary><secondary>gshadow</secondary></indexterm>
+   <indexterm linkend="glibc-cp"><primary>sistem veritabanları</primary><secondary>hosts</secondary></indexterm>
+   <indexterm linkend="glibc-cp"><primary>sistem veritabanları</primary><secondary>hosts</secondary></indexterm>
+   <indexterm linkend="glibc-cp"><primary>sistem veritabanları</primary><secondary>initgroups</secondary></indexterm>
+   <indexterm linkend="glibc-cp"><primary>sistem veritabanları</primary><secondary>netgroup</secondary></indexterm>
+   <indexterm linkend="glibc-cp"><primary>sistem veritabanları</primary><secondary>networks</secondary></indexterm>
+   <indexterm linkend="glibc-cp"><primary>sistem veritabanları</primary><secondary>passwd</secondary></indexterm>
+   <indexterm linkend="glibc-cp"><primary>sistem veritabanları</primary><secondary>protocols</secondary></indexterm>
+   <indexterm linkend="glibc-cp"><primary>sistem veritabanları</primary><secondary>publickey</secondary></indexterm>
+   <indexterm linkend="glibc-cp"><primary>sistem veritabanları</primary><secondary>rpc</secondary></indexterm>
+   <indexterm linkend="glibc-cp"><primary>sistem veritabanları</primary><secondary>services</secondary></indexterm>
+   <indexterm linkend="glibc-cp"><primary>sistem veritabanları</primary><secondary>shadow</secondary></indexterm>
+  </para>
+  <variablelist>
+   <varlistentry>
+    <term><literal>aliases</literal></term>
+    <listitem>
+     <para>
+      Posta takma adları.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry>
+    <term><literal>ethers</literal></term>
+    <listitem>
+     <para>
+      Eternet numaraları.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry>
+    <term><literal>group</literal></term>
+    <listitem>
+     <para>
+      Kullanıcı grupları, bkz. <xref linkend="glibc-Group-Database"/>.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry>
+    <term><literal>hosts</literal></term>
+    <listitem>
+     <para>
+      Konak isimleri ve numaraları, bkz. <xref linkend="glibc-Host-Names"/>.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry>
+    <term><literal>initgroups</literal></term>
+    <listitem>
+     <para>
+      Tamamlayıcı grup erişim listesi.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry>
+    <term><literal>netgroup</literal></term>
+    <listitem>
+     <para>
+      Ağ çapında kullanıcılar, konaklar ve alt ağlar, bkz.<xref linkend="glibc-Netgroup-Database"/>.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry>
+    <term><literal>networks</literal></term>
+    <listitem>
+     <para>
+      Ağ isimleri ve numaraları, bkz. <xref linkend="glibc-Networks-Database"/>.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry>
+    <term><literal>passwd</literal></term>
+    <listitem>
+     <para>
+      Kullanıcı kimlikleri, bkz. <xref linkend="glibc-User-Database"/>.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry>
+    <term><literal>protocols</literal></term>
+    <listitem>
+     <para>
+      Ağ protokolleri, <xref linkend="glibc-Protocols-Database"/>.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry>
+    <term><literal>publickey</literal></term>
+    <listitem>
+     <para>
+      Güvenli uzak yordam çağrıları için genel anahtarlar.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry>
+    <term><literal>rpc</literal></term>
+    <listitem>
+     <para>
+      Uzak yordam çağrı isimleri ve numaraları.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry>
+    <term><literal>services</literal></term>
+    <listitem>
+     <para>
+      Ağ hizmetleri, bkz. <xref linkend="glibc-Services-Database"/>.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry>
+    <term><literal>shadow</literal></term>
+    <listitem>
+     <para>
+      Kullanıcı parola aşları ve ilgili bilgiler.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+  <para>
+   İleride başka veritabanları eklenebilir.
+  </para>
+ </chapter>
 
-<para>The basic idea is to put the implementation of the different services
-offered to access the databases in separate modules.  This has some
-advantages:
-</para>
-<ol>
-<li> Contributors can add new services without adding them to the GNU C Library.
-</li><li> The modules can be updated separately.
-</li><li> The C library image is smaller.
-</li></ol>
-
-<para>To fulfill the first goal above, the ABI of the modules will be described
-below.  For getting the implementation of a new service right it is
-important to understand how the functions in the modules get called.
-They are in no way designed to be used by the programmer directly.
-Instead the programmer should only use the documented and standardized
-functions to access the databases.
-</para>
-<para>The databases available in the NSS are
-</para>
-<span xml:id="glibc-index-aliases"></span>
-<span xml:id="glibc-index-ethers"></span>
-<span xml:id="glibc-index-group"></span>
-<span xml:id="glibc-index-gshadow"></span>
-<span xml:id="glibc-index-hosts"></span>
-<span xml:id="glibc-index-initgroups"></span>
-<span xml:id="glibc-index-netgroup"></span>
-<span xml:id="glibc-index-networks"></span>
-<span xml:id="glibc-index-passwd"></span>
-<span xml:id="glibc-index-protocols"></span>
-<span xml:id="glibc-index-publickey"></span>
-<span xml:id="glibc-index-rpc"></span>
-<span xml:id="glibc-index-services"></span>
-<span xml:id="glibc-index-shadow"></span>
-<dl compact="compact">
-<dt><span><code>aliases</code></span></dt>
-<dd><para>Mail aliases
-</para></dd>
-<dt><span><code>ethers</code></span></dt>
-<dd><para>Ethernet numbers,
-</para></dd>
-<dt><span><code>group</code></span></dt>
-<dd><para>Groups of users, see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Group-Database">Group Database</a>.
-</para></dd>
-<dt><span><code>gshadow</code></span></dt>
-<dd><para>Group passphrase hashes and related information.
-</para></dd>
-<dt><span><code>hosts</code></span></dt>
-<dd><para>Host names and numbers, see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Host-Names">Host Names</a>.
-</para></dd>
-<dt><span><code>initgroups</code></span></dt>
-<dd><para>Supplementary group access list.
-</para></dd>
-<dt><span><code>netgroup</code></span></dt>
-<dd><para>Network wide list of host and users, see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Netgroup-Database">Netgroup Database</a>.
-</para></dd>
-<dt><span><code>networks</code></span></dt>
-<dd><para>Network names and numbers, see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Networks-Database">Networks Database</a>.
-</para></dd>
-<dt><span><code>passwd</code></span></dt>
-<dd><para>User identities, see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#User-Database">User Database</a>.
-</para></dd>
-<dt><span><code>protocols</code></span></dt>
-<dd><para>Network protocols, see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Protocols-Database">Protocols Database</a>.
-</para></dd>
-<dt><span><code>publickey</code></span></dt>
-<dd><para>Public keys for Secure RPC.
-</para></dd>
-<dt><span><code>rpc</code></span></dt>
-<dd><para>Remote procedure call names and numbers.
-</para></dd>
-<dt><span><code>services</code></span></dt>
-<dd><para>Network services, see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Services-Database">The Services Database</a>.
-</para></dd>
-<dt><span><code>shadow</code></span></dt>
-<dd><para>User passphrase hashes and related information.
-</para></dd>
-</dl>
-
-<para>More databases may be added later.
-</para>
-<hr>
-</div>
-<sect xml:id="glibc-NSS-Configuration-File">
-<div class="header">
-<para>
-Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#NSS-Module-Internals" accesskey="n" rel="next">NSS Module Internals</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#NSS-Basics" accesskey="p" rel="prev">NSS Basics</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Name-Service-Switch" accesskey="u" rel="up">System Databases and Name Service Switch</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
-</div>
-<span xml:id="glibc-The-NSS-Configuration-File"></span><h3 class="section">29.2 The NSS Configuration File</title>
-
-<span xml:id="glibc-index-_002fetc_002fnsswitch_002econf"></span>
-<span xml:id="glibc-index-nsswitch_002econf"></span>
-<para>Somehow the NSS code must be told about the wishes of the user.  For
-this reason there is the file <filename>/etc/nsswitch.conf</filename>.  For each
-database, this file contains a specification of how the lookup process should
-work.  The file could look like this:
-</para>
-<div class="example">
-<pre class="example"># /etc/nsswitch.conf
+ <chapter xml:id="glibc-NSS-Configuration-File" userlevel="notoc">
+  <?dbhtml stop-chunking?>
+  <title>NSS Yapılandırma Dosyası</title>
+  <titleabbrev>NSS yapılandırması.</titleabbrev>
+  <para>
+   <indexterm linkend="glibc-cp"><primary sortas="etc/nsswitch.conf"><filename>/etc/nsswitch.conf</filename></primary></indexterm>
+   <indexterm linkend="glibc-cp"><primary><filename>nsswitch.conf</filename></primary></indexterm>
+   Ne olursa olsun, NSS kodu kullanıcının isteklerini yerine getirmelidir. <filename>/etc/nsswitch.conf</filename> dosyası bu sebeple vardır. Bu dosyada her veritabanı için arama sürecinin nasıl çalışacağı ile ilgili bir belirtim vardır. Dosyanın içeriği şuna benzer:
+  </para>
+  <example>
+   <screen># /etc/nsswitch.conf
 #
 # Name Service Switch configuration file.
 #
@@ -148,662 +201,548 @@ ethers:     db files
 protocols:  db files
 rpc:        db files
 services:   db files
-</pre></div>
+</screen>
+  </example>
+  <para>
+   lk sütunda veritabanının ismi bulunur. Satırın kalanında arama sürecinin nasıl çalışacağı belirtilir. Belirtilen yolun her veritabanı için ayrı olduğu unutulmamalıdır. Bu, eski yöntemle, bir tek parça gerçekleme ile yapılamaz.
+  </para>
+  <para>
+   Her veritabanı için yapılandırma belirtimi iki farklı öge içerebilir:
+  </para>
+  <simplelist>
+   <member>
+    <code>files</code>, <code>db</code> veya <code>nis</code> gibi bir hizmet belirtimi.
+   </member>
+   <member>
+    <code>[NOTFOUND=return]</code> gibi arama sonucuna verilen tepki.
+   </member>
+  </simplelist>
 
-<para>The first column is the database as you can guess from the table above.
-The rest of the line specifies how the lookup process works.  Please
-note that you specify the way it works for each database individually.
-This cannot be done with the old way of a monolithic implementation.
-</para>
-<para>The configuration specification for each database can contain two
-different items:
-</para>
-<ul>
-<li> the service specification like <code>files</code>, <code>db</code>, or <code>nis</code>.
-</li><li> the reaction on lookup result like <code>[NOTFOUND=return]</code>.
-</li></ul>
-
-
-<ul class="section-toc">
-<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Services-in-the-NSS-configuration" accesskey="1">Services in the NSS configuration File</a></li>
-<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Actions-in-the-NSS-configuration" accesskey="2">Actions in the NSS configuration</a></li>
-<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Notes-on-NSS-Configuration-File" accesskey="3">Notes on the NSS Configuration File</a></li>
-</ul>
-<hr>
-<div class="subsection" xml:id="glibc-Services-in-the-NSS-configuration">
-<div class="header">
-<para>
-Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Actions-in-the-NSS-configuration" accesskey="n" rel="next">Actions in the NSS configuration</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#NSS-Configuration-File" accesskey="p" rel="prev">The NSS Configuration File</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#NSS-Configuration-File" accesskey="u" rel="up">The NSS Configuration File</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
-</div>
-<span xml:id="glibc-Services-in-the-NSS-configuration-File"></span><h4 class="subsection">29.2.1 Services in the NSS configuration File</title>
-
-<para>The above example file mentions five different services: <code>files</code>,
-<code>db</code>, <code>dns</code>, <code>nis</code>, and <code>nisplus</code>.  This does not
-mean these
-services are available on all sites and neither does it mean these are
-all the services which will ever be available.
-</para>
-<para>In fact, these names are simply strings which the NSS code uses to find
-the implicitly addressed functions.  The internal interface will be
-described later.  Visible to the user are the modules which implement an
-individual service.
-</para>
-<para>Assume the service <var>name</var> shall be used for a lookup.  The code for
-this service is implemented in a module called <filename>libnss_<var>name</var></filename>.
-On a system supporting shared libraries this is in fact a shared library
-with the name (for example) <filename>libnss_<var>name</var>.so.2</filename>.  The number
-at the end is the currently used version of the interface which will not
-change frequently.  Normally the user should not have to be cognizant of
-these files since they should be placed in a directory where they are
-found automatically.  Only the names of all available services are
-important.
-</para>
-<para>Lastly, some system software may make use of the NSS configuration file
-to store their own configuration for similar purposes.  Examples of this
-include the <code>automount</code> service which is used by <code>autofs</code>.
-</para>
-<hr>
-</div>
-<div class="subsection" xml:id="glibc-Actions-in-the-NSS-configuration">
-<div class="header">
-<para>
-Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Notes-on-NSS-Configuration-File" accesskey="n" rel="next">Notes on the NSS Configuration File</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Services-in-the-NSS-configuration" accesskey="p" rel="prev">Services in the NSS configuration File</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#NSS-Configuration-File" accesskey="u" rel="up">The NSS Configuration File</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
-</div>
-<span xml:id="glibc-Actions-in-the-NSS-configuration-1"></span><h4 class="subsection">29.2.2 Actions in the NSS configuration</title>
-
-<para>The second item in the specification gives the user much finer control
-on the lookup process.  Action items are placed between two service
-names and are written within brackets.  The general form is
-</para>
-<div class="display">
-<pre class="display"><code>[</code> ( <code>!</code>? <var>status</var> <code>=</code> <var>action</var> )+ <code>]</code>
-</pre></div>
-
-<para>where
-</para>
-<div class="example">
-<pre class="example"><var>status</var> ⇒ success | notfound | unavail | tryagain
-<var>action</var> ⇒ return | continue
-</pre></div>
-
-<para>The case of the keywords is insignificant.  The <var>status</var>
-values are the results of a call to a lookup function of a specific
-service.  They mean:
-</para>
-<dl compact="compact">
-<dt xml:id="glibc-index-success"><span>‘<filename>success</filename>’<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-success" class="copiable-anchor"> ¶</a></span></dt>
-<dd><para>No error occurred and the wanted entry is returned.  The default action
-for this is <code>return</code>.
-</para>
-</dd>
-<dt xml:id="glibc-index-notfound"><span>‘<filename>notfound</filename>’<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-notfound" class="copiable-anchor"> ¶</a></span></dt>
-<dd><para>The lookup process works ok but the needed value was not found.  The
-default action is <code>continue</code>.
-</para>
-</dd>
-<dt xml:id="glibc-index-unavail"><span>‘<filename>unavail</filename>’<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-unavail" class="copiable-anchor"> ¶</a></span></dt>
-<dd><span xml:id="glibc-index-DNS-server-unavailable"></span>
-<para>The service is permanently unavailable.  This can either mean the needed
-file is not available, or, for DNS, the server is not available or does
-not allow queries.  The default action is <code>continue</code>.
-</para>
-</dd>
-<dt xml:id="glibc-index-tryagain"><span>‘<filename>tryagain</filename>’<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-tryagain" class="copiable-anchor"> ¶</a></span></dt>
-<dd><para>The service is temporarily unavailable.  This could mean a file is
-locked or a server currently cannot accept more connections.  The
-default action is <code>continue</code>.
-</para></dd>
-</dl>
-
-<para>The <var>action</var> values mean:
-</para>
-<dl compact="compact">
-<dt xml:id="glibc-index-return"><span>‘<filename>return</filename>’<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-return" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-<para>If the status matches, stop the lookup process at this service
-specification.  If an entry is available, provide it to the application.
-If an error occurred, report it to the application.  In case of a prior
-‘<filename>merge</filename>’ action, the data is combined with previous lookup results,
-as explained below.
-</para>
-</dd>
-<dt xml:id="glibc-index-continue"><span>‘<filename>continue</filename>’<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-continue" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-<para>If the status matches, proceed with the lookup process at the next
-entry, discarding the result of the current lookup (and any merged
-data).  An exception is the ‘<filename>initgroups</filename>’ database and the
-‘<filename>success</filename>’ status, where ‘<filename>continue</filename>’ acts like <code>merge</code>
-below.
-</para>
-</dd>
-<dt xml:id="glibc-index-merge"><span>‘<filename>merge</filename>’<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-merge" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-<para>Proceed with the lookup process, retaining the current lookup result.
-This action is useful only with the ‘<filename>success</filename>’ status.  If a
-subsequent service lookup succeeds and has a matching ‘<filename>return</filename>’
-specification, the results are merged, the lookup process ends, and the
-merged results are returned to the application.  If the following service
-has a matching ‘<filename>merge</filename>’ action, the lookup process continues,
-retaining the combined data from this and any previous lookups.
-</para>
-<para>After a <code>merge</code> action, errors from subsequent lookups are ignored,
-and the data gathered so far will be returned.
-</para>
-<para>The ‘<filename>merge</filename>’ only applies to the ‘<filename>success</filename>’ status.  It is
-currently implemented for the ‘<filename>group</filename>’ database and its group
-members field, ‘<filename>gr_mem</filename>’.  If specified for other databases, it
-causes the lookup to fail (if the <var>status</var> matches).
-</para>
-<para>When processing ‘<filename>merge</filename>’ for ‘<filename>group</filename>’ membership, the group GID
-and name must be identical for both entries.  If only one or the other is
-a match, the behavior is undefined.
-</para>
-</dd>
-</dl>
-
-<para>If we have a line like
-</para>
-<div class="example">
-<pre class="example">ethers: nisplus [NOTFOUND=return] db files
-</pre></div>
-
-<para>this is equivalent to
-</para>
-<div class="example">
-<pre class="example">ethers: nisplus [SUCCESS=return NOTFOUND=return UNAVAIL=continue
+   <sect1 xml:id="glibc-Services-in-the-NSS-configuration">
+    <title>NSS Yapılandırma Dosyasındaki Hizmetler</title>
+    <titleabbrev>NSS yapılandırmasındaki hizmet isimleri.</titleabbrev>
+    <para>
+     Önceki bölümdeki örnek dosyada beş farklı hizmet vardı: <code>files</code>, <code>db</code>, <code>dns</code>, <code>nis</code> ve <code>nisplus</code>.  Bu, her yerde sadece bu hizmetlerin olduğu anlamına gelmediği gibi bunların her yerde bulunabilen hizmetler olduğu anlamına da gelmez.
+    </para>
+    <para>
+     Aslında, bu isimler NSS kodu tarafından dolaylı olarak adresli işlevleri bulmak için kullanılan basit dizgelerdir. Dahili arayüz daha sonra açıklanacaktır. Kullanıcıya görünür olan, her biri bir hizmeti gerçekleştiren modüllerdir.
+    </para>
+    <para>
+     <replaceable>isim</replaceable> dizgesi arama için kullanılacak hizmet olduğu varsayılırsa bu hizmeti gerçekleştiren modülün dosyası  <code>libnss_</code><replaceable>isim</replaceable> adını alır. Paylaşımlı kütüphaneleri destekleyen sistemlerde ise bu isim (örneğin)  <code>libnss_</code><replaceable>isim</replaceable><code>.so.2</code> olacaktır. Dosya isminin sonundaki sayı arayüzün o an geçerli ve pek sık değişmeyen sürümünü ifade eder. Normalde kullanıcılar bu dosyalarla ilgilenmezler, çünkü bunlar özdevinimli olarak bulunabilecekleri bir dizine konulur. Mevcut hizmetlerin sadece isimleri önemlidir.
+    </para>
+    <para>
+     Son olarak, bazı sistem yazılımları, benzer amaçlarla kendi yapılandırmalarını depolamak için NSS yapılandırma dosyasını kullanabilir. Bunun örnekleri, <code>autofs</code> tarafından kullanılan <code>automount</code> hizmetini içerir.
+    </para>
+   </sect1>
+   <sect1 xml:id="glibc-Actions-in-the-NSS-configuration">
+    <title>NSS Yapılandırmasındaki Eylemler</title>
+    <titleabbrev>Arama sonucuna verilen tepki.</titleabbrev>
+    <para>
+     Belirtimdeki ikinci öge, kullanıcıya arama sürecini daha iyi denetleme imkanı verir. Eylem ögeleri iki hizmet ismi arasına yerleştirilir ve köşeli parantezlerin arasına yazılır. Genel biçimi şöyledir:
+    </para>
+    <literallayout class="monospaced">[ ( !? <replaceable>durum</replaceable>=<replaceable>eylem</replaceable> )+ ]
+</literallayout>
+    <para>Burada:</para>
+    <literallayout class="monospaced"><replaceable>durum</replaceable> ⇒ success | notfound | unavail | tryagain
+<replaceable>eylem</replaceable> ⇒ return | continue
+</literallayout>
+    <para>
+     olabilir. Sözcüklerin harf büyüklükleri önemsizdir. <replaceable>durum</replaceable> değerleri belirli bir hizmetin arama işlevi çağrısının sonucudur. Bunların anlamları:
+    </para>
+    <variablelist>
+     <varlistentry>
+      <term>'<literal>success</literal>'</term>
+      <listitem>
+       <para>
+        Bir hata oluşmadan istenen girdi döndü. Öntanımlı eylem  <code>return</code>, dön'dür.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+       <term>'<literal>notfound</literal>'</term>
+       <listitem>
+        <para>
+         Arama süreci tamamlandı ama gerekli değer bulunamadı. Öntanımlı eylem <code>continue</code>, aramaya devam et'tir.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+       <term>'<literal>unavail</literal>'</term>
+       <listitem>
+        <para>
+         <indexterm linkend="glibc-cp"><primary>DNS sucusu hizmetdışı</primary></indexterm>
+         Hizmet geçici olarak kullanım dışıdır. Bu ya gerekli dosyanın olmadığı ya da DNS için, hizmetin kullanım dışı olduğunu veya sorguya izin vermediğini belirtir. Öntanımlı eylem <code>continue</code>, aramaya devam et'tir.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term>'<literal>tryagain</literal>'</term>
+      <listitem>
+       <para>
+        Hizmet geçici olarak kullanım dışıdır. Bu bir dosyanın kilitli olduğu ya da bir sunucunun o an artık bağlantı kabul edemediğini belirtir. Öntanımlı eylem  <code>continue</code>, aramaya devam et'tir.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+    <para>
+     <replaceable>eylem</replaceable> değerleri ve anlamları:
+    </para>
+    <variablelist>
+     <varlistentry>
+      <term>'<literal>return</literal>'</term>
+      <listitem>
+       <para>
+        <replaceable>durum</replaceable> eşleşirse, bu hizmet belirtiminde arama işlemi durdurulur. Bir girdi varsa, uygulamaya aktarılır. Bir hata oluşursa,  uygulamaya bildirilir. Önceki bir ‘<code>merge</code>’ (birleştirme) eylemi durumunda, veriler aşağıda açıklandığı gibi önceki arama sonuçlarıyla birleştirilir.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term>'<literal>continue</literal>'</term>
+      <listitem>
+       <para>
+        <replaceable>durum</replaceable> eşleşirse, mevcut aramanın sonucu (ve herhangi bir birleştirilmiş veri) atılarak arama işlemine bir sonraki girdiden devam edilir. Bir istisna, ‘<code>initgroups</code>’ veritabanı ve ‘<code>continue</code>’ (devam et) eyleminin aşağıdaki <code>merge</code> (birleştir) gibi davrandığı ‘<code>success</code>’ (başarı) durumudur.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term>'<literal>merge</literal>'</term>
+      <listitem>
+       <para>
+        Geçerli arama sonucu korunarak arama işlemine devam edilir. Bu <replaceable>eylem</replaceable> yalnızca ‘<code>success</code>’ (başarı) <replaceable>durum</replaceable>unda yararlıdır. Sonraki bir hizmet araması başarılı olursa ve eşleşen bir ‘<code>return</code>’ (dönüş) <replaceable>eylem</replaceable>ine sahipse, sonuçlar birleştirilir, arama işlemi sona erer ve birleştirilen sonuçlar uygulamaya döndürülür. Aşağıdaki hizmetin eşleşen bir <code>merge</code> (birleştir) <replaceable>eylem</replaceable>i varsa, arama işlemi bu ve önceki aramalardan birleştirilmiş veriler korunarak devam eder.
+       </para>
+       <para>
+        <code>merge</code> (birleştir) <replaceable>eylem</replaceable>inden sonra, sonraki aramalardan gelen hatalar yok sayılır ve o ana kadar toplanan veriler döndürülür.
+       </para>
+       <para>
+        <code>merge</code> (birleştir) yalnızca ‘<code>success</code>’ (başarı) <replaceable>durum</replaceable>unda uygulanır. Şu anda ‘<filename>group</filename>’ veritabanı ve onun grup üyeleri alanı <filename>gr_mem</filename>’ için uygulanmaktadır. Diğer veritabanları için belirtilirse, aramanın başarısız olmasına neden olur (<replaceable>durum</replaceable> eşleşirse).
+       </para>
+       <para>
+        ‘<filename>group</filename>’ üyeliği için  <code>merge</code> (birleştir) <replaceable>eylem</replaceable>i yürürlükteyken, grup kimliği ve adı her iki girdi için de aynı olmalıdır. Yalnızca biri veya diğeri eşleşirse, davranış tanımsızdır.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+    <para>
+     Şöyle bir satırın varlığında:
+    </para>
+    <literallayout class="monospaced">ethers: nisplus [NOTFOUND=return] db files
+</literallayout>
+    <para>
+     Satır şuna eşdeğerdir (hepsinin bir satıra yazılması zorunluluğu dışında):
+    </para>
+    <literallayout class="monospaced">ethers: nisplus [SUCCESS=return NOTFOUND=return UNAVAIL=continue
                  TRYAGAIN=continue]
         db      [SUCCESS=return NOTFOUND=continue UNAVAIL=continue
                  TRYAGAIN=continue]
         files
-</pre></div>
+</literallayout>
+    <para>
+     Eylemlerin ön tanımlı değeri normalde ne istendiğini gösterir ve sadece olağan dışı durumlarda değiştirmek gerekir.
+    </para>
+    <para>
+     <replaceable>durum</replaceable> dizgesinden önce bir <code>!</code> varsa (isteğe bağlıdır), belirtilen eylemin dışındaki tüm eylemlerin geçerli olduğu anlamına gelir. Yani, <code>!</code> işleci C dilindeki gibi "bundan farklı her şey" anlamına gelir.
+    </para>
+    <para>
+     Bu <replaceable>eylem</replaceable> ögesini gerekli yapan olağan dışılığı açıklamadan önce birkaç yorum: <command>files</command> hizmetinden sonra bir eylem ögesi eklemenin bir faydası olmadığı açıktır. Eylem <emphasis>daima</emphasis> <code>return</code> olacağından bundan sonra başka hizmet belirtilmez.
+    </para>
+    <para>
+     <indexterm linkend="glibc-cp"><primary>nisplus</primary><secondary>bütünlük</secondary></indexterm>
+     Şimdi, bu <code>[NOTFOUND=return]</code> <replaceable>eylem</replaceable>i neden kullanışlıdır? Sebebini anlayabilmek için <code>nisplus</code> hizmetinin çoğunlukla bir bütünlük arzettiğini bilmemiz gerekir. Yani, bir girdi NIS+ tablolarında mevcut değilse başka hiçbir yerde bulunamaz. Bu durum bu eylem ögesinin neden böyle belirtildiğini açıklar: diğer hizmetler zaten bir sonuç vermeyeceğinden onlara bakmak yararsızdır.
+    </para>
+    <para>
+     <indexterm linkend="glibc-cp"><primary>nisplus</primary><secondary>sistem açılışı</secondary></indexterm>
+     NIS+ hizmetinin makinenin yeniden başlatılması nedeniyle yokluğu farklı bir durum olurdu. Bu durumda arama işlevinin dönüş değeri <code>notfound</code> değil, <code>unavail</code> olur. Yukarıdaki satırın açılımında da görüleceği gibi bu durumda <code>db</code> ve <code>files</code> hizmetleri kullanılır. Güzel değil mi? Sistem çalışmaya tamamen hazır olmadığı bir anda (sistem açılışı, kapanışı ya da bir ağ sorunu nedeniyle) sistem yöneticisinin özel bir çaba harcaması gerekmeyecektir.
+    </para>
+   </sect1>
+   <sect1 xml:id="glibc-Notes-on-NSS-Configuration-File">
+    <title>NSS Yapılandırma Dosyası için İpuçları</title>
+    <titleabbrev>NSS yapılandırılırken dikkat edilmesi gerekenler.</titleabbrev>
+    <para>
+     Son olarak birkaç ipucu. <filename>/etc/nsswitch.conf</filename> dosyasının olmayışı durumunda NSS gerçeklemesi tamamen çaresiz bırakmaz. Desteklenen tüm veritabanları için bir ön tanımlı değer vardır, böylece dosya bozuk da olsa hiç olmasa da sistemin normal çalışması mümkün olur.
+    </para>
+    <para>
+     <indexterm linkend="glibc-cp"><primary>NSS</primary><secondary>ön tanımlı değer</secondary></indexterm>
+      <code>hosts</code> ve <code>networks</code> veritabanları için ön tanımlı değer <code>dns [!UNAVAIL=return] files</code> şeklindedir. Yani sistem DNS hizmeti olmaksızın hazırsa ama yanıt varsa dönüş kesindir.
+    </para>
+    <para>
+     <code>passwd</code>, <code>group</code> ve <code>shadow</code> veritabanları geleneksel olarak özel bir yolla elde edilir. <filename>/etc</filename> dizinindeki ilgili dosyalar okunur, bunlar içinde <code>+</code> ile başlayan bir isim varsa NIS kullanılır. Bu çeşit arama kaldırılmıştır ve artık hizmetler için ön tanımlı değer <code>files</code>'tır. <code>libnss_compat</code> artık <code>libnsl</code>'ye bağlı değildir ve NIS olmadan kullanılabilmektedir.
+    </para>
+    <para>
+     Tüm diğer veritabanları için ön tanımlı değer <code>files</code>'tır.
+    </para>
+    <para>
+     <indexterm linkend="glibc-cp"><primary>NSS</primary><secondary>en iyileme</secondary></indexterm>
+     <indexterm linkend="glibc-cp"><primary>en iyileme</primary><secondary>NSS</secondary></indexterm>
+     İkinci bir nokta da kullanıcının arama sürecini en iyilemeye çalışmasıdır. Her hizmetin kendine özgü bir yanıt süresi vardır. Basit dosya araması bir yerel dosya üzerinde hızlı olabilirdi ama dosya uzunsa ve gerekli girdi dosyanın sonlarına doğruysa bu biraz vakit alır. Bu durumda büyük veri kümelerine daha hızlı erişim sağlayan <code>db</code> hizmetinin kullanılması daha iyi olabilir.
+    </para>
+    <para>
+     Sıkça rastlanan bir durum NIS gibi kapsamlı bilgi hizmetlerinin kullanıldığı durumdur. Bu durumda <code>nis</code> vb. hizmet girdilerinin kullanılması kaçınılmazdır. Fakat bunun gibi yavaş hizmetlerden mümkün olduğunca kaçınılmalıdır.
+    </para>
+   </sect1>
+  </chapter>
 
-<para>(except that it would have to be written on one line).  The default
-value for the actions are normally what you want, and only need to be
-changed in exceptional cases.
-</para>
-<para>If the optional <code>!</code> is placed before the <var>status</var> this means
-the following action is used for all statuses but <var>status</var> itself.
-I.e., <code>!</code> is negation as in the C language (and others).
-</para>
-<para>Before we explain the exception which makes this action item necessary
-one more remark: obviously it makes no sense to add another action
-item after the <code>files</code> service.  Since there is no other service
-following the action <emphasis>always</emphasis> is <code>return</code>.
-</para>
-<span xml:id="glibc-index-nisplus_002c-and-completeness"></span>
-<para>Now, why is this <code>[NOTFOUND=return]</code> action useful?  To understand
-this we should know that the <code>nisplus</code> service is often
-complete; i.e., if an entry is not available in the NIS+ tables it is
-not available anywhere else.  This is what is expressed by this action
-item: it is useless to examine further services since they will not give
-us a result.
-</para>
-<span xml:id="glibc-index-nisplus_002c-and-booting"></span>
-<span xml:id="glibc-index-bootstrapping_002c-and-services"></span>
-<para>The situation would be different if the NIS+ service is not available
-because the machine is booting.  In this case the return value of the
-lookup function is not <code>notfound</code> but instead <code>unavail</code>.  And
-as you can see in the complete form above: in this situation the
-<code>db</code> and <code>files</code> services are used.  Neat, isn’t it?  The
-system administrator need not pay special care for the time the system
-is not completely ready to work (while booting or shutdown or
-network problems).
-</para>
-
-<hr>
-</div>
-<div class="subsection" xml:id="glibc-Notes-on-NSS-Configuration-File">
-<div class="header">
-<para>
-Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Actions-in-the-NSS-configuration" accesskey="p" rel="prev">Actions in the NSS configuration</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#NSS-Configuration-File" accesskey="u" rel="up">The NSS Configuration File</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
-</div>
-<span xml:id="glibc-Notes-on-the-NSS-Configuration-File"></span><h4 class="subsection">29.2.3 Notes on the NSS Configuration File</title>
-
-<para>Finally a few more hints.  The NSS implementation is not completely
-helpless if <filename>/etc/nsswitch.conf</filename> does not exist.  For
-all supported databases there is a default value so it should normally
-be possible to get the system running even if the file is corrupted or
-missing.
-</para>
-<span xml:id="glibc-index-default-value_002c-and-NSS"></span>
-<para>For the <code>hosts</code> and <code>networks</code> databases the default value is
-<code>files dns</code>.  I.e., local configuration will override the contents
-of the domain name system (DNS).
-</para>
-<para>The <code>passwd</code>, <code>group</code>, and <code>shadow</code> databases was
-traditionally handled in a special way.  The appropriate files in the
-<filename>/etc</filename> directory were read but if an entry with a name starting
-with a <code>+</code> character was found NIS was used.  This kind of lookup
-was removed and now the default value for the services is <code>files</code>.
-libnss_compat no longer depends on libnsl and can be used without NIS.
-</para>
-<para>For all other databases the default value is <code>files</code>.
-</para>
-<span xml:id="glibc-index-optimizing-NSS"></span>
-<para>A second point is that the user should try to optimize the lookup
-process.  The different service have different response times.
-A simple file look up on a local file could be fast, but if the file
-is long and the needed entry is near the end of the file this may take
-quite some time.  In this case it might be better to use the <code>db</code>
-service which allows fast local access to large data sets.
-</para>
-<para>Often the situation is that some global information like NIS must be
-used.  So it is unavoidable to use service entries like <code>nis</code> etc.
-But one should avoid slow services like this if possible.
-</para>
-
-<hr>
-</div>
-</div>
-<sect xml:id="glibc-NSS-Module-Internals">
-<div class="header">
-<para>
-Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Extending-NSS" accesskey="n" rel="next">Extending NSS</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#NSS-Configuration-File" accesskey="p" rel="prev">The NSS Configuration File</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Name-Service-Switch" accesskey="u" rel="up">System Databases and Name Service Switch</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
-</div>
-<span xml:id="glibc-NSS-Module-Internals-1"></span><h3 class="section">29.3 NSS Module Internals</title>
-
-<para>Now it is time to describe what the modules look like.  The functions
-contained in a module are identified by their names.  I.e., there is no
-jump table or the like.  How this is done is of no interest here; those
-interested in this topic should read about Dynamic Linking.
-</para>
-
-
-<ul class="section-toc">
-<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#NSS-Module-Names" accesskey="1">The Naming Scheme of the NSS Modules</a></li>
-<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#NSS-Modules-Interface" accesskey="2">The Interface of the Function in NSS Modules</a></li>
-</ul>
-<hr>
-<div class="subsection" xml:id="glibc-NSS-Module-Names">
-<div class="header">
-<para>
-Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#NSS-Modules-Interface" accesskey="n" rel="next">The Interface of the Function in NSS Modules</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#NSS-Module-Internals" accesskey="p" rel="prev">NSS Module Internals</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#NSS-Module-Internals" accesskey="u" rel="up">NSS Module Internals</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
-</div>
-<span xml:id="glibc-The-Naming-Scheme-of-the-NSS-Modules"></span><h4 class="subsection">29.3.1 The Naming Scheme of the NSS Modules</title>
-
-<para>The name of each function consists of various parts:
-</para>
-<blockquote>
-<para>_nss_<var>service</var>_<var>function</var>
-</para></blockquote>
-
-<para><var>service</var> of course corresponds to the name of the module this
-function is found in.<a xml:id="glibc-DOCF4" href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#FOOT4"><sup>4</sup></a>  The <var>function</var> part is derived
-from the interface function in the C library itself.  If the user calls
-the function <code>gethostbyname</code> and the service used is <code>files</code>
-the function
-</para>
-<div class="example">
-<pre class="example">       _nss_files_gethostbyname_r
-</pre></div>
-
-<para>in the module
-</para>
-<div class="example">
-<pre class="example">       libnss_files.so.2
-</pre></div>
-
-<para><span xml:id="glibc-index-reentrant-NSS-functions"></span>
-is used.  You see, what is explained above in not the whole truth.  In
-fact the NSS modules only contain reentrant versions of the lookup
-functions.  I.e., if the user would call the <code>gethostbyname_r</code>
-function this also would end in the above function.  For all user
-interface functions the C library maps this call to a call to the
-reentrant function.  For reentrant functions this is trivial since the
-interface is (nearly) the same.  For the non-reentrant version the
-library keeps internal buffers which are used to replace the user
-supplied buffer.
-</para>
-<para>I.e., the reentrant functions <emphasis>can</emphasis> have counterparts.  No service
-module is forced to have functions for all databases and all kinds to
-access them.  If a function is not available it is simply treated as if
-the function would return <code>unavail</code>
-(see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Actions-in-the-NSS-configuration">Actions in the NSS configuration</a>).
-</para>
-<para>The file name <filename>libnss_files.so.2</filename> would be on a Solaris&nbsp;2
-system <filename>nss_files.so.2</filename>.  This is the difference mentioned above.
-Sun’s NSS modules are usable as modules which get indirectly loaded
-only.
-</para>
-<para>The NSS modules in the GNU C Library are prepared to be used as normal
-libraries themselves.  This is <emphasis>not</emphasis> true at the moment, though.
-However,  the organization of the name space in the modules does not make it
-impossible like it is for Solaris.  Now you can see why the modules are
-still libraries.<a xml:id="glibc-DOCF5" href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#FOOT5"><sup>5</sup></a>
-</para>
-
-<hr>
-</div>
-<div class="subsection" xml:id="glibc-NSS-Modules-Interface">
-<div class="header">
-<para>
-Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#NSS-Module-Names" accesskey="p" rel="prev">The Naming Scheme of the NSS Modules</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#NSS-Module-Internals" accesskey="u" rel="up">NSS Module Internals</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
-</div>
-<span xml:id="glibc-The-Interface-of-the-Function-in-NSS-Modules"></span><h4 class="subsection">29.3.2 The Interface of the Function in NSS Modules</title>
-
-<para>Now we know about the functions contained in the modules.  It is now
-time to describe the types.  When we mentioned the reentrant versions of
-the functions above, this means there are some additional arguments
-(compared with the standard, non-reentrant versions).  The prototypes for
-the non-reentrant and reentrant versions of our function above are:
-</para>
-<div class="example">
-<pre class="example">struct hostent *gethostbyname (const char *name)
+  <chapter xml:id="glibc-NSS-Module-Internals" userlevel="notoc">
+   <?dbhtml stop-chunking?>
+   <title>NSS Modüllerinin Yapısı</title>
+   <titleabbrev>Modüller dahili anlamda nasıl çalışır.</titleabbrev>
+   <para>
+    Artık modüllerin nasıl çalıştığı açıklanabilir. Bir modülde bulunan işlevler isimleriyle anılırlar. Yani, bir sıçrama tablosu ya da benzeri bir şey yoktur. Bunun nasıl yapıldığıyla burada ilgilenilmeyecektir; bunlarla ilgilenenler Özdevimli İlintileme (Dynamic Linking) hakkında bir şeyler okumalıdır.
+   </para>
+   <sect1 xml:id="glibc-NSS-Module-Names">
+    <title>NSS Modüllerinin İsimlendirme Şeması</title>
+    <titleabbrev>NSS modüllerinin arayüz işlevinin oluşturulması.</titleabbrev>
+    <para>
+     Her işlevin ismi çeşitli parçaların bir araya getirilmesiyle oluşur:
+    </para>
+    <literallayout class="monospaced">_nss_<replaceable>hizmet</replaceable>_<replaceable>işlev</replaceable>
+</literallayout>
+    <para>
+     <replaceable>hizmet</replaceable> şüphesiz bu işlevi içeren modülün isminden gelecektir.<footnote><para>Şimdi şöyle bir soru sorulabilir: Niçin bu bilgi işlevlerin de ismine sokuluyor, modülün isminde zaten var. Yanıtı, bunun paylaşımlı nesenelerle birlikte ilintilenmesi mümkün olmalıdır.</para></footnote>   <replaceable>işlev</replaceable> parçası C kütüphanesindeki arayüz işlevinden türetilir. Eğer kullanılan hizmet <code>files</code> ve bu hizmetin modülünde kullanılan işlev <function>gethostbyname</function> ise:
+    </para>
+    <literallayout class="monospaced">libnss_files.so.2
+</literallayout>
+    <para>modülündeki</para>
+    <literallayout class="monospaced">_nss_files_gethostbyname_r
+</literallayout>
+     <para>işlevinden bahsediyor, oluruz.</para>
+     <para>
+      <indexterm linkend="glibc-cp"><primary>evresel NSS işlevleri</primary></indexterm>
+      Görüldüğü gibi, yukarıda açıklanan gerçeğin tümü değildir. Aslında NSS modülleri arama işlevlerinin sadece evresel sürümlerini içerir. Yani yazılımcı aslında <function>gethostbyname_r</function> işlevini kullanacağından bunu işlevin isminde <code>gethostbyname_r</code> olarak ('gethostbayname_r'eentrant) belirtmelidir. Tüm kullanıcı arayüzü işlevleri için C kütüphanesi bu çağrıları evresel işlev çağrılarına eşler. Evresel işlevler için arayüz hemen hemen aynı olduğundan bu sıradan bir işlemdir. Evresel eşdeğeri olmayan işlevler için ise kütüphane, kullanılan dahili tamponları kullanıcı tanımlı tamponlarla değiştirerek tutar.
+     </para>
+     <para>
+      Yani evresel işlevlerin benzer karşılıkları olabilir. Tüm veritabanları için işlevler içerecek ya da tüm veritabanlarının erişebileceği şekilde tasarlanmış bir hizmet modülü yoktur. Bir işlevin yokluğu halinde işlevin <code>unavail</code> döndüreceği varsayılmıştır (Bkz. <xref linkend="glibc-Actions-in-the-NSS-configuration"/>).
+     </para>
+     <para>
+      <filename>libnss_files.so.2</filename> dosya ismi bir Solaris 2 sistemde <filename>nss_files.so.2</filename> olarak görünür.  Bu farktan daha önce sözedilmişti. Sun'ın NSS modülleri sadece dolaylı olarak yüklenen modüller olarak kullanılabilir.
+    </para>
+    <para>
+     &glibc;ndeki NSS modülleri, normal kütüphane olarak kullanılmak üzere hazırlanmıştır. Fakat, bu, şu anda geçerli <emphasis>değildir</emphasis>. Fakat modüllerdeki ad alanının kuruluşu, bunu, Solaris'in aksine imkansız kılmamaktadır.     Modüllerin kitaplık olması bundan kaynaklanmaktadır.<footnote>
+      <para>
+       İkinci bir açıklama da şöyledir: Makefile'ları, <code>lib</code> ile başlamayan paylaşımlı nesnelerin oluşturulması için değiştirmeye üşendik, ama bunu kimseye söylemeyin.
+      </para>
+     </footnote>
+    </para>
+   </sect1>
+   <sect1 xml:id="glibc-NSS-Modules-Interface">
+    <title>NSS Modüllerinde İşlev Arayüzü</title>
+    <titleabbrev>NSS modül işlevleriyle arayüzün geliştirilmesi.</titleabbrev>
+    <para>
+     Artık, modüllerdeki işlevler hakkında bir bilgi birikimi oluştu. Şimdi türleri açıklanabilir. Bir önceki bölümde işlevlerin evresel sürümlerinden bahsedilmişti. Bu, işlevin evresel olmayan sürümüne göre ek bağımsız değişkenler gerektiği anlamına gelir. <function>gethostbyname</function> işlevinin evresel olmayan ve evresel sürümlerinin prototipleri ele alınırsa:
+    </para>
+    <literallayout class="monospaced">struct hostent *gethostbyname (const char *name)
 
 int gethostbyname_r (const char *name, struct hostent *result_buf,
                      char *buf, size_t buflen, struct hostent **result,
                      int *h_errnop)
-</pre></div>
-
-<para>The actual prototype of the function in the NSS modules in this case is
-</para>
-<div class="example">
-<pre class="example">enum nss_status _nss_files_gethostbyname_r (const char *name,
+</literallayout>
+     <para>
+      İşlevin NSS modülündeki prototipi ise şöyle olur:
+     </para>
+     <literallayout class="monospaced">enum nss_status _nss_files_gethostbyname_r (const char *name,
                                             struct hostent *result_buf,
                                             char *buf, size_t buflen,
                                             int *errnop, int *h_errnop)
-</pre></div>
-
-<para>I.e., the interface function is in fact the reentrant function with the
-change of the return value, the omission of the <var>result</var> parameter,
-and the addition of the <var>errnop</var> parameter.  While the user-level
-function returns a pointer to the result the reentrant function return
-an <code>enum nss_status</code> value:
-</para>
-<dl compact="compact">
-<dt xml:id="glibc-index-NSS_005fSTATUS_005fTRYAGAIN"><span><code>NSS_STATUS_TRYAGAIN</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-NSS_005fSTATUS_005fTRYAGAIN" class="copiable-anchor"> ¶</a></span></dt>
-<dd><para>numeric value <code>-2</code>
-</para>
-</dd>
-<dt xml:id="glibc-index-NSS_005fSTATUS_005fUNAVAIL"><span><code>NSS_STATUS_UNAVAIL</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-NSS_005fSTATUS_005fUNAVAIL" class="copiable-anchor"> ¶</a></span></dt>
-<dd><para>numeric value <code>-1</code>
-</para>
-</dd>
-<dt xml:id="glibc-index-NSS_005fSTATUS_005fNOTFOUND"><span><code>NSS_STATUS_NOTFOUND</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-NSS_005fSTATUS_005fNOTFOUND" class="copiable-anchor"> ¶</a></span></dt>
-<dd><para>numeric value <code>0</code>
-</para>
-</dd>
-<dt xml:id="glibc-index-NSS_005fSTATUS_005fSUCCESS"><span><code>NSS_STATUS_SUCCESS</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-NSS_005fSTATUS_005fSUCCESS" class="copiable-anchor"> ¶</a></span></dt>
-<dd><para>numeric value <code>1</code>
-</para></dd>
-</dl>
-
-<para>Now you see where the action items of the <filename>/etc/nsswitch.conf</filename> file
-are used.
-</para>
-<para>If you study the source code you will find there is a fifth value:
-<code>NSS_STATUS_RETURN</code>.  This is an internal use only value, used by a
-few functions in places where none of the above value can be used.  If
-necessary the source code should be examined to learn about the details.
-</para>
-<para>In case the interface function has to return an error it is important
-that the correct error code is stored in <code>*<var>errnop</var></code>.  Some
-return status values have only one associated error code, others have
-more.
-</para>
-<table>
-<tbody><tr><td width="30%"><code>NSS_STATUS_TRYAGAIN</code></td><td width="20%"><code>EAGAIN</code></td><td width="50%">One of the functions used ran temporarily out of
-resources or a service is currently not available.</td></tr>
-<tr><td width="30%"></td><td width="20%"><code>ERANGE</code></td><td width="50%">The provided buffer is not large enough.
-The function should be called again with a larger buffer.</td></tr>
-<tr><td width="30%"><code>NSS_STATUS_UNAVAIL</code></td><td width="20%"><code>ENOENT</code></td><td width="50%">A necessary input file cannot be found.</td></tr>
-<tr><td width="30%"><code>NSS_STATUS_NOTFOUND</code></td><td width="20%"><code>ENOENT</code></td><td width="50%">The requested entry is not available.</td></tr>
-<tr><td width="30%"><code>NSS_STATUS_NOTFOUND</code></td><td width="20%"><code>SUCCESS</code></td><td width="50%">There are no entries.
-Use this to avoid returning errors for inactive services which may
-be enabled at a later time. This is not the same as the service
-being temporarily unavailable.</td></tr>
-</tbody></table>
-
-<para>These are proposed values.  There can be other error codes and the
-described error codes can have different meaning.  <strong>With one
-exception:</strong> when returning <code>NSS_STATUS_TRYAGAIN</code> the error code
-<code>ERANGE</code> <emphasis>must</emphasis> mean that the user provided buffer is too
-small.  Everything else is non-critical.
-</para>
-<para>In statically linked programs, the main application and NSS modules do
-not share the same thread-local variable <code>errno</code>, which is the
-reason why there is an explicit <var>errnop</var> function argument.
-</para>
-<para>The above function has something special which is missing for almost all
-the other module functions.  There is an argument <var>h_errnop</var>.  This
-points to a variable which will be filled with the error code in case
-the execution of the function fails for some reason.  (In statically
-linked programs, the thread-local variable <code>h_errno</code> is not shared
-with the main application.)
-</para>
-<para>The <code>get<var>XXX</var>by<var>YYY</var></code> functions are the most important
-functions in the NSS modules.  But there are others which implement
-the other ways to access system databases (say for the
-user database, there are <code>setpwent</code>, <code>getpwent</code>, and
-<code>endpwent</code>).  These will be described in more detail later.
-Here we give a general way to determine the
-signature of the module function:
-</para>
-<ul>
-<li> the return value is <code>enum nss_status</code>;
-</li><li> the name (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#NSS-Module-Names">The Naming Scheme of the NSS Modules</a>);
-</li><li> the first arguments are identical to the arguments of the non-reentrant
-function;
-</li><li> the next four arguments are:
-
-<dl compact="compact">
-<dt><span><code>STRUCT_TYPE *result_buf</code></span></dt>
-<dd><para>pointer to buffer where the result is stored.  <code>STRUCT_TYPE</code> is
-normally a struct which corresponds to the database.
-</para></dd>
-<dt><span><code>char *buffer</code></span></dt>
-<dd><para>pointer to a buffer where the function can store additional data for
-the result etc.
-</para></dd>
-<dt><span><code>size_t buflen</code></span></dt>
-<dd><para>length of the buffer pointed to by <var>buffer</var>.
-</para></dd>
-<dt><span><code>int *errnop</code></span></dt>
-<dd><para>the low-level error code to return to the application.  If the return
-value is not <code>NSS_STATUS_SUCCESS</code>, <code>*<var>errnop</var></code> needs to be
-set to a non-zero value.  An NSS module should never set
-<code>*<var>errnop</var></code> to zero.  The value <code>ERANGE</code> is special, as
-described above.
-</para></dd>
-</dl>
-
-</li><li> possibly a last argument <var>h_errnop</var>, for the host name and network
-name lookup functions.  If the return value is not
-<code>NSS_STATUS_SUCCESS</code>, <code>*<var>h_errnop</var></code> needs to be set to a
-non-zero value.  A generic error code is <code>NETDB_INTERNAL</code>, which
-instructs the caller to examine <code>*<var>errnop</var></code> for further
-details.  (This includes the <code>ERANGE</code> special case.)
-</li></ul>
-
-<para>This table is correct for all functions but the <code>set…ent</code>
-and <code>end…ent</code> functions.
-</para>
-
-<hr>
-</div>
-</div>
-<sect xml:id="glibc-Extending-NSS">
-<div class="header">
-<para>
-Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#NSS-Module-Internals" accesskey="p" rel="prev">NSS Module Internals</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Name-Service-Switch" accesskey="u" rel="up">System Databases and Name Service Switch</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
-</div>
-<span xml:id="glibc-Extending-NSS-1"></span><h3 class="section">29.4 Extending NSS</title>
-
-<para>One of the advantages of NSS mentioned above is that it can be extended
-quite easily.  There are two ways in which the extension can happen:
-adding another database or adding another service.  The former is
-normally done only by the C library developers.  It is
-here only important to remember that adding another database is
-independent from adding another service because a service need not
-support all databases or lookup functions.
-</para>
-<para>A designer/implementer of a new service is therefore free to choose the
-databases s/he is interested in and leave the rest for later (or
-completely aside).
-</para>
-
-<ul class="section-toc">
-<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Adding-another-Service-to-NSS" accesskey="1">Adding another Service to NSS</a></li>
-<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#NSS-Module-Function-Internals" accesskey="2">Internals of the NSS Module Functions</a></li>
-</ul>
-<hr>
-<div class="subsection" xml:id="glibc-Adding-another-Service-to-NSS">
-<div class="header">
-<para>
-Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#NSS-Module-Function-Internals" accesskey="n" rel="next">Internals of the NSS Module Functions</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Extending-NSS" accesskey="p" rel="prev">Extending NSS</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Extending-NSS" accesskey="u" rel="up">Extending NSS</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
-</div>
-<span xml:id="glibc-Adding-another-Service-to-NSS-1"></span><h4 class="subsection">29.4.1 Adding another Service to NSS</title>
-
-<para>The sources for a new service need not (and should not) be part of the GNU C Library
-itself.  The developer retains complete control over the
-sources and its development.  The links between the C library and the
-new service module consists solely of the interface functions.
-</para>
-<para>Each module is designed following a specific interface specification.
-For now the version is 2 (the interface in version 1 was not adequate)
-and this manifests in the version number of the shared library object of
-the NSS modules: they have the extension <code>.2</code>.  If the interface
-changes again in an incompatible way, this number will be increased.
-Modules using the old interface will still be usable.
-</para>
-<para>Developers of a new service will have to make sure that their module is
-created using the correct interface number.  This means the file itself
-must have the correct name and on ELF systems the <emphasis>soname</emphasis> (Shared
-Object Name) must also have this number.  Building a module from a bunch
-of object files on an ELF system using GNU CC could be done like this:
-</para>
-<div class="example">
-<pre class="example">gcc -shared -o libnss_NAME.so.2 -Wl,-soname,libnss_NAME.so.2 OBJECTS
-</pre></div>
-
-<para><a data-manual="gcc" href="https://gcc.gnu.org/onlinedocs/gcc/Link-Options.html#Link-Options">Options for Linking</a> in <cite>GNU CC</cite>, to learn
-more about this command line.
-</para>
-<para>To use the new module the library must be able to find it.  This can be
-achieved by using options for the dynamic linker so that it will search
-the directory where the binary is placed.  For an ELF system this could be
-done by adding the wanted directory to the value of
-<code>LD_LIBRARY_PATH</code>.
-</para>
-<para>But this is not always possible since some programs (those which run
-under IDs which do not belong to the user) ignore this variable.
-Therefore the stable version of the module should be placed into a
-directory which is searched by the dynamic linker.  Normally this should
-be the directory <filename>$prefix/lib</filename>, where <filename>$prefix</filename> corresponds to
-the value given to configure using the <code>&#45;&#45;prefix</code> option.  But be
-careful: this should only be done if it is clear the module does not
-cause any harm.  System administrators should be careful.
-</para>
-
-<hr>
-</div>
-<div class="subsection" xml:id="glibc-NSS-Module-Function-Internals">
-<div class="header">
-<para>
-Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Adding-another-Service-to-NSS" accesskey="p" rel="prev">Adding another Service to NSS</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Extending-NSS" accesskey="u" rel="up">Extending NSS</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
-</div>
-<span xml:id="glibc-Internals-of-the-NSS-Module-Functions"></span><h4 class="subsection">29.4.2 Internals of the NSS Module Functions</title>
-
-<para>Until now we only provided the syntactic interface for the functions in
-the NSS module.  In fact there is not much more we can say since the
-implementation obviously is different for each function.  But a few
-general rules must be followed by all functions.
-</para>
-<para>In fact there are four kinds of different functions which may appear in
-the interface.  All derive from the traditional ones for system databases.
-<var>db</var> in the following table is normally an abbreviation for the
-database (e.g., it is <code>pw</code> for the user database).
-</para>
-<dl compact="compact">
-<dt><span><code>enum nss_status _nss_<var>database</var>_set<var>db</var>ent (void)</code></span></dt>
-<dd><para>This function prepares the service for following operations.  For a
-simple file based lookup this means files could be opened, for other
-services this function simply is a noop.
-</para>
-<para>One special case for this function is that it takes an additional
-argument for some <var>database</var>s (i.e., the interface is
-<code>int set<var>db</var>ent (int)</code>).  <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Host-Names">Host Names</a>, which describes the
-<code>sethostent</code> function.
-</para>
-<para>The return value should be <var>NSS_STATUS_SUCCESS</var> or according to the
-table above in case of an error (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#NSS-Modules-Interface">The Interface of the Function in NSS Modules</a>).
-</para>
-</dd>
-<dt><span><code>enum nss_status _nss_<var>database</var>_end<var>db</var>ent (void)</code></span></dt>
-<dd><para>This function simply closes all files which are still open or removes
-buffer caches.  If there are no files or buffers to remove this is again
-a simple noop.
-</para>
-<para>There normally is no return value other than <var>NSS_STATUS_SUCCESS</var>.
-</para>
-</dd>
-<dt><span><code>enum nss_status _nss_<var>database</var>_get<var>db</var>ent_r (<var>STRUCTURE</var> *result, char *buffer, size_t buflen, int *errnop)</code></span></dt>
-<dd><para>Since this function will be called several times in a row to retrieve
-one entry after the other it must keep some kind of state.  But this
-also means the functions are not really reentrant.  They are reentrant
-only in that simultaneous calls to this function will not try to
-write the retrieved data in the same place (as it would be the case for
-the non-reentrant functions); instead, it writes to the structure
-pointed to by the <var>result</var> parameter.  But the calls share a common
-state and in the case of a file access this means they return neighboring
-entries in the file.
-</para>
-<para>The buffer of length <var>buflen</var> pointed to by <var>buffer</var> can be used
-for storing some additional data for the result.  It is <emphasis>not</emphasis>
-guaranteed that the same buffer will be passed for the next call of this
-function.  Therefore one must not misuse this buffer to save some state
-information from one call to another.
-</para>
-<para>Before the function returns with a failure code, the implementation
-should store the value of the local <code>errno</code> variable in the variable
-pointed to be <var>errnop</var>.  This is important to guarantee the module
-working in statically linked programs.  The stored value must not be
-zero.
-</para>
-<para>As explained above this function could also have an additional last
-argument.  This depends on the database used; it happens only for
-<code>host</code> and <code>networks</code>.
-</para>
-<para>The function shall return <code>NSS_STATUS_SUCCESS</code> as long as there are
-more entries.  When the last entry was read it should return
-<code>NSS_STATUS_NOTFOUND</code>.  When the buffer given as an argument is too
-small for the data to be returned <code>NSS_STATUS_TRYAGAIN</code> should be
-returned.  When the service was not formerly initialized by a call to
-<code>_nss_<var>DATABASE</var>_set<var>db</var>ent</code> all return values allowed for
-this function can also be returned here.
-</para>
-</dd>
-<dt><span><code>enum nss_status _nss_<var>DATABASE</var>_get<var>db</var>by<var>XX</var>_r (<var>PARAMS</var>, <var>STRUCTURE</var> *result, char *buffer, size_t buflen, int *errnop)</code></span></dt>
-<dd><para>This function shall return the entry from the database which is
-addressed by the <var>PARAMS</var>.  The type and number of these arguments
-vary.  It must be individually determined by looking to the user-level
-interface functions.  All arguments given to the non-reentrant version
-are here described by <var>PARAMS</var>.
-</para>
-<para>The result must be stored in the structure pointed to by <var>result</var>.
-If there are additional data to return (say strings, where the
-<var>result</var> structure only contains pointers) the function must use the
-<var>buffer</var> of length <var>buflen</var>.  There must not be any references
-to non-constant global data.
-</para>
-<para>The implementation of this function should honor the <var>stayopen</var>
-flag set by the <code>set<var>DB</var>ent</code> function whenever this makes sense.
-</para>
-<para>Before the function returns, the implementation should store the value of
-the local <code>errno</code> variable in the variable pointed to by
-<var>errnop</var>.  This is important to guarantee the module works in
-statically linked programs.
-</para>
-<para>Again, this function takes an additional last argument for the
-<code>host</code> and <code>networks</code> database.
-</para>
-<para>The return value should as always follow the rules given above
-(see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#NSS-Modules-Interface">The Interface of the Function in NSS Modules</a>).
-</para>
-</dd>
-</dl>
-<hr>
-</div>
-</div>
-</div-->
+</literallayout>
+     <para>
+      <indexterm linkend="glibc-tp" xml:id="glibc-tp-nss_status"><primary sortas="nss_status">enum&#160;nss_status</primary></indexterm>
+      Yani, arayüz işlevi aslında <parameter>result</parameter> bağımsız değişkeni olmayan, fazladan <parameter>errnop</parameter> bağımsız değişkeni olan  ve dönüş değeri değişmiş evresel işlevdir. İşlevin evresel olmayan sürümü <parameter>result</parameter> göstericisi ile dönerken evresel sürümü şu <code>enum&#160;nss_status</code> değerlerinden biri ile döner:
+     </para>
+     <csynopsis>
+      <indexterm linkend="glibc-vr" xml:id="glibc-vr-NSS_STATUS_TRYAGAIN"><primary>NSS_STATUS_TRYAGAIN</primary></indexterm>
+      <csproto type="sabit">
+       <csname><function>NSS_STATUS_TRYAGAIN</function></csname>
+      </csproto>
+      <header>&nss.h;</header>
+      <para>
+       sayısal değeri: <code>-2</code>
+      </para>
+     </csynopsis>
+     <csynopsis>
+      <indexterm linkend="glibc-vr" xml:id="glibc-vr-NSS_STATUS_UNAVAIL"><primary>NSS_STATUS_UNAVAIL</primary></indexterm>
+      <csproto type="sabit">
+       <csname><function>NSS_STATUS_UNAVAIL</function></csname>
+      </csproto>
+      <header>&nss.h;</header>
+     <para>
+      sayısal değeri: <code>-1</code>
+     </para>
+     </csynopsis>
+     <csynopsis>
+      <indexterm linkend="glibc-vr" xml:id="glibc-vr-NSS_STATUS_NOTFOUND"><primary>NSS_STATUS_NOTFOUND</primary></indexterm>
+      <csproto type="sabit">
+       <csname><function>NSS_STATUS_NOTFOUND</function></csname>
+      </csproto>
+      <header>&nss.h;</header>
+      <para>
+       sayısal değeri: <code>0</code>
+      </para>
+     </csynopsis>
+     <csynopsis>
+      <indexterm linkend="glibc-vr" xml:id="glibc-vr-NSS_STATUS_SUCCESS"><primary>NSS_STATUS_SUCCESS</primary></indexterm>
+      <csproto type="sabit">
+       <csname><function>NSS_STATUS_SUCCESS</function></csname>
+      </csproto>
+      <header>&nss.h;</header>
+      <para>
+       sayısal değeri: <code>1</code>
+      </para>
+     </csynopsis>
+     <para>
+      Artık, <filename>/etc/nsswitch.conf</filename> dosyasında kullanılar eylem ögelerinin yerleri incelenebilir.
+     </para>
+     <para>
+      Kaynak kodu incelenirse, beşinci bir değerin varlığı görülür: <code>NSS_STATUS_RETURN</code>.  Bu sadece dahili olarak kullanılan bir değerdir, birkaç işlev tarafından yukarıdaki değerin kullanılamadığı yerlerde kullanılır. Eğer gerekliyse, daha fazla ayrıntıya kaynak kodu incelenerek ulaşılabilir.
+     </para>
+     <para>
+      Arayüz işlevinin bir hata döndürmesi durumunda, doğru hata numarasının *<parameter>errnop</parameter> içinde saklanması önemlidir. Bazı dönüş durum değerleri sadece bir hata kodu ile ilgiliyken diğerleri daha fazlası ile ilgilidir.
+     </para>
+     <informaltable frame="none">
+      <tgroup cols="3">
+       <colspec colwidth="22*"/>
+       <colspec colwidth="14*"/>
+       <colspec colwidth="36*"/>
+       <tbody>
+        <row>
+         <entry><varname>NSS_STATUS_TRYAGAIN</varname></entry>
+         <entry><varname>EAGAIN</varname></entry>
+         <entry> Kullanılan işlevlerden biri ya geçici olarak öz kaynaksız çalıştı ya da hizmet şu an kullanışsız.</entry>
+        </row>
+        <row>
+         <entry/>
+         <entry><varname>ERANGE</varname></entry>
+         <entry> Belirtilen tampon yeterince geniş değil. İşlev tekrar daha geniş bir tamponla çağrılmalı.</entry>
+        </row>
+        <row>
+         <entry><varname>NSS_STATUS_UNAVAIL</varname></entry>
+         <entry><varname>ENOENT</varname></entry>
+         <entry> Gerekli girdi dosyalarından biri bulunamadı.</entry>
+        </row>
+        <row>
+         <entry><varname>NSS_STATUS_NOTFOUND</varname></entry>
+         <entry><varname>ENOENT</varname></entry>
+         <entry> İstenen girdi elverişli değil.</entry>
+        </row>
+        <row>
+         <entry/>
+         <entry><varname>SUCCESS</varname></entry>
+         <entry> Girdi yok. Daha sonra etkinleştirilebilecek etkin olmayan hizmetler için hata döndürmekten kaçınmak için kullanılır. Bu, hizmetin geçici olarak kullanılamamasıyla aynı şey değildir.</entry>
+        </row>
+       </tbody>
+      </tgroup>
+     </informaltable>
+     <para>
+      Bunlar önerilen değerlerdir. Başka hata kodları olabileceği gibi açıklanan hata kodları farklı anlamlara da gelebilir. <emphasis>Biri dışında:</emphasis> <varname>NSS_STATUS_TRYAGAIN</varname> döndüğünde, hata kodu, belirtilen tamponun yetersiz olduğun anlatan <varname>ERANGE</varname> <emphasis>olmalıdır</emphasis>. Bunun dışında önemli bir şey yoktur.
+    </para>
+    <para>
+     Duruk olarak ilintili uygulamalarda, ana uygulama ve NSS modülleri aynı evreye özgü değişken <varname>h_errno</varname>'yu paylaşmaz, <parameter>errnop</parameter> bağımsız değişkeni bu nedenle vardır.
+    </para>
+    <para>
+     Yukarıdaki işlev hemen hemen diğer tüm modül işlevlerinde olmayan bazı özelliklere sahiptir. <parameter>errnop</parameter> diye bir bağımsız değişkeni vardır. Bu bağımsız değişkenin gösterdiği değişkene, işlev bir şekilde başarısız olduğunda hata durumu konulur.
+    </para>
+    <para>
+     <code>get</code><replaceable>XXX</replaceable><code>by</code><replaceable>YYY</replaceable> işlevleri NSS modüllerinde en önemli işlevlerdir. Ancak başka yöntemlerle erişilen veritabanları da vardır (<function>setpwent</function>, <function>getpwent</function> ve <function>endpwent</function> işlevleri ile erişilen parola veritabanı buna örnek verilebilir). Bunlar daha sonra ayrıntılı olarak açıklanacaktır. Modül işlevinin imzasını saptayacak genel bir yöntem:
+    </para>
+    <itemizedlist>
+     <listitem>
+      <para>
+       dönüş değeri <type>enum&#160;nss_status</type> türündedir.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       ismi <xref linkend="glibc-NSS-Module-Names"/> bölümünde açıklandığı gibidir.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       işlevin ilk bağımsız değişkenleri evresel olmayan eşdeğerinin bağımsız değişkenleri ile aynıdır;
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       sonraki dört bağımsız değişkenleri şunlardır:
+      </para>
+      <glosslist>
+       <glossentry>
+        <glossterm>
+         <code>STRUCT_TYPE&#160;*</code><parameter>result_buf</parameter>
+        </glossterm>
+        <glossdef>
+         <para>
+          sonucun saklandığı tampona gösterici.  <command>STRUCT_TYPE</command>, normalde veritabanının karşılığı olan bir yapıdır.
+         </para>
+        </glossdef>
+       </glossentry>
+       <glossentry>
+        <glossterm>
+         <type>char&#160;*</type><parameter>buffer</parameter>
+        </glossterm>
+        <glossdef>
+         <para>
+          sonuçla ilgili ek verilerin saklanabileceği tampona gösterici.
+         </para>
+        </glossdef>
+       </glossentry>
+       <glossentry>
+        <glossterm>
+         <type>size_t&#160;</type><parameter>buflen</parameter>
+        </glossterm>
+        <glossdef>
+         <para>
+          <parameter>buffer</parameter> ile gösterilen tamponun uzunluğu.
+         </para>
+        </glossdef>
+       </glossentry>
+       <glossentry>
+        <glossterm>
+         <type>int&#160;</type><parameter>errnop</parameter>
+        </glossterm>
+        <glossdef>
+         <para>
+          Uygulamaya dönecek düşük seviyeli hata kodu. Dönüş değeri <varname>NSS_STATUS_SUCCESS</varname> değilse, *<parameter>errnop</parameter>'a sıfır olmayan bir değer atanması gerekir. Bir NSS modülü asla *<parameter>errnop</parameter>'a sıfır atamamalıdır. <varname>ERANGE</varname> değeri, yukarıda açıklandığı gibi özeldir.
+         </para>
+        </glossdef>
+       </glossentry>
+      </glosslist>
+     </listitem>
+     <listitem>
+      <para>
+       <indexterm xml:id="glibc-vr-NETDB_INTERNAL" linkend="glibc-vr"><primary>NETDB_INTERNAL</primary></indexterm>
+       konak ismi ve ağ ismi arama işlevlerinde <parameter>errnop</parameter> genelde hep son bağımsız değişkendir. <varname>NSS_STATUS_SUCCESS</varname> değilse, *<parameter>errnop</parameter>'a sıfır olmayan bir değer atanması gerekir. Genel hata kodu <varname>NETDB_INTERNAL</varname> olup daha fazla ayrıntı için *<parameter>errnop</parameter>'un incelenmesini söyler. (Buna, <varname>ERANGE</varname> özel durumu dahildir.)
+      </para>
+     </listitem>
+    </itemizedlist>
+    <para>
+     <code>set…ent</code> ve <code>end…ent</code> işlevleri dışında tüm işlevler için, bu liste geçerlidir.
+    </para>
+  </sect1>
+ </chapter>
+ <chapter xml:id="glibc-Extending-NSS" userlevel="notoc">
+  <?dbhtml stop-chunking?>
+  <title>NSS'nin Genişletilmesi</title>
+  <titleabbrev>Yeni hizmetler ve veritabanlarını eklemek için ne yapılır.</titleabbrev>
+  <para>
+   Evvelce bahsedildiği gibi NSS'nin getirilerinden biri kolayca genişletilebilmesidir. Genişletme iki yolla yapılabilir: İlki normalde sadece C kütüphanesi geliştiricileri tarafından yapılır. Burada önemli olan, başka bir veritabanının bağımsız olarak eklenmesi gerektiğini unutmamaktır. Çünkü bir hizmet tüm veritabanlarını ve arama işlevlerini desteklemek zorunda değildir.
+  </para>
+  <para>
+   Bir yeni hizmetin tasarımcısı/gerçekleştiricisi ilgilendiği veritabanlarını seçmekte özgür olduğu gibi kalanı daha sonraya da bırakabilir (veya tamamen terkedebilir).
+  </para>
+  <sect1 xml:id="glibc-Adding-another-Service-to-NSS">
+   <title>NSS'ye Başka Hizmetlerin Eklenmesi</title>
+   <titleabbrev>Yeni bir hizmet eklenirken ne yapılır.</titleabbrev>
+   <para>
+    Yeni hizmetle ilgili kaynaklar &glibc;nin parçası olmak zorunda değildir (hatta olmamalıdır). Geliştiricinin kaynaklar ve tasarım üzerinde tam hakimiyeti olmalıdır. C kütüphanesi ile yeni hizmet modülü arasındaki bağları sadece arayüz işlevleri oluşturur.
+   </para>
+   <para>
+    Her modül burada açıklanan özel arayüz belirtimine göre tasarlanır. Şimdilik sürümü 2'dir (arayüzün 1. sürümü yetersizdi) ve bu NSS modülünün paylaşımlı kütüphane nesnesinin sürüm numarası olarak belirtilir: bu nesnelerin isimleri <code>.2</code> uzantısını içerir. Eğer arayüz şimdikiyle uyumsuz olarak değiştirilirse bu numara artacak ama eski arayüzü kullanan modüller hala kullanılabilir olacaktır.
+   </para>
+   <para>
+    Yeni hizmetin geliştiricileri modülün doğru arayüz numarası kullanılarak oluşturuduğundan emin olmak zorundadır. Yani, dosyanın ismi doğru tanımlanacak ve ELF sistemlerde paylaşımlı nesne ismi (<emphasis>so uzantısı</emphasis>) ayrıca bu numarayı içerecektir. Bir modül, bir ELF sisteminde GNU CC ile nesne dosyalarından şöyle derlenir:
+   </para>
+   <screen>gcc -shared -o libnss_<replaceable>İSİM</replaceable>.so.2 -Wl,-soname,libnss_<replaceable>İSİM</replaceable>.so.2 <replaceable>NESNELER</replaceable>
+</screen>
+   <para>
+    Bu komut satırı hakkında daha fazla bilgi GNU CC belgelerinin <link xl:href="https://gcc.gnu.org/onlinedocs/gcc/Link-Options.html#Link-Options">İlintileme Seçenekleri</link> sayfasında bulunabilir.
+   </para>
+   <para>
+     Modülü kullanacak kütüphane yeni modülü bulabilmelidir. Bu özdevimli ilintileyici seçenekleri kullanılarak yapılabilir, böylece ikil nesne dosyasının yerleştirildiği dizini bulabilir. ELF sistemlerde bu, modülün bulunduğu dizin <varname>LD_LIBRARY_PATH</varname> ortam değişkenine eklenerek yapılır.
+   </para>
+   <para>
+    Fakat, bazı uygulamalar bu değişkeni yok saydığından (bunlar kullanıcının kimliğini kullanmaz) bu daima mümkün olmaz. Bu nedenle, modülün kararlı sürümünün özdevimli ilintileyicinin araştırdığı dizinlere konulması önem kazanır. Normalde bu dizin <filename>$prefix/lib</filename> dizini olmalıdır, burada <replaceable>$prefix</replaceable> derleme öncesi yapılandırma sırasında <option>&#45;&#45;prefix</option> seçeneğinde belirtilen dizindir. Aman dikkat: bu sadece, modül herhangi bir bozukluğa yol açmıyorsa yapılabilir. Sistem yöneticisi bu bakımdan dikkatli olmalıdır.
+   </para>
+  </sect1>
+  <sect1 xml:id="glibc-NSS-Module-Function-Internals">
+   <title>NSS Modül İşlevlerinin Özellikleri</title>
+   <titleabbrev>Yeni NSS hizmet işlevlerini yazmak için bilinmesi gerekenler.</titleabbrev>
+   <para>
+    Şimdiye kadar NSS modülündeki işlevlerin sözdizimsel arayüzünden bahsedildi. Her işlevin gerçeklenmesi ister istemez farklı olacağında aslında söylenebilecek fazla bir şey yoktur. Fakat tüm işlevlerin uyması gereken birkaç genel kuraldan bahsedilebilir.
+   </para>
+   <para>
+    Aslında arayüzde görülebilecek dört farklı işlev çeşidi vardır. Hepsi sistem veritabanları için kullanılan geleneksel işlevlerden türetilir. Aşağıdaki gösterimde <replaceable>VT</replaceable>, <replaceable>VERİTABANI</replaceable> için kısaltmadır (örn, kullanıcı veritabanı için yerini <code>pw</code> kısaltması alır).
+   </para>
+   <csynopsis>
+    <csproto type="işlev">
+     <csname><type>enum&#160;nss_status</type><code>_nss_<replaceable>VERİTABANI</replaceable>_set<replaceable>VT</replaceable>ent</code></csname>
+     <csparam><void/></csparam>
+    </csproto>
+    <header>&nss.h;</header>
+    <para>
+     Bu işlev hizmeti belirtilen işlemler için hazırlar. Basit bir dosya temelli arama için dosyaları açan, diğer hizmetlerde basitçe hiçbir işlem yapmayan bir işlev olabilir.
+    </para>
+    <para>
+     Bu işlev için özel bir durum, <function>sethostent</function> işlevindeki (<xref linkend="glibc-Host-Names"/>) gibi belirtilen bazı <replaceable>VERİTABANI</replaceable> türleri için ek bağımsız değişkenler alabilmesidir. (işlev, <code>set<replaceable>VT</replaceable>ent</code> gösterimi ile karşılaştırılırsa "hosts" veritabanı için "host" kısaltmasının kullanıldığı görülür.)
+    </para>
+    <para>
+     Normal dönüş değeri <varname>NSS_STATUS_SUCCESS</varname> olmalı; bir hata durumunda <xref linkend="glibc-NSS-Modules-Interface"/> bölümündeki tabloda belirtilen değerlerden biri olmalıdır.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <csproto type="işlev">
+     <csname><type>enum&#160;nss_status&#160;</type><code>_nss_<replaceable>VERİTABANI</replaceable>_end<replaceable>VT</replaceable>ent</code></csname>
+     <csparam><void/></csparam>
+    </csproto>
+    <header>&nss.h;</header>
+    <para>
+     Bu işlev hala açık olan tüm dosyaları kapatır ya da bellekten tamponları kaldırır. Kaldırılacak bir tampon ya da kapatılacak bir dosya yoksa, işlev yine basitçe hiçbir işlem yapmayacaktır.
+    </para>
+    <para>
+     Normalde <varname>NSS_STATUS_SUCCESS</varname>'dan farklı bir dönüş değeri olmaz.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <csproto type="işlev">
+     <csname><type>enum&#160;nss_status&#160;</type><code>_nss_<replaceable>VERİTABANI</replaceable>_get<replaceable>VT</replaceable>ent</code></csname>
+     <csparam><replaceable>YAPI</replaceable><code>&#160;*</code><parameter>result</parameter></csparam>
+     <csparam><ptr>char</ptr><parameter>buffer</parameter></csparam>
+     <csparam><type>size_t</type><parameter>buflen</parameter></csparam>
+     <csparam><ptr>int</ptr><parameter>errnop</parameter></csparam>
+    </csproto>
+    <header>&nss.h;</header>
+    <para>
+     Bu işlev peşpeşe girdi almak için bir satırda defalarca çağrılacağından bir durum bilgisi tutmak zorundadır. Ama bu zorunluluk ayrıca işlevin gerçekte evresel olmayacağı anlamına da gelir. Sadece, bu işlev aynı anda yapılan başka çağrılarıyla verinin alındığı yere veri yazmayı denemeyecekse, <parameter>result</parameter> ile belirtilen tampona yazacaksa evresel olabilir. Fakat, bir ortak durumu paylaşan çağrıların varlığında ve bir dosya erişimi durumunda bu, dosyadaki komşu girdilerin dönmesi anlamına gelir.
+    </para>
+    <para>
+     <parameter>buffer</parameter> tamponunun uzunluğunu belirtmede kullanılan <parameter>buflen</parameter> sonuç ile ilgili bazı ek verilerin saklanması için kullanılabilir, ama bu durumda işlevin sonraki çağrılarının aynı tamponla yapılabilmesi mümkün olmaz. Ancak, bazı durum bilgilerini döndürmesinden hareketle bu tampon, bir çağrıdan diğerine durum bilgisini aktarmak için kullanılmaMAlıdır.
+    </para>
+    <para>
+     İşlev dönmeden önce, gerçekleme <parameter>errnop</parameter> ile gösterilen değeri <varname>errno</varname> genel değişkeninde saklamalıdır. Modülün durağan ilintili yazılımlarla da çalışabilmesini sağlamak için bunun böyle olması önemlidir.
+    </para>
+    <para>
+     Evvelce açıklandığı gibi bu işlev ayrıca bir ek bağımsız değişken alabilir. Bu kullanılan veritabanına bağlıdır; sadece <code>hosts</code> ve <code>networks</code> veritabanlarında görülür.
+    </para>
+    <para>
+     İşlev <varname>NSS_STATUS_SUCCESS</varname> ile döneceği gibi başka değerlerle de dönebilir. Son girdi okunduktan sonra <varname>NSS_STATUS_NOTFOUND</varname> dönebilir. Belirtilen tampon gereğinden küçükse <varname>NSS_STATUS_TRYAGAIN</varname> ile dönebilir. Bir <code>_nss_<replaceable>VERİTABANI</replaceable>_set<replaceable>VT</replaceable>ent</code> çağrısı ile hizmet başta ilklendirilemediğinde bu işlev için izin verilen tüm dönüş değerleri burada ayrıca döndürülebilir.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <csproto type="işlev">
+     <csname><type>enum&#160;nss_status&#160;</type><code>_nss_<replaceable>VERİTABANI</replaceable>_get<replaceable>VT</replaceable>by<replaceable>XX</replaceable>_r</code></csname>
+     <csparam><parameter>BAĞIMSIZ_DEĞİŞKENLER</parameter></csparam>
+     <csparam><parameter>YAPI</parameter><code>&#160;*</code><parameter>result</parameter></csparam>
+     <csparam><ptr>char</ptr><parameter>buffer</parameter></csparam>
+     <csparam><type>size_t</type><parameter>buflen</parameter></csparam>
+     <csparam><ptr>int</ptr><parameter>errnop</parameter></csparam>
+    </csproto>
+    <header>&nss.h;</header>
+    <para>
+     Bu işlev veritabanından <replaceable>BAĞIMSIZ_DEĞİŞKENLER</replaceable> ile adreslenen girdiyi döndürür. Bu bağımsız değişkenlerin sayısı ve türü değişebilir. Bunlar tek tek kullanıcı seviyesi arayüz işlevlerine bakarak saptanır. İşlevin evresel olmayan sürümünde belirtilen tüm bağımsız değişkenler burada <replaceable>BAĞIMSIZ_DEĞİŞKENLER</replaceable> alanında belirtilmelidir.
+    </para>
+    <para>
+     Sonuç <parameter>result</parameter> ile gösterilen yapıda saklanmalıdır. Eğer döndürülecek başka veriler varsa (örn, dizgeler <parameter>result</parameter> yapısında sadece göstericilerle içerilebilir) işlev <parameter>buffer</parameter> ya da ><parameter>buflen</parameter> ile gösterilen tamponları kullanmalıdır. Sabitler biçiminde olmayan hiçbir genel değişkene başvuru olmamalıdır.
+    </para>
+    <para>
+     Bu işlevin gerçeklemesi bir fark oluşacaksa <code>set<replaceable>VT</replaceable>ent</code> işlevi  tarafından atanan <varname>stayopen</varname> seçeneği ile de ilgilenmelidir.
+    </para>
+    <para>
+     İşlev dönmeden önce, gerçekleme <parameter>errnop</parameter> ile gösterilen değeri <varname>errno</varname> genel değişkeninde saklamalıdır. Modülün durağan ilintili yazılımlarla da çalışabilmesini sağlamak için bunun böyle olması önemlidir.
+    </para>
+    <para>
+     Evvelce açıklandığı gibi bu işlev <code>hosts</code> ve <code>networks</code> veritabanları için ayrıca ek bir bağımsız değişken alabilir.
+    </para>
+    <para>
+     İşlevin dönüş değerleri daima <xref linkend="glibc-NSS-Modules-Interface"/> bölümünde açıklanan kurallara uygun olmalıdır.
+    </para>
+   </csynopsis>
+  </sect1>
+ </chapter>
 </part>

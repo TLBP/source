@@ -2,578 +2,429 @@
 <!-- ********************************************************************
         glibc/appa.xml,v2.36, GFDL,LGPL, NBB, 2023
      ******************************************************************** -->
-<appendix xml:id="glibc-Language-Features">
+<part xml:id="glibc-Language-Features" label="A" userlevel="longtoc">
  <title>Kütüphanedeki C Dili Oluşumları</title>
  <titleabbrev>Kütüphane tarafından sağlanan C dili oluşumları.</titleabbrev>
- <para/><!--
-<para>
-Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Library-Summary" accesskey="n" rel="next">Summary of Library Facilities</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Tunables" accesskey="p" rel="prev">Tunables</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Top" accesskey="u" rel="up">Main Menu</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
-</div>
-<span xml:id="glibc-C-Language-Facilities-in-the-Library"></span><h2 class="appendix">Appendix A C Language Facilities in the Library</title>
-
-<para>Some of the facilities implemented by the C library really should be
-thought of as parts of the C language itself.  These facilities ought to
-be documented in the C Language Manual, not in the library manual; but
-since we don’t have the language manual yet, and documentation for these
-features has been written, we are publishing it here.
-</para>
-
-<ul class="section-toc">
-<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Consistency-Checking" accesskey="1">Explicitly Checking Internal Consistency</a></li>
-<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Variadic-Functions" accesskey="2">Variadic Functions</a></li>
-<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Null-Pointer-Constant" accesskey="3">Null Pointer Constant</a></li>
-<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Important-Data-Types" accesskey="4">Important Data Types</a></li>
-<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Data-Type-Measurements" accesskey="5">Data Type Measurements</a></li>
-</ul>
-<hr>
-<sect xml:id="glibc-Consistency-Checking">
-<div class="header">
-<para>
-Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Variadic-Functions" accesskey="n" rel="next">Variadic Functions</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Language-Features" accesskey="u" rel="up">C Language Facilities in the Library</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
-</div>
-<span xml:id="glibc-Explicitly-Checking-Internal-Consistency"></span><h3 class="section">A.1 Explicitly Checking Internal Consistency</title>
-<span xml:id="glibc-index-consistency-checking"></span>
-<span xml:id="glibc-index-impossible-events"></span>
-<span xml:id="glibc-index-assertions"></span>
-
-<para>When you’re writing a program, it’s often a good idea to put in checks
-at strategic places for “impossible” errors or violations of basic
-assumptions.  These kinds of checks are helpful in debugging problems
-with the interfaces between different parts of the program, for example.
-</para>
-<span xml:id="glibc-index-assert_002eh"></span>
-<para>The <code>assert</code> macro, defined in the header file <filename>assert.h</filename>,
-provides a convenient way to abort the program while printing a message
-about where in the program the error was detected.
-</para>
-<span xml:id="glibc-index-NDEBUG"></span>
-<para>Once you think your program is debugged, you can disable the error
-checks performed by the <code>assert</code> macro by recompiling with the
-macro <code>NDEBUG</code> defined.  This means you don’t actually have to
-change the program source code to disable these checks.
-</para>
-<para>But disabling these consistency checks is undesirable unless they make
-the program significantly slower.  All else being equal, more error
-checking is good no matter who is running the program.  A wise user
-would rather have a program crash, visibly, than have it return nonsense
-without indicating anything might be wrong.
-</para>
-<dl class="def">
-<dt xml:id="glibc-index-assert"><span class="category">Macro: </span><span><emphasis>void</emphasis> <strong>assert</strong> <emphasis>(int <var>expression</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-assert" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-<para>Preliminary:
-| MT-Safe
-| AS-Unsafe heap corrupt
-| AC-Unsafe mem lock corrupt
-| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
-</para>
-
-<para>Verify the programmer’s belief that <var>expression</var> is nonzero at
-this point in the program.
-</para>
-<para>If <code>NDEBUG</code> is not defined, <code>assert</code> tests the value of
-<var>expression</var>.  If it is false (zero), <code>assert</code> aborts the
-program (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Aborting-a-Program">Aborting a Program</a>) after printing a message of the
-form:
-</para>
-<div class="example">
-<pre class="example"><filename><var>file</var></filename>:<var>linenum</var>: <var>function</var>: Assertion `<var>expression</var>' failed.
-</pre></div>
-
-<para>on the standard error stream <code>stderr</code> (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Standard-Streams">Standard Streams</a>).
-The filename and line number are taken from the C preprocessor macros
-<code>__FILE__</code> and <code>__LINE__</code> and specify where the call to
-<code>assert</code> was made.  When using the GNU C compiler, the name of
-the function which calls <code>assert</code> is taken from the built-in
-variable <code>__PRETTY_FUNCTION__</code>; with older compilers, the function
-name and following colon are omitted.
-</para>
-<para>If the preprocessor macro <code>NDEBUG</code> is defined before
-<filename>assert.h</filename> is included, the <code>assert</code> macro is defined to do
-absolutely nothing.
-</para>
-<para><strong>Warning:</strong> Even the argument expression <var>expression</var> is not
-evaluated if <code>NDEBUG</code> is in effect.  So never use <code>assert</code>
-with arguments that involve side effects.  For example, <code>assert
-(++i &gt; 0);</code> is a bad idea, because <code>i</code> will not be incremented if
-<code>NDEBUG</code> is defined.
-</para></dd></dl>
-
-<para>Sometimes the “impossible” condition you want to check for is an error
-return from an operating system function.  Then it is useful to display
-not only where the program crashes, but also what error was returned.
-The <code>assert_perror</code> macro makes this easy.
-</para>
-<dl class="def">
-<dt xml:id="glibc-index-assert_005fperror"><span class="category">Macro: </span><span><emphasis>void</emphasis> <strong>assert_perror</strong> <emphasis>(int <var>errnum</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-assert_005fperror" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-<para>Preliminary:
-| MT-Safe
-| AS-Unsafe heap corrupt
-| AC-Unsafe mem lock corrupt
-| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
-</para>
-
-<para>Similar to <code>assert</code>, but verifies that <var>errnum</var> is zero.
-</para>
-<para>If <code>NDEBUG</code> is not defined, <code>assert_perror</code> tests the value of
-<var>errnum</var>.  If it is nonzero, <code>assert_perror</code> aborts the program
-after printing a message of the form:
-</para>
-<div class="example">
-<pre class="example"><filename><var>file</var></filename>:<var>linenum</var>: <var>function</var>: <var>error text</var>
-</pre></div>
-
-<para>on the standard error stream.  The file name, line number, and function
-name are as for <code>assert</code>.  The error text is the result of
-<code>strerror&nbsp;(<var>errnum</var>)</code>.  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Error-Messages">Error Messages</a>.
-</para>
-<para>Like <code>assert</code>, if <code>NDEBUG</code> is defined before <filename>assert.h</filename>
-is included, the <code>assert_perror</code> macro does absolutely nothing.  It
-does not evaluate the argument, so <var>errnum</var> should not have any side
-effects.  It is best for <var>errnum</var> to be just a simple variable
-reference; often it will be <code>errno</code>.
-</para>
-<para>This macro is a GNU extension.
-</para></dd></dl>
-
-<para><strong>Usage note:</strong> The <code>assert</code> facility is designed for
-detecting <emphasis>internal inconsistency</emphasis>; it is not suitable for
-reporting invalid input or improper usage by the <emphasis>user</emphasis> of the
-program.
-</para>
-<para>The information in the diagnostic messages printed by the <code>assert</code>
-and <code>assert_perror</code> macro is intended to help you, the programmer,
-track down the cause of a bug, but is not really useful for telling a user
-of your program why his or her input was invalid or why a command could not
-be carried out.  What’s more, your program should not abort when given
-invalid input, as <code>assert</code> would do—it should exit with nonzero
-status (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Exit-Status">Exit Status</a>) after printing its error messages, or perhaps
-read another command or move on to the next input file.
-</para>
-<para>See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Error-Messages">Error Messages</a>, for information on printing error messages for
-problems that <emphasis>do not</emphasis> represent bugs in the program.
-</para>
-
-<hr>
-</div>
-<sect xml:id="glibc-Variadic-Functions">
-<div class="header">
-<para>
-Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Null-Pointer-Constant" accesskey="n" rel="next">Null Pointer Constant</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Consistency-Checking" accesskey="p" rel="prev">Explicitly Checking Internal Consistency</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Language-Features" accesskey="u" rel="up">C Language Facilities in the Library</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
-</div>
-<span xml:id="glibc-Variadic-Functions-1"></span><h3 class="section">A.2 Variadic Functions</title>
-<span xml:id="glibc-index-variable-number-of-arguments"></span>
-<span xml:id="glibc-index-variadic-functions"></span>
-<span xml:id="glibc-index-optional-arguments"></span>
-
-<para>ISO&nbsp;C defines a syntax for declaring a function to take a variable
-number or type of arguments.  (Such functions are referred to as
-<emphasis>varargs functions</emphasis> or <emphasis>variadic functions</emphasis>.)  However, the
-language itself provides no mechanism for such functions to access their
-non-required arguments; instead, you use the variable arguments macros
-defined in <filename>stdarg.h</filename>.
-</para>
-<para>This section describes how to declare variadic functions, how to write
-them, and how to call them properly.
-</para>
-<para><strong>Compatibility Note:</strong> Many older C dialects provide a similar,
-but incompatible, mechanism for defining functions with variable numbers
-of arguments, using <filename>varargs.h</filename>.
-</para>
-
-<ul class="section-toc">
-<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Why-Variadic" accesskey="1">Why Variadic Functions are Used</a></li>
-<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#How-Variadic" accesskey="2">How Variadic Functions are Defined and Used</a></li>
-<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Variadic-Example" accesskey="3">Example of a Variadic Function</a></li>
-</ul>
-<hr>
-<div class="subsection" xml:id="glibc-Why-Variadic">
-<div class="header">
-<para>
-Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#How-Variadic" accesskey="n" rel="next">How Variadic Functions are Defined and Used</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Variadic-Functions" accesskey="u" rel="up">Variadic Functions</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
-</div>
-<span xml:id="glibc-Why-Variadic-Functions-are-Used"></span><h4 class="subsection">A.2.1 Why Variadic Functions are Used</title>
-
-<para>Ordinary C functions take a fixed number of arguments.  When you define
-a function, you specify the data type for each argument.  Every call to
-the function should supply the expected number of arguments, with types
-that can be converted to the specified ones.  Thus, if the function
-‘<filename>foo</filename>’ is declared with <code>int foo (int, char *);</code> then you must
-call it with two arguments, a number (any kind will do) and a string
-pointer.
-</para>
-<para>But some functions perform operations that can meaningfully accept an
-unlimited number of arguments.
-</para>
-<para>In some cases a function can handle any number of values by operating on
-all of them as a block.  For example, consider a function that allocates
-a one-dimensional array with <code>malloc</code> to hold a specified set of
-values.  This operation makes sense for any number of values, as long as
-the length of the array corresponds to that number.  Without facilities
-for variable arguments, you would have to define a separate function for
-each possible array size.
-</para>
-<para>The library function <code>printf</code> (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Formatted-Output">Formatted Output</a>) is an
-example of another class of function where variable arguments are
-useful.  This function prints its arguments (which can vary in type as
-well as number) under the control of a format template string.
-</para>
-<para>These are good reasons to define a <emphasis>variadic</emphasis> function which can
-handle as many arguments as the caller chooses to pass.
-</para>
-<para>Some functions such as <code>open</code> take a fixed set of arguments, but
-occasionally ignore the last few.  Strict adherence to ISO&nbsp;C requires
-these functions to be defined as variadic; in practice, however, the GNU
-C compiler and most other C compilers let you define such a function to
-take a fixed set of arguments—the most it can ever use—and then only
-<emphasis>declare</emphasis> the function as variadic (or not declare its arguments
-at all!).
-</para>
-<hr>
-</div>
-<div class="subsection" xml:id="glibc-How-Variadic">
-<div class="header">
-<para>
-Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Variadic-Example" accesskey="n" rel="next">Example of a Variadic Function</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Why-Variadic" accesskey="p" rel="prev">Why Variadic Functions are Used</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Variadic-Functions" accesskey="u" rel="up">Variadic Functions</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
-</div>
-<span xml:id="glibc-How-Variadic-Functions-are-Defined-and-Used"></span><h4 class="subsection">A.2.2 How Variadic Functions are Defined and Used</title>
-
-<para>Defining and using a variadic function involves three steps:
-</para>
-<ul>
-<li> <emphasis>Define</emphasis> the function as variadic, using an ellipsis
-(‘<filename>…</filename>’) in the argument list, and using special macros to
-access the variable arguments.  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Receiving-Arguments">Receiving the Argument Values</a>.
-
-</li><li> <emphasis>Declare</emphasis> the function as variadic, using a prototype with an
-ellipsis (‘<filename>…</filename>’), in all the files which call it.
-See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Variadic-Prototypes">Syntax for Variable Arguments</a>.
-
-</li><li> <emphasis>Call</emphasis> the function by writing the fixed arguments followed by the
-additional variable arguments.  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Calling-Variadics">Calling Variadic Functions</a>.
-</li></ul>
-
-
-<ul class="section-toc">
-<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Variadic-Prototypes" accesskey="1">Syntax for Variable Arguments</a></li>
-<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Receiving-Arguments" accesskey="2">Receiving the Argument Values</a></li>
-<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#How-Many-Arguments" accesskey="3">How Many Arguments Were Supplied</a></li>
-<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Calling-Variadics" accesskey="4">Calling Variadic Functions</a></li>
-<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Argument-Macros" accesskey="5">Argument Access Macros</a></li>
-</ul>
-<hr>
-<div class="subsubsection" xml:id="glibc-Variadic-Prototypes">
-<div class="header">
-<para>
-Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Receiving-Arguments" accesskey="n" rel="next">Receiving the Argument Values</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#How-Variadic" accesskey="u" rel="up">How Variadic Functions are Defined and Used</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
-</div>
-<span xml:id="glibc-Syntax-for-Variable-Arguments"></span><h4 class="subsubsection">A.2.2.1 Syntax for Variable Arguments</title>
-<span xml:id="glibc-index-function-prototypes-_0028variadic_0029"></span>
-<span xml:id="glibc-index-prototypes-for-variadic-functions"></span>
-<span xml:id="glibc-index-variadic-function-prototypes"></span>
-
-<para>A function that accepts a variable number of arguments must be declared
-with a prototype that says so.   You write the fixed arguments as usual,
-and then tack on ‘<filename>…</filename>’ to indicate the possibility of
-additional arguments.  The syntax of ISO&nbsp;C requires at least one fixed
-argument before the ‘<filename>…</filename>’.  For example,
-</para>
-<div class="example">
-<pre class="example">int
+ <preliminary>
+  <para>
+   C kütüphanesi tarafından gerçekleştirilen bazı oluşumların aslında C dilinin kendisinde bulunması gerekir. Bu oluşumlar kütüphane kılavuzunun değil C Dili Kılavuzunun bir parçası olmalıydı, ancak henüz bir GNU C dil kılavuzu olmadığı için bu oluşumlar burada belgelenmiştir.
+  </para>
+ </preliminary>
+ <chapter xml:id="glibc-Consistency-Checking">
+  <title>Dahilî Tutarlılığın Doğrudan Denetlenmesi</title>
+  <titleabbrev>Bazı "imkansız" şeyler oluştuğunda çıkmak için <code>assert</code> kullanımı</titleabbrev>
+  <para>
+   <indexterm linkend="glibc-cp"><primary>tutarlılık denetimi</primary></indexterm>
+   <indexterm linkend="glibc-cp"><primary>imkansız olaylar</primary></indexterm>
+   <indexterm linkend="glibc-cp"><primary>savlar</primary></indexterm>
+   Bir yazılımı geliştirirken "imkansız" hatalara ve temel kabullerdeki çatışmalara karşı bazı stratejik yerlere denetimler yerleştirmek iyi olur. Bu çeşit denetimler örneğin, yazılımın farklı parçaları arasında, arayüzlerle hata ayıklama sorunlarını gidermeye yardımcı olur.
+  </para>
+  <para>
+   <indexterm linkend="glibc-pg"><primary>assert.h</primary></indexterm>
+   <code>assert</code> makrosu &assert.h; başlık dosyasında tanımlanmıştır ve yazılımda bir hata saptandığında bir ileti basarak yazılımın çıkması için kullanışlı bir yol sağlar.
+  </para>
+  <csynopsis>
+   <indexterm xml:id="glibc-vr-NDEBUG" linkend="glibc-vr"><primary>NDEBUG</primary></indexterm>
+   <csproto type="makro">
+    <csname><function>NDEBUG</function></csname>
+   </csproto>
+   <header>&assert.h;</header>
+   <para>
+    Yazılımın artık hatalardan arındığı düşünüldüğünde, <function>assert</function> makrosu tarafından uygulanan hata denetimleri, <code>NDEBUG</code> makrosu tanımlandıktan sonra yazılım yeniden derlenerek iptal edilebilir. Yani, bu denetimleri iptal etmek için yazılımın kaynak kodunu değiştirmek gerekmez.
+   </para>
+  </csynopsis>
+  <para>
+   Ancak bu tutarlılık denetimlerinin iptal edilmesi, bu denetimler yazılımınızın  çalışmasını kayda değer oranda yavaşlatmadıkça yapılmasa iyi olur. Yazılımın çalışmasına çok etki etmedikçe daha fazla hata denetimi yapılması daha iyidir. Başlangıç seviyesinde bir kullanıcı bir yazılımın çökmesi sırasında hiçbir  uyarı görmezse  herşeyi yanlış yaptığı sanısına kapılabilir.
+  </para>
+  <csynopsis>
+   <indexterm xml:id="glibc-fn-assert" linkend="glibc-fn"><primary>assert</primary></indexterm>
+   <csproto type="makro">
+    <csname><type>void</type><function>assert</function></csname>
+    <csparam><type>int</type><parameter>expression</parameter></csparam>
+   </csproto>
+   <header>&assert.h;</header>
+   <conceptlist>
+    <concept>&mtsafe;</concept>
+    <concept>&asunsafe; &heap; &corrupt;</concept>
+    <concept>&acunsafe; &corrupt; &lock; &mem;</concept>
+   </conceptlist>
+   <para>
+    Yazılımın o noktasında <parameter>expression</parameter> sıfırdan farklıysa yazılımcının kanaatini doğrular.
+   </para>
+   <para>
+    <varname>NDEBUG</varname> tanımlı değilse, <code>assert</code>  <parameter>expression</parameter> ifadesinin değerini sınamaya tabi tutar. Sınama sonucu yanlışsa (sıfır), <code>assert</code> aşağıdakine benzer bir hata iletisini <link linkend="glibc-Standard-Streams">standart hataya</link>  (<varname>stderr</varname>) basarak <link linkend="glibc-Aborting-a-Program">yazılımı sonlandırır</link>:
+   </para>
+   <literallayout class="monospaced"><replaceable>dosya</replaceable>:<replaceable>satırno</replaceable>: <replaceable>işlev</replaceable>: `<parameter>expression</parameter>' savı başarısız oldu.
+</literallayout>
+   <para>
+    Dosya ismi ve satır numarası <varname>__FILE__ </varname> ve  <varname>__LINE__ </varname> C önişlemci makrolarıyla saptanır ve <code>assert</code> çağrısının yapıldığı yeri belirtir. GNU C derleyicisi kullanılırken, işlevin yani <code>assert</code> çağrısının işlev ismi <varname>__PRETTY_FUNCTION__</varname> yerleşik değişkeninden alınır; daha eski derleyicilerde işlev ismi ve onu izleyen iki nokta üst üste yoktur.
+   </para>
+   <para>
+    <varname>NDEBUG</varname> önişlemci makrosu &assert.h; dosyasının içerildiği satırdan önce tanımlanmışsa, <code>assert</code> makrosu mutlak olarak hiçbir şey yapmamak üzere tanımlanmış olur.
+   </para>
+   <warning>
+    <para>
+     <varname>NDEBUG</varname> etkili ise bağımsız değişken olarak verilen <parameter>expression</parameter> değerlendirilmez. Bu yüzden, yan etkileri olan ifadeler bağımsız değişken olarak kullanılmamalıdır. Örneğin <code>assert (++i &gt; 0);</code> gibi bir çağrı asla kullanılmamalıdır, çünkü <varname>NDEBUG</varname> tanımlıysa <code>i</code> hiçbir zaman artırılmayacaktır.
+    </para>
+   </warning>
+  </csynopsis>
+  <para>
+   Kimi zaman bir işletim sistemi işlevinden dönen bir hatanın denetlenmesinin istenebileceği "imkansız" durumlar olabilir. Bu durumda sadece yazılımın nerede çöktüğü değil, neden çöktüğünün de bildirilmesi faydalıdır. <function>assert_perror</function> makrosu bunu kolayca yapar.
+  </para>
+  <csynopsis>
+   <indexterm xml:id="glibc-fn-assert_perror" linkend="glibc-fn"><primary>assert_perror</primary></indexterm>
+   <csproto type="makro">
+    <csname><type>void</type><function>assert_perror</function></csname>
+    <csparam><type>int</type><parameter>errnum</parameter></csparam>
+   </csproto>
+   <header>&assert.h;</header>
+   <conceptlist>
+    <concept>&mtsafe;</concept>
+    <concept>&asunsafe; &heap; &corrupt;</concept>
+    <concept>&acunsafe; &corrupt; &lock; &mem;</concept>
+   </conceptlist>
+   <para>
+    <parameter>errnum</parameter> değerinin sıfır olduğunu doğrulaması dışında <function>assert</function> makrosuna benzer.
+   </para>
+   <para>
+    <varname>NDEBUG</varname> tanımlı değilse, <code>assert_perror</code> makrosu <parameter>errnum</parameter> değerine bakar. Değer sıfırdan farklıysa, <code>assert_perror</code> aşağıdaki iletiye benzer bir hata iletisini standart hataya basarak yazılımı sonlandırır:
+   </para>
+   <literallayout class="monospaced"><replaceable>dosya</replaceable>:<replaceable>satırno</replaceable>: <replaceable>işlev</replaceable>: <replaceable>hata-iletisi</replaceable>
+</literallayout>
+   <para>
+    Dosya ismi, satır numarası ve işlev ismi <function>assert</function> işlevindeki gibi elde edilir. <replaceable>hata-iletisi</replaceable> ise, <code>strerror (<parameter>errnum</parameter>)</code> işlevinin sonucudur. Bkz.  <xref linkend="glibc-Error-Messages"/>.
+   </para>
+   <para>
+    <function>assert</function> makrosunda olduğu gibi, <varname>NDEBUG</varname> önişlemci makrosu &assert.h; dosyasının içerildiği satırdan önce tanımlanmışsa, <code>assert_perror</code> makrosu mutlak olarak hiçbir şey yapmamak üzere tanımlanmış olur. Bu durumda bağımsız değişken olarak verilen <parameter>errnum</parameter> değerlendirilmez. Yani, <parameter>errnum</parameter> bir yan etki barındırmamalıdır. En iyisi <parameter>errnum</parameter> değerinin basit bir değişken başvurusu olmasıdır; doğrudan <varname>errno</varname> aktarmak daha iyi olacaktır.
+   </para>
+   <para>
+    Bu makro bir GNU oluşumudur.
+   </para>
+  </csynopsis>
+  <note><title>Kullanım Bilgisi:</title>
+   <para>
+    <function>assert</function> oluşumu <emphasis>dahili tutarsızlığın saptanması</emphasis> için tasarlanmıştır. Yazılımın <emphasis>kullanıcı</emphasis> tarafından yanlış kullanımının ya da geçersiz girdilerinin bildirilmesi için kullanışlı değildir.
+   </para>
+  </note>
+  <para>
+   <function>assert</function> ve <function>assert_perror</function> tarafından basılan tanı iletilerinden elde edilen bilgiler yazılımcıya yöneliktir. Bir yazılım hatası ile ilgilidir. Kullanıcıya girdilerinin neden geçersiz olduğunu ya da neden bir komutun gerçekleştirilemediğini bildirmek için değildir. Yazılım, kullanıcının yaptığı bir hatadan dolayı <function>assert</function> makrosunun yaptığı şekilde (bir yazılım hatası vererek) sonlanmamalı, sıfırdan farklı bir çıkış durumu ile çıkmalıdır. Bkz. <xref linkend="glibc-Exit-Status"/>.
+  </para>
+  <para>
+   Yazılımdaki bir yazılım hatasının sonucu <emphasis>olmayan</emphasis> sorunlarda hata iletilerinin basılması ile ilgili bilgiler <xref linkend="glibc-Error-Messages"/> bölümünde bulunabilir.
+  </para>
+ </chapter>
+ <chapter xml:id="glibc-Variadic-Functions">
+  <title>Değişkin İşlevler</title>
+  <titleabbrev>İşlevlerin değişen sayıda bağımsız değişken ile tanımlanması</titleabbrev>
+  <preliminary>
+    <para>
+    <indexterm linkend="glibc-cp"><primary>işlevler</primary><secondary>bağımsız değişkenler</secondary><tertiary>değişen sayıda</tertiary></indexterm>
+    <indexterm linkend="glibc-cp"><primary>işlevler</primary><secondary>bağımsız değişkenler</secondary><tertiary>isteğe bağlı</tertiary></indexterm>
+    <indexterm linkend="glibc-cp"><primary>işlevler</primary><secondary>değişkin</secondary></indexterm>
+    <indexterm linkend="glibc-cp"><primary>değişkin işlev</primary></indexterm>
+    &isoc;, değişen sayıda bağımsız değişken alabilecek bir işlevin bildirilebilmesi için bir  sözdizimi tanımlamıştır. (Bu tür işlevlere <wordasword>değişkin işlevler</wordasword> adı verilir.) Buna rağmen, dilin kendisi bu tür işlevlerin gerekli olmayan bağımsız değişkenlerine erişim için bir düzenek sağlamaz; bu nedenle, &stdarg.h; başlık  dosyasındaki makrolarla tanımlanmış olan sayısı değişen bağımsız değişkenler makroları kullanılacaktır.
+   </para>
+   <para>
+    Bu bölümde değişkin işlevlerin nasıl bildirildikleri, nasıl yazıldıkları ve nasıl çağrıldıkları açıklanmıştır.
+   </para>
+   <note><title>Uyumluluk Bilgisi:</title>
+    <para>
+     Birçok eski C gerçeklemesi, &stdarg.h; kullanılarak değişken sayıda bağımsız değişken ile işlevleri tanımlama düzeneğine benzeyen ama uyumlu olmayan bir düzenek sağlar.
+    </para>
+   </note>
+  </preliminary>
+  <sect1 xml:id="glibc-Why-Variadic">
+   <title>Değişkin İşlevler Neden Kullanılır</title>
+   <titleabbrev>Değişen sayıda bağımsız değişken alan işlevleri oluşturmak için sebepler.</titleabbrev>
+   <para>
+    Sıradan C işlevleri sabit sayıda bağımsız değişken alır. Bir işlevi tanımlanırken her bağımsız değişken için veri türü  de belirtilir. Her işlev çağrısında istenen sayıda bağımsız değişken verirken bağımsız değişkenleri de gerekirse tür dönüşümü yapılarak istenen türde sağlanır. Bu noktada, örneğin, <function>foo</function> işlevi <code>int&nbsp;foo&nbsp;(int,&nbsp;char&nbsp;*);</code> ifadesi ile bildirilmişse, iki bağımsız değişken ile; bir sayı ve bir dizge göstericisi ile çağrılması gerekir.
+   </para>
+   <para>
+    Fakat bazı işlevler sınırsız sayıda bağımsız değişkeni anlamlı kabul ederek işlemler uygulayabilir.
+   </para>
+   <para>
+    Bazı durumlarda bir işlev çok sayıda değeri bir blok olarak işleyerek elde edebilir. Örnek olarak, bir işlev belirli sayıda değeri tutmak için <function>malloc</function> ile tek boyutlu bir dizi için bellek tahsis etmiş olsun. Dizinin uzunluğuna bağlı sayıda değer üzerinde işlem yapılabileceğinden değişen sayıda bağımsız değişkenli oluşumlar olmaksızın, her olası dizi uzunluğu için ayrı bir işlev tanımlamak zorunda kalınırdı.
+   </para>
+   <para>
+    Başka bir işlev sınıfından değişken sayıda bağımsız değişkenli işleve örnek olarak, kütüphane işlevi <function>printf</function>  (Bkz. <xref linkend="glibc-Formatted-Output"/>) verilebilir. Bu işlev (değişken sayıda ve türdeki) bağımsız değişkeni bir biçem şablonu dizgesine uygun olarak ekrana çıktılar.
+   </para>
+   <para>
+    Bunlar, bağımsız değişken sayısı çağrı sırasında belirlenen bir <firstterm>değişkin</firstterm> işlev tanımlamak için iyi sebeplerdir.
+   </para>
+   <para>
+    <function>open</function> gibi bazı işlevler sabit sayıda bağımsız değişken almasına rağmen ara sıra son birkaçını yok sayar. &isoc;'ye kesin bağlılık durumunda bu işlevlerin değişkin olarak tanımlanması gerekir; uygulamada ise, GNU C derleyicisi ve diğer birçok C derleyicisi böyle bir işlevi sabit sayıda bağımsız değişken ile tanımlamayı ve sadece <emphasis>bildirim</emphasis> sırasında işlevi değişkin olarak bildirerek (ya da bağımsız değişkenlerinin tümünü bildirmeyerek) yapmayı tercih eder.
+   </para>
+  </sect1>
+  <sect1 xml:id="glibc-How-Variadic">
+  <title>Değişkin İşlevler Nasıl Tanımlanır ve Kullanılır</title>
+  <titleabbrev>Değişkin işlevler nasıl tanımlanır ve çağrılır.</titleabbrev>
+  <preliminary>
+   <para>
+    Bir değişkin işlev 3 adımda tanımlanıp kullanılır:
+   </para>
+   <variablelist>
+    <varlistentry>
+     <term>Tanım</term>
+     <listitem>
+      <para>
+       Bir işlevin değişkin olarak tanımlanması, bağımsız değişken listesinde bir üçlü nokta (<command>…</command>) kullanarak ve değişken sayıda bağımsız değişkene erişmek için özel makrolar kullanılarak yapılır. Bkz. <xref linkend="glibc-Receiving-Arguments"/>.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term>Bildirim</term>
+     <listitem>
+      <para>
+       Bir işlevin değişkin olarak bildirilmesi, onu çağıran tüm dosyalarda bir üçlü nokta (<command>…</command>) içeren bir örneği kullanarak yapılır. Bkz. <xref linkend="glibc-Variadic-Prototypes"/>.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term>Çağrı</term>
+     <listitem>
+      <para>
+       İşlev çağrısı sabit bağımsız değişkenlere ek olarak değişken sayıdaki bağımsız değişken yazılarak yapılır. Bkz.  <xref linkend="glibc-Calling-Variadics"/>.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </preliminary>
+  <sect2 xml:id="glibc-Variadic-Prototypes">
+   <title>Değişen Sayıda Bağımsız Değişken için Sözdizimi</title>
+   <titleabbrev>Bağımsız değişken sayısı değişen işlevlerin ilk örneği nasıl yazılır.</titleabbrev>
+   <para>
+    <indexterm linkend="glibc-cp"><primary>değişkin işlevler</primary><secondary>sözdizimi</secondary></indexterm>
+    Değişken sayıda bağımsız değişken kabul eden bir işlev şimdi açıklanana benzer bir ilk örnek kullanılarak bildirilmelidir. Önce sabit bağımsız değişkenler yazılır, ardından da başka bağımsız değişkenler de olduğunu belirtmek üzere bir üçlü nokta (<command>…</command>) gelir. &isoc; sözdizimi üçlü noktadan önce en az bir sabit bağımsız değişken gerektirir. Örnek:
+   </para>
+   <example>
+    <screen>int
 func (const char *a, int b, …)
 {
   …
 }
-</pre></div>
-
-<para>defines a function <code>func</code> which returns an <code>int</code> and takes two
-required arguments, a <code>const char *</code> and an <code>int</code>.  These are
-followed by any number of anonymous arguments.
-</para>
-<para><strong>Portability note:</strong> For some C compilers, the last required
-argument must not be declared <code>register</code> in the function
-definition.  Furthermore, this argument’s type must be
-<emphasis>self-promoting</emphasis>: that is, the default promotions must not change
-its type.  This rules out array and function types, as well as
-<code>float</code>, <code>char</code> (whether signed or not) and <code>short&nbsp;int</code>
-(whether signed or not).  This is actually an ISO&nbsp;C requirement.
-</para>
-<hr>
-</div>
-<div class="subsubsection" xml:id="glibc-Receiving-Arguments">
-<div class="header">
-<para>
-Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#How-Many-Arguments" accesskey="n" rel="next">How Many Arguments Were Supplied</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Variadic-Prototypes" accesskey="p" rel="prev">Syntax for Variable Arguments</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#How-Variadic" accesskey="u" rel="up">How Variadic Functions are Defined and Used</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
-</div>
-<span xml:id="glibc-Receiving-the-Argument-Values"></span><h4 class="subsubsection">A.2.2.2 Receiving the Argument Values</title>
-<span xml:id="glibc-index-variadic-function-argument-access"></span>
-<span xml:id="glibc-index-arguments-_0028variadic-functions_0029"></span>
-
-<para>Ordinary fixed arguments have individual names, and you can use these
-names to access their values.  But optional arguments have no
-names—nothing but ‘<filename>…</filename>’.  How can you access them?
-</para>
-<span xml:id="glibc-index-stdarg_002eh"></span>
-<para>The only way to access them is sequentially, in the order they were
-written, and you must use special macros from <filename>stdarg.h</filename> in the
-following three step process:
-</para>
-<ol>
-<li> You initialize an argument pointer variable of type <code>va_list</code> using
-<code>va_start</code>.  The argument pointer when initialized points to the
-first optional argument.
-
-</li><li> You access the optional arguments by successive calls to <code>va_arg</code>.
-The first call to <code>va_arg</code> gives you the first optional argument,
-the next call gives you the second, and so on.
-
-<para>You can stop at any time if you wish to ignore any remaining optional
-arguments.  It is perfectly all right for a function to access fewer
-arguments than were supplied in the call, but you will get garbage
-values if you try to access too many arguments.
-</para>
-</li><li> You indicate that you are finished with the argument pointer variable by
-calling <code>va_end</code>.
-
-<para>(In practice, with most C compilers, calling <code>va_end</code> does nothing.
-This is always true in the GNU C compiler.  But you might as well call
-<code>va_end</code> just in case your program is someday compiled with a peculiar
-compiler.)
-</para></li></ol>
-
-<para>See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Argument-Macros">Argument Access Macros</a>, for the full definitions of <code>va_start</code>,
-<code>va_arg</code> and <code>va_end</code>.
-</para>
-<para>Steps 1 and 3 must be performed in the function that accepts the
-optional arguments.  However, you can pass the <code>va_list</code> variable
-as an argument to another function and perform all or part of step 2
-there.
-</para>
-<para>You can perform the entire sequence of three steps multiple times
-within a single function invocation.  If you want to ignore the optional
-arguments, you can do these steps zero times.
-</para>
-<para>You can have more than one argument pointer variable if you like.  You
-can initialize each variable with <code>va_start</code> when you wish, and
-then you can fetch arguments with each argument pointer as you wish.
-Each argument pointer variable will sequence through the same set of
-argument values, but at its own pace.
-</para>
-<para><strong>Portability note:</strong> With some compilers, once you pass an
-argument pointer value to a subroutine, you must not keep using the same
-argument pointer value after that subroutine returns.  For full
-portability, you should just pass it to <code>va_end</code>.  This is actually
-an ISO&nbsp;C requirement, but most ANSI C compilers work happily
-regardless.
-</para>
-<hr>
-</div>
-<div class="subsubsection" xml:id="glibc-How-Many-Arguments">
-<div class="header">
-<para>
-Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Calling-Variadics" accesskey="n" rel="next">Calling Variadic Functions</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Receiving-Arguments" accesskey="p" rel="prev">Receiving the Argument Values</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#How-Variadic" accesskey="u" rel="up">How Variadic Functions are Defined and Used</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
-</div>
-<span xml:id="glibc-How-Many-Arguments-Were-Supplied"></span><h4 class="subsubsection">A.2.2.3 How Many Arguments Were Supplied</title>
-<span xml:id="glibc-index-number-of-arguments-passed"></span>
-<span xml:id="glibc-index-how-many-arguments"></span>
-<span xml:id="glibc-index-arguments_002c-how-many"></span>
-
-<para>There is no general way for a function to determine the number and type
-of the optional arguments it was called with.  So whoever designs the
-function typically designs a convention for the caller to specify the number
-and type of arguments.  It is up to you to define an appropriate calling
-convention for each variadic function, and write all calls accordingly.
-</para>
-<para>One kind of calling convention is to pass the number of optional
-arguments as one of the fixed arguments.  This convention works provided
-all of the optional arguments are of the same type.
-</para>
-<para>A similar alternative is to have one of the required arguments be a bit
-mask, with a bit for each possible purpose for which an optional
-argument might be supplied.  You would test the bits in a predefined
-sequence; if the bit is set, fetch the value of the next argument,
-otherwise use a default value.
-</para>
-<para>A required argument can be used as a pattern to specify both the number
-and types of the optional arguments.  The format string argument to
-<code>printf</code> is one example of this (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Formatted-Output-Functions">Formatted Output Functions</a>).
-</para>
-<para>Another possibility is to pass an “end marker” value as the last
-optional argument.  For example, for a function that manipulates an
-arbitrary number of pointer arguments, a null pointer might indicate the
-end of the argument list.  (This assumes that a null pointer isn’t
-otherwise meaningful to the function.)  The <code>execl</code> function works
-in just this way; see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Executing-a-File">Executing a File</a>.
-</para>
-
-<hr>
-</div>
-<div class="subsubsection" xml:id="glibc-Calling-Variadics">
-<div class="header">
-<para>
-Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Argument-Macros" accesskey="n" rel="next">Argument Access Macros</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#How-Many-Arguments" accesskey="p" rel="prev">How Many Arguments Were Supplied</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#How-Variadic" accesskey="u" rel="up">How Variadic Functions are Defined and Used</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
-</div>
-<span xml:id="glibc-Calling-Variadic-Functions"></span><h4 class="subsubsection">A.2.2.4 Calling Variadic Functions</title>
-<span xml:id="glibc-index-variadic-functions_002c-calling"></span>
-<span xml:id="glibc-index-calling-variadic-functions"></span>
-<span xml:id="glibc-index-declaring-variadic-functions"></span>
-
-<para>You don’t have to do anything special to call a variadic function.
-Just put the arguments (required arguments, followed by optional ones)
-inside parentheses, separated by commas, as usual.  But you must declare
-the function with a prototype and know how the argument values are converted.
-</para>
-<para>In principle, functions that are <emphasis>defined</emphasis> to be variadic must also
-be <emphasis>declared</emphasis> to be variadic using a function prototype whenever
-you call them.  (See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Variadic-Prototypes">Syntax for Variable Arguments</a>, for how.)  This is because
-some C compilers use a different calling convention to pass the same set
-of argument values to a function depending on whether that function
-takes variable arguments or fixed arguments.
-</para>
-<para>In practice, the GNU C compiler always passes a given set of argument
-types in the same way regardless of whether they are optional or
-required.  So, as long as the argument types are self-promoting, you can
-safely omit declaring them.  Usually it is a good idea to declare the
-argument types for variadic functions, and indeed for all functions.
-But there are a few functions which it is extremely convenient not to
-have to declare as variadic—for example, <code>open</code> and
-<code>printf</code>.
-</para>
-<span xml:id="glibc-index-default-argument-promotions"></span>
-<span xml:id="glibc-index-argument-promotion"></span>
-<para>Since the prototype doesn’t specify types for optional arguments, in a
-call to a variadic function the <emphasis>default argument promotions</emphasis> are
-performed on the optional argument values.  This means the objects of
-type <code>char</code> or <code>short&nbsp;int</code> (whether signed or not) are
-promoted to either <code>int</code> or <code>unsigned&nbsp;int</code>, as
-appropriate; and that objects of type <code>float</code> are promoted to type
-<code>double</code>.  So, if the caller passes a <code>char</code> as an optional
-argument, it is promoted to an <code>int</code>, and the function can access
-it with <code>va_arg (<var>ap</var>, int)</code>.
-</para>
-<para>Conversion of the required arguments is controlled by the function
-prototype in the usual way: the argument expression is converted to the
-declared argument type as if it were being assigned to a variable of
-that type.
-</para>
-<hr>
-</div>
-<div class="subsubsection" xml:id="glibc-Argument-Macros">
-<div class="header">
-<para>
-Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Calling-Variadics" accesskey="p" rel="prev">Calling Variadic Functions</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#How-Variadic" accesskey="u" rel="up">How Variadic Functions are Defined and Used</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
-</div>
-<span xml:id="glibc-Argument-Access-Macros"></span><h4 class="subsubsection">A.2.2.5 Argument Access Macros</title>
-
-<para>Here are descriptions of the macros used to retrieve variable arguments.
-These macros are defined in the header file <filename>stdarg.h</filename>.
-<span xml:id="glibc-index-stdarg_002eh-1"></span>
-</para>
-<dl class="def">
-<dt xml:id="glibc-index-va_005flist"><span class="category">Data Type: </span><span><strong>va_list</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-va_005flist" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-<para>The type <code>va_list</code> is used for argument pointer variables.
-</para></dd></dl>
-
-<dl class="def">
-<dt xml:id="glibc-index-va_005fstart"><span class="category">Macro: </span><span><emphasis>void</emphasis> <strong>va_start</strong> <emphasis>(va_list <var>ap</var>, <var>last-required</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-va_005fstart" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-<para>Preliminary:
-| MT-Safe
-| AS-Safe
-| AC-Safe
-| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
-</para>
-
-<para>This macro initializes the argument pointer variable <var>ap</var> to point
-to the first of the optional arguments of the current function;
-<var>last-required</var> must be the last required argument to the function.
-</para></dd></dl>
-
-<dl class="def">
-<dt xml:id="glibc-index-va_005farg"><span class="category">Macro: </span><span><emphasis><var>type</var></emphasis> <strong>va_arg</strong> <emphasis>(va_list <var>ap</var>, <var>type</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-va_005farg" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-<para>Preliminary:
-| MT-Safe race:ap
-| AS-Safe
-| AC-Unsafe corrupt
-| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
-</para>
-
-<para>The <code>va_arg</code> macro returns the value of the next optional argument,
-and modifies the value of <var>ap</var> to point to the subsequent argument.
-Thus, successive uses of <code>va_arg</code> return successive optional
-arguments.
-</para>
-<para>The type of the value returned by <code>va_arg</code> is <var>type</var> as
-specified in the call.  <var>type</var> must be a self-promoting type (not
-<code>char</code> or <code>short int</code> or <code>float</code>) that matches the type
-of the actual argument.
-</para></dd></dl>
-
-<dl class="def">
-<dt xml:id="glibc-index-va_005fend"><span class="category">Macro: </span><span><emphasis>void</emphasis> <strong>va_end</strong> <emphasis>(va_list <var>ap</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-va_005fend" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-<para>Preliminary:
-| MT-Safe
-| AS-Safe
-| AC-Safe
-| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
-</para>
-
-<para>This ends the use of <var>ap</var>.  After a <code>va_end</code> call, further
-<code>va_arg</code> calls with the same <var>ap</var> may not work.  You should invoke
-<code>va_end</code> before returning from the function in which <code>va_start</code>
-was invoked with the same <var>ap</var> argument.
-</para>
-<para>In the GNU C Library, <code>va_end</code> does nothing, and you need not ever
-use it except for reasons of portability.
-</para>
-</dd></dl>
-
-<para>Sometimes it is necessary to parse the list of parameters more than once
-or one wants to remember a certain position in the parameter list.  To
-do this, one will have to make a copy of the current value of the
-argument.  But <code>va_list</code> is an opaque type and one cannot necessarily
-assign the value of one variable of type <code>va_list</code> to another variable
-of the same type.
-</para>
-<dl class="def">
-<dt xml:id="glibc-index-va_005fcopy-1"><span class="category">Macro: </span><span><emphasis>void</emphasis> <strong>va_copy</strong> <emphasis>(va_list <var>dest</var>, va_list <var>src</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-va_005fcopy-1" class="copiable-anchor"> ¶</a></span></dt>
-<dt xml:id="glibc-index-_005f_005fva_005fcopy"><span class="category">Macro: </span><span><emphasis>void</emphasis> <strong>__va_copy</strong> <emphasis>(va_list <var>dest</var>, va_list <var>src</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-_005f_005fva_005fcopy" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-
-<para>Preliminary:
-| MT-Safe
-| AS-Safe
-| AC-Safe
-| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
-</para>
-
-<para>The <code>va_copy</code> macro allows copying of objects of type
-<code>va_list</code> even if this is not an integral type.  The argument pointer
-in <var>dest</var> is initialized to point to the same argument as the
-pointer in <var>src</var>.
-</para>
-<para><code>va_copy</code> was added in &isoc;99.  When building for strict
-conformance to &isoc;90 (‘<filename>gcc -std=c90</filename>’), it is not available.
-GCC provides <code>__va_copy</code>, as an extension, in any standards mode;
-before GCC 3.0, it was the only macro for this functionality.
-</para>
-<para>These macros are no longer provided by the GNU C Library, but rather by the
-compiler.
-</para></dd></dl>
-
-<para>If you want to use <code>va_copy</code> and be portable to pre-C99 systems,
-you should always be prepared for the
-possibility that this macro will not be available.  On architectures where a
-simple assignment is invalid, hopefully <code>va_copy</code> <emphasis>will</emphasis> be available,
-so one should always write something like this if concerned about
-pre-C99 portability:
-</para>
-<div class="example">
-<pre class="example">{
+</screen>
+   </example>
+   <para>
+    Bu örnekte, <type>int</type> türünde bir dönüş değeri olan ve biri <type>const&nbsp;char&nbsp;*</type> türünde diğeri <type>int</type> türünde iki bağımsız değişken gerektiren <code>func</code> işlevi tanımlanmıştır. Ayrıca işlevin gerekli olan iki bağımsız değişkenden başka belirsiz sayıda isimsiz bağımsız değişkeni de vardır.
+   </para>
+   <note><title>Uyumluluk Bilgisi:</title>
+    <para>
+     Bazı C derleyicileri için son gerekli bağımsız değişkenin işlev tanımında <type>register</type> olarak bildirilmemesi gereklidir. Bundan başka, bu bağımsız değişkenin türü <firstterm>kendinden terfili</firstterm> de olmalıdır: Yani, ön tanımlı terfiler türünü değiştirmemelidir. Bu kurallar dizi ve işlev türleri ile <type>float</type>, <type>char</type> (signed ya da değil) ve <type>short&nbsp;int</type> (signed ya da değil) türlerini dışarda tutar. Bu aslında bir &isoc; gerekliliğidir.
+    </para>
+   </note>
+  </sect2>
+  <sect2 xml:id="glibc-Receiving-Arguments">
+   <title>Bağımsız Değişken Değerlerinin Alınması</title>
+   <titleabbrev>İsteğe bağlı bağımsız değişken değerlerine erişimde izlenecek adımlar.</titleabbrev>
+   <para>
+    <indexterm linkend="glibc-cp"><primary>değişkin işlevler</primary><secondary>bağımsız değişkenlere erişim</secondary></indexterm>
+    <indexterm linkend="glibc-cp"><primary>işlevler</primary><secondary>bağımsız değişkenler</secondary><tertiary>değişkin işlevlerde</tertiary></indexterm>
+    Gerekli olan bağımsız değişkenlerin isimleri vardır ve değerlerine bu isimler kullanılarak erişilir. Ama isteğe bağlı bağımsız değişkenlerin isimleri yoktur, çünkü onlar bir üçlü nokta ile ifade edilmiştir. O halde bu bağımsız değişkenlere nasıl erişilecek?
+   </para>
+   <para>
+    <indexterm linkend="glibc-pg"><primary>stdarg.h</primary></indexterm>
+    Onlara erişmenin tek yolu yazıldıkları sırayla erişmektir. Bunun için &stdarg.h; başlık dosyasındaki özel makroların aşağıdaki üç adımlık işlemlerle kullanılması gerekir:
+   </para>
+   <orderedlist>
+    <listitem>
+     <para>
+      <function>va_start</function> kullanarak <type>va_list</type> türünde bir bağımsız değişken gösterici değişkeni ilklendirilir. Bağımsız değişken gösterici, ilklendirildiğinde ilk isteğe bağlı bağımsız değişkeni gösterecektir.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      İsteğe bağlı bağımsız değişkenlere <function>va_arg</function> işlevi çağrılarak erişilir. İlk <function>va_arg</function> çağrısı ilk isteğe bağlı bağımsız değişkene erişir, ikinci çağrı ile ikincisine, böyle gider.
+     </para>
+     <para>
+      Bu çağrı işlemi, kalan isteğe bağlı bağımsız değişkenlerden yok sayılacaklara kadar sürdürülebilir. Bir işlevin bağımsız değişkenlerinden daha azına erişmek bir sorun çıkarmaz ama daha fazla sayıda bağımsız değişkene erişmeye çalışmak bozuk değerlerle sonuçlanır.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      Bağımsız değişken göstericiye ihtiyaç kalmadığında bunun <function>va_end</function> çağrısıyla belirtilmesi gerekir.
+     </para>
+     <para>
+      (Uygulamada, birçok C derleyicisi <function>va_end</function> çağrısında hiçbir şey yapmaz. Bu GNU C derleyicisi için de geçerlidir. Ancak, yazılımın bir gün bu çağrıyı gerektiren bir derleyici ile derlenebileceği göz önüne alınarak yine de <function>va_end</function> çağrısı yapılması iyi olur.)
+     </para>
+    </listitem>
+   </orderedlist>
+   <para>
+    <function>va_start</function>, <function>va_arg</function> ve <function>va_end</function> işlevlerinin tanımları <xref linkend="glibc-Argument-Macros"/> bölümünde bulunabilir.
+   </para>
+   <para>
+    Birden üçe kadar adımlar isteğe bağlı bağımsız değişkenleri kabul eden işlevin içinde uygulanmalıdır. Buna rağmen <type>va_list</type> türündeki değişken, bir bağımsız değişken olarak başka bir işleve aktarılarak 2. adım ya da tamamı burada uygulanabilir.
+   </para>
+   <para>
+    Bu üç adımlık işlem, tek bir işlev defalarca çağrılarak da uygulanabilir. İsteğe bağlı bağımsız değişkenler yok sayılmak istendiğinde ise bu adımlar sıfır kere uygulanabilir.
+   </para>
+   <para>
+    Gerekirse, birden fazla bağımsız değişken gösterici değişkeni olabilir ve bu değişkenlerin her biri gerektiği zaman <function>va_start</function> çağrılarıyla ayrı ayrı ilklendirilebilir. Her bağımsız değişken göstericisi ile gerektiği kadar isteğe bağlı bağımsız değişken alınabilir. Her bağımsız değişken gösterici değişkeni daima aynı bağımsız değişken kümesine ama kendi alanında sahip olacaktır.
+   </para>
+   <note><title>Taşınabilirlik Bilgisi:</title>
+    <para>
+     Bazı derleyicilerle, bir bağımsız değişken gösterici değerini bir alt işleve aktardıktan sonra, alt işlev döndüğünde aynı bağımsız değişken gösterici değerinin kullanımda tutulması gerekir. Tam taşınabilirlik için,   <function>va_end</function>'e aktarılmalıdır. Bu aslında bir &isoc; gerekliliği olmakla birlikte birçok ANSI C derleyicisi ile de sorunsuz çalışır.
+    </para>
+   </note>
+  </sect2>
+  <sect2 xml:id="glibc-How-Many-Arguments">
+   <title>Aktarılan Bağımsız Değişkenlerin Sayısı</title>
+   <titleabbrev>Daha fazla bağımsız değişken var mı diye nasıl bakmalı.</titleabbrev>
+   <para>
+    <indexterm linkend="glibc-cp"><primary>değişkin işlevler</primary><secondary>bağımsız değişkenlere erişim</secondary><tertiary>aktarılanların sayısı</tertiary></indexterm>
+    <indexterm linkend="glibc-cp"><primary>işlevler</primary><secondary>bağımsız değişkenler</secondary><tertiary>aktarılanların sayısı</tertiary></indexterm>
+    Bir işleve aktarılan isteğe bağlı bağımsız değişkenlerin sayısını ve türünü saptamak için genel bir yol yoktur. Yani işlev tasarlanırken, genellikle çağrıcı tarafından kullanılmak üzere bağımsız değişkenlerin sayısının ve türünün belirtileceği bir yol da tasarlanmalı ve her değişkin işlev için bir çağrı yöntemi tespit edilerek, çağrılar buna uygun yazılmalıdır.
+   </para>
+   <para>
+    Çağrı yöntemlerinden biri, isteğe bağlı bağımsız değişkenlerin sayısını sabit bağımsız değişkenlerden birinde belirtmektir. Bu yöntem sadece tüm isteğe bağlı bağımsız değişkenler aynı türde ise çalışır.
+   </para>
+   <para>
+    Bir diğer çağrı yöntemi ise, sabit bağımsız değişkenlerden birinin bir isteğe bağlı bağımsız değişkenin sağlayabileceği her olası amaç için bir bit olmak üzere bir bit maskesi içermesidir. Bu bitleri önceden tanımlanmış bir sırayla sınayarak; eğer bit bir ise sonraki bağımsız değişkenin değeri alınır, değilse bir ön tanımlı değer kullanılır.
+   </para>
+   <para>
+    Bir sabit bağımsız değişken hem bağımsız değişken sayısını hem de türünü belirten bir kalıp olarak kullanılabilir. <function>printf</function> işlevinin biçem dizgesi bağımsız değişkeni buna bir örnektir (Bkz. <xref linkend="glibc-Formatted-Output-Functions"/>).
+   </para>
+   <para>
+    Diğer bir olasılık da, son isteğe bağlı bağımsız değişken olarak bir "son belirten" değer aktarmaktır. Örneğin isteğe bağlı bağımsız değişkenleri göstericilerden oluşan bir işleve, sonuncu bağımsız değişken olarak bir boş gösterici verilebilir. Örneğin, <function>execl</function> işlevi bu yöntemi kullanır. Bkz. <xref linkend="glibc-Executing-a-File"/>.
+   </para>
+  </sect2>
+  <sect2 xml:id="glibc-Calling-Variadics">
+   <title>Değişkin İşlevlerin Çağrılması</title>
+   <titleabbrev>Bağımsız değişken sayısı değişen işlevlerin çağrıları hakkında bilinmesi gerekenler.</titleabbrev>
+   <para>
+    <indexterm linkend="glibc-cp"><primary>değişkin işlevler</primary><secondary>çağrılması</secondary></indexterm>
+    <indexterm linkend="glibc-cp"><primary>değişkin işlevler</primary><secondary>bildirim</secondary></indexterm>
+    Bir değişkin işlev çağrısına özel hiçbir şey yoktur. Yaylı ayraçlar içine önce gerekli sonra da isteğe bağlı bağımsız değişkenler virgüllerle ayrılarak yazılır. Ama önce işlevin bildirilmesi gerekir, böylece bağımsız değişken değerlerinin nasıl dönüştürüleceği bilinir.
+   </para>
+   <para>
+    Kural olarak, değişkin olarak <emphasis>tanımlanan işlevler</emphasis> çağrılmadan önce bir <link linkend="glibc-Variadic-Prototypes">işlev örneği</link> ile  değişkin olarak <emphasis>bildirilmelidir</emphasis>. Bazı C derleyicileri, işlevin aldığı sabit ve değişken sayıdaki bağımsız değişkene bağlı olarak bir işleve aktarılacak aynı bağımsız değişken değerleri kümesi için farklı çağrı yöntemleri kullandığı için bu böyledir.
+   </para>
+   <para>
+    Uygulamada, GNU C derleyicisi bağımsız değişkenlerin gerekli mi, isteğe bağlı mı olduğuna bakmaksızın bir verilmiş bağımsız değişken türleri kümesini hep aynı yolla aktarır. Yani bağımsız değişken türleri kendinden terfili olduğu sürece bunların bildirilmesi rahatça ihmal edilebilir. Genellikle, değişkin işlevlerin bağımsız değişken türlerini ve hatta tüm işlevleri bildirmek iyi bir fikirdir. Ancak çok kullanışlı birkaç işlev vardır ki değişkin olarak bildirilmez; örneğin, <function>open</function> ve <function>printf</function>.
+   </para>
+   <para>
+    <indexterm linkend="glibc-cp"><primary>ön tanımlı bağımsız değişken terfileri</primary></indexterm>
+    <indexterm linkend="glibc-cp"><primary>işlevler</primary><secondary>bağımsız değişken terfisi</secondary></indexterm>
+    İşlev ilk örneğinde isteğe bağlı bağımsız değişkenlerin türleri belirtilmediğinden, bir değişkin işlev çağrısında isteğe bağlı bağımsız değişken değerleri üzerinde <firstterm>ön tanımlı bağımsız değişken terfileri</firstterm> uygulanır. Yani, nesne türleri <type>char</type> veya <type>short&nbsp;int</type>  (signed ya da değil) ise ya <type>int</type> ya da  <type>unsigned&nbsp;int</type> türüne, nesne türü <type>float</type>  ise <type>double</type> türüne terfi ettirilir. Böylece örneğin, çağrı sırasına <type>char</type> türünde belirtilen bir bağımsız değişken, <type>int</type> türüne terfi ettirilerek, işlev bağımsız değişkene <code>va_arg (<parameter>ap</parameter>, int)</code> ile erişebilir.
+   </para>
+   <para>
+    Gerekli bağımsız değişkenlerin dönüşümleri ise işlev ilk örneğinde genel bir yolla elde edilir: bağımsız değişken ifadesi, o türden bir değişkene atanıyormuş gibi, bildirilen bağımsız değişken türüne dönüştürülür.
+   </para>
+   </sect2>
+   <sect2 xml:id="glibc-Argument-Macros">
+    <title>Bağımsız Değişkene Erişim Makroları</title>
+    <titleabbrev>İsteğe bağlı bağımsız değişkenlere erişmek için kullanılan makroların ayrıntılı belirtimi</titleabbrev>
+    <para>
+     Burada isteğe bağlı bağımsız değişkenlere erişmek için kullanılan makrolar açıklanmıştır. Bu makrolar &stdarg.h; başlık dosyasında bildirilmiştir.
+     <indexterm linkend="glibc-pg"><primary>stdarg.h</primary></indexterm>
+    </para>
+    <csynopsis>
+     <indexterm linkend="glibc-tp" xml:id="glibc-tp-va_list"><primary>va_list</primary></indexterm>
+     <indexterm xml:id="glibc-cp-va_list" linkend="glibc-cp"><primary>değişkin işlevler</primary><secondary>veri türü</secondary></indexterm>
+     <csproto type="veri türü">
+      <csname><function>va_list</function></csname>
+     </csproto>
+     <header>&stdarg.h;</header>
+     <para>
+      <code>va_list</code> türü bağımsız değişken gösterici değişkeni için kullanılır.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-fn" xml:id="glibc-fn-va_start"><primary>va_start</primary></indexterm>
+     <indexterm xml:id="glibc-cp-va_start" linkend="glibc-cp"><primary>değişkin işlevler</primary><secondary>bağımsız değişkenlerin ilklendirilmesi</secondary></indexterm>
+     <csproto type="makro">
+      <csname><type>void</type><function>va_start</function></csname>
+      <csparam><type>va_list</type><parameter>ap</parameter></csparam>
+      <csparam><parameter>last-required</parameter></csparam>
+     </csproto>
+     <header>&stdarg.h;</header>
+     <conceptlist>
+      <concept>&mtsafe;</concept>
+      <concept>&assafe;</concept>
+      <concept>&acsafe;</concept>
+     </conceptlist>
+     <para>
+      Bu makro, kullanıldığı işlevin ilk isteğe bağlı bağımsız değişkenini gösterecek olan <parameter>ap</parameter> bağımsız değişken gösterici değişkenini ilklendirir. <parameter>last-required</parameter> işlevdeki gerekli son bağımsız değişken olmalıdır.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-fn" xml:id="glibc-fn-va_arg"><primary>va_arg</primary></indexterm>
+     <indexterm xml:id="glibc-cp-va_arg" linkend="glibc-cp"><primary>değişkin işlevler</primary><secondary>bağımsız değişkenlerin alınması</secondary></indexterm>
+     <csproto type="makro">
+      <csname><type>type</type><function>va_arg</function></csname>
+      <csparam><type>va_list</type><parameter>ap</parameter></csparam>
+      <csparam><parameter>type</parameter></csparam>
+     </csproto>
+     <header>&stdarg.h;</header>
+     <conceptlist>
+      <concept>&mtsafe; &race;<code linkend="glibc-safety-identifier">:ap</code></concept>
+      <concept>&assafe;</concept>
+      <concept>&acunsafe; &corrupt;</concept>
+     </conceptlist>
+     <para>
+      <code>va_arg</code> makrosu sonraki isteğe bağlı bağımsız değişkenin değeri ile döner ve <parameter>last-required</parameter> değişkeninin değerini sonraki bağımsız değişkeni gösterecek şekilde değiştirir. Böylece her <code>va_arg</code> kullanımında sırayla isteğe bağlı bağımsız değişkenlerden birinin değeri alınır.
+     </para>
+     <para>
+      <code>va_arg</code> tarafından döndürülen değerin türü çağrı sırasında <parameter>type</parameter> ile belirtilir. <parameter>type</parameter> bağımsız değişkeninin türü ile eşleşen tür kendinden terfili türlerden biri olmalıdır (<type>char</type>, <type>short&nbsp;int</type> veya <type>float</type> değil).
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-fn" xml:id="glibc-fn-va_end"><primary>va_end</primary></indexterm>
+     <indexterm xml:id="glibc-cp-va_end" linkend="glibc-cp"><primary>değişkin işlevler</primary><secondary>bağımsız değişkenlerin sonuncusu</secondary></indexterm>
+     <csproto type="makro">
+      <csname><type>void</type><function>va_end</function></csname>
+      <csparam><type>va_list</type><parameter>ap</parameter></csparam>
+     </csproto>
+     <header>&stdarg.h;</header>
+     <conceptlist>
+      <concept>&mtsafe;</concept>
+      <concept>&assafe;</concept>
+      <concept>&acsafe;</concept>
+     </conceptlist>
+     <para>
+      Bu makro <parameter>ap</parameter> kullanımını sonlandırır. Bir <code>va_end</code> çağrısından sonraki <function>va_arg</function> çağrıları bu <parameter>ap</parameter> ile çalışamaz. Aynı <parameter>ap</parameter> bağımsız değişkeni için bir <function>va_start</function> çağrısı yapmadan önce bir <code>va_end</code> çağrısı yapılmalıdır.
+     </para>
+     <para>
+      &glibc;nde, <code>va_end</code> hiçbir şey yapmaz ve taşınabilirlik dışında kulanımı gerekmez.
+     </para>
+    </csynopsis>
+    <para>
+     Kimi zaman bağımsız değişken listesinin defalarca çözümlenmesi veya bağımsız değişkenlerden birinin listedeki konumunun hatırlanması gerekir. Bu durumda, o anki bağımsız değişken değerinin bir kopyasını yapılır. Ancak <type>va_list</type> şeffaf bir tür değildir ve <type>va_list</type> türünden bir değişkenin değeri başka bir değişkene atanamaz.
+    </para>
+    <csynopsis>
+     <indexterm linkend="glibc-fn" xml:id="glibc-fn-va_copy"><primary>va_copy</primary></indexterm>
+     <indexterm linkend="glibc-fn" xml:id="glibc-fn-va_copy_"><primary sortas="va_copy_">__va_copy</primary></indexterm>
+     <indexterm xml:id="glibc-cp-va_copy" linkend="glibc-cp"><primary>değişkin işlevler</primary><secondary>bağımsız değişkenin kopyalanması</secondary></indexterm>
+     <csproto type="makro">
+      <csname><type>void</type><function>va_copy</function></csname>
+      <csparam><type>va_list</type><parameter>dest</parameter></csparam>
+      <csparam><type>va_list</type><parameter>src</parameter></csparam>
+     </csproto>
+     <csproto type="makro">
+      <csname><type>void</type><function>__va_copy</function></csname>
+      <csparam><type>va_list</type><parameter>dest</parameter></csparam>
+      <csparam><type>va_list</type><parameter>src</parameter></csparam>
+     </csproto>
+     <header>&stdarg.h;</header>
+     <conceptlist>
+      <concept>&mtsafe;</concept>
+      <concept>&assafe;</concept>
+      <concept>&acsafe;</concept>
+     </conceptlist>
+     <para>
+      <code>va_copy</code> makrosu, <type>va_list</type> türünden nesnelerin bir bütünleyen tür olmasa bile kopyalanmasını mümkün kılar. <parameter>dest</parameter> bağımsız değişken göstericisi, <parameter>src</parameter> göstericisi ile aynı bağımsız değişkeni göstermek üzere ilklendirilir.
+     </para>
+     <para>
+      <code>va_copy</code> &isoc;99'da eklenmiştir. &isoc;90'a ('gcc -std=c90') sıkı uyumluluk durumunda kullanılamaz. GCC, herhangi bir standart kipinde bir genişletme olarak <code>__va_copy</code> sağlar; GCC 3.0'dan önce, bu işlevsellik için tek makroydu.
+     </para>
+     <para>
+      Bu makrolar derleyici tarafından sağlandığından artık &glibc; tarafından sağlanmamaktadır.
+     </para>
+    </csynopsis>
+    <para>
+     <function>__va_copy</function> makrosu kullanılmak istenirse, bu makronun kullanılabilir olmayabileceği durumlara karşı hazırlıklı olunmalıdır. C99 öncesi taşınabilirlik konusunda endişe duyuluyorsa, basit atamanın geçersiz olduğu mimarilerde <function>__va_copy</function> makrosunun bulunmakta olduğu umularak yazılımda bu makronun daima şöyle yazılması gerekir:
+    </para>
+    <example>
+     <screen>{
   va_list ap, save;
   …
 #ifdef va_copy
@@ -583,28 +434,18 @@ pre-C99 portability:
 #endif
   …
 }
-</pre></div>
-
-
-<hr>
-</div>
-</div>
-<div class="subsection" xml:id="glibc-Variadic-Example">
-<div class="header">
-<para>
-Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#How-Variadic" accesskey="p" rel="prev">How Variadic Functions are Defined and Used</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Variadic-Functions" accesskey="u" rel="up">Variadic Functions</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
-</div>
-<span xml:id="glibc-Example-of-a-Variadic-Function"></span><h4 class="subsection">A.2.3 Example of a Variadic Function</title>
-
-<para>Here is a complete sample function that accepts a variable number of
-arguments.  The first argument to the function is the count of remaining
-arguments, which are added up and the result returned.  While trivial,
-this function is sufficient to illustrate how to use the variable
-arguments facility.
-</para>
-<div class="example">
-<pre class="example">
-#include &lt;stdarg.h&gt;
+</screen>
+    </example>
+   </sect2>
+  </sect1>
+  <sect1 xml:id="glibc-Variadic-Example">
+   <title>Değişkin İşlev Örneği</title>
+   <titleabbrev>Eksiksiz bir örnek.</titleabbrev>
+   <para>
+    Burada değişken sayıda bağımsız değişken kabul eden bir işlevle ilgili tam bir örneğe yer verilmiştir. İşlevin ilk bağımsız değişkeni diğer bağımsız değişkenlerin sayısını içermektedir. İşlev anlamsız olsa da değişken bağımsız değişken oluşumunun kullanımı hakkında fikir vermek için yeterlidir.
+   </para>
+   <example>
+    <screen>#include &lt;stdarg.h&gt;
 #include &lt;stdio.h&gt;
 
 int
@@ -613,769 +454,849 @@ add_em_up (int count,...)
   va_list ap;
   int i, sum;
 
-  va_start (ap, count);         /* <span class="roman">Initialize the argument list.</span> */
+  va_start (ap, count);         /* <replaceable>Bağımsız değişken listesini ilklendir.</replaceable> */
 
   sum = 0;
   for (i = 0; i &lt; count; i++)
-    sum += va_arg (ap, int);    /* <span class="roman">Get the next argument value.</span> */
+    sum += va_arg (ap, int);    /* <replaceable>Sonraki bağımsız değişkenin değerini al.</replaceable> */
 
-  va_end (ap);                  /* <span class="roman">Clean up.</span> */
+  va_end (ap);                  /* <replaceable>Temizlik.</replaceable> */
   return sum;
 }
 
 int
 main (void)
 {
-  /* <span class="roman">This call prints 16.</span> */
+  /* <replaceable>16 basar.</replaceable> */
   printf ("%d\n", add_em_up (3, 5, 5, 6));
 
-  /* <span class="roman">This call prints 55.</span> */
+  /* <replaceable>55 basar.</replaceable> */
   printf ("%d\n", add_em_up (10, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10));
 
   return 0;
 }
-</pre></div>
+</screen>
+   </example>
+  </sect1>
+ </chapter>
 
-<hr>
-</div>
-</div>
-<sect xml:id="glibc-Null-Pointer-Constant">
-<div class="header">
-<para>
-Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Important-Data-Types" accesskey="n" rel="next">Important Data Types</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Variadic-Functions" accesskey="p" rel="prev">Variadic Functions</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Language-Features" accesskey="u" rel="up">C Language Facilities in the Library</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
-</div>
-<span xml:id="glibc-Null-Pointer-Constant-1"></span><h3 class="section">A.3 Null Pointer Constant</title>
-<span xml:id="glibc-index-null-pointer-constant"></span>
+ <chapter xml:id="glibc-Null-Pointer-Constant">
+  <title>Boş Gösterici Sabiti</title>
+  <titleabbrev><code>NULL</code> makrosu.</titleabbrev>
+  <para>
+   <indexterm linkend="glibc-cp"><primary>boş gösterici sabiti (<literal>NULL</literal> makrosu)</primary></indexterm>
+   Boş gösterici sabiti herhangi bir gerçek nesneyi göstermemeyi garanti eder. <type>void&nbsp;*</type> türünde olduğundan herhangi bir gösterici değişkenine atanabilir. Bir boş gösterici sabitini yazmak için tercih edilen yol <varname>NULL</varname> ile yazmaktır.
+  </para>
+  <csynopsis>
+   <indexterm linkend="glibc-vr" xml:id="glibc-vr-NULL"><primary>NULL</primary></indexterm>
+   <csproto type="sabit">
+    <csname><ptr>void</ptr><function>NULL</function></csname>
+   </csproto>
+   <header>&stddef.h;</header>
+   <para>
+    Boş gösterici sabitidir.
+   </para>
+  </csynopsis>
+  <para>
+   Ayrıca, boş gösterici sabiti olarak <code>0</code> veya <code>(void&nbsp;*)0</code> kullanılabilir, ancak <varname>NULL</varname> kullanımı daha temizdir çünkü sabitin amacını daha belirgin yapar.
+  </para>
+  <para>
+   Boş gösterici sabiti işlev bağımsız değişkeni olarak kullanılırsa, tam taşınabilirlik açısından işlev için bir ilk örnek olduğundan emin olunmalıdır. Aksi takdirde, hedef makine iki farklı gösterici tanımına sahipse derleyici bu bağımsız değişken için hangi tanımı kullanacağını bilemeyecektir. Bu sorundan kaçınmak için açıkça bir tür dönüşümü ile sabit, doğru gösterici türüne atanmalıdır. Fakat bunu yapmak yerine çağrılan işlev için bir ilk örnek eklenmesi önerilir.
+  </para>
+ </chapter>
+ <chapter xml:id="glibc-Important-Data-Types">
+  <title>Önemli Veri Türleri</title>
+  <titleabbrev>Nesne boyutları için veri türleri.</titleabbrev>
+  <para>
+   <indexterm linkend="glibc-pg"><primary>stddef.h</primary></indexterm>
+   İki gösterici ile yapılan çıkartma işleminin sonucu C'de daima bir tamsayıdır, ancak doğru veri türü C derleyicisinden C derleyicisine değişir. Benzer şekilde, <function>sizeof</function>'un sonucunun veri türü de derleyiciler arasında değişiklik gösterir. &isoc; bu iki tür için standart isimler tanımlar, böylece bunlar kullanılarak taşınabilirlik sorunları çözülür. Bunlar &stddef.h; başlık dosyasında tanımlanmıştır.
+  </para>
+  <csynopsis>
+   <indexterm linkend="glibc-tp" xml:id="glibc-tp-ptrdiff_t"><primary>ptrdiff_t</primary></indexterm>
+   <csproto type="veri türü">
+    <csname><function>ptrdiff_t</function></csname>
+   </csproto>
+   <header>&stddef.h;</header>
+   <para>
+    Bu göstericiler arasındaki çıkartma işleminin sonucunun işaretli tamsayı türüdür. Örneğin, <code>char *p1, *p2;</code> bildirimiyle <code>p2 - p1</code> ifadesi <code>ptrdiff_t</code> türündedir. Bu muhtemelen standart işaretli tamsayı türlerinden biri (<type>short&nbsp;int</type>,  <type>int</type> veya <type>long&nbsp;int</type>) olacaktır, ancak sadece bu amaca yönelik olarak bir standart dışı tür de mevcut olabilir.
+   </para>
+  </csynopsis>
+  <csynopsis>
+   <indexterm linkend="glibc-tp" xml:id="glibc-tp-size_t"><primary>size_t</primary></indexterm>
+   <csproto type="veri türü">
+    <csname><function>size_t</function></csname>
+   </csproto>
+   <header>&stddef.h;</header>
+   <para>
+    Bu işaretsiz tamsayı türüdür ve nesnelerin boyutları için kullanılır. <operator>sizeof</operator> işlecinin sonucu bu türdendir ve <function>malloc</function>, <function>memcpy</function> gibi işlevler bağımsız değişkenlerinde nesne boyutlarını bu türde kabul eder. &glibc; kullanılan sistemlerde <code>size_t</code> ya <type>unsigned&nbsp;int</type> ya da <type>unsigned&nbsp;longt&nbsp;int</type> türüne eşdeğerdir.
+   </para>
+   <note><title>Kullanım Bilgisi:</title>
+    <para>
+     <code>size_t</code>, bir nesnenin boyutunu tutan herhangi bir değişken ya da bağımsız değişken bildiriminde önerilen yoldur.
+    </para>
+   </note>
+  </csynopsis>
+  <note><title>Uyumluluk Bilgisi:</title>
+   <para>
+    &isoc;'den önceki C gerçeklenimleri genellikle  nesne boyutları için <type>unsigned&nbsp;int</type> ve gösterici çıkartma ifadeleri için <type>int</type> türünü kullanmış, <type>size_t</type> ya da <type>ptrdiff_t</type> türünü tanımlamak gereği duymamıştı. Unix sistemleri <type>size_t</type> türünü &sys-types.h; dosyasında tanımladı ama bu tanım işaretli bir türdü.
+   </para>
+  </note>
+ </chapter>
 
-<para>The null pointer constant is guaranteed not to point to any real object.
-You can assign it to any pointer variable since it has type <code>void
-*</code>.  The preferred way to write a null pointer constant is with
-<code>NULL</code>.
-</para>
-<dl class="def">
-<dt xml:id="glibc-index-NULL"><span class="category">Macro: </span><span><emphasis>void *</emphasis> <strong>NULL</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-NULL" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-<para>This is a null pointer constant.
-</para></dd></dl>
-
-<para>You can also use <code>0</code> or <code>(void *)0</code> as a null pointer
-constant, but using <code>NULL</code> is cleaner because it makes the purpose
-of the constant more evident.
-</para>
-<para>If you use the null pointer constant as a function argument, then for
-complete portability you should make sure that the function has a
-prototype declaration.  Otherwise, if the target machine has two
-different pointer representations, the compiler won’t know which
-representation to use for that argument.  You can avoid the problem by
-explicitly casting the constant to the proper pointer type, but we
-recommend instead adding a prototype for the function you are calling.
-</para>
-<hr>
-</div>
-<sect xml:id="glibc-Important-Data-Types">
-<div class="header">
-<para>
-Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Data-Type-Measurements" accesskey="n" rel="next">Data Type Measurements</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Null-Pointer-Constant" accesskey="p" rel="prev">Null Pointer Constant</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Language-Features" accesskey="u" rel="up">C Language Facilities in the Library</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
-</div>
-<span xml:id="glibc-Important-Data-Types-1"></span><h3 class="section">A.4 Important Data Types</title>
-
-<para>The result of subtracting two pointers in C is always an integer, but the
-precise data type varies from C compiler to C compiler.  Likewise, the
-data type of the result of <code>sizeof</code> also varies between compilers.
-&isoc; defines standard aliases for these two types, so you can refer to
-them in a portable fashion.  They are defined in the header file
-<filename>stddef.h</filename>.
-<span xml:id="glibc-index-stddef_002eh"></span>
-</para>
-<dl class="def">
-<dt xml:id="glibc-index-ptrdiff_005ft"><span class="category">Data Type: </span><span><strong>ptrdiff_t</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-ptrdiff_005ft" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-<para>This is the signed integer type of the result of subtracting two
-pointers.  For example, with the declaration <code>char *p1, *p2;</code>, the
-expression <code>p2 - p1</code> is of type <code>ptrdiff_t</code>.  This will
-probably be one of the standard signed integer types (<code>short&nbsp;int</code>, <code>int</code> or <code>long&nbsp;int</code>), but might be a nonstandard
-type that exists only for this purpose.
-</para></dd></dl>
-
-<dl class="def">
-<dt xml:id="glibc-index-size_005ft"><span class="category">Data Type: </span><span><strong>size_t</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-size_005ft" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-<para>This is an unsigned integer type used to represent the sizes of objects.
-The result of the <code>sizeof</code> operator is of this type, and functions
-such as <code>malloc</code> (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Unconstrained-Allocation">Unconstrained Allocation</a>) and
-<code>memcpy</code> (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Copying-Strings-and-Arrays">Copying Strings and Arrays</a>) accept arguments of
-this type to specify object sizes.  On systems using the GNU C Library, this
-will be <code>unsigned&nbsp;int</code> or <code>unsigned&nbsp;long&nbsp;int</code>.
-</para>
-<para><strong>Usage Note:</strong> <code>size_t</code> is the preferred way to declare any
-arguments or variables that hold the size of an object.
-</para></dd></dl>
-
-<para><strong>Compatibility Note:</strong> Implementations of C before the advent of
-ISO&nbsp;C generally used <code>unsigned int</code> for representing object sizes
-and <code>int</code> for pointer subtraction results.  They did not
-necessarily define either <code>size_t</code> or <code>ptrdiff_t</code>.  Unix
-systems did define <code>size_t</code>, in <filename>sys/types.h</filename>, but the
-definition was usually a signed type.
-</para>
-<hr>
-</div>
-<sect xml:id="glibc-Data-Type-Measurements">
-<div class="header">
-<para>
-Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Important-Data-Types" accesskey="p" rel="prev">Important Data Types</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Language-Features" accesskey="u" rel="up">C Language Facilities in the Library</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
-</div>
-<span xml:id="glibc-Data-Type-Measurements-1"></span><h3 class="section">A.5 Data Type Measurements</title>
-
-<para>Most of the time, if you choose the proper C data type for each object
-in your program, you need not be concerned with just how it is
-represented or how many bits it uses.  When you do need such
-information, the C language itself does not provide a way to get it.
-The header files <filename>limits.h</filename> and <filename>float.h</filename> contain macros
-which give you this information in full detail.
-</para>
-
-<ul class="section-toc">
-<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Width-of-Type" accesskey="1">Width of an Integer Type</a></li>
-<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Range-of-Type" accesskey="2">Range of an Integer Type</a></li>
-<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Floating-Type-Macros" accesskey="3">Floating Type Macros</a></li>
-<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Structure-Measurement" accesskey="4">Structure Field Offset Measurement</a></li>
-</ul>
-<hr>
-<div class="subsection" xml:id="glibc-Width-of-Type">
-<div class="header">
-<para>
-Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Range-of-Type" accesskey="n" rel="next">Range of an Integer Type</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Data-Type-Measurements" accesskey="u" rel="up">Data Type Measurements</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
-</div>
-<span xml:id="glibc-Width-of-an-Integer-Type"></span><h4 class="subsection">A.5.1 Width of an Integer Type</title>
-<span xml:id="glibc-index-integer-type-width"></span>
-<span xml:id="glibc-index-width-of-integer-type"></span>
-<span xml:id="glibc-index-type-measurements_002c-integer"></span>
-<span xml:id="glibc-index-limits_002eh-4"></span>
-
-<para>TS 18661-1:2014 defines macros for the width of integer types (the
-number of value and sign bits).  One benefit of these macros is they
-can be used in <code>#if</code> preprocessor directives, whereas
-<code>sizeof</code> cannot.  The following macros are defined in
-<filename>limits.h</filename>.
-</para>
-<dl compact="compact">
-<dt xml:id="glibc-index-CHAR_005fWIDTH"><span><code>CHAR_WIDTH</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-CHAR_005fWIDTH" class="copiable-anchor"> ¶</a></span></dt>
-<dt xml:id="glibc-index-SCHAR_005fWIDTH"><span><code>SCHAR_WIDTH</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-SCHAR_005fWIDTH" class="copiable-anchor"> ¶</a></span></dt>
-<dt xml:id="glibc-index-UCHAR_005fWIDTH"><span><code>UCHAR_WIDTH</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-UCHAR_005fWIDTH" class="copiable-anchor"> ¶</a></span></dt>
-<dt xml:id="glibc-index-SHRT_005fWIDTH"><span><code>SHRT_WIDTH</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-SHRT_005fWIDTH" class="copiable-anchor"> ¶</a></span></dt>
-<dt xml:id="glibc-index-USHRT_005fWIDTH"><span><code>USHRT_WIDTH</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-USHRT_005fWIDTH" class="copiable-anchor"> ¶</a></span></dt>
-<dt xml:id="glibc-index-INT_005fWIDTH"><span><code>INT_WIDTH</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-INT_005fWIDTH" class="copiable-anchor"> ¶</a></span></dt>
-<dt xml:id="glibc-index-UINT_005fWIDTH"><span><code>UINT_WIDTH</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-UINT_005fWIDTH" class="copiable-anchor"> ¶</a></span></dt>
-<dt xml:id="glibc-index-LONG_005fWIDTH"><span><code>LONG_WIDTH</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LONG_005fWIDTH" class="copiable-anchor"> ¶</a></span></dt>
-<dt xml:id="glibc-index-ULONG_005fWIDTH"><span><code>ULONG_WIDTH</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-ULONG_005fWIDTH" class="copiable-anchor"> ¶</a></span></dt>
-<dt xml:id="glibc-index-LLONG_005fWIDTH"><span><code>LLONG_WIDTH</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LLONG_005fWIDTH" class="copiable-anchor"> ¶</a></span></dt>
-<dt xml:id="glibc-index-ULLONG_005fWIDTH"><span><code>ULLONG_WIDTH</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-ULLONG_005fWIDTH" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-<para>These are the widths of the types <code>char</code>, <code>signed char</code>,
-<code>unsigned char</code>, <code>short int</code>, <code>unsigned short int</code>,
-<code>int</code>, <code>unsigned int</code>, <code>long int</code>, <code>unsigned long
-int</code>, <code>long long int</code> and <code>unsigned long long int</code>,
-respectively.
-</para></dd>
-</dl>
-
-<para>Further such macros are defined in <filename>stdint.h</filename>.  Apart from those
-for types specified by width (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Integers">Integers</a>), the following are
-defined:
-</para>
-<dl compact="compact">
-<dt xml:id="glibc-index-INTPTR_005fWIDTH"><span><code>INTPTR_WIDTH</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-INTPTR_005fWIDTH" class="copiable-anchor"> ¶</a></span></dt>
-<dt xml:id="glibc-index-UINTPTR_005fWIDTH"><span><code>UINTPTR_WIDTH</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-UINTPTR_005fWIDTH" class="copiable-anchor"> ¶</a></span></dt>
-<dt xml:id="glibc-index-PTRDIFF_005fWIDTH"><span><code>PTRDIFF_WIDTH</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-PTRDIFF_005fWIDTH" class="copiable-anchor"> ¶</a></span></dt>
-<dt xml:id="glibc-index-SIG_005fATOMIC_005fWIDTH"><span><code>SIG_ATOMIC_WIDTH</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-SIG_005fATOMIC_005fWIDTH" class="copiable-anchor"> ¶</a></span></dt>
-<dt xml:id="glibc-index-SIZE_005fWIDTH"><span><code>SIZE_WIDTH</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-SIZE_005fWIDTH" class="copiable-anchor"> ¶</a></span></dt>
-<dt xml:id="glibc-index-WCHAR_005fWIDTH"><span><code>WCHAR_WIDTH</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-WCHAR_005fWIDTH" class="copiable-anchor"> ¶</a></span></dt>
-<dt xml:id="glibc-index-WINT_005fWIDTH"><span><code>WINT_WIDTH</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-WINT_005fWIDTH" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-<para>These are the widths of the types <code>intptr_t</code>, <code>uintptr_t</code>,
-<code>ptrdiff_t</code>, <code>sig_atomic_t</code>, <code>size_t</code>, <code>wchar_t</code>
-and <code>wint_t</code>, respectively.
-</para></dd>
-</dl>
-
-<para>A common reason that a program needs to know how many bits are in an
-integer type is for using an array of <code>unsigned long int</code> as a
-bit vector.  You can access the bit at index <var>n</var> with:
-</para>
-<div class="example">
-<pre class="example">vector[<var>n</var> / ULONG_WIDTH] &amp; (1UL &lt;&lt; (<var>n</var> % ULONG_WIDTH))
-</pre></div>
-
-<para>Before <code>ULONG_WIDTH</code> was a part of the C language,
-<code>CHAR_BIT</code> was used to compute the number of bits in an integer
-data type.
-</para>
-<dl class="def">
-<dt xml:id="glibc-index-CHAR_005fBIT"><span class="category">Macro: </span><span><emphasis>int</emphasis> <strong>CHAR_BIT</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-CHAR_005fBIT" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-<para>This is the number of bits in a <code>char</code>.  POSIX.1-2001 requires
-this to be 8.
-</para></dd></dl>
-
-<para>The number of bits in any data type <var>type</var> can be computed like
-this:
-</para>
-<div class="example">
-<pre class="example">sizeof (<var>type</var>) * CHAR_BIT
-</pre></div>
-
-<para>That expression includes padding bits as well as value and sign bits.
-On all systems supported by the GNU C Library, standard integer types other
-than <code>_Bool</code> do not have any padding bits.
-</para>
-<para><strong>Portability Note:</strong> One cannot actually easily compute the
-number of usable bits in a portable manner.
-</para>
-<hr>
-</div>
-<div class="subsection" xml:id="glibc-Range-of-Type">
-<div class="header">
-<para>
-Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Floating-Type-Macros" accesskey="n" rel="next">Floating Type Macros</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Width-of-Type" accesskey="p" rel="prev">Width of an Integer Type</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Data-Type-Measurements" accesskey="u" rel="up">Data Type Measurements</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
-</div>
-<span xml:id="glibc-Range-of-an-Integer-Type"></span><h4 class="subsection">A.5.2 Range of an Integer Type</title>
-<span xml:id="glibc-index-integer-type-range"></span>
-<span xml:id="glibc-index-range-of-integer-type"></span>
-<span xml:id="glibc-index-limits_002c-integer-types"></span>
-
-<para>Suppose you need to store an integer value which can range from zero to
-one million.  Which is the smallest type you can use?  There is no
-general rule; it depends on the C compiler and target machine.  You can
-use the ‘<filename>MIN</filename>’ and ‘<filename>MAX</filename>’ macros in <filename>limits.h</filename> to determine
-which type will work.
-</para>
-<para>Each signed integer type has a pair of macros which give the smallest
-and largest values that it can hold.  Each unsigned integer type has one
-such macro, for the maximum value; the minimum value is, of course,
-zero.
-</para>
-<para>The values of these macros are all integer constant expressions.  The
-‘<filename>MAX</filename>’ and ‘<filename>MIN</filename>’ macros for <code>char</code> and <code>short&nbsp;int</code> types have values of type <code>int</code>.  The ‘<filename>MAX</filename>’ and
-‘<filename>MIN</filename>’ macros for the other types have values of the same type
-described by the macro—thus, <code>ULONG_MAX</code> has type
-<code>unsigned&nbsp;long&nbsp;int</code>.
-</para>
-<dl compact="compact">
-<dt xml:id="glibc-index-SCHAR_005fMIN"><span><code>SCHAR_MIN</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-SCHAR_005fMIN" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-
-<para>This is the minimum value that can be represented by a <code>signed&nbsp;char</code>.
-</para>
-</dd>
-<dt xml:id="glibc-index-SCHAR_005fMAX"><span><code>SCHAR_MAX</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-SCHAR_005fMAX" class="copiable-anchor"> ¶</a></span></dt>
-<dt xml:id="glibc-index-UCHAR_005fMAX"><span><code>UCHAR_MAX</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-UCHAR_005fMAX" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-
-<para>These are the maximum values that can be represented by a
-<code>signed&nbsp;char</code> and <code>unsigned&nbsp;char</code>, respectively.
-</para>
-</dd>
-<dt xml:id="glibc-index-CHAR_005fMIN"><span><code>CHAR_MIN</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-CHAR_005fMIN" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-
-<para>This is the minimum value that can be represented by a <code>char</code>.
-It’s equal to <code>SCHAR_MIN</code> if <code>char</code> is signed, or zero
-otherwise.
-</para>
-</dd>
-<dt xml:id="glibc-index-CHAR_005fMAX"><span><code>CHAR_MAX</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-CHAR_005fMAX" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-
-<para>This is the maximum value that can be represented by a <code>char</code>.
-It’s equal to <code>SCHAR_MAX</code> if <code>char</code> is signed, or
-<code>UCHAR_MAX</code> otherwise.
-</para>
-</dd>
-<dt xml:id="glibc-index-SHRT_005fMIN"><span><code>SHRT_MIN</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-SHRT_005fMIN" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-
-<para>This is the minimum value that can be represented by a <code>signed&nbsp;short&nbsp;int</code>.  On most machines that the GNU C Library runs on,
-<code>short</code> integers are 16-bit quantities.
-</para>
-</dd>
-<dt xml:id="glibc-index-SHRT_005fMAX"><span><code>SHRT_MAX</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-SHRT_005fMAX" class="copiable-anchor"> ¶</a></span></dt>
-<dt xml:id="glibc-index-USHRT_005fMAX"><span><code>USHRT_MAX</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-USHRT_005fMAX" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-
-<para>These are the maximum values that can be represented by a
-<code>signed&nbsp;short&nbsp;int</code> and <code>unsigned&nbsp;short&nbsp;int</code>,
-respectively.
-</para>
-</dd>
-<dt xml:id="glibc-index-INT_005fMIN"><span><code>INT_MIN</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-INT_005fMIN" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-
-<para>This is the minimum value that can be represented by a <code>signed&nbsp;int</code>.  On most machines that the GNU C Library runs on, an <code>int</code> is
-a 32-bit quantity.
-</para>
-</dd>
-<dt xml:id="glibc-index-INT_005fMAX"><span><code>INT_MAX</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-INT_005fMAX" class="copiable-anchor"> ¶</a></span></dt>
-<dt xml:id="glibc-index-UINT_005fMAX"><span><code>UINT_MAX</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-UINT_005fMAX" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-
-<para>These are the maximum values that can be represented by, respectively,
-the type <code>signed&nbsp;int</code> and the type <code>unsigned&nbsp;int</code>.
-</para>
-</dd>
-<dt xml:id="glibc-index-LONG_005fMIN"><span><code>LONG_MIN</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LONG_005fMIN" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-
-<para>This is the minimum value that can be represented by a <code>signed&nbsp;long&nbsp;int</code>.  On most machines that the GNU C Library runs on, <code>long</code>
-integers are 32-bit quantities, the same size as <code>int</code>.
-</para>
-</dd>
-<dt xml:id="glibc-index-LONG_005fMAX"><span><code>LONG_MAX</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LONG_005fMAX" class="copiable-anchor"> ¶</a></span></dt>
-<dt xml:id="glibc-index-ULONG_005fMAX"><span><code>ULONG_MAX</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-ULONG_005fMAX" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-
-<para>These are the maximum values that can be represented by a
-<code>signed&nbsp;long&nbsp;int</code> and <code>unsigned long int</code>, respectively.
-</para>
-</dd>
-<dt xml:id="glibc-index-LLONG_005fMIN"><span><code>LLONG_MIN</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LLONG_005fMIN" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-
-<para>This is the minimum value that can be represented by a <code>signed&nbsp;long&nbsp;long&nbsp;int</code>.  On most machines that the GNU C Library runs on,
-<code>long&nbsp;long</code> integers are 64-bit quantities.
-</para>
-</dd>
-<dt xml:id="glibc-index-LLONG_005fMAX"><span><code>LLONG_MAX</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LLONG_005fMAX" class="copiable-anchor"> ¶</a></span></dt>
-<dt xml:id="glibc-index-ULLONG_005fMAX"><span><code>ULLONG_MAX</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-ULLONG_005fMAX" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-
-<para>These are the maximum values that can be represented by a <code>signed
-long long int</code> and <code>unsigned long long int</code>, respectively.
-</para>
-</dd>
-<dt xml:id="glibc-index-LONG_005fLONG_005fMIN"><span><code>LONG_LONG_MIN</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LONG_005fLONG_005fMIN" class="copiable-anchor"> ¶</a></span></dt>
-<dt xml:id="glibc-index-LONG_005fLONG_005fMAX"><span><code>LONG_LONG_MAX</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LONG_005fLONG_005fMAX" class="copiable-anchor"> ¶</a></span></dt>
-<dt xml:id="glibc-index-ULONG_005fLONG_005fMAX"><span><code>ULONG_LONG_MAX</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-ULONG_005fLONG_005fMAX" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-<para>These are obsolete names for <code>LLONG_MIN</code>, <code>LLONG_MAX</code>, and
-<code>ULLONG_MAX</code>.  They are only available if <code>_GNU_SOURCE</code> is
-defined (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Feature-Test-Macros">Feature Test Macros</a>).  In GCC versions prior to 3.0,
-these were the only names available.
-</para>
-</dd>
-<dt xml:id="glibc-index-WCHAR_005fMAX-1"><span><code>WCHAR_MAX</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-WCHAR_005fMAX-1" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-
-<para>This is the maximum value that can be represented by a <code>wchar_t</code>.
-See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Extended-Char-Intro">Introduction to Extended Characters</a>.
-</para></dd>
-</dl>
-
-<para>The header file <filename>limits.h</filename> also defines some additional constants
-that parameterize various operating system and file system limits.  These
-constants are described in <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#System-Configuration">System Configuration Parameters</a>.
-</para>
-<hr>
-</div>
-<div class="subsection" xml:id="glibc-Floating-Type-Macros">
-<div class="header">
-<para>
-Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Structure-Measurement" accesskey="n" rel="next">Structure Field Offset Measurement</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Range-of-Type" accesskey="p" rel="prev">Range of an Integer Type</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Data-Type-Measurements" accesskey="u" rel="up">Data Type Measurements</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
-</div>
-<span xml:id="glibc-Floating-Type-Macros-1"></span><h4 class="subsection">A.5.3 Floating Type Macros</title>
-<span xml:id="glibc-index-floating-type-measurements"></span>
-<span xml:id="glibc-index-measurements-of-floating-types"></span>
-<span xml:id="glibc-index-type-measurements_002c-floating"></span>
-<span xml:id="glibc-index-limits_002c-floating-types"></span>
-
-<para>The specific representation of floating point numbers varies from
-machine to machine.  Because floating point numbers are represented
-internally as approximate quantities, algorithms for manipulating
-floating point data often need to take account of the precise details of
-the machine’s floating point representation.
-</para>
-<para>Some of the functions in the C library itself need this information; for
-example, the algorithms for printing and reading floating point numbers
-(see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#I_002fO-on-Streams">Input/Output on Streams</a>) and for calculating trigonometric and
-irrational functions (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Mathematics">Mathematics</a>) use it to avoid round-off
-error and loss of accuracy.  User programs that implement numerical
-analysis techniques also often need this information in order to
-minimize or compute error bounds.
-</para>
-<para>The header file <filename>float.h</filename> describes the format used by your
-machine.
-</para>
-
-<ul class="section-toc">
-<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Floating-Point-Concepts" accesskey="1">Floating Point Representation Concepts</a></li>
-<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Floating-Point-Parameters" accesskey="2">Floating Point Parameters</a></li>
-<li><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#IEEE-Floating-Point" accesskey="3">IEEE Floating Point</a></li>
-</ul>
-<hr>
-<div class="subsubsection" xml:id="glibc-Floating-Point-Concepts">
-<div class="header">
-<para>
-Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Floating-Point-Parameters" accesskey="n" rel="next">Floating Point Parameters</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Floating-Type-Macros" accesskey="u" rel="up">Floating Type Macros</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
-</div>
-<span xml:id="glibc-Floating-Point-Representation-Concepts"></span><h4 class="subsubsection">A.5.3.1 Floating Point Representation Concepts</title>
-
-<para>This section introduces the terminology for describing floating point
-representations.
-</para>
-<para>You are probably already familiar with most of these concepts in terms
-of scientific or exponential notation for floating point numbers.  For
-example, the number <code>123456.0</code> could be expressed in exponential
-notation as <code>1.23456e+05</code>, a shorthand notation indicating that the
-mantissa <code>1.23456</code> is multiplied by the base <code>10</code> raised to
-power <code>5</code>.
-</para>
-<para>More formally, the internal representation of a floating point number
-can be characterized in terms of the following parameters:
-</para>
-<ul>
-<li> <span xml:id="glibc-index-sign-_0028of-floating-point-number_0029"></span>
-The <emphasis>sign</emphasis> is either <code>-1</code> or <code>1</code>.
-
-</li><li> <span xml:id="glibc-index-base-_0028of-floating-point-number_0029"></span>
-<span xml:id="glibc-index-radix-_0028of-floating-point-number_0029"></span>
-The <emphasis>base</emphasis> or <emphasis>radix</emphasis> for exponentiation, an integer greater
-than <code>1</code>.  This is a constant for a particular representation.
-
-</li><li> <span xml:id="glibc-index-exponent-_0028of-floating-point-number_0029"></span>
-The <emphasis>exponent</emphasis> to which the base is raised.  The upper and lower
-bounds of the exponent value are constants for a particular
-representation.
-
-<span xml:id="glibc-index-bias-_0028of-floating-point-number-exponent_0029"></span>
-<para>Sometimes, in the actual bits representing the floating point number,
-the exponent is <emphasis>biased</emphasis> by adding a constant to it, to make it
-always be represented as an unsigned quantity.  This is only important
-if you have some reason to pick apart the bit fields making up the
-floating point number by hand, which is something for which the GNU C Library
-provides no support.  So this is ignored in the discussion that
-follows.
-</para>
-</li><li> <span xml:id="glibc-index-mantissa-_0028of-floating-point-number_0029"></span>
-<span xml:id="glibc-index-significand-_0028of-floating-point-number_0029"></span>
-The <emphasis>mantissa</emphasis> or <emphasis>significand</emphasis> is an unsigned integer which is a
-part of each floating point number.
-
-</li><li> <span xml:id="glibc-index-precision-_0028of-floating-point-number_0029"></span>
-The <emphasis>precision</emphasis> of the mantissa.  If the base of the representation
-is <var>b</var>, then the precision is the number of base-<var>b</var> digits in
-the mantissa.  This is a constant for a particular representation.
-
-<span xml:id="glibc-index-hidden-bit-_0028of-floating-point-number-mantissa_0029"></span>
-<para>Many floating point representations have an implicit <emphasis>hidden bit</emphasis> in
-the mantissa.  This is a bit which is present virtually in the mantissa,
-but not stored in memory because its value is always 1 in a normalized
-number.  The precision figure (see above) includes any hidden bits.
-</para>
-<para>Again, the GNU C Library provides no facilities for dealing with such
-low-level aspects of the representation.
-</para></li></ul>
-
-<para>The mantissa of a floating point number represents an implicit fraction
-whose denominator is the base raised to the power of the precision.  Since
-the largest representable mantissa is one less than this denominator, the
-value of the fraction is always strictly less than <code>1</code>.  The
-mathematical value of a floating point number is then the product of this
-fraction, the sign, and the base raised to the exponent.
-</para>
-<span xml:id="glibc-index-normalized-floating-point-number"></span>
-<para>We say that the floating point number is <emphasis>normalized</emphasis> if the
-fraction is at least <code>1/<var>b</var></code>, where <var>b</var> is the base.  In
-other words, the mantissa would be too large to fit if it were
-multiplied by the base.  Non-normalized numbers are sometimes called
-<emphasis>denormal</emphasis>; they contain less precision than the representation
-normally can hold.
-</para>
-<para>If the number is not normalized, then you can subtract <code>1</code> from the
-exponent while multiplying the mantissa by the base, and get another
-floating point number with the same value.  <emphasis>Normalization</emphasis> consists
-of doing this repeatedly until the number is normalized.  Two distinct
-normalized floating point numbers cannot be equal in value.
-</para>
-<para>(There is an exception to this rule: if the mantissa is zero, it is
-considered normalized.  Another exception happens on certain machines
-where the exponent is as small as the representation can hold.  Then
-it is impossible to subtract <code>1</code> from the exponent, so a number
-may be normalized even if its fraction is less than <code>1/<var>b</var></code>.)
-</para>
-<hr>
-</div>
-<div class="subsubsection" xml:id="glibc-Floating-Point-Parameters">
-<div class="header">
-<para>
-Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#IEEE-Floating-Point" accesskey="n" rel="next">IEEE Floating Point</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Floating-Point-Concepts" accesskey="p" rel="prev">Floating Point Representation Concepts</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Floating-Type-Macros" accesskey="u" rel="up">Floating Type Macros</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
-</div>
-<span xml:id="glibc-Floating-Point-Parameters-1"></span><h4 class="subsubsection">A.5.3.2 Floating Point Parameters</title>
-
-<span xml:id="glibc-index-float_002eh"></span>
-<para>These macro definitions can be accessed by including the header file
-<filename>float.h</filename> in your program.
-</para>
-<para>Macro names starting with ‘<filename>FLT_</filename>’ refer to the <code>float</code> type,
-while names beginning with ‘<filename>DBL_</filename>’ refer to the <code>double</code> type
-and names beginning with ‘<filename>LDBL_</filename>’ refer to the <code>long double</code>
-type.  (If GCC does not support <code>long double</code> as a distinct data
-type on a target machine then the values for the ‘<filename>LDBL_</filename>’ constants
-are equal to the corresponding constants for the <code>double</code> type.)
-</para>
-<para>Of these macros, only <code>FLT_RADIX</code> is guaranteed to be a constant
-expression.  The other macros listed here cannot be reliably used in
-places that require constant expressions, such as ‘<filename>#if</filename>’
-preprocessing directives or in the dimensions of static arrays.
-</para>
-<para>Although the ISO&nbsp;C standard specifies minimum and maximum values for
-most of these parameters, the GNU C implementation uses whatever values
-describe the floating point representation of the target machine.  So in
-principle GNU C actually satisfies the ISO&nbsp;C requirements only if the
-target machine is suitable.  In practice, all the machines currently
-supported are suitable.
-</para>
-<dl compact="compact">
-<dt xml:id="glibc-index-FLT_005fROUNDS"><span><code>FLT_ROUNDS</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-FLT_005fROUNDS" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-<para>This value characterizes the rounding mode for floating point addition.
-The following values indicate standard rounding modes:
-</para>
-
-<dl compact="compact">
-<dt><span><code>-1</code></span></dt>
-<dd><para>The mode is indeterminable.
-</para></dd>
-<dt><span><code>0</code></span></dt>
-<dd><para>Rounding is towards zero.
-</para></dd>
-<dt><span><code>1</code></span></dt>
-<dd><para>Rounding is to the nearest number.
-</para></dd>
-<dt><span><code>2</code></span></dt>
-<dd><para>Rounding is towards positive infinity.
-</para></dd>
-<dt><span><code>3</code></span></dt>
-<dd><para>Rounding is towards negative infinity.
-</para></dd>
-</dl>
-
-<para>Any other value represents a machine-dependent nonstandard rounding
-mode.
-</para>
-<para>On most machines, the value is <code>1</code>, in accordance with the IEEE
-standard for floating point.
-</para>
-<para>Here is a table showing how certain values round for each possible value
-of <code>FLT_ROUNDS</code>, if the other aspects of the representation match
-the IEEE single-precision standard.
-</para>
-<div class="example">
-<pre class="example">                0      1             2             3
+ <chapter xml:id="glibc-Data-Type-Measurements">
+  <title>Veri Türü Ölçüleri</title>
+  <titleabbrev>Veri türü bağımsız değişkenlerinin gösterimleri.</titleabbrev>
+  <preliminary>
+   <para>
+    Çoğu zaman, yazılımlarda her nesne için uygun bir C veri türü seçilir ve nasıl gösterildiği veya kaç bit kullandığıyla ilgilenilmez. Böyle bir bilgiye ihtiyaç duyulursa C dilinin kendisi bu bilgiyi sağlamaz. &limits.h; ve &float.h; başlık dosyaları bu bilgiyi tüm ayrıntıları ile veren makrolar içerir.
+   </para>
+  </preliminary>
+  <sect1 xml:id="glibc-Width-of-Type">
+   <title>Tamsayı Veri Türünün Genişliğinin Hesaplanması</title>
+   <titleabbrev>Bir tamsayı türü kaç bitle tutulur?</titleabbrev>
+   <para>
+    <indexterm linkend="glibc-cp"><primary>tamsayı</primary><secondary>türün genişliği</secondary></indexterm>
+    <indexterm linkend="glibc-cp"><primary>veri türü ölçüleri</primary><secondary>tamsayılar</secondary></indexterm>
+    TS 18661-1:2014, tamsayı türlerinin (değer sayısı ve işaret bitleri) genişliği için makrolar tanımlar. Bu makroların bir yararı, <code>#if</code> önişlemci yönergelerinde <operator>sizeof</operator> kullanılamazken bunların kullanılabilmesidir. Aşağıdaki makrolar, &limits.h; başlık dosyasında tanımlanmıştır.
+   </para>
+   <csynopsis>
+    <indexterm linkend="glibc-vr" xml:id="glibc-vr-CHAR_WIDTH"><primary>CHAR_WIDTH</primary></indexterm>
+    <csproto type="makro">
+     <csname><function>CHAR_WIDTH</function></csname>
+    </csproto>
+    <indexterm linkend="glibc-vr" xml:id="glibc-vr-SCHAR_WIDTH"><primary>SCHAR_WIDTH</primary></indexterm>
+    <csproto type="makro">
+     <csname><function>SCHAR_WIDTH</function></csname>
+    </csproto>
+    <indexterm linkend="glibc-vr" xml:id="glibc-vr-UCHAR_WIDTH"><primary>UCHAR_WIDTH</primary></indexterm>
+    <csproto type="makro">
+     <csname><function>UCHAR_WIDTH</function></csname>
+    </csproto>
+    <indexterm linkend="glibc-vr" xml:id="glibc-vr-SHRT_WIDTH"><primary>SHRT_WIDTH</primary></indexterm>
+    <csproto type="makro">
+     <csname><function>SHRT_WIDTH</function></csname>
+    </csproto>
+    <indexterm linkend="glibc-vr" xml:id="glibc-vr-USHRT_WIDTH"><primary>USHRT_WIDTH</primary></indexterm>
+    <csproto type="makro">
+     <csname><function>USHRT_WIDTH</function></csname>
+    </csproto>
+    <indexterm linkend="glibc-vr" xml:id="glibc-vr-INT_WIDTH"><primary>INT_WIDTH</primary></indexterm>
+    <csproto type="makro">
+     <csname><function>INT_WIDTH</function></csname>
+    </csproto>
+    <indexterm linkend="glibc-vr" xml:id="glibc-vr-UINT_WIDTH"><primary>UINT_WIDTH</primary></indexterm>
+    <csproto type="makro">
+     <csname><function>UINT_WIDTH</function></csname>
+    </csproto>
+    <indexterm linkend="glibc-vr" xml:id="glibc-vr-LONG_WIDTH"><primary>LONG_WIDTH</primary></indexterm>
+    <csproto type="makro">
+     <csname><function>LONG_WIDTH</function></csname>
+    </csproto>
+    <indexterm linkend="glibc-vr" xml:id="glibc-vr-ULONG_WIDTH"><primary>ULONG_WIDTH</primary></indexterm>
+    <csproto type="makro">
+     <csname><function>ULONG_WIDTH</function></csname>
+    </csproto>
+    <indexterm linkend="glibc-vr" xml:id="glibc-vr-LLONG_WIDTH"><primary>LLONG_WIDTH</primary></indexterm>
+    <csproto type="makro">
+     <csname><function>LLONG_WIDTH</function></csname>
+    </csproto>
+    <indexterm linkend="glibc-vr" xml:id="glibc-vr-ULLONG_WIDTH"><primary>ULLONG_WIDTH</primary></indexterm>
+    <csproto type="makro">
+     <csname><function>ULLONG_WIDTH</function></csname>
+    </csproto>
+    <header>&limits.h;</header>
+    <para>
+     Bunlar sırayla <type>char</type>, <type>signed char</type>, <type>unsigned char</type>, <type>short int</type>, <type>unsigned short int</type>, <type>int</type>, <type>unsigned int</type>, <type>long int</type>, <type>unsigned long int</type>, <type>long long int</type> ve <type>unsigned long long int</type> veri türlerinin genişlikleridir.
+    </para>
+   </csynopsis>
+   <para>
+    Veri türleri ile ilgili diğer makrolar &stdint.h; başlık dosyasında tanımlanmıştır. Genişliğe göre belirtilen türlerden başka (bkz. <xref linkend="glibc-Integers"/>), aşağıdakiler de tanımlanmıştır:
+   </para>
+   <csynopsis>
+    <indexterm linkend="glibc-vr" xml:id="glibc-vr-INTPTR_WIDTH"><primary>INTPTR_WIDTH</primary></indexterm>
+    <csproto type="makro">
+     <csname><function>INTPTR_WIDTH</function></csname>
+    </csproto>
+    <indexterm linkend="glibc-vr" xml:id="glibc-vr-UINTPTR_WIDTH"><primary>UINTPTR_WIDTH</primary></indexterm>
+    <csproto type="makro">
+     <csname><function>UINTPTR_WIDTH</function></csname>
+    </csproto>
+    <indexterm linkend="glibc-vr" xml:id="glibc-vr-PTRDIFF_WIDTH"><primary>PTRDIFF_WIDTH</primary></indexterm>
+    <csproto type="makro">
+     <csname><function>PTRDIFF_WIDTH</function></csname>
+    </csproto>
+    <indexterm linkend="glibc-vr" xml:id="glibc-vr-SIG_ATOMIC_WIDTH"><primary>SIG_ATOMIC_WIDTH</primary></indexterm>
+    <csproto type="makro">
+     <csname><function>SIG_ATOMIC_WIDTH</function></csname>
+    </csproto>
+    <indexterm linkend="glibc-vr" xml:id="glibc-vr-SIZE_WIDTH"><primary>SIZE_WIDTH</primary></indexterm>
+    <csproto type="makro">
+     <csname><function>SIZE_WIDTH</function></csname>
+    </csproto>
+    <indexterm linkend="glibc-vr" xml:id="glibc-vr-WCHAR_WIDTH"><primary>WCHAR_WIDTH</primary></indexterm>
+    <csproto type="makro">
+     <csname><function>WCHAR_WIDTH</function></csname>
+    </csproto>
+    <indexterm linkend="glibc-vr" xml:id="glibc-vr-WINT_WIDTH"><primary>WINT_WIDTH</primary></indexterm>
+    <csproto type="makro">
+     <csname><function>WINT_WIDTH</function></csname>
+    </csproto>
+    <header>&stdint.h;</header>
+    <para>
+     Bunlar sırasıyla <type>intptr_t</type>, <type>uintptr_t</type>, <type>ptrdiff_t</type>, <type>sig_atomic_t</type>, <type>size_t</type>, <type>wchar_t</type> ve <type>wint_t</type> türlerinin genişlikleridir.
+    </para>
+   </csynopsis>
+   <para>
+    Çok bilinen sebeplerle bir yazılım bir tamsayı türünde kaç bit bulunduğunu bilmeye ihtiyaç duyabilir. Örneğin, <type>long int</type> türünde bir dizi bir bit vektörü olarak kullanılıyorsa, bitlere <replaceable>n</replaceable> indisi ile aşağıdaki gibi erişilebilir:
+   </para>
+   <literallayout class="monospaced">vector[<replaceable>n</replaceable> / ULONG_WIDTH] &amp; (1UL &lt;&lt; (<replaceable>n</replaceable> % ULONG_WIDTH))
+</literallayout>
+   <para>
+    <varname>ULONG_WIDTH</varname>, C dilinin bir parçası olmadan önce, bir tamsayı veri türündeki bit sayısını hesaplamak için <varname>CHAR_BIT</varname> kullanılıyordu.
+   </para>
+   <csynopsis>
+    <indexterm linkend="glibc-vr" xml:id="glibc-vr-CHAR_BIT"><primary>CHAR_BIT</primary></indexterm>
+    <csproto type="makro">
+     <csname><type>int</type><function>CHAR_BIT</function></csname>
+    </csproto>
+    <header>&stdint.h;</header>
+    <para>
+     <type>char</type> türünün bit sayısıdır.  POSIX.1-2001 bunun 8 bit olmasını gerektirir.
+    </para>
+   </csynopsis>
+   <para>
+    Herhangi bir veri <replaceable>tür</replaceable>ünün bit sayısı şöyle hesaplanır:
+   </para>
+   <literallayout class="monospaced">sizeof (<replaceable>tür</replaceable>) * CHAR_BIT
+</literallayout>
+   <para>
+    Bu ifade, dolgu bitlerinin yanı sıra değer ve işaret bitlerini içerir. &glibc; tarafından desteklenen tüm sistemlerde, <type>_Bool</type> dışındaki standart tamsayı türlerinde dolgu biti yoktur.
+   </para>
+   <note><title>Taşınabilirlik Bilgisi:</title>
+    <para>
+     Kullanılabilir bitlerin sayısı taşınabilir bir şekilde kolayca hesaplanamaz.
+    </para>
+   </note>
+  </sect1>
+  <sect1 xml:id="glibc-Range-of-Type">
+   <title>Bir Tamsayı Türün Aralığı</title>
+   <titleabbrev>Bir tamsayı türün tutabileceği en küçük ve en büyük değer nedir?</titleabbrev>
+   <para>
+    <indexterm linkend="glibc-cp"><primary>tamsayı</primary><secondary>tür aralığı</secondary></indexterm>
+    <indexterm linkend="glibc-cp"><primary>sınırlar</primary><secondary>tamsayı türler</secondary></indexterm>
+    "Sıfırdan bir milyona kadar bir aralıktaki tamsayı değerleri saklanmak istenirse, kullanabilecek en küçük tür hangisidir?" sorusunun yanıtı "genel bir kural yoktur" olurdu; C derleyicisine ve hedef makineye bağlıdır. Hangi tür ile çalışılacağını bulmak için &limits.h; başlık dosyasında tanımlanmış olan <varname>MIN</varname> ve <varname>MAX</varname> makroları kullanılabilir.
+   </para>
+   <para>
+    Her işaretli tamsayı türü için, tutabileceği en küçük ve en büyük değerleri veren bir çift makro vardır. Her işaretsiz tamsayı türü için de böyle makrolar vardır; en büyük değer için, en küçük değer yani sıfır için.
+   </para>
+   <para>
+    Bu makroların değerlerinin hepsi tamsayı sabit ifadeleridir. <type>char</type> ve <type>short&nbsp;int</type> için <varname>MAX</varname> ve <varname>MIN</varname> makroları <type>int</type> türünden değerlere sahiptir. Diğer türlerin <varname>MAX</varname> ve <varname>MIN</varname> makrolarının değerleri de makro tarafından açıklananla aynı türde değerlerdir. Örneğin, <varname>ULONG_MAX</varname> makrosunun değeri <type>unsigned&nbsp;long&nbsp;int</type> türündendir.
+   </para>
+   <csynopsis>
+    <indexterm linkend="glibc-vr" xml:id="glibc-vr-SCHAR_MIN"><primary>SCHAR_MIN</primary></indexterm>
+    <csproto type="makro">
+     <csname><function>SCHAR_MIN</function></csname>
+    </csproto>
+    <header>&limits.h;</header>
+    <para>
+     <type>signed&nbsp;char</type> tarafından gösterilebilen en küçük değerdir.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-vr" xml:id="glibc-vr-SCHAR_MAX"><primary>SCHAR_MAX</primary></indexterm>
+    <csproto type="makro">
+     <csname><function>SCHAR_MAX</function></csname>
+    </csproto>
+    <indexterm linkend="glibc-vr" xml:id="glibc-vr-UCHAR_MAX"><primary>UCHAR_MAX</primary></indexterm>
+    <csproto type="makro">
+     <csname><function>UCHAR_MAX</function></csname>
+    </csproto>
+    <header>&limits.h;</header>
+    <para>
+     Sırasıyla <type>signed&nbsp;char</type> ve <type>unsigned&nbsp;char</type> tarafından gösterilebilen en büyük değerlerdir.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-vr" xml:id="glibc-vr-CHAR_MIN"><primary>CHAR_MIN</primary></indexterm>
+    <csproto type="makro">
+     <csname><function>CHAR_MIN</function></csname>
+    </csproto>
+    <header>&limits.h;</header>
+    <para>
+     <type>char</type> tarafından gösterilebilen en küçük değerdir. <type>char</type> işaretli ise <varname>SCHAR_MIN</varname>'e, değilse sıfıra eşittir.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-vr" xml:id="glibc-vr-CHAR_MAX"><primary>CHAR_MAX</primary></indexterm>
+    <csproto type="makro">
+     <csname><function>CHAR_MAX</function></csname>
+    </csproto>
+    <header>&limits.h;</header>
+    <para>
+     <type>char</type> tarafından gösterilebilen en büyük değerdir. <type>char</type> işaretli ise <varname>SCHAR_MAX</varname>'a, değilse <varname>UCHAR_MAX</varname>'a eşittir.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-vr" xml:id="glibc-vr-SHRT_MIN"><primary>SHRT_MIN</primary></indexterm>
+    <csproto type="makro">
+     <csname><function>SHRT_MIN</function></csname>
+    </csproto>
+    <header>&limits.h;</header>
+    <para>
+     <type>signed&nbsp;short&nbsp;int</type> tarafından gösterilebilen en küçük değerdir. &glibc;nin üzerinde çalıştığı çoğu makinede, kısa tamsayılar 16 bitlik niceliklerdir.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-vr" xml:id="glibc-vr-SHRT_MAX"><primary>SHRT_MAX</primary></indexterm>
+    <csproto type="makro">
+     <csname><function>SHRT_MAX</function></csname>
+    </csproto>
+    <indexterm linkend="glibc-vr" xml:id="glibc-vr-USHRT_MAX"><primary>USHRT_MAX</primary></indexterm>
+    <csproto type="makro">
+     <csname><function>USHRT_MAX</function></csname>
+    </csproto>
+    <header>&limits.h;</header>
+    <para>
+     Sırasıyla <type>signed&nbsp;short&nbsp;int</type> ve <type>unsigned&nbsp;short&nbsp;int</type> tarafından gösterilebilen en büyük değerlerdir.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-vr" xml:id="glibc-vr-INT_MIN"><primary>INT_MIN</primary></indexterm>
+    <csproto type="makro">
+     <csname><function>INT_MIN</function></csname>
+    </csproto>
+    <header>&limits.h;</header>
+    <para>
+     <type>signed&nbsp;int</type> tarafından gösterilebilen en küçük değerdir. &glibc;nin üzerinde çalıştığı çoğu makinede, <type>int</type> değerler 32 bitlik niceliklerdir.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-vr" xml:id="glibc-vr-INT_MAX"><primary>INT_MAX</primary></indexterm>
+    <csproto type="makro">
+     <csname><function>INT_MAX</function></csname>
+    </csproto>
+    <indexterm linkend="glibc-vr" xml:id="glibc-vr-UINT_MAX"><primary>UINT_MAX</primary></indexterm>
+    <csproto type="makro">
+     <csname><function>UINT_MAX</function></csname>
+    </csproto>
+    <header>&limits.h;</header>
+    <para>
+     Sırasıyla <type>signed&nbsp;int</type> ve <type>unsigned&nbsp;int</type> tarafından gösterilebilen en büyük değerlerdir.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-vr" xml:id="glibc-vr-LONG_MIN"><primary>LONG_MIN</primary></indexterm>
+    <csproto type="makro">
+     <csname><function>LONG_MIN</function></csname>
+    </csproto>
+    <header>&limits.h;</header>
+    <para>
+     <type>signed&nbsp;long&nbsp;int</type> tarafından gösterilebilen en küçük değerdir. &glibc;nin üzerinde çalıştığı çoğu makinede, <type>long</type> değerler <code>int</code> ile aynı boyutta 32 bitlik niceliklerdir.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-vr" xml:id="glibc-vr-LONG_MAX"><primary>LONG_MAX</primary></indexterm>
+    <csproto type="makro">
+     <csname><function>LONG_MAX</function></csname>
+    </csproto>
+    <indexterm linkend="glibc-vr" xml:id="glibc-vr-ULONG_MAX"><primary>ULONG_MAX</primary></indexterm>
+    <csproto type="makro">
+     <csname><function>ULONG_MAX</function></csname>
+    </csproto>
+    <header>&limits.h;</header>
+    <para>
+     Sırasıyla <type>signed&nbsp;long&nbsp;int</type> ve <type>unsigned&nbsp;long&nbsp;int</type> tarafından gösterilebilen en büyük değerlerdir.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-vr" xml:id="glibc-vr-LLONG_MIN"><primary>LLONG_MIN</primary></indexterm>
+    <csproto type="makro">
+     <csname><function>LLONG_MIN</function></csname>
+    </csproto>
+    <header>&limits.h;</header>
+    <para>
+     <type>signed&nbsp;long&nbsp;long&nbsp;int</type> tarafından gösterilebilen en küçük değerdir. &glibc;nin üzerinde çalıştığı çoğu makinede, <type>long&nbsp;long</type> değerler 64 bitlik niceliklerdir.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-vr" xml:id="glibc-vr-LLONG_MAX"><primary>LLONG_MAX</primary></indexterm>
+    <csproto type="makro">
+     <csname><function>LLONG_MAX</function></csname>
+    </csproto>
+    <indexterm linkend="glibc-vr" xml:id="glibc-vr-ULLONG_MAX"><primary>ULLONG_MAX</primary></indexterm>
+    <csproto type="makro">
+     <csname><function>ULLONG_MAX</function></csname>
+    </csproto>
+    <header>&limits.h;</header>
+    <para>
+     Sırasıyla <type>signed&nbsp;long&nbsp;long&nbsp;int</type> ve <type>unsigned&nbsp;long&nbsp;long&nbsp;int</type> tarafından gösterilebilen en büyük değerlerdir.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-vr" xml:id="glibc-vr-LONG_LONG_MIN"><primary>LONG_LONG_MIN</primary></indexterm>
+    <csproto type="makro">
+     <csname><function>LONG_LONG_MIN</function></csname>
+    </csproto>
+    <indexterm linkend="glibc-vr" xml:id="glibc-vr-LONG_LONG_MAX"><primary>LONG_LONG_MAX</primary></indexterm>
+    <csproto type="makro">
+     <csname><function>LONG_LONG_MAX</function></csname>
+    </csproto>
+    <indexterm linkend="glibc-vr" xml:id="glibc-vr-ULONG_LONG_MAX"><primary>ULONG_LONG_MAX</primary></indexterm>
+    <csproto type="makro">
+     <csname><function>ULONG_LONG_MAX</function></csname>
+    </csproto>
+    <header>&limits.h;</header>
+    <para>
+     <varname>LLONG_MIN</varname>, <varname>LLONG_MAX</varname> ve <varname>ULLONG_MAX</varname> makrolarının eski isimleri olup yalnızca <code>_GNU_SOURCE</code> tanımlıysa kullanılabilir. Bkz. <xref linkend="glibc-Feature-Test-Macros"/>.  GCC 3.0 öncesinde yalnızca bu isimler kullanılabiliyordu.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-vr" xml:id="glibc-vr-WCHAR_MAX_"><primary>WCHAR_MAX</primary></indexterm>
+    <csproto type="makro">
+     <csname><function>WCHAR_MAX</function></csname>
+    </csproto>
+    <header>&limits.h;</header>
+    <para>
+     <type>wchar_t</type> tarafından gösterilebilen en büyük değerdir. Bkz. <xref linkend="glibc-Extended-Char-Intro"/>.
+    </para>
+   </csynopsis>
+   <para>
+    &limits.h; başlık dosyasında ayrıca işletim sistemi ve dosya sistemi sınırlarını belirleyen bazı sabitler de bulunmaktadır. Bu sabitler <xref linkend="glibc-System-Configuration"/> bölümünde açıklanmıştır.
+   </para>
+  </sect1>
+  <sect1 xml:id="glibc-Floating-Type-Macros">
+   <title>Gerçek Sayı Türü Makroları</title>
+   <titleabbrev>Gerçek sayı türlerini ölçümlemede kullanılan makrolar.</titleabbrev>
+   <preliminary>
+    <para>
+     <indexterm linkend="glibc-cp"><primary>gerçek sayılar</primary><secondary>türün genişliği</secondary></indexterm>
+     <indexterm linkend="glibc-cp"><primary>veri türü olçüleri</primary><secondary>gerçek sayılar</secondary></indexterm>
+     <indexterm linkend="glibc-cp"><primary>sınırlar</primary><secondary>gerçek sayı türleri</secondary></indexterm>
+     Gerçek sayılara özel gösterim makineden makineye değişir. Çünkü gerçek sayılar dahili olarak yaklaşık niceliklerle gösterilir. Gerçek sayı verilerle çalışan algoritmalar çoğunlukla makinenin doğru gerçek sayı gösterim ayrıntılarına dikkat etmeyi gerektirir.
+    </para>
+    <para>
+     C kütüphanesindeki bazı işlevlerin kendileri de bu bilgiye gereksinim duyar; örneğin, gerçek sayıları okumak ve basmak (Bkz. <xref linkend="glibc-I-O-on-Streams"/>) için ve trigonometri ve gerçel sayı işlevlerinin (Bkz. <xref linkend="glibc-Mathematics"/>)  hesaplanmasında kullanılan algoritmalar yuvarlama hatalarından ve hassasiyet kayıplarından kaçınmak için bunu kullanır. Sayısal analiz teknikleri gerçekleştiren bazı kullanıcı yazılımları da çoğunlukla hata sınırlarının küçültülmesi ya da hesaplanması sırasında bu bilgiye ihtiyaç duyar.
+    </para>
+    <para>
+     &float.h; başlık dosyası makinenizde kullanılan biçimi açıklar.
+    </para>
+   </preliminary>
+   <sect2 xml:id="glibc-Floating-Point-Concepts">
+    <title>Gerçek Sayı Gösterimi ile İlgili Kavramlar</title>
+    <titleabbrev>Terminoloji.</titleabbrev>
+    <para>
+     <dicterm><english>base</english><turkish>taban (sayılar)</turkish></dicterm>
+     <dicterm><english>radix</english><turkish>taban (sayılar)</turkish></dicterm>
+     <dicterm><english>exponent</english><turkish>üstel kısım (sayılar)</turkish></dicterm>
+     <dicterm><english>mantissa</english><turkish>ondalık kısım (sayılar)</turkish></dicterm>
+     <dicterm><english>significant</english><turkish>ondalık kısım (sayılar)</turkish></dicterm>
+     Bu bölümde gerçek sayı gösterimleri ile ilgili terminolojiye değinilmiştir.
+    </para>
+    <para>
+     Büyük ihtimalle gerçek sayılar için üstel gösterim veya bilimsel terimler olarak bu kavramların çoğuna zaten aşinasınızdır. Örneğin <command>123456.0</command> sayısı üstel olarak <command>1.23456e+05</command> biçiminde, <command>1.23456</command> sayısı ile  <command>10</command> üssü <command>5</command>'in çarpımı olarak gösterilir.
+    </para>
+    <para>
+     Daha biçimsel olarak, gerçek sayıların bit gösterimi aşağıdaki terimlerle tanımlanabilir:
+    </para>
+    <itemizedlist>
+     <listitem>
+      <para>
+       <indexterm linkend="glibc-cp-sign"><primary>gerçek sayıların bit gösterimi</primary><secondary>işaret biti</secondary></indexterm>
+       <wordasword>İşaret</wordasword> ya <code>-1</code> ya da <code>1</code>'dir.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       <indexterm linkend="glibc-cp-base"><primary>gerçek sayıların bit gösterimi</primary><secondary>taban</secondary></indexterm>
+       Üs alma için <wordasword>taban</wordasword>, <code>1</code>'den büyük bir tamsayıdır. Belirli bir gösterim için bu bir sabittir.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       <indexterm linkend="glibc-cp-exponent"><primary>gerçek sayıların bit gösterimi</primary><secondary>üstel kısım</secondary></indexterm>
+       <wordasword>Üstel kısım</wordasword> tabanın kendisiyle kaç defa çarpılacağını gösterir.  Belirli bir gösterim için üs değerinin alt ve üst sınırları birer sabittir.
+      </para>
+      <para>
+       Kimi zaman gerçek sayının bit gösteriminde üssü ifade eden kısım bir sabit eklenmesiyle daima işaretsiz bir nicelik yapılır. Bu sadece bit alanlarını ayırıp gerçek sayıyı kendiniz oluşturmak isterseniz önemli olur, ancak GNU kütüphanesinde böyle bir işlem için destek yoktur. Bu nedenle, aşağıdaki açıklamalarda bu göz ardı edilmiştir.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       <indexterm linkend="glibc-cp-mantissa"><primary>gerçek sayıların bit gösterimi</primary><secondary>ondalık kısım</secondary></indexterm>
+       <wordasword>Ondalık kısım</wordasword> her gerçek sayının bir parçası olan işaretsiz bir tamsayıdır.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       <indexterm linkend="glibc-cp-precision"><primary>gerçek sayıların bit gösterimi</primary><secondary>hassasiyet</secondary></indexterm>
+       Ondalık kısmın <wordasword>hassasiyet</wordasword>i. Eğer bit gösteriminde taban <replaceable>b</replaceable> ise hassasiyet, ondalık kısmın taban-<replaceable>b</replaceable> sayıda basamağıdır. Bu belirli bir gösterim için bir sabittir.
+      </para>
+      <para>
+       <indexterm linkend="glibc-cp-hidden-bit"><primary>gerçek sayıların bit gösterimi</primary><secondary>gizli bit</secondary></indexterm>
+       Birçok gerçek sayı gösterimi ondalık kısım içinde bir örtük <wordasword>gizli bit</wordasword> içerir. Bu ondalık kısım içinde olduğu varsayılan bir bittir ancak bellekte saklanmaz, çünkü normalleştirilmiş bir sayı içinde daima <code>1</code>'dir. Hassasiyet ile ilgili kısım kendi içinde çok sayıda gizli bit içerebilir.
+      </para>
+      <para>
+       Tekrar belirtmek gerekirse, &glibc; gerçek sayıların düşük seviye (ikil tabandaki bit gösterimi) gösterimleri ile ilgili oluşumlara destek sağlamamaktadır.
+      </para>
+     </listitem>
+    </itemizedlist>
+    <para>
+     <dicterm><english>fraction</english><turkish>kesir</turkish></dicterm>
+     <dicterm><english>denominator</english><turkish>payda</turkish></dicterm>
+     Bir gerçek sayının bit gösterimindeki ondalık kısım dolaylı olarak paydası üstel taban hassasiyetteki bir kesri ifade eder. Bu ondalık kısım ile gösterilebilecek en büyük sayı bu paydadan bir eksiği olduğundan kesrin değeri daima birden küçüktür. Bu bit gösteriminin matematiksel değeri bu kesir ile işaret ve üstel tabanın çarpımıdır.
+    </para>
+    <para>
+     <indexterm linkend="glibc-cp-normalized"><primary>normalleştirilmiş gerçek sayı</primary></indexterm>
+     Kesir en az <code>1/<replaceable>b</replaceable></code> ise, kayan noktalı sayı <replaceable>b</replaceable> tabanına göre normalleştirilmiştir denir. Başka bir deyişle, mantis tabanla çarpılırsa tahsis edilen alana sığamayacak kadar büyük olur. Normalleştirilmemiş sayılara bazen normal dışı da denir ve gösterimin normalde tutabileceğinden daha az hassasiyet içerir.
+    </para>
+    <para>
+     Sayı normalleştirilmemişse, ondalık kısmı tabanla çarparken üstten 1 çıkarılabilir ve aynı değerde başka bir kayan noktalı sayı elde edilebilir. <emphasis>Normalleştirme</emphasis>, sayı normalleşene kadar bunu tekrar tekrar yapmaktan ibarettir. Bu süreçteki iki farklı normalleştirilmiş kayan noktalı sayı, değer olarak eşit olamaz.
+    </para>
+    <para>
+     (Bu kuralın bir istisnası vardır: ondalik kısım sıfır ise sayı normalleştirilmiş kabul edilir. Başka bir istisna, üssün gösterimin tutabileceği kadar küçük olduğu belirli makinelerde gerçekleşir. O zaman üsten <code>1</code> çıkarmak imkansızdır, dolayısıyla kesri <code>1/<replaceable>b</replaceable></code>'den küçük olsa bile bir sayı normalleştirilebilir.)
+    </para>
+   </sect2>
+   <sect2 xml:id="glibc-Floating-Point-Parameters">
+    <title>Gerçek Sayılar ile İlgili Makrolar</title>
+    <titleabbrev>Bu sayılara özgü makroların açıklamaları.</titleabbrev>
+    <para>
+     <indexterm linkend="glibc-pg"><primary>float.h</primary></indexterm>
+     Bu makroların tanımları &float.h; başlık dosyasında bulunabilir.
+    </para>
+    <para>
+     <dicterm><english>floating point numbers</english><turkish>gerçek sayılar</turkish></dicterm>
+     <code>FLT_</code> ile başlayan makro isimleri <type>float</type> türü ile, <code>DBL_</code> ile başlayanlar <type>double</type> türü ile ve <code>LDBL_</code> ile başlayanlar da <type>long&nbsp;double</type> türü ile ilgilidir. (GCC hedef makinede bir veri türü olarak <type>long&nbsp;double</type> türünü desteklemezse, <code>LDBL_</code> ile başlayan sabitler <type>double</type> türüne karşılık olan sabitlere eşitlenir.)
+    </para>
+    <para>
+     Bu makrolardan sadece <varname>FLT_RADIX</varname> bir sabit ifadesi olarak garantilidir. Burada listelenmiş diğer sabitler <code>#if</code> önişlemci komutu ya da durağan dizilerin boyutları gibi yerlerde sabit ifadesi olarak güvenilir olamaz.
+    </para>
+    <para>
+     &isoc; standardı bu bağımsız değişkenlerin en küçük ve en büyük değerlerini belirtse de, GNU C gerçeklenimi hedef makinede desteklenen gerçek sayı gösterimlerini açıklayan değerleri kullanır. Yani GNU C prensip olarak &isoc; gereksinimlerini hedef makinenin yapabildiği kadarıyla karşılar. Uygulamada tüm makinelerde bu destekler zaten vardır.
+    </para>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-FLT_ROUNDS"><primary>FLT_ROUNDS</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>FLT_ROUNDS</function></csname>
+     </csproto>
+     <header>&float.h;</header>
+     <para>
+      Bu değer gerçek sayı toplamasında yuvarlama kipini belirler. Standart yuvarlama kiplerinin değerleri:
+     </para>
+     <variablelist>
+      <varlistentry>
+       <term><code>-1</code></term>
+       <listitem>
+        <para>
+         Bu kip belirlenebilir değildir.
+        </para>
+       </listitem>
+      </varlistentry>
+      <varlistentry>
+       <term><code>0</code></term>
+       <listitem>
+        <para>
+         Sıfıra yuvarlar.
+        </para>
+       </listitem>
+      </varlistentry>
+      <varlistentry>
+       <term><code>1</code></term>
+       <listitem>
+        <para>
+         En yakın sayıya yuvarlar.
+        </para>
+       </listitem>
+      </varlistentry>
+      <varlistentry>
+       <term><code>2</code></term>
+       <listitem>
+        <para>
+         Pozitif sonsuza yuvarlar.
+        </para>
+       </listitem>
+      </varlistentry>
+      <varlistentry>
+       <term><code>3</code></term>
+       <listitem>
+        <para>
+         Negatif sonsuza yuvarlar.
+        </para>
+       </listitem>
+      </varlistentry>
+     </variablelist>
+     <para>
+      Diğer değerler, eğer varsa, makine bağımlı standart dışı yuvarlama kiplerini belirtir.
+     </para>
+     <para>
+      Gerçek sayılar için IEEE standardı gereğince çoğu makinede <code>1</code> değeri kullanılır.
+     </para>
+     <para>
+      <dicterm><english>single-precision</english><turkish>tek hassasiyetli</turkish></dicterm>
+      <dicterm><english>double-precision</english><turkish>çift hassasiyetli</turkish></dicterm>
+      Aşağıdaki tabloda <code>FLT_ROUNDS</code> sabitinin olası değerleri ile yuvarlamanın nasıl yapıldığı gösterilmiştir. Yuvarlama IEEE tek hassasiyetli gerçek sayılar standardına uygun olarak yapılmıştır.
+     </para>
+     <literallayout class="monospaced">                0      1             2             3
  1.00000003    1.0    1.0           1.00000012    1.0
  1.00000007    1.0    1.00000012    1.00000012    1.0
 -1.00000003   -1.0   -1.0          -1.0          -1.00000012
 -1.00000007   -1.0   -1.00000012   -1.0          -1.00000012
-</pre></div>
-
-</dd>
-<dt xml:id="glibc-index-FLT_005fRADIX"><span><code>FLT_RADIX</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-FLT_005fRADIX" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-<para>This is the value of the base, or radix, of the exponent representation.
-This is guaranteed to be a constant expression, unlike the other macros
-described in this section.  The value is 2 on all machines we know of
-except the IBM 360 and derivatives.
-</para>
-</dd>
-<dt xml:id="glibc-index-FLT_005fMANT_005fDIG"><span><code>FLT_MANT_DIG</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-FLT_005fMANT_005fDIG" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-<para>This is the number of base-<code>FLT_RADIX</code> digits in the floating point
-mantissa for the <code>float</code> data type.  The following expression
-yields <code>1.0</code> (even though mathematically it should not) due to the
-limited number of mantissa digits:
-</para>
-<div class="example">
-<pre class="example">float radix = FLT_RADIX;
+</literallayout>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-FLT_RADIX"><primary>FLT_RADIX</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>FLT_RADIX</function></csname>
+     </csproto>
+     <header>&float.h;</header>
+     <para>
+      Bit gösteriminde üstel kısmın tabanına karşılık gelen değerdir. Bu bölümde açıklanan diğer makroların aksine bir sabit ifadesi olarak garantilidir. IBM 360 ve türevleri dışında bilinen tüm makineler için değeri 2 dir.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-FLT_MANT_DIG"><primary>FLT_MANT_DIG</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>FLT_MANT_DIG</function></csname>
+     </csproto>
+     <header>&float.h;</header>
+     <para>
+      <type>float</type> veri türü için gerçek sayının ondalık kısmındaki taban-<varname>FLT_RADIX</varname> basamağın basamak sayısıdır. Aşağıdaki ifade ondalık kısım basamaklarının sınırlı olmasından dolayı <code>1.0</code>'a gider (matematiksel olarak olmasa da):
+     </para>
+     <screen>float radix = FLT_RADIX;
 
 1.0f + 1.0f / radix / radix / … / radix
-</pre></div>
-
-<para>where <code>radix</code> appears <code>FLT_MANT_DIG</code> times.
-</para>
-</dd>
-<dt xml:id="glibc-index-DBL_005fMANT_005fDIG"><span><code>DBL_MANT_DIG</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-DBL_005fMANT_005fDIG" class="copiable-anchor"> ¶</a></span></dt>
-<dt xml:id="glibc-index-LDBL_005fMANT_005fDIG"><span><code>LDBL_MANT_DIG</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LDBL_005fMANT_005fDIG" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-<para>This is the number of base-<code>FLT_RADIX</code> digits in the floating point
-mantissa for the data types <code>double</code> and <code>long double</code>,
-respectively.
-</para>
-</dd>
-<dt xml:id="glibc-index-FLT_005fDIG"><span><code>FLT_DIG</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-FLT_005fDIG" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-
-<para>This is the number of decimal digits of precision for the <code>float</code>
-data type.  Technically, if <var>p</var> and <var>b</var> are the precision and
-base (respectively) for the representation, then the decimal precision
-<var>q</var> is the maximum number of decimal digits such that any floating
-point number with <var>q</var> base 10 digits can be rounded to a floating
-point number with <var>p</var> base <var>b</var> digits and back again, without
-change to the <var>q</var> decimal digits.
-</para>
-<para>The value of this macro is supposed to be at least <code>6</code>, to satisfy
-ISO&nbsp;C.
-</para>
-</dd>
-<dt xml:id="glibc-index-DBL_005fDIG"><span><code>DBL_DIG</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-DBL_005fDIG" class="copiable-anchor"> ¶</a></span></dt>
-<dt xml:id="glibc-index-LDBL_005fDIG"><span><code>LDBL_DIG</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LDBL_005fDIG" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-
-<para>These are similar to <code>FLT_DIG</code>, but for the data types
-<code>double</code> and <code>long double</code>, respectively.  The values of these
-macros are supposed to be at least <code>10</code>.
-</para>
-</dd>
-<dt xml:id="glibc-index-FLT_005fMIN_005fEXP"><span><code>FLT_MIN_EXP</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-FLT_005fMIN_005fEXP" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-<para>This is the smallest possible exponent value for type <code>float</code>.
-More precisely, it is the minimum negative integer such that the value
-<code>FLT_RADIX</code> raised to this power minus 1 can be represented as a
-normalized floating point number of type <code>float</code>.
-</para>
-</dd>
-<dt xml:id="glibc-index-DBL_005fMIN_005fEXP"><span><code>DBL_MIN_EXP</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-DBL_005fMIN_005fEXP" class="copiable-anchor"> ¶</a></span></dt>
-<dt xml:id="glibc-index-LDBL_005fMIN_005fEXP"><span><code>LDBL_MIN_EXP</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LDBL_005fMIN_005fEXP" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-
-<para>These are similar to <code>FLT_MIN_EXP</code>, but for the data types
-<code>double</code> and <code>long double</code>, respectively.
-</para>
-</dd>
-<dt xml:id="glibc-index-FLT_005fMIN_005f10_005fEXP"><span><code>FLT_MIN_10_EXP</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-FLT_005fMIN_005f10_005fEXP" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-<para>This is the minimum negative integer such that <code>10</code> raised to this
-power minus 1 can be represented as a normalized floating point number
-of type <code>float</code>.  This is supposed to be <code>-37</code> or even less.
-</para>
-</dd>
-<dt xml:id="glibc-index-DBL_005fMIN_005f10_005fEXP"><span><code>DBL_MIN_10_EXP</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-DBL_005fMIN_005f10_005fEXP" class="copiable-anchor"> ¶</a></span></dt>
-<dt xml:id="glibc-index-LDBL_005fMIN_005f10_005fEXP"><span><code>LDBL_MIN_10_EXP</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LDBL_005fMIN_005f10_005fEXP" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-<para>These are similar to <code>FLT_MIN_10_EXP</code>, but for the data types
-<code>double</code> and <code>long double</code>, respectively.
-</para>
-</dd>
-<dt xml:id="glibc-index-FLT_005fMAX_005fEXP"><span><code>FLT_MAX_EXP</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-FLT_005fMAX_005fEXP" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-<para>This is the largest possible exponent value for type <code>float</code>.  More
-precisely, this is the maximum positive integer such that value
-<code>FLT_RADIX</code> raised to this power minus 1 can be represented as a
-floating point number of type <code>float</code>.
-</para>
-</dd>
-<dt xml:id="glibc-index-DBL_005fMAX_005fEXP"><span><code>DBL_MAX_EXP</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-DBL_005fMAX_005fEXP" class="copiable-anchor"> ¶</a></span></dt>
-<dt xml:id="glibc-index-LDBL_005fMAX_005fEXP"><span><code>LDBL_MAX_EXP</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LDBL_005fMAX_005fEXP" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-<para>These are similar to <code>FLT_MAX_EXP</code>, but for the data types
-<code>double</code> and <code>long double</code>, respectively.
-</para>
-</dd>
-<dt xml:id="glibc-index-FLT_005fMAX_005f10_005fEXP"><span><code>FLT_MAX_10_EXP</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-FLT_005fMAX_005f10_005fEXP" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-<para>This is the maximum positive integer such that <code>10</code> raised to this
-power minus 1 can be represented as a normalized floating point number
-of type <code>float</code>.  This is supposed to be at least <code>37</code>.
-</para>
-</dd>
-<dt xml:id="glibc-index-DBL_005fMAX_005f10_005fEXP"><span><code>DBL_MAX_10_EXP</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-DBL_005fMAX_005f10_005fEXP" class="copiable-anchor"> ¶</a></span></dt>
-<dt xml:id="glibc-index-LDBL_005fMAX_005f10_005fEXP"><span><code>LDBL_MAX_10_EXP</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LDBL_005fMAX_005f10_005fEXP" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-<para>These are similar to <code>FLT_MAX_10_EXP</code>, but for the data types
-<code>double</code> and <code>long double</code>, respectively.
-</para>
-</dd>
-<dt xml:id="glibc-index-FLT_005fMAX"><span><code>FLT_MAX</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-FLT_005fMAX" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-
-<para>The value of this macro is the maximum number representable in type
-<code>float</code>.  It is supposed to be at least <code>1E+37</code>.  The value
-has type <code>float</code>.
-</para>
-<para>The smallest representable number is <code>- FLT_MAX</code>.
-</para>
-</dd>
-<dt xml:id="glibc-index-DBL_005fMAX"><span><code>DBL_MAX</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-DBL_005fMAX" class="copiable-anchor"> ¶</a></span></dt>
-<dt xml:id="glibc-index-LDBL_005fMAX"><span><code>LDBL_MAX</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LDBL_005fMAX" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-
-<para>These are similar to <code>FLT_MAX</code>, but for the data types
-<code>double</code> and <code>long double</code>, respectively.  The type of the
-macro’s value is the same as the type it describes.
-</para>
-</dd>
-<dt xml:id="glibc-index-FLT_005fMIN"><span><code>FLT_MIN</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-FLT_005fMIN" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-
-<para>The value of this macro is the minimum normalized positive floating
-point number that is representable in type <code>float</code>.  It is supposed
-to be no more than <code>1E-37</code>.
-</para>
-</dd>
-<dt xml:id="glibc-index-DBL_005fMIN"><span><code>DBL_MIN</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-DBL_005fMIN" class="copiable-anchor"> ¶</a></span></dt>
-<dt xml:id="glibc-index-LDBL_005fMIN"><span><code>LDBL_MIN</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LDBL_005fMIN" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-
-<para>These are similar to <code>FLT_MIN</code>, but for the data types
-<code>double</code> and <code>long double</code>, respectively.  The type of the
-macro’s value is the same as the type it describes.
-</para>
-</dd>
-<dt xml:id="glibc-index-FLT_005fEPSILON"><span><code>FLT_EPSILON</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-FLT_005fEPSILON" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-
-<para>This is the difference between 1 and the smallest floating point
-number of type <code>float</code> that is greater than 1.  It’s supposed to
-be no greater than <code>1E-5</code>.
-</para>
-</dd>
-<dt xml:id="glibc-index-DBL_005fEPSILON"><span><code>DBL_EPSILON</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-DBL_005fEPSILON" class="copiable-anchor"> ¶</a></span></dt>
-<dt xml:id="glibc-index-LDBL_005fEPSILON"><span><code>LDBL_EPSILON</code><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-LDBL_005fEPSILON" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-
-<para>These are similar to <code>FLT_EPSILON</code>, but for the data types
-<code>double</code> and <code>long double</code>, respectively.  The type of the
-macro’s value is the same as the type it describes.  The values are not
-supposed to be greater than <code>1E-9</code>.
-</para></dd>
-</dl>
-
-<hr>
-</div>
-<div class="subsubsection" xml:id="glibc-IEEE-Floating-Point">
-<div class="header">
-<para>
-Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Floating-Point-Parameters" accesskey="p" rel="prev">Floating Point Parameters</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Floating-Type-Macros" accesskey="u" rel="up">Floating Type Macros</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
-</div>
-<span xml:id="glibc-IEEE-Floating-Point-1"></span><h4 class="subsubsection">A.5.3.3 IEEE Floating Point</title>
-<span xml:id="glibc-index-IEEE-floating-point-representation"></span>
-<span xml:id="glibc-index-floating-point_002c-IEEE"></span>
-
-<para>Here is an example showing how the floating type measurements come out
-for the most common floating point representation, specified by the
-<cite>IEEE Standard for Binary Floating Point Arithmetic (ANSI/IEEE Std
-754-1985)</cite>.  Nearly all computers designed since the 1980s use this
-format.
-</para>
-<para>The IEEE single-precision float representation uses a base of 2.  There
-is a sign bit, a mantissa with 23 bits plus one hidden bit (so the total
-precision is 24 base-2 digits), and an 8-bit exponent that can represent
-values in the range -125 to 128, inclusive.
-</para>
-<para>So, for an implementation that uses this representation for the
-<code>float</code> data type, appropriate values for the corresponding
-parameters are:
-</para>
-<div class="example">
-<pre class="example">FLT_RADIX                             2
+</screen>
+     <para>
+      Burada <replaceable>radix</replaceable>, <code>FLT_MANT_DIG</code> kere uygulanır.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-DBL_MANT_DIG"><primary>DBL_MANT_DIG</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>DBL_MANT_DIG</function></csname>
+     </csproto>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-LDBL_MANT_DIG"><primary>LDBL_MANT_DIG</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>LDBL_MANT_DIG</function></csname>
+     </csproto>
+     <header>&float.h;</header>
+     <para>
+      Sırasıyla <type>double</type> ve <type>long double</type> veri türleri için gerçek sayının ondalık kısmındaki taban-<varname>FLT_RADIX</varname> basamağın basamak sayısıdır.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-FLT_DIG"><primary>FLT_DIG</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>FLT_DIG</function></csname>
+     </csproto>
+     <header>&float.h;</header>
+     <para>
+      <type>float</type> türü için hassasiyeti belirleyen ondalık basamakların sayısıdır. Teknik olarak <replaceable>h</replaceable> ve <replaceable>t</replaceable> sırasıyla ikilik gösterimdeki hassasiyet ve taban ise onluk gösterimdeki hassasiyet <replaceable>o</replaceable> ondalık basamakların sayısıdır, örneğin, <replaceable>o</replaceable> tabanındaki 10 basamaklı bir gerçek sayı <replaceable>t</replaceable> tabanındaki <replaceable>h</replaceable> basamağa yuvarlanır ve <replaceable>o</replaceable> ondalık basamak sayısı değiştirilmeksizin korunur.
+     </para>
+     <para>
+      Bu makronun değerinin &isoc; gereksinimlerini karşılamak üzere en azından <code>6</code> olacağı varsayılır.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-DBL_DIG"><primary>DBL_DIG</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>DBL_DIG</function></csname>
+     </csproto>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-LDBL_DIG"><primary>LDBL_DIG</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>LDBL_DIG</function></csname>
+     </csproto>
+     <header>&float.h;</header>
+     <para>
+      <varname>FLT_DIG</varname> makrosuna benzerler ancak sırasıyla <type>double</type> ve <type>long double</type> veri türleri içindir. Bu makroların değerlerinin en azından <code>10</code> olacağı varsayılır.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-FLT_MIN_EXP"><primary>FLT_MIN_EXP</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>FLT_MIN_EXP</function></csname>
+     </csproto>
+     <header>&float.h;</header>
+     <para>
+      <type>double</type> türü için ikil gösterimdeki mümkün en küçük üs değeridir. Daha ayrıntılı ifade etmek gerekirse, <type>double</type> türündeki normalleştirilmiş bir gerçek sayı olarak <varname>FLT_RADIX</varname> değerinin bu değerden bir eksiğinin artan kuvvetlerinden elde edilebilecek en küçük değerini sağlayacak olan en küçük negatif tamsayıdır.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-DBL_MIN_EXP"><primary>DBL_MIN_EXP</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>DBL_MIN_EXP</function></csname>
+     </csproto>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-LDBL_MIN_EXP"><primary>LDBL_MIN_EXP</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>LDBL_MIN_EXP</function></csname>
+     </csproto>
+     <header>&float.h;</header>
+     <para>
+      <varname>FLT_MIN_EXP</varname>'ye benzerler ancak sırasıyla <type>double</type> ve <type>long double</type> veri türleri içindir.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-FLT_MIN_10_EXP"><primary>FLT_MIN_10_EXP</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>FLT_MIN_10_EXP</function></csname>
+     </csproto>
+     <header>&float.h;</header>
+     <para>
+      <type>float</type> türü için onluk tabanda üssün en küçük negatif değeri olan bir tamsayıdır. Normalleştirilmiş gerçek sayıların mümkün en küçük değeri için <code>10</code>'un bu değerden <code>1</code> eksiği artan kuvvetindeki değerine karşılıktır. Bu değerin <code>-37</code> veya daha az olduğu varsayılır.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-DBL_MIN_10_EXP"><primary>DBL_MIN_10_EXP</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>DBL_MIN_10_EXP</function></csname>
+     </csproto>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-LDBL_MIN_10_EXP"><primary>LDBL_MIN_10_EXP</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>LDBL_MIN_10_EXP</function></csname>
+     </csproto>
+     <header>&float.h;</header>
+     <para>
+      <varname>FLT_MIN_10_EXP</varname>'ye benzerler ancak sırasıyla <type>double</type> ve <type>long double</type> veri türleri içindir.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-FLT_MAX_EXP"><primary>FLT_MAX_EXP</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>FLT_MAX_EXP</function></csname>
+     </csproto>
+     <header>&float.h;</header>
+     <para>
+      <type>float</type> türü için ikilik gösterimdeki mümkün en büyük üs değeridir. Daha ayrıntılı ifade etmek gerekirse, <type>float</type> türündeki normalleştirilmiş bir gerçek sayı olarak <varname>FLT_RADIX</varname> değerinin bu değerden bir eksiğinin artan kuvvetlerinden elde edilebilecek en büyük değerini sağlayacak olan en büyük pozitif tamsayıdır.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-DBL_MAX_EXP"><primary>DBL_MAX_EXP</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>DBL_MAX_EXP</function></csname>
+     </csproto>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-LDBL_MAX_EXP"><primary>LDBL_MAX_EXP</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>LDBL_MAX_EXP</function></csname>
+     </csproto>
+     <header>&float.h;</header>
+     <para>
+      <varname>FLT_MAX_EXP</varname>'ye benzerler ancak sırasıyla <type>double</type> ve <type>long double</type> veri türleri içindir.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-FLT_MAX_10_EXP"><primary>FLT_MAX_10_EXP</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>FLT_MAX_10_EXP</function></csname>
+     </csproto>
+     <header>&float.h;</header>
+     <para>
+      <type>float</type> türü için onluk tabanda üssün en büyük değeri olan pozitif tamsayıdır. Normalleştirilmiş gerçek sayıların mümkün en küçük değeri için <code>10</code>'un bu değerden <code>1</code> eksiği artan kuvvetindeki değerine karşılıktır. Bu değerin en azından <code>37</code> olduğu varsayılır.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-DBL_MAX_10_EXP"><primary>DBL_MAX_10_EXP</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>DBL_MAX_10_EXP</function></csname>
+     </csproto>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-LDBL_MAX_10_EXP"><primary>LDBL_MAX_10_EXP</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>LDBL_MAX_10_EXP</function></csname>
+     </csproto>
+     <header>&float.h;</header>
+     <para>
+      <varname>FLT_MAX_10_EXP</varname>'ye benzerler ancak sırasıyla <type>double</type> ve <type>long double</type> veri türleri içindir.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-FLT_MAX"><primary>FLT_MAX</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>FLT_MAX</function></csname>
+     </csproto>
+     <header>&float.h;</header>
+     <para>
+      Bu makronun değeri <type>float</type> türünde ifade edilebilecek en büyük gerçek sayının değeridir. Bu değerin en azından <code>1E+37</code> olacağı varsayılır ve bu değer <type>float</type> türündendir.
+     </para>
+     <para>
+      İfade edilebilir en küçük sayı ise <code>- FLT_MAX</code>'tır.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-DBL_MAX"><primary>DBL_MAX</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>DBL_MAX</function></csname>
+     </csproto>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-LDBL_MAX"><primary>LDBL_MAX</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>LDBL_MAX</function></csname>
+     </csproto>
+     <header>&float.h;</header>
+     <para>
+      <varname>FLT_MAX</varname>'a benzerler ancak sırasıyla <type>double</type> ve <type>long double</type> veri türleri içindir. Makro değerinin veri türü kendi türü ile aynıdır.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-FLT_MIN"><primary>FLT_MIN</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>FLT_MIN</function></csname>
+     </csproto>
+     <header>&float.h;</header>
+     <para>
+      Bu makronun değeri <type>float</type> türünde ifade edilebilecek en küçük gerçek sayının değeridir. Bu değerin <code>1E-37</code>'den daha büyük olmayacağı varsayılır ve bu değer <type>float</type> türündendir.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-DBL_MIN"><primary>DBL_MIN</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>DBL_MIN</function></csname>
+     </csproto>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-LDBL_MIN"><primary>LDBL_MIN</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>LDBL_MIN</function></csname>
+     </csproto>
+     <header>&float.h;</header>
+     <para>
+      <varname>FLT_MIN</varname>'a benzerler ancak sırasıyla <type>double</type> ve <type>long double</type> veri türleri içindir. Makro değerinin veri türü kendi türü ile aynıdır.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-FLT_EPSILON"><primary>FLT_EPSILON</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>FLT_EPSILON</function></csname>
+     </csproto>
+     <header>&float.h;</header>
+     <para>
+      Bu, <code>1</code> ile <type>float</type> türünün <code>1</code>'den büyük en küçük kayan noktalı sayısı arasındaki farktır. <code>1E-5</code>'ten büyük olmayacağı varsayılır.
+     </para>
+    </csynopsis>
+    <csynopsis>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-DBL_EPSILON"><primary>DBL_EPSILON</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>DBL_EPSILON</function></csname>
+     </csproto>
+     <indexterm linkend="glibc-vr" xml:id="glibc-vr-LDBL_EPSILON"><primary>LDBL_EPSILON</primary></indexterm>
+     <csproto type="makro">
+      <csname><function>LDBL_EPSILON</function></csname>
+     </csproto>
+     <header>&float.h;</header>
+     <para>
+      <varname>FLT_EPSILON</varname>'a benzerler ancak sırasıyla <type>double</type> ve <type>long double</type> veri türleri içindir. Makro değerinin veri türü kendi türü ile aynıdır. <code>1E-0</code>'dan büyük olmayacağı varsayılır.
+     </para>
+    </csynopsis>
+   </sect2>
+   <sect2 xml:id="glibc-IEEE-Floating-Point">
+    <title>IEEE Gerçek Sayı Gösterimleri</title>
+    <titleabbrev>Ortak gösterim için ölçüler.</titleabbrev>
+    <para>
+     <indexterm linkend="glibc-cp"><primary>IEEE gerçek sayı gösterimleri</primary></indexterm>
+     <indexterm linkend="glibc-cp"><primary>gerçek sayıların bit gösterimi</primary><secondary>IEEE</secondary></indexterm>
+     Burada, en genel gerçek sayı gösterimi olan  <citation>IEEE Standard for Binary Floating Point Arithmetic (ANSI/IEEE Std 754-1985)</citation> tarafından belirtilmiş gerçek sayı metrikleri için bir örnek gösterilmektedir. 1980'lerden sonra tasarlanan tüm bilgisayarlar bu biçimi kullanır.
+    </para>
+    <para>
+     IEEE tek hassasiyetli gerçek sayı biçimi ikilik tabanı kullanır. Bir işaret biti, 23 bit artı bir gizli bit olmak üzere (yani toplam hassasiyet 24 taban-2 basamak) 24 bitlik ondalık kısım ile  -125 ile 128 aralığındaki üs değerleri için 8 bitlik üstel kısımdan oluşan bir gösterim sunar.
+    </para>
+    <para>
+     Bu gösterimin <type>float</type> veri türünü gerçeklemekte kullanılan ilgili değerleri aşağıda gösterilmiştir:
+    </para>
+    <literallayout class="monospaced">FLT_RADIX                             2
 FLT_MANT_DIG                         24
 FLT_DIG                               6
 FLT_MIN_EXP                        -125
@@ -1385,12 +1306,11 @@ FLT_MAX_10_EXP                      +38
 FLT_MIN                 1.17549435E-38F
 FLT_MAX                 3.40282347E+38F
 FLT_EPSILON             1.19209290E-07F
-</pre></div>
-
-<para>Here are the values for the <code>double</code> data type:
-</para>
-<div class="example">
-<pre class="example">DBL_MANT_DIG                         53
+</literallayout>
+    <para>
+     Bu değerler de <type>double</type> veri türü içindir:
+    </para>
+<literallayout class="monospaced">DBL_MANT_DIG                         53
 DBL_DIG                              15
 DBL_MIN_EXP                       -1021
 DBL_MIN_10_EXP                     -307
@@ -1399,41 +1319,34 @@ DBL_MAX_10_EXP                      308
 DBL_MAX         1.7976931348623157E+308
 DBL_MIN         2.2250738585072014E-308
 DBL_EPSILON     2.2204460492503131E-016
-</pre></div>
-
-<hr>
-</div>
-</div>
-<div class="subsection" xml:id="glibc-Structure-Measurement">
-<div class="header">
-<para>
-Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Floating-Type-Macros" accesskey="p" rel="prev">Floating Type Macros</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Data-Type-Measurements" accesskey="u" rel="up">Data Type Measurements</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
-</div>
-<span xml:id="glibc-Structure-Field-Offset-Measurement"></span><h4 class="subsection">A.5.4 Structure Field Offset Measurement</title>
-
-<para>You can use <code>offsetof</code> to measure the location within a structure
-type of a particular structure member.
-</para>
-<dl class="def">
-<dt xml:id="glibc-index-offsetof"><span class="category">Macro: </span><span><emphasis>size_t</emphasis> <strong>offsetof</strong> <emphasis>(<var>type</var>, <var>member</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-offsetof" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-<para>Preliminary:
-| MT-Safe
-| AS-Safe
-| AC-Safe
-| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
-</para>
-
-<para>This expands to an integer constant expression that is the offset of the
-structure member named <var>member</var> in the structure type <var>type</var>.
-For example, <code>offsetof (struct s, elem)</code> is the offset, in bytes,
-of the member <code>elem</code> in a <code>struct s</code>.
-</para>
-<para>This macro won’t work if <var>member</var> is a bit field; you get an error
-from the C compiler in that case.
-</para></dd></dl>
-<hr>
-</div>
-</div>
-</div-->
-</appendix>
+</literallayout>
+   </sect2>
+  </sect1>
+  <sect1 xml:id="glibc-Structure-Measurement">
+   <title>Yapı Alanı Konum Ölçüleri</title>
+   <titleabbrev>Yapı türleri üzerinden ölçü alınması.</titleabbrev>
+   <para>
+    Bir yapı içindeki bir yapı üyesinin konumunu bulmak için <function>offsetof</function> kullanılır.
+   </para>
+   <csynopsis>
+    <indexterm linkend="glibc-fn" xml:id="glibc-fn-offsetof"><primary>offsetof</primary></indexterm>
+    <csproto type="makro">
+     <csname><type>size_t</type><function>offsetof</function></csname>
+     <csparam><parameter>type</parameter></csparam>
+     <csparam><parameter>member</parameter></csparam>
+    </csproto>
+    <conceptlist>
+     <concept>&mtsafe;</concept>
+     <concept>&assafe;</concept>
+     <concept>&acsafe;</concept>
+    </conceptlist>
+    <para>
+     <parameter>type</parameter> türündeki yapının <parameter>member</parameter> isimli üyesinin konumunu bir tamsayı sabit olarak döndürür. Örneğin <code>offsetof (struct s, elem)</code> ifadesi, <code>struct s</code> içindeki <code>elem</code> üyesinin bayt cinsinden başlangıç konumunu verir.
+    </para>
+    <para>
+     Bu makro, <parameter>member</parameter> bir bit alanı ise çalışmayacaktır. Bu durumda C derleyicisi hata verir.
+    </para>
+   </csynopsis>
+  </sect1>
+ </chapter>
+</part>

@@ -6,82 +6,49 @@
   <title>Yerel Olmayan Çıkışlar</title>
   <titleabbrev>İç içe işlev çağrılarının dışına atlamak.</titleabbrev>
  <preliminary>
-<!--span xml:id="glibc-index-non_002dlocal-exits"></span>
-<span xml:id="glibc-index-long-jumps"></span-->
-
-<para>Sometimes when your program detects an unusual situation inside a deeply
-nested set of function calls, you would like to be able to immediately
-return to an outer level of control.  This section describes how you can
-do such <emphasis>non-local exits</emphasis> using the <code>setjmp</code> and <code>longjmp</code>
-functions.
-</para>
- </preliminary><!--
-<sect xml:id="glibc-Non_002dLocal-Intro">
-<div class="header">
-<para>
-Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Non_002dLocal-Details" accesskey="n" rel="next">Details of Non-Local Exits</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Non_002dLocal-Exits" accesskey="u" rel="up">Non-Local Exits</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
-</div>
-<span xml:id="glibc-Introduction-to-Non_002dLocal-Exits"></span><h3 class="section">23.1 Introduction to Non-Local Exits</title>
-
-<para>As an example of a situation where a non-local exit can be useful,
-suppose you have an interactive program that has a “main loop” that
-prompts for and executes commands.  Suppose the “read” command reads
-input from a file, doing some lexical analysis and parsing of the input
-while processing it.  If a low-level input error is detected, it would
-be useful to be able to return immediately to the “main loop” instead
-of having to make each of the lexical analysis, parsing, and processing
-phases all have to explicitly deal with error situations initially
-detected by nested calls.
-</para>
-<para>(On the other hand, if each of these phases has to do a substantial
-amount of cleanup when it exits—such as closing files, deallocating
-buffers or other data structures, and the like—then it can be more
-appropriate to do a normal return and have each phase do its own
-cleanup, because a non-local exit would bypass the intervening phases and
-their associated cleanup code entirely.  Alternatively, you could use a
-non-local exit but do the cleanup explicitly either before or after
-returning to the “main loop”.)
-</para>
-<para>In some ways, a non-local exit is similar to using the ‘<filename>return</filename>’
-statement to return from a function.  But while ‘<filename>return</filename>’ abandons
-only a single function call, transferring control back to the point at
-which it was called, a non-local exit can potentially abandon many
-levels of nested function calls.
-</para>
-<para>You identify return points for non-local exits by calling the function
-<code>setjmp</code>.  This function saves information about the execution
-environment in which the call to <code>setjmp</code> appears in an object of
-type <code>jmp_buf</code>.  Execution of the program continues normally after
-the call to <code>setjmp</code>, but if an exit is later made to this return
-point by calling <code>longjmp</code> with the corresponding <code><span class="nolinebreak">jmp_buf</span></code>
-object, control is transferred back to the point where <code>setjmp</code> was
-called.  The return value from <code>setjmp</code> is used to distinguish
-between an ordinary return and a return made by a call to
-<code>longjmp</code>, so calls to <code>setjmp</code> usually appear in an ‘<filename>if</filename>’
-statement.
-</para>
-<para>Here is how the example program described above might be set up:
-</para>
-<div class="example">
-<pre class="example">
-#include &lt;setjmp.h&gt;
+  <para>
+   <indexterm linkend="glibc-cp"><primary>yerel olmayan çıkışlar</primary></indexterm>
+   <indexterm linkend="glibc-cp"><primary>uzun atlama</primary></indexterm>
+   Kimi zaman derinlemesine iç içe geçmiş bir dizi işlev çağrısı içinde olağan dışı bir durum algılandığında, denetimin daha dış bir düzeye aktarılması ihtiyacı ortaya çıkar. Bu oylumda <function>setjmp</function> ve <function>longjmp</function> çağrılarıyla böyle <wordasword>yerel olmayan çıkışlar</wordasword>ın nasıl yapılacağından bahsedilecektir.
+  </para>
+ </preliminary>
+ <chapter xml:id="glibc-Non-Local-Intro">
+  <title>Yerel Olmayan Çıkışlar Hakkında</title>
+  <titleabbrev>Bu oluşumlar ne zaman ve nasıl kullanılır.</titleabbrev>
+  <para>
+   Yerel olmayan çıkışların ne zaman faydalı olabileceğini bir örnekle açıklamaya çalışmak daha iyi olacak. Örneğin, bir ana döngüyle kullanıcıdan komutları alıp bunları çalıştıran etkileşimli bir yazılım olsun. Komutların bir dosyadaki girdilerden okunduğunu ve girdideki komutun işleme sokulmadan önce bazı sözel çözümleme işlemleriyle girdinin incelendiği varsayılsın. Düşük seviyeli bir hata saptandığında, sözel çözümleme, ayrıştırma ve işleme aşamalarının her yapılışında iç içe çağrılarda saptanan hatalarla yerinde uğraşmaktansa hemen "ana döngü"ye dönebilmek iyi olurdu.
+  </para>
+  <para>
+   (Diğer taraftan, bu aşamalardan her çıkışta önemli miktarda temizlik işlemleri yapılması gerekli olabilir--örneğin, dosyaların kapatılması, tamponların ve veri yapılarının serbest bırakılması ve benzerleri--ancak bundan sonra normal dönüş yapmak daha uygun olabilir. Bir yerel olmayan çıkış ara aşamaların ve onlarla ilgili temizlik kodunun atlanmasına neden olacağından her aşamanın kendine özgü temizlik kodu olması da daha uygun olabilir. Bundan başka, temizliği "ana döngü"ye dönmeden önce ya da döndükten sonra yapacak şekilde bir yerel olmayan çıkış da kullanılabilirdi.)
+  </para>
+  <para>
+   Bazı bakımlardan, yerel olmayan çıkış, işlevden çıkış deyimi olan <code>return</code> kullanımına benzer. Fakat <code>return</code> sadece tek bir işlev çağrısından çıkıp denetimi geriye işlev çağrısının yapıldığı noktaya taşırken,  yerel olmayan çıkış denetimin büyük olasılıkla çok iç içe geçmiş pek çok işlev çağrısının dışındaki bir noktaya taşınmasını sağlar.
+  </para>
+  <para>
+   Yerel olmayan çıkışlarda denetimin döndürüleceği nokta <function>setjmp</function> işlevi çağrılarak belirtilebilir. Bu işlev,  <function>setjmp</function> işlev çağrısının göründüğü yürütme ortamı hakkındaki bilgiyi <type>jmp_buf</type> türünde bir nesneye kaydeder. Yazılımın çalışması <function>setjmp</function> çağrısından sonra normal olarak devam eder, fakat daha sonra bu dönüş noktası için kaydedilen <type>jmp_buf</type> türündeki nesne ile yapılan bir <function>longjmp</function> çağrısı ile bu dönüş noktasına bir çıkış yapılırsa, denetim <function>setjmp</function> çağrısının yapıldığı noktaya aktarılmış olur. <function>setjmp</function> çağrısından dönen değer ile sıradan bir dönüş ve <function>longjmp</function> çağrısı tarafından yapılan bir dönüş arasında ayrım yapılabilmesi için <function>setjmp</function> çağrısının bir <code>if</code> deyimi içinde görünmesi gerekir.
+  </para>
+  <para>
+   Bunun yapılışına bir örnek:
+  </para>
+  <example>
+   <screen>#include &lt;setjmp.h&gt;
 #include &lt;stdlib.h&gt;
 #include &lt;stdio.h&gt;
 
-jmp_buf main_loop;
+jmp_buf ana_dongu;
 
 void
 abort_to_main_loop (int status)
 {
-  longjmp (main_loop, status);
+  longjmp (ana_dongu, status);
 }
 
 int
 main (void)
 {
   while (1)
-    if (setjmp (main_loop))
-      puts ("Back at main loop....");
+    if (setjmp (ana_dongu))
+      puts ("Ana döngüye geri dön....");
     else
       do_command ();
 }
@@ -96,507 +63,436 @@ do_command (void)
   else
     exit (EXIT_SUCCESS);
 }
-</pre></div>
-
-<para>The function <code>abort_to_main_loop</code> causes an immediate transfer of
-control back to the main loop of the program, no matter where it is
-called from.
-</para>
-<para>The flow of control inside the <code>main</code> function may appear a little
-mysterious at first, but it is actually a common idiom with
-<code>setjmp</code>.  A normal call to <code>setjmp</code> returns zero, so the
-“else” clause of the conditional is executed.  If
-<code>abort_to_main_loop</code> is called somewhere within the execution of
-<code>do_command</code>, then it actually appears as if the <emphasis>same</emphasis> call
-to <code>setjmp</code> in <code>main</code> were returning a second time with a value
-of <code>-1</code>.
-</para>
-<para>So, the general pattern for using <code>setjmp</code> looks something like:
-</para>
-<div class="example">
-<pre class="example">if (setjmp (<var>buffer</var>))
-  /* <span class="roman">Code to clean up after premature return.</span> */
+</screen>
+   <para>
+    <code>abort_to_main_loop</code> işlevi nereden çağrıldığına bakılmaksızın, denetimin, yazılımın ana döngüsüne geri dönmesine sebep olur.
+   </para>
+   <para>
+    <code>main</code> işlevinin içindeki akış denetimi başta biraz esrarlı görünebilir. Bir normal <function>setjmp</function> çağrısı sıfırla döner, böylece &quot;else&quot; sözcüğündeki kod çalışır. <code>do_command</code> içinde bir yerlerde <code>abort_to_main_loop</code> yapılırsa, hemen ardından <code>main</code> içinde <code>-1</code> değeri döndüren ikinci bir <function>setjmp</function> çağrısı yapılmış gibi görünür.
+   </para>
+   <para>
+    <function>setjmp</function> kullanımı ile ilgili genel kalıp şöyle görünür:
+   </para>
+   <screen>if (setjmp (<replaceable>tampon</replaceable>))
+  /* <replaceable>Erken dönüş sonrası temizlik kodu.</replaceable> */
   …
 else
-  /* <span class="roman">Code to be executed normally after setting up the return point.</span> */
+  /* <replaceable>Dönüş noktası ayarlandıktan sonra
+     normal olarak çalıştırılacak kod.</replaceable> */
   …
-</pre></div>
+</screen>
+  </example>
+ </chapter>
 
-<hr>
-</div>
-<sect xml:id="glibc-Non_002dLocal-Details">
-<div class="header">
-<para>
-Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Non_002dLocal-Exits-and-Signals" accesskey="n" rel="next">Non-Local Exits and Signals</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Non_002dLocal-Intro" accesskey="p" rel="prev">Introduction to Non-Local Exits</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Non_002dLocal-Exits" accesskey="u" rel="up">Non-Local Exits</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
-</div>
-<span xml:id="glibc-Details-of-Non_002dLocal-Exits"></span><h3 class="section">23.2 Details of Non-Local Exits</title>
+ <chapter xml:id="glibc-Non-Local-Details">
+  <title>Yerel Olmayan Çıkışların Ayrıntıları</title>
+  <titleabbrev>Yerel olmayan çıkışlarla ilgili işlevler.</titleabbrev>
+  <para>
+   Burada yerel olmayan çıkışları gerçekleştirmekte kullanılan veri yapıları ve işlevler ayrıntılı olarak incelenecektir. Bu oluşumlar &setjmp.h; dosyasında bildirilmiştir.
+   <indexterm linkend="glibc-pg"><primary>setjmp.h</primary></indexterm>
+  </para>
+  <csynopsis>
+   <indexterm linkend="glibc-tp" xml:id="glibc-tp-jmp_buf"><primary>jmp_buf</primary></indexterm>
+   <csproto type="veri türü">
+    <csname><function>jmp_buf</function></csname>
+   </csproto>
+   <header>&setjmp.h;</header>
+   <para>
+    <code>jmp_buf</code> türündeki nesneler, yerel olmayan bir çıkış tarafından eski durumuna getirilecek durum bilgisini tutar.
+   </para>
+  </csynopsis>
+  <csynopsis>
+   <indexterm linkend="glibc-fn" xml:id="glibc-fn-setjmp"><primary>setjmp</primary></indexterm>
+   <csproto type="makro">
+    <csname><type>int</type><function>setjmp</function></csname>
+    <csparam><type>jmp_buf</type><parameter>state</parameter></csparam>
+   </csproto>
+   <header>&setjmp.h;</header>
+   <conceptlist>
+    <concept>&mtsafe;</concept>
+    <concept>&assafe;</concept>
+    <concept>&acsafe;</concept>
+   </conceptlist>
+   <para>
+    Normal olarak çağrıldığında, <code>setjmp</code> işlevi yazılımın yürütülme durumu hakkında bilgiyi <parameter>state</parameter> nesnesine kaydeder ve sıfırla döner. Daha sonra yerel olmayan bir çıkış gerçekleştirmek için bu <parameter>state</parameter> durum bilgisi ile bir <function>longjmp</function> çağrısı yapılırsa, <code>setjmp</code> sıfırdan farklı bir değerle döner.
+   </para>
+  </csynopsis>
+  <csynopsis>
+   <indexterm linkend="glibc-fn" xml:id="glibc-fn-longjmp"><primary>longjmp</primary></indexterm>
+   <csproto type="makro">
+    <csname><type>void</type><function>longjmp</function></csname>
+    <csparam><type>jmp_buf</type><parameter>state</parameter></csparam>
+    <csparam><type>int</type><parameter>value</parameter></csparam>
+   </csproto>
+   <header>&setjmp.h;</header>
+   <conceptlist>
+    <concept>&mtsafe;</concept>
+    <concept>&asunsafe; &plugin; &corrupt; &lock;<code linkend="glibc-safety-condition">/hurd</code></concept>
+    <concept>&acunsafe; &corrupt; &lock;<code linkend="glibc-safety-condition">/hurd</code></concept>
+   </conceptlist>
+   <para>
+    Bu işlev o anki çalışma durumunu <parameter>state</parameter> nesnesinde kayıtlı durum ile değiştirerek yürütmenin dönüş noktasını oluşturan <function>setjmp</function> çağrısından devam etmesini sağlar. <function>setjmp</function> işlevinin dönüş durumu <code>0</code> yerine, <function>longjmp</function> çağrısının <parameter>value</parameter> bağımsız değişkeninde belirtilen değer olur. (Ancak, eğer <parameter>value</parameter> olarak sıfır verilmişse, <function>setjmp</function> işlevi <code>1</code> ile döner).
+   </para>
+  </csynopsis>
+  <para>
+   <function>setjmp</function> ve <function>longjmp</function> kullanımında önemli sınırlamalar getirmeyen bazı karanlık noktalar vardır. Bu sınırlamaların çoğu hala vardır, çünkü yerel olmayan çıkışlar C derleyicisinin bir kısmının biraz sihirli olmasını ve dilin diğer parçaları ile tuhaf bir yolla etkileşmesini gerektirir.
+  </para>
+  <para>
+   <function>setjmp</function> işlevi aslında bir işlev tanımı olmaksızın bir makrodur, yani <code>#undef</code> yapılamaz ve adresi alınamaz. Ek olarak, <function>setjmp</function> çağrıları sadece aşağıdaki bağlamla güvenlidir.
+  </para>
+  <itemizedlist>
+   <listitem>
+    <para>
+     Bir seçim ya da yineleme deyiminin sınama ifadesi olarak. (örneğin, <code>if</code>, <code>switch</code> veya <code>while</code>).
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+      Bir seçim ya da yineleme deyiminin sınama ifadesinde görünen bir eşitlik ya da karşılaştırma işlecinin terimi olarak. Diğer terim bir tamsayı sabit ifadesi olmalıdır.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     Bir seçim ya da yineleme deyiminin sınama ifadesinde görünen bir tek terimli <code>!</code> işlecinin terimi olarak.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     Bir ifade deyimi olarak kendisi tarafından.
+    </para>
+   </listitem>
+  </itemizedlist>
+  <para>
+   Geri dönüş noktaları, sadece bu dönüş noktalarını oluşturan <function>setjmp</function> işlevine çağrı yapan işlevin (örnekteki, <code>main</code> işlevi) çalışması boyunca geçerlidir. Eğer zaten dönmüş bir işlevde kurulu bir dönüş noktasına <function>longjmp</function> yapılırsa bunun sonuçları öngörülemez ve yıkıcı etkileri olabilir.
+  </para>
+  <para>
+   <function>longjmp</function> çağrısında <parameter>value</parameter> bağımsız değişkenine sıfırdan farklı bir değer belirtilmelidir. <function>longjmp</function> işlevinin, <function>setjmp</function> işlevinden dönecek değer olarak, <command>setjmp</command> işlevine sıfır değerini aktarmayı reddetmesi, aslında kaza ile oluşacak bir kötü kullanıma karşı oluşturulmuş bir güvencedir.
+  </para>
+  <para>
+   Bir yerel olmayan çıkış yapıldığında, erişilebilir nesneler genellikle <command>longjmp</command> çağrısı yapıldığı sıradaki değerlerinde kalır. Bunun istisnası, <function>setjmp</function> çağrısını içeren işlevin yerel özdevinimli değişken değerlerinin, <function>setjmp</function> çağrısının belirsizliğinden dolayı değişmesidir. Bunun olmaması için bunlar <type>volatile</type> olarak bildirilebilir.
+  </para>
+ </chapter>
 
-<para>Here are the details on the functions and data structures used for
-performing non-local exits.  These facilities are declared in
-<filename>setjmp.h</filename>.
-<span xml:id="glibc-index-setjmp_002eh"></span>
-</para>
-<dl class="def">
-<dt xml:id="glibc-index-jmp_005fbuf"><span class="category">Data Type: </span><span><strong>jmp_buf</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-jmp_005fbuf" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-<para>Objects of type <code>jmp_buf</code> hold the state information to
-be restored by a non-local exit.  The contents of a <code>jmp_buf</code>
-identify a specific place to return to.
-</para></dd></dl>
+ <chapter xml:id="glibc-Non-Local-Exits-and-Signals">
+  <title>Yerel Olmayan Çıkışlarda Sinyaller</title>
+  <titleabbrev>Taşınabilirlik bilgileri.</titleabbrev>
+  <para>
+   BSD Unix sistemlerinde, <function>setjmp</function> ve <function>longjmp</function> işlevleri <link linkend="glibc-Blocking-Signals">engellenen sinyalleri</link> kaydedebilir ve daha sonra onları eski durumuna getirebilir.  Ancak, POSIX.1 standardı <function>setjmp</function> ve <function>longjmp</function> gerçekleniminin engellenen sinyalleri değiştirmemesini gerektirir ve BSD davranışını elde etmek için ek bir işlev çifti (<function>sigsetjmp</function> ve <function>siglongjmp</function>) sağlar.
+  </para>
+  <para>
+   <function>setjmp</function> ve <function>longjmp</function> işlevlerinin davranışı &glibc;nde <link linkend="glibc-Feature-Test-Macros">özellik sınama makroları</link> ile denetlenir. &glibc;nde ön tanımlı olan BSD davranışı değil POSIX.1 davranışıdır.
+  </para>
+  <para>
+   Bu kısımdaki oluşumlar &setjmp.h; başlık dosyasında bildirilmiştir.
+   <indexterm linkend="glibc-pg"><primary>setjmp.h</primary></indexterm>
+  </para>
+  <csynopsis>
+   <indexterm linkend="glibc-tp" xml:id="glibc-tp-sigjmp_buf"><primary>sigjmp_buf</primary></indexterm>
+   <csproto type="veri türü">
+    <csname><function>sigjmp_buf</function></csname>
+   </csproto>
+   <header>&setjmp.h;</header>
+   <para>
+    Bu veri türü, ayrıca engellenen sinyallerin durum bilgilerinin de kaydedilmesini sağlaması dışında <type>jmp_buf</type> türüne benzer.
+   </para>
+  </csynopsis>
+  <csynopsis>
+   <indexterm linkend="glibc-fn" xml:id="glibc-fn-sigsetjmp"><primary>sigsetjmp</primary></indexterm>
+   <csproto type="işlev">
+    <csname><type>int</type><function>sigsetjmp</function></csname>
+    <csparam><type>sigjmp_buf</type><parameter>state</parameter></csparam>
+    <csparam><type>int</type><parameter>savesigs</parameter></csparam>
+   </csproto>
+   <header>&setjmp.h;</header>
+   <conceptlist>
+    <concept>&mtsafe;</concept>
+    <concept>&asunsafe; &lock;<code linkend="glibc-safety-condition">/hurd</code></concept>
+    <concept>&acunsafe; &lock;<code linkend="glibc-safety-condition">/hurd</code></concept>
+   </conceptlist>
+   <para>
+    <code>setjmp</code> işlevine benzer.  Eğer <parameter>savesigs</parameter> bağımsız değişkeninin değeri sıfırdan farklıysa, engellenen sinyaller daha sonraki bir <function>siglongjmp</function> çağrısı ile yerine konmak üzere <parameter>state</parameter> nesnesine kaydedilir.
+   </para>
+  </csynopsis>
+  <csynopsis>
+   <indexterm linkend="glibc-fn" xml:id="glibc-fn-siglongjmp"><primary>siglongjmp</primary></indexterm>
+   <csproto type="işlev">
+    <csname><type>void</type><function>siglongjmp</function></csname>
+    <csparam><type>sigjmp_buf</type><parameter>state</parameter></csparam>
+    <csparam><type>int</type><parameter>value</parameter></csparam>
+   </csproto>
+   <header>&setjmp.h;</header>
+   <conceptlist>
+    <concept>&mtsafe;</concept>
+    <concept>&asunsafe; &plugin; &corrupt; &lock;<code linkend="glibc-safety-condition">/hurd</code></concept>
+    <concept>&acunsafe; &corrupt; &lock;<code linkend="glibc-safety-condition">/hurd</code></concept>
+   </conceptlist>
+   <para>
+    <parameter>state</parameter> bağımsız değişkeninin türü dışında <function>longjmp</function> işlevine benzer. Eğer <function>sigsetjmp</function> çağrısında sıfırdan farklı bir <parameter>savesigs</parameter> bağımsız değişkeni belirtilerek engellenen sinyaller bu <parameter>state</parameter> nesnesine kaydedilmişse, bu çağrı ayrıca onları da eski durumlarına getirir.
+   </para>
+  </csynopsis>
+ </chapter>
 
-<dl class="def">
-<dt xml:id="glibc-index-setjmp"><span class="category">Macro: </span><span><emphasis>int</emphasis> <strong>setjmp</strong> <emphasis>(jmp_buf <var>state</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-setjmp" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-<para>Preliminary:
-| MT-Safe
-| AS-Safe
-| AC-Safe
-| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
-</para>
-
-<para>When called normally, <code>setjmp</code> stores information about the
-execution state of the program in <var>state</var> and returns zero.  If
-<code>longjmp</code> is later used to perform a non-local exit to this
-<var>state</var>, <code>setjmp</code> returns a nonzero value.
-</para></dd></dl>
-
-<dl class="def">
-<dt xml:id="glibc-index-longjmp-1"><span class="category">Function: </span><span><emphasis>void</emphasis> <strong>longjmp</strong> <emphasis>(jmp_buf <var>state</var>, int <var>value</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-longjmp-1" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-<para>Preliminary:
-| MT-Safe
-| AS-Unsafe plugin corrupt lock/hurd
-| AC-Unsafe corrupt lock/hurd
-| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
-</para>
-
-<para>This function restores current execution to the state saved in
-<var>state</var>, and continues execution from the call to <code>setjmp</code> that
-established that return point.  Returning from <code>setjmp</code> by means of
-<code>longjmp</code> returns the <var>value</var> argument that was passed to
-<code>longjmp</code>, rather than <code>0</code>.  (But if <var>value</var> is given as
-<code>0</code>, <code>setjmp</code> returns <code>1</code>).
-</para></dd></dl>
-
-<para>There are a lot of obscure but important restrictions on the use of
-<code>setjmp</code> and <code>longjmp</code>.  Most of these restrictions are
-present because non-local exits require a fair amount of magic on the
-part of the C compiler and can interact with other parts of the language
-in strange ways.
-</para>
-<para>The <code>setjmp</code> function is actually a macro without an actual
-function definition, so you shouldn’t try to ‘<filename>#undef</filename>’ it or take
-its address.  In addition, calls to <code>setjmp</code> are safe in only the
-following contexts:
-</para>
-<ul>
-<li> As the test expression of a selection or iteration
-statement (such as ‘<filename>if</filename>’, ‘<filename>switch</filename>’, or ‘<filename>while</filename>’).
-
-</li><li> As one operand of an equality or comparison operator that appears as the
-test expression of a selection or iteration statement.  The other
-operand must be an integer constant expression.
-
-</li><li> As the operand of a unary ‘<filename>!</filename>’ operator, that appears as the
-test expression of a selection or iteration statement.
-
-</li><li> By itself as an expression statement.
-</li></ul>
-
-<para>Return points are valid only during the dynamic extent of the function
-that called <code>setjmp</code> to establish them.  If you <code>longjmp</code> to
-a return point that was established in a function that has already
-returned, unpredictable and disastrous things are likely to happen.
-</para>
-<para>You should use a nonzero <var>value</var> argument to <code>longjmp</code>.  While
-<code>longjmp</code> refuses to pass back a zero argument as the return value
-from <code>setjmp</code>, this is intended as a safety net against accidental
-misuse and is not really good programming style.
-</para>
-<para>When you perform a non-local exit, accessible objects generally retain
-whatever values they had at the time <code>longjmp</code> was called.  The
-exception is that the values of automatic variables local to the
-function containing the <code>setjmp</code> call that have been changed since
-the call to <code>setjmp</code> are indeterminate, unless you have declared
-them <code>volatile</code>.
-</para>
-<hr>
-</div>
-<sect xml:id="glibc-Non_002dLocal-Exits-and-Signals">
-<div class="header">
-<para>
-Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#System-V-contexts" accesskey="n" rel="next">Complete Context Control</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Non_002dLocal-Details" accesskey="p" rel="prev">Details of Non-Local Exits</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Non_002dLocal-Exits" accesskey="u" rel="up">Non-Local Exits</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
-</div>
-<span xml:id="glibc-Non_002dLocal-Exits-and-Signals-1"></span><h3 class="section">23.3 Non-Local Exits and Signals</title>
-
-<para>In BSD Unix systems, <code>setjmp</code> and <code>longjmp</code> also save and
-restore the set of blocked signals; see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Blocking-Signals">Blocking Signals</a>.  However,
-the POSIX.1 standard requires <code>setjmp</code> and <code>longjmp</code> not to
-change the set of blocked signals, and provides an additional pair of
-functions (<code>sigsetjmp</code> and <code>siglongjmp</code>) to get the BSD
-behavior.
-</para>
-<para>The behavior of <code>setjmp</code> and <code>longjmp</code> in the GNU C Library is
-controlled by feature test macros; see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Feature-Test-Macros">Feature Test Macros</a>.  The
-default in the GNU C Library is the POSIX.1 behavior rather than the BSD
-behavior.
-</para>
-<para>The facilities in this section are declared in the header file
-<filename>setjmp.h</filename>.
-<span xml:id="glibc-index-setjmp_002eh-1"></span>
-</para>
-<dl class="def">
-<dt xml:id="glibc-index-sigjmp_005fbuf"><span class="category">Data Type: </span><span><strong>sigjmp_buf</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-sigjmp_005fbuf" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-<para>This is similar to <code>jmp_buf</code>, except that it can also store state
-information about the set of blocked signals.
-</para></dd></dl>
-
-<dl class="def">
-<dt xml:id="glibc-index-sigsetjmp"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>sigsetjmp</strong> <emphasis>(sigjmp_buf <var>state</var>, int <var>savesigs</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-sigsetjmp" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-<para>Preliminary:
-| MT-Safe
-| AS-Unsafe lock/hurd
-| AC-Unsafe lock/hurd
-| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
-</para>
-
-<para>This is similar to <code>setjmp</code>.  If <var>savesigs</var> is nonzero, the set
-of blocked signals is saved in <var>state</var> and will be restored if a
-<code>siglongjmp</code> is later performed with this <var>state</var>.
-</para></dd></dl>
-
-<dl class="def">
-<dt xml:id="glibc-index-siglongjmp"><span class="category">Function: </span><span><emphasis>void</emphasis> <strong>siglongjmp</strong> <emphasis>(sigjmp_buf <var>state</var>, int <var>value</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-siglongjmp" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-<para>Preliminary:
-| MT-Safe
-| AS-Unsafe plugin corrupt lock/hurd
-| AC-Unsafe corrupt lock/hurd
-| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
-</para>
-
-<para>This is similar to <code>longjmp</code> except for the type of its <var>state</var>
-argument.  If the <code>sigsetjmp</code> call that set this <var>state</var> used a
-nonzero <var>savesigs</var> flag, <code>siglongjmp</code> also restores the set of
-blocked signals.
-</para></dd></dl>
-
-<hr>
-</div>
-<sect xml:id="glibc-System-V-contexts">
-<div class="header">
-<para>
-Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Non_002dLocal-Exits-and-Signals" accesskey="p" rel="prev">Non-Local Exits and Signals</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Non_002dLocal-Exits" accesskey="u" rel="up">Non-Local Exits</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
-</div>
-<span xml:id="glibc-Complete-Context-Control"></span><h3 class="section">23.4 Complete Context Control</title>
-
-<para>The Unix standard provides one more set of functions to control the
-execution path and these functions are more powerful than those
-discussed in this chapter so far.  These functions were part of the
-original System&nbsp;V API and by this route were added to the Unix
-API.  Besides on branded Unix implementations these interfaces are not
-widely available.  Not all platforms and/or architectures the GNU C Library
-is available on provide this interface.  Use <filename>configure</filename> to
-detect the availability.
-</para>
-<para>Similar to the <code>jmp_buf</code> and <code>sigjmp_buf</code> types used for the
-variables to contain the state of the <code>longjmp</code> functions the
-interfaces of interest here have an appropriate type as well.  Objects
-of this type are normally much larger since more information is
-contained.  The type is also used in a few more places as we will see.
-The types and functions described in this section are all defined and
-declared respectively in the <filename>ucontext.h</filename> header file.
-</para>
-<dl class="def">
-<dt xml:id="glibc-index-ucontext_005ft"><span class="category">Data Type: </span><span><strong>ucontext_t</strong><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-ucontext_005ft" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-
-<para>The <code>ucontext_t</code> type is defined as a structure with at least the
-following elements:
-</para>
-<dl compact="compact">
-<dt><span><code>ucontext_t *uc_link</code></span></dt>
-<dd><para>This is a pointer to the next context structure which is used if the
-context described in the current structure returns.
-</para>
-</dd>
-<dt><span><code>sigset_t uc_sigmask</code></span></dt>
-<dd><para>Set of signals which are blocked when this context is used.
-</para>
-</dd>
-<dt><span><code>stack_t uc_stack</code></span></dt>
-<dd><para>Stack used for this context.  The value need not be (and normally is
-not) the stack pointer.  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Signal-Stack">Using a Separate Signal Stack</a>.
-</para>
-</dd>
-<dt><span><code>mcontext_t uc_mcontext</code></span></dt>
-<dd><para>This element contains the actual state of the process.  The
-<code>mcontext_t</code> type is also defined in this header but the definition
-should be treated as opaque.  Any use of knowledge of the type makes
-applications less portable.
-</para>
-</dd>
-</dl>
-</dd></dl>
-
-<para>Objects of this type have to be created by the user.  The initialization
-and modification happens through one of the following functions:
-</para>
-<dl class="def">
-<dt xml:id="glibc-index-getcontext"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>getcontext</strong> <emphasis>(ucontext_t *<var>ucp</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-getcontext" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-<para>Preliminary:
-| MT-Safe race:ucp
-| AS-Safe
-| AC-Safe
-| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
-</para>
-
-<para>The <code>getcontext</code> function initializes the variable pointed to by
-<var>ucp</var> with the context of the calling thread.  The context contains
-the content of the registers, the signal mask, and the current stack.
-Executing the contents would start at the point where the
-<code>getcontext</code> call just returned.
-</para>
-<para><strong>Compatibility Note:</strong> Depending on the operating system,
-information about the current context’s stack may be in the
-<code>uc_stack</code> field of <var>ucp</var>, or it may instead be in
-architecture-specific subfields of the <code>uc_mcontext</code> field.
-</para>
-<para>The function returns <code>0</code> if successful.  Otherwise it returns
-<code>-1</code> and sets <code>errno</code> accordingly.
-</para></dd></dl>
-
-<para>The <code>getcontext</code> function is similar to <code>setjmp</code> but it does
-not provide an indication of whether <code>getcontext</code> is returning for
-the first time or whether an initialized context has just been restored.
-If this is necessary the user has to determine this herself.  This must
-be done carefully since the context contains registers which might contain
-register variables.  This is a good situation to define variables with
-<code>volatile</code>.
-</para>
-<para>Once the context variable is initialized it can be used as is or it can
-be modified using the <code>makecontext</code> function.  The latter is normally
-done when implementing co-routines or similar constructs.
-</para>
-<dl class="def">
-<dt xml:id="glibc-index-makecontext"><span class="category">Function: </span><span><emphasis>void</emphasis> <strong>makecontext</strong> <emphasis>(ucontext_t *<var>ucp</var>, void (*<var>func</var>) (void), int <var>argc</var>, …)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-makecontext" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-<para>Preliminary:
-| MT-Safe race:ucp
-| AS-Safe
-| AC-Safe
-| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
-</para>
-
-
-<para>The <var>ucp</var> parameter passed to <code>makecontext</code> shall be
-initialized by a call to <code>getcontext</code>.  The context will be
-modified in a way such that if the context is resumed it will start by
-calling the function <code>func</code> which gets <var>argc</var> integer arguments
-passed.  The integer arguments which are to be passed should follow the
-<var>argc</var> parameter in the call to <code>makecontext</code>.
-</para>
-<para>Before the call to this function the <code>uc_stack</code> and <code>uc_link</code>
-element of the <var>ucp</var> structure should be initialized.  The
-<code>uc_stack</code> element describes the stack which is used for this
-context.  No two contexts which are used at the same time should use the
-same memory region for a stack.
-</para>
-<para>The <code>uc_link</code> element of the object pointed to by <var>ucp</var> should
-be a pointer to the context to be executed when the function <var>func</var>
-returns or it should be a null pointer.  See <code>setcontext</code> for more
-information about the exact use.
-</para></dd></dl>
-
-<para>While allocating the memory for the stack one has to be careful.  Most
-modern processors keep track of whether a certain memory region is
-allowed to contain code which is executed or not.  Data segments and
-heap memory are normally not tagged to allow this.  The result is that
-programs would fail.  Examples for such code include the calling
-sequences the GNU C compiler generates for calls to nested functions.
-Safe ways to allocate stacks correctly include using memory on the
-original thread’s stack or explicitly allocating memory tagged for
-execution using (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Memory_002dmapped-I_002fO">Memory-mapped I/O</a>).
-</para>
-<para><strong>Compatibility note</strong>: The current Unix standard is very imprecise
-about the way the stack is allocated.  All implementations seem to agree
-that the <code>uc_stack</code> element must be used but the values stored in
-the elements of the <code>stack_t</code> value are unclear.  The GNU C Library
-and most other Unix implementations require the <code>ss_sp</code> value of
-the <code>uc_stack</code> element to point to the base of the memory region
-allocated for the stack and the size of the memory region is stored in
-<code>ss_size</code>.  There are implementations out there which require
-<code>ss_sp</code> to be set to the value the stack pointer will have (which
-can, depending on the direction the stack grows, be different).  This
-difference makes the <code>makecontext</code> function hard to use and it
-requires detection of the platform at compile time.
-</para>
-<dl class="def">
-<dt xml:id="glibc-index-setcontext"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>setcontext</strong> <emphasis>(const ucontext_t *<var>ucp</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-setcontext" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-<para>Preliminary:
-| MT-Safe race:ucp
-| AS-Unsafe corrupt
-| AC-Unsafe corrupt
-| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
-</para>
-
-
-<para>The <code>setcontext</code> function restores the context described by
-<var>ucp</var>.  The context is not modified and can be reused as often as
-wanted.
-</para>
-<para>If the context was created by <code>getcontext</code> execution resumes with
-the registers filled with the same values and the same stack as if the
-<code>getcontext</code> call just returned.
-</para>
-<para>If the context was modified with a call to <code>makecontext</code> execution
-continues with the function passed to <code>makecontext</code> which gets the
-specified parameters passed.  If this function returns execution is
-resumed in the context which was referenced by the <code>uc_link</code>
-element of the context structure passed to <code>makecontext</code> at the
-time of the call.  If <code>uc_link</code> was a null pointer the application
-terminates normally with an exit status value of <code>EXIT_SUCCESS</code>
-(see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Program-Termination">Program Termination</a>).
-</para>
-<para>If the context was created by a call to a signal handler or from any
-other source then the behaviour of <code>setcontext</code> is unspecified.
-</para>
-<para>Since the context contains information about the stack no two threads
-should use the same context at the same time.  The result in most cases
-would be disastrous.
-</para>
-<para>The <code>setcontext</code> function does not return unless an error occurred
-in which case it returns <code>-1</code>.
-</para></dd></dl>
-
-<para>The <code>setcontext</code> function simply replaces the current context with
-the one described by the <var>ucp</var> parameter.  This is often useful but
-there are situations where the current context has to be preserved.
-</para>
-<dl class="def">
-<dt xml:id="glibc-index-swapcontext"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>swapcontext</strong> <emphasis>(ucontext_t *restrict <var>oucp</var>, const ucontext_t *restrict <var>ucp</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-swapcontext" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-<para>Preliminary:
-| MT-Safe race:oucp race:ucp
-| AS-Unsafe corrupt
-| AC-Unsafe corrupt
-| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
-</para>
-
-
-<para>The <code>swapcontext</code> function is similar to <code>setcontext</code> but
-instead of just replacing the current context the latter is first saved
-in the object pointed to by <var>oucp</var> as if this was a call to
-<code>getcontext</code>.  The saved context would resume after the call to
-<code>swapcontext</code>.
-</para>
-<para>Once the current context is saved the context described in <var>ucp</var> is
-installed and execution continues as described in this context.
-</para>
-<para>If <code>swapcontext</code> succeeds the function does not return unless the
-context <var>oucp</var> is used without prior modification by
-<code>makecontext</code>.  The return value in this case is <code>0</code>.  If the
-function fails it returns <code>-1</code> and sets <code>errno</code> accordingly.
-</para></dd></dl>
-
-<span xml:id="glibc-Example-for-SVID-Context-Handling"></span><h3 class="heading">Example for SVID Context Handling</title>
-
-<para>The easiest way to use the context handling functions is as a
-replacement for <code>setjmp</code> and <code>longjmp</code>.  The context contains
-on most platforms more information which may lead to fewer surprises
-but this also means using these functions is more expensive (besides
-being less portable).
-</para>
-<div class="example">
-<pre class="example">int
+ <chapter xml:id="glibc-System-V-contexts">
+  <title>Bütünsel Bağlam Denetimi</title>
+  <titleabbrev>System V usulü bütünsel bağlam denetimi.</titleabbrev>
+  <para>
+   Unix standardında var olan, yürütme yolunu denetleyen bir diğer işlev grubu. Bu işlevler bu bölümde buraya kadar anlatılanlardan daha güçlü olup en baştan beri System V yazılım geliştirme arayüzünde bulunmakta olup buradan Unix yazılım geliştirme arayüzüne aktarılmıştır. Markalı Unix gerçeklenimleri dışında bu arayüzlere fazla rastlanmaz. GNU C'nin bulunduğu bütün platformlar ve mimarilerde de yer almazlar. Var olup olmadıkları <code>configure</code> kullanılarak anlaşılabilir.
+  </para>
+  <para>
+   <function>longjmp</function> işlevinin durumunu içeren değişkenler için kullanılan <type>jmp_buf</type> ve <type>sigjmp_buf</type> türlerine benzer şekilde, burada anlatılacak olan arayüzler için de uygun türler tanımlanmıştır. Bu türdeki nesneler daha fazla bilgi içerdiklerinden dolayı daha büyüktür. Bu tür ileride görülecek birkaç yerde daha kullanılmıştır. Bu bölümde anlatılan veri türleri ve işlevlerin tümü &ucontext.h; başlık dosyasında tanımlanmış ve bildirilmiştir.
+   <indexterm linkend="glibc-pg"><primary>ucontext.h</primary></indexterm>
+  </para>
+  <csynopsis>
+   <indexterm linkend="glibc-tp" xml:id="glibc-tp-ucontext_t"><primary>ucontext_t</primary></indexterm>
+   <csproto type="veri türü">
+    <csname><function>ucontext_t</function></csname>
+   </csproto>
+   <header>&ucontext.h;</header>
+   <para>
+    <code>ucontext_t</code> yapısı en azından aşağıdaki üyeleri içermelidir:
+   </para>
+   <glosslist>
+    <glossentry>
+     <glossterm>
+      <type>ucontext_t&nbsp;*</type><structfield>uc_link</structfield>
+     </glossterm>
+     <glossdef>
+      <para>
+       Sonraki bağlam yapısına göstericidir. Eğer mevcut yapıda tanımlanan bağlamdan çıkılmışsa kullanılır.
+      </para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <type>sigset_t&nbsp;</type><structfield>uc_sigmask</structfield>
+     </glossterm>
+     <glossdef>
+      <para>
+       Bu bağlam kullanıldığında engellenen sinyalleri içerir.
+      </para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <type>stack_t&nbsp;</type><structfield>uc_stack</structfield>
+     </glossterm>
+     <glossdef>
+      <para>
+       Bu bağlam için kullanılan yığıt. Değeri bir yığıt göstericisi olmak zorunda değildir ve normalde de değildir. Bkz. <xref linkend="glibc-Signal-Stack"/>.
+      </para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <type>mcontext_t&nbsp;</type><structfield>uc_mcontext</structfield>
+     </glossterm>
+     <glossdef>
+      <para>
+       Bu üye sürecin mevcut durumunu içerir. <type>mcontext_t</type> türü de bu başlıkta tanımlanır fakat bu tanımın geçirimsiz olduğu düşünülmelidir. Bu türde herhangi bir bilgi kullanımı, uygulamaları daha az taşınabilir hale getirir.
+      </para>
+     </glossdef>
+    </glossentry>
+   </glosslist>
+  </csynopsis>
+  <para>
+   Bu türden nesneler yazılımcı tarafından oluşturulmalıdır. İlklendirme ve değişiklik işlemleri için aşağıdaki işlevlerden biri kullanılır:
+  </para>
+  <csynopsis>
+   <indexterm linkend="glibc-fn" xml:id="glibc-fn-getcontext"><primary>getcontext</primary></indexterm>
+   <csproto type="işlev">
+    <csname><type>int</type><function>getcontext</function></csname>
+    <csparam><ptr>ucontext_t</ptr><parameter>ucp</parameter></csparam>
+   </csproto>
+   <header>&ucontext.h;</header>
+   <conceptlist>
+    <concept>&mtsafe; &race;<code linkend="glibc-safety-identifier">:ucp</code></concept>
+    <concept>&assafe;</concept>
+    <concept>&acsafe;</concept>
+   </conceptlist>
+   <para>
+    <code>getcontext</code> işlevi, kendisini çağıran evre bağlamında <parameter>ucp</parameter> ile gösterilen bağlam nesnesini ilklendirir. Buradaki bağlam, yazmaçlar, sinyal maskesi ve mevcut yığıta ait içerikleri barındırır. İçeriklerin yürütmesi <code>getcontext</code> çağrısı döndüğü anda başlar.
+   </para>
+   <note><title>Uyumluluk Bilgisi:</title>
+    <para>
+     İşletim sistemine bağlı olarak, geçerli bağlamın yığıtı hakkındaki bilgiler <parameter>ucp</parameter>'nin <structfield>uc_stack</structfield> alanında olabilir veya bunun yerine <structfield>uc_mcontext</structfield> alanının mimariye özgü alt alanlarında olabilir.
+    </para>
+   </note>
+   <para>
+    İşlev başarılıysa <code>0</code> değerini döndürür. Değilse <code>-1</code> döndürür ve <varname>errno</varname> değişkenine uygun değeri atar.
+   </para>
+  </csynopsis>
+  <para>
+   <code>getcontext</code> işlevi <function>setjmp</function> işlevine benzer ancak işlevin ilk kez mi döndüğü yoksa ilklendirilmiş bağlam kullanılıp yürütmeye o noktadan mı geri dönüldüğü konusunda bilgi vermez.  Eğer bu ayrımın yapılması gerekliyse, bunu yazılımcı kendisi ortaya çıkarmalıdır. Ancak bunu dikkatlice yapmak gerekir çünkü bağlam içerisinde yazmaç değişkenlerini içeren yazmaçlar bulunabilir. Değişkenleri <type>volatile</type> ile tanımlamak için bu iyi bir durumdur.
+  </para>
+  <para>
+   <parameter>ucp</parameter> bağlam nesnesine bir kez ilk değer atandıktan sonra ya olduğu gibi ya da <code>makecontext</code> işlevi ile değiştirilerek kullanılır. Değişiklik normal olarak eş-yordamları veya benzeri yapıları gerçekleştirmek için yapılır.
+  </para>
+  <csynopsis>
+   <indexterm linkend="glibc-fn" xml:id="glibc-fn-makecontext"><primary>makecontext</primary></indexterm>
+   <csproto type="işlev">
+    <csname><type>void</type><function>makecontext</function></csname>
+    <csparam><ptr>ucontext_t</ptr><parameter>ucp</parameter></csparam>
+    <csparam><code>void&nbsp;(*<parameter>func</parameter>)&nbsp;(void)</code></csparam>
+    <csparam><type>int</type><parameter>argc</parameter></csparam>
+    <varargs/>
+   </csproto>
+   <header>&ucontext.h;</header>
+   <conceptlist>
+    <concept>&mtsafe; &race;<code linkend="glibc-safety-identifier">:ucp</code></concept>
+    <concept>&assafe;</concept>
+    <concept>&acsafe;</concept>
+   </conceptlist>
+   <para>
+    İşleve aktarılan <parameter>ucp</parameter> bağımsız değişkeni <function>getcontext</function> tarafından ilklendirilmiş olmalıdır. Sonuçta elde edilen bağlama geri dönüldüğünde yapılan ilk işlem, <parameter>argc</parameter> tane tamsayı bağımsız değişken ile <parameter>func</parameter> işlevinin çağrılmasıdır. <code>makecontext</code> çağrısında tamsayı bağımsız değişkenler <parameter>argc</parameter> bağımsız değişkeninden sonra verilmelidir.
+   </para>
+   <para>
+    Bu işlev çağrılmadan önce <parameter>ucp</parameter> yapısına ait <structfield>uc_stack</structfield> ve <structfield>uc_link</structfield> üyeleri ilklendirilmelidir. <structfield>uc_stack</structfield> üyesi bu bağlam için kullanılan yığıtı tanımlar. Aynı anda kullanılan bağlamların her biri yığıt için ayrı bellek bölgeleri kullanmalıdır.
+   </para>
+   <para>
+    <parameter>ucp</parameter> tarafından gösterilen nesnenin <structfield>uc_link</structfield> üyesi, <parameter>func</parameter> işlevinin geri dönüş noktasında yürütülecek bağlamı göstermeli veya boş gösterici olmalıdır. Kullanımı hakkında daha fazla bilgi için bkz: <function>setcontext</function>.
+   </para>
+  </csynopsis>
+  <para>
+   Yığıt için bellek ayırırken dikkatli olunmalıdır. Günümüzde işlemcilerin çoğunluğu bir bellek bölgesinin çalıştırılabilir kod içerip içeremeyeceği konusunda ayrım yapar. Veri bölütleri ve özdevimli ayırma yapılan bellekte buna izin veren bir yaftalama yoktur. Sonuçta yazılımlar başarısız olur. Bu tür çalıştırılabilir koda bir örnek, iç içe işlev çağrıları için GNU C derleyicisinin ürettiği çağrı dizilimleridir. Yığıtlar için güvenli bir şekilde bellek ayırmak için örneğin özgün evre yığıtı üzerindeki bellek kullanılabilir veya çalıştırılmaya uygun şekilde yaftalanmış bir bellek bölgesi tahsis edilebilir (bkz. <xref linkend="glibc-Memory-mapped-I-O"/>).
+  </para>
+  <note><title>Uyumluluk Bilgisi</title>
+   <para>
+    Mevcut Unix standardı yığıt için bellek tahsisi konusunda hemen hemen hiç belirleyici değildir. Bütün gerçeklenimler <structfield>uc_stack</structfield> üyesinin kullanımında anlaşmıştır ama <type>stack_t</type> türünden üyelerde saklanan değerler konusunu belirsiz bırakmıştır. &glibc; ve diğer Unix gerçeklenimlerinin çoğunluğunda <structfield>uc_stack</structfield> üyesinin <structfield>ss_sp</structfield> değeri, yığıt için ayrılmış bellek bölgesinin tabanını göstermelir ve <structfield>ss_size</structfield> değeri de bu bölgenin büyüklüğünü içermelidir. Bazı gerçeklenimlerde ise <structfield>ss_sp</structfield> değeri yığıt göstericisinin değerini içerir (yığıtın gelişme yönüne göre bu değer farklıdır). Bu farklılık <function>makecontext</function> işlevinin kullanımını zorlaştırır ve derleme sırasında platformn bilgisinin elde edilip kullanılmasını zorunlu kılar.
+   </para>
+  </note>
+  <csynopsis>
+   <indexterm linkend="glibc-fn" xml:id="glibc-fn-setcontext"><primary>setcontext</primary></indexterm>
+   <csproto type="işlev">
+    <csname><type>int</type><function>setcontext</function></csname>
+    <csparam><ptr>const&nbsp;ucontext_t</ptr><parameter>ucp</parameter></csparam>
+   </csproto>
+   <header>&ucontext.h;</header>
+   <conceptlist>
+    <concept>&mtsafe; &race;<code linkend="glibc-safety-identifier">:ucp</code></concept>
+    <concept>&asunsafe; &corrupt;</concept>
+    <concept>&acunsafe; &corrupt;</concept>
+   </conceptlist>
+   <para>
+    <code>setcontext</code> işlevi, <parameter>ucp</parameter> tarafından tanımlanmış bağlamı yeniden geçerli kılar. Bağlamda değişiklik yapılmaz ve istenen sıklıkta yeniden kullanılabilir.
+   </para>
+   <para>
+    Eğer bağlam <function>getcontext</function> ile oluşturulmuşsa yürütme sonunda yazmaçlar, <function>getcontext</function> sanki o an geri dönüş yapmış gibi aynı değerleri içerir.
+   </para>
+   <para>
+    Eğer <function>makecontext</function>'in çağrılmasıyla bağlamda değişiklik yapılmışsa <function>makecontext</function>'in çağrıldığı işlevle yürütmeye devam edilir ve bu işleve aynı çağrı sırasında verilen bağımsız değişkenler aktarılır. Bu işlev geri dönüş yaptığında <function>makecontext</function> çağrılırken verilen bağlam yapısının <structfield>uc_link</structfield> üyesi tarafından gösterilen bağlamla yürütmeye devam edilir. Eğer <structfield>uc_link</structfield> boş gösterici ise, bu durumda uygulama sonlanır.
+   </para>
+   <para>
+    Bağlam yığıt hakkında bilgi içerdiğinden aynı bağlamı aynı anda iki evre kullanmamalıdır. Aksi takdirde, sonuç çoğu durumda felaket olurdu.
+   </para>
+   <para>
+    <code>setcontext</code> işlevi bir hata oluşmadıkça dönmeyecekir, hata oluşmuşsa <code>-1</code> değeri ile döner.
+   </para>
+  </csynopsis>
+  <para>
+   <code>setcontext</code> işlevi mevcut bağlamı basitçe <parameter>ucp</parameter> bağımsız değişkenini tanımlayarak değiştirir. Mevcut bağlamın korunmasını gerektiren durumlar da olmasına rağmen bu çoğunlukla kullanışlıdır.
+  </para>
+  <csynopsis>
+   <indexterm linkend="glibc-fn" xml:id="glibc-fn-swapcontext"><primary>swapcontext</primary></indexterm>
+   <csproto type="işlev">
+    <csname><type>int</type><function>swapcontext</function></csname>
+    <csparam><type>ucontext_t&nbsp;*restrict</type><parameter>oucp</parameter></csparam>
+    <csparam><type>const&nbsp;ucontext_t&nbsp;*restrict</type><parameter>ucp</parameter></csparam>
+   </csproto>
+   <header>&ucontext.h;</header>
+   <conceptlist>
+    <concept>&mtsafe; &race;<code linkend="glibc-safety-identifier">:oucp</code> &race;<code linkend="glibc-safety-identifier">:ucp</code></concept>
+    <concept>&asunsafe; &corrupt;</concept>
+    <concept>&acunsafe; &corrupt;</concept>
+   </conceptlist>
+   <para>
+    <code>swapcontext</code> işlevi <function>setcontext</function> işlevine benzer, fakat geçerli bağlam olan <parameter>ucp</parameter> bağlamını bir <function>getcontext</function> çağrısından dönmüş olan <parameter>oucp</parameter> ile değiştirir. <code>swapcontext</code> çağrısında sonra yürütme bu bağlamla devam eder.
+   </para>
+   <para>
+    Eğer <code>swapcontext</code> başarılıysa işlev dönmez. <parameter>oucp</parameter> bağlamı evvelki bir <function>makecontext</function> çağrısı ile değişiklik yapılmaksızın kullanışmışsa  dönüş değeri <code>0</code>'dır. Eğer işlev başarısız olmuşsa <code>-1</code> döner ve <varname>errno</varname> değişkenine hata durumu atanır.
+   </para>
+  </csynopsis>
+  <example xml:id="glibc-Example-for-SVID-Context-Handling">
+   <title>SVID Bağlam Denetimi Örneği</title>
+   <para>
+    Bağlam işleme işlevlerini kullanmanın en kolay yolu <function>setjmp</function> ve <function>longjmp</function> işlevlerinin yerine bunları kullanmaktır. Bağlam çoğu platformda daha az sürprizle sonuçlanan daha fazla bilgi içermesine rağmen bu işlevlerin kullanımı daha masraflıdır (daha az taşınabilir olması cabası).
+   </para>
+   <screen>int
 random_search (int n, int (*fp) (int, ucontext_t *))
 {
   volatile int cnt = 0;
   ucontext_t uc;
 
-  /* <span class="roman">Safe current context.</span>  */
+  /* <replaceable>Geçerli bağlamı güvene alalım.</replaceable>  */
   if (getcontext (&amp;uc) &lt; 0)
     return -1;
 
-  /* <span class="roman">If we have not tried <var>n</var> times try again.</span>  */
+  /* <replaceable>n deneme yapılmamışsa, tekrar dene.</replaceable>  */
   if (cnt++ &lt; n)
-    /* <span class="roman">Call the function with a new random number</span>
-       <span class="roman">and the context</span>.  */
+    /* <replaceable>İşlevi yeni bir rastgele sayı
+       ve bağlamla çağır.</replaceable>.  */
     if (fp (rand (), &amp;uc) != 0)
-      /* <span class="roman">We found what we were looking for.</span>  */
+      /* <replaceable>Arayan bulur.</replaceable>  */
       return 1;
 
-  /* <span class="roman">Not found.</span>  */
+  /* <replaceable>Yokmuş.</replaceable>  */
   return 0;
 }
-</pre></div>
-
-<para>Using contexts in such a way enables emulating exception handling.  The
-search functions passed in the <var>fp</var> parameter could be very large,
-nested, and complex which would make it complicated (or at least would
-require a lot of code) to leave the function with an error value which
-has to be passed down to the caller.  By using the context it is
-possible to leave the search function in one step and allow restarting
-the search which also has the nice side effect that it can be
-significantly faster.
-</para>
-<para>Something which is harder to implement with <code>setjmp</code> and
-<code>longjmp</code> is to switch temporarily to a different execution path
-and then resume where execution was stopped.
-</para>
-<div class="example">
-<pre class="example">
+</screen>
+   <para>
+    Bağlamların böyle bir yolla kullanımı olağan dışılıkların elde edilme benzeşimini etkinleştirir. <replaceable>fp</replaceable> bağımsız değişkeni ile aktarılan arama işlevleri çok büyük, iç içe ve çağrıcıya aktarılan bir hata değeri ile işlevin bırakılması onu karmaşıklaştıracağından (veya en azından biraz daha kod gerekeceğinden), çok karmaşık olabilir. Bağlamı kullanarak arama işlevini tek bir adımda bırakmak ve ayrıca belirgin biçimde daha hızlı olabilen bir yan etkiyle aramanın yeniden başlatılmasına izin vermek mümkündür.
+   </para>
+   <para>
+    Geçici olarak farklı bir yürütme noktasına geçmek ve sonra yürütmenin durduğu yerden devam etmek gibi şeylerin <function>setjmp</function> ve <function>longjmp</function> ile gerçeklenmesi daha zordur.
+   </para>
+   <screen>
 #include &lt;signal.h&gt;
 #include &lt;stdio.h&gt;
 #include &lt;stdlib.h&gt;
 #include &lt;ucontext.h&gt;
 #include &lt;sys/time.h&gt;
 
-/* <span class="roman">Set by the signal handler.</span> */
+/* <replaceable>Bunu sinyal eylemci atayacak.</replaceable> */
 static volatile int expired;
 
-/* <span class="roman">The contexts.</span> */
+/* <replaceable>Bağlamlar.</replaceable> */
 static ucontext_t uc[3];
 
-/* <span class="roman">We do only a certain number of switches.</span> */
+/* <replaceable>Belli sayıda geçiş yapılacak.</replaceable> */
 static int switches;
 
 
-/* <span class="roman">This is the function doing the work.  It is just a
-   skeleton, real code has to be filled in.</span> */
+/* <replaceable>Bu işi yapan işlev. Sadece bir iskelet,
+   gerçek kod sonra yerleştirilecek</replaceable> */
 static void
 f (int n)
 {
   int m = 0;
   while (1)
     {
-      /* <span class="roman">This is where the work would be done.</span> */
+      /* <replaceable>İşin yapıldığı yer.</replaceable> */
       if (++m % 100 == 0)
         {
           putchar ('.');
           fflush (stdout);
         }
 
-      /* <span class="roman">Regularly the <var>expire</var> variable must be checked.</span> */
+      /* <replaceable>Değişkenin zaman aşımına uğrayıp uğramadığına
+         düzenli olarak bakmak lazım.</replaceable> */
       if (expired)
         {
-          /* <span class="roman">We do not want the program to run forever.</span> */
+          /* <replaceable>Kodun uzun uzadıya çalışmasını istenmiyor.</replaceable> */
           if (++switches == 20)
             return;
 
-          printf ("\nswitching from %d to %d\n", n, 3 - n);
+          printf (\n%d. bağlamdan %d. bağlama geçiliyor\n", n, 3 - n);
           expired = 0;
-          /* <span class="roman">Switch to the other context, saving the current one.</span> */
+          /* <replaceable>Diğer bağlama geçip şimdikini kaydet.</replaceable> */
           swapcontext (&amp;uc[n], &amp;uc[3 - n]);
         }
     }
 }
 
-/* <span class="roman">This is the signal handler which simply set the variable.</span> */
+/* <replaceable>Sadece değişkene değer atayan bir sinyal eylemci bu.</replaceable> */
 void
 handler (int signal)
 {
@@ -612,7 +508,7 @@ main (void)
   char st1[8192];
   char st2[8192];
 
-  /* <span class="roman">Initialize the data structures for the interval timer.</span> */
+  /* <replaceable>Zamanlayıcının kullanacağı veri yapılarını ilklendir.</replaceable> */
   sa.sa_flags = SA_RESTART;
   sigfillset (&amp;sa.sa_mask);
   sa.sa_handler = handler;
@@ -620,49 +516,38 @@ main (void)
   it.it_interval.tv_usec = 1;
   it.it_value = it.it_interval;
 
-  /* <span class="roman">Install the timer and get the context we can manipulate.</span> */
+  /* <replaceable>Zamanlayıcıyı kur ve çalışılacak bağlamı al.</replaceable> */
   if (sigaction (SIGPROF, &amp;sa, NULL) &lt; 0
       || setitimer (ITIMER_PROF, &amp;it, NULL) &lt; 0
       || getcontext (&amp;uc[1]) == -1
       || getcontext (&amp;uc[2]) == -1)
     abort ();
 
-  /* <span class="roman">Create a context with a separate stack which causes the
-     function <code>f</code> to be call with the parameter <code>1</code>.
-     Note that the <code>uc_link</code> points to the main context
-     which will cause the program to terminate once the function
-     return.</span> */
+  /* <replaceable>Bağlamı, f işlevinin 1 bağımsız değişkeni ile
+     çağrılmasına sebep olan ayrı bir yığıt ile oluştur.
+     uc_link'in, işlev döndüğü anda yazılımın sonlanmasına
+     sebep olan ana bağlamı gösterdiğine dikkat et.</replaceable> */
   uc[1].uc_link = &amp;uc[0];
   uc[1].uc_stack.ss_sp = st1;
   uc[1].uc_stack.ss_size = sizeof st1;
   makecontext (&amp;uc[1], (void (*) (void)) f, 1, 1);
 
-  /* <span class="roman">Similarly, but <code>2</code> is passed as the parameter to <code>f</code>.</span> */
+  /* <replaceable>Aynı ama f'ye bağımsız değişken olarak 2 aktarılıyor.</replaceable> */
   uc[2].uc_link = &amp;uc[0];
   uc[2].uc_stack.ss_sp = st2;
   uc[2].uc_stack.ss_size = sizeof st2;
   makecontext (&amp;uc[2], (void (*) (void)) f, 1, 2);
 
-  /* <span class="roman">Start running.</span> */
+  /* <replaceable>İşbaşı!</replaceable> */
   swapcontext (&amp;uc[0], &amp;uc[1]);
   putchar ('\n');
 
   return 0;
 }
-</pre></div>
-
-<para>This an example how the context functions can be used to implement
-co-routines or cooperative multi-threading.  All that has to be done is
-to call every once in a while <code>swapcontext</code> to continue running a
-different context.  It is not recommended to do the context switching from
-the signal handler directly since leaving the signal handler via
-<code>setcontext</code> if the signal was delivered during code that was not
-asynchronous signal safe could lead to problems. Setting a variable in
-the signal handler and checking it in the body of the functions which
-are executed is a safer approach.  Since <code>swapcontext</code> is saving the
-current context it is possible to have multiple different scheduling points
-in the code.  Execution will always resume where it was left.
-</para><hr>
-</div>
-</div-->
+</screen>
+   <para>
+    Bu kod, bağlam işlevlerinin eş-yordamları veya çok evreli işbirliğini gerçekleştirmekte kullanılabilirliğine bir örnektir. Burada yapılan <function>swapcontext</function> kullanarak yürütmenin her seferinde farklı bir bağlamdan devam ettirilmesidir. Sinyal eylemci içinden ne <function>setcontext</function> ne de <function>swapcontext</function> çağrısı yapıldığından, bağlam değiştirme doğrudan sinyal eylemci tarafından yapılmamaktadır. Bunun yerine sinyal eylemci içinde bir değişkene değer atanıp, işlev içinden bu değişkene bakarak bu işlem gerçekleştirilmektedir. <function>swapcontext</function> geçerli bağlamı kaydettiğinden kod içinde farklı zamanlama noktaları olabilir. Yürütme daima kaldığı yerden devam edecektir.
+   </para>
+  </example>
+ </chapter>
 </part>

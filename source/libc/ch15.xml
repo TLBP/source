@@ -3,107 +3,90 @@
         glibc/ch15.xml,v2.36, GFDL,LGPL, NBB, 2023
      ******************************************************************** -->
 <part xml:id="glibc-Pipes-and-FIFOs">
- <title>Borular ve İsimli Borular</title>
- <titleabbrev>Süreçler arası basit iletişim düzeneği.</titleabbrev>
- <preliminary>
+ <title>Ardışık Süreçler</title>
+ <titleabbrev>Süreçler arası basit bir iletişim düzeneği.</titleabbrev>
+ <partintro>
+  <?dbhtml stop-chunking?>
   <para>
-   <indexterm linkend="glibc-cp"><primary>boru</primary></indexterm>
-   A <emphasis>pipe</emphasis> is a mechanism for interprocess communication; data written
-to the pipe by one process can be read by another process.  The data is
-handled in a first-in, first-out (FIFO) order.  The pipe has no name; it
-is created for one use and both ends must be inherited from the single
-process which created the pipe.
-</para>
-
+   <dicterm><english>pipe</english><turkish>ardışık süreç akımı</turkish></dicterm>
+   <dicterm><english>FIFO</english><turkish>ardışık süreç dosyası</turkish></dicterm>
+   <indexterm linkend="glibc-cp"><primary>ardışık süreçler</primary></indexterm>
+   <wordasword>Ardışık süreçler</wordasword> süreçler arasında iletişim için bir düzenektir; bir süreç tarafından ardışık süreçlerin ilkine aktarılan veri ardından  gelen süreç tarafından okunabilir. Veri ilk giren, ilk çıkar sırasıyla ele alınır. Düzeneğin bir adı yoktur; bir kullanımlık oluşturulur ve her iki uç, düzeneği oluşturan süreç tarafından erişilebilir olmalıdır.
+  </para>
   <para>
-   <indexterm linkend="glibc-cp"><primary>FIFO özel dosyası</primary></indexterm>
-   A <emphasis>FIFO special file</emphasis> is similar to a pipe, but instead of being an anonymous, temporary connection, a FIFO has a name or names like any
-other file.  Processes open the FIFO by name in order to communicate
-through it.
-</para>
-<para>A pipe or FIFO has to be open at both ends simultaneously.  If you read
-from a pipe or FIFO file that doesn’t have any processes writing to it
-(perhaps because they have all closed the file, or exited), the read
-returns end-of-file.  Writing to a pipe or FIFO that doesn’t have a
-reading process is treated as an error condition; it generates a
-<code>SIGPIPE</code> signal, and fails with error code <code>EPIPE</code> if the
-signal is handled or blocked.
-</para>
-<para>Neither pipes nor FIFO special files allow file positioning.  Both
-reading and writing operations happen sequentially; reading from the
-beginning of the file and writing at the end.
-</para>
- </preliminary><!--
-<sect xml:id="glibc-Creating-a-Pipe">
-<div class="header">
-<para>
-Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Pipe-to-a-Subprocess" accesskey="n" rel="next">Pipe to a Subprocess</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Pipes-and-FIFOs" accesskey="u" rel="up">Pipes and FIFOs</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
-</div>
-<span xml:id="glibc-Creating-a-Pipe-1"></span><h3 class="section">15.1 Creating a Pipe</title>
-<span xml:id="glibc-index-creating-a-pipe"></span>
-<span xml:id="glibc-index-opening-a-pipe"></span>
-<span xml:id="glibc-index-interprocess-communication_002c-with-pipes"></span>
+   <indexterm linkend="glibc-cp"><primary>ardışık süreç dosyası</primary></indexterm>
+   <wordasword>Ardışık süreç dosyaları</wordasword> ardışık süreçlerin bir veya birden fazla ismi olan türüdür. Süreçler tarafından üzerinden iletişim kurmak için bir <emphasis>ardışık süreç dosyası</emphasis> olarak adı belirtilerek açılabilir.
+  </para>
+  <para>
+   İster akım ister dosya olsun, ardışık sürecin her iki ucu aynı anda açılmalıdır. Herhangi bir sürecin üzerine yazmadığı (belki hepsi ardışık süreci kapatmış veya çıkmış olabilir) böyle bir ardışık süreçten okuma yapılıyorsa, okuma sonucunda <varname>EOF</varname> döner. Üzerinde okuma işlemi olmayan ardışık sürece  yazmak hata olarak ele alınır ve bir <varname>SIGPIPE</varname> sinyali üretilir. Sinyal işleniyor ya da engelleniyorsa akım <varname>EPIPE</varname> hata koduyla başarısız olur.
+  </para>
+  <para>
+   İster akım ister dosya olsun, ardışık süreçte konumlamaya izin verilmez. Okuma ve yazma işlemleri sırayla gerçekleşir; başından okunur ve sonuna yazılır.
+  </para>
 
-<para>The primitive for creating a pipe is the <code>pipe</code> function.  This
-creates both the reading and writing ends of the pipe.  It is not very
-useful for a single process to use a pipe to talk to itself.  In typical
-use, a process creates a pipe just before it forks one or more child
-processes (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Creating-a-Process">Creating a Process</a>).  The pipe is then used for
-communication either between the parent or child processes, or between
-two sibling processes.
-</para>
-<para>The <code>pipe</code> function is declared in the header file
-<filename>unistd.h</filename>.
-<span xml:id="glibc-index-unistd_002eh-12"></span>
-</para>
-<dl class="def">
-<dt xml:id="glibc-index-pipe-1"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>pipe</strong> <emphasis>(int <var>filedes</var><tt>[2]</tt>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-pipe-1" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-<para>Preliminary:
-| MT-Safe
-| AS-Safe
-| AC-Safe fd
-| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
-</para>
-
-<para>The <code>pipe</code> function creates a pipe and puts the file descriptors
-for the reading and writing ends of the pipe (respectively) into
-<code><var>filedes</var>[0]</code> and <code><var>filedes</var>[1]</code>.
-</para>
-<para>An easy way to remember that the input end comes first is that file
-descriptor <code>0</code> is standard input, and file descriptor <code>1</code> is
-standard output.
-</para>
-<para>If successful, <code>pipe</code> returns a value of <code>0</code>.  On failure,
-<code>-1</code> is returned.  The following <code>errno</code> error conditions are
-defined for this function:
-</para>
-<dl compact="compact">
-<dt><span><code>EMFILE</code></span></dt>
-<dd><para>The process has too many files open.
-</para>
-</dd>
-<dt><span><code>ENFILE</code></span></dt>
-<dd><para>There are too many open files in the entire system.  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Error-Codes">Error Codes</a>,
-for more information about <code>ENFILE</code>.  This error never occurs on
-GNU/Hurd systems.
-</para></dd>
-</dl>
-</dd></dl>
-
-<para>Here is an example of a simple program that creates a pipe.  This program
-uses the <code>fork</code> function (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Creating-a-Process">Creating a Process</a>) to create
-a child process.  The parent process writes data to the pipe, which is
-read by the child process.
-</para>
-<div class="example">
-<pre class="example">
-#include &lt;sys/types.h&gt;
+  <sect1 xml:id="glibc-Creating-a-Pipe">
+   <title>Ardışık Süreç Akımının Oluşturulması</title>
+   <titleabbrev>Ardışık süreç akımının <code>pipe</code> işleviyle oluşturulması.</titleabbrev>
+   <para>
+    <indexterm linkend="glibc-cp"><primary>ardışık süreç akımı</primary><secondary> açılması</secondary></indexterm>
+    <indexterm linkend="glibc-cp"><primary>süreçler arası iletişim</primary><secondary>ardışık süreç akımı</secondary></indexterm>
+    Ardışık süreçlere özel akımı oluşturmak için en ilkel işlev <function>pipe</function> işlevidir. İşlev akımın okuma ve yazma uçlarının her ikisini de oluşturur.  Tek bir sürecin kendisiyle konuşması için pek kullanışlı değildir. Genelde kullanım şekli, bir sürecin bir veya daha fazla <link linkend="glibc-Creating-a-Process">alt sürece çatallanmadan</link> önce akımı oluşturmasıdır.  Bundan sonra akım üst ve alt süreç arasında veya iki alt süreç arasında iletişim için kullanılır.
+   </para>
+   <para>
+    <indexterm linkend="glibc-pg"><primary>unistd.h</primary></indexterm>
+    <function>pipe</function> işlevi &unistd.h; başlık dosyasında bildirilmiştir.
+   </para>
+   <csynopsis>
+    <indexterm linkend="glibc-fn" xml:id="glibc-fn-pipe"><primary>pipe</primary></indexterm>
+    <indexterm linkend="glibc-cp-pipe"><primary>ardışık süreç dosyası</primary><secondary>oluşturulması</secondary></indexterm>
+    <csproto type="işlev">
+     <csname><type>int</type><function>pipe</function></csname>
+     <csparam><type>int</type><parameter>filedes</parameter><code>[2]</code></csparam>
+    </csproto>
+    <header>&unistd.h;</header>
+    <conceptlist>
+     <concept>&mtsafe;</concept>
+     <concept>&assafe;</concept>
+     <concept>&acsafe; &fd;</concept>
+    </conceptlist>
+    <para>
+     <code>pipe</code> işlevi ardışık süreç akımını oluşturup okuma ve yazma uçları için dosya tanıtıcılarını (sırasıyla) dizinin <parameter>filedes</parameter><code>[0]</code> ve <parameter>filedes</parameter><code>[1]</code> elemanlarına yerleştirir.
+    </para>
+    <para>
+     Girdi ucunun önce geldiğini hatırlamanın en kolay yolu dosya tanıtıcı <code>0</code>'ın standart girdi ve dosya tanıtıcı <code>1</code>'in standart çıktı olmasıdır.
+    </para>
+    <para>
+     Başarı durumunda  <code>pipe</code> işlevi, <code>0</code> değerini döndürür.  Başarısızlık halinde ise <code>-1</code> döndürülür.  Aşağıdaki <varname>errno</varname> hata durumları bu işlev için tanımlanmıştır:
+    </para>
+    <variablelist>
+     <varlistentry>
+      <term><code>EMFILE</code></term>
+      <listitem>
+       <para>
+        Sürecin çok sayıda açık dosyası var.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><code>ENFILE</code></term>
+      <listitem>
+       <para>
+        Sistemde çok sayıda açık dosya var. <varname>ENFILE</varname> hatası GNU sisteminde hiçbir zaman oluşmaz.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </csynopsis>
+   <example>
+    <para>
+     Burada basit bir ardışık süreç akımı oluşturma yazılımı yer almaktadır. Bu yazılım <function>fork</function> işlevini (<xref linkend="glibc-Creating-a-Process"/>) alt süreç oluşturmak için kullanmıştır. Üst süreç veriyi ardışık süreç akımına yazar, alt süreç okur.
+    </para>
+    <screen>#include &lt;sys/types.h&gt;
 #include &lt;unistd.h&gt;
 #include &lt;stdio.h&gt;
 #include &lt;stdlib.h&gt;
 
-/* <span class="roman">Read characters from the pipe and echo them to <code>stdout</code>.</span> */
+/* <replaceable>Akımdan karakterleri oku.</replaceable> */
 
 void
 read_from_pipe (int file)
@@ -116,15 +99,15 @@ read_from_pipe (int file)
   fclose (stream);
 }
 
-/* <span class="roman">Write some random text to the pipe.</span> */
+/* <replaceable>Akıma bir şeyler yaz.</replaceable> */
 
 void
 write_to_pipe (int file)
 {
   FILE *stream;
   stream = fdopen (file, "w");
-  fprintf (stream, "hello, world!\n");
-  fprintf (stream, "goodbye, world!\n");
+  fprintf (stream, "Merhaba!\n");
+  fprintf (stream, "Elveda!\n");
   fclose (stream);
 }
 
@@ -134,119 +117,103 @@ main (void)
   pid_t pid;
   int mypipe[2];
 
-</pre><pre class="example">  /* <span class="roman">Create the pipe.</span> */
+  /* <replaceable>Akımı oluştur.</replaceable> */
   if (pipe (mypipe))
     {
-      fprintf (stderr, "Pipe failed.\n");
+      fprintf (stderr, "Ardışık süreç başarısız oldu.\n");
       return EXIT_FAILURE;
     }
-</pre><pre class="example">
-  /* <span class="roman">Create the child process.</span> */
+
+  /* <replaceable>Alt süreç oluştur.</replaceable> */
   pid = fork ();
   if (pid == (pid_t) 0)
     {
-      /* <span class="roman">This is the child process.
-         Close other end first.</span> */
+      /* <replaceable>Alt süreç. Önce diğer ucu kapat.</replaceable> */
       close (mypipe[1]);
       read_from_pipe (mypipe[0]);
       return EXIT_SUCCESS;
     }
   else if (pid &lt; (pid_t) 0)
     {
-      /* <span class="roman">The fork failed.</span> */
-      fprintf (stderr, "Fork failed.\n");
+      /* <replaceable>Alt süreç oluşturulamadı.</replaceable> */
+      fprintf (stderr, "Çatallama başarısız oldu.\n");
       return EXIT_FAILURE;
     }
   else
     {
-      /* <span class="roman">This is the parent process.
-         Close other end first.</span> */
+      /* <replaceable>Üst süreç. Önce diğer ucu kapat.</replaceable> */
       close (mypipe[0]);
       write_to_pipe (mypipe[1]);
       return EXIT_SUCCESS;
     }
 }
-</pre></div>
+</screen>
+   </example>
+  </sect1>
 
-<hr>
-</div>
-<sect xml:id="glibc-Pipe-to-a-Subprocess">
-<div class="header">
-<para>
-Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#FIFO-Special-Files" accesskey="n" rel="next">FIFO Special Files</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Creating-a-Pipe" accesskey="p" rel="prev">Creating a Pipe</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Pipes-and-FIFOs" accesskey="u" rel="up">Pipes and FIFOs</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
-</div>
-<span xml:id="glibc-Pipe-to-a-Subprocess-1"></span><h3 class="section">15.2 Pipe to a Subprocess</title>
-<span xml:id="glibc-index-creating-a-pipe-to-a-subprocess"></span>
-<span xml:id="glibc-index-pipe-to-a-subprocess"></span>
-<span xml:id="glibc-index-filtering-i_002fo-through-subprocess"></span>
+  <sect1 xml:id="glibc-Pipe-to-a-Subprocess">
+   <title>Alt Süreçle Veri Alışverişi</title>
+   <titleabbrev>Alt süreçle iletişim için ardışık süreç kullanımı.</titleabbrev>
+   <para>
+    <indexterm linkend="glibc-cp"><primary>ardışık süreç akımı</primary><secondary>alt sürece veri aktarımı</secondary></indexterm>
+    <indexterm linkend="glibc-cp"><primary>alt sürece veri aktarımı</primary><secondary>ardışık süreçlerden</secondary></indexterm>
+    <indexterm linkend="glibc-cp"><primary>alt süreç üzerinden G/Ç süzme</primary></indexterm>
+    Ardışık süreçlerin genel kullanım şekli alt süreç olarak çalışan bir yazılım ile veri alışverişidir. Bunu yapmanın bir yolu  <function>pipe</function> (akımı oluşturmak için), <function>fork</function> (alt süreç oluşturmak için), <function>dup2</function> (bir alt süreci ardışık süreç akımı için standart girdi veya çıktı kanalı olmaya zorlamak için) ve <function>exec</function> (yeni bir yazılımı çalıştırmak için) birleşimini kullanmaktır.  Ya da, bunlar yerine <function>popen</function> ve <function>pclose</function> işlevlerini kullanmaktır.
+   </para>
+   <para>
+    <function>popen</function> ve <function>pclose</function> kullanmanın yararı arayüzünün daha basit ve kullanımının kolay oluşudur. Ancak düşük seviyeli işlevleri doğrudan kullanma esnekliği yoktur.
+   </para>
 
-<para>A common use of pipes is to send data to or receive data from a program
-being run as a subprocess.  One way of doing this is by using a combination of
-<code>pipe</code> (to create the pipe), <code>fork</code> (to create the subprocess),
-<code>dup2</code> (to force the subprocess to use the pipe as its standard input
-or output channel), and <code>exec</code> (to execute the new program).  Or,
-you can use <code>popen</code> and <code>pclose</code>.
-</para>
-<para>The advantage of using <code>popen</code> and <code>pclose</code> is that the
-interface is much simpler and easier to use.  But it doesn’t offer as
-much flexibility as using the low-level functions directly.
-</para>
-<dl class="def">
-<dt xml:id="glibc-index-popen"><span class="category">Function: </span><span><emphasis>FILE *</emphasis> <strong>popen</strong> <emphasis>(const char *<var>command</var>, const char *<var>mode</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-popen" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
+   <csynopsis>
+    <indexterm linkend="glibc-fn" xml:id="glibc-fn-popen"><primary>popen</primary></indexterm>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-popen"><primary>ardışık süreç akımı</primary><secondary>açılması</secondary></indexterm>
+    <csproto type="işlev">
+     <csname><ptr>FILE</ptr><function>popen</function></csname>
+     <csparam><ptr>const&#160;char</ptr><parameter>command</parameter></csparam>
+     <csparam><ptr>const&#160;char</ptr><parameter>mode</parameter></csparam>
+    </csproto>
+    <header>&stdio.h;</header>
+    <conceptlist>
+     <concept>&mtsafe;</concept>
+     <concept>&asunsafe; &heap; &corrupt;</concept>
+     <concept>&acunsafe; &corrupt; &lock; &fd; &mem;</concept>
+    </conceptlist>
+    <para>
+     <code>popen</code> işlevi <function>system</function> işlevleriyle yakından ilgilidir;  bkz. <xref linkend="glibc-Running-a-Command"/>. <parameter>command</parameter> kabuk komutunu alt süreç olarak çalıştırır.  Fakat, komutun bitmesini beklemek yerine, alt süreçten bir ardışık süreç oluşturur ve ardışık süreçle ilişkili akımı döndürür.
+    </para>
+    <para>
+     <parameter>mode</parameter> bağımsız değişkeninde <code>"r"</code> belirtilirse, alt sürecin standart çıktı kanalındaki veriyi almak için akımdan okuma yapılabilir. Alt süreç, standart girdi kanalını üst süreçten miras alır.
+    </para>
+    <para>
+     Benzer şekilde, <parameter>mode</parameter> bağımsız değişkeninde <code>"w"</code> belirtilirse, alt sürecin standart girdi kanalına veri göndermek için akıma yazılabilir. Alt süreç, standart çıktı kanalını üst süreçten alır.
+    </para>
+    <para>
+     Hata durumunda <code>popen</code> boş gösterici ile döner. Bu ardışık süreç veya akım oluşturulamadığında, alt süreç çatallanamadığında ya da yazılım çalıştırılamadığında ortaya çıkabilir.
+    </para>
+   </csynopsis>
 
-
-<para>Preliminary:
-| MT-Safe
-| AS-Unsafe heap corrupt
-| AC-Unsafe corrupt lock fd mem
-| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
-</para>
-
-<para>The <code>popen</code> function is closely related to the <code>system</code>
-function; see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Running-a-Command">Running a Command</a>.  It executes the shell command
-<var>command</var> as a subprocess.  However, instead of waiting for the
-command to complete, it creates a pipe to the subprocess and returns a
-stream that corresponds to that pipe.
-</para>
-<para>If you specify a <var>mode</var> argument of <code>"r"</code>, you can read from the
-stream to retrieve data from the standard output channel of the subprocess.
-The subprocess inherits its standard input channel from the parent process.
-</para>
-<para>Similarly, if you specify a <var>mode</var> argument of <code>"w"</code>, you can
-write to the stream to send data to the standard input channel of the
-subprocess.  The subprocess inherits its standard output channel from
-the parent process.
-</para>
-<para>In the event of an error <code>popen</code> returns a null pointer.  This
-might happen if the pipe or stream cannot be created, if the subprocess
-cannot be forked, or if the program cannot be executed.
-</para></dd></dl>
-
-<dl class="def">
-<dt xml:id="glibc-index-pclose"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>pclose</strong> <emphasis>(FILE *<var>stream</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-pclose" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-
-
-<para>Preliminary:
-| MT-Safe
-| AS-Unsafe heap plugin corrupt lock
-| AC-Unsafe corrupt lock fd mem
-| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
-</para>
-
-<para>The <code>pclose</code> function is used to close a stream created by <code>popen</code>.
-It waits for the child process to terminate and returns its status value,
-as for the <code>system</code> function.
-</para></dd></dl>
-
-<para>Here is an example showing how to use <code>popen</code> and <code>pclose</code> to
-filter output through another program, in this case the paging program
-<code>more</code>.
-</para>
-<div class="example">
-<pre class="example">
-#include &lt;stdio.h&gt;
+   <csynopsis>
+    <indexterm linkend="glibc-fn" xml:id="glibc-fn-pclose"><primary>pclose</primary></indexterm>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-pclose"><primary>ardışık süreç akımı</primary><secondary>kapatılması</secondary></indexterm>
+    <csproto type="işlev">
+     <csname><type>int</type><function>pclose</function></csname>
+     <csparam><ptr>FILE</ptr><parameter>stream</parameter></csparam>
+    </csproto>
+    <header>&stdio.h;</header>
+    <conceptlist>
+     <concept>&mtsafe;</concept>
+     <concept>&asunsafe; &heap; &plugin; &corrupt; &lock;</concept>
+     <concept>&acunsafe; &corrupt; &lock; &fd; &mem;</concept>
+    </conceptlist>
+    <para>
+     <code>pclose</code> işlevi <function>popen</function> tarafından oluşturulan <parameter>stream</parameter> ardışık süreç akımını kapatmak için kullanılır. <function>system</function> işlevinin yaptığı gibi, alt sürecin sonlanmasını bekler ve onun durum değerini döndürür.
+    </para>
+   </csynopsis>
+   <example>
+    <para>
+     Burada <function>popen</function> ve <function>pclose</function> işlevlerinin, çıktıyı <uri xl:href="man1-more"/> sayfalama yazılımı gibi başka bir yazılımla süzmek için nasıl kullanıldığını gösteren bir örneğe yer verilmiştir.
+    </para>
+    <screen>#include &lt;stdio.h&gt;
 #include &lt;stdlib.h&gt;
 
 void
@@ -257,12 +224,12 @@ write_data (FILE * stream)
     fprintf (stream, "%d\n", i);
   if (ferror (stream))
     {
-      fprintf (stderr, "Output to stream failed.\n");
+      fprintf (stderr, "Akıma çıktılama başarısız oldu.\n");
       exit (EXIT_FAILURE);
     }
 }
 
-</pre><pre class="example">int
+int
 main (void)
 {
   FILE *output;
@@ -271,105 +238,98 @@ main (void)
   if (!output)
     {
       fprintf (stderr,
-               "incorrect parameters or too many files.\n");
+               "ya bağımsız değişken yanlış ya da dosya sayısı fazla.\n");
       return EXIT_FAILURE;
     }
   write_data (output);
   if (pclose (output) != 0)
     {
       fprintf (stderr,
-               "Could not run more or other error.\n");
+               "Artık yürütülemiyor veya başka bir hata var.\n");
     }
   return EXIT_SUCCESS;
 }
-</pre></div>
+</screen>
+   </example>
+  </sect1>
 
-<hr>
-</div>
-<sect xml:id="glibc-FIFO-Special-Files">
-<div class="header">
-<para>
-Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Pipe-Atomicity" accesskey="n" rel="next">Atomicity of Pipe I/O</a>, Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Pipe-to-a-Subprocess" accesskey="p" rel="prev">Pipe to a Subprocess</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Pipes-and-FIFOs" accesskey="u" rel="up">Pipes and FIFOs</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
-</div>
-<span xml:id="glibc-FIFO-Special-Files-1"></span><h3 class="section">15.3 FIFO Special Files</title>
-<span xml:id="glibc-index-creating-a-FIFO-special-file"></span>
-<span xml:id="glibc-index-interprocess-communication_002c-with-FIFO"></span>
+  <sect1 xml:id="glibc-FIFO-Special-Files">
+   <title>Ardışık Süreç Dosyaları</title>
+   <titleabbrev>Ardışık süreç dosyasının oluşturulması.</titleabbrev>
+   <para>
+    <indexterm linkend="glibc-cp"><primary>ardışık süreç dosyası</primary><secondary>oluşturulması</secondary></indexterm>
+    <indexterm linkend="glibc-cp"><primary>süreçler arası iletişim</primary><secondary>ardışık süreç dosyası</secondary></indexterm>
+    Bir ardışık süreç dosyasının ardışık süreç akımından farkı oluşturulma şeklidir. İsimsiz bir iletişim kanalı olmak yerine, ardışık süreç dosyası, dosya sistemine <function>mkfifo</function> işlevi çağrılarak sokulur.
+   </para>
+   <para>
+    Herhangi bir süreç, ardışık süreç dosyasını bir kere bu şekilde oluşturduktan sonra, sıradan bir dosya gibi, onu okuma veya yazma için açabilir. Fakat, üzerinde her hangi bir girdi veya çıktı işlemi yapmadan önce her iki ucun da eş zamanlı açılması gerekir. Ardışık süreç dosyasının okumak için açılması, normalde başka bir süreç aynı ardışık süreç dosyasını yazmak için açana engellenir (ya da tam tersi).
+   </para>
+   <para>
+    <function>mkfifo</function> işlevi &sys-stat.h; başlık dosyasında bildirilmiştir.
+    <indexterm linkend="glibc-pg"><primary>sys/stat.h</primary></indexterm>
+   </para>
+   <csynopsis>
+    <indexterm linkend="glibc-fn" xml:id="glibc-fn-mkfifo"><primary>mkfifo</primary></indexterm>
+    <indexterm linkend="glibc-cp" xml:id="glibc-cp-mkfifo"><primary>ardışık süreç dosyası</primary><secondary>oluşturulması</secondary></indexterm>
+    <csproto type="işlev">
+     <csname><type>int</type><function>mkfifo</function></csname>
+     <csparam><ptr>const&#160;char</ptr><parameter>filename</parameter></csparam>
+     <csparam><type>mode_t</type><parameter>mode</parameter></csparam>
+    </csproto>
+    <header>&sys-stat.h;</header>
+    <conceptlist>
+     <concept>&mtsafe;</concept>
+     <concept>&assafe;</concept>
+     <concept>&acsafe;</concept>
+    </conceptlist>
+    <para>
+     <code>mkfifo</code> işlevi <parameter>filename</parameter> adında bir ardışık süreç dosyası oluşturur. <parameter>mode</parameter> bağımsız değişkeni dosyanın izinlerini belirlemek için kullanılır; bkz. <xref linkend="glibc-Setting-Permissions"/>.
+    </para>
+    <para>
+     <code>mkfifo</code> işlevinin normal hatasız dönüş değeri <code>0</code>'dır. Hata durumunda, <code>-1</code> döner.  Bildik <link linkend="glibc-File-Name-Errors">dosya ismi hatalarına</link> ek olarak, aşağıdaki <varname>errno</varname> hata durumları bu işlev için tanımlanmıştır:
+    </para>
+    <variablelist>
+     <varlistentry>
+      <term><literal>EEXIST</literal></term>
+      <listitem>
+       <para>
+        Bu isimde dosya zaten var.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><literal>ENOSPC</literal></term>
+      <listitem>
+       <para>
+        Dizin veya dosya sistemi genişletilemez.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><literal>EROFS</literal></term>
+      <listitem>
+       <para>
+        Dosyayı içeren dizin salt-okunur bir dosya sisteminde.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </csynopsis>
+  </sect1>
 
-<para>A FIFO special file is similar to a pipe, except that it is created in a
-different way.  Instead of being an anonymous communications channel, a
-FIFO special file is entered into the file system by calling
-<code>mkfifo</code>.
-</para>
-<para>Once you have created a FIFO special file in this way, any process can
-open it for reading or writing, in the same way as an ordinary file.
-However, it has to be open at both ends simultaneously before you can
-proceed to do any input or output operations on it.  Opening a FIFO for
-reading normally blocks until some other process opens the same FIFO for
-writing, and vice versa.
-</para>
-<para>The <code>mkfifo</code> function is declared in the header file
-<filename>sys/stat.h</filename>.
-<span xml:id="glibc-index-sys_002fstat_002eh-7"></span>
-</para>
-<dl class="def">
-<dt xml:id="glibc-index-mkfifo"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>mkfifo</strong> <emphasis>(const char *<var>filename</var>, mode_t <var>mode</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-mkfifo" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-<para>Preliminary:
-| MT-Safe
-| AS-Safe
-| AC-Safe
-| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
-</para>
-
-<para>The <code>mkfifo</code> function makes a FIFO special file with name
-<var>filename</var>.  The <var>mode</var> argument is used to set the file’s
-permissions; see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Setting-Permissions">Assigning File Permissions</a>.
-</para>
-<para>The normal, successful return value from <code>mkfifo</code> is <code>0</code>.  In
-the case of an error, <code>-1</code> is returned.  In addition to the usual
-file name errors (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#File-Name-Errors">File Name Errors</a>), the following
-<code>errno</code> error conditions are defined for this function:
-</para>
-<dl compact="compact">
-<dt><span><code>EEXIST</code></span></dt>
-<dd><para>The named file already exists.
-</para>
-</dd>
-<dt><span><code>ENOSPC</code></span></dt>
-<dd><para>The directory or file system cannot be extended.
-</para>
-</dd>
-<dt><span><code>EROFS</code></span></dt>
-<dd><para>The directory that would contain the file resides on a read-only file
-system.
-</para></dd>
-</dl>
-</dd></dl>
-
-<hr>
-</div>
-<sect xml:id="glibc-Pipe-Atomicity">
-<div class="header">
-<para>
-Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#FIFO-Special-Files" accesskey="p" rel="prev">FIFO Special Files</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Pipes-and-FIFOs" accesskey="u" rel="up">Pipes and FIFOs</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
-</div>
-<span xml:id="glibc-Atomicity-of-Pipe-I_002fO"></span><h3 class="section">15.4 Atomicity of Pipe I/O</title>
-
-<para>Reading or writing pipe data is <emphasis>atomic</emphasis> if the size of data written
-is not greater than <code>PIPE_BUF</code>.  This means that the data transfer
-seems to be an instantaneous unit, in that nothing else in the system
-can observe a state in which it is partially complete.  Atomic I/O may
-not begin right away (it may need to wait for buffer space or for data),
-but once it does begin it finishes immediately.
-</para>
-<para>Reading or writing a larger amount of data may not be atomic; for
-example, output data from other processes sharing the descriptor may be
-interspersed.  Also, once <code>PIPE_BUF</code> characters have been written,
-further writes will block until some characters are read.
-</para>
-<para>See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Limits-for-Files">Limits on File System Capacity</a>, for information about the <code>PIPE_BUF</code>
-parameter.
-</para><hr>
-</div>
-</div-->
+  <sect1 xml:id="glibc-Pipe-Atomicity">
+   <title>Ardışık Süreçlerin G/Ç Bölünmezliği</title>
+   <titleabbrev>Ardışık Süreçlerin G/Ç işlemleri ne zaman bütündür.</titleabbrev>
+   <para>
+    Yazılan verinin miktarı <varname>PIPE_BUF</varname> değerinden büyük olmadığı sürece ardışık süreçlerden okuma ve yazma işlemi <wordasword>bölünmez</wordasword> bir işlemdir. Bu veri aktarımının anlık bir birim olarak göründüğü anlamına gelir, bu nedenle sistemdeki hiçbir şey tamamlanmış halini gözlemleyemez. Bölünmez G/Ç hemen başlayamayabilir (tampon alanı veya veri için beklemesi gerekebilir), fakat başladıktan hemen sonra biter.
+   </para>
+   <para>
+    Büyük miktarda veri okumak veya yazmak bölünmez olmayabilir; örneğin, dosya tanıtıcısını paylaşan diğer süreçlerin çıktı verisi araya serpiştirilmiş olabilir.
+    Aynı zamanda, bir kere <varname>PIPE_BUF</varname> karakter yazılınca, okuma yapılıncaya kadar başka yazımlar durdurulur.
+   </para>
+   <para>
+    <varname>PIPE_BUF</varname> hakkında daha fazla bilgi <xref linkend="glibc-Limits-for-Files"/> bölümünde bulunmaktadır.
+   </para>
+  </sect1>
+ </partintro>
 </part>

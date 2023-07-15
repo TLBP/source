@@ -6,196 +6,174 @@
   <title>Şifrelemeyle İlgili İşlevler</title>
   <titleabbrev>Parola depolama ve son derece öngörülemeyen baytlar.</titleabbrev>
  <preliminary>
-
-<para>The GNU C Library includes only a few special-purpose cryptographic
-functions: one-way hash functions for passphrase storage, and access
-to a cryptographic randomness source, if one is provided by the
-operating system.  Programs that need general-purpose cryptography
-should use a dedicated cryptography library, such as
-<link xl:href="https://www.gnu.org/software/libgcrypt/">libgcrypt</link>.
-</para>
-<para>Many countries place legal restrictions on the import, export,
-possession, or use of cryptographic software.  We deplore these
-restrictions, but we must still warn you that the GNU C Library may be
-subject to them, even if you do not use the functions in this chapter
-yourself.  The restrictions vary from place to place and are changed
-often, so we cannot give any more specific advice than this warning.
-</para>
- </preliminary><!--
-<sect xml:id="glibc-Passphrase-Storage">
-<div class="header">
-<para>
-Next: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Unpredictable-Bytes" accesskey="n" rel="next">Generating Unpredictable Bytes</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Cryptographic-Functions" accesskey="u" rel="up">Cryptographic Functions</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
-</div>
-<span xml:id="glibc-Passphrase-Storage-1"></span><h3 class="section">33.1 Passphrase Storage</title>
-<span xml:id="glibc-index-passphrase-hashing"></span>
-<span xml:id="glibc-index-one_002dway-hashing"></span>
-<span xml:id="glibc-index-hashing_002c-passphrase"></span>
-
-<para>Sometimes it is necessary to be sure that a user is authorized
-to use some service a machine provides—for instance, to log in as a
-particular user id (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Users-and-Groups">Users and Groups</a>).  One traditional way of
-doing this is for each user to choose a secret <emphasis>passphrase</emphasis>; then, the
-system can ask someone claiming to be a user what the user’s passphrase
-is, and if the person gives the correct passphrase then the system can
-grant the appropriate privileges.  (Traditionally, these were called
-“passwords,” but nowadays a single word is too easy to guess.)
-</para>
-<para>Programs that handle passphrases must take special care not to reveal
-them to anyone, no matter what.  It is not enough to keep them in a
-file that is only accessible with special privileges.  The file might
-be “leaked” via a bug or misconfiguration, and system administrators
-shouldn’t learn everyone’s passphrase even if they have to edit that
-file for some reason.  To avoid this, passphrases should also be
-converted into <emphasis>one-way hashes</emphasis>, using a <emphasis>one-way function</emphasis>,
-before they are stored.
-</para>
-<para>A one-way function is easy to compute, but there is no known way to
-compute its inverse.  This means the system can easily check
-passphrases, by hashing them and comparing the result with the stored
-hash.  But an attacker who discovers someone’s passphrase hash can
-only discover the passphrase it corresponds to by guessing and
-checking.  The one-way functions are designed to make this process
-impractically slow, for all but the most obvious guesses.  (Do not use
-a word from the dictionary as your passphrase.)
-</para>
-<para>The GNU C Library provides an interface to four one-way functions, based on
-the SHA-2-512, SHA-2-256, MD5, and DES cryptographic primitives.  New
-passphrases should be hashed with either of the SHA-based functions.
-The others are too weak for newly set passphrases, but we continue to
-support them for verifying old passphrases.  The DES-based hash is
-especially weak, because it ignores all but the first eight characters
-of its input.
-</para>
-<dl class="def">
-<dt xml:id="glibc-index-crypt"><span class="category">Function: </span><span><emphasis>char *</emphasis> <strong>crypt</strong> <emphasis>(const char *<var>phrase</var>, const char *<var>salt</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-crypt" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-
-<para>Preliminary:
-| MT-Unsafe race:crypt
-| AS-Unsafe corrupt lock heap dlopen
-| AC-Unsafe lock mem
-| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
-</para>
-
-
-<para>The function <code>crypt</code> converts a passphrase string, <var>phrase</var>,
-into a one-way hash suitable for storage in the user database.  The
-string that it returns will consist entirely of printable ASCII
-characters.  It will not contain whitespace, nor any of the characters
-‘<filename>:</filename>’, ‘<filename>;</filename>’, ‘<filename>*</filename>’, ‘<filename>!</filename>’, or ‘<filename>\</filename>’.
-</para>
-<para>The <var>salt</var> parameter controls which one-way function is used, and
-it also ensures that the output of the one-way function is different
-for every user, even if they have the same passphrase.  This makes it
-harder to guess passphrases from a large user database.  Without salt,
-the attacker could make a guess, run <code>crypt</code> on it once, and
-compare the result with all the hashes.  Salt forces the attacker to
-make separate calls to <code>crypt</code> for each user.
-</para>
-<para>To verify a passphrase, pass the previously hashed passphrase as the
-<var>salt</var>.  To hash a new passphrase for storage, set <var>salt</var> to a
-string consisting of a prefix plus a sequence of randomly chosen
-characters, according to this table:
-</para>
-<table>
-<thead><tr><th width="20%">One-way function</th><th width="10%">Prefix</th><th width="30%">Random sequence</th></tr></thead>
-<tbody><tr><td width="20%">SHA-2-512</td><td width="10%">‘<filename>$6$</filename>’</td><td width="30%">16 characters</td></tr>
-<tr><td width="20%">SHA-2-256</td><td width="10%">‘<filename>$5$</filename>’</td><td width="30%">16 characters</td></tr>
-<tr><td width="20%">MD5</td><td width="10%">‘<filename>$1$</filename>’</td><td width="30%">8 characters</td></tr>
-<tr><td width="20%">DES</td><td width="10%">‘<filename></filename>’</td><td width="30%">2 characters</td></tr>
-</tbody></table>
-
-<para>In all cases, the random characters should be chosen from the alphabet
-<code>./0-9A-Za-z</code>.
-</para>
-<para>With all of the hash functions <emphasis>except</emphasis> DES, <var>phrase</var> can be
-arbitrarily long, and all eight bits of each byte are significant.
-With DES, only the first eight characters of <var>phrase</var> affect the
-output, and the eighth bit of each byte is also ignored.
-</para>
-<para><code>crypt</code> can fail.  Some implementations return <code>NULL</code> on
-failure, and others return an <emphasis>invalid</emphasis> hashed passphrase, which
-will begin with a ‘<filename>*</filename>’ and will not be the same as <var>salt</var>.  In
-either case, <code>errno</code> will be set to indicate the problem.  Some
-of the possible error codes are:
-</para>
-<dl compact="compact">
-<dt><span><code>EINVAL</code></span></dt>
-<dd><para><var>salt</var> is invalid; neither a previously hashed passphrase, nor a
-well-formed new salt for any of the supported hash functions.
-</para>
-</dd>
-<dt><span><code>EPERM</code></span></dt>
-<dd><para>The system configuration forbids use of the hash function selected by
-<var>salt</var>.
-</para>
-</dd>
-<dt><span><code>ENOMEM</code></span></dt>
-<dd><para>Failed to allocate internal scratch storage.
-</para>
-</dd>
-<dt><span><code>ENOSYS</code></span></dt>
-<dt><span><code>EOPNOTSUPP</code></span></dt>
-<dd><para>Hashing passphrases is not supported at all, or the hash function
-selected by <var>salt</var> is not supported.  The GNU C Library does not use
-these error codes, but they may be encountered on other operating
-systems.
-</para></dd>
-</dl>
-
-<para><code>crypt</code> uses static storage for both internal scratchwork and the
-string it returns.  It is not safe to call <code>crypt</code> from multiple
-threads simultaneously, and the string it returns will be overwritten
-by any subsequent call to <code>crypt</code>.
-</para>
-<para><code>crypt</code> is specified in the X/Open Portability Guide and is
-present on nearly all historical Unix systems.  However, the XPG does
-not specify any one-way functions.
-</para>
-<para><code>crypt</code> is declared in <filename>unistd.h</filename>.  The GNU C Library also
-declares this function in <filename>crypt.h</filename>.
-</para></dd></dl>
-
-<dl class="def">
-<dt xml:id="glibc-index-crypt_005fr"><span class="category">Function: </span><span><emphasis>char *</emphasis> <strong>crypt_r</strong> <emphasis>(const char *<var>phrase</var>, const char *<var>salt</var>, struct crypt_data *<var>data</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-crypt_005fr" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-<para>Preliminary:
-| MT-Safe
-| AS-Unsafe corrupt lock heap dlopen
-| AC-Unsafe lock mem
-| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
-</para>
-
-<span xml:id="glibc-index-struct-crypt_005fdata"></span>
-
-<para>The function <code>crypt_r</code> is a thread-safe version of <code>crypt</code>.
-Instead of static storage, it uses the memory pointed to by its
-<var>data</var> argument for both scratchwork and the string it returns.
-It can safely be used from multiple threads, as long as different
-<var>data</var> objects are used in each thread.  The string it returns
-will still be overwritten by another call with the same <var>data</var>.
-</para>
-<para><var>data</var> must point to a <code>struct crypt_data</code> object allocated
-by the caller.  All of the fields of <code>struct crypt_data</code> are
-private, but before one of these objects is used for the first time,
-it must be initialized to all zeroes, using <code>memset</code> or similar.
-After that, it can be reused for many calls to <code>crypt_r</code> without
-erasing it again.  <code>struct crypt_data</code> is very large, so it is
-best to allocate it with <code>malloc</code> rather than as a local
-variable.  See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Memory-Allocation">Allocating Storage For Program Data</a>.
-</para>
-<para><code>crypt_r</code> is a GNU extension.  It is declared in <filename>crypt.h</filename>,
-as is <code>struct crypt_data</code>.
-</para></dd></dl>
-
-<para>The following program shows how to use <code>crypt</code> the first time a
-passphrase is entered.  It uses <code>getentropy</code> to make the salt as
-unpredictable as possible; see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Unpredictable-Bytes">Generating Unpredictable Bytes</a>.
-</para>
-<div class="example">
-<pre class="example">
-#include &lt;stdio.h&gt;
+  <para>
+   &glibc; yalnızca birkaç özel amaçlı şifreleme işlevi içerir: parola depolama için tek yönlü aşlama işlevleri ve işletim sistemi tarafından sağlanıyorsa,şifresel rastgelelik kaynağına erişim. Genel amaçlı şifrelemeye ihtiyaç duyan uygulamalar, <link xl:href="https://www.gnu.org/software/libgcrypt/">libgcrypt</link> gibi özel bir şifreleme kütüphanesi kullanmalıdır.
+  </para>
+  <para>
+   Birçok ülke, şifresel yazılımların ithalatına, ihracatına, bulundurulmasına veya kullanımına yasal kısıtlamalar getirmektedir. Bu kısıtlamaları kınıyoruz, ancak bu bölümdeki işlevleri kendiniz kullanmasanız bile &glibc;nin bunlara tabi olabileceği konusunda sizi uyarmalıyız. Kısıtlamalar bölgeden bölgeye ve sık sık değişir, bu nedenle bu uyarıdan daha belirgin bir tavsiye veremiyoruz.
+  </para>
+ </preliminary>
+ <chapter xml:id="glibc-Passphrase-Storage">
+  <title>Parolaların Saklanması</title>
+  <titleabbrev>Parolalar için tek yönlü aşlama</titleabbrev>
+  <para>
+   <dicterm><english>hashing</english><turkish>aşlama</turkish></dicterm>
+   <dicterm><english>hash</english><turkish>aş, aşlamak</turkish></dicterm>
+   <indexterm linkend="glibc-cp"><primary>parola aşlama</primary></indexterm>
+   <indexterm linkend="glibc-cp"><primary>tek yönlü aşlama</primary></indexterm>
+   <indexterm linkend="glibc-cp"><primary>aşlama</primary><secondary>parola</secondary></indexterm>
+   Bazen bir kullanıcının, örneğin belirli bir kullanıcı kimliği ile oturum açmak için, bir makinenin sağladığı bazı hizmetleri kullanma yetkisine sahip olduğundan emin olmak gerekir (bkz. <xref linkend="glibc-Users-and-Groups"/>). Bunu yapmanın geleneksel yolu, her kullanıcının gizli bir <wordasword>parola</wordasword> seçmesidir; daha sonra sistem, kullanıcı olduğunu iddia eden birine kullanıcının parolasının ne olduğunu sorabilir ve kişi doğru parolayı verirse, sistem uygun ayrıcalıkları verebilir. (Geleneksel olarak bunlar tek sözcüklük parolalardı, ancak günümüzde tek bir sözcüğü tahmin etmek çok kolay.)
+  </para>
+  <para>
+   Parolaları işleyen uygulamalar, ne olursa olsun, bunları kimseye açıklamamaya özen göstermelidir. Bunları yalnızca özel ayrıcalıklarla erişilebilen bir dosyada tutmak yeterli değildir. Dosya bir hata veya yanlış yapılandırma yoluyla "sızdırılmış" olabilir ve sistem yöneticileri, herhangi bir nedenle bu dosyayı düzenlemek zorunda kalsalar bile herkesin parolasını öğrenmemelidir. Bundan kaçınmak için, parolalar saklanmadan önce <wordasword>tek yönlü işlev</wordasword> kullanılarak <wordasword>tek yönlü aş</wordasword>lara dönüştürülmelidir.
+  </para>
+  <para>
+   Tek yönlü bir işlevi hesaplamak kolaydır, ancak tersini hesaplamanın bilinen bir yolu yoktur. Bu, sistemin parolaları aşlayarak ve sonucu saklanan aş ile karşılaştırarak kolayca sınayabileceği anlamına gelir. Ancak birisinin parola aşını keşfeden bir saldırgan, aşın karşılık geldiği parolayı ancak tahmin ederek ve deneyerek keşfedebilir. Tek yönlü işlevler, oldukça belli tahminler (sözlükteki bir sözcük parola olarak kullanılmamalıdır) dışında, bu işlemi pratik olmayacak şekilde yavaşlatmak için tasarlanmıştır.
+  </para>
+  <para>
+   &glibc; SHA-2-512, SHA-2-256, MD5 ve DES şifreleme algoritmalarına dayalı dört tek yönlü algoritma için arayüz içerir. Yeni parolalar, SHA tabanlı algoritmalardan biriyle aş haline getirilmelidir. Diğer şifreleme algoritmaları yeni ayarlanan parolalar için çok zayıftır, ancak eski parolaları doğrulamak için hala desteklenmektedir. DES tabanlı aşlar özellikle zayıftır, çünkü girdinin ilk sekiz karakteri hariç hepsini yok sayar.
+  </para>
+  <csynopsis>
+   <indexterm linkend="glibc-fn" xml:id="glibc-fn-crypt"><primary>crypt</primary></indexterm>
+   <csproto type="işlev">
+    <csname><ptr>char</ptr><function>crypt</function></csname>
+    <csparam><ptr>const&#160;char</ptr><parameter>phrase</parameter></csparam>
+    <csparam><ptr>const&#160;char</ptr><parameter>salt</parameter></csparam>
+   </csproto>
+   <header>&unistd.h;</header>
+   <conceptlist>
+    <concept>&mtunsafe; &race;<code linkend="glibc-safety-identifier">:crypt</code></concept>
+    <concept>&asunsafe; &corrupt; &lock; &heap; &dlopen;</concept>
+    <concept>&acunsafe; &lock; &mem;</concept>
+   </conceptlist>
+   <para>
+    <code>crypt</code> işlevi, bir parola dizgesini, tümceyi, kullanıcı veritabanında depolamaya uygun tek yönlü bir aşa dönüştürür. Döndürdüğü dizge tamamen yazdırılabilir ASCII karakterlerinden oluşur. Boşluk veya ‘<code>:</code>’, ‘<code>;</code>’, ‘<code>*</code>’, ‘<code>!</code>’, ‘<code>\</code>’ karakterlerinden herhangi birini içermez.
+   </para>
+   <para>
+    <parameter>salt</parameter> bağımsız değişkeni kullanılacak tek yönlü algoritmayı belirler ve aynı parolaya sahip olsalar bile tek yönlü algoritma çıktısının her kullanıcı için farklı olmasını sağlar. Bu, büyük bir kullanıcı veri tabanından parolaların tahmin edilmesini zorlaştırır. Saldırgan <parameter>salt</parameter> olmadan bir tahminde bulunabilir, üzerinde bir kez <code>crypt</code> çalıştırabilir ve sonucu tüm aşlarla karşılaştırabilir. <parameter>salt</parameter>, saldırganı her kullanıcı için ayrı <code>crypt</code> çağrıları yapmaya zorlar.
+   </para>
+   <para>
+    Bir parolayı doğrulamak için, <parameter>salt</parameter> olarak önceden aşlanmış parola aktarılır. Saklamak için yeni bir parolayı aşlarken, aşağıdaki tabloya göre, bir önek artı rastgele seçilen bir dizi karakterden oluşan bir dizge içeren bir  <parameter>salt</parameter> kullanılmalıdır:
+   </para>
+   <informaltable>
+    <tgroup cols="3" colsep='1' rowsep='1'>
+     <thead>
+      <row>
+       <entry>Algoritma</entry>
+       <entry>Önek</entry>
+       <entry>Rastgele karakter</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry>SHA-2-512</entry>
+       <entry>‘<code>$6$</code>’</entry>
+       <entry>16 karakter</entry>
+      </row>
+      <row>
+       <entry>SHA-2-256</entry>
+       <entry>‘<code>$5$</code>’</entry>
+       <entry>16 karakter</entry>
+      </row>
+      <row>
+       <entry>MD5</entry>
+       <entry>‘<code>$1$</code>’</entry>
+       <entry>8 karakter</entry>
+      </row>
+      <row>
+       <entry>DES</entry>
+       <entry>‘’</entry>
+       <entry>2 karakter</entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </informaltable>
+   <para>
+    Tüm durumlarda rastgele karakterler <code>./0-9A-Za-z</code> ifadesindeki karakterlerden seçilmelidir.
+   </para>
+   <para>
+    DES dışındaki tüm aşlama algoritmalarında, parola keyfi olarak uzun olabilir ve her baytın sekiz bitinin tümü anlamlıdır. DES ile, parolanın yalnızca ilk sekiz karakteri çıktıyı etkiler ve her baytın sekizinci biti de dikkate alınmaz.
+   </para>
+   <para>
+    <code>crypt</code> başarısız olabilir. Bazı gerçeklenimler başarısızlık durumunda <varname>NULL</varname> döndürür ve diğerleri "*" ile başlayan ve <parameter>salt</parameter> içermeyen geçersiz aşlı parola döndürür. Her iki durumda da, sorunu belirtmek için hata <varname>errno</varname> değişkenine atanır. Olası hata değerlerinden bazıları:
+   </para>
+   <glosslist>
+    <glossentry>
+     <glossterm><code>EINVAL</code></glossterm>
+     <glossdef>
+      <para>
+       <parameter>salt</parameter> geçersiz. Desteklenen aşlama algoritmaları için ne önceden aşlanmış bir parola ne de iyi biçimlendirilmiş yeni bir tuz içeriyor.
+      </para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm><code>EPERM</code></glossterm>
+     <glossdef>
+      <para>
+       Sistem yapılandırması, <parameter>salt</parameter> tarafından seçilen aşlama işlevinin kullanımını yasaklıyor.
+      </para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm><code>ENOMEM</code></glossterm>
+     <glossdef>
+      <para>
+       Dahili sıfırdan depolama alanı tahsis edilemedi.
+      </para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm>
+      <glossterm><code>ENOSYS</code></glossterm>
+      <glossterm><code>EOPNOTSUPP</code></glossterm>
+     </glossterm>
+     <glossdef>
+      <para>
+       Aşlı parolalar hiç desteklenmiyor veya <parameter>salt</parameter> tarafından seçilen aşlama algoritması desteklenmiyor. &glibc; bu hata kodlarını kullanmaz ancak diğer işletim sistemlerinde bunlara rastlanabilir.
+      </para>
+     </glossdef>
+    </glossentry>
+   </glosslist>
+   <para>
+    <code>crypt</code> işlevi, hem dahili karalama hem de döndürdüğü dizi için duruk depolama kullanır. Aynı anda birden çok evreden <code>crypt</code> çağrısı güvenli değildir ve sonraki herhangi bir <code>crypt</code> çağrısı önceki çağrıdan dönen dizgenin üzerine yazar.
+   </para>
+   <para>
+    <code>crypt</code> işlevi, X/Open Taşınabilirlik Kılavuzunda belirtilir ve neredeyse tüm tarihi Unix sistemlerinde bulunur. Ancak, XPG herhangi bir tek yönlü algoritma belirtmez.
+   </para>
+   <para>
+    <code>crypt</code> işlevi &unistd.h; başlık dosyasına bildirilmiştir. &glibc; işlevi ayrıca &crypt.h; başlık dosyasında da bildirir.
+   </para>
+  </csynopsis>
+  <csynopsis>
+   <indexterm linkend="glibc-fn" xml:id="glibc-fn-crypt_r"><primary>crypt_r</primary></indexterm>
+   <indexterm linkend="glibc-tp" xml:id="glibc-tp-crypt_data"><primary sortas="crypt_data">struct&#160;crypt_data</primary></indexterm>
+   <csproto type="işlev">
+    <csname><ptr>char</ptr><function>crypt_r</function></csname>
+    <csparam><ptr>const&#160;char</ptr><parameter>phrase</parameter></csparam>
+    <csparam><ptr>const&#160;char</ptr><parameter>salt</parameter></csparam>
+    <csparam><ptr>struct&#160;crypt_data</ptr><parameter>data</parameter></csparam>
+   </csproto>
+   <header>&crypt.h;</header>
+   <conceptlist>
+    <concept>&mtsafe;</concept>
+    <concept>&asunsafe; &corrupt; &lock; &heap; &dlopen;</concept>
+    <concept>&acunsafe; &lock; &mem;</concept>
+   </conceptlist>
+   <para>
+    <code>crypt_r</code> işlevi evresel olarak güvenli sürümdür. Duruk depolama kullanılmaz. Döndürdüğü dizge için <parameter>data</parameter> bağımsız değişkeninin gösterdiği belleği kullanacak şekilde işlev sıfırdan yeniden tanımlanmıştır. Her evrede farklı <parameter>data</parameter> nesneleri kullanıldığından birden çok evrede güvenle kullanılabilir. Ancak, aynı <parameter>data</parameter> ile yapılan başka bir çağrı dönen dizgenin üzerine yazacaktır.
+   </para>
+   <para>
+    <parameter>data</parameter>, çağrıcı tarafından tahsis edilen bir <type>struct&#160;crypt_data</type> nesnesine gösterici içermelidir. <type>struct&#160;crypt_data</type> yapısının tüm alanları özeldir, ancak bu nesnelerden biri ilk kez kullanılmadan önce, <function>memset</function> veya benzeri bir işlev ile sıfırlarla doldurularak ilklendirilmelidir. Bundan sonra, tekrar silmeden <code>crypt_r</code> işlevine yapılan birçok çağrı için yeniden kullanılabilir. <type>struct&#160;crypt_data</type> yapısı çok büyüktür, bu yüzden yerel bir değişken yerine <function>malloc</function> ile tahsis etmek daha iyidir. Bkz: <xref linkend="glibc-Memory-Allocation"/>.
+   </para>
+   <para>
+    <code>crypt_r</code> işlevi GNU oluşumudur. İşlev ve <type>struct&#160;crypt_data</type> yapısı &crypt.h; başlık dosyasında bildirilmiştir.
+   </para>
+  </csynopsis>
+  <example>
+   <para>
+    Aşağıdaki örnek, bir parola ilk kez girildiğinde <code>crypt</code> işlevinin nasıl kullanılacağını göstermektedir. Tuzu olabildiğince öngörülemez hale getirmek için <code>getentropy</code> işlevi kullanılmıştır. Bkz: <xref linkend="glibc-Unpredictable-Bytes"/>.
+   </para>
+   <screen>#include &lt;stdio.h&gt;
 #include &lt;unistd.h&gt;
 #include &lt;crypt.h&gt;
 
@@ -203,56 +181,50 @@ int
 main(void)
 {
   unsigned char ubytes[16];
-  char salt[20];
+  char tuz[20];
   const char *const saltchars =
     "./0123456789ABCDEFGHIJKLMNOPQRST"
     "UVWXYZabcdefghijklmnopqrstuvwxyz";
   char *hash;
   int i;
 
-  /* <span class="roman">Retrieve 16 unpredictable bytes from the operating system.</span> */
+  /* <replaceable>işletim sisteminden 16 öngörülemez bayt al.</replaceable> */
   if (getentropy (ubytes, sizeof ubytes))
     {
       perror ("getentropy");
       return 1;
     }
 
-  /* <span class="roman">Use them to fill in the salt string.</span> */
-  salt[0] = '$';
-  salt[1] = '5'; /* <span class="roman">SHA-256</span> */
-  salt[2] = '$';
+  /* <replaceable>Onları tuzu oluşturmak için kullan.</replaceable> */
+  tuz[0] = '$';
+  tuz[1] = '5'; /* <replaceable>SHA-256</replaceable> */
+  tuz[2] = '$';
   for (i = 0; i &lt; 16; i++)
-    salt[3+i] = saltchars[ubytes[i] &amp; 0x3f];
-  salt[3+i] = '\0';
+    tuz[3+i] = saltchars[ubytes[i] &amp; 0x3f];
+  tuz[3+i] = '\0';
 
-  /* <span class="roman">Read in the user’s passphrase and hash it.</span> */
-  hash = crypt (getpass ("Enter new passphrase: "), salt);
+  /* <replaceable>Kullanıcının parolasını oku ve aşla.</replaceable> */
+  hash = crypt (getpass ("Parolanızı giriniz: "), tuz);
   if (!hash || hash[0] == '*')
     {
       perror ("crypt");
       return 1;
     }
 
-  /* <span class="roman">Print the results.</span> */
+  /* <replaceable>Sonuçları göster.</replaceable> */
   puts (hash);
   return 0;
 }
-</pre></div>
-
-<para>The next program demonstrates how to verify a passphrase.  It checks a
-hash hardcoded into the program, because looking up real users’ hashed
-passphrases may require special privileges (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#User-Database">User Database</a>).
-It also shows that different one-way functions produce different
-hashes for the same passphrase.
-</para>
-<div class="example">
-<pre class="example">
-#include &lt;stdio.h&gt;
+</screen>
+   <para>
+    Aşağıdaki örnekte ise, bir parolanın nasıl doğrulanacağını gösterilmiştir. Gerçek kullanıcıların aşlanmış parolalarına bakmak özel ayrıcalıklar gerektirebileceğinden, yazılıma sabit kodlanmış bir aşa göre doğrulama yapılmıştır (bkz. <xref linkend="glibc-User-Database"/>). Ayrıca, farklı tek yönlü algoritmaların aynı parola için farklı aşlar ürettiği de gösterilmiştir.
+   </para>
+   <screen>#include &lt;stdio.h&gt;
 #include &lt;string.h&gt;
 #include &lt;unistd.h&gt;
 #include &lt;crypt.h&gt;
 
-/* <span class="roman">‘<filename>GNU's Not Unix</filename>’ hashed using SHA-256, MD5, and DES.</span> */
+/* <replaceable>‘GNU's Not Unix’ aşlı SHA-256, MD5 ve DES kullanımı.</replaceable> */
 static const char hash_sha[] =
   "$5$DQ2z5NHf1jNJnChB$kV3ZTR0aUaosujPhLzR84Llo3BsspNSe4/tsp7VoEn6";
 static const char hash_md5[] = "$1$A3TxDv41$rtXVTUXl2LkeSV0UU5xxs1";
@@ -264,213 +236,221 @@ main(void)
   char *phrase;
   int status = 0;
 
-  /* <span class="roman">Prompt for a passphrase.</span> */
-  phrase = getpass ("Enter passphrase: ");
+  /* <replaceable>Parolayı iste.</replaceable> */
+  phrase = getpass ("Parolanızı giriniz: ");
 
-  /* <span class="roman">Compare against the stored hashes.  Any input that begins with
-     ‘<filename>GNU's No</filename>’ will match the DES hash, but the other two will
-     only match ‘<filename>GNU's Not Unix</filename>’.</span> */
+  /* <replaceable>Saklı aşlarla karşılaştır. ‘GNU's No’ ile
+   * başlayanlar DES aşı ile, diğer ikisi yalnızca
+   * ‘GNU's Not Unix>’ aşı ile eşleşir.</replaceable>
+   */
 
   if (strcmp (crypt (phrase, hash_sha), hash_sha))
     {
-      puts ("SHA: not ok");
+      puts ("SHA: reddedildi");
       status = 1;
     }
   else
-    puts ("SHA: ok");
+    puts ("SHA: onaylandı");
 
   if (strcmp (crypt (phrase, hash_md5), hash_md5))
     {
-      puts ("MD5: not ok");
+      puts ("MD5: reddedildi");
       status = 1;
     }
   else
-    puts ("MD5: ok");
+    puts ("MD5: onaylandı");
 
   if (strcmp (crypt (phrase, hash_des), hash_des))
     {
-      puts ("DES: not ok");
+      puts ("DES: reddedildi");
       status = 1;
     }
   else
-    puts ("DES: ok");
+    puts ("DES: onaylandı");
 
   return status;
 }
-</pre></div>
+</screen>
+  </example>
+ </chapter>
 
-<hr>
-</div>
-<sect xml:id="glibc-Unpredictable-Bytes">
-<div class="header">
-<para>
-Previous: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Passphrase-Storage" accesskey="p" rel="prev">Passphrase Storage</a>, Up: <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Cryptographic-Functions" accesskey="u" rel="up">Cryptographic Functions</a> &nbsp; [<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Concept-Index" title="Index" rel="index">Index</a>]</para>
-</div>
-<span xml:id="glibc-Generating-Unpredictable-Bytes"></span><h3 class="section">33.2 Generating Unpredictable Bytes</title>
-<span xml:id="glibc-index-randomness-source"></span>
-<span xml:id="glibc-index-random-numbers_002c-cryptographic"></span>
-<span xml:id="glibc-index-pseudo_002drandom-numbers_002c-cryptographic"></span>
-<span xml:id="glibc-index-cryptographic-random-number-generator"></span>
-<span xml:id="glibc-index-deterministic-random-bit-generator"></span>
-<span xml:id="glibc-index-CRNG"></span>
-<span xml:id="glibc-index-CSPRNG"></span>
-<span xml:id="glibc-index-DRBG"></span>
-
-<para>Cryptographic applications often need some random data that will be as
-difficult as possible for a hostile eavesdropper to guess.  For
-instance, encryption keys should be chosen at random, and the “salt”
-strings used by <code>crypt</code> (see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Passphrase-Storage">Passphrase Storage</a>) should also
-be chosen at random.
-</para>
-<para>Some pseudo-random number generators do not provide unpredictable-enough
-output for cryptographic applications; see <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#Pseudo_002dRandom-Numbers">Pseudo-Random Numbers</a>.
-Such applications need to use a <emphasis>cryptographic random number
-generator</emphasis> (CRNG), also sometimes called a <emphasis>cryptographically strong
-pseudo-random number generator</emphasis> (CSPRNG) or <emphasis>deterministic random
-bit generator</emphasis> (DRBG).
-</para>
-<para>Currently, the GNU C Library does not provide a cryptographic random number
-generator, but it does provide functions that read random data from a
-<emphasis>randomness source</emphasis> supplied by the operating system.  The
-randomness source is a CRNG at heart, but it also continually
-“re-seeds” itself from physical sources of randomness, such as
-electronic noise and clock jitter.  This means applications do not need
-to do anything to ensure that the random numbers it produces are
-different on each run.
-</para>
-<para>The catch, however, is that these functions will only produce
-relatively short random strings in any one call.  Often this is not a
-problem, but applications that need more than a few kilobytes of
-cryptographically strong random data should call these functions once
-and use their output to seed a CRNG.
-</para>
-<para>Most applications should use <code>getentropy</code>.  The <code>getrandom</code>
-function is intended for low-level applications which need additional
-control over blocking behavior.
-</para>
-<dl class="def">
-<dt xml:id="glibc-index-getentropy"><span class="category">Function: </span><span><emphasis>int</emphasis> <strong>getentropy</strong> <emphasis>(void *<var>buffer</var>, size_t <var>length</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-getentropy" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-<para>| MT-Safe
-| AS-Safe
-| AC-Safe
-| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
-</para>
-
-
-<para>This function writes exactly <var>length</var> bytes of random data to the
-array starting at <var>buffer</var>.  <var>length</var> can be no more than 256.
-On success, it returns zero.  On failure, it returns <em class="math">-1</emphasis>, and
-<code>errno</code> is set to indicate the problem.  Some of the possible
-errors are listed below.
-</para>
-<dl compact="compact">
-<dt><span><code>ENOSYS</code></span></dt>
-<dd><para>The operating system does not implement a randomness source, or does
-not support this way of accessing it.  (For instance, the system call
-used by this function was added to the Linux kernel in version 3.17.)
-</para>
-</dd>
-<dt><span><code>EFAULT</code></span></dt>
-<dd><para>The combination of <var>buffer</var> and <var>length</var> arguments specifies
-an invalid memory range.
-</para>
-</dd>
-<dt><span><code>EIO</code></span></dt>
-<dd><para><var>length</var> is larger than 256, or the kernel entropy pool has
-suffered a catastrophic failure.
-</para></dd>
-</dl>
-
-<para>A call to <code>getentropy</code> can only block when the system has just
-booted and the randomness source has not yet been initialized.
-However, if it does block, it cannot be interrupted by signals or
-thread cancellation.  Programs intended to run in very early stages of
-the boot process may need to use <code>getrandom</code> in non-blocking mode
-instead, and be prepared to cope with random data not being available
-at all.
-</para>
-<para>The <code>getentropy</code> function is declared in the header file
-<filename>sys/random.h</filename>.  It is derived from OpenBSD.
-</para></dd></dl>
-
-<dl class="def">
-<dt xml:id="glibc-index-getrandom"><span class="category">Function: </span><span><emphasis>ssize_t</emphasis> <strong>getrandom</strong> <emphasis>(void *<var>buffer</var>, size_t <var>length</var>, unsigned int <var>flags</var>)</emphasis><a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#index-getrandom" class="copiable-anchor"> ¶</a></span></dt>
-<dd>
-<para>| MT-Safe
-| AS-Safe
-| AC-Safe
-| See <a href="https://www.gnu.org/software/libc/manual/html_mono/libc.html#POSIX-Safety-Concepts">POSIX Safety Concepts</a>.
-</para>
-
-
-<para>This function writes up to <var>length</var> bytes of random data to the
-array starting at <var>buffer</var>.  The <var>flags</var> argument should be
-either zero, or the bitwise OR of some of the following flags:
-</para>
-<dl compact="compact">
-<dt><span><code>GRND_RANDOM</code></span></dt>
-<dd><para>Use the <filename>/dev/random</filename> (blocking) source instead of the
-<filename>/dev/urandom</filename> (non-blocking) source to obtain randomness.
-</para>
-<para>If this flag is specified, the call may block, potentially for quite
-some time, even after the randomness source has been initialized.  If it
-is not specified, the call can only block when the system has just
-booted and the randomness source has not yet been initialized.
-</para>
-</dd>
-<dt><span><code>GRND_NONBLOCK</code></span></dt>
-<dd><para>Instead of blocking, return to the caller immediately if no data is
-available.
-</para>
-</dd>
-<dt><span><code>GRND_INSECURE</code></span></dt>
-<dd><para>Write random data that may not be cryptographically secure.
-</para></dd>
-</dl>
-
-<para>Unlike <code>getentropy</code>, the <code>getrandom</code> function is a
-cancellation point, and if it blocks, it can be interrupted by
-signals.
-</para>
-<para>On success, <code>getrandom</code> returns the number of bytes which have
-been written to the buffer, which may be less than <var>length</var>.  On
-error, it returns <em class="math">-1</emphasis>, and <code>errno</code> is set to indicate the
-problem.  Some of the possible errors are:
-</para>
-<dl compact="compact">
-<dt><span><code>ENOSYS</code></span></dt>
-<dd><para>The operating system does not implement a randomness source, or does
-not support this way of accessing it.  (For instance, the system call
-used by this function was added to the Linux kernel in version 3.17.)
-</para>
-</dd>
-<dt><span><code>EAGAIN</code></span></dt>
-<dd><para>No random data was available and <code>GRND_NONBLOCK</code> was specified in
-<var>flags</var>.
-</para>
-</dd>
-<dt><span><code>EFAULT</code></span></dt>
-<dd><para>The combination of <var>buffer</var> and <var>length</var> arguments specifies
-an invalid memory range.
-</para>
-</dd>
-<dt><span><code>EINTR</code></span></dt>
-<dd><para>The system call was interrupted.  During the system boot process, before
-the kernel randomness pool is initialized, this can happen even if
-<var>flags</var> is zero.
-</para>
-</dd>
-<dt><span><code>EINVAL</code></span></dt>
-<dd><para>The <var>flags</var> argument contains an invalid combination of flags.
-</para></dd>
-</dl>
-
-<para>The <code>getrandom</code> function is declared in the header file
-<filename>sys/random.h</filename>.  It is a GNU extension.
-</para>
-</dd></dl>
-<hr>
-</div>
-</div-->
+ <chapter xml:id="glibc-Unpredictable-Bytes">
+  <title>Öngörülemez Baytların Üretimi</title>
+  <titleabbrev>Şifresel rastgeleliğin sağlanması</titleabbrev>
+  <para>
+   <indexterm linkend="glibc-cp"><primary>rastgelelik kaynağı</primary></indexterm>
+   <indexterm linkend="glibc-cp"><primary>şifresel rastgele sayı üreteci</primary></indexterm>
+   <indexterm linkend="glibc-cp"><primary>belirlenimsel rastgele bit üreteci</primary></indexterm>
+   <indexterm linkend="glibc-cp"><primary>rastgele sayılar</primary><secondary>şifresel</secondary></indexterm>
+   <indexterm linkend="glibc-cp"><primary>ŞRSÜ</primary></indexterm>
+   <indexterm linkend="glibc-cp"><primary>BRBÜ</primary></indexterm>
+   <indexterm linkend="glibc-cp"><primary>ŞOGSRSÜ</primary></indexterm>
+   <indexterm linkend="glibc-cp"><primary>CRNG</primary></indexterm>
+   <indexterm linkend="glibc-cp"><primary>DRBG</primary></indexterm>
+   <indexterm linkend="glibc-cp"><primary>CSPRNG</primary></indexterm>
+   <dicterm><english>cryptographic</english><turkish>şifresel</turkish></dicterm>
+   Şifresel uygulamalar genellikle düşman bir kulak misafiri için tahmin etmesi mümkün olduğu kadar zor olacak bazı rastgele verilere ihtiyaç duyar. Örneğin, şifreleme anahtarları rasgele seçilmelidir ve <function>crypt</function> tarafından kullanılan "tuz" dizileri de rasgele seçilmelidir (bkz. <xref linkend="glibc-Passphrase-Storage"/>).
+  </para>
+  <para>
+   Bazı sözde rasgele sayı üreteçleri, şifresel uygulamalar için yeterince öngörülemeyen çıktı sağlamaz; bkz. <xref linkend="glibc-Pseudo-Random-Numbers"/>. Bu tür uygulamaların, bazen "şifresel olarak güçlü sözde rasgele sayı üreteci" (ŞOGSRSÜ - İng: CSPRNG) veya "belirlenimsel rasgele bit üreteci" (BRBÜ - İng: DRBG) olarak da adlandırılan bir "şifresel rasgele sayı üreteci" (ŞRSÜ - İng: CRNG) kullanması gerekir.
+  </para>
+  <para>
+   Şu anda, &glibc; şifresel rasgele sayı üreteci sağlamamaktadır, ancak işletim sistemi tarafından sağlanan bir rasgelelik kaynağından rasgele verileri okuyan işlevler sağlar. Rastgelelik kaynağı özünde bir ŞRSÜ'dür, ancak aynı zamanda kendini elektronik gürültü ve saat titremesi gibi fiziksel rastgelelik kaynaklarından sürekli olarak "yeniden tohumlar". Bu, uygulamaların ürettiği rasgele sayıların her çalıştırmada farklı olmasını sağlamak için herhangi bir şey yapmasına gerek olmadığı anlamına gelir.
+  </para>
+  <para>
+   Ancak işin püf noktası, bu işlevlerin herhangi bir çağrıda yalnızca nispeten kısa rasgele diziler üretecek olmasıdır. Genellikle bu sorun olmaz, ancak birkaç kilobayttan fazla şifresel olarak güçlü rasgele veriye ihtiyaç duyan uygulamalar bu işlevleri bir kez çağırmalı ve çıktılarını ŞRSÜ'yü tohumlamak için kullanmalıdır.
+  </para>
+  <para>
+   Uygulamaların genelde <function>getentropy</function> kullanması gerekir. <function>getrandom</function> işlevi, engelleme davranışı üzerinde ek denetime ihtiyaç duyan düşük düzeyli uygulamalar için tasarlanmıştır.
+  </para>
+  <csynopsis>
+   <indexterm linkend="glibc-fn" xml:id="glibc-fn-getentropy"><primary>getentropy</primary></indexterm>
+   <indexterm linkend="glibc-cp" xml:id="glibc-cp-getentropy"><primary>rasgele veri</primary></indexterm>
+   <csproto type="işlev">
+    <csname><type>int</type><function>getentropy</function></csname>
+    <csparam><ptr>void</ptr><parameter>buffer</parameter></csparam>
+    <csparam><type>size_t</type><parameter>length</parameter></csparam>
+   </csproto>
+   <header>&sys-random.h;</header>
+   <conceptlist>
+    <concept>&mtsafe;</concept>
+    <concept>&assafe;</concept>
+    <concept>&acsafe;</concept>
+   </conceptlist>
+   <para>
+    Bu işlev, <parameter>buffer</parameter> göstericisinde başlayan diziye tam olarak <parameter>length</parameter> uzunlukta rastgele veri baytları yazar. <parameter>length</parameter> 256 bayttan fazla olamaz. Başarı durumunda <code>0</code> döner. Başarısızlık durumunda, <code>-1</code> döner ve sorunu belirten kod <varname>errno</varname> değişkenine atanır. Olası hatalardan bazıları aşağıda listelenmiştir.
+   </para>
+   <glosslist>
+    <glossentry>
+     <glossterm><code>ENOSYS</code></glossterm>
+     <glossdef>
+      <para>
+       İşletim sistemi bir rastgelelik kaynağı gerçeklemiyor veya bu şekilde erişimi desteklemiyor. (Örneğin, bu işlev tarafından kullanılan sistem çağrısı, 3.17 sürümünde Linux çekirdeğine eklenmiştir.)
+      </para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm><code>EFAULT</code></glossterm>
+     <glossdef>
+      <para>
+       <parameter>buffer</parameter> ve <parameter>length</parameter> birlikte geçersiz bir bellek aralığı belirtiyor.
+      </para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm><code>EIO</code></glossterm>
+     <glossdef>
+      <para>
+       <dicterm><english>entropy</english><turkish>rastgele veri</turkish></dicterm>
+       <parameter>length</parameter> 256'dan büyük veya çekirdek rastgele veri havuzu ciddi bir başarısızlık yaşadı.
+      </para>
+     </glossdef>
+    </glossentry>
+   </glosslist>
+   <para>
+    <code>getentropy</code> çağrısı, yalnızca sistem yeni başlatıldığında ve rastgelelik kaynağı henüz başlatılmadığında engellenebilir. Ancak, engellenirse, sinyaller veya evre iptali ile kesintiye uğratılamaz. Önyükleme işleminin çok erken aşamalarında çalıştırılması amaçlanan süreçlerin bunun yerine <function>getentropy</function> işlevini engellenmeyen kipte kullanması ve rastgele verilerin hiç mevcut olmamasıyla başa çıkmaya hazırlıklı olması gerekebilir.
+   </para>
+   <para>
+    <code>getentropy</code> işlevi OpenBSD'deki benzerinden türetilmiştir.
+   </para>
+  </csynopsis>
+  <csynopsis>
+   <indexterm linkend="glibc-fn" xml:id="glibc-fn-getrandom"><primary>getrandom</primary></indexterm>
+   <indexterm linkend="glibc-cp" xml:id="glibc-cp-getrandom"><primary>rasgele veri</primary></indexterm>
+   <csproto type="işlev">
+    <csname><type>ssize_t</type><function>getrandom</function></csname>
+    <csparam><ptr>void</ptr><parameter>buffer</parameter></csparam>
+    <csparam><type>size_t</type><parameter>length</parameter></csparam>
+    <csparam><type>unsigned&#160;int</type><parameter>flags</parameter></csparam>
+   </csproto>
+   <header>&sys-random.h;</header>
+   <conceptlist>
+    <concept>&mtsafe;</concept>
+    <concept>&assafe;</concept>
+    <concept>&acsafe;</concept>
+   </conceptlist>
+   <para>
+    Bu işlev, <parameter>buffer</parameter> göstericisinde başlayan diziye <parameter>length</parameter> uzunlukta rastgele veri baytları yazar.
+    <parameter>flags</parameter> sıfır ya da aşağıdaki sabitlerin bazılarının bitsel VEYAsı olmalıdır:
+   </para>
+   <csynopsis>
+    <indexterm linkend="glibc-vr" xml:id="glibc-vr-GRND_RANDOM"><primary>GRND_RANDOM</primary></indexterm>
+    <csproto type="sabit">
+     <csname><function>GRND_RANDOM</function></csname>
+    </csproto>
+    <para>
+     Rastgelelik elde etmek için (engellenmeyen) <filename>/dev/urandom</filename>  kaynak yerine (engellenen) <filename>/dev/random</filename> kaynağı kullanılır.
+    </para>
+    <para>
+     Bu bayrak belirtilirse, çağrının, rastgelelik kaynağı başlatıldıktan sonra bile  oldukça uzun bir süre engellenebilme olasılığı vardır. Belirtilmezse, çağrı yalnızca sistem yeni başlatıldığında ve rastgelelik kaynağı henüz ilklendirilmediğinde engellenebilir.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-vr" xml:id="glibc-vr-GRND_NONBLOCK"><primary>GRND_NONBLOCK</primary></indexterm>
+    <csproto type="sabit">
+     <csname><function>GRND_NONBLOCK</function></csname>
+    </csproto>
+    <para>
+     Engellemek yerine, hiçbir veri yoksa çağrıcıya hemen geri dönülür.
+    </para>
+   </csynopsis>
+   <csynopsis>
+    <indexterm linkend="glibc-vr" xml:id="glibc-vr-GRND_INSECURE"><primary>GRND_INSECURE</primary></indexterm>
+    <csproto type="sabit">
+     <csname><function>GRND_INSECURE</function></csname>
+    </csproto>
+    <para>
+     Şifresel olarak güvenli olmayabilecek rastgele veri yazılır.
+    </para>
+   </csynopsis>
+   <para>
+    <function>getentropy</function> işlevinden farklı olarak <code>getrandom</code> işlevi bir iptal noktasıdır ve engellenirse sinyallerle kesintiye uğratılabilir.
+   </para>
+   <para>
+    <code>getrandom</code> işlevi başarı durumunda, <parameter>buffer</parameter> tamponuna yazılan ve <parameter>length</parameter> değerinden daha az uzunlukta bayt sayısı döndürebilir. Hata durumunda, <code>-1</code> döner ve sorunu belirten kod <varname>errno</varname> değişkenine atanır. Olası hatalardan bazıları aşağıda listelenmiştir.
+   </para>
+   <glosslist>
+    <glossentry>
+     <glossterm><code>ENOSYS</code></glossterm>
+     <glossdef>
+      <para>
+       İşletim sistemi bir rastgelelik kaynağı gerçeklemiyor veya bu şekilde erişimi desteklemiyor. (Örneğin, bu işlev tarafından kullanılan sistem çağrısı, 3.17 sürümünde Linux çekirdeğine eklenmiştir.)
+      </para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm><code>EAGAIN</code></glossterm>
+     <glossdef>
+      <para>
+       Rastgele veri mevcut değildi ve <parameter>flags</parameter> için <varname>GRND_NONBLOCK</varname> belirtildi.
+      </para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm><code>EFAULT</code></glossterm>
+     <glossdef>
+      <para>
+       <parameter>buffer</parameter> ve <parameter>length</parameter> birlikte geçersiz bir bellek aralığı belirtiyor.
+      </para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm><code>EINTR</code></glossterm>
+     <glossdef>
+      <para>
+       Sistem çağrısı kesintiye uğradı. Sistem önyüklemesi sırasında, çekirdek rasgelelik havuzu başlatılmadan önce, <parameter>flags</parameter> sıfır olsa bile bu olabilir.
+      </para>
+     </glossdef>
+    </glossentry>
+    <glossentry>
+     <glossterm><code>EINVAL</code></glossterm>
+     <glossdef>
+      <para>
+       <parameter>flags</parameter> geçersiz sabitler içeriyor.
+      </para>
+     </glossdef>
+    </glossentry>
+   </glosslist>
+  </csynopsis>
+ </chapter>
 </part>
