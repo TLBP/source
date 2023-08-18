@@ -3,7 +3,7 @@
       docbooc/xsl/belgeler/common.xsl
      ********************************************************************-->
 <!--
-   Copyright © 2002-2021 Nilgün Belma Bugüner <https://github.com/nilgun>
+   Copyright © 2002-2023 Nilgün Belma Bugüner <https://github.com/nilgun>
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU Affero General Public License as published
    by the Free Software Foundation, either version 3 of the License, or
@@ -92,6 +92,11 @@ set ve book öntanımlı olarak ilk başlıkları listeler. -->
 <xsl:param name="callout.graphics.path">images/xsl/callouts/</xsl:param>
 <xsl:param name="navig.graphics.path">images/xsl/</xsl:param>
 <xsl:param name="generate.section.toc.level" select="2"/>
+<xsl:param name="part.autolabel">1</xsl:param>
+<xsl:param name="label.from.part">1</xsl:param>
+<xsl:param name="component.label.includes.part.label" select="1"/>
+<xsl:param name="bibliography.numbered">1</xsl:param>
+<xsl:param name="biblioentry.item.separator">·</xsl:param>
 <xsl:param name="generate.toc">
 appendix  toc,title
 article/appendix  nop
@@ -111,16 +116,13 @@ sect5     nop
 section   nop
 set       toc,title
 </xsl:param>
-<xsl:param name="part.autolabel">1</xsl:param>
-<xsl:param name="label.from.part">1</xsl:param>
-<xsl:param name="component.label.includes.part.label" select="1"/>
-<xsl:param name="html.stylesheet">style/nav.css</xsl:param>
 <!-- sözlük yapılandırılınca silinecek -->
 <xsl:template match="d:dicterm|d:english|d:turkish"/>
 
 <xsl:template name="user.head.content">
  <meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+ <link rel="stylesheet" type="text/css" href="/style/nav.css"/>
  <link rel="icon" type="image/png" href="/images/belgeler-logo.png"/>
  <meta name="robots" content="index, follow"/>
 </xsl:template>
@@ -394,6 +396,19 @@ set       toc,title
 
 <xsl:template match="d:address" mode="titlepage.mode">
  <dd class="address"><xsl:apply-templates/></dd>
+</xsl:template>
+
+<xsl:template match="d:contrib" mode="titlepage.mode">
+ <dd class="contrib"><xsl:apply-templates/></dd>
+</xsl:template>
+
+<xsl:template match="d:releaseinfo" mode="titlepage.mode">
+  <xsl:variable name="rtf">
+    <xsl:apply-templates/>
+  </xsl:variable>
+  <xsl:call-template name="make-verbatim">
+    <xsl:with-param name="rtf" select="$rtf"/>
+  </xsl:call-template>
 </xsl:template>
 
 <xsl:template match="d:small">

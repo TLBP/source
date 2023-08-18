@@ -129,7 +129,7 @@ xmlns:exsl="http://exslt.org/common" xmlns="http://www.w3.org/1999/xhtml" exclud
   <xsl:if test="$info and $info/d:abstract">
     <meta name="description">
       <xsl:attribute name="content">
-        <xsl:for-each select="$info/d:abstract[1]/*">
+        <xsl:for-each select="$info/d:abstract[1]/d:para[1]">
           <xsl:value-of select="normalize-space(.)"/>
           <xsl:if test="position() &lt; last()">
             <xsl:text> </xsl:text>
@@ -142,7 +142,7 @@ xmlns:exsl="http://exslt.org/common" xmlns="http://www.w3.org/1999/xhtml" exclud
 
 <xsl:template name="head.content.link.made">
   <xsl:param name="node" select="."/>
-  
+
   <link rev="made" href="{$link.mailto.url}"/>
 </xsl:template>
 
@@ -506,7 +506,7 @@ chunk-code.xsl; and in $chunk.hierarchy used in chunkfast.xsl -->
     </body>
   </html>
   <xsl:value-of select="$html.append"/>
-  
+
   <!-- Generate any css files only once, not once per chunk -->
   <xsl:call-template name="generate.css.files"/>
 </xsl:template>

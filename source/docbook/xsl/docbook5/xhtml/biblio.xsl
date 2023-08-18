@@ -20,7 +20,7 @@ xmlns="http://www.w3.org/1999/xhtml" version="1.0">
 <xsl:template match="d:bibliography">
   <xsl:call-template name="id.warning"/>
 
-  <div>
+  <section>
     <xsl:call-template name="common.html.attributes">
       <xsl:with-param name="inherit" select="1"/>
     </xsl:call-template>
@@ -35,7 +35,7 @@ xmlns="http://www.w3.org/1999/xhtml" version="1.0">
     <xsl:if test="not(parent::d:article)">
       <xsl:call-template name="process.footnotes"/>
     </xsl:if>
-  </div>
+  </section>
 </xsl:template>
 
 <xsl:template match="d:bibliography/d:bibliographyinfo"/>
@@ -233,12 +233,12 @@ xmlns="http://www.w3.org/1999/xhtml" version="1.0">
 <xsl:template name="biblioentry.label">
   <xsl:param name="node" select="."/>
 
+  <xsl:if test="$bibliography.numbered != 0">
+    <xsl:number from="d:bibliography|d:sect1" count="d:biblioentry|d:bibliomixed" level="any" format="1"/>
+    <xsl:text>. </xsl:text>
+  </xsl:if>
+
   <xsl:choose>
-    <xsl:when test="$bibliography.numbered != 0">
-      <xsl:text>[</xsl:text>
-      <xsl:number from="d:bibliography" count="d:biblioentry|d:bibliomixed" level="any" format="1"/>
-      <xsl:text>] </xsl:text>
-    </xsl:when>
     <xsl:when test="local-name($node/child::*[1]) = 'abbrev'">
       <xsl:text>[</xsl:text>
       <xsl:apply-templates select="$node/d:abbrev[1]"/>
